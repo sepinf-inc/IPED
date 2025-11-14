@@ -98,9 +98,9 @@ public class KnownMetCarveTask extends BaseCarveTask {
     private static final MediaType eMulePreferencesDatMediaType = MediaType.application("x-emule-preferences-dat"); //$NON-NLS-1$
 
     /**
-     * Passo para verificação do início do arquivo.
+     * Reading block size.
      */
-    private final int step = 512;
+    private final int blockSize = 512;
 
     /**
      * Tamanho da assinatura do arquivo preferences.dat.
@@ -166,55 +166,48 @@ public class KnownMetCarveTask extends BaseCarveTask {
 
     public void process(IItem evidence) {
         // Verifica se está desabilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || caseData.isIpedReport() || !isAcceptedType(evidence.getMediaType()))
+        if (!taskEnabled || caseData.isIpedReport() || !isAcceptedType(evidence.getMediaType()) || !isToProcess(evidence)) {
             return;
+        }
 
         // Percorre conteúdo buscando padrões plausíveis de arquivos known.met
-        byte[] bb = new byte[1];
-        byte[] buf = new byte[step - 1];
+        byte[] buf = new byte[blockSize * 2];
         byte[] buf2 = new byte[1 << 20];
         BufferedInputStream is = null;
         long offset = 0;
         try {
             is = evidence.getBufferedInputStream();
-            while (is.read(bb) > 0) {
-                byte read = bb[0];
-                boolean firstByteMatched = false;
+            int done = 0;
+            if (is.readNBytes(buf, blockSize, blockSize) < blockSize) {
+                done++;
+            }
+            while (true) {
+                System.arraycopy(buf, blockSize, buf, 0, blockSize);
+                int len = is.readNBytes(buf, blockSize, blockSize);
+                if (len < blockSize) {
+                    done++;
+                    Arrays.fill(buf, blockSize + len, 2 * blockSize, (byte) 0);
+                }
+                for (int pos = 0; pos < blockSize; pos++) {
+                    int read = buf[pos] & 0xFF;
 
-                // Verifica se foi encontrado o padrão do arquivo known.met (0x0E or 0x0F)
-                if ((read & 0xFF) == 0x0E || (read & 0xFF) == 0x0F) {
-                    firstByteMatched = true;
-                    checkKnownMet(is, evidence, offset, buf);
+                    // Verifica se foi encontrado o padrão do arquivo known.met (0x0E or 0x0F)
+                    if (read == 0x0E || read == 0x0F) {
+                        checkKnownMet(is, evidence, pos + 1, offset + pos, buf);
+                    }
+                    // Verifica se foi encontrado o padrão do arquivo part.met (0xE0 or 0xE2)
+                    else if (read == 0xE0 || read == 0xE2) {
+                        checkPartMet(is, evidence, pos + 1, offset + pos, buf, buf2);
+                    }
+                    // Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
+                    else if (read == 0x14) {
+                        checkPreferencesDat(is, evidence, pos + 1, offset + pos, buf);
+                    }
                 }
-                // Verifica se foi encontrado o padrão do arquivo part.met (0xE0 or 0xE2)
-                else if ((read & 0xFF) == 0xE0 || (read & 0xFF) == 0xE2) {
-                    firstByteMatched = true;
-                    checkPartMet(is, evidence, offset, buf, buf2);
+                if (done >= 2) {
+                    break;
                 }
-                // Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
-                else if ((read & 0xFF) == 0x14) {
-                    firstByteMatched = true;
-                    checkPreferencesDat(is, evidence, offset, buf);
-                }
-
-                // consome os restante do bloco se o primeiro byte não deu match
-                // se deu match no primeiro byte, já consumimos 512 bytes (1 + 511)
-                if (!firstByteMatched) {
-                    long skip = 0;
-                    do {
-                        long i = is.skip(step - 1 - skip);
-                        if (i == 0) {
-                            // check EOF
-                            is.mark(1);
-                            if (is.read() == -1) {
-                                return;
-                            }
-                            is.reset();
-                        }
-                        skip += i;
-                    } while (skip < step - 1);
-                }
-                offset += step;
+                offset += blockSize;
             }
         } catch (Exception e) {
             logger.warn(evidence.toString(), e);
@@ -226,12 +219,11 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Verifica se foi encontrado o padrão do arquivo known.met (0x0E or 0x0F)
      */
-    private boolean checkKnownMet(BufferedInputStream is, IItem evidence, long offset,
+    private boolean checkKnownMet(BufferedInputStream is, IItem evidence, int pos, long offset,
                                    byte[] buf) throws Exception {
-        is.readNBytes(buf, 0, buf.length);
-        int numFiles = toInt(buf, 0);
+        int numFiles = toInt(buf, pos);
+        pos += 4;
         if (numFiles > 0 && numFiles < 65536) {
-            int pos = 4;
             long date = toInt(buf, pos) * 1000L;
             if (date > dateMin && date < dateMax) {
                 pos += 4;
@@ -248,7 +240,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                             inParse = evidence.getSeekableInputStream();
                             inParse.seek(offset);
                             List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len, true);
-                            if (!l.isEmpty()) {
+                            if (l != null && !l.isEmpty()) {
                                 // Check if at least one entry has a defined name and file size (#2116)
                                 boolean valid = false;
                                 for (KnownMetEntry entry : l) {
@@ -279,12 +271,11 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Checks for part.met file pattern and carves if valid.
      */
-    private boolean checkPartMet(BufferedInputStream is, IItem evidence, long offset,
+    private boolean checkPartMet(BufferedInputStream is, IItem evidence, int pos, long offset,
                                   byte[] buf, byte[] buf2) throws Exception {
-        is.readNBytes(buf, 0, buf.length);
-        long date = toInt(buf, 0) * 1000L;
+        long date = toInt(buf, pos) * 1000L;
         if (date > dateMin && date < dateMax) {
-            int pos = 20;
+            pos += 20;
             int numParts = toSmall(buf, pos);
             int numTags = 2;
             pos += 2;
@@ -321,9 +312,8 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
      */
-    private boolean checkPreferencesDat(BufferedInputStream is, IItem evidence, long offset, byte[] buf) throws Exception {
-        is.readNBytes(buf, 0, buf.length);
-        if (matchesPreferencesDatSignature(buf)) {
+    private boolean checkPreferencesDat(BufferedInputStream is, IItem evidence, int pos, long offset, byte[] buf) throws Exception {
+        if (matchesPreferencesDatSignature(buf, pos)) {
             addCarvedFile(evidence, offset, PREFERENCES_DAT_SIGNATURE_LENGTH,
                     "Carved-" + offset + "-preferences.dat", //$NON-NLS-1$ //$NON-NLS-2$
                     eMulePreferencesDatMediaType);
@@ -337,64 +327,64 @@ public class KnownMetCarveTask extends BaseCarveTask {
      * Checks if the bytes read match the preferences.dat signature.
      * Pattern: \14?????\0E????????\6F?\2C\00\00\00?\00\00\00?\00\00\00??????????????????\00\00??\00\00??\00\00??\00\00
      */
-    private boolean matchesPreferencesDatSignature(byte[] buf) {
+    private boolean matchesPreferencesDatSignature(byte[] buf, int pos) {
         // First byte already verified (0x14)
         // buf[0-4] = ????? (5 bytes - any value)
 
         // buf[5] = 0x0E (position 6 of the signature)
-        if ((buf[5] & 0xFF) != 0x0E)
+        if ((buf[pos + 5] & 0xFF) != 0x0E)
             return false;
 
         // buf[6-13] = ???????? (8 bytes - any value)
 
         // buf[14] = 0x6F (position 15 of the signature)
-        if ((buf[14] & 0xFF) != 0x6F)
+        if ((buf[pos + 14] & 0xFF) != 0x6F)
             return false;
 
         // buf[15] = ? (1 byte - any value)
 
         // buf[16] = 0x2C (position 17 of the signature)
-        if ((buf[16] & 0xFF) != 0x2C)
+        if ((buf[pos + 16] & 0xFF) != 0x2C)
             return false;
 
         // buf[17-19] = 0x00, 0x00, 0x00 (positions 18-20)
-        if ((buf[17] & 0xFF) != 0x00 || (buf[18] & 0xFF) != 0x00 || (buf[19] & 0xFF) != 0x00)
+        if ((buf[pos + 17] & 0xFF) != 0x00 || (buf[pos + 18] & 0xFF) != 0x00 || (buf[pos + 19] & 0xFF) != 0x00)
             return false;
 
         // buf[20] = ? (1 byte - any value)
 
         // buf[21-23] = 0x00, 0x00, 0x00 (positions 22-24)
-        if ((buf[21] & 0xFF) != 0x00 || (buf[22] & 0xFF) != 0x00 || (buf[23] & 0xFF) != 0x00)
+        if ((buf[pos + 21] & 0xFF) != 0x00 || (buf[pos + 22] & 0xFF) != 0x00 || (buf[pos + 23] & 0xFF) != 0x00)
             return false;
 
         // buf[24] = ? (1 byte - any value)
 
         // buf[25-27] = 0x00, 0x00, 0x00 (positions 26-28)
-        if ((buf[25] & 0xFF) != 0x00 || (buf[26] & 0xFF) != 0x00 || (buf[27] & 0xFF) != 0x00)
+        if ((buf[pos + 25] & 0xFF) != 0x00 || (buf[pos + 26] & 0xFF) != 0x00 || (buf[pos + 27] & 0xFF) != 0x00)
             return false;
 
         // buf[28-45] = ?????????????????? (18 bytes - any value)
 
         // buf[46-47] = 0x00, 0x00 (positions 47-48)
-        if ((buf[46] & 0xFF) != 0x00 || (buf[47] & 0xFF) != 0x00)
+        if ((buf[pos + 46] & 0xFF) != 0x00 || (buf[pos + 47] & 0xFF) != 0x00)
             return false;
 
         // buf[48-49] = ?? (2 bytes - any value)
 
         // buf[50-51] = 0x00, 0x00 (positions 51-52)
-        if ((buf[50] & 0xFF) != 0x00 || (buf[51] & 0xFF) != 0x00)
+        if ((buf[pos + 50] & 0xFF) != 0x00 || (buf[pos + 51] & 0xFF) != 0x00)
             return false;
 
         // buf[52-53] = ?? (2 bytes - any value)
 
         // buf[54-55] = 0x00, 0x00 (positions 55-56)
-        if ((buf[54] & 0xFF) != 0x00 || (buf[55] & 0xFF) != 0x00)
+        if ((buf[pos + 54] & 0xFF) != 0x00 || (buf[pos + 55] & 0xFF) != 0x00)
             return false;
 
         // buf[56-57] = ?? (2 bytes - any value)
 
         // buf[58-59] = 0x00, 0x00 (positions 59-60)
-        if ((buf[58] & 0xFF) != 0x00 || (buf[59] & 0xFF) != 0x00)
+        if ((buf[pos + 58] & 0xFF) != 0x00 || (buf[pos + 59] & 0xFF) != 0x00)
             return false;
 
         return true;
