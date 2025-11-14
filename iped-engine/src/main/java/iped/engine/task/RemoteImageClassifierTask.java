@@ -249,6 +249,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
+        // Disable task during report generation
+        if (caseData.isIpedReport()) {
+            enabled = false;
+        }
+
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
 
         if (!isEnabled()) {
