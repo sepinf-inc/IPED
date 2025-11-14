@@ -100,7 +100,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Reading block size.
      */
-    private final int blockSize = 512;
+    private final int blockSize = 4096;
 
     /**
      * Tamanho da assinatura do arquivo preferences.dat.
@@ -231,7 +231,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                 int numParts = toSmall(buf, pos);
                 pos += 2;
                 pos += 16 * numParts;
-                if (pos < 500) {
+                if (numParts > 0 && numParts < 256 && pos < buf.length - 4) {
                     int numTags = toInt(buf, pos);
                     if (numTags > 2 && numTags < 100) {
                         int len = 512 * numFiles;
