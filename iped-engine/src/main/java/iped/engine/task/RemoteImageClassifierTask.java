@@ -94,6 +94,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private boolean skipHashDBFiles;   
     private boolean validateSSL;
     private double labelingThreshold;
+    private int thumbSize = 0;
 
     // Labeling classes name in priority order
     private static final List<String> classesName = new ArrayList<>();
@@ -144,11 +145,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final AtomicInteger skipDimensionCount = new AtomicInteger();
     private static final AtomicInteger skipHashDBFilesCount = new AtomicInteger();
     private static final AtomicInteger activeInstances = new AtomicInteger(0);
-    
-    private static final int MODEL_1_0_INPUT_SIZE = 384;
-    private static final int MODEL_1_1_INPUT_SIZE = 448;
-
-    private String model_version;
 
     // Number of the current batch of files being processed
     private int currentBatch;
@@ -288,10 +284,13 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         ObjectMapper objectMapper = new ObjectMapper();
                         JsonNode jsonResponse = objectMapper.readTree(responseStream);
                         String protocol_version = jsonResponse.get("protocol_version").asText();
-                        model_version = jsonResponse.get("model_version").asText();
+                        String model_version = jsonResponse.get("model_version").asText();
+                        JsonNode thumb_size = jsonResponse.get("thumbnail_size");
+                        if (thumb_size != null) {
+                            thumbSize = thumb_size.asInt();
+                        }
                         logger.info(
-                                "RemoteImageClassifierTask: Connected to remote image classifier at '{}' - protocol_version: {} model_version: {}",
-                                urlVersion, protocol_version, model_version);
+                                "RemoteImageClassifierTask: Connected to remote image classifier at '{}' - protocol_version: {} model_version: {} thumbnail_size: {}", urlVersion, protocol_version, model_version, thumbSize);
                         if (!protocol_version.startsWith("v1")) {
                             throw new RuntimeException("Incompatible protocol version: " + protocol_version);
                         }
@@ -312,16 +311,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
             logger.error("Task disabled. Failed to connect to remote image classifier at '" + urlVersion + "': " + e.getMessage());
         }
 
-        if (isEnabled()) {
+        if (isEnabled() && thumbSize != 0) {
             ImageThumbTaskConfig imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
             VideoThumbsConfig videoConfig = configurationManager.findObject(VideoThumbsConfig.class);
-            if ("v1.0".equals(model_version)) {
-                imgThumbConfig.setThumbSize(MODEL_1_0_INPUT_SIZE);
-                videoConfig.setSize(MODEL_1_0_INPUT_SIZE);
-            } else if ("v1.1".equals(model_version)) {
-                imgThumbConfig.setThumbSize(MODEL_1_1_INPUT_SIZE);
-                videoConfig.setSize(MODEL_1_1_INPUT_SIZE);
-            }
+            imgThumbConfig.setThumbSize(thumbSize);
+            videoConfig.setSize(thumbSize);
         }
 
         if (zip == null) {
