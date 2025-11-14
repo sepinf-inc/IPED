@@ -365,8 +365,9 @@ public class KnownMetCarveTask extends BaseCarveTask {
 
         // buf[28-45] = ?????????????????? (18 bytes - any value)
 
-        // buf[46-47] = 0x00, 0x00 (positions 47-48)
-        if ((buf[pos + 46] & 0xFF) != 0x00 || (buf[pos + 47] & 0xFF) != 0x00)
+        // buf[46-47] = 0x00, 0x00 (positions 47-48), but sometimes 0xFF, 0xFF
+        if (((buf[pos + 46] & 0xFF) != 0x00 || (buf[pos + 47] & 0xFF) != 0x00)
+                && ((buf[pos + 46] & 0xFF) != 0xFF || (buf[pos + 47] & 0xFF) != 0xFF))
             return false;
 
         // buf[48-49] = ?? (2 bytes - any value)
