@@ -271,7 +271,7 @@ public class VideoThumbTask extends ThumbTask {
 
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();
-        configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig.getSize(), videoConfig.getColumns(), videoConfig.getRows(), 2));
+        configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig, 2));
 
     }
 
