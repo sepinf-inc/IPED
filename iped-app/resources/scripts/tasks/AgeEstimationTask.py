@@ -88,6 +88,11 @@ class AgeEstimationTask:
         if AgeEstimationTask.enabled is None:
             AgeEstimationTask.enabled = taskConfig.isEnabled()
         
+        # disable task during report generation
+        if (caseData.isIpedReport()):
+            AgeEstimationTask.enabled = False
+            return
+
         faceRecognitionTaskEnabled = configuration.getEnableTaskProperty('enableFaceRecognition')
         if AgeEstimationTask.enabled and not faceRecognitionTaskEnabled:
             logger.error('To use the AgeEstimation task, you must enable the FaceRecognition task by setting enableFaceRecognition = true. AgeEstimation has been disabled.')
@@ -265,7 +270,7 @@ class AgeEstimationTask:
     def process(self, item):        
     
         # does not process item if any condition is met
-        if (not item.isQueueEnd() and not supported(item)) or (not item.isToAddToCase()):
+        if (not self.isEnabled()) or (not item.isQueueEnd() and not supported(item)) or (not item.isToAddToCase()):
             return
 
         if not item.isQueueEnd():
