@@ -183,9 +183,11 @@ class AgeEstimationTask:
                             device = torch.device(gpu_device_name)
                             logger.info(f"AgeEstimationTask: Device to use for classification is '{gpu_device}' ({gpu_device_name})")
                         else:
-                            # CUDA GPU device is not available, then fallback to default device, 'cpu'
-                            device = torch.device(cpu_device)
-                            logger.warn(f"AgeEstimationTask: Device '{gpu_device}' not available to use for classification. Default device, '{cpu_device}', will be used instead.")
+                            # CUDA GPU device is not available, then abort case processing
+                            error_msg = f"AgeEstimationTask: Device '{gpu_device}' is not available or properly configured on your system."
+                            logger.error(error_msg)
+                            from java.lang import RuntimeException
+                            raise RuntimeException(error_msg)
             else:
                 if device is None:
                     logger.warn("AgeEstimationTask: Invalid value for property 'device': " + extraProps.getProperty(deviceProp) + " - value must be 'cpu' or 'gpu'")
