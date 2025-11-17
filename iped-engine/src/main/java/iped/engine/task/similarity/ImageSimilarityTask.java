@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
 
-import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +19,7 @@ import iped.engine.config.EnableTaskProperty;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
+import iped.parsers.util.MetadataUtil;
 
 /**
  * Image Similarity task.
@@ -95,7 +95,7 @@ public class ImageSimilarityTask extends AbstractTask {
     }
 
     protected void process(IItem evidence) throws Exception {
-        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
+        if (!taskEnabled || !MetadataUtil.isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHash() == null) {
             return;
         }
@@ -124,9 +124,5 @@ public class ImageSimilarityTask extends AbstractTask {
         } catch (Exception e) {
             logger.warn(evidence.toString(), e);
         }
-    }
-
-    private static boolean isImageType(MediaType mediaType) {
-        return mediaType.getType().equals("image"); //$NON-NLS-1$
     }
 }

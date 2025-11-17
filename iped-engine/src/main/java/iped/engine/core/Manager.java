@@ -74,6 +74,7 @@ import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
 import iped.engine.lucene.CustomIndexDeletionPolicy;
 import iped.engine.lucene.analysis.AppAnalyzer;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IndexerSimilarity;
 import iped.engine.search.ItemSearcher;
@@ -266,6 +267,8 @@ public class Manager {
             LOGGER.info("Evidence " + (i++) + ": '{}'", source.getAbsolutePath()); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
+        PreviewRepositoryManager.configureWritable(output);
+
         EvidenceStatus status = new EvidenceStatus(output.getParentFile());
 
         try {
@@ -300,6 +303,7 @@ public class Manager {
 
         } finally {
             closeItemProducers();
+            PreviewRepositoryManager.close(output);
         }
 
         filterKeywords();

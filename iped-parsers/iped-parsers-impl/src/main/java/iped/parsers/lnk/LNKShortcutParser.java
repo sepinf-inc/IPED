@@ -65,12 +65,13 @@ import iped.utils.DateUtil;
  * @author Gabriel
  */
 public class LNKShortcutParser extends AbstractParser {
+
     private static final long serialVersionUID = -3156133141331973368L;
 
     private static Logger logger = LoggerFactory.getLogger(LNKShortcutParser.class);
 
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-lnk")); //$NON-NLS-1$
-    public static final String LNK_MIME_TYPE = "application/x-lnk"; //$NON-NLS-1$
+    public static final MediaType LNK_MEDIA_TYPE = MediaType.application("x-lnk");
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(LNK_MEDIA_TYPE);
 
     public static final String LNK_METADATA_PREFIX = "lnk:";
     public static final Property LNK_METADATA_CREATED = Property.internalDate(LNK_METADATA_PREFIX + BasicProps.CREATED);
@@ -96,7 +97,7 @@ public class LNKShortcutParser extends AbstractParser {
         final DateFormat df = new SimpleDateFormat(Messages.getString("LNKShortcutParser.DateFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
 
-        metadata.set(HttpHeaders.CONTENT_TYPE, LNK_MIME_TYPE);
+        metadata.set(HttpHeaders.CONTENT_TYPE, LNK_MEDIA_TYPE.toString());
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
@@ -388,7 +389,12 @@ public class LNKShortcutParser extends AbstractParser {
         }
 
         metadata.set(LNK_METADATA_TARGET_REFERENCED, Boolean.toString(true));
-        metadata.set(ExtraProperties.LINKED_ITEMS, BasicProps.ID + ":" + item.getId());
+        String trackId = (String) item.getExtraAttribute(BasicProps.TRACK_ID);
+        if (trackId != null) {
+            metadata.set(ExtraProperties.LINKED_ITEMS, BasicProps.TRACK_ID + ":" + trackId);
+        } else {
+            logger.warn("Referenced item has no trackId: {}", item);
+        }
 
         Date created = item.getCreationDate();
         if (created != null && lnkObj.getCreateDate() != null

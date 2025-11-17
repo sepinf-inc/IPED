@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -37,19 +38,25 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.util.BytesRef;
-import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.controls.ErrorIcon;
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.task.HTMLReportTask;
+import iped.engine.config.ImageThumbTaskConfig;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewKey;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.ImageThumbTask;
+import iped.engine.task.ThumbTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.Util;
+import iped.parsers.util.MetadataUtil;
+import iped.properties.ExtraProperties;
 import iped.utils.ExternalImageConverter;
+import iped.utils.HashValue;
 import iped.utils.ImageUtil;
 import iped.viewers.util.ImageMetadataUtil;
 
@@ -70,7 +77,6 @@ public class GalleryModel extends AbstractTableModel {
     private static final double blurIntensity = 0.02d;
 
     private int colCount = defaultColCount;
-    private int thumbSize;
     private int galleryThreads = 1;
     private boolean logRendering = false;
     private ImageThumbTask imgThumbTask;
@@ -136,20 +142,27 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     private boolean isSupportedImage(String mediaType) {
-        return ImageThumbTask.isImageType(MediaType.parse(mediaType));
+        return MetadataUtil.isImageType(mediaType);
     }
 
     private boolean isAnimationImage(Document doc, String mediaType) {
-        return VideoThumbTask.isImageSequence(mediaType) || doc.get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
+        return MetadataUtil.isImageSequence(mediaType) || doc.get(ExtraProperties.ANIMATION_FRAMES_PROP) != null;
     }
 
     private boolean isSupportedVideo(String mediaType) {
-        return VideoThumbTask.isVideoType(MediaType.parse(mediaType));
+        return MetadataUtil.isVideoType(mediaType);
     }
 
     @Override
     public Class<?> getColumnClass(int c) {
         return GalleryCellRenderer.class;
+    }
+
+    private int getThumbSize() {
+        if (imgThumbTask != null) {
+            return imgThumbTask.getThumbSize();
+        }
+        return ImageThumbTaskConfig.DEFAULT_THUMB_SIZE;
     }
 
     @Override
@@ -159,7 +172,6 @@ public class GalleryModel extends AbstractTableModel {
             try {
                 imgThumbTask = new ImageThumbTask();
                 imgThumbTask.init(ConfigurationManager.get());
-                thumbSize = imgThumbTask.getImageThumbConfig().getThumbSize();
                 galleryThreads = Math.min(imgThumbTask.getImageThumbConfig().getGalleryThreads(), MAX_TSK_POOL_SIZE);
                 logRendering = imgThumbTask.getImageThumbConfig().isLogGalleryRendering();
 
@@ -261,14 +273,14 @@ public class GalleryModel extends AbstractTableModel {
                         }
 
                         if (image == null && stream != null) {
-                            image = ImageUtil.getSubSampledImage(stream, thumbSize);
+                            image = ImageUtil.getSubSampledImage(stream, getThumbSize());
                             stream.reset();
                         }
 
                         if (image == null && stream != null) {
                             String sizeStr = doc.get(IndexItem.LENGTH);
                             Long size = sizeStr == null ? null : Long.parseLong(sizeStr);
-                            image = externalImageConverter.getImage(stream, thumbSize, false, size);
+                            image = externalImageConverter.getImage(stream, getThumbSize(), false, size);
                         }
                     }
 
@@ -277,12 +289,12 @@ public class GalleryModel extends AbstractTableModel {
                             value.icon = errorIcon;
                     } else {
                         // Resize image only if it is too large (> 2x the desired thumbSize)
-                        if (image.getWidth() > thumbSize * 2 || image.getHeight() > thumbSize * 2) {
-                            image = ImageUtil.resizeImage(image, thumbSize, thumbSize);
+                        if (image.getWidth() > getThumbSize() * 2 || image.getHeight() > getThumbSize() * 2) {
+                            image = ImageUtil.resizeImage(image, getThumbSize(), getThumbSize());
                         }
 
                         if (blurFilter) {
-                            image = ImageUtil.blur(image, thumbSize, blurIntensity);
+                            image = ImageUtil.blur(image, getThumbSize(), blurIntensity);
                         }
                         if (grayFilter) {
                             image = ImageUtil.grayscale(image);
@@ -342,14 +354,19 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     private BufferedImage getViewImage(int docID, String hash, boolean isVideo) throws IOException {
-        File baseFolder = App.get().appCase.getAtomicSource(docID).getModuleDir();
+        File modulesDir = App.get().appCase.getAtomicSource(docID).getModuleDir();
+        File baseFolder;
+        String ext;
         if (isVideo) {
-            baseFolder = new File(baseFolder, HTMLReportTask.viewFolder);
+            baseFolder = new File(modulesDir, PreviewConstants.VIEW_FOLDER_NAME);
+            ext = VideoThumbTask.PREVIEW_EXT;
         } else {
-            baseFolder = new File(baseFolder, ImageThumbTask.thumbsFolder);
+            // for old cases, when image thumbs were not stored in index
+            baseFolder = new File(modulesDir, ImageThumbTask.THUMBS_FOLDER_NAME);
+            ext = ThumbTask.THUMB_EXT;
         }
 
-        File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg"); //$NON-NLS-1$
+        File hashFile = Util.getFileFromHash(baseFolder, hash, ext);
         if (hashFile.exists()) {
             BufferedImage image = ImageIO.read(hashFile);
             if (image == null) {
@@ -359,6 +376,20 @@ public class GalleryModel extends AbstractTableModel {
             }
 
         } else {
+            try {
+                PreviewKey key = new PreviewKey(new HashValue(hash).getBytes());
+                AtomicReference<BufferedImage> result = new AtomicReference<>();
+                PreviewRepositoryManager.get(baseFolder.getParentFile()).consumePreview(key, inputStream -> {
+                    BufferedImage image = ImageIO.read(inputStream);
+                    if (image == null) {
+                        image = errorImg;
+                    }
+                    result.set(image);
+                });
+                return result.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             return null;
         }
     }

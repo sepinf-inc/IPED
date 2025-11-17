@@ -14,19 +14,21 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     private static final String CONFIG_FILE = "ImageThumbsConfig.txt"; //$NON-NLS-1$
 
+    public static final int DEFAULT_THUMB_SIZE = 256;
+
     private boolean enableExternalConv = true;
     private boolean useGraphicsMagick = false;
     private boolean extractThumb = true;
     private boolean logGalleryRendering = false;
     private int minTimeout = 20;
     private int timeoutPerMB = 2;
-    private int thumbSize = 256;
+    private int thumbSize = DEFAULT_THUMB_SIZE;
     private int galleryThreads = 1;
     private int lowResDensity = 96;
     private int highResDensity = 250;
     private int maxMPixelsInMemory = 32;
     private int maxViewImageSize = 2400;
-    private int compression = 50;
+    private int compression = 60;
     private final Set<String> mimesToCreateView = new HashSet<String>();
 
     public boolean isEnableExternalConv() {
@@ -55,6 +57,10 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     public int getThumbSize() {
         return thumbSize;
+    }
+
+    public void setThumbSize(int value) {
+        this.thumbSize = value;
     }
 
     public int getGalleryThreads() {

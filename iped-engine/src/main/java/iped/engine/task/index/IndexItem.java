@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -40,6 +41,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
@@ -77,10 +79,14 @@ import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewInputStreamFactory;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
+import iped.engine.task.ThumbTask;
 import iped.engine.task.similarity.ImageSimilarityTask;
+import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.Util;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
@@ -93,7 +99,6 @@ import iped.utils.IOUtil;
 import iped.utils.SeekableInputStreamFactory;
 import iped.utils.SelectImagePathWithDialog;
 import iped.utils.UTF8Properties;
-import jep.NDArray;
 
 /**
  * Cria um org.apache.lucene.document.Document a partir das propriedades do
@@ -103,14 +108,13 @@ public class IndexItem extends BasicProps {
 
     public static final String GEO_SSDV_PREFIX = "geo_ssdv_";
 
-    public static final String TRACK_ID = "trackId"; //$NON-NLS-1$
-    public static final String PARENT_TRACK_ID = "parentTrackId"; //$NON-NLS-1$
-    public static final String CONTAINER_TRACK_ID = "containerTrackId"; //$NON-NLS-1$
-
     public static final String IGNORE_CONTENT_REF = "ignoreContentRef"; //$NON-NLS-1$
     public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
     public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
     public static final String SOURCE_DECODER = "dataSourceDecoder"; //$NON-NLS-1$
+
+    public static final String HAS_PREVIEW = "hasPreview";
+    public static final String PREVIEW_EXT = "previewExt";
 
     public static final String attrTypesFilename = "metadataTypes.txt"; //$NON-NLS-1$
 
@@ -157,6 +161,26 @@ public class IndexItem extends BasicProps {
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
         BasicProps.SET.add(SOURCE_DECODER);
+        BasicProps.SET.add(HAS_PREVIEW);
+        BasicProps.SET.add(PREVIEW_EXT);
+    }
+
+    public static class KnnVector {
+
+        private final double[] array;
+
+        public KnnVector(double[] array) {
+            this.array = array;
+        }
+
+        public double[] getArray() {
+            return array;
+        }
+
+        @Override
+        public String toString() {
+            return Arrays.toString(array);
+        }
     }
 
     public static boolean isByte(String field) {
@@ -196,16 +220,19 @@ public class IndexItem extends BasicProps {
         return isFloat(field) || isDouble(field);
     }
 
-    public static Map<String, Class> getMetadataTypes() {
+    public static Map<String, Class<?>> getMetadataTypes() {
         return Collections.unmodifiableMap(typesMap);
     }
 
+    @SuppressWarnings("unchecked")
     public static void saveMetadataTypes(File confDir) throws IOException {
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         UTF8Properties props = new UTF8Properties();
-        for (Object o : typesMap.entrySet().toArray()) {
-            Entry<String, Class<?>> e = (Entry<String, Class<?>>) o;
-            props.setProperty(e.getKey(), e.getValue().getCanonicalName());
+        for (Entry<String, Class<?>> e : typesMap.entrySet().toArray(new Entry[0])) {
+            if (ExtraProperties.FACE_ENCODINGS.equals(e.getKey())) {
+                continue;
+            }
+            props.setProperty(e.getKey(), e.getValue().getName());
         }
         props.store(metadataTypesFile);
         IOUtils.fsync(metadataTypesFile.toPath(), false);
@@ -417,6 +444,18 @@ public class IndexItem extends BasicProps {
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
+        if (evidence.hasPreview()) {
+            value = Boolean.TRUE.toString();
+            doc.add(new StringField(HAS_PREVIEW, value, Field.Store.YES));
+            doc.add(new SortedDocValuesField(HAS_PREVIEW, new BytesRef(Boolean.TRUE.toString())));
+        }
+
+        value = evidence.getPreviewExt();
+        if (value != null) {
+            doc.add(new StringField(PREVIEW_EXT, value, Field.Store.YES));
+            doc.add(new SortedDocValuesField(PREVIEW_EXT, new BytesRef(value)));
+        }
+
         byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES);
         // clear extra property to don't add it again later when iterating over extra props
         evidence.getExtraAttributeMap().remove(ImageSimilarityTask.IMAGE_FEATURES);
@@ -611,8 +650,8 @@ public class IndexItem extends BasicProps {
             else
                 doc.add(new SortedNumericDocValuesField(key, NumericUtils.doubleToSortableLong((Double) oValue)));
 
-        } else if (oValue instanceof NDArray) {
-            float[] floatArray = convNDArrayToFloatArray((NDArray) oValue);
+        } else if (oValue instanceof KnnVector) {
+            float[] floatArray = convDoubleToFloatArray(((KnnVector) oValue).getArray());
             byte[] byteArray = convFloatArrayToByteArray(floatArray);
             int suffix = 0;
             // KnnVectorField is not multivalued, must use other key if it exists
@@ -645,10 +684,6 @@ public class IndexItem extends BasicProps {
             buffer.putFloat(value);
         }
         return buffer.array();
-    }
-
-    public static final float[] convNDArrayToFloatArray(NDArray nd) {
-        return convDoubleToFloatArray((double[]) nd.getData());
     }
 
     public static final float[] convDoubleToFloatArray(double[] array) {
@@ -735,6 +770,12 @@ public class IndexItem extends BasicProps {
             Item evidence = new Item();
 
             evidence.setName(doc.get(IndexItem.NAME));
+
+            // if evidence was stored with EXT, replace the generated in setName()
+            String ext = doc.get(IndexItem.EXT);
+            if (ext != null) {
+                evidence.setExtension(ext);
+            }
 
             String value = doc.get(IndexItem.LENGTH);
             Long len = null;
@@ -825,13 +866,14 @@ public class IndexItem extends BasicProps {
                 synchronized (inputStreamFactories) {
                     SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                     if (sisf == null) {
-                        Class<?> clazz = Class.forName(className);
+                        @SuppressWarnings("unchecked")
+                        Class<SeekableInputStreamFactory> clazz = (Class<SeekableInputStreamFactory>) Class.forName(className);
                         try {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                            Constructor<SeekableInputStreamFactory> c =  clazz.getConstructor(Path.class);
                             sisf = c.newInstance(Path.of(sourcePath));
 
                         } catch (NoSuchMethodException e) {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                            Constructor<SeekableInputStreamFactory> c = clazz.getConstructor(URI.class);
                             sisf = c.newInstance(URI.create(sourcePath));
                         }
                         if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
@@ -848,28 +890,44 @@ public class IndexItem extends BasicProps {
                 evidence.setTimeOut(Boolean.parseBoolean(value));
             }
 
+            value = doc.get(HAS_PREVIEW);
+            if (Boolean.parseBoolean(value)) {
+                evidence.setHasPreview(true);
+                evidence.setPreviewBaseFolder(outputBase);
+            }
+
+            value = doc.get(PREVIEW_EXT);
+            if (value != null) {
+                evidence.setPreviewExt(value);
+            }
+
             value = doc.get(IndexItem.HASH);
             if (value != null) {
                 value = value.toUpperCase();
                 evidence.setHash(value);
             }
 
-            if (evidence.getHash() != null && !evidence.getHash().isEmpty()) {
+            File viewFile = null;
+            if (StringUtils.isNotBlank(evidence.getHash())) {
 
-                if (Boolean.valueOf(doc.get(ImageThumbTask.HAS_THUMB))) {
-                    String mimePrefix = evidence.getMediaType().getType();
-                    if (doc.getBinaryValue(THUMB) != null) {
-                        evidence.setThumb(doc.getBinaryValue(THUMB).bytes);
-
-                    } else if (mimePrefix.equals("image") || mimePrefix.equals("video")) { //$NON-NLS-1$ //$NON-NLS-2$
-                        String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view"; //$NON-NLS-1$ //$NON-NLS-2$
-                        File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(),
-                                "jpg"); //$NON-NLS-1$
-                        try {
-                            if (thumbFile.exists())
-                                evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                if (Boolean.parseBoolean(doc.get(ThumbTask.HAS_THUMB))) {
+                    BytesRef thumb = doc.getBinaryValue(THUMB);
+                    if (thumb != null) {
+                        evidence.setThumb(thumb.bytes);
+                    } else {
+                        boolean isImage = MetadataUtil.isImageType(evidence.getMediaType());
+                        boolean isVideo = MetadataUtil.isVideoType(evidence.getMediaType());
+                        if (isImage || isVideo) {
+                            String thumbFolder = isImage ? ThumbTask.THUMBS_FOLDER_NAME : PreviewConstants.VIEW_FOLDER_NAME;
+                            String thumbExt = isImage ? ThumbTask.THUMB_EXT : VideoThumbTask.PREVIEW_EXT;
+                            File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), thumbExt);
+                            try {
+                                if (thumbFile.exists()) {
+                                    evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
@@ -879,22 +937,9 @@ public class IndexItem extends BasicProps {
                     evidence.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES, bytesRef.bytes);
                 }
 
-                File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
-                /*
-                 * if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
-                 * viewFile = Util.findFileFromHash(new File(outputBase,
-                 * ImageThumbTask.thumbsFolder), value); }
-                 */
+                viewFile = Util.findFileFromHash(new File(outputBase, PreviewConstants.VIEW_FOLDER_NAME), evidence.getHash());
                 if (viewFile != null) {
                     evidence.setViewFile(viewFile);
-
-                    if (viewItem || (!IOUtil.hasFile(evidence) && evidence.getIdInDataSource() == null)) {
-                        evidence.setIdInDataSource("");
-                        evidence.setInputStreamFactory(new FileInputStreamFactory(viewFile.toPath()));
-                        evidence.setTempFile(viewFile);
-                        // Do not reset media type (see issue #1409)
-                        // evidence.setMediaType(null);
-                    }
                 }
             }
 
@@ -960,6 +1005,21 @@ public class IndexItem extends BasicProps {
                             evidence.getMetadata().add(f.name(), casted.toString());
                         }
                     }
+                }
+            }
+
+            if (viewItem || (!IOUtil.hasFile(evidence) && evidence.getIdInDataSource() == null)) {
+
+                if (viewFile != null) {
+                    evidence.setIdInDataSource("");
+                    evidence.setInputStreamFactory(new FileInputStreamFactory(viewFile.toPath()));
+                    evidence.setTempFile(viewFile);
+                    // Do not reset media type (see issue #1409)
+                    // evidence.setMediaType(null);
+
+                } else if (evidence.hasPreview()) {
+                    evidence.setIdInDataSource(PreviewInputStreamFactory.getIdentifierForPreview(evidence));
+                    evidence.setInputStreamFactory(new PreviewInputStreamFactory(outputBase.toURI()));
                 }
             }
 

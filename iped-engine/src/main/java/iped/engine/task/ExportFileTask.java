@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -47,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -54,8 +56,9 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipParameters;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,6 +87,9 @@ import iped.engine.config.HtmlReportTaskConfig;
 import iped.engine.data.Category;
 import iped.engine.data.IPEDSource;
 import iped.engine.localization.Messages;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewRepository;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
@@ -95,6 +101,7 @@ import iped.properties.ExtraProperties;
 import iped.utils.FileInputStreamFactory;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
+import iped.utils.LockManager;
 import iped.utils.SeekableFileInputStream;
 import iped.utils.SeekableInputStreamFactory;
 
@@ -147,6 +154,7 @@ public class ExportFileTask extends AbstractTask {
     private static boolean computeHash = false;
     private static File extractDir;
     private static ExportFileTask lastInstance = null;
+    private static LockManager<String> lockManager;
 
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
@@ -154,6 +162,12 @@ public class ExportFileTask extends AbstractTask {
     private ExportByKeywordsConfig exportByKeywords;
     private CategoryConfig categoryConfig;
     private boolean automaticExportEnabled = false;
+
+    private static synchronized void initLockManager() {
+        if (lockManager == null) {
+            lockManager = new LockManager<>();
+        }
+    }
 
     public static ExportFileTask getLastInstance() {
         return lastInstance;
@@ -300,7 +314,22 @@ public class ExportFileTask extends AbstractTask {
             }
 
             incItensExtracted();
-            copyViewFile(evidence);
+
+            if (caseData.isIpedReport()) {
+                ReentrantLock lock = null;
+                if (StringUtils.isNotBlank(evidence.getHash())) {
+                    lock = lockManager.getLock(evidence.getHash());
+                    lock.lock();
+                }
+                try {
+                    copyViewFile(evidence);
+
+                } finally {
+                    if (lock != null) {
+                        lock.unlock();
+                    }
+                }
+            }
         }
 
         // Renomeia subitem caso deva ser exportado
@@ -376,21 +405,109 @@ public class ExportFileTask extends AbstractTask {
     }
 
     private void copyViewFile(IItem evidence) {
-        if (!caseData.isIpedReport()) {
-            return;
-        }
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get().findObject(HtmlReportTaskConfig.class);
         File viewFile = evidence.getViewFile();
         if (viewFile != null) {
-            String viewName = viewFile.getName();
-            File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            if (destFile.equals(viewFile)) {
-                return;
+            if (htmlReportConfig.isEnabled()) {
+
+                // viewFile -> viewFile
+                String viewName = viewFile.getName();
+                Path destFile = Paths
+                        .get(output.getAbsolutePath(), PreviewConstants.VIEW_FOLDER_NAME, String.valueOf(viewName.charAt(0)),
+                                String.valueOf(viewName.charAt(1)), viewName);
+                if (viewFile.equals(destFile.toFile()) || Files.exists(destFile)) {
+                    return;
+                }
+                Path tmpFile = null;
+                try {
+                    Files.createDirectories(destFile.getParent());
+                    tmpFile =  Files.createTempFile(destFile.getParent(), "viewFile", ".tmp");
+                    Files.copy(viewFile.toPath(), tmpFile, StandardCopyOption.REPLACE_EXISTING);
+                    Files.move(tmpFile, destFile, StandardCopyOption.REPLACE_EXISTING);
+                    evidence.setHasPreview(false);
+                    evidence.setViewFile(destFile.toFile());
+                } catch (IOException e) {
+                    LOGGER.warn("Error copying viewFile -> viewFile: {}", evidence);
+                    LOGGER.warn("", e);
+                } finally {
+                    if (tmpFile != null) {
+                        try {
+                            Files.deleteIfExists(tmpFile);
+                        } catch (IOException e) {
+                            LOGGER.warn("Error deleting tmpFile", e);
+                        }
+                    }
+                }
+            } else {
+
+                // viewFile -> previewRepository
+                try {
+                    PreviewRepository destRepo = PreviewRepositoryManager.get(output);
+                    if (destRepo.previewExists(evidence)) {
+                        return;
+                    }
+                    try (InputStream viewFileStream = Files.newInputStream(viewFile.toPath())) {
+                        PreviewRepositoryManager.get(output).storeRawPreview(evidence, viewFileStream);
+                        evidence.setHasPreview(true);
+                        evidence.setViewFile(null);
+                    }
+                } catch (IOException | SQLException e) {
+                    LOGGER.warn("Error copying viewFile -> previewRepository: {}", evidence);
+                    LOGGER.warn("", e);
+                }
             }
-            destFile.getParentFile().mkdirs();
-            try {
-                IOUtil.copyFile(viewFile, destFile);
-            } catch (IOException e) {
-                e.printStackTrace();
+        } else if (evidence.hasPreview()) {
+            if (htmlReportConfig.isEnabled() && StringUtils.isNotBlank(evidence.getHash())) {
+
+                // previewRepository -> viewFile
+                try {
+                    Path destFile = Util
+                            .getFileFromHash(new File(output, PreviewConstants.VIEW_FOLDER_NAME), evidence.getHash(), evidence.getPreviewExt())
+                            .toPath();
+                    if (Files.exists(destFile)) {
+                        return;
+                    }
+                    PreviewRepository srcRepo = PreviewRepositoryManager.get(evidence.getPreviewBaseFolder());
+                    srcRepo.consumePreview(evidence, inputStream -> {
+                        Files.createDirectories(destFile.getParent());
+                        Path tmpFile = null;
+                        try {
+                            tmpFile =  Files.createTempFile(destFile.getParent(), "viewFile", ".tmp");
+                            Files.copy(inputStream, tmpFile, StandardCopyOption.REPLACE_EXISTING);
+                            Files.move(tmpFile, destFile, StandardCopyOption.REPLACE_EXISTING);
+                            evidence.setHasPreview(false);
+                            evidence.setViewFile(destFile.toFile());
+                        } finally {
+                            if (tmpFile != null) {
+                                try {
+                                    Files.deleteIfExists(tmpFile);
+                                } catch (IOException e) {
+                                    LOGGER.warn("Error deleting tmpFile", e);
+                                }
+                            }
+                        }
+                    });
+                } catch (IOException | SQLException e) {
+                    LOGGER.warn("Error copying previewRepository -> viewFile: {}", evidence);
+                    LOGGER.warn("", e);
+                }
+            } else {
+                // previewRepository -> previewRepository
+                try {
+                    PreviewRepository destRepo = PreviewRepositoryManager.get(output);
+                    if (destRepo.previewExists(evidence)) {
+                        return;
+                    }
+                    PreviewRepository srcRepo = PreviewRepositoryManager.get(evidence.getPreviewBaseFolder());
+                    srcRepo.consumePreview(evidence, false, inputStream -> { // consume without decompress
+                        destRepo.storeCompressedPreview(evidence, inputStream);
+                        // evidence.setHasPreview(true); -- already set
+                        // evidence.setViewFile(null); -- already set
+                    });
+                } catch (IOException | SQLException e) {
+                    LOGGER.warn("Error copying previewRepository -> previewRepository: {}", evidence);
+                    LOGGER.warn("", e);
+                }
             }
         }
     }
@@ -728,6 +845,7 @@ public class ExportFileTask extends AbstractTask {
                 new ExportByKeywordsConfig());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
@@ -757,6 +875,7 @@ public class ExportFileTask extends AbstractTask {
 
         hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
 
+        initLockManager();
     }
 
     @Override

@@ -2,6 +2,7 @@ package iped.engine.task;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
@@ -20,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
 
-import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,11 @@ import iped.data.IItem;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ImageThumbTaskConfig;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewRepository;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.util.Util;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.MediaTypes;
 import iped.utils.ExternalImageConverter;
 import iped.utils.ImageUtil;
@@ -37,6 +41,8 @@ import iped.utils.ImageUtil.BooleanWrapper;
 import iped.viewers.util.ImageMetadataUtil;
 
 public class ImageThumbTask extends ThumbTask {
+
+    private static final String PREVIEW_EXT = "jpg";
 
     public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
 
@@ -60,9 +66,12 @@ public class ImageThumbTask extends ThumbTask {
     private static final AtomicBoolean extConvPropInit = new AtomicBoolean(false);
 
     private int compression;
-    private int thumbSize;
     private int maxViewImageSize;
     private Set<String> mimesToCreateView;
+
+    public int getThumbSize() {
+        return imgThumbConfig.getThumbSize();
+    }
 
     public ImageThumbTaskConfig getImageThumbConfig() {
         return imgThumbConfig;
@@ -102,7 +111,6 @@ public class ImageThumbTask extends ThumbTask {
         }
 
         externalImageConverter = new ExternalImageConverter(executor);
-        thumbSize = imgThumbConfig.getThumbSize();
         compression = imgThumbConfig.getCompression();
         maxViewImageSize = imgThumbConfig.getMaxViewImageSize();
         mimesToCreateView = imgThumbConfig.getMimesToCreateView();
@@ -110,7 +118,7 @@ public class ImageThumbTask extends ThumbTask {
         synchronized (logInit) {
             if (isEnabled() && !logInit.get()) {
                 logInit.set(true);
-                logger.info("Thumb Size: " + thumbSize); //$NON-NLS-1$
+                logger.info("Thumb Size: " + getThumbSize()); //$NON-NLS-1$
                 logger.info("Extract Thumb: " + imgThumbConfig.isExtractThumb()); //$NON-NLS-1$
             }
         }
@@ -237,16 +245,19 @@ public class ImageThumbTask extends ThumbTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!isEnabled() || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
+        if (!isEnabled() || !MetadataUtil.isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null || evidence.getThumb() != null) {
             return;
         }
 
         File thumbFile = getThumbFile(evidence);
         if (hasThumb(evidence, thumbFile)) {
-            File viewFile = getViewFile(evidence, "jpg");
+            File viewFile = Util.getFileFromHash(new File(output, PreviewConstants.VIEW_FOLDER_NAME), evidence.getHash(), PREVIEW_EXT);
             if (viewFile.exists()) {
                 evidence.setViewFile(viewFile);
+            } else if (PreviewRepositoryManager.get(output).previewExists(evidence)) {
+                evidence.setHasPreview(true);
+                evidence.setPreviewExt(PREVIEW_EXT);
             }
             return;
         }
@@ -263,15 +274,6 @@ public class ImageThumbTask extends ThumbTask {
             logger.warn("Timeout creating thumb: " + evidence); //$NON-NLS-1$
         }
 
-    }
-
-    /**
-     * Verifica se é imagem.
-     */
-    public static boolean isImageType(MediaType mediaType) {
-        return mediaType.getType().equals("image") || //$NON-NLS-1$
-                mediaType.toString().equals("application/coreldraw") || //$NON-NLS-1$
-                mediaType.toString().equals("application/x-vnd.corel.zcf.draw.document+zip"); //$NON-NLS-1$
     }
 
     private class ThumbCreator implements Runnable {
@@ -315,7 +317,7 @@ public class ImageThumbTask extends ThumbTask {
             if (img == null) {
                 long t = System.currentTimeMillis();
                 BooleanWrapper renderException = new BooleanWrapper();
-                img = ImageUtil.getSubSampledImage(evidence, thumbSize * samplingRatio, renderException,
+                img = ImageUtil.getSubSampledImage(evidence, getThumbSize() * samplingRatio, renderException,
                         MediaTypes.getMimeTypeString(evidence));
                 if (img != null && renderException.value) {
                     evidence.setExtraAttribute("thumbException", "true");
@@ -341,13 +343,15 @@ public class ImageThumbTask extends ThumbTask {
                         logger.warn("Timeout creating view: " + evidence);
                     }
                     if (img != null) {
-                        // Store view
-                        File viewTmpFile = getViewFile(evidence, "tmp");
-                        viewTmpFile.getParentFile().mkdirs();
-                        ImageIO.write(img, "jpg", viewTmpFile);
-                        File viewFile = getViewFile(evidence, "jpg");
-                        viewTmpFile.renameTo(viewFile);
-                        evidence.setViewFile(viewFile);
+                        PreviewRepository previewRepo = PreviewRepositoryManager.get(output);
+                        if (!previewRepo.previewExists(evidence)) {
+                            // Store view
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ImageIO.write(img, PREVIEW_EXT, baos);
+                            previewRepo.storeRawPreview(evidence, new ByteArrayInputStream(baos.toByteArray()));
+                        }
+                        evidence.setHasPreview(true);
+                        evidence.setPreviewExt(PREVIEW_EXT);
                         isView = true;
                     }
                 }
@@ -355,7 +359,7 @@ public class ImageThumbTask extends ThumbTask {
                 if (img == null) {
                     // No view was created through external conversion
                     try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                        img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
+                        img = externalImageConverter.getImage(stream, getThumbSize(), false, evidence.getLength(), true);
                     } catch (TimeoutException e) {
                         stats.incTimeouts();
                         evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
@@ -371,9 +375,9 @@ public class ImageThumbTask extends ThumbTask {
             }
 
             if (img != null) {
-                if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
+                if (img.getWidth() > getThumbSize() || img.getHeight() > getThumbSize()) {
                     long t = System.currentTimeMillis();
-                    img = ImageUtil.resizeImage(img, thumbSize, thumbSize);
+                    img = ImageUtil.resizeImage(img, getThumbSize(), getThumbSize());
                     performanceStats[12]++;
                     performanceStats[13] += System.currentTimeMillis() - t;
                 }
@@ -426,9 +430,5 @@ public class ImageThumbTask extends ThumbTask {
         } finally {
             updateHasThumb(evidence);
         }
-    }
-
-    private File getViewFile(IItem evidence, String ext) {
-        return Util.getFileFromHash(new File(output, MakePreviewTask.viewFolder), evidence.getHash(), ext);
     }
 }

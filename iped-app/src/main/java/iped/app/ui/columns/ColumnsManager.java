@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import javax.swing.table.TableColumn;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ import iped.engine.task.PhotoDNALookup;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.regex.RegexTask;
 import iped.engine.util.Util;
+import iped.localization.LocaleResolver;
 import iped.parsers.evtx.EvtxParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
@@ -63,7 +65,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     private static final File getGlobalColsFile() {
         String name = "visibleCols"; //$NON-NLS-1$
-        String locale = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+        String locale = LocaleResolver.getLocaleString();
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".dat"; //$NON-NLS-1$
@@ -329,7 +331,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
                 p2pFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
-            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
+            else if (StringUtils.startsWithAny(f, Message.MESSAGE_PREFIX, ExtraProperties.CONVERSATION_PREFIX, ExtraProperties.COMMUNICATION_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
                 communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);

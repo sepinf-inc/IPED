@@ -1,0 +1,50 @@
+{
+"name": "AI Root",
+"children":[
+
+    {"name": "Classified by AI", "prefix": "Classifier", "property": "ai\\:label", "value": "*", "children":[
+        {"name": "Child Sexual Abuse", "value": "ChildSexualAbuse"},
+        {"name": "Likely Child Sexual Abuse", "value": "LikelyChildSexualAbuse"},
+        {"name": "Pornography"},
+        {"name": "Drawing", "addChildren": "true", "children":[
+            {"name":"Child Sexual Abuse Drawing", "value": "ChildSexualAbuseDrawing"},
+            {"name":"Explicit Drawing", "value": "ExplicitDrawing"}
+        ]},
+        {"name": "People"}
+    ]}, 
+
+    {"name": "Detected Faces", "prefix": "Face", "property": "face\\_count", "value": "[1 TO *]", "children":[
+        {"name": "1"},
+        {"name": "2"},
+        {"name": "3 or more", "value": "[3 TO *]"}
+    ]},
+
+    {"name": "Estimated Age", "prefix": "Age", "property": "faceAge\\:labels", "value": "*", "children":[
+        {"name": "Child"},
+        {"name": "Teenager"},
+        {"name": "Adult"},
+        {"name": "Middle Age", "value": "MiddleAge"},
+        {"name": "Aged"}
+    ]},
+
+    {"name": "Nudity Score", "prefix": "Nudity", "property": "nudityScore", "value": "[* TO *]", "children":[
+        {"name": "Very High", "value": "[900 TO *]"},
+        {"name": "High", "value": "[650 TO 899]"},
+        {"name": "Medium", "value": "[400 TO 649]"},
+        {"name": "Low", "value": "[150 TO 399]"},
+        {"name": "Very Low", "value": "[* TO 149]"}
+    ]},
+
+    {"name": "OCR Char Count", "prefix": "OCR", "property": "ocrCharCount", "value": "[1 TO *]", "children":[
+        {"name": "High", "value": "[1001 TO *]"},
+        {"name": "Medium", "value": "[100 TO 1000]"},
+        {"name": "Low", "value": "[1 TO 99]"}
+    ]},
+
+    {"name": "Transcribed Audio", "prefix": "Transcript", "property": "audio\\:transcription", "value": "*"},
+
+    {"name": "UFED Media Classification", "prefix": "UfedClassifier", "property": "ufed\\:mediaClasses", "value": "*", "dynamic": "true"},
+
+    {"name": "UFED Native Scene Classification", "prefix": "UfedScene", "property": "ufed\\:Native\\ Scene\\ Classification", "value": "*", "dynamic": "true"}
+
+]}
