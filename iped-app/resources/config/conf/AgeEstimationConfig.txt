@@ -2,7 +2,8 @@
 # AgeEstimation Task configuration
 ###################################
 
-# Maximum number of items per classification run
+# Maximum number of items per classification run.
+# When using GPU for classification (see 'device' property below) adjust this value to avoid GPU memory exaustion.
 batchSize = 16
 
 # Threshold used to decide if a face is labeled in one category (values range: 0-100; '0' means the category with the highest score)
@@ -11,3 +12,6 @@ categorizationThreshold = 0
 # Skip age estimation for faces within images with hits on IPED hashesDB database (if 'hashesDB' is not configured in 'LocalConfig.txt' or 'false', do not skip)
 skipHashDBFiles = true
 
+# Device to use for classification run ('cpu' or 'gpu').
+# For 'gpu', see GPU setup on IPED's user manual, for instance: <https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules>
+device = cpu

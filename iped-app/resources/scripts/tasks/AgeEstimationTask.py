@@ -32,6 +32,10 @@ categorizationThresholdProp = 'categorizationThreshold'
 skipHashDBFiles = True
 skipHashDBFilesProp = 'skipHashDBFiles'
 
+# Device to use for classification run ('cpu' or 'gpu'). URL to information on GPU setup on config file.
+device = None
+deviceProp = 'device'
+
 # age estimation cache (avoids age estimation of duplicates)
 from java.util.concurrent import ConcurrentHashMap
 cache = ConcurrentHashMap()
@@ -53,9 +57,6 @@ predictTime = 0
 
 # semaphore for concurrency control
 semaphore = None
-
-# device to use for classification run (GPU or CPU)
-device = None
 
 '''
 Main class: AgeEstimationTask
@@ -111,6 +112,10 @@ class AgeEstimationTask:
             global torch
             import torch
 
+            # chek if 'torchvision' module is installed (needed for faster image processor)
+            module_name = 'torchvision'
+            import torchvision
+
             # chek if 'pillow' module is installed
             module_name = 'pillow'
             global PilImage
@@ -135,7 +140,7 @@ class AgeEstimationTask:
 
         # load task configuration properties
         extraProps = taskConfig.getConfiguration()
-        global batchSize, categorizationThreshold, skipHashDBFiles
+        global batchSize, categorizationThreshold, skipHashDBFiles, device
 
         if extraProps.getProperty(batchSizeProp) is not None:
             try:
@@ -161,6 +166,35 @@ class AgeEstimationTask:
             else:
                 logger.warn("AgeEstimationTask: Invalid value for property 'skipHashDBFiles': " + extraProps.getProperty(skipHashDBFilesProp) + " - value must be 'true' or 'false'")
                 logger.warn("AgeEstimationTask: Using default value for property 'skipHashDBFiles': " + str(skipHashDBFiles))
+        cpu_device = 'cpu'
+        gpu_device = 'gpu'
+        gpu_device_name = 'cuda'
+        if extraProps.getProperty(deviceProp) is not None:
+            if extraProps.getProperty(deviceProp) in (cpu_device, gpu_device):
+                if device is None:
+                    if deviceProp == cpu_device:
+                        # device is 'cpu'
+                        device = torch.device(cpu_device)
+                        logger.info(f"AgeEstimationTask: Device to use for classification is '{cpu_device}'")
+                    else:
+                        # device is 'gpu'
+                        if torch.cuda.is_available():
+                            # CUDA GPU device is available
+                            device = torch.device(gpu_device_name)
+                            logger.info(f"AgeEstimationTask: Device to use for classification is '{gpu_device}' ({gpu_device_name})")
+                        else:
+                            # CUDA GPU device is not available, then fallback to default device, 'cpu'
+                            device = torch.device(cpu_device)
+                            logger.warn(f"AgeEstimationTask: Device '{gpu_device}' not available to use for classification. Default device, '{cpu_device}', will be used instead.")
+            else:
+                if device is None:
+                    logger.warn("AgeEstimationTask: Invalid value for property 'device': " + extraProps.getProperty(deviceProp) + " - value must be 'cpu' or 'gpu'")
+                    device = torch.device(cpu_device)
+                    logger.warn(f"AgeEstimationTask: Using default device for classification: '{cpu_device}'")
+        else:
+            if device is None:
+                device = torch.device(cpu_device)
+                logger.warn(f"AgeEstimationTask: Using default device for classification: '{cpu_device}'")
 
         # load model and processor
         loadModelAndProcessor()
@@ -378,11 +412,6 @@ Load model and processor which perform age estimation for faces
 '''
 def loadModelAndProcessor():
     logger.debug('AgeEstimationTask: Loading Open Age Detection model')
-
-    # Device to use for classification run (GPU or CPU)
-    global device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.debug(f"AgeEstimationTask: Device to use for classification is '{device}'")
 
     model = caseData.getCaseObject('open-age-detection_model')
     processor = caseData.getCaseObject('open-age-detection_processor')
