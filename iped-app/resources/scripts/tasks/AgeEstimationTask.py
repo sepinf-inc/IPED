@@ -32,11 +32,6 @@ categorizationThresholdProp = 'categorizationThreshold'
 skipHashDBFiles = True
 skipHashDBFilesProp = 'skipHashDBFiles'
 
-# Max number of threads allowed to enter code between semaphore.acquire() and semaphore.release()
-# This can be set if your GPU does not have enough memory to use all threads with configured 'batchSize'
-maxThreads = None
-maxThreadsProp = 'maxThreads'
-
 # age estimation cache (avoids age estimation of duplicates)
 from java.util.concurrent import ConcurrentHashMap
 cache = ConcurrentHashMap()
@@ -140,7 +135,7 @@ class AgeEstimationTask:
 
         # load task configuration properties
         extraProps = taskConfig.getConfiguration()
-        global batchSize, categorizationThreshold, skipHashDBFiles, maxThreads
+        global batchSize, categorizationThreshold, skipHashDBFiles
 
         if extraProps.getProperty(batchSizeProp) is not None:
             try:
@@ -166,14 +161,6 @@ class AgeEstimationTask:
             else:
                 logger.warn("AgeEstimationTask: Invalid value for property 'skipHashDBFiles': " + extraProps.getProperty(skipHashDBFilesProp) + " - value must be 'true' or 'false'")
                 logger.warn("AgeEstimationTask: Using default value for property 'skipHashDBFiles': " + str(skipHashDBFiles))
-        if extraProps.getProperty(maxThreadsProp) is not None:
-            try:
-                maxThreads = int(extraProps.getProperty(maxThreadsProp))
-                if maxThreads < 1:
-                    raise ValueError("AgeEstimationTask: Value for property 'maxThreads' must be >0")
-            except ValueError:
-                logger.warn("AgeEstimationTask: Invalid value for property 'maxThreads': " + extraProps.getProperty(maxThreadsProp))
-                logger.warn("AgeEstimationTask: Using default value for property 'maxThreads': " + str(maxThreads))
 
         # load model and processor
         loadModelAndProcessor()
