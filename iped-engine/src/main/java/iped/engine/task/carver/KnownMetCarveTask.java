@@ -1,6 +1,4 @@
 /*
- * Copyright 2012-2016, Wladimir Leite
- *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -38,9 +36,8 @@ import iped.parsers.emule.KnownMetEntry;
 import iped.utils.IOUtil;
 
 /**
- * Tarefa específica para carving de arquivos known.met, part.met e preferences.dat do e-Mule.
- *
- * @author Wladimir Leite
+ * Custom carving for e-Mule artifacts (known.met, part.met, and
+ * preferences.dat).
  */
 public class KnownMetCarveTask extends BaseCarveTask {
 
