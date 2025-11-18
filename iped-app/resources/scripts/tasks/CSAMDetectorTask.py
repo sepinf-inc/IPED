@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "1.1" # Changed name to CSAMDetectorTask
+__version__ = "1.2" # Video classification configurations
 
 import traceback
 import io
@@ -24,6 +24,7 @@ from java.io import ByteArrayOutputStream
 from iped.utils import ImageUtil
 from iped.parsers.util import MetadataUtil
 import numpy as np
+import math
 
 # --- Placeholders for Late Loading ---
 tf = None
@@ -47,7 +48,7 @@ IPED_GPU_GLOBAL_SEMAPHORE_STRING = 'IPED_GPU_GLOBAL_SEMAPHORE'
 MODEL_SEMAPHORE = None
 CSAM_IMG_SIZE = 224
 
-# Constantes de normalização do ImageNet (usadas por PyTorch-style ONNX)
+# ImageNet normalization constants (used by PyTorch-style ONNX)
 IMG_MEAN_PYTORCH = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(1, 1, 3)
 IMG_STD_PYTORCH = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(1, 1, 3)
 
@@ -73,12 +74,28 @@ CSAM_SKIP_DIMENSION = 0  # in pixels
 CSAM_SKIP_HASHDB_FILES = 'false'  # skip files with hits on IPED HashDB database
 CSAM_CREATE_BOOKMARKS = 'false'
 
+# --- Video/Hierarchical Classification Configuration Defaults ---
+CSAM_THRESHOLD = 0.60
+PORN_THRESHOLD = 0.50
+CSAM_MIN_FRAMES = 1
+PORN_MIN_FRAMES = 1
+CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE = 0.20 # 20%
+CSAM_PORN_OVERRIDE_RATIO = 2.0 # 2.0x more porn frames
+
 CSAM_MODELFILE_PROPERTY = 'ModelFile'
 CSAM_BATCH_SIZE_PROPERTY = 'BatchSize'
 CSAM_MINIMUM_IMAGE_SIZE_PROPERTY = 'MinimumImageSize'
 CSAM_SKIP_DIMENSION_PROPERTY = 'SkipDimension'
 CSAM_SKIP_HASHDB_FILES_PROPERTY = 'SkipHashDBFiles'
 CSAM_CREATE_BOOKMARKS_PROPERTY = 'CreateBookmarks'
+
+# --- NEW VIDEO PROPERTIES ---
+CSAM_THRESHOLD_PROPERTY = 'CsamThreshold'
+PORN_THRESHOLD_PROPERTY = 'PornThreshold'
+CSAM_MIN_FRAMES_PROPERTY = 'CsamMinFrames'
+PORN_MIN_FRAMES_PROPERTY = 'PornMinFrames'
+CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE_PROPERTY = 'CsamAmbiguityMaxHitsPercentage'
+CSAM_PORN_OVERRIDE_RATIO_PROPERTY = 'CsamPornOverrideRatio'
 
 # AI constants
 AI_CLASSIFICATION_STATUS_ATTR  = "ai:csamDetector:status"
@@ -129,21 +146,21 @@ def carregar_e_configurar_modelo():
                 logger.info(f"CSAMDetector: Loading PyTorch model from: {caminho_modelo}")
                 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
                 
-                # 1. Carregar o checkpoint (dicionário) primeiro
+                # 1. Load the checkpoint (dictionary) first
                 checkpoint = torch.load(caminho_modelo, map_location=DEVICE, weights_only=False)
                 
-                # 2. Obter metadados de dentro do checkpoint
-                # Usamos .get() para segurança, caso uma chave não exista
-                model_name_key = checkpoint.get('model_name', 'B0') # Pega o nome 'S', 'B0', etc.
+                # 2. Get metadata from inside the checkpoint
+                # We use .get() for safety, in case a key does not exist
+                model_name_key = checkpoint.get('model_name', 'B0') # Gets the name 'S', 'B0', etc.
                 num_classes_saved = checkpoint.get('num_classes', NUM_CLASSES)
                 img_size_saved = checkpoint.get('img_size')
 
-                # 3. Usar os metadados salvos para configurar o modelo
+                # 3. Use the saved metadata to configure the model
                 if img_size_saved:
-                    CSAM_IMG_SIZE = img_size_saved # Sobrepõe o valor baseado no nome do arquivo
+                    CSAM_IMG_SIZE = img_size_saved # Overrides the value based on the file name
                     logger.info(f"CSAMDetector: Image size set to {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE} from model checkpoint.")
                 
-                # Constrói o nome do modelo 'timm' com base na chave 'model_name'
+                # Builds the 'timm' model name based on the 'model_name' key
                 model_map = {
                     'B0': 'tf_efficientnetv2_b0.in1k',
                     'S': 'tf_efficientnetv2_s.in21k_ft_in1k',
@@ -156,18 +173,18 @@ def carregar_e_configurar_modelo():
                     'TinyViT-21M': 'tiny_vit_21m_224.dist_in22k'
                 }
                 
-                # Se o nome não estiver no mapa, usa o B0 como padrão
+                # If the name is not in the map, use B0 as default
                 modelo_timm = model_map.get(model_name_key, 'tf_efficientnetv2_b0.in1k')
                 logger.info(f"CSAMDetector: Building model architecture: {modelo_timm}")
 
-                # 4. Criar o modelo com a arquitetura correta
+                # 4. Create the model with the correct architecture
                 MODELO_CARREGADO = timm.create_model(modelo_timm, pretrained=False, num_classes=num_classes_saved)
                 
-                # 5. Carregar o state_dict CORRETO (aqui está a correção principal)
+                # 5. Load the CORRECT state_dict (here is the main fix)
                 if 'model_state_dict' in checkpoint:
                     MODELO_CARREGADO.load_state_dict(checkpoint['model_state_dict'])
                 else:
-                    # Tenta carregar como um checkpoint antigo (só por segurança)
+                    # Tries to load as an old checkpoint (just for safety)
                     MODELO_CARREGADO.load_state_dict(checkpoint)
                 
                 MODELO_CARREGADO.to(DEVICE)
@@ -177,7 +194,7 @@ def carregar_e_configurar_modelo():
             
             except Exception as e:
                 logger.warn(f"CSAMDetector: FATAL ERROR loading PyTorch model: {e}")
-                # Imprime o traceback completo no log do IPED para facilitar a depuração
+                # Prints the full traceback in the IPED log for easier debugging
                 logger.warn(traceback.format_exc()) 
                 return None
                 
@@ -193,10 +210,10 @@ def carregar_e_configurar_modelo():
                 input_dtype = input_details['dtype']
                 is_quantized = input_dtype == np.int8
 
-                logger.info(f"CSAMDetector: Modelo espera imagens de tamanho: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
+                logger.info(f"CSAMDetector: Model expects image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
                 
                 if is_quantized:
-                    logger.info("CSAMDetector: Modelo quantizado (INT8) detectado.")                
+                    logger.info("CSAMDetector: Quantized model (INT8) detected.")                
                 logger.info("CSAMDetector: TFLite model loaded successfully.")
                 
             except Exception as e:
@@ -205,11 +222,11 @@ def carregar_e_configurar_modelo():
         
         elif MOTOR_IA == 'onnx':
             try:
-                # --- MODIFICADO: Carrega a SESSÃO GLOBAL OTIMIZADA ---
+                # --- MODIFIED: Loads the OPTIMIZED GLOBAL SESSION ---
                 logger.info(f"CSAMDetector: Loading GLOBAL ONNX session from: {caminho_modelo}")
                 session_options = ort.SessionOptions()
                 
-                # Configurações de otimização para CPU (concorrência externa)
+                # Optimization settings for CPU (external concurrency)
                 session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
                 session_options.intra_op_num_threads = 1
                 session_options.inter_op_num_threads = 1
@@ -218,13 +235,13 @@ def carregar_e_configurar_modelo():
                 MODELO_CARREGADO = ort.InferenceSession(
                     caminho_modelo, 
                     sess_options=session_options, 
-                    providers=['CPUExecutionProvider'] # Força CPU
+                    providers=['CPUExecutionProvider'] # Forces CPU
                 )
                 
                 input_details = MODELO_CARREGADO.get_inputs()[0]
                 output_details = MODELO_CARREGADO.get_outputs()[0]
                 
-                # Armazena nomes de entrada/saída globalmente
+                # Stores input/output names globally
                 ONNX_INPUT_NAME = input_details.name
                 ONNX_OUTPUT_NAME = output_details.name
                 
@@ -233,17 +250,17 @@ def carregar_e_configurar_modelo():
                 # PyTorch: [batch, 3, height, width]
                 if input_shape[1] == 3 and isinstance(input_shape[2], int) and isinstance(input_shape[3], int):
                     CSAM_IMG_SIZE = input_shape[2] 
-                    ONNX_MODEL_TYPE = 'pytorch' # Define o tipo global
+                    ONNX_MODEL_TYPE = 'pytorch' # Defines the global type
                     logger.info(f"CSAMDetector: ONNX (PyTorch-style, Channels-First) detected. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
                 
                 # TensorFlow: [batch, height, width, 3]
                 elif input_shape[3] == 3 and isinstance(input_shape[1], int) and isinstance(input_shape[2], int):
                     CSAM_IMG_SIZE = input_shape[1]
-                    ONNX_MODEL_TYPE = 'tensorflow' # Define o tipo global
+                    ONNX_MODEL_TYPE = 'tensorflow' # Defines the global type
                     logger.info(f"CSAMDetector: ONNX (TensorFlow-style, Channels-Last) detected. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
                 
                 else:
-                    raise ValueError(f"Formato de entrada ONNX não reconhecido: {input_shape}")
+                    raise ValueError(f"Unrecognized ONNX input format: {input_shape}")
                                 
             except Exception as e:
                 logger.warn(f"CSAMDetector: FATAL ERROR reading ONNX metadata: {e}")
@@ -255,10 +272,10 @@ def carregar_e_configurar_modelo():
         
     return MODELO_CARREGADO
 
-# Processa as imagens como um array de objetos do tipo BufferedImage
+# Processes the images as an array of BufferedImage objects
 def processFrameTensors(frames_from_video):
     tensors = []
-    # converte os tensores em arrays de bytes
+    # converts the tensors to byte arrays
     for frame in frames_from_video:
         baos = ByteArrayOutputStream()
         ImageIO.write(frame, "jpeg", baos);
@@ -292,7 +309,7 @@ def processar_imagem(item):
             logger.error(f"CSAMDetector: Failed to process thumbnail for {item.getPath()}: {thumb_e}")
             return None
 
-# Processa as imagens a partir de um caminho ou array de bytes e retorna o tensor pronto
+# Processes images from a path or byte array and returns the ready tensor
 def get_tensor_from_path_or_bytes(file_path, file_bytes=None):
     """Loads and preprocesses the image to the correct format (tensor)."""
     global CSAM_IMG_SIZE, ONNX_MODEL_TYPE
@@ -320,21 +337,21 @@ def get_tensor_from_path_or_bytes(file_path, file_bytes=None):
         if ONNX_MODEL_TYPE == 'tensorflow':
             image_resample = Image.NEAREST
             
-        # ONNX usa PIL e Numpy para evitar dependência do torchvision
+        # ONNX uses PIL and Numpy to avoid dependency on torchvision
         image = Image.open(file_path).convert('RGB').resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE), image_resample)
         
-        # Pré-processamento estilo PyTorch (Channels-First, CHW)
+        # PyTorch-style preprocessing (Channels-First, CHW)
         if ONNX_MODEL_TYPE == 'pytorch':
             img_array = np.array(image, dtype=np.float32) / 255.0
             img_array = (img_array - IMG_MEAN_PYTORCH) / IMG_STD_PYTORCH
             img_array = img_array.transpose(2, 0, 1) # HWC -> CHW
-            return img_array.astype(np.float32) # Retorna np.ndarray (C, H, W)
+            return img_array.astype(np.float32) # Returns np.ndarray (C, H, W)
         
-        # Pré-processamento estilo TensorFlow (Channels-Last, HWC)
+        # TensorFlow-style preprocessing (Channels-Last, HWC)
         elif ONNX_MODEL_TYPE == 'tensorflow':
-            # Apenas converte para float32, normalização [0, 255] é embutida no modelo
+            # Just converts to float32, [0, 255] normalization is built into the model
             img_array = np.array(image, dtype=np.float32)
-            return img_array # Retorna np.ndarray (H, W, C)
+            return img_array # Returns np.ndarray (H, W, C)
 
 def createSemaphore():
     global MODEL_SEMAPHORE, IPED_GPU_GLOBAL_SEMAPHORE_STRING
@@ -346,6 +363,7 @@ def createSemaphore():
     return MODEL_SEMAPHORE
     
 def extrair_e_formatar_dois_digitos(score):
+  # Function unused, keeping name/content as is (was in portuguese but not used)
   numero = score*100
   if numero >= 100: return "99"      
   return f'{int(numero):02d}' 
@@ -381,7 +399,7 @@ def isItemAnimatedImage(item):
     return item.getMediaType() is not None and (item.getMediaType().equals("image/heic-sequence") or item.getMediaType().equals("image/heif-sequence"))   
 
 def softmax(x, axis=-1):
-    """Calcula softmax de forma estável (necessário para ONNX e TFLite)."""
+    """Calculates softmax in a stable way (needed for ONNX and TFLite)."""
     e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
     return e_x / e_x.sum(axis=axis, keepdims=True)
     
@@ -423,6 +441,7 @@ def get_scores_from_prediction(scores):
     return results
 
 def md5_bytes_para_hex_maiusculo(bytes_data: bytes) -> str:
+    # Function unused, keeping name/content as is (was in portuguese but not used)
     hash_md5_objeto = hashlib.md5(bytes_data)  
     hash_md5_hex = hash_md5_objeto.hexdigest()   
     hash_md5_hex_maiusculo = hash_md5_hex.upper()
@@ -455,6 +474,8 @@ class CSAMDetectorTask:
     def init(self, configuration):
         global MOTOR_IA, CSAM_MODELFILE, CACHE, CSAM_BATCH_SIZE, CSAM_MINIMUM_IMAGE_SIZE, CSAM_SKIP_DIMENSION, CSAM_SKIP_HASHDB_FILES 
         global tf, keras, torch, nn, timm, transforms, Image, tflite, ort, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, CSAM_CREATE_BOOKMARKS, CSAM_SKIP_HASHDB_FILES_PROPERTY
+        # --- NEW VIDEO GLOBALS ---
+        global CSAM_THRESHOLD, PORN_THRESHOLD, CSAM_MIN_FRAMES, PORN_MIN_FRAMES, CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE, CSAM_PORN_OVERRIDE_RATIO
         
         taskConfig = configuration.getTaskConfigurable(CSAM_CONFIG_FILE)
         
@@ -481,8 +502,17 @@ class CSAMDetectorTask:
             createbookmarks = extraProps.getProperty(CSAM_CREATE_BOOKMARKS_PROPERTY, str(CSAM_CREATE_BOOKMARKS))
             CSAM_CREATE_BOOKMARKS = True if createbookmarks.lower() == 'true' else False
             
+            # --- LOADING NEW VIDEO CONFIGURATIONS ---
+            CSAM_THRESHOLD = float(extraProps.getProperty(CSAM_THRESHOLD_PROPERTY, str(CSAM_THRESHOLD)))
+            PORN_THRESHOLD = float(extraProps.getProperty(PORN_THRESHOLD_PROPERTY, str(PORN_THRESHOLD)))
+            CSAM_MIN_FRAMES = int(extraProps.getProperty(CSAM_MIN_FRAMES_PROPERTY, str(CSAM_MIN_FRAMES)))
+            PORN_MIN_FRAMES = int(extraProps.getProperty(PORN_MIN_FRAMES_PROPERTY, str(PORN_MIN_FRAMES)))
+            CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE = float(extraProps.getProperty(CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE_PROPERTY, str(CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE)))
+            CSAM_PORN_OVERRIDE_RATIO = float(extraProps.getProperty(CSAM_PORN_OVERRIDE_RATIO_PROPERTY, str(CSAM_PORN_OVERRIDE_RATIO)))
+            
         
         logger.debug(f"CSAMDetector: CSAM configurations {CSAM_MODELFILE=} {CSAM_BATCH_SIZE=} {CSAM_MINIMUM_IMAGE_SIZE=} {CSAM_SKIP_DIMENSION=} {CSAM_SKIP_HASHDB_FILES=} {CSAM_CREATE_BOOKMARKS=}")
+        logger.debug(f"CSAMDetector: Video classification configurations {CSAM_THRESHOLD=} {PORN_THRESHOLD=} {CSAM_MIN_FRAMES=} {PORN_MIN_FRAMES=} {CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE=} {CSAM_PORN_OVERRIDE_RATIO=}")
         
         from iped.engine.config import HashTaskConfig
         from iped.engine.config import ImageThumbTaskConfig 
@@ -543,7 +573,7 @@ class CSAMDetectorTask:
                     logger.info("CSAMDetector: TFLite engine detected. Loading libraries...")
                     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
                     module_name = 'tensorflow'
-                    # Tenta importar o interpretador leve primeiro, se falhar, usa o do TF completo
+                    # Tries to import the lite interpreter first, if it fails, uses the full TF one
                     import tensorflow as tf_module
                     tf = tf_module
                     tflite = tf.lite
@@ -556,7 +586,7 @@ class CSAMDetectorTask:
                     module_name = 'onnxruntime'
                     import onnxruntime as ort_module
                     ort = ort_module
-                    # ONNX preprocessing usa PIL (mas não torchvision)
+                    # ONNX preprocessing uses PIL (but not torchvision)
                     if Image is None:
                         from PIL import Image as Image_module
                         Image = Image_module
@@ -572,8 +602,8 @@ class CSAMDetectorTask:
             CSAMDetectorTask.enabled = False
             return
             
-        # Carrega o modelo global (TF/PyTorch) ou lê metadados (TFLite/ONNX)
-        # Esta chamada agora é feita para todos os motores
+        # Loads the global model (TF/PyTorch) or reads metadata (TFLite/ONNX)
+        # This call is now done for all engines
         if not carregar_e_configurar_modelo():
              CSAMDetectorTask.enabled  = False
              return
@@ -584,17 +614,17 @@ class CSAMDetectorTask:
             CACHE = ConcurrentHashMap()
             caseData.putCaseObject('csam_cache_unificado', CACHE)             
     
-        # Em caso de TFLite, cada thread deve ter seu próprio interpretador
+        # In case of TFLite, each thread must have its own interpreter
         if MOTOR_IA == 'tflite':
             caminho_modelo = System.getProperty('iped.root') + '/models/' + CSAM_MODELFILE
             self.modelo_tflite = tf.lite.Interpreter(model_path=caminho_modelo)
             self.modelo_tflite.allocate_tensors()
-            # O CSAM_IMG_SIZE já foi definido na verificação inicial
-            CSAM_BATCH_SIZE = 1 # TFLite é processado 1 a 1
+            # CSAM_IMG_SIZE was already set in the initial check
+            CSAM_BATCH_SIZE = 1 # TFLite is processed 1 by 1
             logger.debug(f"CSAMDetector: TFLite interpreter created for thread. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
             
         elif MOTOR_IA == 'onnx':            
-            CSAM_BATCH_SIZE = 1 # Processa um por um
+            CSAM_BATCH_SIZE = 1 # Processes one by one
 
         else:            
             # semaphore is only used when processing in batches, tflite and onnx are multithreaded
@@ -722,43 +752,43 @@ class CSAMDetectorTask:
                             predictions = self.fazer_predicao(tensores)
                             predictions_array.extend(predictions)
                         
-                        # 1. Chama a nova função, que retorna um objeto rico
+                        # 1. Calls the new function, which returns a rich object
                         video_result = self.classify_video_with_full_scores(predictions_array)
                         
-                        # 2. Extrai os dados de classificação e risco
+                        # 2. Extracts classification and risk data
                         class_info = video_result['classification']
                         risk_meta = video_result['risk_metadata']
                         
-                        # 3. Usa o vetor de probabilidade do frame vencedor para o get_scores_from_prediction
-                        # Isso preenche csam_score_formatado, porn_score_formatado, etc.
+                        # 3. Uses the winning frame's probability vector for get_scores_from_prediction
+                        # This fills csam_score_formatado, porn_score_formatado, etc.
                         results = get_scores_from_prediction(class_info['probabilities'])
                             
-                        # 4. Define os atributos antigos (scores)
+                        # 4. Sets the old attributes (scores)
                         item.setExtraAttribute(CSAM_SCORE, results['csam_score_formatado'])
                         item.setExtraAttribute(PORN_SCORE, results['porn_score_formatado'])
                         item.setExtraAttribute(OTHER_SCORE, results['other_score_formatado'])
                         
-                        # 5. Define a categoria com base na classe hierárquica (mais confiável)
+                        # 5. Sets the category based on the hierarchical class (more reliable)
                         item.setExtraAttribute(CSAMDETECTOR_CATEGORY, class_info['class'])
                         
-                        # 6. Define os NOVOS atributos de metadados de risco
+                        # 6. Sets the NEW risk metadata attributes
                         item.setExtraAttribute('ai:csamDetector:triggerFrame', class_info['trigger_frame_index'])
                         
-                        # Essas duas propriedades não são essenciais, pois o hitPercentage já fornece o necessário
+                        # These two properties are not essential, as hitPercentage already provides what is needed
                         #item.setExtraAttribute('ai:csamDetector:totalFrames', risk_meta['total_frames'])
                         #item.setExtraAttribute('ai:csamDetector:hitCount', risk_meta['hit_count'])
                         
-                        # Formata para percentual inteiro (0 a 100)
+                        # Formats to integer percentage (0 to 100)
                         hit_perc_formatted = int(risk_meta['hit_percentage']*100)
                         avg_conf_formatted = int(risk_meta['avg_confidence']*100)
                         
                         item.setExtraAttribute('ai:csamDetector:hitPercentage', hit_perc_formatted)
                         item.setExtraAttribute('ai:csamDetector:avgConfidence', avg_conf_formatted)
 
-                        # 7. Define o status de sucesso
+                        # 7. Sets the success status
                         item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS)
                         
-                        # 8. Atualiza o cache (Usando a classe hierárquica correta)
+                        # 8. Updates the cache (Using the correct hierarchical class)
                         CACHE.put(item.getHash(), (results['csam_score_formatado'], results['porn_score_formatado'], results['other_score_formatado'], class_info['class'], class_info['trigger_frame_index'], hit_perc_formatted, avg_conf_formatted))
 
         except Exception as e:
@@ -834,14 +864,14 @@ class CSAMDetectorTask:
                 "color": [255, 105, 180]
             },
             {
-                "query": "hashDb\:status:pedo",
+                "query": "hashDb:status=pedo".replace(":", r"\:"),
                 "name": "Probable CSAM - Hash Hit",
                 "comment": "Probable CSAM - hash hit",
                 "color": [255, 0, 0]
             }
         ]  
 
-        # Itera sobre a lista e chama a função para cada item
+        # Iterates over the list and calls the function for each item
         for bookmark_data in bookmarks_to_create:
             self.create_bookmark_from_query(
                 query=bookmark_data["query"], 
@@ -854,31 +884,31 @@ class CSAMDetectorTask:
         
     def create_bookmark_from_query(self, query, bookmark_name, bookmark_comment, color):
         """
-        Executa uma busca e, se encontrar resultados, cria um bookmark com eles.
+        Executes a search and, if results are found, creates a bookmark with them.
 
         Args:
-            query (str): A string de consulta para a busca.
-            bookmark_name (str): O nome do bookmark a ser criado.
-            bookmark_comment (str): O comentário para o bookmark.
+            query (str): The query string for the search.
+            bookmark_name (str): The name of the bookmark to be created.
+            bookmark_comment (str): The comment for the bookmark.
         """
         
-        # Define e executa a consulta
+        # Defines and executes the query
         searcher.setQuery(query)
         ids = searcher.search().getIds()
         
-        # Cria o bookmark mesmo que vazio
+        # Creates the bookmark even if empty
         bookmarks = ipedCase.getBookmarks()
         bookmark_id = bookmarks.newBookmark(bookmark_name)
         bookmarks.setBookmarkComment(bookmark_id, bookmark_comment)
         if(color):
             bookmarks.setBookmarkColor(bookmark_id, Color(color[0], color[1], color[2]))        
         
-        # Verifica se houve resultados
+        # Checks if there were results
         if ids and len(ids) > 0:
-            # Cria e configura o novo bookmark
+            # Creates and configures the new bookmark
             bookmarks.addBookmark(ids, bookmark_id)
 
-        # Salva as alterações
+        # Saves the changes
         bookmarks.saveState(True)       
         
        
@@ -905,7 +935,7 @@ class CSAMDetectorTask:
                 is_quantized = input_details['dtype'] == np.int8
                 
                 predictions = []
-                for tensor in tensores: # Lote sempre será 1
+                for tensor in tensores: # Batch size will always be 1
                     input_tensor = np.expand_dims(tensor.numpy(), axis=0)
                     
                     if is_quantized:
@@ -916,13 +946,13 @@ class CSAMDetectorTask:
                     output_data = interpreter.get_tensor(output_details['index'])
                     
                     if is_quantized:
-                        # 1. Dequantiza os logits
+                        # 1. Dequantizes the logits
                         scale, zero_point = output_details['quantization']
                         dequantized_logits = (output_data.astype(np.float32) - zero_point) * scale
-                        # 2. Aplica softmax nos logits dequantizados
+                        # 2. Applies softmax to the dequantized logits
                         output_probabilities = softmax(dequantized_logits, axis=1) 
                     else:
-                        # Modelo Float32 (do Keras) já contém softmax, a saída são probabilidades
+                        # Float32 Model (from Keras) already contains softmax, the output is probabilities
                         output_probabilities = output_data
 
                     predictions.append(output_probabilities[0])
@@ -930,22 +960,22 @@ class CSAMDetectorTask:
                 return np.array(predictions)
                 
             elif MOTOR_IA == 'onnx':
-                # --- MODIFICADO: USA SESSÃO GLOBAL E BATCH ---
-                session = MODELO_CARREGADO # Sessão global
-                input_name = ONNX_INPUT_NAME  # Nome global
-                output_name = ONNX_OUTPUT_NAME # Nome global
+                # --- MODIFIED: USES GLOBAL SESSION AND BATCH ---
+                session = MODELO_CARREGADO # Global session
+                input_name = ONNX_INPUT_NAME  # Global name
+                output_name = ONNX_OUTPUT_NAME # Global name
                 
-                # Empilha os tensores (list de np.ndarray) em um único lote
+                # Stacks the tensors (list of np.ndarray) into a single batch
                 input_tensor = np.stack(tensores, axis=0)
                 
-                # Executa a inferência no lote inteiro de uma vez
+                # Executes inference on the entire batch at once
                 stacked_outputs = session.run([output_name], {input_name: input_tensor})[0]
                 
-                # Usa a variável global para decidir o pós-processamento
+                # Uses the global variable to decide post-processing
                 if ONNX_MODEL_TYPE == 'pytorch':
-                    return softmax(stacked_outputs, axis=1) # Aplica softmax
+                    return softmax(stacked_outputs, axis=1) # Applies softmax
                 elif ONNX_MODEL_TYPE == 'tensorflow':
-                    return stacked_outputs # Retorna probabilidades diretas
+                    return stacked_outputs # Returns direct probabilities
 
         finally:
             if MODEL_SEMAPHORE is not None:
@@ -954,7 +984,7 @@ class CSAMDetectorTask:
     def processar_lote_de_imagens(self, items, tensores):
         global CLASS_NAMES, CSAM_SCORE, PORN_SCORE, OTHER_SCORE, AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS, CSAMDETECTOR_CATEGORY
         
-        """Processa um lote e atribui os scores de csam e porn, salvando ambos no cache."""
+        """Processes a batch and assigns csam and porn scores, saving both to cache."""
         predicoes_lote = self.fazer_predicao(tensores)              
 
         for i, item in enumerate(items):            
@@ -972,43 +1002,46 @@ class CSAMDetectorTask:
                     
     def classify_video_with_full_scores(self, frame_predictions):
         """
-        Classifica um vídeo usando uma lógica hierárquica robusta com uma
-        "Regra de Exceção por Proporção" para desambiguar CSAM vs Porn.
+        Classifies a video using a robust hierarchical logic with an
+        "Override by Ratio Rule" to disambiguate CSAM vs Porn.
 
-        A lógica é:
-        1. Conta "hits" para CSAM e Porn (baseado em Threshold e Min_Frames).
-        2. REGRA DE EXCEÇÃO:
-           Se (hits_csam > MIN_FRAMES) E (hits_csam <= AMBIGUITY_MAX) E (hits_porn > hits_csam * OVERRIDE_RATIO):
-              -> Classificar como PORN (assume Falso Positivo)
-        3. REGRA HIERÁRQUICA PADRÃO:
-           Se (hits_csam > MIN_FRAMES) -> Classificar como CSAM.
-           Se (hits_porn > MIN_FRAMES) -> Classificar como PORN.
-           Senão -> Classificar como OTHER.
+        The logic is:
+        1. Count "hits" for CSAM and Porn (based on Threshold and Min_Frames).
+        2. OVERRIDE RULE:
+           If (csam_hits > MIN_FRAMES) AND (csam_hits <= AMBIGUITY_MAX) AND (porn_hits > csam_hits * OVERRIDE_RATIO):
+              -> Classify as PORN (assumes False Positive)
+        3. STANDARD HIERARCHICAL RULE:
+           If (csam_hits > MIN_FRAMES) -> Classify as CSAM.
+           If (porn_hits > MIN_FRAMES) -> Classify as PORN.
+           Else -> Classify as OTHER.
         """
         global CLASS_NAMES, np
-        
-        # --- PARÂMETROS DE AJUSTE CRÍTICOS ---
+        # Add 'global' for the new variables here
+        global CSAM_THRESHOLD, PORN_THRESHOLD, CSAM_MIN_FRAMES, PORN_MIN_FRAMES, CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE, CSAM_PORN_OVERRIDE_RATIO
+
+        # --- CRITICAL TUNING PARAMETERS (NOW GLOBALS) ---
         THRESHOLDS = {
-            'csam': 0.60, # Só conta como 'hit' se score > 60%
-            'porn': 0.50  # Só conta como 'hit' se score > 50%
+            'csam': CSAM_THRESHOLD, 
+            'porn': PORN_THRESHOLD
         }
         MIN_FRAMES = {
-            'csam': 1, # Precisa de pelo menos 1 frames de 'hit'
-            'porn': 1  # Precisa de pelo menos 1 frames de 'hit'
+            'csam': CSAM_MIN_FRAMES, 
+            'porn': PORN_MIN_FRAMES
         }
-        
-        # --- NOVOS PARÂMETROS DE EXCEÇÃO, considerando 20 frames extraídos no total ---
-        # Regra de "override" só se aplica se os hits de CSAM forem <= este número
-        CSAM_AMBIGUITY_MAX_HITS = 4 
-        # Quantas vezes os hits de PORN devem ser maiores que os de CSAM para o "override"
-        CSAM_PORN_OVERRIDE_RATIO = 2 # Ex: 2x mais frames de porn
-        # ------------------------------------
         
         csam_idx = CLASS_NAMES.index('csam')
         porn_idx = CLASS_NAMES.index('porn')
         other_idx = CLASS_NAMES.index('other')
 
         total_frames = len(frame_predictions)
+        
+        # --- EXCEPTION PARAMETERS ---
+        # Override rule only applies if CSAM hits are <= this number
+        # Uses the global variable CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE
+        CSAM_AMBIGUITY_MAX_HITS = int(total_frames * CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE)
+        # How many times PORN hits must be greater than CSAM hits for the override
+        CSAM_PORN_OVERRIDE_RATIO_VAR = CSAM_PORN_OVERRIDE_RATIO
+        # ------------------------------------       
         
         DEFAULT_OTHER_FRAME = [0.0] * len(CLASS_NAMES)
         DEFAULT_OTHER_FRAME[other_idx] = 1.0
@@ -1028,12 +1061,12 @@ class CSAMDetectorTask:
                 }
             }
 
-        # --- Passo 1: Evidência Máxima (Para relatório) ---
+        # --- Step 1: Maximum Evidence (For reporting) ---
         best_csam_frame = {'score': -1.0, 'vector': DEFAULT_OTHER_FRAME, 'index': -1}
         best_porn_frame = {'score': -1.0, 'vector': DEFAULT_OTHER_FRAME, 'index': -1}
         best_other_frame = {'score': -1.0, 'vector': DEFAULT_OTHER_FRAME, 'index': -1}
 
-        # --- Passo 2: Contagem de "Hits" (Baseado em Threshold) ---
+        # --- Step 2: "Hit" Count (Based on Threshold) ---
         csam_hits_count = 0
         porn_hits_count = 0
         
@@ -1064,27 +1097,28 @@ class CSAMDetectorTask:
             elif porn_score >= THRESHOLDS['porn']:
                 porn_hits_count += 1
 
-        # --- Passo 3: Decisão Hierárquica (com Lógica de Exceção) ---
+        # --- Step 3: Hierarchical Decision (with Exception Logic) ---
         final_classification = {}
         hit_count = 0
         total_confidence_sum_for_avg = 0.0 
 
-        # 1. Verifica as condições de "hit"
+        # 1. Checks the "hit" conditions
         is_csam_candidate = (csam_hits_count >= MIN_FRAMES['csam'])
         is_porn_candidate = (porn_hits_count >= MIN_FRAMES['porn'])
 
-        # 2. Lógica de Exceção: É um Falso Positivo de CSAM provável?
+        # 2. Exception Logic: Is it a probable CSAM False Positive?
         is_false_positive_override = (
             is_csam_candidate and
             csam_hits_count <= CSAM_AMBIGUITY_MAX_HITS and
-            csam_hits_count > 0 and # Evita divisão por zero
-            porn_hits_count > (csam_hits_count * CSAM_PORN_OVERRIDE_RATIO)
+            csam_hits_count > 0 and # Avoids division by zero
+            # Uses the local variable CSAM_PORN_OVERRIDE_RATIO_VAR
+            porn_hits_count > (csam_hits_count * CSAM_PORN_OVERRIDE_RATIO_VAR) 
         )
         
-        # 3. Define a classe final
+        # 3. Defines the final class
         
         if is_false_positive_override:
-            # EXCEÇÃO: Trata como PORN apesar dos hits de CSAM
+            # EXCEPTION: Treats as PORN despite CSAM hits
             final_classification = {
                 'class': 'porn',
                 'probabilities': best_porn_frame['vector'],
@@ -1094,7 +1128,7 @@ class CSAMDetectorTask:
             total_confidence_sum_for_avg = total_porn_score_sum
             
         elif is_csam_candidate:
-            # REGRA PADRÃO 1: CSAM
+            # STANDARD RULE 1: CSAM
             final_classification = {
                 'class': 'csam',
                 'probabilities': best_csam_frame['vector'], 
@@ -1104,7 +1138,7 @@ class CSAMDetectorTask:
             total_confidence_sum_for_avg = total_csam_score_sum
             
         elif is_porn_candidate:
-            # REGRA PADRÃO 2: Porn
+            # STANDARD RULE 2: Porn
             final_classification = {
                 'class': 'porn',
                 'probabilities': best_porn_frame['vector'],
@@ -1114,7 +1148,7 @@ class CSAMDetectorTask:
             total_confidence_sum_for_avg = total_porn_score_sum
             
         else:
-            # REGRA PADRÃO 3: Other
+            # STANDARD RULE 3: Other
             final_classification = {
                 'class': 'other',
                 'probabilities': best_other_frame['vector'],
@@ -1123,7 +1157,7 @@ class CSAMDetectorTask:
             hit_count = 0
             total_confidence_sum_for_avg = total_other_score_sum
 
-        # --- Passo 4: Calcular Metadados Finais ---
+        # --- Step 4: Calculate Final Metadata ---
         hit_percentage = (hit_count / total_frames) if total_frames > 0 else 0.0
         avg_confidence = (total_confidence_sum_for_avg / total_frames) if total_frames > 0 else 0.0
 

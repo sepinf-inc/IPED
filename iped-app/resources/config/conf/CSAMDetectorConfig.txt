@@ -37,3 +37,25 @@ SkipHashDBFiles = true
 
 # Creates Bookmarks with files of interest in the end of processing
 CreateBookmarks = false
+
+# Classifies a video using a robust hierarchical logic with an
+# "Override by Ratio Rule" to disambiguate CSAM vs Porn.
+# 
+# The logic is:
+# 1. Count "hits" for CSAM and Porn (based on Threshold and Min_Frames).
+# 2. OVERRIDE RULE:
+#    If (csam_hits > MIN_FRAMES) AND (csam_hits <= AMBIGUITY_MAX) AND (porn_hits > csam_hits * OVERRIDE_RATIO):
+# 	  -> Classify as PORN (assumes False Positive)
+# 3. STANDARD HIERARCHICAL RULE:
+#    If (csam_hits > MIN_FRAMES) -> Classify as CSAM.
+#    If (porn_hits > MIN_FRAMES) -> Classify as PORN.
+#    Else -> Classify as OTHER.
+# Treshold is the score on the respective class
+CsamThreshold = 0.6
+PornThreshold = 0.5
+CsamMinFrames = 1
+PornMinFrames = 1
+# If the percentage of csam frames is above this percentage, video is always categorized as csam
+CsamAmbiguityMaxHitsPercentage = 0.2
+# If csam frames is below percentage, and there are ratio more porn frames, classify video as porn
+CsamPornOverrideRatio = 2
