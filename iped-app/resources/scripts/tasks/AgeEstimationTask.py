@@ -117,10 +117,6 @@ class AgeEstimationTask:
             global torch
             import torch
 
-            # chek if 'torchvision' module is installed (needed for faster image processor)
-            module_name = 'torchvision'
-            import torchvision
-
             # chek if 'pillow' module is installed
             module_name = 'pillow'
             global PilImage
