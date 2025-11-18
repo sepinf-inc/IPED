@@ -411,6 +411,24 @@ public class Item implements IItem {
     }
 
     /**
+     * Retrieves a subset of extra attributes whose keys begin with the specified prefix.
+     *
+     * @param prefix The prefix string to search for at the beginning of attribute keys.
+     * @return A new {@code Map<String, Object>} containing only the key-value pairs 
+     * from {@code extraAttributes} where the key starts with {@code prefix}. 
+     * Returns an empty map if no matching keys are found.
+     */
+    public Map<String, Object> getExtraAttributesStartWith(String prefix) {
+        Map<String, Object> attrs = new HashMap<String, Object>();
+        // toArray avoids possible ConcurrentModificationException
+        for (String key : extraAttributes.keySet().toArray(new String[0])) {
+            if (key.startsWith(prefix))
+                attrs.put(key, extraAttributes.get(key));
+        }
+        return attrs;
+    }
+
+    /**
      *
      * @return o offset no item pai da onde o item foi recuperado (carving). Retorna
      *         -1 se o item não é proveniente de carving.

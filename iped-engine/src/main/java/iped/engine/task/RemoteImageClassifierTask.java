@@ -60,7 +60,9 @@ import iped.configuration.Configurable;
 import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.config.RemoteImageClassifierConfig;
+import iped.engine.config.VideoThumbsConfig;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
@@ -92,6 +94,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private boolean skipHashDBFiles;   
     private boolean validateSSL;
     private double labelingThreshold;
+    private int thumbSize = 0;
 
     // Labeling classes name in priority order
     private static final List<String> classesName = new ArrayList<>();
@@ -249,6 +252,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
+        // Disable task during report generation
+        if (caseData.isIpedReport()) {
+            enabled = false;
+        }
+
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
 
         if (!isEnabled()) {
@@ -277,9 +285,12 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         JsonNode jsonResponse = objectMapper.readTree(responseStream);
                         String protocol_version = jsonResponse.get("protocol_version").asText();
                         String model_version = jsonResponse.get("model_version").asText();
+                        JsonNode thumb_size = jsonResponse.get("thumbnail_size");
+                        if (thumb_size != null) {
+                            thumbSize = thumb_size.asInt();
+                        }
                         logger.info(
-                                "RemoteImageClassifierTask: Connected to remote image classifier at '{}' - protocol_version: {} model_version: {}",
-                                urlVersion, protocol_version, model_version);
+                                "RemoteImageClassifierTask: Connected to remote image classifier at '{}' - protocol_version: {} model_version: {} thumbnail_size: {}", urlVersion, protocol_version, model_version, thumbSize);
                         if (!protocol_version.startsWith("v1")) {
                             throw new RuntimeException("Incompatible protocol version: " + protocol_version);
                         }
@@ -298,6 +309,13 @@ public class RemoteImageClassifierTask extends AbstractTask {
             // Disable task in case of failure to connect to remote image classifier 
             enabled = false;
             logger.error("Task disabled. Failed to connect to remote image classifier at '" + urlVersion + "': " + e.getMessage());
+        }
+
+        if (isEnabled() && thumbSize != 0) {
+            ImageThumbTaskConfig imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
+            VideoThumbsConfig videoConfig = configurationManager.findObject(VideoThumbsConfig.class);
+            imgThumbConfig.setThumbSize(thumbSize);
+            videoConfig.setSize(thumbSize);
         }
 
         if (zip == null) {
