@@ -1,0 +1,36 @@
+{
+    "server" : [
+                {
+                    "host" : "your-first-translation.server",
+                    "port" : 5000,
+                    "api_key" : "API-Key Server 1"
+                },
+                {
+                    "host" : "your-second-translation.server",
+                    "port" : 5000,
+                    "api_key" : "API-Key Server 2"
+                }
+                ],
+    "target_language" : "de",
+    "maxChars" : 10000,
+    "comment_maxChars" : "maxChars = 0 -> process the whole text",
+    "minChars" : 200,
+    "comment_minChars" : "translate only if the text have a set of minimum chars",
+    "categories" : [
+                    "Emails",
+                    "Scanned Documents",
+                    "PDF Documents",
+                    "Text Documents",
+                    "Other Documents",
+                    "WhatsApp",
+                    "Messenger",
+                    "Skype",
+                    "Telegram",
+                    "Jabber",
+                    "Facebook",
+                    "Instagram",
+                    "Discord",
+                    "Chat Activities",
+                    "Others Chats"
+                    ]
+}
