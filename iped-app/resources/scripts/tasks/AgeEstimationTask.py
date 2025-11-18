@@ -191,8 +191,7 @@ class AgeEstimationTask:
                             # CUDA GPU device is not available, then abort case processing
                             error_msg = f"AgeEstimationTask: Device '{gpu_device}' is not available or properly configured on your system."
                             logger.error(error_msg)
-                            from java.lang import RuntimeException
-                            raise RuntimeException(error_msg)
+                            raise RuntimeError(error_msg)
             else:
                 if device is None:
                     logger.warn("AgeEstimationTask: Invalid value for property 'device': " + extraProps.getProperty(deviceProp) + " - value must be 'cpu' or 'gpu'")
