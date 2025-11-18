@@ -177,7 +177,7 @@ class AgeEstimationTask:
         if extraProps.getProperty(deviceProp) is not None:
             if extraProps.getProperty(deviceProp) in (cpu_device, gpu_device):
                 if device is None:
-                    if deviceProp == cpu_device:
+                    if extraProps.getProperty(deviceProp) == cpu_device:
                         # device is 'cpu'
                         device = torch.device(cpu_device)
                         logger.info(f"AgeEstimationTask: Device to use for classification is '{cpu_device}'")
