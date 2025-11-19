@@ -82,7 +82,6 @@ import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
 import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewInputStreamFactory;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
-import iped.engine.task.ImageThumbTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
 import iped.engine.task.ThumbTask;
 import iped.engine.task.similarity.ImageSimilarityTask;
@@ -126,7 +125,11 @@ public class IndexItem extends BasicProps {
     public static final char EVENT_IDX_SEPARATOR2 = ',';
     public static final String EVENT_SEPARATOR = " | ";
 
+    private static final String COUNT_SUFFIX = ":count";
+
     static HashSet<String> ignoredMetadata = new HashSet<String>();
+
+    static HashSet<String> countMetadata = new HashSet<>();
 
     private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new HashMap<>();
 
@@ -157,6 +160,9 @@ public class IndexItem extends BasicProps {
         ignoredMetadata.add("File Size"); //$NON-NLS-1$
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
+
+        countMetadata.add(ExtraProperties.CONVERSATION_PARTICIPANTS);
+        countMetadata.add(ExtraProperties.CONVERSATION_ADMINS);
 
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
@@ -711,6 +717,12 @@ public class IndexItem extends BasicProps {
                     addMetadataKeyToDoc(doc, key, val, isMultiValued, mimetype, timeEventSet);
             }
 
+            if (countMetadata.contains(key)) {
+                String newKey = key + COUNT_SUFFIX;
+                MetadataUtil.setMetadataType(newKey, Integer.class);
+                doc.removeFields(newKey);
+                addExtraAttributeToDoc(doc, newKey, metadata.getValues(key).length, false, timeEventSet);
+            }
         }
     }
 

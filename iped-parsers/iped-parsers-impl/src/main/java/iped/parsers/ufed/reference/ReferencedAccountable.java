@@ -1,7 +1,7 @@
 package iped.parsers.ufed.reference;
 
 import static iped.parsers.ufed.util.UfedUtils.readUfedMetadata;
-
+import static iped.parsers.ufed.util.UfedUtils.readUfedMetadataArray;
 import iped.data.IItemReader;
 
 public class ReferencedAccountable extends AbstractReferencedItem {
@@ -15,7 +15,7 @@ public class ReferencedAccountable extends AbstractReferencedItem {
     }
 
     public String getPhoneNumber() {
-        return readUfedMetadata(item, "PhoneNumber");
+        return String.join("|", readUfedMetadataArray(item, "PhoneNumber"));
     }
 
     public String getUsername() {
