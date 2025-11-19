@@ -35,6 +35,7 @@ skipHashDBFilesProp = 'skipHashDBFiles'
 # Device to use for classification run ('cpu' or 'gpu'). URL to information on GPU setup on config file.
 device = None
 deviceProp = 'device'
+deviceError = False
 
 # age estimation cache (avoids age estimation of duplicates)
 from java.util.concurrent import ConcurrentHashMap
@@ -141,7 +142,7 @@ class AgeEstimationTask:
 
         # load task configuration properties
         extraProps = taskConfig.getConfiguration()
-        global batchSize, categorizationThreshold, skipHashDBFiles, device
+        global batchSize, categorizationThreshold, skipHashDBFiles, device, deviceError
 
         if extraProps.getProperty(batchSizeProp) is not None:
             try:
@@ -186,7 +187,9 @@ class AgeEstimationTask:
                         else:
                             # CUDA GPU device is not available, then abort case processing
                             error_msg = f"AgeEstimationTask: Device '{gpu_device}' is not available or properly configured on your system."
-                            logger.error(error_msg)
+                            if not deviceError:
+                                deviceError = True
+                                logger.error(error_msg)
                             from java.lang import RuntimeException
                             worker.exception = RuntimeException(error_msg)
                             return
