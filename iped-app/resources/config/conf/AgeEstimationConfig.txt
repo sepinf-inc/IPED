@@ -4,7 +4,8 @@
 
 # Maximum number of items per classification run.
 # When using GPU for classification (see 'device' property below) adjust this value to avoid GPU memory exaustion.
-batchSize = 16
+# For example, a value of 16 may be a good fit for a 12 GB GPU (this value should be set according to GPU sharing by your system and other IPED tasks)
+batchSize = 50
 
 # Threshold used to decide if a face is labeled in one category (values range: 0-100; '0' means the category with the highest score)
 categorizationThreshold = 0
