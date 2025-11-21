@@ -23,7 +23,6 @@ from javax.imageio import ImageIO
 from java.io import ByteArrayOutputStream
 from iped.utils import ImageUtil
 from iped.parsers.util import MetadataUtil
-import numpy as np
 import math
 
 # --- Placeholders for Late Loading ---
@@ -48,9 +47,9 @@ IPED_GPU_GLOBAL_SEMAPHORE_STRING = 'IPED_GPU_GLOBAL_SEMAPHORE'
 MODEL_SEMAPHORE = None
 CSAM_IMG_SIZE = 224
 
-# ImageNet normalization constants (used by PyTorch-style ONNX)
-IMG_MEAN_PYTORCH = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(1, 1, 3)
-IMG_STD_PYTORCH = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(1, 1, 3)
+# ImageNet normalization constants (used by PyTorch-style ONNX; set up during initialization)
+IMG_MEAN_PYTORCH = None
+IMG_STD_PYTORCH = None
 
 # --- Global Control Variables ---
 MOTOR_IA = None
@@ -120,7 +119,7 @@ def carregar_e_configurar_modelo():
     if MODELO_CARREGADO is None:
         caminho_modelo = System.getProperty('iped.root') + '/models/' + CSAM_MODELFILE
         if not os.path.exists(caminho_modelo):
-            logger.warn(f"CSAMDetector: FATAL ERROR: Model file not found: {caminho_modelo}")
+            logger.error(f"CSAMDetector: FATAL ERROR: Model file not found: {caminho_modelo}")
             return None
 
         nome_modelo_lower = CSAM_MODELFILE.lower()
@@ -138,7 +137,7 @@ def carregar_e_configurar_modelo():
                 MODELO_CARREGADO = keras.models.load_model(caminho_modelo)
                 logger.info("TensorFlow model loaded successfully.")
             except Exception as e:
-                logger.warn(f"CSAMDetector: FATAL ERROR loading TensorFlow model: {e}")
+                logger.error(f"CSAMDetector: FATAL ERROR loading TensorFlow model: {e}")
                 return None
         
         elif MOTOR_IA == 'pytorch':
@@ -193,7 +192,7 @@ def carregar_e_configurar_modelo():
                 logger.info(f"CSAMDetector: PyTorch model ({model_name_key}, {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}) loaded on {DEVICE}.")
             
             except Exception as e:
-                logger.warn(f"CSAMDetector: FATAL ERROR loading PyTorch model: {e}")
+                logger.error(f"CSAMDetector: FATAL ERROR loading PyTorch model: {e}")
                 # Prints the full traceback in the IPED log for easier debugging
                 logger.warn(traceback.format_exc()) 
                 return None
@@ -217,7 +216,7 @@ def carregar_e_configurar_modelo():
                 logger.info("CSAMDetector: TFLite model loaded successfully.")
                 
             except Exception as e:
-                logger.warn(f"CSAMDetector: FATAL ERROR loading TFLite model: {e}")
+                logger.error(f"CSAMDetector: FATAL ERROR loading TFLite model: {e}")
                 return None            
         
         elif MOTOR_IA == 'onnx':
@@ -263,10 +262,9 @@ def carregar_e_configurar_modelo():
                     raise ValueError(f"Unrecognized ONNX input format: {input_shape}")
                                 
             except Exception as e:
-                logger.warn(f"CSAMDetector: FATAL ERROR reading ONNX metadata: {e}")
+                logger.error(f"CSAMDetector: FATAL ERROR reading ONNX metadata: {e}")
                 logger.warn(traceback.format_exc())
-                return None                
-        
+                return None        
         
         caseData.putCaseObject('csam_model_unificado', MODELO_CARREGADO)
         
@@ -538,6 +536,9 @@ class CSAMDetectorTask:
            
         try:
             model_name_lower = CSAM_MODELFILE.lower()           
+            module_name = 'numpy'
+            import numpy as np
+            # Determine AI engine from model name
             if model_name_lower.endswith('.keras'):
                 MOTOR_IA = 'tensorflow'
                 if tf is None:
@@ -554,11 +555,14 @@ class CSAMDetectorTask:
                 MOTOR_IA = 'pytorch'
                 if torch is None:
                     logger.info("CSAMDetector: PyTorch engine detected. Loading libraries...")
-                    module_name = 'pytorch'
+                    module_name = 'torch'
                     import torch as torch_module
                     import torch.nn as nn_module
+                    module_name = 'torchvision'
                     from torchvision import transforms as transforms_module
+                    module_name = 'timm'
                     import timm as timm_module
+                    module_name = 'pillow'
                     from PIL import Image as Image_module
                     torch = torch_module
                     nn = nn_module
@@ -588,9 +592,16 @@ class CSAMDetectorTask:
                     ort = ort_module
                     # ONNX preprocessing uses PIL (but not torchvision)
                     if Image is None:
+                        module_name = 'pillow'
                         from PIL import Image as Image_module
                         Image = Image_module
                     logger.info("CSAMDetector: ONNX Runtime and PIL libraries loaded.")    
+                # ImageNet normalization constants (used by PyTorch-style ONNX)
+                global IMG_MEAN_PYTORCH, IMG_STD_PYTORCH
+                if IMG_MEAN_PYTORCH is None:
+                    IMG_MEAN_PYTORCH = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(1, 1, 3)
+                if IMG_STD_PYTORCH is None:
+                    IMG_STD_PYTORCH = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(1, 1, 3)
                     
             else:
                 logger.error(f"CSAMDetector: Could not determine AI engine from model name: {CSAM_MODELFILE}")
@@ -598,13 +609,14 @@ class CSAMDetectorTask:
                 return
 
         except ModuleNotFoundError as e:
-            logger.error(f"CSAMDetector: Task could not be initialized and was disabled, {module_name} is missing. See CSAMDetector task setup information at <https://github.com/sepinf-inc/IPED/wiki/User-Manual#csamdetector>. {e}")
+            logger.error(f"CSAMDetector: Task could not be initialized and was disabled, '{module_name}' is missing. See CSAMDetector task setup information at <https://github.com/sepinf-inc/IPED/wiki/User-Manual#csamdetector>. {e}")
             CSAMDetectorTask.enabled = False
             return
             
         # Loads the global model (TF/PyTorch) or reads metadata (TFLite/ONNX)
         # This call is now done for all engines
         if not carregar_e_configurar_modelo():
+             logger.error(f"CSAMDetector: Task was disabled.")
              CSAMDetectorTask.enabled  = False
              return
              
