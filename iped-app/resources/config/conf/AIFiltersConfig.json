@@ -1,6 +1,5 @@
 {
 "name": "AI Root",
-"sortChildren": "true",
 "children":[
 
     {"name": "Remote Image Classifier", "prefix": "Classifier", "property": "ai\\:label", "value": "*", "children":[
