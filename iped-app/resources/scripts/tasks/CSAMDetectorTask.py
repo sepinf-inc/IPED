@@ -35,6 +35,7 @@ timm = None
 transforms = None
 Image = None
 ort = None
+np = None
 
 # --- Global Configurations ---
 PLUGIN_ENABLE_PROP = 'enableCSAMDetector'
@@ -471,7 +472,7 @@ class CSAMDetectorTask:
 
     def init(self, configuration):
         global MOTOR_IA, CSAM_MODELFILE, CACHE, CSAM_BATCH_SIZE, CSAM_MINIMUM_IMAGE_SIZE, CSAM_SKIP_DIMENSION, CSAM_SKIP_HASHDB_FILES 
-        global tf, keras, torch, nn, timm, transforms, Image, tflite, ort, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, CSAM_CREATE_BOOKMARKS, CSAM_SKIP_HASHDB_FILES_PROPERTY
+        global tf, keras, torch, nn, timm, transforms, Image, tflite, ort, np, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, CSAM_CREATE_BOOKMARKS, CSAM_SKIP_HASHDB_FILES_PROPERTY
         # --- NEW VIDEO GLOBALS ---
         global CSAM_THRESHOLD, PORN_THRESHOLD, CSAM_MIN_FRAMES, PORN_MIN_FRAMES, CSAM_AMBIGUITY_MAX_HITS_PERCENTAGE, CSAM_PORN_OVERRIDE_RATIO
         
@@ -536,8 +537,12 @@ class CSAMDetectorTask:
            
         try:
             model_name_lower = CSAM_MODELFILE.lower()           
-            module_name = 'numpy'
-            import numpy as np
+            
+            if(np is None):
+                module_name = 'numpy'
+                import numpy as np_module
+                np = np_module
+
             # Determine AI engine from model name
             if model_name_lower.endswith('.keras'):
                 MOTOR_IA = 'tensorflow'
