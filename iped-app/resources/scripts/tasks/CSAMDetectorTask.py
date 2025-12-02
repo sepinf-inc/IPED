@@ -123,20 +123,21 @@ def carregar_e_configurar_modelo():
             logger.error(f"CSAMDetector: FATAL ERROR: Model file not found: {caminho_modelo}")
             return None
 
-        nome_modelo_lower = CSAM_MODELFILE.lower()
-        if "_s_" in nome_modelo_lower:
-            CSAM_IMG_SIZE = 384
-        elif "_m_" in nome_modelo_lower or "_l_" in nome_modelo_lower:
-            CSAM_IMG_SIZE = 480
-        else: # Default for B0
-            CSAM_IMG_SIZE = 224
-        logger.info(f"CSAMDetector: Image size set to {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE} based on model name.")
-
         if MOTOR_IA == 'tensorflow':
             try:
                 logger.info(f"CSAMDetector: Loading TensorFlow model from: {caminho_modelo}")
                 MODELO_CARREGADO = keras.models.load_model(caminho_modelo)
                 logger.info("TensorFlow model loaded successfully.")
+                
+                nome_modelo_lower = CSAM_MODELFILE.lower()
+                if "_s_" in nome_modelo_lower:
+                    CSAM_IMG_SIZE = 384
+                elif "_m_" in nome_modelo_lower or "_l_" in nome_modelo_lower:
+                    CSAM_IMG_SIZE = 480
+                else: # Default for B0
+                    CSAM_IMG_SIZE = 224
+                logger.info(f"CSAMDetector: Image size set to {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE} based on model name.")
+                
             except Exception as e:
                 logger.error(f"CSAMDetector: FATAL ERROR loading TensorFlow model: {e}")
                 return None
@@ -150,8 +151,6 @@ def carregar_e_configurar_modelo():
                 checkpoint = torch.load(caminho_modelo, map_location=DEVICE, weights_only=False)
                 
                 # 2. Get metadata from inside the checkpoint
-                # We use .get() for safety, in case a key does not exist
-                model_name_key = checkpoint.get('model_name', 'B0') # Gets the name 'S', 'B0', etc.
                 num_classes_saved = checkpoint.get('num_classes', NUM_CLASSES)
                 img_size_saved = checkpoint.get('img_size')
 
@@ -159,6 +158,12 @@ def carregar_e_configurar_modelo():
                 if img_size_saved:
                     CSAM_IMG_SIZE = img_size_saved # Overrides the value based on the file name
                     logger.info(f"CSAMDetector: Image size set to {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE} from model checkpoint.")
+
+                # We use .get() for safety, in case a key does not exist
+                model_name_key = checkpoint.get('model_name', 'B0') # Gets the name 'S', 'B0', etc.
+                timm_name = checkpoint.get('timm_model_name')
+                
+                model_name_to_load = timm_name if timm_name else model_name_key
                 
                 # Builds the 'timm' model name based on the 'model_name' key
                 model_map = {
@@ -173,12 +178,16 @@ def carregar_e_configurar_modelo():
                     'TinyViT-21M': 'tiny_vit_21m_224.dist_in22k'
                 }
                 
-                # If the name is not in the map, use B0 as default
-                modelo_timm = model_map.get(model_name_key, 'tf_efficientnetv2_b0.in1k')
-                logger.info(f"CSAMDetector: Building model architecture: {modelo_timm}")
+                # Resolves timm model name if not present in model file
+                if model_name_to_load in model_map:
+                    model_timm_name = model_map[model_name_to_load]
+                else:
+                    model_timm_name = timm_name # Assumes it is already the technical name
+                
+                logger.info(f"CSAMDetector: Building model architecture: {model_timm_name}")
 
                 # 4. Create the model with the correct architecture
-                MODELO_CARREGADO = timm.create_model(modelo_timm, pretrained=False, num_classes=num_classes_saved)
+                MODELO_CARREGADO = timm.create_model(model_timm_name, pretrained=False, num_classes=num_classes_saved)
                 
                 # 5. Load the CORRECT state_dict (here is the main fix)
                 if 'model_state_dict' in checkpoint:
