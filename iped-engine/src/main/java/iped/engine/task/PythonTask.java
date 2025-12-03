@@ -158,6 +158,10 @@ public class PythonTask extends AbstractTask {
             }
         }
     }
+	
+    public PythonTask get() {
+        return this;
+    }	
 
     @Override
     public String getName() {
