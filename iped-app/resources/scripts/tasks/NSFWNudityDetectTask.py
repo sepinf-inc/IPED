@@ -128,16 +128,16 @@ class NSFWNudityDetectTask:
     
     def sendToNextTask(self, item):
         if not item.isQueueEnd() and item not in self.itemList and item not in self.nextTaskList:
-            javaTask.get().sendToNextTaskSuper(item)
+            self.javaTask.sendToNextTaskSuper(item)
         
         if len(self.nextTaskList) > 0:
             localList = list(self.nextTaskList)
             self.nextTaskList.clear()
             for i in localList:
-                javaTask.get().sendToNextTaskSuper(i)
+                self.javaTask.sendToNextTaskSuper(i)
             
         if item.isQueueEnd():
-            javaTask.get().sendToNextTaskSuper(item)
+            self.javaTask.sendToNextTaskSuper(item)
     
     def isToProcessBatch(self, item):
         size = len(self.itemList)
