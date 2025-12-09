@@ -125,11 +125,17 @@ public abstract class ExtractorAndroidNew extends Extractor {
     public ExtractorAndroidNew(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         super(itemPath, databaseFile, contacts, account, false);
     }
-
+    
     protected abstract Connection getConnection() throws SQLException;
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
+        try {
+            updateContactsDirectoryMapping();
+        } catch (SQLException ex) {
+            throw new WAExtractorException(ex);
+        }
+
         List<Chat> list = new ArrayList<>();
         Map<Long, Chat> idToChat = new HashMap<Long, Chat>();
 
@@ -169,6 +175,25 @@ public abstract class ExtractorAndroidNew extends Extractor {
         }
 
         return list;
+    }
+
+    private void updateContactsDirectoryMapping() throws SQLException {
+        // Read LID -> JID mapping
+        try (Connection conn = getConnection()) {
+            if (SQLite3DBParser.containsTable("jid_map", conn)) {
+                try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_JID_MAP)) {
+                    while (rs.next()) {
+                        String lid = rs.getString("lid");
+                        if (lid != null && !lid.isBlank()) {
+                            String jid = rs.getString("jid");
+                            if (jid != null && !jid.isBlank()) {
+                                contacts.addContactMapping(lid, jid);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private boolean isUnblocked(Connection conn, long id) throws SQLException {
@@ -1250,4 +1275,5 @@ public abstract class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
             + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
 
+    private static final String SELECT_JID_MAP = "SELECT a.raw_string AS lid, b.raw_string AS jid FROM jid_map map, jid a, jid b WHERE map.lid_row_id = a._id AND map.jid_row_id = b._id";
 }

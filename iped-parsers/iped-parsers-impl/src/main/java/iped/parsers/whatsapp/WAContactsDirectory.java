@@ -16,6 +16,17 @@ public class WAContactsDirectory {
         return contact;
     }
 
+    public boolean addContactMapping(String lid, String jid) {
+        String nameJid = Util.getNameFromId(jid);
+        WAContact contact = contacts.get(nameJid);
+        if (contact != null) {
+            String nameLid = Util.getNameFromId(lid);
+            contacts.put(nameLid, contact);
+            return true;
+        }
+        return false;
+    }
+
     public Iterable<WAContact> contacts() {
         return contacts.values();
     }
