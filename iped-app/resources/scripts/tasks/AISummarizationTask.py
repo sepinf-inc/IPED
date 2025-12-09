@@ -1,6 +1,9 @@
 import requests, time
 #need to install requests lib: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py requests
 #also numpy for some reason: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py "numpy<2.0" 
+# git add iped-app/resources/scripts/tasks/AISummarizationTask.py
+# git commit -m "#2641: "
+# git push origin add-aisummarizationtask --force-with-lease
 import json
 from bs4 import BeautifulSoup, NavigableString, Tag
 import re
@@ -403,12 +406,14 @@ class AISummarizationTask:
             logger.error('[AISummarizationTask]: Error: Task enabled but remoteServiceAddress not set on config file.')
             self.enabled = False
             return
-        self.enableWhatsAppSummarization = bool(extraProps.getProperty(enableWhatsAppSummarizationProp))
-        self.enableUFEDChatSummarization = bool(extraProps.getProperty(enableUFEDChatSummarizationProp))
+
+        self.enableWhatsAppSummarization = (extraProps.getProperty(enableWhatsAppSummarizationProp)) == "true"
+        self.enableUFEDChatSummarization = (extraProps.getProperty(enableUFEDChatSummarizationProp)) == "true"
+
         self.minimumContentLength = int(extraProps.getProperty(minimumContentLengthProp) or 0)
         
         # NEW: chat analysis-related options
-        self.enableChatAnalysis = bool(extraProps.getProperty(enableChatAnalysisProp))
+        self.enableChatAnalysis = (extraProps.getProperty(enableChatAnalysisProp)) == "true"
         if self.enableChatAnalysis:
             self.questions = _parse_list_prop(extraProps.getProperty(questionsProp))
             self.questionAttributes = _parse_list_prop(extraProps.getProperty(questionAttributesProp))
@@ -480,6 +485,7 @@ class AISummarizationTask:
         # 2) Build per-attribute arrays of answers (one entry per chunk)
         # ----------------------------------------------------------
         chunk_summaries: List[str] = []
+        chunk_ids: List[str] = []
 
         per_attr_answers: Dict[str, List[str]] = {}
         if self.enableChatAnalysis and self.questions and self.questionAttributes:
@@ -498,6 +504,11 @@ class AISummarizationTask:
             summary = entry.get("summary")
             if isinstance(summary, str) and summary.strip():
                 chunk_summaries.append(summary)
+
+            # --- chunk ids ---
+            chunk_id = entry.get("chunk_id")
+            if isinstance(chunk_id, str) and chunk_id.strip():
+                chunk_ids.append(chunk_id)
 
             # --- answers per question / attribute ---
             if per_attr_answers:
@@ -525,6 +536,9 @@ class AISummarizationTask:
 
         # Store all chunk summaries (same attribute as before)
         item.setExtraAttribute(ExtraProperties.SUMMARIES, chunk_summaries)
+
+        # Store chunk ids
+        item.setExtraAttribute("chunk_ids", chunk_ids)
 
         # Store per-question arrays in their respective attributes
         for attr_name, values in per_attr_answers.items():
