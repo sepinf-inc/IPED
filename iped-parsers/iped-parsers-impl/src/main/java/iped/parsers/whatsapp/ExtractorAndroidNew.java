@@ -893,13 +893,6 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     case 107:
                         result = COMMUNITY_RENAMED;
                         break;
-                    case 112:
-                        result = ADVANCED_PRIVACY_ON;
-                        break;
-                    case 116:
-                        // Nothing is shown in the app itself
-                        result = IGNORE_MESSAGE;
-                        break;
                     case 118:
                         result = PINNED_MESSAGE;
                         break;
@@ -1073,6 +1066,13 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 break;
             case 99:
                 result = MESSAGE_ASSOCIATION;
+                break;
+            case 112:
+                result = ADVANCED_PRIVACY_ON;
+                break;
+            case 116:
+                // Nothing is shown in the app itself
+                result = IGNORE_MESSAGE;
                 break;
             default:
                 break;
