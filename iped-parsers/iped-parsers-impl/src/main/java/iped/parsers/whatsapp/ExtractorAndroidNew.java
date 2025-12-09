@@ -125,7 +125,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
     public ExtractorAndroidNew(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         super(itemPath, databaseFile, contacts, account, false);
     }
-    
+
     protected abstract Connection getConnection() throws SQLException;
 
     @Override
