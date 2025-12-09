@@ -9,11 +9,45 @@ from typing import List, Any, Dict, Tuple, Optional
 
 # configuration properties
 enableProp = 'enableAISummarization'
-enableWhatsAppSummarizationProp = 'enableWhatsAppSummarization' # This is for IPED internal Parser
+enableWhatsAppSummarizationProp = 'enableWhatsAppSummarization' # This is for IPED internal WhatsApp Parser
 enableUFEDChatSummarizationProp = 'enableUFEDChatSummarization' # This is for UFED Chat Parser - x-ufed-chat-preview
-minimumContentLengthProp = 'minimumContentLength' # Minimum item content length to perform summarization in characters
+minimumContentLengthProp = 'minimumContentLength' # Minimum item content length 
 remoteServiceAddressProp = 'remoteServiceAddress'
 configFile = 'AISummarizationConfig.txt'
+
+# NEW: chat analysis / questions config
+enableChatAnalysisProp = 'enableChatAnalysis'
+questionsProp = 'questions'
+questionAttributesProp = 'questionAttributes'
+
+# bookmarks config
+analysisBookmarksCreated = False
+
+
+def _parse_list_prop(raw: Optional[str]) -> List[str]:
+    """
+    Parse a config property that may be a JSON list like
+    ["q1", "q2"] or a comma/semicolon-separated string.
+    """
+    if not raw:
+        return []
+    raw = raw.strip()
+    if not raw:
+        return []
+
+    # Try JSON list first
+    try:
+        val = json.loads(raw)
+        if isinstance(val, list):
+            return [str(v) for v in val]
+    except Exception:
+        pass
+
+    # Fallback: comma or semicolon separated
+    sep = ';' if ';' in raw else ','
+    return [p.strip() for p in raw.split(sep) if p.strip()]
+
+
 
 #--------------------------------------------------------
 # Helper functions for the remote service error handling
@@ -93,9 +127,10 @@ def create_summaries_request(
     msgs: list[dict],
     base_url: str = "127.0.0.1:1111",
     *,
-    BUSY_SLEEP: float = 1.0,           # fixed sleep for BUSY retries
-    NONBUSY_SLEEP: float = 1.0,        # fixed sleep for non-BUSY retries
-    MAX_ATTEMPTS_NONBUSY: int = 10,    # max retries for non-BUSY errors
+    questions: Optional[List[str]] = None,  # NEW
+    BUSY_SLEEP: float = 1.0,
+    NONBUSY_SLEEP: float = 1.0,
+    MAX_ATTEMPTS_NONBUSY: int = 10,
 ) -> Dict[str, Any]:
     """
     - BUSY (code == 'BUSY'): retry forever, sleeping BUSY_SLEEP each time.
@@ -108,7 +143,10 @@ def create_summaries_request(
 
     while True:
         try:
-            resp = requests.post(url, json={"msgs": msgs})
+            payload: Dict[str, Any] = {"msgs": msgs}
+            if questions:                    # NEW
+                payload["questions"] = questions
+            resp = requests.post(url, json=payload)
             res = _normalize(resp)
         except requests.exceptions.Timeout:
             res = {
@@ -254,8 +292,9 @@ def getMessagesFromChatHTML(html_text: str) -> Tuple[List[Dict], int]:
         # -------------------------------------------------------------------#
         content = ""
         kind = ""
+        
         i_tag = msg_div.find("i")
-        if i_tag and msg_div.find("div", class_=["audioImg"]):
+        if i_tag and msg_div.find("div", class_=["audioImg"]) and "Recovered message" not in i_tag.get_text(" ", strip=True):
             content = i_tag.get_text(" ", strip=True)
             kind = "audio transcription"
 
@@ -334,6 +373,12 @@ class AISummarizationTask:
         self.enableWhatsAppSummarization = False
         self.enableUFEDChatSummarization = False
         self.minimumContentLength = 0
+
+        # NEW: chat analysis / questions
+        self.enableChatAnalysis = False
+        self.questions: List[str] = []
+        self.questionAttributes: List[str] = []
+
         return
 
     # Returns if this task is enabled or not. This could access options read by init() method.
@@ -361,6 +406,21 @@ class AISummarizationTask:
         self.enableWhatsAppSummarization = bool(extraProps.getProperty(enableWhatsAppSummarizationProp))
         self.enableUFEDChatSummarization = bool(extraProps.getProperty(enableUFEDChatSummarizationProp))
         self.minimumContentLength = int(extraProps.getProperty(minimumContentLengthProp) or 0)
+        
+        # NEW: chat analysis-related options
+        self.enableChatAnalysis = bool(extraProps.getProperty(enableChatAnalysisProp))
+        if self.enableChatAnalysis:
+            self.questions = _parse_list_prop(extraProps.getProperty(questionsProp))
+            self.questionAttributes = _parse_list_prop(extraProps.getProperty(questionAttributesProp))
+
+
+        if self.enableChatAnalysis and (len(self.questions) == 0 or len(self.questionAttributes) == 0):
+            logger.error("[AISummarizationTask]: Warning - 'questions' and 'questionAttributes' are not set.")
+            raise Exception(f"[AISummarizationTask]: Warning - 'questions' and 'questionAttributes' are not set.")
+
+        if self.enableChatAnalysis and len(self.questions) != len(self.questionAttributes):
+            logger.error("[AISummarizationTask]: Warning - 'questions' and 'questionAttributes' have different sizes.")
+            raise Exception(f"[AISummarizationTask]: Warning - 'questions' and 'questionAttributes' have different sizes.")
 
         return
 
@@ -381,20 +441,101 @@ class AISummarizationTask:
         if len(msgs) == 0 or total_len < self.minimumContentLength:
             return
 
-        res = create_summaries_request(msgs, self.remoteServiceAddress)
+        questions = None
+        if self.enableChatAnalysis and self.questions:
+            questions = self.questions
+
+        res = create_summaries_request(
+            msgs,
+            self.remoteServiceAddress,
+            questions=questions
+        )
+        
         if not res["ok"]:
             logger.error(f"[AISummarizationTask]: Error {item.getName()} - {res['code']} ({res['http_status']}): {res.get('message')}")
             # Exit - server connection problem
             raise Exception(f"[AISummarizationTask]: Error {item.getName()} - {res['code']} ({res['http_status']}): {res.get('message')}")
             #return
 
-        summaries = res["data"]["summaries"] 
+        
+        
+        #summaries = res["data"]["summaries"] 
 
-        if len(summaries) == 0:
-            logger.error(f"[AISummarizationTask]: Error - No summaries returned for {item.getName()}, this should not happen as we send only messages with content")
+        #if len(summaries) == 0:
+        #    logger.error(f"[AISummarizationTask]: Error - No summaries returned for {item.getName()}, this should not happen as we send only messages with content")
+        #    return
+
+        #item.setExtraAttribute(ExtraProperties.SUMMARIES, summaries)
+
+        data = res.get("data")
+        if not isinstance(data, list):
+            logger.error(
+                f"[AISummarizationTask]: Error - Unexpected response format for "
+                f"{item.getName()}, expected list of results."
+            )
             return
 
-        item.setExtraAttribute(ExtraProperties.SUMMARIES, summaries)
+        # ----------------------------------------------------------
+        # 1) Extract summaries
+        # 2) Build per-attribute arrays of answers (one entry per chunk)
+        # ----------------------------------------------------------
+        chunk_summaries: List[str] = []
+
+        per_attr_answers: Dict[str, List[str]] = {}
+        if self.enableChatAnalysis and self.questions and self.questionAttributes:
+            # initialize one list per configured attribute
+            per_attr_answers = {attr: [] for attr in self.questionAttributes}
+
+        for idx, entry in enumerate(data):
+            if not isinstance(entry, dict):
+                logger.warn(
+                    f"[AISummarizationTask]: Warning - Result entry {idx} for "
+                    f"{item.getName()} is not a dict; skipping."
+                )
+                continue
+
+            # --- summaries ---
+            summary = entry.get("summary")
+            if isinstance(summary, str) and summary.strip():
+                chunk_summaries.append(summary)
+
+            # --- answers per question / attribute ---
+            if per_attr_answers:
+                answers = entry.get("answers")
+                if not isinstance(answers, list):
+                    # If this chunk has no answers list, append "0" for each attribute to keep lengths aligned
+                    for attr in self.questionAttributes:
+                        per_attr_answers[attr].append("0")
+                    continue
+
+                # For each question index, append its answer to the corresponding attribute array
+                for q_idx, attr_name in enumerate(self.questionAttributes):
+                    if q_idx < len(answers):
+                        per_attr_answers[attr_name].append(str(answers[q_idx]))
+                    else:
+                        # No answer for this question in this chunk → default "0"
+                        per_attr_answers[attr_name].append("0")
+
+        if len(chunk_summaries) == 0:
+            logger.error(
+                f"[AISummarizationTask]: Error - No summaries returned for {item.getName()}, "
+                "this should not happen as we send only messages with content"
+            )
+            return
+
+        # Store all chunk summaries (same attribute as before)
+        item.setExtraAttribute(ExtraProperties.SUMMARIES, chunk_summaries)
+
+        # Store per-question arrays in their respective attributes
+        for attr_name, values in per_attr_answers.items():
+            full_attr_name = f"ai:analysis:{attr_name}"
+            try:
+                item.setExtraAttribute(full_attr_name, values)
+            except Exception as e:
+                logger.warn(
+                    f"[AISummarizationTask]: Warning - Could not set attribute "
+                    f"{full_attr_name} for {item.getName()}: {e}"
+                )
         
 
 
@@ -420,4 +561,66 @@ class AISummarizationTask:
     # Called when task processing is finished. Can be used to cleanup resources.
     # Objects "ipedCase" and "searcher" are provided, so case can be queried for items and bookmarks can be created.
     def finish(self):
-        return
+        """
+        Creates bookmarks for all ai:analysis:* attributes after processing.
+        One pair of bookmarks per questionAttribute:
+        - Todos os analisados (score >= 0)
+        - Alta relevância (score >= 750)
+        """
+        from iped.properties import ExtraProperties  
+
+        global analysisBookmarksCreated
+        if analysisBookmarksCreated:
+            return
+
+        # If analysis is disabled or there are no configured attributes, do nothing
+        if not getattr(self, "enableChatAnalysis", False) or not getattr(self, "questionAttributes", None):
+            return
+
+        try:
+            # Loop over each configured question attribute
+            for attr_name in self.questionAttributes:
+                # ai:analysis:<attr>  →  ai\\:analysis\\:<attr> in Lucene query
+                field = f"ai\\:analysis\\:{attr_name}"
+
+                # All analyzed (score >= 0)
+                query_all = f"{field}: [0 TO *]"
+
+                # High relevance (score >= 750)
+                query_high = f"{field}: [750 TO *]"
+
+                # ---- Bookmark: all analyzed for this attribute ----
+                searcher.setQuery(query_all)
+                ids = searcher.search().getIds()
+
+                if len(ids) > 0:
+                    bookmarkId = ipedCase.getBookmarks().newBookmark(
+                        f"IA: {attr_name} - todos analisados"
+                    )
+                    ipedCase.getBookmarks().setBookmarkComment(
+                        bookmarkId,
+                        f"{len(ids)} chats possuem valores em {field} (score >= 0)."
+                    )
+                    ipedCase.getBookmarks().addBookmark(ids, bookmarkId)
+
+                # ---- Bookmark: high relevance for this attribute ----
+                searcher.setQuery(query_high)
+                ids = searcher.search().getIds()
+
+                if len(ids) > 0:
+                    bookmarkId = ipedCase.getBookmarks().newBookmark(
+                        f"IA: {attr_name} - alta relevância"
+                    )
+                    ipedCase.getBookmarks().setBookmarkComment(
+                        bookmarkId,
+                        f"{len(ids)} chats possuem alta relevância em {field} (score >= 750)."
+                    )
+                    ipedCase.getBookmarks().addBookmark(ids, bookmarkId)
+
+            # Persist all bookmark changes once at the end
+            ipedCase.getBookmarks().saveState(True)
+
+            analysisBookmarksCreated = True
+
+        except Exception as e:
+            logger.error(f"[AISummarizationTask]: Error creating analysis bookmarks in finish(): {e}")
