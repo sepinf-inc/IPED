@@ -45,6 +45,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
+import static iped.parsers.whatsapp.Message.MessageType.IGNORE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
@@ -441,8 +442,8 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 m.setMessageType(decodeMessageType(type, status, edit_version, caption, actionType,
                         rs.getInt("bizStateId"), rs.getInt("privacyType"),  m.getMediaMime()));
                 
-                if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED) {
-                    // Ignore this type of message, as it does nothing and it is not visible in the application itself.
+                if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED || m.getMessageType() == IGNORE_MESSAGE) {
+                    // Ignore these type of message, as they do nothing and are not visible in the application itself.
                     continue;
                 }
                 
@@ -894,6 +895,10 @@ public abstract class ExtractorAndroidNew extends Extractor {
                         break;
                     case 112:
                         result = ADVANCED_PRIVACY_ON;
+                        break;
+                    case 116:
+                        // Nothing is shown in the app itself
+                        result = IGNORE_MESSAGE;
                         break;
                     case 118:
                         result = PINNED_MESSAGE;
