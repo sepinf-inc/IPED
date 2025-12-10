@@ -3,7 +3,7 @@
 ##############################################################################
 
 # IP:PORT of the service/central node used by the AISummarizationTask implementation.
-remoteServiceAddress = 127.0.0.1:11111
+remoteServiceAddress = 127.0.0.1:8000
 
 # Enables automatic summarization of WhatsApp chats using AI models.
 # When set to true, summaries will be generated for WhatsApp conversations parsed by IPED's internal parser.
@@ -14,3 +14,11 @@ enableUFEDChatSummarization = false
 
 # Minimum item content length to perform summarization in characters
 minimumContentLength = 1000
+
+# Options for chat analysis with AI LLM.
+# When 'enableChatAnalysis' is true, custom questions in 'questions' are sent to the AI summarizer,
+# and the returned scores (0-999) will be available as attributes listed in 'questionAttributes'.
+enableChatAnalysis = false
+
+questions = ["Question1?", "Question2?"]
+questionAttributes = ["question1Score", "question2Score"]
