@@ -19,11 +19,14 @@ public class WAContactsDirectory {
     public boolean addContactMapping(String lid, String jid) {
         String nameJid = Util.getNameFromId(jid);
         WAContact contact = contacts.get(nameJid);
+        String nameLid = Util.getNameFromId(lid);
         if (contact != null) {
-            String nameLid = Util.getNameFromId(lid);
             contacts.put(nameLid, contact);
             return true;
         }
+        contact = new WAContact(nameJid);
+        contacts.put(nameJid, contact);
+        contacts.put(nameLid, contact);
         return false;
     }
 
