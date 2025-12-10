@@ -1,5 +1,6 @@
 package iped.parsers.whatsapp;
 
+import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_THIRD_PARTY;
 import static iped.parsers.whatsapp.Message.MessageType.ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -44,6 +45,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
+import static iped.parsers.whatsapp.Message.MessageType.IGNORE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
@@ -128,6 +130,12 @@ public abstract class ExtractorAndroidNew extends Extractor {
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
+        try {
+            updateContactsDirectoryMapping();
+        } catch (SQLException ex) {
+            throw new WAExtractorException(ex);
+        }
+
         List<Chat> list = new ArrayList<>();
         Map<Long, Chat> idToChat = new HashMap<Long, Chat>();
 
@@ -167,6 +175,25 @@ public abstract class ExtractorAndroidNew extends Extractor {
         }
 
         return list;
+    }
+
+    private void updateContactsDirectoryMapping() throws SQLException {
+        // Read LID -> JID mapping
+        try (Connection conn = getConnection()) {
+            if (SQLite3DBParser.containsTable("jid_map", conn)) {
+                try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_JID_MAP)) {
+                    while (rs.next()) {
+                        String lid = rs.getString("lid");
+                        if (lid != null && !lid.isBlank()) {
+                            String jid = rs.getString("jid");
+                            if (jid != null && !jid.isBlank()) {
+                                contacts.addContactMapping(lid, jid);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private boolean isUnblocked(Connection conn, long id) throws SQLException {
@@ -440,8 +467,8 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 m.setMessageType(decodeMessageType(type, status, edit_version, caption, actionType,
                         rs.getInt("bizStateId"), rs.getInt("privacyType"),  m.getMediaMime()));
                 
-                if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED) {
-                    // Ignore this type of message, as it does nothing and it is not visible in the application itself.
+                if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED || m.getMessageType() == IGNORE_MESSAGE) {
+                    // Ignore these type of message, as they do nothing and are not visible in the application itself.
                     continue;
                 }
                 
@@ -1065,6 +1092,13 @@ public abstract class ExtractorAndroidNew extends Extractor {
             case 99:
                 result = MESSAGE_ASSOCIATION;
                 break;
+            case 112:
+                result = ADVANCED_PRIVACY_ON;
+                break;
+            case 116:
+                // Nothing is shown in the app itself
+                result = IGNORE_MESSAGE;
+                break;
             default:
                 break;
         }
@@ -1241,4 +1275,5 @@ public abstract class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
             + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
 
+    private static final String SELECT_JID_MAP = "SELECT a.raw_string AS lid, b.raw_string AS jid FROM jid_map map, jid a, jid b WHERE map.lid_row_id = a._id AND map.jid_row_id = b._id";
 }

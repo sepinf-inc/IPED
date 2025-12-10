@@ -525,8 +525,8 @@ div:target {
     cursor: pointer;
     border-radius: 4px;
     box-shadow: 0 0 6px #a7a7a7;
-    display: grid;
-    padding: 8px 8px 8px 8px;
+    display: block;
+    padding: 8px 8px 20px 8px;
     background-color: #f7f787;
     color: #444400;
     margin: 4px 2px 4px 3px;
