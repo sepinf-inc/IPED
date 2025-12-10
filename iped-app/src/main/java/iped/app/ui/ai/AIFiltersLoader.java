@@ -26,12 +26,21 @@ public class AIFiltersLoader {
         AIFiltersConfig config = ConfigurationManager.get().findObject(AIFiltersConfig.class);
         SimpleFilterNode root = (SimpleFilterNode) config.getRootAIFilter().clone();
 
+        sortChildrenNodes(root, (Comparator<SimpleFilterNode>) new SimpleFilterNode.LocalizedNameComparator());
         updateCount(App.get().appCase, root);
         removeEmptyTopLevel(root);
         expandDynamic(App.get().appCase, root);
 
         AIFiltersTreeModel model = new AIFiltersTreeModel(root);
         App.get().aiFiltersTree.setModel(model);
+    }
+
+    private static void sortChildrenNodes(SimpleFilterNode node, Comparator<SimpleFilterNode> comparator) {
+        if ("true".equalsIgnoreCase(node.getSortChildren()))
+            Collections.sort(node.getChildren(), comparator);
+        for (SimpleFilterNode child : node.getChildren()) {
+            sortChildrenNodes(child, comparator);
+        }
     }
 
     private static void removeEmptyTopLevel(SimpleFilterNode root) {
