@@ -32,14 +32,16 @@ categorizationThresholdProp = 'categorizationThreshold'
 skipHashDBFiles = True
 skipHashDBFilesProp = 'skipHashDBFiles'
 
-# Max number of threads allowed to enter code between semaphore.acquire() and semaphore.release()
-# This can be set if your GPU does not have enough memory to use all threads with configured 'batchSize'
-maxThreads = None
-maxThreadsProp = 'maxThreads'
+# Device to use for classification run ('cpu' or 'gpu'). URL to information on GPU setup on config file.
+device = None
+deviceProp = 'device'
+deviceError = False
 
 # age estimation cache (avoids age estimation of duplicates)
 from java.util.concurrent import ConcurrentHashMap
 cache = ConcurrentHashMap()
+
+IPED_GPU_GLOBAL_SEMAPHORE_STRING = 'IPED_GPU_GLOBAL_SEMAPHORE'
 
 # Margins proportions added to the face rectangle before submitting to the age estimation model.
 topMargin = 0.50
@@ -87,6 +89,11 @@ class AgeEstimationTask:
         if AgeEstimationTask.enabled is None:
             AgeEstimationTask.enabled = taskConfig.isEnabled()
         
+        # disable task during report generation
+        if (caseData.isIpedReport()):
+            AgeEstimationTask.enabled = False
+            return
+
         faceRecognitionTaskEnabled = configuration.getEnableTaskProperty('enableFaceRecognition')
         if AgeEstimationTask.enabled and not faceRecognitionTaskEnabled:
             logger.error('To use the AgeEstimation task, you must enable the FaceRecognition task by setting enableFaceRecognition = true. AgeEstimation has been disabled.')
@@ -135,7 +142,7 @@ class AgeEstimationTask:
 
         # load task configuration properties
         extraProps = taskConfig.getConfiguration()
-        global batchSize, categorizationThreshold, skipHashDBFiles, maxThreads
+        global batchSize, categorizationThreshold, skipHashDBFiles, device, deviceError
 
         if extraProps.getProperty(batchSizeProp) is not None:
             try:
@@ -161,20 +168,47 @@ class AgeEstimationTask:
             else:
                 logger.warn("AgeEstimationTask: Invalid value for property 'skipHashDBFiles': " + extraProps.getProperty(skipHashDBFilesProp) + " - value must be 'true' or 'false'")
                 logger.warn("AgeEstimationTask: Using default value for property 'skipHashDBFiles': " + str(skipHashDBFiles))
-        if extraProps.getProperty(maxThreadsProp) is not None:
-            try:
-                maxThreads = int(extraProps.getProperty(maxThreadsProp))
-                if maxThreads < 1:
-                    raise ValueError("AgeEstimationTask: Value for property 'maxThreads' must be >0")
-            except ValueError:
-                logger.warn("AgeEstimationTask: Invalid value for property 'maxThreads': " + extraProps.getProperty(maxThreadsProp))
-                logger.warn("AgeEstimationTask: Using default value for property 'maxThreads': " + str(maxThreads))
+        cpu_device = 'cpu'
+        gpu_device = 'gpu'
+        gpu_device_name = 'cuda'
+        if extraProps.getProperty(deviceProp) is not None:
+            if extraProps.getProperty(deviceProp) in (cpu_device, gpu_device):
+                if device is None:
+                    if extraProps.getProperty(deviceProp) == cpu_device:
+                        # device is 'cpu'
+                        device = torch.device(cpu_device)
+                        logger.info(f"AgeEstimationTask: Device to use for classification is '{cpu_device}'")
+                    else:
+                        # device is 'gpu'
+                        if torch.cuda.is_available():
+                            # CUDA GPU device is available
+                            device = torch.device(gpu_device_name)
+                            logger.info(f"AgeEstimationTask: Device to use for classification is '{gpu_device}' ({gpu_device_name})")
+                        else:
+                            # CUDA GPU device is not available, then abort case processing
+                            error_msg = f"AgeEstimationTask: Device '{gpu_device}' is not available or properly configured on your system."
+                            if not deviceError:
+                                deviceError = True
+                                logger.error(error_msg)
+                            from java.lang import RuntimeException
+                            worker.exception = RuntimeException(error_msg)
+                            return
+            else:
+                if device is None:
+                    logger.warn("AgeEstimationTask: Invalid value for property 'device': " + extraProps.getProperty(deviceProp) + " - value must be 'cpu' or 'gpu'")
+                    device = torch.device(cpu_device)
+                    logger.warn(f"AgeEstimationTask: Using default device for classification: '{cpu_device}'")
+        else:
+            if device is None:
+                device = torch.device(cpu_device)
+                logger.warn(f"AgeEstimationTask: Using default device for classification: '{cpu_device}'")
 
         # load model and processor
         loadModelAndProcessor()
         
-        # create semaphore
-        createSemaphore()
+        # create semaphore only if GPU available
+        if(torch.cuda.is_available()):
+            createSemaphore()
 
 
     def finish(self):
@@ -216,16 +250,16 @@ class AgeEstimationTask:
 
     def sendToNextTask(self, item):        
         if not item.isQueueEnd() and item not in self.itemList and item not in self.nextTaskList:
-            javaTask.get().sendToNextTaskSuper(item)
+            self.javaTask.sendToNextTaskSuper(item)
         
         if len(self.nextTaskList) > 0:
             localList = list(self.nextTaskList)
             self.nextTaskList.clear()
             for i in localList:
-                javaTask.get().sendToNextTaskSuper(i)
+                self.javaTask.sendToNextTaskSuper(i)
             
         if item.isQueueEnd():
-            javaTask.get().sendToNextTaskSuper(item)
+            self.javaTask.sendToNextTaskSuper(item)
     
 
     def isToProcessBatch(self, item):
@@ -236,7 +270,7 @@ class AgeEstimationTask:
     def process(self, item):        
     
         # does not process item if any condition is met
-        if (not item.isQueueEnd() and not supported(item)) or (not item.isToAddToCase()):
+        if (not self.isEnabled()) or (not item.isQueueEnd() and not supported(item)) or (not item.isToAddToCase()):
             return
 
         if not item.isQueueEnd():
@@ -399,7 +433,7 @@ def loadModelAndProcessor():
         if not os.path.exists(model_path + '/' + model_filename) or not os.path.exists(model_path + '/' + processor_filename):
             # Create model files
             model = SiglipForImageClassification.from_pretrained(model_name)
-            processor = AutoImageProcessor.from_pretrained(model_name)
+            processor = AutoImageProcessor.from_pretrained(model_name, use_fast=True)
             
             # Create the model path if it doesn't exist
             os.makedirs(model_path, exist_ok=True)
@@ -412,8 +446,11 @@ def loadModelAndProcessor():
             # Load model files
             logger.debug('AgeEstimationTask: Loading model from ' + model_path)
             model = SiglipForImageClassification.from_pretrained(model_path)
-            processor = AutoImageProcessor.from_pretrained(model_path)
+            processor = AutoImageProcessor.from_pretrained(model_path, use_fast=True)
         
+        # move model weights to the selected device (GPU or CPU)
+        model.to(device)
+
         # Store model in memory
         caseData.putCaseObject('open-age-detection_model', model)
         caseData.putCaseObject('open-age-detection_processor', processor)
@@ -425,14 +462,12 @@ def loadModelAndProcessor():
 Create semaphore for concurrency control
 '''
 def createSemaphore():
-    if maxThreads is None:
-        return
-    global semaphore
-    semaphore = caseData.getCaseObject('age_estimation_semaphore')    
+    global semaphore, IPED_GPU_GLOBAL_SEMAPHORE_STRING
+    semaphore = caseData.getCaseObject(IPED_GPU_GLOBAL_SEMAPHORE_STRING)    
     if semaphore is None:
         from java.util.concurrent import Semaphore
-        semaphore = Semaphore(maxThreads)
-        caseData.putCaseObject('age_estimation_semaphore', semaphore)
+        semaphore = Semaphore(1)
+        caseData.putCaseObject(IPED_GPU_GLOBAL_SEMAPHORE_STRING, semaphore)
    
 '''
 Process faces for age estimation
@@ -528,6 +563,8 @@ def makePrediction(imageList):
     # load model and processor
     [model, processor] = loadModelAndProcessor()
     inputs = processor(images=imageList, return_tensors="pt")
+    # ensure all input tensors (including image data) are on the same device as the model
+    inputs = {name: tensor.to(device) for name, tensor in inputs.items()}
     try:
         if semaphore is not None:
             semaphore.acquire()
