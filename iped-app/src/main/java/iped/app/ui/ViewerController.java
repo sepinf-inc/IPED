@@ -26,6 +26,7 @@ import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
+import bibliothek.gui.dock.common.CControl;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.viewers.AttachmentSearcherImpl;
 import iped.app.ui.viewers.HexSearcherImpl;
@@ -51,6 +52,7 @@ import iped.viewers.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import iped.viewers.MetadataViewer;
 import iped.viewers.MsgViewer;
 import iped.viewers.MultiViewer;
+import iped.viewers.SummaryViewer;
 import iped.viewers.ReferencedFileViewer;
 import iped.viewers.TiffViewer;
 import iped.viewers.api.AbstractViewer;
@@ -99,6 +101,7 @@ public class ViewerController {
                 return IndexItem.isNumeric(field);
             }
         });
+        viewers.add(new SummaryViewer());
         viewers.add(viewersRepository = new MultiViewer());
 
         // These are content-specific viewers (inside a single ViewersRepository)
@@ -299,11 +302,63 @@ public class ViewerController {
         return highlightTerms != null && !highlightTerms.isEmpty();
     }
 
+    // helper
+    private boolean isRegistered(DefaultSingleCDockable d) {
+        CControl cc = App.get().dockingControl;
+        for (int i = 0; i < cc.getCDockableCount(); i++) {
+            if (cc.getCDockable(i) == d) return true;
+        }
+        return false;
+    }
+
+
     public void updateViewer(AbstractViewer viewer, boolean clean, boolean forceLoad) {
+
+        DefaultSingleCDockable dock = dockPerViewer.get(viewer);
+
+        if (viewer instanceof SummaryViewer) {
+            boolean has = file != null && ((SummaryViewer) viewer).hasSummaries(file);
+            CControl cc = App.get().dockingControl;
+            boolean registered = dock != null && isRegistered(dock);
+
+            if (!has) {
+                if (registered) {
+                    // ensure some other tab is selected, then remove Summary from the control
+                    AbstractViewer keep = getBestViewer(viewType != null ? viewType : contentType);
+                    DefaultSingleCDockable keepDock = dockPerViewer.get(keep);
+                    if (keepDock != null && keepDock != dock) App.get().selectDockableTab(keepDock);
+
+                    SwingUtilities.invokeLater(() -> {
+                        // remove instead of setVisible(false) to prevent the blank stub
+                        cc.removeDockable(dock);
+                    });
+                }
+                if (clean && isInitialized()) viewer.loadFile(null);
+                return; // done with Summary
+            } else {
+                if (!registered) {
+                    // add back and place it alongside the current best viewer
+                    DefaultSingleCDockable keepDock = dockPerViewer.get(getBestViewer(viewType != null ? viewType : contentType));
+                    SwingUtilities.invokeLater(() -> {
+                        cc.addDockable(dock);
+                        if (keepDock != null) dock.setLocationsAside(keepDock);
+                        dock.setVisible(true);
+                        // keep selection on preview/metadata/etc.
+                        if (keepDock != null) App.get().selectDockableTab(keepDock);
+                    });
+                } else if (!dock.isVisible()) {
+                    dock.setVisible(true);
+                }
+                // do NOT return; let the generic branch load Summary only when its panel is showing
+            }
+        }
+        // --- end Summary block ---
+
+
         if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits()) || forceLoad) {
             if (isInitialized())
                 loadInViewer(viewer);
-            DefaultSingleCDockable dock = dockPerViewer.get(viewer);
+            //DefaultSingleCDockable dock = dockPerViewer.get(viewer);
             if (dock != null) {
                 boolean hitsEnabled = viewFile != null && ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
 
@@ -377,6 +432,10 @@ public class ViewerController {
     private AbstractViewer getBestViewer(String contentType) {
         AbstractViewer result = null;
         for (AbstractViewer viewer : viewers) {
+
+            // Never make Summary the default tab
+            if (viewer instanceof iped.viewers.SummaryViewer) continue;
+
             if (viewer.isSupportedType(contentType, true)) {
                 if (viewer instanceof MetadataViewer) {
                     if (((MetadataViewer) viewer).isMetadataEntry(contentType)) {
