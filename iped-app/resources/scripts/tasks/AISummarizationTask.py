@@ -18,13 +18,19 @@ minimumContentLengthProp = 'minimumContentLength' # Minimum item content length
 remoteServiceAddressProp = 'remoteServiceAddress'
 configFile = 'AISummarizationConfig.txt'
 
+# Remote service communication parameters
+BUSY_SLEEP_TIME = 10.0
+NONBUSY_SLEEP_TIME = 1.0,
+MAX_ATTEMPTS_NONBUSY_RETRIES = 10,
+
 # NEW: chat analysis / questions config
 enableChatAnalysisProp = 'enableChatAnalysis'
 questionsProp = 'questions'
 questionAttributesProp = 'questionAttributes'
 
-# bookmarks config
-analysisBookmarksCreated = False
+# bookmarks config - Just for testing purposes, set to False to test bookmarks creation
+# I believe it is better to show AI analysis results in the AI panel.
+analysisBookmarksCreated = True
 
 
 def _parse_list_prop(raw: Optional[str]) -> List[str]:
@@ -131,9 +137,9 @@ def create_summaries_request(
     base_url: str = "127.0.0.1:1111",
     *,
     questions: Optional[List[str]] = None,  # NEW
-    BUSY_SLEEP: float = 1.0,
-    NONBUSY_SLEEP: float = 1.0,
-    MAX_ATTEMPTS_NONBUSY: int = 10,
+    BUSY_SLEEP: float =  BUSY_SLEEP_TIME,
+    NONBUSY_SLEEP: float = NONBUSY_SLEEP_TIME,
+    MAX_ATTEMPTS_NONBUSY: int = MAX_ATTEMPTS_NONBUSY_RETRIES,
 ) -> Dict[str, Any]:
     """
     - BUSY (code == 'BUSY'): retry forever, sleeping BUSY_SLEEP each time.
@@ -312,10 +318,10 @@ def getMessagesFromChatHTML(html_text: str) -> Tuple[List[Dict], int]:
             if msg_div.find("div", class_="audioImg"):
                 kind = "audio"
                 content = f" "
-            if msg_div.find("div", class_="imageImg"):
+            elif msg_div.find("div", class_="imageImg"):
                 kind = "image"
                 content = f" "
-            if msg_div.find("div", class_="videoImg"):
+            elif msg_div.find("div", class_="videoImg"):
                 kind = "video"
                 content = f" "
             # vídeo ou imagem ➜ thumbnail <img class="thumb" … title="video|image">
@@ -407,13 +413,13 @@ class AISummarizationTask:
             self.enabled = False
             return
 
-        self.enableWhatsAppSummarization = (extraProps.getProperty(enableWhatsAppSummarizationProp)) == "true"
-        self.enableUFEDChatSummarization = (extraProps.getProperty(enableUFEDChatSummarizationProp)) == "true"
+        self.enableWhatsAppSummarization = (extraProps.getProperty(enableWhatsAppSummarizationProp) or "").lower() == "true"
+        self.enableUFEDChatSummarization = (extraProps.getProperty(enableUFEDChatSummarizationProp) or "").lower() == "true"
 
         self.minimumContentLength = int(extraProps.getProperty(minimumContentLengthProp) or 0)
         
         # NEW: chat analysis-related options
-        self.enableChatAnalysis = (extraProps.getProperty(enableChatAnalysisProp)) == "true"
+        self.enableChatAnalysis = (extraProps.getProperty(enableChatAnalysisProp) or "").lower() == "true"
         if self.enableChatAnalysis:
             self.questions = _parse_list_prop(extraProps.getProperty(questionsProp))
             self.questionAttributes = _parse_list_prop(extraProps.getProperty(questionAttributesProp))
@@ -460,7 +466,6 @@ class AISummarizationTask:
             logger.error(f"[AISummarizationTask]: Error {item.getName()} - {res['code']} ({res['http_status']}): {res.get('message')}")
             # Exit - server connection problem
             raise Exception(f"[AISummarizationTask]: Error {item.getName()} - {res['code']} ({res['http_status']}): {res.get('message')}")
-            #return
 
         
         
@@ -522,7 +527,7 @@ class AISummarizationTask:
                 # For each question index, append its answer to the corresponding attribute array
                 for q_idx, attr_name in enumerate(self.questionAttributes):
                     if q_idx < len(answers):
-                        per_attr_answers[attr_name].append(str(answers[q_idx]))
+                        per_attr_answers[attr_name].append(int(answers[q_idx]))
                     else:
                         # No answer for this question in this chunk → default "0"
                         per_attr_answers[attr_name].append("0")
@@ -538,7 +543,7 @@ class AISummarizationTask:
         item.setExtraAttribute(ExtraProperties.SUMMARIES, chunk_summaries)
 
         # Store chunk ids
-        item.setExtraAttribute("chunk_ids", chunk_ids)
+        item.setExtraAttribute("ai:chunk_ids", chunk_ids)
 
         # Store per-question arrays in their respective attributes
         for attr_name, values in per_attr_answers.items():
