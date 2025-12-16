@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "1.2" # Video classification configurations
+__version__ = "1.3" # Treats invalid dimensions in images/videos
 
 import traceback
 import io
@@ -689,23 +689,26 @@ class CSAMDetectorTask:
 
             # Skip very small dimensions
             if(CSAM_SKIP_DIMENSION>0):
-                width = None
-                height = None
-                if(isImage):
-                    width_meta = item.getMetadata().get("image:Width")
-                    height_meta = item.getMetadata().get("image:Height")
-                    width = int(width_meta) if width_meta is not None else None
-                    height = int(height_meta) if height_meta is not None else None
-                elif(isVideo):
-                    width_meta = item.getMetadata().get("video:Width")
-                    height_meta = item.getMetadata().get("video:Height")
-                    width = int(width_meta) if width_meta is not None else None
-                    height = int(height_meta) if height_meta is not None else None
-                
-                if(width is not None and height is not None and (width<CSAM_SKIP_DIMENSION or height<CSAM_SKIP_DIMENSION)):
-                    logger.debug(f"CSAMDetector: skipping very small image {item.getName()} {width}x{height}")
-                    item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_DIMENSION)
-                    return
+                try:                
+                    width = None
+                    height = None
+                    if(isImage):
+                        width_meta = item.getMetadata().get("image:Width")
+                        height_meta = item.getMetadata().get("image:Height")
+                        width = int(width_meta) if width_meta is not None else None
+                        height = int(height_meta) if height_meta is not None else None
+                    elif(isVideo):
+                        width_meta = item.getMetadata().get("video:Width")
+                        height_meta = item.getMetadata().get("video:Height")
+                        width = int(width_meta) if width_meta is not None else None
+                        height = int(height_meta) if height_meta is not None else None
+                    
+                    if(width is not None and height is not None and (width<CSAM_SKIP_DIMENSION or height<CSAM_SKIP_DIMENSION)):
+                        logger.debug(f"CSAMDetector: skipping very small image {item.getName()} {width}x{height}")
+                        item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_DIMENSION)
+                        return
+                except ValueError:
+                    logger.warn(f"CSAMDetector: invalid dimensions for item {item.getName()} {width_meta}x{height_meta}")                        
 
             # Skip classification of images/videos with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
             if (CSAM_SKIP_HASHDB_FILES and item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) is not None):
