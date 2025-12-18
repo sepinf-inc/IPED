@@ -5,7 +5,3 @@ nbactions.xml
 /.project
 .pydevproject
 /.idea/
-*.log
-iped-parsers/iped-parsers-impl/src/test/tmp_tools/*
-exemplos/*
-test_*
