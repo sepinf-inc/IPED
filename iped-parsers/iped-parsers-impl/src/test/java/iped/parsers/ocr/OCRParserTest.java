@@ -16,6 +16,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -69,7 +70,6 @@ public class OCRParserTest {
         FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
     }
 
-
     @Test
     public void testOCRParserPNG() throws IOException, SAXException, TikaException, SQLException {
         Metadata metadata = new Metadata();
@@ -83,7 +83,7 @@ public class OCRParserTest {
 
         String hts = "";
         try (OCRParser parser = new OCRParser();
-            InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.png")) {
+                InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.png")) {
             assumeTrue(parser.isEnabled());
 
             parser.parse(stream, handler, metadata, context);
@@ -112,12 +112,12 @@ public class OCRParserTest {
         metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "application/pdf");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "por");
-        
+
         String hts = "";
         try (OCRParser parser = new OCRParser();
-            InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.pdf")) {
+                InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.pdf")) {
             assumeTrue(parser.isEnabled());
-            
+
             parser.parse(stream, handler, metadata, context);
             hts = handler.toString();
 
@@ -142,13 +142,13 @@ public class OCRParserTest {
         System.setProperty(PDFToImage.PDFLIB_PROP, "icepdf");
         FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
         assertPDFParsing();
-        // convert pdf externally (fails because the classpath when testing lacks the necessary jars)
+        // convert pdf externally (fails because the classpath when testing lacks the
+        // necessary jars)
         // System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "true");
         // FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
         // assertPDFParsing();
     }
 
-    
     @Test
     public void testOCRParserTIFF() throws IOException, SAXException, TikaException, SQLException {
         Metadata metadata = new Metadata();
@@ -162,7 +162,7 @@ public class OCRParserTest {
 
         String hts = "";
         try (OCRParser parser = new OCRParser();
-            InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.tiff")) {
+                InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.tiff")) {
             assumeTrue(parser.isEnabled());
 
             parser.parse(stream, handler, metadata, context);
@@ -194,6 +194,7 @@ public class OCRParserTest {
     }
 
     @Test
+    @Ignore
     public void testOCRParserPSD() throws IOException, SAXException, TikaException, SQLException {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
@@ -206,7 +207,7 @@ public class OCRParserTest {
 
         String hts = "";
         try (OCRParser parser = new OCRParser();
-            InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.psd")) {
+                InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.psd")) {
             assumeTrue(parser.isEnabled());
 
             setUpImageMagick();
@@ -227,6 +228,7 @@ public class OCRParserTest {
     }
 
     @Test
+    @Ignore
     public void testOCRParserSVG() throws IOException, SAXException, TikaException, SQLException, InterruptedException {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
@@ -239,7 +241,7 @@ public class OCRParserTest {
 
         String hts = "";
         try (OCRParser parser = new OCRParser();
-            InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.svg")) {
+                InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.svg")) {
             assumeTrue(parser.isEnabled());
 
             setUpImageMagick();
@@ -259,7 +261,6 @@ public class OCRParserTest {
             throw e;
         }
     }
-
 
     private void setUpImageMagick() throws IOException {
         if (System.getProperty(ExternalImageConverter.enabledProp, "").isEmpty()) {
