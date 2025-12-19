@@ -37,7 +37,7 @@
         <sleuthkit.version>4.12.0.p1</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <log4j.version>2.17.1</log4j.version>
+        <log4j.version>2.25.3</log4j.version>
         <junit.version>4.13.2</junit.version>
         <hamcrest.version>3.0</hamcrest.version>
         <icepdf.version>7.0.0</icepdf.version>
