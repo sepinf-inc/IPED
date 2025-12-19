@@ -1165,7 +1165,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
         return "select m._id AS id,m.chat_row_id as chatId, chatJid.raw_string as remoteId,"
                 + " jid.raw_string as remoteResource, status, mv.vcard, m.text_data,"
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
-                + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName,"
+                + " mm.mime_type as mediaMime, mm.file_length as mediaSize, mm.file_path as mediaName,"
                 + " m.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
                 + " as mediaCaption, mm.file_hash as mediaHash, mt.thumbnail as thumbData, m.key_id as uuid,"
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"

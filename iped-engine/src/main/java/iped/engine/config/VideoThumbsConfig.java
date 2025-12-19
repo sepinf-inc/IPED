@@ -73,7 +73,7 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
     private int galleryMinThumbs = -1;
     private int galleryMaxThumbs = -1;
 
-    private int compression = 50;
+    private int compression = 60;
 
     /**
      * Extracts video frames using original video resolution.
@@ -100,6 +100,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     public int getSize() {
         return size;
+    }
+
+    public void setSize(int value) {
+        size = value;
     }
 
     public int getColumns() {

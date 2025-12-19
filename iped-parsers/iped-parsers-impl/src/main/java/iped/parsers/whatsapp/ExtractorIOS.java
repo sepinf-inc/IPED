@@ -1873,7 +1873,7 @@ public abstract class ExtractorIOS extends Extractor {
     private static final String VCARD_SEPARATOR = "_$!<VCard-Separator>!$_"; //$NON-NLS-1$
 
     private static final Set<MessageType> MEDIA_MESSAGES = ImmutableSet.of(AUDIO_MESSAGE, VIDEO_MESSAGE, GIF_MESSAGE,
-            DOC_MESSAGE, IMAGE_MESSAGE);
+            DOC_MESSAGE, IMAGE_MESSAGE, VIEW_ONCE_AUDIO_MESSAGE, VIEW_ONCE_IMAGE_MESSAGE, VIEW_ONCE_VIDEO_MESSAGE);
 
     private static class WAIOSMessageValidator implements SQLiteRecordValidator {
 

@@ -93,3 +93,9 @@ BR_BOLETO = \b[0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{6}(\s|\.)?[0
 BR_BANK_ACCOUNT = (ag|agen|ag[eê]ncia)(\s|\.|:){0,10}[0-9]{4}(\-?[0-9xX])?.{0,10}(cc|conta|conta[ \-]corrente)(\s|\.|:){0,10}[0-9]{5,11}(\-?[0-9xX])?
 
 BR_CAR_PLATE = \b((([A-Z]{3})(()|-)([0-9]{4}))|(Placas?( |:|: )([A-Za-z]{3})( )([0-9]{4})))\b
+
+#You can get the oficial document at https://www.nfe.fazenda.gov.br/portal/principal.aspx
+#The first 2 chacartes is the State
+#11-Rondônia 12-Acre 13-Amazonas 14-Roraima 15-Pará 16-Amapá 17-Tocantins 21-Maranhão 22-Piauí 23-Ceará 24-Rio Grande do Norte 25-Paraíba 26-Pernambuco 27-Alagoas 28-Sergipe
+#29-Bahia 31-Minas Gerais 32-Espírito Santo 33-Rio de Janeiro 35-São Paulo 41-Paraná 42-Santa Catarina 43-Rio Grande do Sul 50-Mato Grosso do Sul 51-Mato Grosso 52-Goiás 53-Distrito Federal
+BR_CHAVE_DANFE = \b(11|12|13|14|15|16|17|21|22|23|24|25|26|27|28|29|31|32|33|35|41|42|43|50|51|52|53)[1-2]{1}[0-9]{1}[0-1]{1}[0-9]{1}[0-9]{14}(55|65)[0-9]{22}\b

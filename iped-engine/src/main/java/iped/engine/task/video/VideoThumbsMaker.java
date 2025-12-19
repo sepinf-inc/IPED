@@ -48,7 +48,6 @@ public class VideoThumbsMaker {
     private int timeoutInfo = 15000;
     private int timeoutFirstCall = 300000;
     private boolean verbose = false;
-    private int quality = 50;
     private boolean firstCall = true;
     private static final String prefix = "_vtm"; //$NON-NLS-1$
     private int ignoreWaitKeyFrame;
@@ -238,7 +237,7 @@ public class VideoThumbsMaker {
             cmds.add(videoStream);
         }
 
-        cmds.addAll(Arrays.asList(new String[] { "-vo", "jpeg:smooth=50:nobaseline:quality=" + quality}));
+        cmds.addAll(Arrays.asList(new String[] { "-vo", "jpeg:smooth=50:nobaseline:quality=" + compression}));
 
         String rot = null;
         boolean transposed = false;
