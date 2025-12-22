@@ -20,8 +20,8 @@ configFile = 'AISummarizationConfig.txt'
 
 # Remote service communication parameters
 BUSY_SLEEP_TIME = 10.0
-NONBUSY_SLEEP_TIME = 1.0,
-MAX_ATTEMPTS_NONBUSY_RETRIES = 10,
+NONBUSY_SLEEP_TIME = 1.0
+MAX_ATTEMPTS_NONBUSY_RETRIES = 10
 
 # NEW: chat analysis / questions config
 enableChatAnalysisProp = 'enableChatAnalysis'
