@@ -842,6 +842,23 @@ public class BfacDialog extends JDialog {
                 closeButton.setEnabled(true);
                 currentWorker = null;
             }
+
+            @Override
+            public void onAuthenticationError() {
+                // Clear credentials and return to login screen
+                apiClient.logout();
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    javax.swing.JOptionPane.showMessageDialog(
+                        BfacDialog.this,
+                        "Your session has expired. Please log in again.",
+                        "Session Expired",
+                        javax.swing.JOptionPane.WARNING_MESSAGE
+                    );
+                    cardLayout.show(cardPanel, CARD_LOGIN);
+                    loginStatusLabel.setText("Session expired. Please log in again.");
+                    loginStatusLabel.setForeground(java.awt.Color.RED);
+                });
+            }
         };
 
         // Start the submission worker

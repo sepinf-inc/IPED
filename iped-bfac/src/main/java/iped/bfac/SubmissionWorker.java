@@ -48,6 +48,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
     private final boolean uploadFiles;
 
     private volatile boolean cancelled = false;
+    private volatile boolean authenticationError = false;
     private int totalItems = 0;
     private int processedItems = 0;
     private int successCount = 0;
@@ -60,6 +61,14 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
     public interface SubmissionCallback {
         void onLogMessage(String message);
         void onComplete(boolean success);
+
+        /**
+         * Called when an authentication error (401) is received from the server.
+         * The dialog should return to the login screen.
+         */
+        default void onAuthenticationError() {
+            // Default implementation does nothing
+        }
     }
 
     public SubmissionWorker(BfacApiClient apiClient, IIPEDSource ipedSource, SubmissionCallback callback,
@@ -87,6 +96,9 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
 
                 if (!result.isSuccess()) {
                     publish("ERROR: " + result.getMessage());
+                    if (result.isUnauthorized()) {
+                        authenticationError = true;
+                    }
                     return false;
                 }
 
@@ -96,7 +108,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 publish("Using existing submission: " + submissionName + " (ID: " + submissionId + ")");
             }
 
-            if (cancelled) return false;
+            if (cancelled || authenticationError) return false;
 
             // Step 2: Collect items from bookmarks
             publish("");
@@ -123,7 +135,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
             Map<Integer, FileHashInfo> filesToUpload = new HashMap<>();
 
             // Process in batches
-            for (int i = 0; i < hashInfos.size() && !cancelled; i += BATCH_SIZE) {
+            for (int i = 0; i < hashInfos.size() && !cancelled && !authenticationError; i += BATCH_SIZE) {
                 int end = Math.min(i + BATCH_SIZE, hashInfos.size());
                 List<FileHashInfo> batch = hashInfos.subList(i, end);
 
@@ -139,6 +151,12 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                         }
                     } else {
                         errorCount++;
+                        // Check for authentication error
+                        if (result.isUnauthorized()) {
+                            publish("ERROR: Authentication failed. Session expired.");
+                            authenticationError = true;
+                            break;
+                        }
                     }
                     processedItems++;
                 }
@@ -149,9 +167,11 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 publish("Processed " + processedItems + " of " + totalItems + " items...");
             }
 
-            if (cancelled) {
-                publish("");
-                publish("Operation cancelled by user.");
+            if (cancelled || authenticationError) {
+                if (cancelled) {
+                    publish("");
+                    publish("Operation cancelled by user.");
+                }
                 return false;
             }
 
@@ -190,7 +210,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 long bytesUploadedSoFar = 0;
 
                 for (Map.Entry<Integer, FileHashInfo> entry : filesToUpload.entrySet()) {
-                    if (cancelled) break;
+                    if (cancelled || authenticationError) break;
 
                     int fileId = entry.getKey();
                     FileHashInfo hashInfo = entry.getValue();
@@ -204,6 +224,8 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                     } else {
                         uploadErrorCount++;
                         bytesUploadedSoFar += bytesUploaded[0]; // Count partial uploads too
+                        // Stop if authentication error occurred
+                        if (authenticationError) break;
                     }
 
                     publish("Uploaded " + (uploadedCount + uploadErrorCount) + " of " + totalFilesToUpload + " files...");
@@ -243,6 +265,15 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
         try {
             boolean success = get();
             if (callback != null) {
+                // Check if there was an authentication error
+                if (authenticationError) {
+                    callback.onLogMessage("");
+                    callback.onLogMessage("ERROR: Authentication failed. Please log in again.");
+                    callback.onAuthenticationError();
+                    callback.onComplete(false);
+                    return;
+                }
+
                 if (success) {
                     callback.onLogMessage("");
                     callback.onLogMessage("Operation completed successfully!");
@@ -432,8 +463,11 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
         try {
             // Get upload status from backend
             FileUploadStatus status = apiClient.getUploadStatus(fileId);
-            if (status == null) {
-                publish("  Error: Could not get upload status for file " + hashInfo.getFileName());
+            if (!status.isSuccess()) {
+                publish("  Error: " + status.getErrorMessage());
+                if (status.isUnauthorized()) {
+                    authenticationError = true;
+                }
                 return false;
             }
 
@@ -482,8 +516,11 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                     byte[] segment = bytesRead == buffer.length ? buffer : Arrays.copyOf(buffer, bytesRead);
 
                     FileUploadStatus result = apiClient.uploadFileSegment(fileId, currentOffset, segment);
-                    if (result == null) {
-                        publish("    Error uploading segment at offset " + currentOffset);
+                    if (!result.isSuccess()) {
+                        publish("    Error uploading segment: " + result.getErrorMessage());
+                        if (result.isUnauthorized()) {
+                            authenticationError = true;
+                        }
                         return false;
                     }
 

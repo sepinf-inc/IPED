@@ -8,12 +8,18 @@ public class SendHashResult {
     private final int fileId;
     private final String message;
     private final boolean fileExistsInBackend;
+    private final int httpStatusCode;
 
     public SendHashResult(boolean success, int fileId, String message, boolean fileExistsInBackend) {
+        this(success, fileId, message, fileExistsInBackend, 0);
+    }
+
+    public SendHashResult(boolean success, int fileId, String message, boolean fileExistsInBackend, int httpStatusCode) {
         this.success = success;
         this.fileId = fileId;
         this.message = message;
         this.fileExistsInBackend = fileExistsInBackend;
+        this.httpStatusCode = httpStatusCode;
     }
 
     public boolean isSuccess() {
@@ -30,5 +36,13 @@ public class SendHashResult {
 
     public boolean isFileExistsInBackend() {
         return fileExistsInBackend;
+    }
+
+    public int getHttpStatusCode() {
+        return httpStatusCode;
+    }
+
+    public boolean isUnauthorized() {
+        return httpStatusCode == 401;
     }
 }

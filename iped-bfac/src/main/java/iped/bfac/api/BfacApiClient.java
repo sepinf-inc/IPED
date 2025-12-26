@@ -208,17 +208,17 @@ public class BfacApiClient {
                     // Use default error message
                 }
                 logger.error(errorMsg);
-                return new SubmissionResult(false, -1, errorMsg);
+                return new SubmissionResult(false, -1, errorMsg, response.statusCode());
             }
 
         } catch (IOException e) {
             String errorMsg = "Connection error: " + e.getMessage();
             logger.error("Failed to create submission", e);
-            return new SubmissionResult(false, -1, errorMsg);
+            return new SubmissionResult(false, -1, errorMsg, -1);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return new SubmissionResult(false, -1, "Operation interrupted");
+            return new SubmissionResult(false, -1, "Operation interrupted", -1);
         }
     }
 
@@ -263,16 +263,16 @@ public class BfacApiClient {
             } else {
                 String errorMsg = "Failed to send hash: " + response.statusCode();
                 logger.error(errorMsg);
-                return new SendHashResult(false, -1, errorMsg, false);
+                return new SendHashResult(false, -1, errorMsg, false, response.statusCode());
             }
 
         } catch (IOException e) {
             logger.error("Failed to send hash", e);
-            return new SendHashResult(false, -1, "Connection error: " + e.getMessage(), false);
+            return new SendHashResult(false, -1, "Connection error: " + e.getMessage(), false, -1);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return new SendHashResult(false, -1, "Operation interrupted", false);
+            return new SendHashResult(false, -1, "Operation interrupted", false, -1);
         }
     }
 
@@ -343,7 +343,7 @@ public class BfacApiClient {
                 String errorMsg = "Failed to send hashes batch: " + response.statusCode();
                 logger.error(errorMsg);
                 for (int i = 0; i < hashInfos.size(); i++) {
-                    results.add(new SendHashResult(false, -1, errorMsg, false));
+                    results.add(new SendHashResult(false, -1, errorMsg, false, response.statusCode()));
                 }
                 return results;
             }
@@ -351,14 +351,14 @@ public class BfacApiClient {
         } catch (IOException e) {
             logger.error("Failed to send hashes batch", e);
             for (int i = 0; i < hashInfos.size(); i++) {
-                results.add(new SendHashResult(false, -1, "Connection error: " + e.getMessage(), false));
+                results.add(new SendHashResult(false, -1, "Connection error: " + e.getMessage(), false, -1));
             }
             return results;
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             for (int i = 0; i < hashInfos.size(); i++) {
-                results.add(new SendHashResult(false, -1, "Operation interrupted", false));
+                results.add(new SendHashResult(false, -1, "Operation interrupted", false, -1));
             }
             return results;
         }
@@ -367,11 +367,11 @@ public class BfacApiClient {
     /**
      * Gets the upload status for a file from the backend.
      * @param fileId The file ID in the backend
-     * @return FileUploadStatus or null if failed
+     * @return FileUploadStatus with success or error information
      */
     public FileUploadStatus getUploadStatus(int fileId) {
         if (accessToken == null || accessToken.isEmpty()) {
-            return null;
+            return FileUploadStatus.error(fileId, 401, "Not authenticated");
         }
 
         try {
@@ -394,11 +394,13 @@ public class BfacApiClient {
                     data.has("is_complete") && data.get("is_complete").getAsBoolean()
                 );
             }
-            return null;
+            String errorMsg = "Failed to get upload status: " + response.statusCode();
+            logger.error(errorMsg);
+            return FileUploadStatus.error(fileId, response.statusCode(), errorMsg);
 
         } catch (Exception e) {
             logger.error("Error getting upload status for file {}", fileId, e);
-            return null;
+            return FileUploadStatus.error(fileId, -1, "Connection error: " + e.getMessage());
         }
     }
 
@@ -406,24 +408,24 @@ public class BfacApiClient {
      * Uploads a file segment to the BFAC backend.
      * @param fileId The file ID in the backend
      * @param offset Byte offset for this segment
-     * @param data The segment data
-     * @return FileUploadStatus or null if failed
+     * @param segmentData The segment data
+     * @return FileUploadStatus with success or error information
      */
-    public FileUploadStatus uploadFileSegment(int fileId, long offset, byte[] data) {
+    public FileUploadStatus uploadFileSegment(int fileId, long offset, byte[] segmentData) {
         if (accessToken == null || accessToken.isEmpty()) {
-            return null;
+            return FileUploadStatus.error(fileId, 401, "Not authenticated");
         }
 
         try {
             String url = baseUrl + "api/v1/file-transfer/" + fileId + "/upload-segment" +
-                         "?offset=" + offset + "&segment_size=" + data.length;
+                         "?offset=" + offset + "&segment_size=" + segmentData.length;
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .timeout(TIMEOUT)
                     .header("Authorization", "Bearer " + accessToken)
                     .header("Content-Type", "application/octet-stream")
-                    .POST(HttpRequest.BodyPublishers.ofByteArray(data))
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(segmentData))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -438,13 +440,14 @@ public class BfacApiClient {
                     responseData.has("is_complete") && responseData.get("is_complete").getAsBoolean()
                 );
             } else {
-                logger.error("Error uploading segment: {}", response.body());
-                return null;
+                String errorMsg = "Error uploading segment: " + response.statusCode();
+                logger.error(errorMsg + " - " + response.body());
+                return FileUploadStatus.error(fileId, response.statusCode(), errorMsg);
             }
 
         } catch (Exception e) {
             logger.error("Error uploading segment for file {}", fileId, e);
-            return null;
+            return FileUploadStatus.error(fileId, -1, "Connection error: " + e.getMessage());
         }
     }
 
