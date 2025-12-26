@@ -447,6 +447,7 @@ public class BfacDialog extends JDialog {
         panel.add(new JLabel("Password:"), gbc);
 
         passwordField = new JPasswordField(25);
+        passwordField.addActionListener(e -> onLogin()); // Allow ENTER key to submit
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
         panel.add(passwordField, gbc);
