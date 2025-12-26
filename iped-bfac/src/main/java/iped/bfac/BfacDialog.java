@@ -624,7 +624,7 @@ public class BfacDialog extends JDialog {
         gbc.fill = GridBagConstraints.NONE;
         gbc.weighty = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        uploadFilesCheckBox = new JCheckBox("Upload files (not just hashes)");
+        uploadFilesCheckBox = new JCheckBox("Upload files (not just hashes)", true);
         detailsPanel.add(uploadFilesCheckBox, gbc);
 
         centerPanel.add(detailsPanel);
