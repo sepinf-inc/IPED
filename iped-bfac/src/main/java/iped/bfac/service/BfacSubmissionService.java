@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import iped.bfac.api.BfacApiClient;
 import iped.bfac.api.FileHashInfo;
+import iped.bfac.api.SubmissionResult;
 import iped.data.IItemId;
 
 /**
@@ -51,7 +52,7 @@ public class BfacSubmissionService {
 
         // Step 1: Create submission on backend
         reportProgress("Creating submission on server...", 0, 0);
-        BfacApiClient.SubmissionResult result = apiClient.createSubmission(submissionName, comment, categoryName);
+        SubmissionResult result = apiClient.createSubmission(submissionName, comment, categoryName);
 
         if (!result.isSuccess()) {
             reportProgress("Failed to create submission: " + result.getMessage(), 0, 0);

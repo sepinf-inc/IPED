@@ -144,8 +144,9 @@ public class BfacDialog extends JDialog {
      * Shows the dialog, restoring it if minimized and bringing it to focus.
      */
     public void showDialog() {
-        if (getState() == Frame.ICONIFIED) {
-            setState(Frame.NORMAL);
+        // Restore parent frame if iconified
+        if (parentFrame != null && parentFrame.getState() == Frame.ICONIFIED) {
+            parentFrame.setState(Frame.NORMAL);
         }
         setVisible(true);
         toFront();
