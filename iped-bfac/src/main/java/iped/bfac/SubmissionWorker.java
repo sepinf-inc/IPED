@@ -14,6 +14,7 @@ import javax.swing.SwingWorker;
 import iped.bfac.api.BfacApiClient;
 import iped.bfac.api.FileHashInfo;
 import iped.bfac.api.FileUploadStatus;
+import iped.bfac.api.LoginResult;
 import iped.bfac.api.SendHashResult;
 import iped.bfac.api.SubmissionResult;
 import iped.data.IIPEDSource;
@@ -32,6 +33,7 @@ import iped.search.IMultiSearchResult;
 public class SubmissionWorker extends SwingWorker<Boolean, String> {
 
     private static final int BATCH_SIZE = 50;
+    private static final long TOKEN_RENEWAL_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 
     private final BfacApiClient apiClient;
     private final IIPEDSource ipedSource;
@@ -50,6 +52,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
     private int processedItems = 0;
     private int successCount = 0;
     private int errorCount = 0;
+    private long lastTokenRenewalTime = 0;
 
     /**
      * Callback interface for communication with the dialog.
@@ -167,6 +170,9 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 publish("=== Starting File Upload ===");
                 publish("Files to upload: " + filesToUpload.size());
 
+                // Renew token before starting upload (uploads can take days)
+                renewTokenIfNeeded(true);
+
                 // Reset progress bar for upload phase
                 setProgress(0);
 
@@ -254,6 +260,34 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
     public void cancelOperation() {
         cancelled = true;
         cancel(false);
+    }
+
+    /**
+     * Renews the access token if needed.
+     * Should be called periodically during long-running operations.
+     * @param force If true, renews the token regardless of time elapsed
+     * @return true if token is valid (either already valid or successfully renewed)
+     */
+    private boolean renewTokenIfNeeded(boolean force) {
+        long currentTime = System.currentTimeMillis();
+
+        // Check if we need to renew (first time, forced, or interval elapsed)
+        if (!force && lastTokenRenewalTime > 0 &&
+            (currentTime - lastTokenRenewalTime) < TOKEN_RENEWAL_INTERVAL_MS) {
+            return true; // Token still valid, no need to renew
+        }
+
+        publish("Renewing authentication token...");
+        LoginResult result = apiClient.renewToken();
+
+        if (result.isSuccess()) {
+            lastTokenRenewalTime = currentTime;
+            publish("Token renewed successfully.");
+            return true;
+        } else {
+            publish("WARNING: Token renewal failed: " + result.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -439,6 +473,9 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 byte[] buffer = new byte[segmentSize];
 
                 while (currentOffset < fileSize && !cancelled) {
+                    // Renew token periodically (every 12 hours) during long uploads
+                    renewTokenIfNeeded(false);
+
                     int bytesRead = is.read(buffer);
                     if (bytesRead <= 0) break;
 
