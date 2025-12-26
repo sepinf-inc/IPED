@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -48,7 +48,7 @@ public class MenuClass extends JPopupMenu {
     JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted, readHighlighted, unreadHighlighted, exportChecked, copyChecked, saveBookmarks, loadBookmarks,
             checkHighlightedAndSubItems, uncheckHighlightedAndSubItems, checkHighlightedAndParent, uncheckHighlightedAndParent, checkHighlightedAndReferences, uncheckHighlightedAndReferences, checkHighlightedAndReferencedBy, uncheckHighlightedAndReferencedBy,
             changeGalleryColCount, defaultLayout, changeLayout, previewScreenshot, manageBookmarks, clearSearchHistory, importKeywords, navigateToParent, exportTerms, manageFilters, manageColumns, exportCheckedToZip, exportCheckedTreeToZip,
-            exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
+            exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, openBfacClient, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
             similarFacesCurrent, similarFacesExternal, toggleTimelineView, uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout;
 
     MenuListener menuListener = new MenuListener(this);
@@ -332,6 +332,10 @@ public class MenuClass extends JPopupMenu {
         this.add(addToGraph);
 
         this.addSeparator();
+
+        openBfacClient = new JMenuItem(Messages.getString("MenuClass.OpenBfacClient")); //$NON-NLS-1$
+        openBfacClient.addActionListener(menuListener);
+        this.add(openBfacClient);
 
         createReport = new JMenuItem(Messages.getString("MenuClass.GenerateReport")); //$NON-NLS-1$
         createReport.addActionListener(menuListener);

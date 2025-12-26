@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -439,6 +439,12 @@ public class MenuListener implements ActionListener {
                     JOptionPane.showMessageDialog(App.get(), e1.getMessage());
                 }
             }
+
+        } else if (e.getSource() == menu.openBfacClient) {
+            iped.bfac.BfacDialog bfacDialog = new iped.bfac.BfacDialog(App.get());
+            bfacDialog.setIPEDSource(App.get().appCase);
+            bfacDialog.setBookmarks(App.get().appCase.getMultiBookmarks().getBookmarkSet());
+            bfacDialog.setVisible(true);
 
         } else if (e.getSource() == menu.createReport) {
             new ReportDialog().setVisible();
