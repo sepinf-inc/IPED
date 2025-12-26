@@ -12,10 +12,10 @@ import java.util.Set;
 import javax.swing.SwingWorker;
 
 import iped.bfac.api.BfacApiClient;
-import iped.bfac.api.BfacApiClient.FileUploadStatus;
-import iped.bfac.api.BfacApiClient.SendHashResult;
-import iped.bfac.api.BfacApiClient.SubmissionResult;
 import iped.bfac.api.FileHashInfo;
+import iped.bfac.api.FileUploadStatus;
+import iped.bfac.api.SendHashResult;
+import iped.bfac.api.SubmissionResult;
 import iped.data.IIPEDSource;
 import iped.data.IItem;
 import iped.data.IItemId;

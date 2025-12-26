@@ -45,10 +45,10 @@ import java.awt.event.WindowEvent;
 import javax.swing.JOptionPane;
 
 import iped.bfac.api.BfacApiClient;
-import iped.bfac.api.BfacApiClient.LoginResult;
-import iped.bfac.api.BfacApiClient.ValidationResult;
 import iped.bfac.api.Category;
+import iped.bfac.api.LoginResult;
 import iped.bfac.api.Submission;
+import iped.bfac.api.ValidationResult;
 import iped.data.IIPEDSource;
 
 /**

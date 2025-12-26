@@ -449,72 +449,6 @@ public class BfacApiClient {
     }
 
     /**
-     * Status of a file upload operation.
-     */
-    public static class FileUploadStatus {
-        private final int fileId;
-        private final long totalSize;
-        private final long uploadedSize;
-        private final int segmentSize;
-        private final boolean complete;
-
-        public FileUploadStatus(int fileId, long totalSize, long uploadedSize, int segmentSize, boolean complete) {
-            this.fileId = fileId;
-            this.totalSize = totalSize;
-            this.uploadedSize = uploadedSize;
-            this.segmentSize = segmentSize;
-            this.complete = complete;
-        }
-
-        public int getFileId() { return fileId; }
-        public long getTotalSize() { return totalSize; }
-        public long getUploadedSize() { return uploadedSize; }
-        public int getSegmentSize() { return segmentSize; }
-        public boolean isComplete() { return complete; }
-    }
-
-    /**
-     * Result of a submission creation operation.
-     */
-    public static class SubmissionResult {
-        private final boolean success;
-        private final int submissionId;
-        private final String message;
-
-        public SubmissionResult(boolean success, int submissionId, String message) {
-            this.success = success;
-            this.submissionId = submissionId;
-            this.message = message;
-        }
-
-        public boolean isSuccess() { return success; }
-        public int getSubmissionId() { return submissionId; }
-        public String getMessage() { return message; }
-    }
-
-    /**
-     * Result of a send hash operation.
-     */
-    public static class SendHashResult {
-        private final boolean success;
-        private final int fileId;
-        private final String message;
-        private final boolean fileExistsInBackend;
-
-        public SendHashResult(boolean success, int fileId, String message, boolean fileExistsInBackend) {
-            this.success = success;
-            this.fileId = fileId;
-            this.message = message;
-            this.fileExistsInBackend = fileExistsInBackend;
-        }
-
-        public boolean isSuccess() { return success; }
-        public int getFileId() { return fileId; }
-        public String getMessage() { return message; }
-        public boolean isFileExistsInBackend() { return fileExistsInBackend; }
-    }
-
-    /**
      * Gets the list of available categories from the backend.
      * @return List of Category objects, or empty list on error
      */
@@ -739,25 +673,6 @@ public class BfacApiClient {
         }
     }
 
-    /**
-     * Result of a session validation operation.
-     */
-    public static class ValidationResult {
-        private final boolean valid;
-        private final int statusCode;
-        private final String message;
-
-        public ValidationResult(boolean valid, int statusCode, String message) {
-            this.valid = valid;
-            this.statusCode = statusCode;
-            this.message = message;
-        }
-
-        public boolean isValid() { return valid; }
-        public int getStatusCode() { return statusCode; }
-        public String getMessage() { return message; }
-    }
-
     public String getAccessToken() {
         return accessToken;
     }
@@ -774,26 +689,5 @@ public class BfacApiClient {
      */
     public String getStoredUsername() {
         return config.getStoredUsername();
-    }
-
-    /**
-     * Result of a login or token renewal operation.
-     */
-    public static class LoginResult {
-        private final boolean success;
-        private final String message;
-
-        public LoginResult(boolean success, String message) {
-            this.success = success;
-            this.message = message;
-        }
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public String getMessage() {
-            return message;
-        }
     }
 }
