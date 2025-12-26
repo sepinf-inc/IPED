@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -356,7 +356,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public MenuClass getContextMenu() {
         IItemId id = resultTableListener.getSelectedItemId();
-        IItem item = id == null ? null : appCase.getItemByItemId(id); 
+        IItem item = id == null ? null : appCase.getItemByItemId(id);
         return new MenuClass(item);
     }
 
@@ -1006,7 +1006,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
         butFaceSearch.setEnabled(false);
-        
+
         galleryTabDock.addSeparator();
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
@@ -1508,6 +1508,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowClosing(WindowEvent e) {
+        // Check if BFAC upload is in progress
+        if (!iped.bfac.BfacDialog.confirmApplicationClose(this)) {
+            return; // User cancelled, don't close
+        }
         removeAllDockables();
         this.dispose();
         destroy();

@@ -441,10 +441,10 @@ public class MenuListener implements ActionListener {
             }
 
         } else if (e.getSource() == menu.openBfacClient) {
-            iped.bfac.BfacDialog bfacDialog = new iped.bfac.BfacDialog(App.get());
+            iped.bfac.BfacDialog bfacDialog = iped.bfac.BfacDialog.getInstance(App.get());
             bfacDialog.setIPEDSource(App.get().appCase);
             bfacDialog.setBookmarks(App.get().appCase.getMultiBookmarks().getBookmarkSet());
-            bfacDialog.setVisible(true);
+            bfacDialog.showDialog();
 
         } else if (e.getSource() == menu.createReport) {
             new ReportDialog().setVisible();

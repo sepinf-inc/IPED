@@ -35,8 +35,14 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
+import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import javax.swing.JOptionPane;
 
 import iped.bfac.api.BfacApiClient;
 import iped.bfac.api.BfacApiClient.LoginResult;
@@ -56,6 +62,10 @@ public class BfacDialog extends JDialog {
     private static final String CARD_LOGIN = "login";
     private static final String CARD_SUBMISSION = "submission";
     private static final String CARD_PROGRESS = "progress";
+
+    // Singleton instance
+    private static BfacDialog instance;
+    private JFrame parentFrame;
 
     private CardLayout cardLayout;
     private JPanel cardPanel;
@@ -98,14 +108,129 @@ public class BfacDialog extends JDialog {
     private JButton cancelButton;
     private JButton closeButton;
 
-    public BfacDialog(JFrame parent) {
-        super(parent, "BFAC - Base Federal de Arquivos Conhecidos", true);
+    private BfacDialog(JFrame parent) {
+        super(parent, "BFAC - Base Federal de Arquivos Conhecidos", false); // Non-modal
+        this.parentFrame = parent;
         this.apiClient = new BfacApiClient();
         initComponents();
         initFromStoredCredentials();
         setSize(600, 550);
         setLocationRelativeTo(parent);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+        // Handle window closing
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                handleWindowClosing();
+            }
+        });
+    }
+
+    /**
+     * Gets or creates the singleton instance of BfacDialog.
+     * If the dialog already exists, it will be restored and brought to focus.
+     * @param parent The parent frame
+     * @return The singleton BfacDialog instance
+     */
+    public static synchronized BfacDialog getInstance(JFrame parent) {
+        if (instance == null || !instance.isDisplayable()) {
+            instance = new BfacDialog(parent);
+        }
+        return instance;
+    }
+
+    /**
+     * Shows the dialog, restoring it if minimized and bringing it to focus.
+     */
+    public void showDialog() {
+        if (getState() == Frame.ICONIFIED) {
+            setState(Frame.NORMAL);
+        }
+        setVisible(true);
+        toFront();
+        requestFocus();
+    }
+
+    /**
+     * Handles the window closing event.
+     * If an upload is in progress, asks the user for confirmation.
+     */
+    private void handleWindowClosing() {
+        if (isUploadInProgress()) {
+            int result = JOptionPane.showConfirmDialog(
+                this,
+                "An upload is currently in progress. If you close this window, the upload will be interrupted.\n\n" +
+                "Do you want to close anyway?",
+                "Upload in Progress",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+
+            if (result == JOptionPane.YES_OPTION) {
+                if (currentWorker != null) {
+                    currentWorker.cancelOperation();
+                }
+                closeAndCleanup();
+            }
+            // If NO, do nothing - keep the dialog open
+        } else {
+            closeAndCleanup();
+        }
+    }
+
+    /**
+     * Checks if an upload operation is currently in progress.
+     * @return true if upload is in progress
+     */
+    public boolean isUploadInProgress() {
+        return currentWorker != null && !currentWorker.isDone();
+    }
+
+    /**
+     * Static method to check if there's an active BFAC upload in progress.
+     * Can be called from outside to check before closing the application.
+     * @return true if an upload is in progress
+     */
+    public static boolean hasActiveUpload() {
+        return instance != null && instance.isUploadInProgress();
+    }
+
+    /**
+     * Static method to confirm application close when upload is in progress.
+     * Shows a confirmation dialog if there's an active upload.
+     * @param parent The parent component for the dialog
+     * @return true if the application can be closed, false if user cancelled
+     */
+    public static boolean confirmApplicationClose(java.awt.Component parent) {
+        if (!hasActiveUpload()) {
+            return true;
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+            parent,
+            "BFAC: An upload is currently in progress. If you close the application, the upload will be interrupted.\n\n" +
+            "Do you want to close anyway?",
+            "Upload in Progress",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+
+        if (result == JOptionPane.YES_OPTION) {
+            if (instance != null && instance.currentWorker != null) {
+                instance.currentWorker.cancelOperation();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Closes the dialog and cleans up resources.
+     */
+    private void closeAndCleanup() {
+        instance = null;
+        dispose();
     }
 
     /**
