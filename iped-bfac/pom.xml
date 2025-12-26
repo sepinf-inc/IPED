@@ -13,7 +13,7 @@
     <artifactId>iped-bfac</artifactId>
     <packaging>jar</packaging>
 
-    <name>IPED BFAC Integration</name>
+    <name>iped-bfac</name>
     <description>Integration module for BFAC (Base Federal de Arquivos Conhecidos) - allows submitting files and hashes from IPED cases to BFAC backend</description>
 
     <dependencies>
