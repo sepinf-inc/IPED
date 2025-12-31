@@ -1,6 +1,7 @@
 31/12/2025: IPED-4.3.0
 News:
-#2438: Adds a new remote task to classify images (@joaomacedo, @hauck-jvsh, @marcosammoura)
+#2438: Adds a new remote task to classify CSAM images, depends on proprietary service/model (@joaomacedo, @hauck-jvsh, @marcosammoura)
+#2693: Adds a new local CSAM Detector, depends on proprietary models (@gmdalpian, @marcosammoura, @wladimirleite)
 #377:  Age estimation for faces (@marcosammoura, @aberenguel, @lfcnassif)
 #2565: Use PhotoDNA for videos (@wladimirleite)
 #2648: Add a "AI" tab to the analysis GUI (@wladimirleite, @marcosammoura)
