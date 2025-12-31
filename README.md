@@ -98,7 +98,7 @@ Communication links:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/8b164948-fa36-47b8-a249-f64547a36b28)
 
 Face search:
-![image](https://github.com/sepinf-inc/IPED/assets/7276994/55ceb13c-dc21-40cd-a6e2-a6e3d6ed49a6)
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/d9b37060-afa4-4e9b-ae55-a9d8413ac43a)
 
 Audio Transcription:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/ebded2ad-f88d-43c8-9699-66e498c9939c)
