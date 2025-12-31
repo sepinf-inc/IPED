@@ -37,12 +37,12 @@
         <sleuthkit.version>4.12.0.p1</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <log4j.version>2.25.3</log4j.version>
+        <log4j.version>2.17.1</log4j.version>
         <junit.version>4.13.2</junit.version>
         <hamcrest.version>3.0</hamcrest.version>
         <icepdf.version>7.0.0</icepdf.version>
         <java.dbx.version>1.1-p6</java.dbx.version>
-        <xerial.sqlite.version>3.50.3.0</xerial.sqlite.version>
+        <xerial.sqlite.version>3.41.2.2</xerial.sqlite.version>
         <dockingframes.version>1.1.2</dockingframes.version>
         <telegram.version>1.0.14</telegram.version>
         <twelvemonkeys.version>3.10.1</twelvemonkeys.version>
