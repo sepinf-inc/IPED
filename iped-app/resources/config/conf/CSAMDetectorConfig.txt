@@ -1,0 +1,61 @@
+# Detects Child Sexual Abuse Material (CSAM) using a TensorFlow or PyTorch trained AI model.
+# Must have either tensorflow, onnxruntime, or pytorch with timm installed, see online documentation.
+# To enable the module, set "enableCSAMDetector=true" property in IPEDConfig.txt file
+#
+# Availabel models, with stats for csam class in test dataset (speed is measured in images/s on reference computer with AMD Ryzen 3 5300 CPU):
+#   TENSORFLOW MODELS (for GPU)
+#    	- tensorflow_B0_v3_1.keras    - EfficientNetV2-B0 using tensorflow, image size 224x224 (precision 0.91, recall 0.96, speed 11)
+#
+#	TFLITE MODELS (for CPU - requires tensorflow installation)
+#		- tflite_B0_v3_1.tflite 	- Converted from tensorflow B0 to tflite with 32-bit floating-point (FP32)  (precision 0.89, recall 0.95, speed 56)
+#
+#   PYTORCH MODELS (for GPU)
+#   	- pytorch_B0_v3_1_2.pth     - based on efficientnetv2_b0.in1k, image size 224x224 (precision 0.91, recall 0.92, speed 25)
+#       - TinyViT-5M-21k.pth		- based on tiny_vit_5m_224.dist_in22k, image size 224x224 (precision 0.94, recall 0.96, speed 21)
+#    	- pytorch_S_v3_1.pth      	- based on tf_efficientnetv2_s.in21k_ft_in1k, image size 384x384 (recommended the use of GPU)  (precision 0.96, recall 0.97, speed 5)
+#
+#	ONNX MODELS (for CPU, requires only onnxruntime installation  - less then 20MB)
+#       - pytorch_B0_v3_1_2_fp32.onnx - FASTEST MODE ON GPU, converted from pytorch_B0_v3_1_2.pth (precision 0.91, recall 0.92, speed 60)
+#		- TinyViT-5M-21k_fp32.onnx    - converted from TinyViT-5M-21k.pth (precision 0.94, recall 0.96, speed 21)
+#		- pytorch_S_v3_1_fp32.onnx	  - converted from pytorch_S_v3_1.pth to ONNX FP32 (precision 0.96, recall 0.97, speed 5)
+#
+ModelFile = pytorch_B0_v3_1_2_fp32.onnx
+
+# Batch size to be used. When using the large models this value should  be reduced to avoid GPU memory exaustion
+# For example, recommended size for 12 GB GPU on large models is 16
+# Ignored when using TFLITE or ONNX models
+BatchSize = 16
+
+# Minimum image size to be processed, in bytes (use 0 to disable)
+MinimumImageSize = 2048
+
+# Minimum file dimension, in pixels (use 0 to disable)
+SkipDimension = 10
+
+# Skip files with hits on IPED HashDB database (known and csam)
+SkipHashDBFiles = true
+
+# Creates Bookmarks with files of interest in the end of processing
+CreateBookmarks = false
+
+# Classifies a video using a robust hierarchical logic with an
+# "Override by Ratio Rule" to disambiguate CSAM vs Porn.
+# 
+# The logic is:
+# 1. Count "hits" for CSAM and Porn (based on Threshold and Min_Frames).
+# 2. OVERRIDE RULE:
+#    If (csam_hits > MIN_FRAMES) AND (csam_hits <= AMBIGUITY_MAX) AND (porn_hits > csam_hits * OVERRIDE_RATIO):
+# 	  -> Classify as PORN (assumes False Positive)
+# 3. STANDARD HIERARCHICAL RULE:
+#    If (csam_hits > MIN_FRAMES) -> Classify as CSAM.
+#    If (porn_hits > MIN_FRAMES) -> Classify as PORN.
+#    Else -> Classify as OTHER.
+# Treshold is the score on the respective class
+CsamThreshold = 0.6
+PornThreshold = 0.5
+CsamMinFrames = 1
+PornMinFrames = 1
+# If the percentage of csam frames is above this percentage, video is always categorized as csam
+CsamAmbiguityMaxHitsPercentage = 0.2
+# If csam frames is below percentage, and there are ratio more porn frames, classify video as porn
+CsamPornOverrideRatio = 2
