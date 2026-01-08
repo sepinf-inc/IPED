@@ -254,7 +254,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             }
 
             if (field.equals(BOOKMARK_COL)) {
-                return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(app.ipedResult.getItem(row)));
+                return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(app.ipedResult.getItem(row)), true);
             }
 
             if (item instanceof TimeItemId) {
