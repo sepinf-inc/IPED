@@ -285,6 +285,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     final static String FILTRO_TODOS = Messages.getString("App.NoFilter"); //$NON-NLS-1$
     final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
     public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
+    public final static String ACTIVE_BOOKMARK_QUERY_PROPERTY = "active_bookmark_query"; //$NON-NLS-1$
 
     static int MAX_HITS = 10000;
 
@@ -330,6 +331,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return app;
     }
 
+    public boolean isMultiCase() {
+        return this.isMultiCase;
+    }
+    
     public void setLastSelectedDoc(int lastSelectedDoc) {
         this.lastSelectedDoc = lastSelectedDoc;
     }

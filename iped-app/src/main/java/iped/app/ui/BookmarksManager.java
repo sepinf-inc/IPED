@@ -68,6 +68,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,6 +76,7 @@ import iped.app.ui.bookmarks.BookmarkAndKey;
 import iped.app.ui.bookmarks.BookmarkColorsUtil;
 import iped.app.ui.bookmarks.BookmarkEditDialog;
 import iped.app.ui.bookmarks.BookmarkListRenderer;
+import iped.app.ui.bookmarks.BookmarksMismatchDialog;
 import iped.app.ui.utils.JTextFieldLimited;
 import iped.data.IItem;
 import iped.data.IItemId;
@@ -108,10 +110,12 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     JButton butRemove = new JButton(Messages.getString("BookmarksManager.Remove")); //$NON-NLS-1$
     JButton butEdit = new JButton(Messages.getString("BookmarksManager.Edit")); //$NON-NLS-1$
     JTextFieldLimited newBookmark = new JTextFieldLimited();
-    JTextArea comments = new JTextArea();
+    JTextArea commentsTextArea = new JTextArea();
+    JTextArea queryTextArea = new JTextArea();
     JButton butNew = new JButton(Messages.getString("BookmarksManager.New")); //$NON-NLS-1$
-    JButton butUpdateComment = new JButton(Messages.getString("BookmarksManager.Update")); //$NON-NLS-1$
+    JButton butUpdate = new JButton(Messages.getString("BookmarksManager.Update")); //$NON-NLS-1$
     JButton butDelete = new JButton(Messages.getString("BookmarksManager.Delete")); //$NON-NLS-1$
+    JButton butMismatch = new JButton(Messages.getString("BookmarksManager.Mismatch"));
     DefaultListModel<BookmarkAndKey> listModel = new DefaultListModel<>();
     JList<BookmarkAndKey> list = new JList<>(listModel);
     JScrollPane scrollList = new JScrollPane(list);
@@ -130,7 +134,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         instance.dialog.setVisible(true);
         instance.list.clearSelection();
         instance.newBookmark.setText("");
-        instance.comments.setText("");
+        instance.commentsTextArea.setText("");
+        instance.queryTextArea.setText("");
     }
 
     public static void updateCounters() {
@@ -155,13 +160,24 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
         newBookmark.setLimit(maxBookmarkNameLength);
         newBookmark.setToolTipText(Messages.getString("BookmarksManager.NewBookmark.Tip")); //$NON-NLS-1$
-        comments.setToolTipText(Messages.getString("BookmarksManager.CommentsTooltip")); //$NON-NLS-1$
-        butUpdateComment.setToolTipText(Messages.getString("BookmarksManager.UpdateTooltip")); //$NON-NLS-1$
+        if (App.get().isMultiCase()) {
+            commentsTextArea.setToolTipText(Messages.getString("BookmarksManager.CommentsTooltip.Multicase")); //$NON-NLS-1$
+            queryTextArea.setToolTipText(Messages.getString("BookmarksManager.QueryTooltip.Multicase")); //$NON-NLS-1$
+        }
+        else {
+            commentsTextArea.setToolTipText(Messages.getString("BookmarksManager.CommentsTooltip")); //$NON-NLS-1$
+            queryTextArea.setToolTipText(Messages.getString("BookmarksManager.QueryTooltip")); //$NON-NLS-1$
+        }
+        butUpdate.setToolTipText(Messages.getString("BookmarksManager.UpdateTooltip")); //$NON-NLS-1$
         butNew.setToolTipText(Messages.getString("BookmarksManager.New.Tip")); //$NON-NLS-1$
         butAdd.setToolTipText(Messages.getString("BookmarksManager.Add.Tip")); //$NON-NLS-1$
         butRemove.setToolTipText(Messages.getString("BookmarksManager.Remove.Tip")); //$NON-NLS-1$
         butDelete.setToolTipText(Messages.getString("BookmarksManager.Delete.Tip")); //$NON-NLS-1$
         butEdit.setToolTipText(Messages.getString("BookmarksManager.Edit.Tip")); //$NON-NLS-1$
+        butMismatch.setToolTipText(Messages.getString("BookmarksManager.MismatchButtonTooltip")); //$NON-NLS-1$
+
+        butMismatch.setForeground(Color.RED);
+        butMismatch.setVisible(false);
 
         JPanel top = new JPanel(new GridLayout(3, 2, 0, 5));
         top.add(msg);
@@ -177,7 +193,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         left1.setLayout(new BoxLayout(left1, BoxLayout.PAGE_AXIS));
         JPanel left0 = new JPanel(new GridLayout(0, 1, 0, 0));
         left0.add(butNew);
-        left0.add(butUpdateComment);
+        left0.add(butUpdate);
+        left0.add(butMismatch);
         left1.add(left0);
         left1.add(Box.createVerticalStrut(65));
         JPanel left3 = new JPanel(new GridLayout(0, 1, 0, 0));
@@ -193,10 +210,15 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         left.add(left1, BorderLayout.PAGE_START);
         left.add(left2, BorderLayout.PAGE_END);
 
-        comments.setLineWrap(true);
-        comments.setWrapStyleWord(true);
-        JScrollPane commentScroll = new JScrollPane(comments);
+        commentsTextArea.setLineWrap(true);
+        commentsTextArea.setWrapStyleWord(true);
+        JScrollPane commentScroll = new JScrollPane(commentsTextArea);
         commentScroll.setPreferredSize(new Dimension(300, 50));
+
+        queryTextArea.setLineWrap(true);
+        queryTextArea.setWrapStyleWord(true);
+        JScrollPane queryScroll = new JScrollPane(queryTextArea);
+        queryScroll.setPreferredSize(new Dimension(300, 50));
 
         JLabel shortcutBookmark = new JLabel(Messages.getString("BookmarksManager.KeyStrokeBookmark"));
         shortcutBookmark.setBorder(BorderFactory.createEmptyBorder(6, 1, 0, 0));
@@ -204,7 +226,10 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         JPanel center = new JPanel(new BorderLayout());
         JPanel bookmark = new JPanel(new BorderLayout());
         bookmark.add(newBookmark, BorderLayout.PAGE_START);
-        bookmark.add(commentScroll, BorderLayout.CENTER);
+        Box verticalBox = Box.createVerticalBox();
+        verticalBox.add(commentScroll);
+        verticalBox.add(queryScroll);
+        bookmark.add(verticalBox, BorderLayout.CENTER);
         bookmark.add(shortcutBookmark, BorderLayout.PAGE_END);
         center.add(bookmark, BorderLayout.PAGE_START);
         center.add(scrollList, BorderLayout.CENTER);
@@ -217,11 +242,12 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         dialog.getContentPane().add(pane);
 
         butAdd.addActionListener(this);
-        butUpdateComment.addActionListener(this);
+        butUpdate.addActionListener(this);
         butRemove.addActionListener(this);
         butEdit.addActionListener(this);
         butNew.addActionListener(this);
         butDelete.addActionListener(this);
+        butMismatch.addActionListener(this);
 
         list.addListSelectionListener(this);
         // disable selection by typing
@@ -241,6 +267,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             }
         });
         list.setCellRenderer(new BookmarkListRenderer());
+        list.setFixedCellHeight(19);
 
         dialog.setLocationRelativeTo(App.get());
 
@@ -425,7 +452,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     @Override
     public void actionPerformed(final ActionEvent evt) {
-        if (evt.getSource() == butAdd || evt.getSource() == butRemove || evt.getSource() == butUpdateComment || evt.getSource() == butEdit || evt.getSource() == butDelete) {
+        if (evt.getSource() == butAdd || evt.getSource() == butRemove || evt.getSource() == butUpdate || evt.getSource() == butEdit || evt.getSource() == butDelete) {
             // Check if there is at least one bookmark selected
             if (list.getSelectedIndex() == -1) {
                 showMessage(Messages.getString("BookmarksManager.AlertNoSelectedBookmarks"));
@@ -433,7 +460,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             }
         }
 
-        if (evt.getSource() == butUpdateComment || evt.getSource() == butEdit) {
+        if (evt.getSource() == butUpdate || evt.getSource() == butEdit) {
             // Check if there is more than one bookmark selected
             if (list.getSelectedIndices().length > 1) {
                 showMessage(Messages.getString("BookmarksManager.AlertMultipleSelectedBookmarks"));
@@ -444,11 +471,14 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
         if (evt.getSource() == butNew) {
             String name = newBookmark.getText().trim();
-            String comment = comments.getText().trim();
+            String comment = commentsTextArea.getText().trim();
+            String query = queryTextArea.getText().trim();
             if (!name.isEmpty() && !listModel.contains(new BookmarkAndKey(name))) {
                 multiBookmarks.newBookmark(name);
                 multiBookmarks.setBookmarkComment(name, comment);
+                multiBookmarks.setBookmarkQuery(name, query);
                 multiBookmarks.setBookmarkColor(name, BookmarkColorsUtil.getInitialColor(multiBookmarks.getUsedColors(), name));
+                BookmarksMismatchChecker.get().setMismatch(name, false);
                 updateList();
             }
             list.clearSelection();
@@ -457,13 +487,48 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                     list.setSelectedIndex(i);
                 }
             }
-
         }
-        if (evt.getSource() == butUpdateComment) {
+
+        if (evt.getSource() == butUpdate) {
+            // Show alert if in multicase mode
+            if (App.get().isMultiCase()) {
+                int choice = JOptionPane.showConfirmDialog(dialog, Messages.getString("BookmarksManager.ConfirmUpdate"), 
+                                Messages.getString("BookmarksManager.ConfirmTitle"), JOptionPane.YES_NO_OPTION);
+                if (choice == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }            
             int idx = list.getSelectedIndex();
             String bookmarkName = list.getModel().getElementAt(idx).getName();
-            multiBookmarks.setBookmarkComment(bookmarkName, comments.getText());
+            String newQuery = queryTextArea.getText().trim();
+
+            multiBookmarks.setBookmarkComment(bookmarkName, commentsTextArea.getText().trim());
+            multiBookmarks.setBookmarkQuery(bookmarkName, newQuery);
             multiBookmarks.saveState();
+            BookmarksMismatchChecker.get().setMismatch(bookmarkName, false);
+            queryTextArea.setForeground(Color.BLACK);
+
+            // Hide "Mismatch" button
+            butMismatch.setVisible(false);
+            butMismatch.getParent().revalidate();
+            butMismatch.getParent().repaint();
+
+            // Repaint the list to update the icon (alert icon is removed if there was a mismatch)
+            list.repaint();
+
+            BookmarksController.get().updateUI();
+
+            // Check if the updated bookmark is the only one selected in the bookmark tree
+            // If so, trigger a refresh to apply the new query highlighting
+            Set<String> selectedBookmarks = App.get().bookmarksListener.getSelectedBookmarkNames();
+            if (selectedBookmarks.size() == 1 && selectedBookmarks.contains(bookmarkName)) {
+                // Update the client property with the new query
+                String normalizedQuery = (newQuery != null && !newQuery.isEmpty()) ? newQuery : null;
+                App.get().queryComboBox.putClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY, normalizedQuery);
+                
+                // Trigger file listing update to refresh with new bookmark query
+                App.get().appletListener.updateFileListing();
+            }
         }
 
         if (evt.getSource() == butAdd || evt.getSource() == butRemove || evt.getSource() == butNew) {
@@ -479,16 +544,16 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
         } else if (evt.getSource() == butDelete) {
             int result = JOptionPane.showConfirmDialog(dialog, Messages.getString("BookmarksManager.ConfirmDelete"), //$NON-NLS-1$
-                    Messages.getString("BookmarksManager.ConfirmDelTitle"), JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
+                    Messages.getString("BookmarksManager.ConfirmTitle"), JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
             if (result == JOptionPane.YES_OPTION) {
                 for (int index : list.getSelectedIndices()) {
                     String bookmark = list.getModel().getElementAt(index).getName();
                     multiBookmarks.delBookmark(bookmark);
+                    BookmarksMismatchChecker.get().setMismatch(bookmark, null);
                 }
                 updateList();
                 multiBookmarks.saveState();
                 BookmarksController.get().updateUI();
-
             }
 
         } else if (evt.getSource() == butEdit) {
@@ -520,11 +585,18 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
             if (changed) {
                 multiBookmarks.saveState();
+                boolean queryMismatch = BookmarksMismatchChecker.get().queryMismatch(currentName);
+                BookmarksMismatchChecker.get().setMismatch(currentName, null);
+                BookmarksMismatchChecker.get().setMismatch(newName, queryMismatch);
                 BookmarksController.get().updateUI();
                 list.repaint();
             }
+            
+        } else if (evt.getSource() == butMismatch) {
+            String currentName = list.getSelectedValue().getName();
+            BookmarksMismatchDialog mismatchDialog = new BookmarksMismatchDialog(dialog, currentName, App.get().appCase.getAtomicSources());
+            mismatchDialog.setVisible(true);
         }
-
     }
 
     private ArrayList<IItemId> getUniqueSelectedIds() {
@@ -584,16 +656,45 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        int idx = list.getSelectedIndex();
-        if (idx == -1) {
-            comments.setText(null);
+        // Do nothing if selection has not finished changing
+        if (e.getValueIsAdjusting())
+            return;
+
+        // Behaviour if more than one bookmark is selected
+        int[] selectedIndices = list.getSelectedIndices();
+        if (selectedIndices.length != 1) {
             newBookmark.setText(null);
+            commentsTextArea.setText(null);
+            queryTextArea.setText(null);
+            if (App.get().isMultiCase()) {
+                butMismatch.setVisible(false);
+                butMismatch.getParent().revalidate();
+                butMismatch.getParent().repaint();
+            }
             return;
         }
+
+        int idx = selectedIndices[0];
         String bookmarkName = list.getModel().getElementAt(idx).getName();
-        String comment = App.get().appCase.getMultiBookmarks().getBookmarkComment(bookmarkName);
+        String comments = App.get().appCase.getMultiBookmarks().getBookmarkComment(bookmarkName);
+        String query = App.get().appCase.getMultiBookmarks().getBookmarkQuery(bookmarkName);
+        
         newBookmark.setText(bookmarkName);
-        comments.setText(comment);
+        commentsTextArea.setText(comments);
+        commentsTextArea.setCaretPosition(0);
+        queryTextArea.setText(query);
+        queryTextArea.setCaretPosition(0);
+        boolean queryMismatch = BookmarksMismatchChecker.get().queryMismatch(bookmarkName);
+        if (queryMismatch) {
+            queryTextArea.setForeground(Color.RED);
+        } else {
+            queryTextArea.setForeground(Color.BLACK);
+        }
+
+        // Handle "Mismatch" button visibility
+        butMismatch.setVisible(queryMismatch);
+        butMismatch.getParent().revalidate();
+        butMismatch.getParent().repaint();
     }
 
     @Override

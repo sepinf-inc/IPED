@@ -14,8 +14,11 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.roaringbitmap.RoaringBitmap;
 
+import iped.data.IBookmarks;
+import iped.data.IIPEDSource;
 import iped.data.IMultiBookmarks;
 import iped.engine.data.MultiBitmapBookmarks;
 import iped.engine.search.MultiSearchResult;
@@ -76,6 +79,20 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             }
         }
 
+        // Store bookmark query for the filter to use
+        if (selection.size() == 1) {
+            Object selected = selection.iterator().next();
+            if (selected != BookmarksTreeModel.ROOT && selected != BookmarksTreeModel.NO_BOOKMARKS) {
+                String bookmarkName = selected.toString();
+                String unifiedQuery = getUnifiedBookmarkQuery(bookmarkName);
+                App.get().queryComboBox.putClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY, unifiedQuery);
+            } else {
+                App.get().queryComboBox.putClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY, null);
+            }
+        } else {
+            App.get().queryComboBox.putClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY, null);
+        }
+        
         if (!clearing)
             App.get().appletListener.updateFileListing();
 
@@ -85,6 +102,62 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             App.get().setBookmarksDefaultColor(false);
         }
 
+    }
+
+    /**
+     * Checks if a bookmark has the same query across all cases in multicase mode.
+     * Returns the query if they're all identical, or null if they differ or don't exist.
+     */
+    private String getUnifiedBookmarkQuery(String bookmarkName) {
+        IMultiBookmarks mm = App.get().appCase.getMultiBookmarks();
+
+        if (!App.get().isMultiCase()) {
+            // Single case - just return the query
+            return mm.getBookmarkQuery(bookmarkName);
+        }
+        
+        // Multicase
+        if (!(mm instanceof MultiBitmapBookmarks)) {
+            return null;
+        }
+
+        // Check bookmark query for the bookmark in all cases
+        String unifiedQuery = null;
+        boolean foundBookmark = false;
+        for (IIPEDSource source : App.get().appCase.getAtomicSources()) {
+            IBookmarks bookmarks = source.getBookmarks();
+
+            // Get bookmark ID for the bookmark in this case
+            int bookmarkId = bookmarks.getBookmarkId(bookmarkName);
+            if (bookmarkId == -1) {
+                continue; // the bookmark does not exist in this case
+            }
+
+            String caseQuery = bookmarks.getBookmarkQuery(bookmarkId);
+
+            // Normalize null/empty to null for comparison
+            String normalizedCaseQuery = (caseQuery != null && !caseQuery.trim().isEmpty()) ? caseQuery.trim() : null;
+
+            if (!foundBookmark) {
+                // First case where the bookmark exists
+                unifiedQuery = normalizedCaseQuery;
+                foundBookmark = true;
+            } else {
+                // Check if this case's query matches the unified query
+                if (unifiedQuery == null && normalizedCaseQuery == null) {
+                    // Both null - continue
+                    continue;
+                } else if (unifiedQuery == null || normalizedCaseQuery == null) {
+                    // One is null, the other isn't - queries differ
+                    return null;
+                } else if (!unifiedQuery.equals(normalizedCaseQuery)) {
+                    // Queries differ between cases
+                    return null;
+                }
+            }
+        }
+        
+        return unifiedQuery;
     }
 
     public void updateModelAndSelection() {
@@ -210,26 +283,94 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
 }
 
 class BookMarkFilter implements IResultSetFilter, IMutableFilter, IBitmapFilter {
-    Set<String> bookmark;
+    Set<String> bookmarks;
 
-    public BookMarkFilter(Set<String> bookmark2) {
-        this.bookmark = bookmark2;
+    public BookMarkFilter(Set<String> bookmarks) {
+        this.bookmarks = bookmarks;
     }
 
     @Override
     public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
-        return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(src, (Set<String>) bookmark);
+        IMultiSearchResult bookmarkedItems = App.get().appCase.getMultiBookmarks().filterBookmarks(src, bookmarks);
+        
+        // Get the global query
+        org.apache.lucene.search.Query globalQuery = App.get().getQuery();
+        
+        // Get the bookmark query if available
+        String bookmarkQueryStr = (String) App.get().queryComboBox.getClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY);
+        org.apache.lucene.search.Query bookmarkQuery = null;
+        
+        if (bookmarkQueryStr != null && !bookmarkQueryStr.trim().isEmpty()) {
+            try {
+                bookmarkQuery = new iped.engine.search.QueryBuilder(App.get().appCase).getQuery(bookmarkQueryStr);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        
+        // Combine queries for search execution
+        org.apache.lucene.search.Query combinedQuery = globalQuery;
+        
+        if (bookmarkQuery != null) {
+            if (globalQuery != null) {
+                // Combine both queries with AND logic
+                org.apache.lucene.search.BooleanQuery.Builder builder = new org.apache.lucene.search.BooleanQuery.Builder();
+                builder.add(globalQuery, org.apache.lucene.search.BooleanClause.Occur.MUST);
+                builder.add(bookmarkQuery, org.apache.lucene.search.BooleanClause.Occur.MUST);
+                combinedQuery = builder.build();
+            } else {
+                combinedQuery = bookmarkQuery;
+            }
+        }
+
+        if (combinedQuery == null) {
+            return bookmarkedItems;
+        }
+
+        // Execute the search using the combined query
+        iped.engine.search.IPEDSearcher searcher = new iped.engine.search.IPEDSearcher(App.get().appCase, combinedQuery);
+        IMultiSearchResult queryMatches = (IMultiSearchResult) searcher.search();
+
+        // Return the intersection of bookmarked items and search hits
+        return intersect(bookmarkedItems, queryMatches);
+    }
+
+    /**
+     * Keeps only items that exist in both result sets.
+     */
+    private IMultiSearchResult intersect(IMultiSearchResult bmkResults, IMultiSearchResult queryResults) {
+        // Iterate through the items in query results
+        java.util.Set<iped.data.IItemId> queryIds = new java.util.HashSet<>();
+        for (iped.data.IItemId id : queryResults.getIterator()) {
+            queryIds.add(id);
+        }
+
+        // Iterate through the items in bookmark results
+        java.util.List<iped.data.IItemId> finalIds = new java.util.ArrayList<>();
+        java.util.List<Float> finalScores = new java.util.ArrayList<>();
+        for (int i = 0; i < bmkResults.getLength(); i++) {
+            iped.data.IItemId bmkItem = bmkResults.getItem(i);
+            if (queryIds.contains(bmkItem)) {
+                finalIds.add(bmkItem);
+                finalScores.add(bmkResults.getScore(i));
+            }
+        }
+
+        return new iped.engine.search.MultiSearchResult(
+            finalIds.toArray(new iped.data.IItemId[0]), 
+            ArrayUtils.toPrimitive(finalScores.toArray(new Float[0]))
+        );
     }
 
     public String toString() {
-        return bookmark.toString();
+        return bookmarks.toString();
     }
 
     @Override
     public RoaringBitmap[] getBitmap() {
         IMultiBookmarks mm = App.get().appCase.getMultiBookmarks();
         if (mm instanceof MultiBitmapBookmarks) {
-            return ((MultiBitmapBookmarks) mm).getBookmarksUnions(bookmark);
+            return ((MultiBitmapBookmarks) mm).getBookmarksUnions(bookmarks);
         }
         return null;
     }
