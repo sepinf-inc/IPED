@@ -29,12 +29,14 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.ai.AIFiltersLoader;
 import iped.app.ui.columns.ColumnsManagerUI;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.EvidenceStatus;
 import iped.engine.core.Manager;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.SignatureTask;
 import iped.parsers.standard.StandardParser;
@@ -94,6 +96,14 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
 
             App.get().appCase.checkImagePaths();
             App.get().appCase.getMultiBookmarks().addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
+            App.get().getViewerController().notifyAppLoaded();
+
+            // only configure PreviewRepository when opening in AppMain (case not being processed)
+            if (Manager.getInstance() == null) {
+                App.get().appCase.getAtomicSources().forEach(ipedCase -> {
+                    PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
+                });
+            }
 
             if (!updateItems) {
                 App.get().appGraphAnalytics.initGraphService();
@@ -189,6 +199,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
     public void done() {
         try {
             CategoryTreeModel.install();
+            AIFiltersLoader.load();
             App.get().filterManager.loadFilters();
             BookmarksController.get().updateUIandHistory();
 
@@ -204,5 +215,4 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
             App.get().dialogBar.setVisible(false);
         }
     }
-
 }

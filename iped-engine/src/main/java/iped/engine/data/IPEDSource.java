@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -44,7 +45,6 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
@@ -112,6 +112,7 @@ public class IPEDSource implements IIPEDSource {
 
     protected ArrayList<String> leafCategories = new ArrayList<String>();
     protected Category categoryTree;
+    protected final Map<String, Set<String>> descendantsCategories = new HashMap<String, Set<String>>();
 
     private IBookmarks bookmarks;
     IMultiBookmarks multiBookmarks;
@@ -161,6 +162,7 @@ public class IPEDSource implements IIPEDSource {
         this(casePath, iw, true);
     }
 
+    @SuppressWarnings("unchecked")
     public IPEDSource(File casePath, IndexWriter iw, boolean askImagePathIfNotFound) {
         this.askImagePathIfNotFound = askImagePathIfNotFound;
         this.casePath = casePath;
@@ -218,7 +220,7 @@ public class IPEDSource implements IIPEDSource {
 
             openIndex(index, iw);
 
-            BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
+            IndexSearcher.setMaxClauseCount(Integer.MAX_VALUE);
             analyzer = AppAnalyzer.get();
 
             populateLuceneIdToIdMap();
@@ -230,6 +232,7 @@ public class IPEDSource implements IIPEDSource {
 
             loadLeafCategories();
             loadCategoryTree();
+            buildDescendantsCategories(categoryTree);
 
             loadKeywords();
 
@@ -374,6 +377,27 @@ public class IPEDSource implements IIPEDSource {
         categoryTree = root;
     }
 
+    private void buildDescendantsCategories(Category category) {
+        Set<String> descendants = new HashSet<String>();
+        fillDescendants(category, category, descendants);
+        if (!descendants.isEmpty()) {
+            descendantsCategories.put(category.getName().toLowerCase(), descendants);
+        }
+
+        Set<Category> children = category.getChildren();
+        for (Category child : children) {
+            buildDescendantsCategories(child);
+        }
+    }
+
+    private void fillDescendants(Category ancestral, Category current, Set<String> descendants) {
+        Set<Category> children = current.getChildren();
+        for (Category child : children) {
+            descendants.add(child.getName().toLowerCase());
+            fillDescendants(ancestral, child, descendants);
+        }
+    }
+
     private boolean checkAndAddMissingCategory(Category root, Category leaf) {
         boolean found = false;
         if (leaf.getName().equalsIgnoreCase(root.getName())) {
@@ -421,19 +445,19 @@ public class IPEDSource implements IIPEDSource {
         if (category.getNumItems() != -1)
             return category.getNumItems();
 
-        int num = 0;
         for (Category child : category.getChildren()) {
-            num += countNumItems(child);
+            countNumItems(child);
         }
 
         String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
         IPEDSearcher searcher = new IPEDSearcher(this, query);
         searcher.setNoScoring(true);
+        int num = 0;
         try {
             if (this instanceof IPEDMultiSource) {
-                num += searcher.multiSearch().getLength();
+                num = searcher.multiSearch().getLength();
             } else {
-                num += searcher.search().getLength();
+                num = searcher.search().getLength();
             }
 
         } catch (Exception e) {
@@ -716,6 +740,10 @@ public class IPEDSource implements IIPEDSource {
 
     public List<String> getLeafCategories() {
         return leafCategories;
+    }
+
+    public Set<String> getDescendantsCategories(String ancestral) {
+        return descendantsCategories.get(ancestral);
     }
 
     public Category getCategoryTree() {

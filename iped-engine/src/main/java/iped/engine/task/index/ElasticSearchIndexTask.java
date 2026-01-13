@@ -57,6 +57,7 @@ import iped.engine.config.IndexTaskConfig;
 import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
+import iped.engine.task.index.IndexItem.KnnVector;
 import iped.engine.task.similarity.ImageSimilarity;
 import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.engine.util.SSLFix;
@@ -67,7 +68,6 @@ import iped.io.ISeekableInputStreamFactory;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
-import jep.NDArray;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 
@@ -554,7 +554,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     }
 
-    public static final int[] convArrayListLongToInt(ArrayList<Long> nd) {
+    public static final int[] convArrayListLongToInt(List<Long> nd) {
         int[] result = new int[nd.size()];
         for (int i = 0; i < result.length; i++) {
             result[i] = nd.get(i).intValue();
@@ -562,6 +562,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     private XContentBuilder getJsonMetadataBuilder(IItem item) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
@@ -595,11 +596,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
 
         if (extraAttributes.containsKey(ExtraProperties.FACE_ENCODINGS) && extraAttributes.containsKey(ExtraProperties.FACE_LOCATIONS)) {
-            ArrayList<NDArray> face_encodings = (ArrayList<NDArray>) extraAttributes.get(ExtraProperties.FACE_ENCODINGS);
-            ArrayList<ArrayList<Long>> face_locations = (ArrayList) extraAttributes.get(ExtraProperties.FACE_LOCATIONS);
+            List<KnnVector> face_encodings = (List<KnnVector>) extraAttributes.get(ExtraProperties.FACE_ENCODINGS);
+            List<List<Long>> face_locations = (List<List<Long>>) extraAttributes.get(ExtraProperties.FACE_LOCATIONS);
             ArrayList<Map<String, Object>> faces = new ArrayList<>();
             for (int i = 0; i < face_encodings.size(); i++) {
-                float encoding[] = IndexItem.convNDArrayToFloatArray(face_encodings.get(i));
+                float encoding[] = IndexItem.convDoubleToFloatArray(face_encodings.get(i).getArray());
                 int location[] = convArrayListLongToInt(face_locations.get(i));
                 Map<String, Object> map = new HashMap<>();
                 map.put("face_encoding", encoding);
@@ -634,9 +635,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     if (prevIt.length == 2) {
                         previewInDataSource.put(prevIt[0], prevIt[1]);
                     }
-                }
-                if (item.getViewFile() != null) {
-                    previewInDataSource.put("size", Long.toString(item.getViewFile().length()));
                 }
                 builder.field(key, previewInDataSource);
 

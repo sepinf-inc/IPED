@@ -9,7 +9,9 @@ import java.awt.RenderingHints;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
+import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
+import java.awt.image.WritableRaster;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -127,6 +129,10 @@ public class ImageUtil {
 
     public static BufferedImage getSubSampledImage(InputStream inputStream, int size) {
         return doGetSubSampledImage(inputStream, size, null, null);
+    }
+
+    public static BufferedImage getSubSampledImage(InputStream inputStream, int size, String mimeType) {
+        return doGetSubSampledImage(inputStream, size, null, mimeType);
     }
 
     public static BufferedImage getSubSampledImage(File file, int size, String mimeType) {
@@ -392,7 +398,7 @@ public class ImageUtil {
      *
      * @return Array com {BufferedImage, String}
      */
-    public static Object[] readJpegWithMetaData(File inFile) throws IOException {
+    public static Object[] readJpegWithMetaData(Object inFile) throws IOException {
         ImageReader reader = null;
         ImageInputStream iis = null;
         try {
@@ -535,7 +541,7 @@ public class ImageUtil {
         return result;
     }
 
-    public static List<BufferedImage> getFrames(File videoFramesFile) throws IOException {
+    public static List<BufferedImage> getFrames(Object videoFramesFile) throws IOException {
         Object[] read = ImageUtil.readJpegWithMetaData(videoFramesFile);
         if (read != null && read.length == 2) {
             String videoComment = (String) read[1];
@@ -819,5 +825,17 @@ public class ImageUtil {
             }
         }
         pluginsPriorityUpdated = true;
+    }
+
+    public static BufferedImage cloneImage(BufferedImage source) {
+        if (source == null) {
+            return null;
+        }
+
+        ColorModel cm = source.getColorModel();
+        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+        WritableRaster raster = source.copyData(null);
+
+        return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
     }
 }

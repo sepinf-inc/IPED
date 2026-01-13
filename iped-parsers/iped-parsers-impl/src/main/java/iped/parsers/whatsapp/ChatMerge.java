@@ -20,7 +20,7 @@ public class ChatMerge {
         }
     }
 
-    public boolean isBackup(List<Chat> backup) {
+    public boolean isBackup(List<Chat> backup, WAContactsDirectory contacts) {
         if (backup == null) {
             return false;
         }
@@ -29,7 +29,8 @@ public class ChatMerge {
         for (Chat c : backup) {
             indexmain = findChat(main, c);
             if (indexmain >= 0) {// verify if the chats are compatible
-                if (!c.getRemote().getId().equals(main.get(indexmain).getRemote().getId())) {
+                if (!contacts.getContact(c.getRemote().getId())
+                        .matches(contacts.getContact(main.get(indexmain).getRemote().getId()))) {
                     // if there is a chat incompatible the msgstore is not a backup
                     return false;
                 } else if (hasCompatibleMessage(c.getMessages(), main.get(indexmain).getMessages())) {

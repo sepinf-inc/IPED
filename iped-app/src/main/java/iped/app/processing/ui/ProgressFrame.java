@@ -77,6 +77,7 @@ import iped.utils.LocalizedFormat;
  */
 public class ProgressFrame extends JFrame implements PropertyChangeListener, ActionListener {
 
+    private static final int MAX_PROGRESS_BAR = 10000;
     private static final long serialVersionUID = -1130342847618772236L;
     private JProgressBar progressBar;
     private JButton pause, openApp;
@@ -142,6 +143,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         progressBar.setPreferredSize(new Dimension(600, 40));
         progressBar.setStringPainted(true);
         progressBar.setString(Messages.getString("ProgressFrame.Starting")); //$NON-NLS-1$
+        progressBar.setMaximum(MAX_PROGRESS_BAR);
 
         pause = new JButton(Messages.getString("ProgressFrame.Pause")); //$NON-NLS-1$
         pause.addActionListener(this);
@@ -206,7 +208,20 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         int processedVolume = (int)(Statistics.get().getVolume() >>> 20); // Converted to MB
         int processedItems = Statistics.get().getProcessed();
 
-        progressBar.setMaximum(totalVolume);
+        long interval = (System.currentTimeMillis() - processingStart) / 1000 + 1;
+        rate = processedVolume * 3600L / ((1 << 10) * interval);
+        instantRate = (processedVolume - prevVolume) * 3600L / (1 << 10) + 1;
+
+        if (discoverEnded) {
+            float volumeProgress = (float) processedVolume / totalVolume;
+            float itemsProgress = (float) processedItems / totalItems;
+            int newProgressValue = (int) (MAX_PROGRESS_BAR * (volumeProgress + itemsProgress) / 2);
+
+            // Ensure progress only moves forward, even if totalItems increases
+            if (newProgressValue > progressBar.getValue()) {
+                progressBar.setValue(newProgressValue);
+            }
+        }
         
         tasks.setText(getTaskTimes());
         itens.setText(getItemList());
@@ -214,14 +229,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         parsers.setText(getParserTimes());
         if (processedItems > 0)
             openApp.setEnabled(true);
-
-        if (discoverEnded) {
-            progressBar.setValue(processedVolume);
-        }
-
-        long interval = (System.currentTimeMillis() - processingStart) / 1000 + 1;
-        rate = processedVolume * 3600L / ((1 << 10) * interval);
-        instantRate = (processedVolume - prevVolume) * 3600L / (1 << 10) + 1;
 
         String msg = progressBar.getString();
         if (processedItems > 0) {
@@ -231,8 +238,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         }
 
         if (discoverEnded && processingStart != 0) {
-            secsToEnd = (totalVolume - processedVolume) * (System.currentTimeMillis() - processingStart)
+            long secsToEndVolume = (totalVolume - processedVolume) * (System.currentTimeMillis() - processingStart)
                     / ((processedVolume + 1) * 1000L);
+            long secsToEndItems = (totalItems - processedItems) * (System.currentTimeMillis() - processingStart)
+                    / ((processedItems + 1) * 1000L);
+            secsToEnd = Math.max(secsToEndVolume, secsToEndItems);
             msg += Messages.getString("ProgressFrame.FinishIn") + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m "
                     + secsToEnd % 60 + "s";
         } else if (decodingDir != null) {

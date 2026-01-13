@@ -11,12 +11,14 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.core.Manager;
 import iped.engine.core.QueuesProcessingOrder;
 import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
 import iped.engine.core.Worker.STATE;
 import iped.engine.data.CaseData;
 import iped.engine.io.TimeoutException;
+import iped.exception.IPEDException;
 import iped.parsers.util.CorruptedCarvedException;
 
 /**
@@ -334,5 +336,26 @@ public abstract class AbstractTask {
      * Default implementation does nothing. 
      */
     public void interrupted() {
+    }
+
+    protected void checkDependency(Class<? extends AbstractTask> requiredTask) throws IPEDException {
+        if (Manager.getInstance() != null) {
+            Worker[] workers = Manager.getInstance().getWorkers();
+            String requiredName = requiredTask.getName();
+            if (workers != null) {
+                List<AbstractTask> tasks = workers[0].tasks;
+                for (AbstractTask task : tasks) {
+                    if (task.getClass().equals(requiredTask)) {
+                        requiredName = task.getName();
+                        if (task.isEnabled()) {
+                            return;
+                        }
+                        break;
+                    }
+                }
+            }
+            String msg = getName() + " requires that " + requiredName + " is enabled!";
+            throw new IPEDException(msg);
+        }
     }
 }

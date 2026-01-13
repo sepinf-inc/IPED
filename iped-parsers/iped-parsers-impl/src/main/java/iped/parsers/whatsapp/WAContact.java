@@ -168,4 +168,10 @@ public class WAContact {
         return this.getFullId().hashCode();
     }
 
+    public boolean matches(WAContact o) {
+        if (id != null && o.id != null && id.equals(o.id)) {
+            return true;
+        }
+        return true;
+    }
 }

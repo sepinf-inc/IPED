@@ -143,7 +143,7 @@ public class ReportGenerator {
     private static final String[] tagsWA = { "```", "*", "_", "~" };
     private static final String[] tagsHTML = { "tt", "b", "i", "s" };
 
-    private static final String convertWhatsAppTagsToHTML(String s) {
+    public static final String convertWhatsAppTagsToHTML(String s) {
         int start = 0;
         while (start < s.length()) {
             int min = s.length();
@@ -220,6 +220,10 @@ public class ReportGenerator {
                     // These messages are currently redundant with calls information already
                     // extracted from other tables (these come from messages table). So, at least
                     // for now, nothing should be included in the report.
+                    continue;
+                }
+                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION) {
+                    // These messages are not visible on the app and don't contain any data
                     continue;
                 }
                 String thisDate = dateFormat.format(m.getTimeStamp());
@@ -576,18 +580,20 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
                 boolean selfAction = false;
-                if (users.size() == 1) {
+                if (users.size() == 0) {
+                    if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP || message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
+                        out.print(Messages.getString("WhatsAppReport.WasAdded"));
+                        selfAction = true;
+                    }
+                } else if (users.size() == 1) {
                     String user = users.get(0);
                     user = getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account);
                     if (user != null && user.equals(name)) {
                         if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
                             out.print(Messages.getString("WhatsAppReport.RemovedGroup"));
                             selfAction = true;
-                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP) {
-                            out.print(Messages.getString("WhatsAppReport.AddedToGroup"));
-                            selfAction = true;
-                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
-                            out.print(Messages.getString("WhatsAppReport.AddedToCommunity"));
+                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP || message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
+                            out.print(Messages.getString("WhatsAppReport.WasAdded"));
                             selfAction = true;
                         } else if (message.getMessageType() == MessageType.USER_COMMUNITY_ADMIN) {
                             out.print(Messages.getString("WhatsAppReport.CommunityAdmin"));
@@ -753,6 +759,10 @@ public class ReportGenerator {
             case CHAT_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChatAddedPrivacy") + "<br>");
+                break;
+            case ADVANCED_PRIVACY_ON:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.AdvancedPrivacyOn") + "<br>");
                 break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");

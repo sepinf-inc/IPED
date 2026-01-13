@@ -26,6 +26,22 @@ enableLedDie = false
 # An attribute nsfw_nudity_score from 0 to 100 will be created.
 enableYahooNSFWDetection = false
 
+# [Experimental] Detects Child Sexual Abuse Material (CSAM) using a TensorFlow, PyTorch or ONNX AI model.
+#
+# Prerequisites: Python and the TensorFlow, PyTorch or ONNX library, generated thumbnails for images and videos, file hashes
+#
+# This feature assigns the following properties to the image and video files: 
+#     ai:csamDetector:label - classification, possible values are csam, porn or other
+#     ai:csamDetector:csam, ai:csamDetector:porn, ai:csamDetector:other - confidence from 0 to 100 to each category
+# To video files the following properties are added, as well:
+#     ai:csamDetector:triggerFrame - frame number with the most confidence from the video thumbs
+#     ai:csamDetector:hitPercentage - percentagem of the total frames analyzed from the csam or porn categories
+#     ai:csamDetector:avgConfidence - average of all the confidences of the chosen categorization
+#
+# To change the model to be used and other parameters edit file in conf/CSAMDetector.txt
+#
+enableCSAMDetector = false
+
 # Enables QRcode detection and decoding
 enableQRCode = false
 
@@ -88,7 +104,7 @@ indexFileContents = true
 # You must configure at least host/port options in conf/ElasticSearchConfig.txt
 enableIndexToElasticSearch = false
 
-# Enable exporting files to MinIO object storage cluster.
+# Enables exporting files to MinIO object storage cluster.
 # You must configure at least host/port options in conf/MinIOConfig.txt
 enableMinIO = false
 
@@ -96,7 +112,7 @@ enableMinIO = false
 # OCR language dictionary and other advanced configurations can be found in conf/OCRConfig.txt.
 enableOCR = false
 
-# Enable audio transcription.
+# Enables audio transcription.
 # Default implementation uses VOSK transcription on local CPU (faster but bad accuracy).
 # You can change the algorithm into conf/AudioTranscriptConfig.txt:
 # - Wav2Vec2 algorithm (slower and good accuracy)
@@ -131,6 +147,11 @@ enableImageSimilarity = false
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 enableFaceRecognition = false
 
+# Enables age estimation feature.
+# You may install python and some dependencies, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#AgeEstimation
+# Advanced configuration options can be found in conf/AgeEstimationConfig.txt.
+enableAgeEstimation = false
+
 # Enables searching for crypto hardware wallets.
 enableSearchHardwareWallets = true
 
@@ -145,3 +166,8 @@ enableDocThumbs = false
 # Enables HTML report generation on automatic extractions or from selected items.
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = true
+
+# Enables remote image classifier.
+# It performs classification of image and video files.
+# Advanced settings can be modified in file "conf/RemoteImageClassifierConfig.txt"
+enableRemoteImageClassifier = false

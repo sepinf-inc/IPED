@@ -7,12 +7,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.IntPoint;
@@ -206,6 +208,10 @@ public class QueryBuilder {
     }
 
     public Query rewriteQuery(Query query) {
+        return rewriteQuery(query, true);
+    }
+
+    public Query rewriteQuery(Query query, boolean expandCategories) {
         if (query == null) {
             return null;
         }
@@ -221,18 +227,32 @@ public class QueryBuilder {
         } else if (query instanceof BooleanQuery) {
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
             for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
-                builder.add(rewriteQuery(clause.getQuery()), clause.getOccur());
+                builder.add(rewriteQuery(clause.getQuery(), expandCategories), clause.getOccur());
             }
             builder.setMinimumNumberShouldMatch(((BooleanQuery) query).getMinimumNumberShouldMatch());
             return builder.build();
 
         } else if (query instanceof BoostQuery) {
             BoostQuery bq = (BoostQuery) query;
-            return new BoostQuery(rewriteQuery(bq.getQuery()), bq.getBoost());
+            return new BoostQuery(rewriteQuery(bq.getQuery(), expandCategories), bq.getBoost());
 
         } else if (query instanceof TermQuery) {
             Term term = ((TermQuery) query).getTerm();
-            return getContentQuery(new TermQuery(getNonLocalizedTerm(term)), term.field());
+            term = getNonLocalizedTerm(term);
+            if (expandCategories && BasicProps.CATEGORY.equals(term.field())) {
+                String value = term.text();
+                Set<String> descendants = ipedCase.getDescendantsCategories(value);
+                if (descendants != null) {
+                    BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                    builder.add(query, Occur.SHOULD);
+                    for (String descendant : descendants) {
+                        builder.add(new TermQuery(new Term(term.field(), descendant)), Occur.SHOULD);
+                    }
+                    BooleanQuery expandedQuery = builder.build();
+                    return rewriteQuery(expandedQuery, false);
+                }
+            }
+            return getContentQuery(new TermQuery(term), term.field());
 
         } else if (query instanceof PhraseQuery) {
             PhraseQuery pq = (PhraseQuery) query;
@@ -287,7 +307,7 @@ public class QueryBuilder {
 
         } else if (query instanceof ConstantScoreQuery) {
             ConstantScoreQuery q = (ConstantScoreQuery) query;
-            return new ConstantScoreQuery(rewriteQuery(q.getQuery()));
+            return new ConstantScoreQuery(rewriteQuery(q.getQuery(), expandCategories));
 
         } else {
             // TODO: handle MultiPhraseQuery and DisjunctionMaxQuery
@@ -312,28 +332,31 @@ public class QueryBuilder {
     }
 
     public Set<String> getQueryStrings(String queryText) {
+
+        Set<String> result = new HashSet<>();
         Query query = null;
         if (queryText != null) {
             try {
                 query = getQuery(queryText, spaceAnalyzer);
-
+                result.addAll(getQueryStrings(query));
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
 
-        Set<String> result = getQueryStrings(query);
-
-        if (queryText != null) {
             try {
                 query = getQuery(queryText, ipedCase.getAnalyzer());
+                result.addAll(getQueryStrings(query));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
+            try {
+                query = getQuery(queryText, new KeywordAnalyzer());
+                result.addAll(getQueryStrings(query));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
-        result.addAll(getQueryStrings(query));
 
         logger.info("Expanded query terms: {}", result.toString());
 
@@ -345,7 +368,6 @@ public class QueryBuilder {
     }
 
     public Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException {
-
         if(texto.trim().startsWith("* "))
             texto = texto.trim().replaceFirst("\\* ", "*:* ");
 
@@ -408,6 +430,8 @@ public class QueryBuilder {
             }
             if(allNegative) {
                 builder.add(new MatchAllDocsQuery(), Occur.SHOULD);
+            } else {
+                builder.setMinimumNumberShouldMatch(((BooleanQuery) q).getMinimumNumberShouldMatch());
             }
             return builder.build();
         }
