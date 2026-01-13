@@ -394,7 +394,7 @@ public class HTMLReportTask extends AbstractTask {
         File pdf_cmds = File.createTempFile("pdf_cmds", ".tmp");
         pdf_cmds.deleteOnExit();
 
-        File pdfTempOutput = File.createTempFile("report", ".pdf");
+        File pdfTempOutput = File.createTempFile(Messages.getString("HTMLReportTask.ReportFileName").replace(".htm",""), ".pdf");
         pdfTempOutput.deleteOnExit();
 
         List<String> arguments = new ArrayList<String>();
