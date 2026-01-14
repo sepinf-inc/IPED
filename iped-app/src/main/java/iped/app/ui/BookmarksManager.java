@@ -99,12 +99,16 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     public static final int maxBookmarkNameLength = 256;
 
+    private static boolean hiddenBookmarkQueryMode = false;
+
     JDialog dialog = new JDialog(App.get());
-    JLabel msg = new JLabel(Messages.getString("BookmarksManager.Dataset")); //$NON-NLS-1$
+    JLabel options = new JLabel(Messages.getString("App.Options") + ":"); //$NON-NLS-1$
+    JLabel dataset = new JLabel(Messages.getString("BookmarksManager.Dataset")); //$NON-NLS-1$
     JRadioButton highlighted = new JRadioButton();
     JRadioButton checked = new JRadioButton();
     ButtonGroup group = new ButtonGroup();
-    JCheckBox duplicates = new JCheckBox();
+    JCheckBox duplicates = new JCheckBox(Messages.getString("BookmarksManager.AddDuplicates")); //$NON-NLS-1$
+    JCheckBox showBookmarkQueryModeCheckbox = new JCheckBox(Messages.getString("BookmarksManager.ShowBookmarkQueryPanel")); //$NON-NLS-1$
     JButton butAdd = new JButton(Messages.getString("BookmarksManager.Add")); //$NON-NLS-1$
     JButton butRemove = new JButton(Messages.getString("BookmarksManager.Remove")); //$NON-NLS-1$
     JButton butEdit = new JButton(Messages.getString("BookmarksManager.Edit")); //$NON-NLS-1$
@@ -144,16 +148,31 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 + LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalChecked()) + ")"); //$NON-NLS-1$
     }
 
+    public static boolean isHiddenBookmarkQueryMode() {
+        return hiddenBookmarkQueryMode;
+    }
+
+    public static void setHiddenBookmarkQueryMode(boolean hidden) {
+        hiddenBookmarkQueryMode = hidden;
+        // Update bookmark query panel visibility
+        String activeQuery = (String) App.get().queryComboBox.getClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY);
+        if (hidden) {
+            App.get().updateBookmarkQueryPanelVisibility(null);
+        } else {
+            App.get().updateBookmarkQueryPanelVisibility(activeQuery);
+        }
+    }
+
     private BookmarksManager() {
 
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
-        dialog.setSize(480, 480);
+        dialog.setSize(540, 540);
 
         group.add(highlighted);
         group.add(checked);
         highlighted.setSelected(true);
-        duplicates.setText(Messages.getString("BookmarksManager.AddDuplicates")); //$NON-NLS-1$
         duplicates.setSelected(false);
+        showBookmarkQueryModeCheckbox.setSelected(!hiddenBookmarkQueryMode);
 
         updateList();
 
@@ -178,8 +197,12 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         butMismatch.setForeground(Color.RED);
         butMismatch.setVisible(false);
 
-        JPanel top = new JPanel(new GridLayout(3, 2, 0, 5));
-        top.add(msg);
+        JPanel top = new JPanel(new GridLayout(5, 2, 0, 5));
+        top.add(options);
+        top.add(new JLabel());
+        top.add(showBookmarkQueryModeCheckbox);
+        top.add(new JLabel());
+        top.add(dataset);
         top.add(new JLabel());
         top.add(highlighted);
         top.add(checked);
@@ -239,6 +262,13 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         pane.add(left, BorderLayout.LINE_START);
         pane.add(center, BorderLayout.CENTER);
         dialog.getContentPane().add(pane);
+
+        showBookmarkQueryModeCheckbox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setHiddenBookmarkQueryMode(!showBookmarkQueryModeCheckbox.isSelected());
+            }
+        });
 
         butAdd.addActionListener(this);
         butUpdate.addActionListener(this);
@@ -518,11 +548,16 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             BookmarksController.get().updateUI();
 
             // Check if the updated bookmark is the only one selected in the bookmark tree
-            // If so, trigger a refresh to apply the new query highlighting
+            // If so, trigger a refresh to update the bookmark query panel and to apply the new query highlighting
             Set<String> selectedBookmarks = App.get().bookmarksListener.getSelectedBookmarkNames();
-            if (selectedBookmarks.size() == 1 && selectedBookmarks.contains(bookmarkName)) {
-                // Update the client property with the new query
+            if (App.get().bookmarksTree.getSelectionCount() == 1 && selectedBookmarks.size() == 1 && selectedBookmarks.contains(bookmarkName)) {
                 String normalizedQuery = (newQuery != null && !newQuery.isEmpty()) ? newQuery : null;
+
+                // Update the bookmark query panel
+                if (!BookmarksManager.isHiddenBookmarkQueryMode())
+                    App.get().updateBookmarkQueryPanelVisibility(normalizedQuery);
+
+                // Update the client property with the new query
                 App.get().queryComboBox.putClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY, normalizedQuery);
                 
                 // Trigger file listing update to refresh with new bookmark query

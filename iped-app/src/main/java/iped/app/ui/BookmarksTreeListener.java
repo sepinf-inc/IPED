@@ -86,11 +86,14 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
                 String bookmarkName = selected.toString();
                 String unifiedQuery = getUnifiedBookmarkQuery(bookmarkName);
                 App.get().queryComboBox.putClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY, unifiedQuery);
+                App.get().updateBookmarkQueryPanelVisibility(unifiedQuery);
             } else {
                 App.get().queryComboBox.putClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY, null);
+                App.get().updateBookmarkQueryPanelVisibility(null);
             }
         } else {
             App.get().queryComboBox.putClientProperty(App.ACTIVE_BOOKMARK_QUERY_PROPERTY, null);
+            App.get().updateBookmarkQueryPanelVisibility(null);
         }
         
         if (!clearing)
