@@ -88,7 +88,7 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
 
             case 2:
                 // Item Bookmarks
-                return Util.concatStrings(App.get().appCase.getMultiBookmarks().getBookmarkList(App.get().appCase.getItemId(results.getLuceneIds()[row])));
+                return Util.concatStrings(App.get().appCase.getMultiBookmarks().getBookmarkList(App.get().appCase.getItemId(results.getLuceneIds()[row])), true);
 
             case 3:
                 // Item Name
