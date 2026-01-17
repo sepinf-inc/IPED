@@ -18,12 +18,27 @@ import iped.utils.UiUtil;
 public class SummaryViewer extends HtmlViewer {
 
     public SummaryViewer() {
-        super(); // delegates to HtmlViewer constructor
+        // delegates to HtmlViewer constructor
+        super();
     }
 
-    @Override public String getName() { return "Summary"; } // or wire into i18n later
-    @Override public boolean isSupportedType(String contentType) { return true; } // we gate by data presence
-    @Override public int getHitsSupported() { return -1; } // no Prev/Next hit buttons for this tab
+    @Override
+    public String getName() {
+        // or wire into i18n later
+        return "Summary";
+    }
+
+    @Override
+    public boolean isSupportedType(String contentType) {
+        // we gate by data presence
+        return true;
+    }
+
+    @Override
+    public int getHitsSupported() {
+        // no Prev/Next hit buttons for this tab
+        return -1;
+    }
 
     /** Quick presence check so controller can decide tab visibility. */
     public boolean hasSummaries(IStreamSource content) {
@@ -47,7 +62,6 @@ public class SummaryViewer extends HtmlViewer {
         loadFile(content, null, terms);
     }
 
-
     @Override
     public void loadFile(final IStreamSource content, String contentType, final Set<String> terms) {
         // Reuse HtmlViewer's highlighter: set highlightTerms and load HTML directly in the WebEngine.
@@ -64,7 +78,6 @@ public class SummaryViewer extends HtmlViewer {
             //List<String> chunks = new ArrayList<>();
             //ArrayList<Object> chunks = new ArrayList<>();
             ArrayList<String> chunks = new ArrayList<>();
-            
 
             Object value = item.getExtraAttributeMap().get(ExtraProperties.SUMMARIES);
             if (value instanceof Collection<?>) {
@@ -90,8 +103,6 @@ public class SummaryViewer extends HtmlViewer {
                     }
                 }
             }
-
-
 
             // Simple, readable HTML; HtmlViewer will highlight search terms after load.
             StringBuilder html = new StringBuilder();
