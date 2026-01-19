@@ -75,8 +75,6 @@ public class SummaryViewer extends HtmlViewer {
             }
 
             IItemReader item = (IItemReader) content;
-            //List<String> chunks = new ArrayList<>();
-            //ArrayList<Object> chunks = new ArrayList<>();
             ArrayList<String> chunks = new ArrayList<>();
 
             Object value = item.getExtraAttributeMap().get(ExtraProperties.SUMMARIES);
@@ -117,10 +115,8 @@ public class SummaryViewer extends HtmlViewer {
             html.append("<div class='title'>AI-generated summaries. Check all information").append("</div>");
 
             for (int i = 0; i < chunks.size(); i++) {
-                //String c = SimpleHTMLEncoder.htmlEncode(chunks.get(i));
                 String c = SimpleHTMLEncoder.htmlEncode(chunks.get(i)).replaceAll("\n","<br>");
                 html.append("<div class='chunk'>")
-                    //.append("<div class='title'>Chunk ").append(i + 1).append("</div>")
                     .append("<div>").append(c).append("</div>")
                     .append("</div>");
             }
