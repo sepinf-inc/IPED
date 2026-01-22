@@ -188,37 +188,44 @@ public class KnownMetCarveTask extends BaseCarveTask {
         }
 
         // Percorre conteúdo buscando padrões plausíveis de arquivos known.met
-        byte[] buf = new byte[blockSize * 2];
+        byte[] prevBuf = new byte[blockSize];
+        byte[] currBuf = new byte[blockSize];
         byte[] buf2 = new byte[1 << 20];
         BufferedInputStream is = null;
         long offset = 0;
         try {
             is = evidence.getBufferedInputStream();
             int done = 0;
-            if (is.readNBytes(buf, blockSize, blockSize) < blockSize) {
+            int firstRead = is.readNBytes(currBuf, 0, blockSize);
+            if (firstRead < blockSize) {
                 done++;
+                Arrays.fill(currBuf, Math.max(0, firstRead), blockSize, (byte) 0);
             }
+            WindowBuffer window = new WindowBuffer(prevBuf, currBuf, blockSize);
             while (true) {
-                System.arraycopy(buf, blockSize, buf, 0, blockSize);
-                int len = is.readNBytes(buf, blockSize, blockSize);
+                byte[] tmp = prevBuf;
+                prevBuf = currBuf;
+                currBuf = tmp;
+                int len = is.readNBytes(currBuf, 0, blockSize);
                 if (len < blockSize) {
                     done++;
-                    Arrays.fill(buf, blockSize + len, 2 * blockSize, (byte) 0);
+                    Arrays.fill(currBuf, Math.max(0, len), blockSize, (byte) 0);
                 }
+                window.reset(prevBuf, currBuf);
                 int firstAligned = (int) ((SECTOR_SIZE - (offset & (SECTOR_SIZE - 1))) & (SECTOR_SIZE - 1));
                 for (int pos = firstAligned; pos < blockSize; pos += SECTOR_SIZE) {
-                    int read = buf[pos] & 0xFF;
+                    int read = window.getUnsigned(pos);
 
                     // Verifica se foi encontrado o padrão do arquivo known.met (0x0E or 0x0F)
                     if (read == 0x0E || read == 0x0F) {
-                        checkKnownMet(is, evidence, pos + 1, offset + pos, buf);
+                        checkKnownMet(is, evidence, pos + 1, offset + pos, window);
                     }
                     // Verifica se foi encontrado o padrão do arquivo part.met (0xE0 or 0xE2)
                     else if (read == 0xE0 || read == 0xE2) {
-                        checkPartMet(is, evidence, pos + 1, offset + pos, buf, buf2);
+                        checkPartMet(is, evidence, pos + 1, offset + pos, window, buf2);
                     }
                 }
-                scanPreferencesDat(is, evidence, buf, offset);
+                scanPreferencesDat(is, evidence, window, offset);
                 if (done >= 2) {
                     break;
                 }
@@ -235,19 +242,19 @@ public class KnownMetCarveTask extends BaseCarveTask {
      * Verifica se foi encontrado o padrão do arquivo known.met (0x0E or 0x0F)
      */
     private boolean checkKnownMet(BufferedInputStream is, IItem evidence, int pos, long offset,
-                                   byte[] buf) throws Exception {
-        int numFiles = toInt(buf, pos);
+                                   WindowBuffer window) throws Exception {
+        int numFiles = toInt(window, pos);
         pos += 4;
         if (numFiles > 0 && numFiles < 65536) {
-            long date = toInt(buf, pos) * 1000L;
+            long date = toInt(window, pos) * 1000L;
             if (date > dateMin && date < dateMax) {
                 pos += 4;
                 pos += 16;
-                int numParts = toSmall(buf, pos);
+                int numParts = toSmall(window, pos);
                 pos += 2;
                 pos += 16 * numParts;
-                if (numParts >= 0 && numParts < 256 && pos < buf.length - 4) {
-                    int numTags = toInt(buf, pos);
+                if (numParts >= 0 && numParts < 256 && pos < window.length() - 4) {
+                    int numTags = toInt(window, pos);
                     if (numTags > 2 && numTags < 100) {
                         int len = 512 * numFiles;
                         SeekableInputStream inParse = null;
@@ -287,16 +294,16 @@ public class KnownMetCarveTask extends BaseCarveTask {
      * Checks for part.met file pattern and carves if valid.
      */
     private boolean checkPartMet(BufferedInputStream is, IItem evidence, int pos, long offset,
-                                  byte[] buf, byte[] buf2) throws Exception {
-        long date = toInt(buf, pos) * 1000L;
+                                  WindowBuffer window, byte[] buf2) throws Exception {
+        long date = toInt(window, pos) * 1000L;
         if (date > dateMin && date < dateMax) {
             pos += 20;
-            int numParts = toSmall(buf, pos);
+            int numParts = toSmall(window, pos);
             int numTags = 2;
             pos += 2;
             pos += 16 * numParts;
             if (pos < 500) {
-                numTags = toInt(buf, pos);
+                numTags = toInt(window, pos);
             }
             if (numTags >= 2 && numTags <= 1024 && numParts <= 4096 && numParts >= 0) {
                 SeekableInputStream inParse = null;
@@ -327,8 +334,9 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
      */
-    private boolean checkPreferencesDat(BufferedInputStream is, IItem evidence, int pos, long offset, byte[] buf) throws Exception {
-        if (matchesPreferencesDatQuick(buf, pos) && matchesPreferencesDatSignature(buf, pos)) {
+    private boolean checkPreferencesDat(BufferedInputStream is, IItem evidence, int pos, long offset,
+                                         WindowBuffer window) throws Exception {
+        if (matchesPreferencesDatQuick(window, pos) && matchesPreferencesDatSignature(window, pos)) {
             addCarvedFile(evidence, offset, PREFERENCES_DAT_SIGNATURE_LENGTH,
                     "Carved-" + offset + "-preferences.dat", //$NON-NLS-1$ //$NON-NLS-2$
                     eMulePreferencesDatMediaType);
@@ -341,25 +349,25 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Boyer-Moore-Horspool scan for preferences.dat anchor bytes.
      */
-    private void scanPreferencesDat(BufferedInputStream is, IItem evidence, byte[] buf, long offset) throws Exception {
+    private void scanPreferencesDat(BufferedInputStream is, IItem evidence, WindowBuffer window, long offset) throws Exception {
         int anchorLen = PREFERENCES_DAT_ANCHOR.length;
-        int maxStart = Math.min(blockSize - 1 + PREFERENCES_DAT_ANCHOR_OFFSET, buf.length - anchorLen);
+        int maxStart = Math.min(blockSize - 1 + PREFERENCES_DAT_ANCHOR_OFFSET, window.length() - anchorLen);
         int i = PREFERENCES_DAT_ANCHOR_OFFSET;
         while (i <= maxStart) {
             int j = anchorLen - 1;
-            while (j >= 0 && (buf[i + j] & 0xFF) == (PREFERENCES_DAT_ANCHOR[j] & 0xFF)) {
+            while (j >= 0 && window.getUnsigned(i + j) == (PREFERENCES_DAT_ANCHOR[j] & 0xFF)) {
                 j--;
             }
             if (j < 0) {
                 int candidateStart = i - PREFERENCES_DAT_ANCHOR_OFFSET;
                 if (candidateStart >= 0
-                        && candidateStart + PREFERENCES_DAT_SIGNATURE_LENGTH <= buf.length
-                        && (buf[candidateStart] & 0xFF) == 0x14) {
-                    checkPreferencesDat(is, evidence, candidateStart + 1, offset + candidateStart, buf);
+                        && candidateStart + PREFERENCES_DAT_SIGNATURE_LENGTH <= window.length()
+                        && window.getUnsigned(candidateStart) == 0x14) {
+                    checkPreferencesDat(is, evidence, candidateStart + 1, offset + candidateStart, window);
                 }
                 i++;
             } else {
-                i += PREFERENCES_DAT_BMH_SHIFT[buf[i + anchorLen - 1] & 0xFF];
+                i += PREFERENCES_DAT_BMH_SHIFT[window.getUnsigned(i + anchorLen - 1) & 0xFF];
             }
         }
     }
@@ -368,65 +376,68 @@ public class KnownMetCarveTask extends BaseCarveTask {
      * Checks if the bytes read match the preferences.dat signature.
      * Pattern: \14?????\0E????????\6F?\2C\00\00\00?\00\00\00?\00\00\00??????????????????\00\00??\00\00??\00\00??\00\00
      */
-    private boolean matchesPreferencesDatSignature(byte[] buf, int pos) {
+    private boolean matchesPreferencesDatSignature(WindowBuffer window, int pos) {
         // First byte already verified (0x14)
         // buf[0-4] = ????? (5 bytes - any value)
 
         // buf[5] = 0x0E (position 6 of the signature)
-        if ((buf[pos + 5] & 0xFF) != 0x0E)
+        if (window.getUnsigned(pos + 5) != 0x0E)
             return false;
 
         // buf[6-13] = ???????? (8 bytes - any value)
 
         // buf[14] = 0x6F (position 15 of the signature)
-        if ((buf[pos + 14] & 0xFF) != 0x6F)
+        if (window.getUnsigned(pos + 14) != 0x6F)
             return false;
 
         // buf[15] = ? (1 byte - any value)
 
         // buf[16] = 0x2C (position 17 of the signature)
-        if ((buf[pos + 16] & 0xFF) != 0x2C)
+        if (window.getUnsigned(pos + 16) != 0x2C)
             return false;
 
         // buf[17-19] = 0x00, 0x00, 0x00 (positions 18-20)
-        if ((buf[pos + 17] & 0xFF) != 0x00 || (buf[pos + 18] & 0xFF) != 0x00 || (buf[pos + 19] & 0xFF) != 0x00)
+        if (window.getUnsigned(pos + 17) != 0x00 || window.getUnsigned(pos + 18) != 0x00
+                || window.getUnsigned(pos + 19) != 0x00)
             return false;
 
         // buf[20] = ? (1 byte - any value)
 
         // buf[21-23] = 0x00, 0x00, 0x00 (positions 22-24)
-        if ((buf[pos + 21] & 0xFF) != 0x00 || (buf[pos + 22] & 0xFF) != 0x00 || (buf[pos + 23] & 0xFF) != 0x00)
+        if (window.getUnsigned(pos + 21) != 0x00 || window.getUnsigned(pos + 22) != 0x00
+                || window.getUnsigned(pos + 23) != 0x00)
             return false;
 
         // buf[24] = ? (1 byte - any value)
 
         // buf[25-27] = 0x00, 0x00, 0x00 (positions 26-28)
-        if ((buf[pos + 25] & 0xFF) != 0x00 || (buf[pos + 26] & 0xFF) != 0x00 || (buf[pos + 27] & 0xFF) != 0x00)
+        if (window.getUnsigned(pos + 25) != 0x00 || window.getUnsigned(pos + 26) != 0x00
+                || window.getUnsigned(pos + 27) != 0x00)
             return false;
 
         // buf[28-45] = ?????????????????? (18 bytes - any value)
 
         // buf[46-47] = 0x00, 0x00 (positions 47-48), but sometimes 0xFF, 0xFF
-        if (((buf[pos + 46] & 0xFF) != 0x00 || (buf[pos + 47] & 0xFF) != 0x00)
-                && ((buf[pos + 46] & 0xFF) != 0xFF || (buf[pos + 47] & 0xFF) != 0xFF))
+        if (((window.getUnsigned(pos + 46) != 0x00 || window.getUnsigned(pos + 47) != 0x00)
+                && (window.getUnsigned(pos + 46) != 0xFF || window.getUnsigned(pos + 47) != 0xFF)))
             return false;
 
         // buf[48-49] = ?? (2 bytes - any value)
 
         // buf[50-51] = 0x00, 0x00 (positions 51-52)
-        if ((buf[pos + 50] & 0xFF) != 0x00 || (buf[pos + 51] & 0xFF) != 0x00)
+        if (window.getUnsigned(pos + 50) != 0x00 || window.getUnsigned(pos + 51) != 0x00)
             return false;
 
         // buf[52-53] = ?? (2 bytes - any value)
 
         // buf[54-55] = 0x00, 0x00 (positions 55-56)
-        if ((buf[pos + 54] & 0xFF) != 0x00 || (buf[pos + 55] & 0xFF) != 0x00)
+        if (window.getUnsigned(pos + 54) != 0x00 || window.getUnsigned(pos + 55) != 0x00)
             return false;
 
         // buf[56-57] = ?? (2 bytes - any value)
 
         // buf[58-59] = 0x00, 0x00 (positions 59-60)
-        if ((buf[pos + 58] & 0xFF) != 0x00 || (buf[pos + 59] & 0xFF) != 0x00)
+        if (window.getUnsigned(pos + 58) != 0x00 || window.getUnsigned(pos + 59) != 0x00)
             return false;
 
         return true;
@@ -435,13 +446,54 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Fast pre-check for preferences.dat signature to reduce full validations.
      */
-    private boolean matchesPreferencesDatQuick(byte[] buf, int pos) {
-        return (buf[pos + 5] & 0xFF) == 0x0E
-                && (buf[pos + 14] & 0xFF) == 0x6F
-                && (buf[pos + 16] & 0xFF) == 0x2C
-                && (buf[pos + 17] & 0xFF) == 0x00
-                && (buf[pos + 18] & 0xFF) == 0x00
-                && (buf[pos + 19] & 0xFF) == 0x00;
+    private boolean matchesPreferencesDatQuick(WindowBuffer window, int pos) {
+        return window.getUnsigned(pos + 5) == 0x0E
+                && window.getUnsigned(pos + 14) == 0x6F
+                && window.getUnsigned(pos + 16) == 0x2C
+                && window.getUnsigned(pos + 17) == 0x00
+                && window.getUnsigned(pos + 18) == 0x00
+                && window.getUnsigned(pos + 19) == 0x00;
+    }
+
+    private static final class WindowBuffer {
+        private byte[] prev;
+        private byte[] curr;
+        private final int blockSize;
+
+        private WindowBuffer(byte[] prev, byte[] curr, int blockSize) {
+            this.prev = prev;
+            this.curr = curr;
+            this.blockSize = blockSize;
+        }
+
+        private void reset(byte[] prev, byte[] curr) {
+            this.prev = prev;
+            this.curr = curr;
+        }
+
+        private int getUnsigned(int pos) {
+            return get(pos) & 0xFF;
+        }
+
+        private byte get(int pos) {
+            if (pos < blockSize) {
+                return prev[pos];
+            }
+            return curr[pos - blockSize];
+        }
+
+        private int length() {
+            return blockSize * 2;
+        }
+    }
+
+    private static final int toInt(WindowBuffer window, int offset) {
+        return window.getUnsigned(offset) | (window.getUnsigned(offset + 1) << 8)
+                | (window.getUnsigned(offset + 2) << 16) | (window.getUnsigned(offset + 3) << 24);
+    }
+
+    private static final int toSmall(WindowBuffer window, int offset) {
+        return window.getUnsigned(offset) | (window.getUnsigned(offset + 1) << 8);
     }
 
     private static int[] buildBmhTable(byte[] pattern) {
@@ -455,16 +507,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
 
     private static boolean isSectorAligned(long offset) {
         return (offset & (SECTOR_SIZE - 1)) == 0;
-    }
-
-
-    private static final int toInt(byte[] b, int offset) {
-        return (b[offset] & 0XFF) | ((b[offset + 1] & 0XFF) << 8) | ((b[offset + 2] & 0XFF) << 16)
-                | ((b[offset + 3] & 0XFF) << 24);
-    }
-
-    private static final int toSmall(byte[] b, int offset) {
-        return (b[offset] & 0XFF) | ((b[offset + 1] & 0XFF) << 8);
     }
 
     private static boolean isAcceptedType(MediaType mediaType) {
