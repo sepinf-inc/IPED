@@ -100,9 +100,29 @@ public class KnownMetCarveTask extends BaseCarveTask {
     private final int blockSize = 4096;
 
     /**
+     * Setor padrão usado para alinhamento de known.met/part.met.
+     */
+    private static final int SECTOR_SIZE = 512;
+
+    /**
      * Tamanho da assinatura do arquivo preferences.dat.
      */
     private static final int PREFERENCES_DAT_SIGNATURE_LENGTH = 61;
+
+    /**
+     * Anchor offset for preferences.dat signature (0x2C 00 00 00).
+     */
+    private static final int PREFERENCES_DAT_ANCHOR_OFFSET = 16;
+
+    /**
+     * Anchor bytes used for Boyer-Moore-Horspool scan of preferences.dat.
+     */
+    private static final byte[] PREFERENCES_DAT_ANCHOR = new byte[] {(byte) 0x2C, 0x00, 0x00, 0x00};
+
+    /**
+     * Precomputed Boyer-Moore-Horspool shift table for preferences.dat anchor.
+     */
+    private static final int[] PREFERENCES_DAT_BMH_SHIFT = buildBmhTable(PREFERENCES_DAT_ANCHOR);
 
     /**
      * Heurística de data mínima utilizada para filtrar arquivos plausíveis.
@@ -185,7 +205,8 @@ public class KnownMetCarveTask extends BaseCarveTask {
                     done++;
                     Arrays.fill(buf, blockSize + len, 2 * blockSize, (byte) 0);
                 }
-                for (int pos = 0; pos < blockSize; pos++) {
+                int firstAligned = (int) ((SECTOR_SIZE - (offset & (SECTOR_SIZE - 1))) & (SECTOR_SIZE - 1));
+                for (int pos = firstAligned; pos < blockSize; pos += SECTOR_SIZE) {
                     int read = buf[pos] & 0xFF;
 
                     // Verifica se foi encontrado o padrão do arquivo known.met (0x0E or 0x0F)
@@ -196,11 +217,8 @@ public class KnownMetCarveTask extends BaseCarveTask {
                     else if (read == 0xE0 || read == 0xE2) {
                         checkPartMet(is, evidence, pos + 1, offset + pos, buf, buf2);
                     }
-                    // Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
-                    else if (read == 0x14) {
-                        checkPreferencesDat(is, evidence, pos + 1, offset + pos, buf);
-                    }
                 }
+                scanPreferencesDat(is, evidence, buf, offset);
                 if (done >= 2) {
                     break;
                 }
@@ -310,7 +328,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
      * Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
      */
     private boolean checkPreferencesDat(BufferedInputStream is, IItem evidence, int pos, long offset, byte[] buf) throws Exception {
-        if (matchesPreferencesDatSignature(buf, pos)) {
+        if (matchesPreferencesDatQuick(buf, pos) && matchesPreferencesDatSignature(buf, pos)) {
             addCarvedFile(evidence, offset, PREFERENCES_DAT_SIGNATURE_LENGTH,
                     "Carved-" + offset + "-preferences.dat", //$NON-NLS-1$ //$NON-NLS-2$
                     eMulePreferencesDatMediaType);
@@ -318,6 +336,32 @@ public class KnownMetCarveTask extends BaseCarveTask {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Boyer-Moore-Horspool scan for preferences.dat anchor bytes.
+     */
+    private void scanPreferencesDat(BufferedInputStream is, IItem evidence, byte[] buf, long offset) throws Exception {
+        int anchorLen = PREFERENCES_DAT_ANCHOR.length;
+        int maxStart = Math.min(blockSize - 1 + PREFERENCES_DAT_ANCHOR_OFFSET, buf.length - anchorLen);
+        int i = PREFERENCES_DAT_ANCHOR_OFFSET;
+        while (i <= maxStart) {
+            int j = anchorLen - 1;
+            while (j >= 0 && (buf[i + j] & 0xFF) == (PREFERENCES_DAT_ANCHOR[j] & 0xFF)) {
+                j--;
+            }
+            if (j < 0) {
+                int candidateStart = i - PREFERENCES_DAT_ANCHOR_OFFSET;
+                if (candidateStart >= 0
+                        && candidateStart + PREFERENCES_DAT_SIGNATURE_LENGTH <= buf.length
+                        && (buf[candidateStart] & 0xFF) == 0x14) {
+                    checkPreferencesDat(is, evidence, candidateStart + 1, offset + candidateStart, buf);
+                }
+                i++;
+            } else {
+                i += PREFERENCES_DAT_BMH_SHIFT[buf[i + anchorLen - 1] & 0xFF];
+            }
+        }
     }
 
     /**
@@ -386,6 +430,31 @@ public class KnownMetCarveTask extends BaseCarveTask {
             return false;
 
         return true;
+    }
+
+    /**
+     * Fast pre-check for preferences.dat signature to reduce full validations.
+     */
+    private boolean matchesPreferencesDatQuick(byte[] buf, int pos) {
+        return (buf[pos + 5] & 0xFF) == 0x0E
+                && (buf[pos + 14] & 0xFF) == 0x6F
+                && (buf[pos + 16] & 0xFF) == 0x2C
+                && (buf[pos + 17] & 0xFF) == 0x00
+                && (buf[pos + 18] & 0xFF) == 0x00
+                && (buf[pos + 19] & 0xFF) == 0x00;
+    }
+
+    private static int[] buildBmhTable(byte[] pattern) {
+        int[] table = new int[256];
+        Arrays.fill(table, pattern.length);
+        for (int i = 0; i < pattern.length - 1; i++) {
+            table[pattern[i] & 0xFF] = pattern.length - 1 - i;
+        }
+        return table;
+    }
+
+    private static boolean isSectorAligned(long offset) {
+        return (offset & (SECTOR_SIZE - 1)) == 0;
     }
 
 
