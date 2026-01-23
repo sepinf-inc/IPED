@@ -112,7 +112,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Anchor offset for preferences.dat signature (0x2C 00 00 00).
      */
-    private static final int PREFERENCES_DAT_ANCHOR_OFFSET = 16;
+    private static final int PREFERENCES_DAT_ANCHOR_OFFSET = 17;
 
     /**
      * Anchor bytes used for Boyer-Moore-Horspool scan of preferences.dat.
@@ -335,7 +335,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
      * Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
      */
     private boolean checkPreferencesDat(BufferedInputStream is, IItem evidence, int pos, long offset,
-                                         WindowBuffer window) throws Exception {
+                                        WindowBuffer window) throws Exception {
         if (matchesPreferencesDatQuick(window, pos) && matchesPreferencesDatSignature(window, pos)) {
             addCarvedFile(evidence, offset, PREFERENCES_DAT_SIGNATURE_LENGTH,
                     "Carved-" + offset + "-preferences.dat", //$NON-NLS-1$ //$NON-NLS-2$
@@ -349,7 +349,8 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Boyer-Moore-Horspool scan for preferences.dat anchor bytes.
      */
-    private void scanPreferencesDat(BufferedInputStream is, IItem evidence, WindowBuffer window, long offset) throws Exception {
+    private void scanPreferencesDat(BufferedInputStream is, IItem evidence, WindowBuffer window, long offset)
+            throws Exception {
         int anchorLen = PREFERENCES_DAT_ANCHOR.length;
         int maxStart = Math.min(blockSize - 1 + PREFERENCES_DAT_ANCHOR_OFFSET, window.length() - anchorLen);
         int i = PREFERENCES_DAT_ANCHOR_OFFSET;
@@ -363,7 +364,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                 if (candidateStart >= 0
                         && candidateStart + PREFERENCES_DAT_SIGNATURE_LENGTH <= window.length()
                         && window.getUnsigned(candidateStart) == 0x14) {
-                    checkPreferencesDat(is, evidence, candidateStart + 1, offset + candidateStart, window);
+                    checkPreferencesDat(is, evidence, candidateStart, offset + candidateStart, window);
                 }
                 i++;
             } else {
@@ -380,64 +381,64 @@ public class KnownMetCarveTask extends BaseCarveTask {
         // First byte already verified (0x14)
         // buf[0-4] = ????? (5 bytes - any value)
 
-        // buf[5] = 0x0E (position 6 of the signature)
-        if (window.getUnsigned(pos + 5) != 0x0E)
+        // buf[6] = 0x0E (position 7 of the signature)
+        if (window.getUnsigned(pos + 6) != 0x0E)
             return false;
 
         // buf[6-13] = ???????? (8 bytes - any value)
 
-        // buf[14] = 0x6F (position 15 of the signature)
-        if (window.getUnsigned(pos + 14) != 0x6F)
+        // buf[15] = 0x6F (position 16 of the signature)
+        if (window.getUnsigned(pos + 15) != 0x6F)
             return false;
 
         // buf[15] = ? (1 byte - any value)
 
-        // buf[16] = 0x2C (position 17 of the signature)
-        if (window.getUnsigned(pos + 16) != 0x2C)
+        // buf[17] = 0x2C (position 18 of the signature)
+        if (window.getUnsigned(pos + 17) != 0x2C)
             return false;
 
-        // buf[17-19] = 0x00, 0x00, 0x00 (positions 18-20)
-        if (window.getUnsigned(pos + 17) != 0x00 || window.getUnsigned(pos + 18) != 0x00
-                || window.getUnsigned(pos + 19) != 0x00)
+        // buf[18-20] = 0x00, 0x00, 0x00 (positions 19-21)
+        if (window.getUnsigned(pos + 18) != 0x00 || window.getUnsigned(pos + 19) != 0x00
+                || window.getUnsigned(pos + 20) != 0x00)
             return false;
 
         // buf[20] = ? (1 byte - any value)
 
-        // buf[21-23] = 0x00, 0x00, 0x00 (positions 22-24)
-        if (window.getUnsigned(pos + 21) != 0x00 || window.getUnsigned(pos + 22) != 0x00
-                || window.getUnsigned(pos + 23) != 0x00)
+        // buf[22-24] = 0x00, 0x00, 0x00 (positions 23-25)
+        if (window.getUnsigned(pos + 22) != 0x00 || window.getUnsigned(pos + 23) != 0x00
+                || window.getUnsigned(pos + 24) != 0x00)
             return false;
 
         // buf[24] = ? (1 byte - any value)
 
-        // buf[25-27] = 0x00, 0x00, 0x00 (positions 26-28)
-        if (window.getUnsigned(pos + 25) != 0x00 || window.getUnsigned(pos + 26) != 0x00
-                || window.getUnsigned(pos + 27) != 0x00)
+        // buf[26-28] = 0x00, 0x00, 0x00 (positions 27-29)
+        if (window.getUnsigned(pos + 26) != 0x00 || window.getUnsigned(pos + 27) != 0x00
+                || window.getUnsigned(pos + 28) != 0x00)
             return false;
 
         // buf[28-45] = ?????????????????? (18 bytes - any value)
 
-        // buf[46-47] = 0x00, 0x00 (positions 47-48), but sometimes 0xFF, 0xFF
-        if (((window.getUnsigned(pos + 46) != 0x00 || window.getUnsigned(pos + 47) != 0x00)
-                && (window.getUnsigned(pos + 46) != 0xFF || window.getUnsigned(pos + 47) != 0xFF)))
+        // buf[47-48] = 0x00, 0x00 (positions 48-49), but sometimes 0xFF, 0xFF
+        if (((window.getUnsigned(pos + 47) != 0x00 || window.getUnsigned(pos + 48) != 0x00)
+                && (window.getUnsigned(pos + 47) != 0xFF || window.getUnsigned(pos + 48) != 0xFF)))
             return false;
 
         // buf[48-49] = ?? (2 bytes - any value)
 
-        // buf[50-51] = 0x00, 0x00 (positions 51-52)
-        if (window.getUnsigned(pos + 50) != 0x00 || window.getUnsigned(pos + 51) != 0x00)
+        // buf[51-52] = 0x00, 0x00 (positions 52-53)
+        if (window.getUnsigned(pos + 51) != 0x00 || window.getUnsigned(pos + 52) != 0x00)
             return false;
 
         // buf[52-53] = ?? (2 bytes - any value)
 
-        // buf[54-55] = 0x00, 0x00 (positions 55-56)
-        if (window.getUnsigned(pos + 54) != 0x00 || window.getUnsigned(pos + 55) != 0x00)
+        // buf[55-56] = 0x00, 0x00 (positions 56-57)
+        if (window.getUnsigned(pos + 55) != 0x00 || window.getUnsigned(pos + 56) != 0x00)
             return false;
 
         // buf[56-57] = ?? (2 bytes - any value)
 
-        // buf[58-59] = 0x00, 0x00 (positions 59-60)
-        if (window.getUnsigned(pos + 58) != 0x00 || window.getUnsigned(pos + 59) != 0x00)
+        // buf[59-60] = 0x00, 0x00 (positions 60-61)
+        if (window.getUnsigned(pos + 59) != 0x00 || window.getUnsigned(pos + 60) != 0x00)
             return false;
 
         return true;
@@ -447,12 +448,12 @@ public class KnownMetCarveTask extends BaseCarveTask {
      * Fast pre-check for preferences.dat signature to reduce full validations.
      */
     private boolean matchesPreferencesDatQuick(WindowBuffer window, int pos) {
-        return window.getUnsigned(pos + 5) == 0x0E
-                && window.getUnsigned(pos + 14) == 0x6F
-                && window.getUnsigned(pos + 16) == 0x2C
-                && window.getUnsigned(pos + 17) == 0x00
+        return window.getUnsigned(pos + 6) == 0x0E
+                && window.getUnsigned(pos + 15) == 0x6F
+                && window.getUnsigned(pos + 17) == 0x2C
                 && window.getUnsigned(pos + 18) == 0x00
-                && window.getUnsigned(pos + 19) == 0x00;
+                && window.getUnsigned(pos + 19) == 0x00
+                && window.getUnsigned(pos + 20) == 0x00;
     }
 
     private static final class WindowBuffer {
