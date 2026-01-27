@@ -66,7 +66,7 @@ public class SummaryViewer extends HtmlViewer {
 
         javafx.application.Platform.runLater(() -> {
             if (!(content instanceof IItemReader) || !hasSummary(content)) {
-                webEngine.loadContent(UiUtil.getUIEmptyHtml());
+                webEngine.loadContent(UiUtil.getUIEmptyHtml("[No summary available]"));
                 return;
             }
 
@@ -104,7 +104,7 @@ public class SummaryViewer extends HtmlViewer {
                 .append("<style>")
                 .append("body{font:13px sans-serif;margin:8px}")
                 .append(".chunk{margin:8px 0;padding:10px;border:1px solid #ccc;border-radius:8px}")
-                .append(".title{font-weight:600;margin-bottom:4px}")
+                .append(".title{font-weight:bold;margin-bottom:4px}")
                 .append("</style>")
                 .append("</head><body>");
 
