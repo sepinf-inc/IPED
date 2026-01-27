@@ -188,7 +188,7 @@ public class ExtraProperties {
 
     public static final String FACE_AGE_LABELS = "faceAge:labels";
 
-    public static final String SUMMARIES = "ai:summaries";
+    public static final String SUMMARY = "ai:summary";
 
     /**
      * Property to be set if the evidence is a animated image (i.e. contain multiple

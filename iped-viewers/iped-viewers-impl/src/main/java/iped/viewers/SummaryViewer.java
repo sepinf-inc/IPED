@@ -12,7 +12,7 @@ import iped.utils.SimpleHTMLEncoder;
 import iped.utils.UiUtil;
 
 /**
- * Shows ExtraProperties.SUMMARIES (array of strings) for the current item.
+ * Shows ExtraProperties.SUMMARY (array of strings) for the current item.
  * Extends HtmlViewer to reuse hit highlighting & WebView plumbing.
  */
 public class SummaryViewer extends HtmlViewer {
@@ -41,19 +41,19 @@ public class SummaryViewer extends HtmlViewer {
     }
 
     /** Quick presence check so controller can decide tab visibility. */
-    public boolean hasSummaries(IStreamSource content) {
+    public boolean hasSummary(IStreamSource content) {
         if (!(content instanceof IItemReader)) return false;
         IItemReader item = (IItemReader) content;
 
         // Check extra attributes (preferred)
-        Object v = item.getExtraAttributeMap().get(ExtraProperties.SUMMARIES);
+        Object v = item.getExtraAttributeMap().get(ExtraProperties.SUMMARY);
         if (v instanceof Collection && !((Collection<?>) v).isEmpty()) return true;
         if (v instanceof Object[] && ((Object[]) v).length > 0) return true;
         if (v instanceof String && !((String) v).isEmpty()) return true;
         if (v != null) return true; // some non-null single value
 
         // Fallback: metadata bag
-        String[] vals = item.getMetadata().getValues(ExtraProperties.SUMMARIES);
+        String[] vals = item.getMetadata().getValues(ExtraProperties.SUMMARY);
         return vals != null && vals.length > 0;
     }
 
@@ -69,7 +69,7 @@ public class SummaryViewer extends HtmlViewer {
         this.tmpFile = null; // ensure the "location endsWith(tmpFile)" early-return never triggers
 
         javafx.application.Platform.runLater(() -> {
-            if (!(content instanceof IItemReader) || !hasSummaries(content)) {
+            if (!(content instanceof IItemReader) || !hasSummary(content)) {
                 webEngine.loadContent(UiUtil.getUIEmptyHtml());
                 return;
             }
@@ -77,7 +77,7 @@ public class SummaryViewer extends HtmlViewer {
             IItemReader item = (IItemReader) content;
             ArrayList<String> chunks = new ArrayList<>();
 
-            Object value = item.getExtraAttributeMap().get(ExtraProperties.SUMMARIES);
+            Object value = item.getExtraAttributeMap().get(ExtraProperties.SUMMARY);
             if (value instanceof Collection<?>) {
                 for (Object v : (Collection<?>) value) {
                     if (v != null) chunks.add(v.toString());
@@ -94,7 +94,7 @@ public class SummaryViewer extends HtmlViewer {
 
             // Fallback to metadata if we still have nothing
             if (chunks.isEmpty()) {
-                String[] vals = item.getMetadata().getValues(ExtraProperties.SUMMARIES);
+                String[] vals = item.getMetadata().getValues(ExtraProperties.SUMMARY);
                 if (vals != null) {
                     for (String s : vals) {
                         if (s != null) chunks.add(s);

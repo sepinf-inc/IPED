@@ -438,7 +438,7 @@ class AISummarizationTask:
 
     def processChat(self, item):
         from iped.properties import ExtraProperties
-        if item.getExtraAttribute(ExtraProperties.SUMMARIES) is not None:
+        if item.getExtraAttribute(ExtraProperties.SUMMARY) is not None:
             return
 
         inputStream = item.getBufferedInputStream()
@@ -475,7 +475,7 @@ class AISummarizationTask:
         #    logger.error(f"[AISummarizationTask]: Error - No summaries returned for {item.getName()}, this should not happen as we send only messages with content")
         #    return
 
-        #item.setExtraAttribute(ExtraProperties.SUMMARIES, summaries)
+        #item.setExtraAttribute(ExtraProperties.SUMMARY, summaries)
 
         data = res.get("data")
         if not isinstance(data, list):
@@ -540,7 +540,7 @@ class AISummarizationTask:
             return
 
         # Store all chunk summaries (same attribute as before)
-        item.setExtraAttribute(ExtraProperties.SUMMARIES, chunk_summaries)
+        item.setExtraAttribute(ExtraProperties.SUMMARY, chunk_summaries)
 
         # Store chunk ids
         item.setExtraAttribute("ai:chunk_ids", chunk_ids)

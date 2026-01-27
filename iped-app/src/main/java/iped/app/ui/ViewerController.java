@@ -317,7 +317,7 @@ public class ViewerController {
         DefaultSingleCDockable dock = dockPerViewer.get(viewer);
 
         if (viewer instanceof SummaryViewer) {
-            boolean has = file != null && ((SummaryViewer) viewer).hasSummaries(file);
+            boolean has = file != null && ((SummaryViewer) viewer).hasSummary(file);
             CControl cc = App.get().dockingControl;
             boolean registered = dock != null && isRegistered(dock);
 
