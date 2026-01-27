@@ -5,12 +5,11 @@
 # IP:PORT of the service/central node used by the AISummarizationTask implementation.
 remoteServiceAddress = 127.0.0.1:8000
 
-# Enables automatic summarization of WhatsApp chats using AI models.
-# When set to true, summaries will be generated for WhatsApp conversations parsed by IPED's internal parser.
-enableWhatsAppSummarization = false
+# Enables automatic summarization of internally parsed chats (WhatsApp, Telegram etc.) using AI models.
+enableInternalChatSummarization = true
 
-# Enables automatic summarization of UFED supported chats using AI models.
-enableUFEDChatSummarization = false
+# Enables automatic summarization of externally parsed chats (UFED) using AI models.
+enableExternalChatSummarization = true
 
 # Minimum item content length to perform summarization in characters
 minimumContentLength = 1000

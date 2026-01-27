@@ -12,8 +12,8 @@ from typing import List, Any, Dict, Tuple, Optional
 
 # configuration properties
 enableProp = 'enableAISummarization'
-enableWhatsAppSummarizationProp = 'enableWhatsAppSummarization' # This is for IPED internal WhatsApp Parser
-enableUFEDChatSummarizationProp = 'enableUFEDChatSummarization' # This is for UFED Chat Parser - x-ufed-chat-preview
+enableInternalSummarizationProp = 'enableInternalChatSummarization' # This is for IPED internal chats parsers (WhatsApp, Telegram etc.)
+enableExternalSummarizationProp = 'enableExternalChatSummarization' # This is for external (UFED) chat parsers - x-ufed-chat-preview
 minimumContentLengthProp = 'minimumContentLength' # Minimum item content length 
 remoteServiceAddressProp = 'remoteServiceAddress'
 configFile = 'AISummarizationConfig.txt'
@@ -379,8 +379,8 @@ class AISummarizationTask:
     def __init__(self):
         self.enabled = False
         self.remoteServiceAddress = None
-        self.enableWhatsAppSummarization = False
-        self.enableUFEDChatSummarization = False
+        self.enableInternalSummarizationProp = False
+        self.enableExternalSummarizationProp = False
         self.minimumContentLength = 0
 
         # NEW: chat analysis / questions
@@ -413,8 +413,8 @@ class AISummarizationTask:
             self.enabled = False
             return
 
-        self.enableWhatsAppSummarization = (extraProps.getProperty(enableWhatsAppSummarizationProp) or "").lower() == "true"
-        self.enableUFEDChatSummarization = (extraProps.getProperty(enableUFEDChatSummarizationProp) or "").lower() == "true"
+        self.enableInternalSummarization = (extraProps.getProperty(enableInternalSummarizationProp) or "").lower() == "true"
+        self.enableExternalSummarization = (extraProps.getProperty(enableExternalSummarizationProp) or "").lower() == "true"
 
         self.minimumContentLength = int(extraProps.getProperty(minimumContentLengthProp) or 0)
         
@@ -467,8 +467,7 @@ class AISummarizationTask:
             # Exit - server connection problem
             raise Exception(f"[AISummarizationTask]: Error {item.getName()} - {res['code']} ({res['http_status']}): {res.get('message')}")
 
-        
-        
+
         #summaries = res["data"]["summaries"] 
 
         #if len(summaries) == 0:
@@ -555,8 +554,6 @@ class AISummarizationTask:
                     f"[AISummarizationTask]: Warning - Could not set attribute "
                     f"{full_attr_name} for {item.getName()}: {e}"
                 )
-        
-
 
     
     # Process an Item object. This method is executed on all case items.
@@ -565,16 +562,16 @@ class AISummarizationTask:
         if not self.enabled:
             return
 
-        # WhatsApp chats processed by internal IPED parser
-        if self.enableWhatsAppSummarization and "whatsapp-chat" in item.getMediaType().toString():
+        # Process chats parsed by internal IPED parsers
+        mimes = {"application/x-whatsapp-chat", "application/x-telegram-chat", "application/x-threema-chat"}
+        if self.enableInternalSummarization and item.getMediaType().toString() in mimes:
             self.processChat(item)
             return
-        # Process UFED Chats 
-        if self.enableUFEDChatSummarization and "x-ufed-chat-preview" in item.getMediaType().toString():
-            self.processChat(item)
-            return
-            
 
+        # Process external (UFED) chats 
+        if self.enableExternalSummarization and "x-ufed-chat-preview" in item.getMediaType().toString():
+            self.processChat(item)
+            return
 
 
     # Called when task processing is finished. Can be used to cleanup resources.
