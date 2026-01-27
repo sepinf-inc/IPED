@@ -543,7 +543,7 @@ class AISummarizationTask:
         item.setExtraAttribute(ExtraProperties.SUMMARY, chunk_summaries)
 
         # Store chunk ids
-        item.setExtraAttribute("ai:chunk_ids", chunk_ids)
+        item.setExtraAttribute(ExtraProperties.CHUNK_IDS, chunk_ids)
 
         # Store per-question arrays in their respective attributes
         for attr_name, values in per_attr_answers.items():
