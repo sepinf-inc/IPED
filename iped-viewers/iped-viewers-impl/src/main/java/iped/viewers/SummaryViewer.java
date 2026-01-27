@@ -46,11 +46,8 @@ public class SummaryViewer extends HtmlViewer {
         IItemReader item = (IItemReader) content;
 
         // Check extra attributes (preferred)
-        Object v = item.getExtraAttributeMap().get(ExtraProperties.SUMMARY);
-        if (v instanceof Collection && !((Collection<?>) v).isEmpty()) return true;
-        if (v instanceof Object[] && ((Object[]) v).length > 0) return true;
-        if (v instanceof String && !((String) v).isEmpty()) return true;
-        if (v != null) return true; // some non-null single value
+        Object v = item.getExtraAttribute(ExtraProperties.SUMMARY);
+        if (v != null) return true;
 
         // Fallback: metadata bag
         String[] vals = item.getMetadata().getValues(ExtraProperties.SUMMARY);
@@ -77,7 +74,7 @@ public class SummaryViewer extends HtmlViewer {
             IItemReader item = (IItemReader) content;
             ArrayList<String> chunks = new ArrayList<>();
 
-            Object value = item.getExtraAttributeMap().get(ExtraProperties.SUMMARY);
+            Object value = item.getExtraAttribute(ExtraProperties.SUMMARY);
             if (value instanceof Collection<?>) {
                 for (Object v : (Collection<?>) value) {
                     if (v != null) chunks.add(v.toString());
