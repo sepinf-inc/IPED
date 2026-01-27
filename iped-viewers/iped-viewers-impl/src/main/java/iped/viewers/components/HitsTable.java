@@ -18,10 +18,12 @@
  */
 package iped.viewers.components;
 
+import java.awt.Color;
 import java.awt.Dimension;
 
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.UIManager;
 import javax.swing.table.AbstractTableModel;
 
 public class HitsTable extends JTable {
@@ -42,4 +44,16 @@ public class HitsTable extends JTable {
         super.changeSelection(rowIndex, 0, toggle, extend);
     }
 
+    @Override
+    public void updateUI() {
+        Color background = UIManager.getColor("Viewer.background");
+        if (background == null)
+            background = Color.WHITE;
+        setBackground(background);
+        Color foreground = UIManager.getColor("Viewer.foreground");
+        if (foreground == null)
+            foreground = Color.BLACK;
+        setForeground(foreground);
+        super.updateUI();
+    }
 }
