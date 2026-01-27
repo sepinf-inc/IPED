@@ -36,8 +36,7 @@ public class SummaryViewer extends HtmlViewer {
 
     @Override
     public int getHitsSupported() {
-        // no Prev/Next hit buttons for this tab
-        return -1;
+        return 1;
     }
 
     /** Quick presence check so controller can decide tab visibility. */
