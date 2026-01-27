@@ -1,9 +1,12 @@
 package iped.viewers;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+
+import javax.swing.UIManager;
 
 import iped.data.IItemReader;
 import iped.io.IStreamSource;
@@ -98,17 +101,30 @@ public class SummaryViewer extends HtmlViewer {
                 }
             }
 
+            // Use theme colors
+            Color background = UIManager.getColor("Viewer.background");
+            if (background == null) {
+                background = Color.white;
+            }
+            Color foreground = UIManager.getColor("Viewer.foreground");
+            if (foreground == null) {
+                foreground = Color.black;
+            }
+
             // Simple, readable HTML; HtmlViewer will highlight search terms after load.
             StringBuilder html = new StringBuilder();
             html.append("<!doctype html><html><head><meta charset='utf-8'>")
                 .append("<style>")
-                .append("body{font:13px sans-serif;margin:8px}")
-                .append(".chunk{margin:8px 0;padding:10px;border:1px solid #ccc;border-radius:8px}")
-                .append(".title{font-weight:bold;margin-bottom:4px}")
+                .append("body {font:13px sans-serif; margin:8px;")
+                .append("background-color:").append(UiUtil.getHexRGB(background)).append(";")
+                .append("color:").append(UiUtil.getHexRGB(foreground)).append(";")
+                .append("}")
+                .append(".chunk {margin:8px 0; padding:10px; border:1px solid #ccc; border-radius:8px;}")
+                .append(".title {font-weight:bold; margin-bottom:4px;}")
                 .append("</style>")
                 .append("</head><body>");
 
-            html.append("<div class='title'>AI-generated summaries. Check all information").append("</div>");
+            html.append("<div class='title'>AI-generated summary. Check all information.").append("</div>");
 
             for (int i = 0; i < chunks.size(); i++) {
                 String c = SimpleHTMLEncoder.htmlEncode(chunks.get(i)).replaceAll("\n","<br>");
@@ -118,8 +134,6 @@ public class SummaryViewer extends HtmlViewer {
             }
             html.append("</body></html>");
 
-            // Keep IPED HTML style for consistent colors (HtmlViewer uses this).
-            webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
             webEngine.setJavaScriptEnabled(false); // not needed here
             webEngine.loadContent(html.toString());
         });
