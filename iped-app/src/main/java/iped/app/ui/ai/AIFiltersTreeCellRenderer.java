@@ -45,6 +45,10 @@ public class AIFiltersTreeCellRenderer extends DefaultTreeCellRenderer {
             int numItems = node.getNumItems();
             setIcon(IconManager.getFilterIcon(node, numItems != 0));
             String text = AIFiltersLocalization.get(node);
+            String suffix = node.getSuffix();
+            if (suffix != null) {
+                text += " - " + suffix;
+            }
             if (numItems >= 0) {
                 text += " (" + LocalizedFormat.format(numItems) + ")";
             }
