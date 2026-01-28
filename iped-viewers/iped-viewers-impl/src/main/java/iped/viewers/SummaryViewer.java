@@ -64,7 +64,7 @@ public class SummaryViewer extends HtmlViewer {
 
         javafx.application.Platform.runLater(() -> {
             if (!(content instanceof IItemReader) || !hasSummary(content)) {
-                webEngine.loadContent(UiUtil.getUIEmptyHtml("[No summary available]"));
+                webEngine.loadContent(UiUtil.getUIEmptyHtml("[" + Messages.getString("SummaryViewer.NoSummary") + "]"));
                 return;
             }
 
