@@ -119,7 +119,7 @@ public class SummaryViewer extends HtmlViewer {
                 .append("</style>")
                 .append("</head><body>");
 
-            html.append("<div class='title'>AI-generated summary. Check all information.").append("</div>");
+            html.append("<div class='title'>").append(Messages.getString("SummaryViewer.Title")).append("</div>");
 
             for (int i = 0; i < chunks.size(); i++) {
                 String c = SimpleHTMLEncoder.htmlEncode(chunks.get(i)).replaceAll("\n","<br>");
