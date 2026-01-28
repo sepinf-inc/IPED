@@ -441,6 +441,10 @@ class AISummarizationTask:
         if item.getExtraAttribute(ExtraProperties.SUMMARY) is not None:
             return
 
+        # Skip empty chats     
+        if (item.getMetadata().get(ExtraProperties.COMMUNICATION_PREFIX + "isEmpty")  or "").lower() == "true":
+            return
+
         inputStream = item.getBufferedInputStream()
         try:
             raw_bytes = inputStream.readAllBytes()
