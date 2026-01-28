@@ -13,6 +13,7 @@ import iped.io.IStreamSource;
 import iped.properties.ExtraProperties;
 import iped.utils.SimpleHTMLEncoder;
 import iped.utils.UiUtil;
+import iped.viewers.localization.Messages;
 
 /**
  * Shows ExtraProperties.SUMMARY (array of strings) for the current item.
@@ -20,15 +21,9 @@ import iped.utils.UiUtil;
  */
 public class SummaryViewer extends HtmlViewer {
 
-    public SummaryViewer() {
-        // delegates to HtmlViewer constructor
-        super();
-    }
-
     @Override
     public String getName() {
-        // or wire into i18n later
-        return "Summary";
+        return Messages.getString("SummaryViewer.TabName");
     }
 
     @Override
