@@ -19,5 +19,8 @@ minimumContentLength = 1000
 # and the returned scores (0-999) will be available as attributes listed in 'questionAttributes'.
 enableChatAnalysis = false
 
+# It is recommended to use the 'Score' suffix for attributes, e.g., 'fraudScore'. 
+# In this case, the property would be named 'ai:analysis:fraudScore', and an entry named 
+# 'Analyzed Chats - Fraud' would be available in the AI panel, grouping chats by score level.
 questions = ["Question1?", "Question2?"]
 questionAttributes = ["question1Score", "question2Score"]
