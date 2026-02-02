@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import iped.data.IMultiBookmarks;
+import iped.engine.data.Bookmarks;
+import iped.app.ui.BookmarkTree;
+import iped.app.ui.BookmarksManager;
 
 public class BookmarkCellRenderer {
     private static final RenderingHints renderingHints;
@@ -94,6 +97,25 @@ public class BookmarkCellRenderer {
         }
     }
 
+    public String[] getBookmarkNames() {
+        return names;
+    }
+
+    public String getBookmarkAt(int mouseX, int w) {
+        int wKey = (w > maxSpacing) ? maxSpacing : w;
+        ClippedString[] cn = clippedNamesMemo.get(wKey);
+        if (cn == null) return null;
+
+        int currentX = 0;
+        for (int i = 0; i < cn.length; i++) {
+            if (mouseX >= currentX && mouseX <= currentX + cn[i].w) {
+                return names[i];
+            }
+            currentX += cn[i].w + 1;
+        }
+        return null;
+    }
+
     private synchronized ClippedString[] getClippedNames(FontMetrics fm, Graphics2D g, int w) {
         if (w > maxSpacing) {
             w = maxSpacing;
@@ -104,6 +126,21 @@ public class BookmarkCellRenderer {
             int x = 0;
             for (int i = 0; i < names.length; i++) {
                 String s = names[i].trim();
+                if (BookmarksManager.showShortBookmarksNames()) {
+                    StringBuilder displayName = new StringBuilder();
+                    int ancestorsCount = BookmarkTree.countAncestors(s);
+                    for (int j = 0; j < ancestorsCount; j++) {
+                        displayName.append(Bookmarks.PATH_SEPARATOR_DISPLAY);
+                    }
+                    if (displayName.length() > 0) {
+                        displayName.append(" ");
+                    }
+                    displayName.append(BookmarkTree.getNameFromPath(s));
+                    s = displayName.toString();
+                }
+                else {
+                    s = BookmarkTree.displayPath(s);
+                }
                 Rectangle2D rc = fm.getStringBounds(s, g);
                 int rw = (int) rc.getWidth() + 6;
                 cs[i] = new ClippedString(s, rw);
