@@ -1,0 +1,26 @@
+##############################################################################
+# Configuration file for AI-based summarization of evidence items.
+##############################################################################
+
+# IP:PORT of the service/central node used by the AISummarizationTask implementation.
+remoteServiceAddress = 127.0.0.1:8000
+
+# Enables automatic summarization of internally parsed chats (WhatsApp, Telegram etc.) using AI models.
+enableInternalChatSummarization = true
+
+# Enables automatic summarization of externally parsed chats (UFED) using AI models.
+enableExternalChatSummarization = true
+
+# Minimum item content length to perform summarization in characters
+minimumContentLength = 1000
+
+# Options for chat analysis with AI LLM.
+# When 'enableChatAnalysis' is true, custom questions in 'questions' are sent to the AI summarizer,
+# and the returned scores (0-999) will be available as attributes listed in 'questionAttributes'.
+enableChatAnalysis = false
+
+# It is recommended to use the 'Score' suffix for attributes, e.g., 'fraudScore'. 
+# In this case, the property would be named 'ai:analysis:fraudScore', and an entry named 
+# 'Analyzed Chats - Fraud' would be available in the AI panel, grouping chats by score level.
+questions = ["Question1?", "Question2?"]
+questionAttributes = ["question1Score", "question2Score"]

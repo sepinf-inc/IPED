@@ -188,6 +188,9 @@ public class ExtraProperties {
 
     public static final String FACE_AGE_LABELS = "faceAge:labels";
 
+    public static final String SUMMARY = "ai:summary";
+    public static final String CHUNK_IDS = "ai:chunkIds";
+
     /**
      * Property to be set if the evidence is a animated image (i.e. contain multiple
      * frames). Only set if the number of frames is greater than one.
