@@ -509,25 +509,30 @@ public class BfacApiClient {
     }
 
     /**
-     * Gets the list of submissions from the backend.
+     * Gets the list of submissions from the backend using cursor-based pagination.
      * @param closed If true, get closed submissions; if false, get open submissions
-     * @param offset Number of records to skip (for pagination)
+     * @param cursor Cursor for pagination (null for first page)
      * @param limit Maximum number of records to return
-     * @return List of Submission objects, or empty list on error
+     * @return PaginationResult containing submissions and pagination metadata
      */
-    public List<Submission> getSubmissions(boolean closed, int offset, int limit) {
+    public PaginationResult<Submission> getSubmissions(boolean closed, String cursor, int limit) {
+        PaginationResult<Submission> result = new PaginationResult<>();
         List<Submission> submissions = new ArrayList<>();
 
         if (accessToken == null || accessToken.isEmpty()) {
             logger.warn("Cannot get submissions: not authenticated");
-            return submissions;
+            return result;
         }
 
         try {
-            String url = baseUrl + "api/v1/submissions/?closed=" + closed + "&offset=" + offset + "&limit=" + limit;
+            StringBuilder urlBuilder = new StringBuilder(baseUrl + "api/v1/submissions/?closed=" + closed);
+            if (cursor != null && !cursor.isEmpty()) {
+                urlBuilder.append("&cursor=").append(URLEncoder.encode(cursor, StandardCharsets.UTF_8));
+            }
+            urlBuilder.append("&limit=").append(limit);
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(URI.create(urlBuilder.toString()))
                     .timeout(TIMEOUT)
                     .header("Authorization", "Bearer " + accessToken)
                     .GET()
@@ -574,6 +579,21 @@ public class BfacApiClient {
 
                     submissions.add(submission);
                 }
+
+                // Parse pagination metadata
+                PaginationResult.PaginationMeta paginationMeta = null;
+                if (responseObj.has("meta") && responseObj.getAsJsonObject("meta").has("pagination")) {
+                    JsonObject paginationObj = responseObj.getAsJsonObject("meta").getAsJsonObject("pagination");
+                    paginationMeta = new PaginationResult.PaginationMeta();
+                    paginationMeta.setLimit(paginationObj.has("limit") ? paginationObj.get("limit").getAsInt() : limit);
+                    paginationMeta.setHasMore(paginationObj.has("has_more") && paginationObj.get("has_more").getAsBoolean());
+                    paginationMeta.setNextCursor(paginationObj.has("next_cursor") && !paginationObj.get("next_cursor").isJsonNull()
+                            ? paginationObj.get("next_cursor").getAsString() : null);
+                    paginationMeta.setCursorField(paginationObj.has("cursor_field") ? paginationObj.get("cursor_field").getAsString() : "created_at");
+                }
+
+                result.setData(submissions);
+                result.setPagination(paginationMeta);
                 logger.info("Retrieved {} submissions from server", submissions.size());
 
             } else if (response.statusCode() == 401) {
@@ -590,7 +610,7 @@ public class BfacApiClient {
             logger.error("Error parsing submissions response", e);
         }
 
-        return submissions;
+        return result;
     }
 
     /**
@@ -598,7 +618,8 @@ public class BfacApiClient {
      * @return List of open Submission objects
      */
     public List<Submission> getOpenSubmissions() {
-        return getSubmissions(false, 0, 100);
+        PaginationResult<Submission> result = getSubmissions(false, null, 100);
+        return result.getData();
     }
 
     /**
@@ -606,7 +627,8 @@ public class BfacApiClient {
      * @return List of closed Submission objects
      */
     public List<Submission> getClosedSubmissions() {
-        return getSubmissions(true, 0, 100);
+        PaginationResult<Submission> result = getSubmissions(true, null, 100);
+        return result.getData();
     }
 
     public String getBaseUrl() {
