@@ -737,7 +737,8 @@ public abstract class ExtractorIOS extends Extractor {
         if (receiptInfo != null) {
             decodeReceiptInfo(m, receiptInfo);
         }
-        m.setForwarded(rs.getInt("forwarded") > 0);
+        int forwardedMask = 0b1_1000_0000; // 8th and 9th bits
+        m.setForwarded((rs.getLong("zflags") & forwardedMask) == forwardedMask);
 
         byte[] metadata = rs.getBytes("metadata");
         if (hasZSTANZAIDAndZMETADATAColumns) {
@@ -1815,7 +1816,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1830,7 +1831,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1846,7 +1847,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, NULL as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$           
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1861,7 +1862,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, NULL as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$          
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$

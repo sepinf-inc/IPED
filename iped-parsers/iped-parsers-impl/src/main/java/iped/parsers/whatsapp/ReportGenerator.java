@@ -580,18 +580,20 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
                 boolean selfAction = false;
-                if (users.size() == 1) {
+                if (users.size() == 0) {
+                    if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP || message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
+                        out.print(Messages.getString("WhatsAppReport.WasAdded"));
+                        selfAction = true;
+                    }
+                } else if (users.size() == 1) {
                     String user = users.get(0);
                     user = getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account);
                     if (user != null && user.equals(name)) {
                         if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
                             out.print(Messages.getString("WhatsAppReport.RemovedGroup"));
                             selfAction = true;
-                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP) {
-                            out.print(Messages.getString("WhatsAppReport.AddedToGroup"));
-                            selfAction = true;
-                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
-                            out.print(Messages.getString("WhatsAppReport.AddedToCommunity"));
+                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP || message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
+                            out.print(Messages.getString("WhatsAppReport.WasAdded"));
                             selfAction = true;
                         } else if (message.getMessageType() == MessageType.USER_COMMUNITY_ADMIN) {
                             out.print(Messages.getString("WhatsAppReport.CommunityAdmin"));
@@ -757,6 +759,10 @@ public class ReportGenerator {
             case CHAT_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChatAddedPrivacy") + "<br>");
+                break;
+            case ADVANCED_PRIVACY_ON:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.AdvancedPrivacyOn") + "<br>");
                 break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");

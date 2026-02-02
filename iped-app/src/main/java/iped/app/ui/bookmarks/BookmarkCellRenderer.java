@@ -74,6 +74,9 @@ public class BookmarkCellRenderer {
             } else {
                 names = str.split(" \\| ");
             }
+            for (int i = 0; i < names.length; i++) {
+                names[i] = names[i].replace("||", "|");
+            }
             lastStr = str;
         }
         if (colors == null || colors.length < names.length) {

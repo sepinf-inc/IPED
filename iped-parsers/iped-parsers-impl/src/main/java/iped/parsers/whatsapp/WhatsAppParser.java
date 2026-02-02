@@ -761,7 +761,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
                 ChatMerge cm = new ChatMerge(mainDBChatList, other.getItem().getName());
 
-                if (cm.isBackup(other.getChalist())) {
+                if (cm.isBackup(other.getChalist(), contacts)) {
                     if (wcontext == mainDb) {
                         // merge backup in the main chat list
                         int numMsgRecovered = cm.mergeChatList(other.getChalist());

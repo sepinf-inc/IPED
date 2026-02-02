@@ -49,12 +49,14 @@ public class BookmarkIcon implements Icon {
             return null;
         }
         if (str.indexOf(" | ") < 0) {
+            str = str.replace("||", "|");
             return getIcon(bookmarks.getBookmarkColor(str));
         }
         // Multiple bookmarks
         String[] bookmarkNames = str.split(" \\| ");
         List<Color> l = new ArrayList<Color>(bookmarkNames.length);
         for (String name : bookmarkNames) {
+            name = name.replace("||", "|");
             l.add(bookmarks.getBookmarkColor(name));
         }
         synchronized (iconPerColorList) {
