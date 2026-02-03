@@ -128,7 +128,7 @@ public class BfacApiClient {
                     .uri(URI.create(baseUrl + "api/auth/users/renew_token"))
                     .timeout(TIMEOUT)
                     .header("Authorization", "Bearer " + accessToken)
-                    .GET()
+                    .POST(HttpRequest.BodyPublishers.noBody())
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -659,7 +659,7 @@ public class BfacApiClient {
                     .uri(URI.create(baseUrl + "api/auth/users/renew_token"))
                     .timeout(TIMEOUT)
                     .header("Authorization", "Bearer " + accessToken)
-                    .GET()
+                    .POST(HttpRequest.BodyPublishers.noBody())
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
