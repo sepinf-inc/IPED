@@ -671,6 +671,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         bookmarksTree.addTreeSelectionListener(bookmarksListener);
         bookmarksTree.addTreeExpansionListener(bookmarksListener);
         bookmarksTree.setExpandsSelectedPaths(false);
+        // Add listener to handle copy shortcuts
+        bookmarksTree.addKeyListener(new BookmarkTreeKeyListener(bookmarksTree));
 
         metadataPanel = new MetadataPanel();
 
