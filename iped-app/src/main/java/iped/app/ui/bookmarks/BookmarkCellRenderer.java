@@ -19,10 +19,12 @@ public class BookmarkCellRenderer {
     private static final RenderingHints renderingHints;
 
     private String[] names;
+    private String[] shortNames;
     private Color[] colors, foregrounds;
     private final Map<Integer, ClippedString[]> clippedNamesMemo = new HashMap<Integer, ClippedString[]>();
     private int maxSpacing;
     private String lastStr;
+    private boolean lastShowShortNames;
 
     static {
         Map<Key, Object> hints = new HashMap<Key, Object>();
@@ -44,13 +46,19 @@ public class BookmarkCellRenderer {
     }
 
     void setBookmark(String str, Color color) {
-        boolean strChanged = false;
-        if (!str.equals(lastStr)) {
+        boolean showShortNames = BookmarksManager.showShortBookmarksNames();
+        boolean settingChanged = (showShortNames != lastShowShortNames);
+        boolean strChanged = false;        
+        if (!str.equals(lastStr) || settingChanged) {
             strChanged = true;
             if (names == null || names.length != 1) {
                 names = new String[1];
+                shortNames = new String[1];
             }
-            lastStr = names[0] = str;
+            names[0] = str;
+            shortNames[0] = transformBookmarkName(str, showShortNames);
+            lastStr = str;
+            lastShowShortNames = showShortNames;
         }
         if (colors == null || colors.length < names.length) {
             colors = new Color[1];
@@ -65,22 +73,29 @@ public class BookmarkCellRenderer {
     }
 
     public void setBookmarks(IMultiBookmarks bookmarks, String str) {
-        boolean strChanged = false;
-        if (!str.equals(lastStr)) {
+        boolean showShortNames = BookmarksManager.showShortBookmarksNames();
+        boolean settingChanged = (showShortNames != lastShowShortNames);
+        boolean strChanged = false;        
+        if (!str.equals(lastStr) || settingChanged) {
             strChanged = true;
             if (str.indexOf(" | ") < 0) {
                 if (names == null || names.length != 1) {
                     names = new String[] { str };
+                    shortNames = new String[] { str };
                 } else {
                     names[0] = str;
+                    shortNames[0] = str;
                 }
             } else {
                 names = str.split(" \\| ");
+                shortNames = new String[names.length];
             }
             for (int i = 0; i < names.length; i++) {
                 names[i] = names[i].replace("||", "|");
+                shortNames[i] = transformBookmarkName(names[i], showShortNames);
             }
             lastStr = str;
+            lastShowShortNames = showShortNames;
         }
         if (colors == null || colors.length < names.length) {
             colors = new Color[names.length];
@@ -125,21 +140,12 @@ public class BookmarkCellRenderer {
             cs = new ClippedString[names.length];
             int x = 0;
             for (int i = 0; i < names.length; i++) {
-                String s = names[i].trim();
+                String s;
                 if (BookmarksManager.showShortBookmarksNames()) {
-                    StringBuilder displayName = new StringBuilder();
-                    int ancestorsCount = BookmarkTree.countAncestors(s);
-                    for (int j = 0; j < ancestorsCount; j++) {
-                        displayName.append(Bookmarks.PATH_SEPARATOR_DISPLAY);
-                    }
-                    if (displayName.length() > 0) {
-                        displayName.append(" ");
-                    }
-                    displayName.append(BookmarkTree.getNameFromPath(s));
-                    s = displayName.toString();
+                    s = shortNames[i].trim();
                 }
                 else {
-                    s = BookmarkTree.displayPath(s);
+                    s = BookmarkTree.displayPath(names[i].trim());
                 }
                 Rectangle2D rc = fm.getStringBounds(s, g);
                 int rw = (int) rc.getWidth() + 6;
@@ -223,5 +229,25 @@ public class BookmarkCellRenderer {
             this.str = str;
             this.w = w;
         }
+    }
+
+    /**
+     * Transforms a bookmark name to short format if needed
+     */
+    private String transformBookmarkName(String name, boolean useShortNames) {
+        if (!useShortNames) {
+            return name;
+        }
+        
+        StringBuilder displayName = new StringBuilder();
+        int ancestorsCount = BookmarkTree.countAncestors(name);
+        for (int j = 0; j < ancestorsCount; j++) {
+            displayName.append(Bookmarks.PATH_SEPARATOR_DISPLAY);
+        }
+        if (displayName.length() > 0) {
+            displayName.append(" ");
+        }
+        displayName.append(BookmarkTree.getNameFromPath(name));
+        return displayName.toString();
     }
 }
