@@ -1,0 +1,6 @@
+# BFAC (Base Federal de Arquivos Conhecidos) Backend Configuration
+# Configuration for the BFAC backend API client
+
+# Base URL for the BFAC backend API server
+# Default: http://10.61.86.217:8000/
+baseUrl = http://10.61.86.217:8000/

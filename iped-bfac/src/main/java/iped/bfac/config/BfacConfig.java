@@ -1,12 +1,18 @@
 package iped.bfac.config;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,22 +25,27 @@ import com.google.gson.JsonObject;
  */
 public class BfacConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(BfacConfig.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static final String BFAC_FOLDER_NAME = ".bfac";
     private static final String CREDENTIALS_FILE = "credentials.json";
     private static final String CONFIG_FILE = "config.json";
+    private static final String PROPERTIES_CONFIG_FILE = "BFACConfig.txt";
+    private static final String DEFAULT_BASE_URL = "http://localhost:8000/";
 
     private static BfacConfig instance;
 
     private final Path bfacFolder;
     private JsonObject credentials;
     private JsonObject config;
+    private String baseUrl;
 
     private BfacConfig() {
         String userHome = System.getProperty("user.home");
         this.bfacFolder = Paths.get(userHome, BFAC_FOLDER_NAME);
         ensureFolderExists();
+        loadBaseUrlFromProperties();
     }
 
     public static synchronized BfacConfig getInstance() {
@@ -172,5 +183,79 @@ public class BfacConfig {
      */
     public Path getBfacFolder() {
         return bfacFolder;
+    }
+
+    /**
+     * Loads the base URL from BFACConfig.txt properties file.
+     * Searches in the following locations:
+     * 1. conf/BFACConfig.txt (relative to current directory)
+     * 2. ../conf/BFACConfig.txt (relative to current directory)
+     * 3. Classpath resource
+     * If not found or error occurs, uses default value.
+     */
+    private void loadBaseUrlFromProperties() {
+        this.baseUrl = DEFAULT_BASE_URL;
+
+        // Try to load from file system first (conf/ directory)
+        File configFile = new File("conf", PROPERTIES_CONFIG_FILE);
+        if (!configFile.exists()) {
+            configFile = new File("../conf", PROPERTIES_CONFIG_FILE);
+        }
+
+        Properties props = new Properties();
+        boolean loaded = false;
+
+        // Try loading from file system
+        if (configFile.exists()) {
+            try (InputStream is = new FileInputStream(configFile)) {
+                props.load(is);
+                loaded = true;
+                logger.info("Loaded BFAC configuration from: {}", configFile.getAbsolutePath());
+            } catch (IOException e) {
+                logger.warn("Failed to load BFAC config from file: {}", configFile.getAbsolutePath(), e);
+            }
+        }
+
+        // Try loading from classpath if not loaded from file
+        if (!loaded) {
+            try (InputStream is = getClass().getClassLoader().getResourceAsStream("conf/" + PROPERTIES_CONFIG_FILE)) {
+                if (is != null) {
+                    props.load(is);
+                    loaded = true;
+                    logger.info("Loaded BFAC configuration from classpath");
+                }
+            } catch (IOException e) {
+                logger.warn("Failed to load BFAC config from classpath", e);
+            }
+        }
+
+        // Parse baseUrl property
+        if (loaded) {
+            String url = props.getProperty("baseUrl");
+            if (url != null && !url.trim().isEmpty()) {
+                this.baseUrl = url.trim();
+                logger.info("BFAC base URL set to: {}", this.baseUrl);
+            } else {
+                logger.info("No baseUrl property found in config, using default: {}", DEFAULT_BASE_URL);
+            }
+        } else {
+            logger.info("BFAC config file not found, using default base URL: {}", DEFAULT_BASE_URL);
+        }
+    }
+
+    /**
+     * Gets the base URL for the BFAC backend API.
+     * @return The base URL loaded from configuration or default value
+     */
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+    /**
+     * Sets the base URL for the BFAC backend API.
+     * @param baseUrl The base URL to set
+     */
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
     }
 }

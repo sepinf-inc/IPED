@@ -33,15 +33,25 @@ public class BfacApiClient {
     private static final Gson GSON = new Gson();
     private static final Duration TIMEOUT = Duration.ofSeconds(60);
 
-    public static final String DEFAULT_BASE_URL = "http://localhost:8000/";
-
     private String baseUrl;
     private String accessToken;
     private HttpClient httpClient;
     private BfacConfig config;
 
     public BfacApiClient() {
-        this(DEFAULT_BASE_URL);
+        this.config = BfacConfig.getInstance();
+        // Load base URL from configuration file
+        this.baseUrl = config.getBaseUrl();
+        if (!this.baseUrl.endsWith("/")) {
+            this.baseUrl += "/";
+        }
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(TIMEOUT)
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
+
+        // Load existing access token if available
+        this.accessToken = config.getAccessToken();
     }
 
     public BfacApiClient(String baseUrl) {
