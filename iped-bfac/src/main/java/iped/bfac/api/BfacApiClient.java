@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import iped.bfac.config.BfacConfig;
+import iped.engine.Version;
 
 /**
  * HTTP client for communicating with the BFAC (Base Federal de Arquivos Conhecidos) backend API.
@@ -32,6 +33,7 @@ public class BfacApiClient {
     private static final Logger logger = LoggerFactory.getLogger(BfacApiClient.class);
     private static final Gson GSON = new Gson();
     private static final Duration TIMEOUT = Duration.ofSeconds(60);
+    private static final String USER_AGENT = "IPED-BFAC-Client/" + Version.APP_VERSION + " (" + Version.APP_EXT + ")";
 
     private String baseUrl;
     private String accessToken;
@@ -67,6 +69,28 @@ public class BfacApiClient {
     }
 
     /**
+     * Creates a new HttpRequest.Builder with common headers (User-Agent).
+     * @param url The URL for the request
+     * @return HttpRequest.Builder with common headers set
+     */
+    private HttpRequest.Builder newRequestBuilder(String url) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(TIMEOUT)
+                .header("User-Agent", USER_AGENT);
+    }
+
+    /**
+     * Creates a new HttpRequest.Builder with common headers including Authorization.
+     * @param url The URL for the request
+     * @return HttpRequest.Builder with common headers and Authorization set
+     */
+    private HttpRequest.Builder newAuthenticatedRequestBuilder(String url) {
+        return newRequestBuilder(url)
+                .header("Authorization", "Bearer " + accessToken);
+    }
+
+    /**
      * Authenticates with the BFAC server.
      * @param username The username
      * @param password The password
@@ -78,9 +102,7 @@ public class BfacApiClient {
             String formData = "username=" + URLEncoder.encode(username, StandardCharsets.UTF_8) +
                               "&password=" + URLEncoder.encode(password, StandardCharsets.UTF_8);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "api/auth/token"))
-                    .timeout(TIMEOUT)
+            HttpRequest request = newRequestBuilder(baseUrl + "api/auth/token")
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(formData))
                     .build();
@@ -134,10 +156,7 @@ public class BfacApiClient {
         }
 
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "api/auth/users/renew_token"))
-                    .timeout(TIMEOUT)
-                    .header("Authorization", "Bearer " + accessToken)
+            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/auth/users/renew_token")
                     .POST(HttpRequest.BodyPublishers.noBody())
                     .build();
 
@@ -190,10 +209,7 @@ public class BfacApiClient {
                 submissionData.addProperty("comment", comment);
             }
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "api/v1/submissions/"))
-                    .timeout(TIMEOUT)
-                    .header("Authorization", "Bearer " + accessToken)
+            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/v1/submissions/")
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(submissionData)))
                     .build();
@@ -253,10 +269,7 @@ public class BfacApiClient {
             if (hashInfo.getSha1() != null) hashData.addProperty("sha1", hashInfo.getSha1());
             if (hashInfo.getSha256() != null) hashData.addProperty("sha256", hashInfo.getSha256());
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "api/v1/submissions/" + submissionId + "/files/hashes"))
-                    .timeout(TIMEOUT)
-                    .header("Authorization", "Bearer " + accessToken)
+            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/v1/submissions/" + submissionId + "/files/hashes")
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(hashData)))
                     .build();
@@ -325,10 +338,7 @@ public class BfacApiClient {
             JsonObject batchData = new JsonObject();
             batchData.add("file_data", fileDataList);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "api/v1/submissions/" + submissionId + "/files/hashes_batched"))
-                    .timeout(TIMEOUT)
-                    .header("Authorization", "Bearer " + accessToken)
+            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/v1/submissions/" + submissionId + "/files/hashes_batched")
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(batchData)))
                     .build();
@@ -385,10 +395,7 @@ public class BfacApiClient {
         }
 
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "api/v1/file-transfer/" + fileId + "/status"))
-                    .timeout(TIMEOUT)
-                    .header("Authorization", "Bearer " + accessToken)
+            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/v1/file-transfer/" + fileId + "/status")
                     .GET()
                     .build();
 
@@ -430,10 +437,7 @@ public class BfacApiClient {
             String url = baseUrl + "api/v1/file-transfer/" + fileId + "/upload-segment" +
                          "?offset=" + offset + "&segment_size=" + segmentData.length;
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .timeout(TIMEOUT)
-                    .header("Authorization", "Bearer " + accessToken)
+            HttpRequest request = newAuthenticatedRequestBuilder(url)
                     .header("Content-Type", "application/octet-stream")
                     .POST(HttpRequest.BodyPublishers.ofByteArray(segmentData))
                     .build();
@@ -474,10 +478,7 @@ public class BfacApiClient {
         }
 
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "api/v1/categories/"))
-                    .timeout(TIMEOUT)
-                    .header("Authorization", "Bearer " + accessToken)
+            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/v1/categories/")
                     .GET()
                     .build();
 
@@ -541,10 +542,7 @@ public class BfacApiClient {
             }
             urlBuilder.append("&limit=").append(limit);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(urlBuilder.toString()))
-                    .timeout(TIMEOUT)
-                    .header("Authorization", "Bearer " + accessToken)
+            HttpRequest request = newAuthenticatedRequestBuilder(urlBuilder.toString())
                     .GET()
                     .build();
 
@@ -665,10 +663,7 @@ public class BfacApiClient {
 
         try {
             // Use the renew_token endpoint to validate and refresh the token
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "api/auth/users/renew_token"))
-                    .timeout(TIMEOUT)
-                    .header("Authorization", "Bearer " + accessToken)
+            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/auth/users/renew_token")
                     .POST(HttpRequest.BodyPublishers.noBody())
                     .build();
 
