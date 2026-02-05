@@ -7,24 +7,28 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JProgressBar;
@@ -38,11 +42,6 @@ import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-
-import java.awt.Frame;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import javax.swing.JOptionPane;
 
 import iped.bfac.api.BfacApiClient;
 import iped.bfac.api.Category;
@@ -80,7 +79,7 @@ public class BfacDialog extends JDialog {
     private SubmissionWorker currentWorker;
 
     // Login panel components
-    private JTextField serverUrlField;
+    private JLabel serverUrlLabel;
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton loginButton;
@@ -418,16 +417,18 @@ public class BfacDialog extends JDialog {
         gbc.gridwidth = 1;
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        // Server URL
+        // Server URL (read-only, from config)
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.EAST;
         panel.add(new JLabel("Server URL:"), gbc);
 
-        serverUrlField = new JTextField("http://localhost:8000/", 25);
+        serverUrlLabel = new JLabel(apiClient.getBaseUrl());
+        serverUrlLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        serverUrlLabel.setForeground(Color.DARK_GRAY);
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
-        panel.add(serverUrlField, gbc);
+        panel.add(serverUrlLabel, gbc);
 
         // Username
         gbc.gridx = 0;
@@ -694,7 +695,6 @@ public class BfacDialog extends JDialog {
     private void onLogin() {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword());
-        String serverUrl = serverUrlField.getText().trim();
 
         if (username.isEmpty() || password.isEmpty()) {
             loginStatusLabel.setForeground(Color.RED);
@@ -702,16 +702,10 @@ public class BfacDialog extends JDialog {
             return;
         }
 
-        // Update server URL if changed
-        if (!serverUrl.isEmpty() && !serverUrl.equals(apiClient.getBaseUrl())) {
-            apiClient.setBaseUrl(serverUrl);
-        }
-
         // Disable UI during login
         loginButton.setEnabled(false);
         usernameField.setEnabled(false);
         passwordField.setEnabled(false);
-        serverUrlField.setEnabled(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         loginStatusLabel.setForeground(Color.BLUE);
@@ -752,7 +746,6 @@ public class BfacDialog extends JDialog {
                     loginButton.setEnabled(true);
                     usernameField.setEnabled(true);
                     passwordField.setEnabled(true);
-                    serverUrlField.setEnabled(true);
                     setCursor(Cursor.getDefaultCursor());
                 }
             }
