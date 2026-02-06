@@ -7,11 +7,18 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +54,7 @@ public class BfacApiClient {
         if (!this.baseUrl.endsWith("/")) {
             this.baseUrl += "/";
         }
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(TIMEOUT)
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
+        this.httpClient = createHttpClient();
 
         // Load existing access token if available
         this.accessToken = config.getAccessToken();
@@ -58,14 +62,50 @@ public class BfacApiClient {
 
     public BfacApiClient(String baseUrl) {
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(TIMEOUT)
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
+        this.httpClient = createHttpClient();
         this.config = BfacConfig.getInstance();
 
         // Load existing access token if available
         this.accessToken = config.getAccessToken();
+    }
+
+    /**
+     * Creates an HttpClient that accepts all SSL certificates, including self-signed ones.
+     * This is useful for development/testing environments with self-signed certificates.
+     * @return HttpClient configured to trust all certificates
+     */
+    private HttpClient createHttpClient() {
+        try {
+            // Create a trust manager that accepts all certificates
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+            };
+
+            // Install the all-trusting trust manager
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+
+            return HttpClient.newBuilder()
+                    .connectTimeout(TIMEOUT)
+                    .version(HttpClient.Version.HTTP_1_1)
+                    .sslContext(sslContext)
+                    .build();
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            logger.warn("Failed to create insecure SSL context, falling back to default: {}", e.getMessage());
+            // Fallback to default HTTP client if SSL configuration fails
+            return HttpClient.newBuilder()
+                    .connectTimeout(TIMEOUT)
+                    .version(HttpClient.Version.HTTP_1_1)
+                    .build();
+        }
     }
 
     /**
