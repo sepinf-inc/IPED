@@ -30,6 +30,8 @@ import com.google.gson.JsonObject;
 
 import iped.bfac.config.BfacConfig;
 import iped.engine.Version;
+import iped.engine.config.BFACClientConfig;
+import iped.engine.config.ConfigurationManager;
 
 /**
  * HTTP client for communicating with the BFAC (Base Federal de Arquivos Conhecidos) backend API.
@@ -49,8 +51,9 @@ public class BfacApiClient {
 
     public BfacApiClient() {
         this.config = BfacConfig.getInstance();
-        // Load base URL from configuration file
-        this.baseUrl = config.getBaseUrl();
+        // Load base URL from IPED configuration
+        BFACClientConfig bfacClientConfig = ConfigurationManager.get().findObject(BFACClientConfig.class);
+        this.baseUrl = bfacClientConfig != null ? bfacClientConfig.getBaseUrl() : "http://localhost:8000/";
         if (!this.baseUrl.endsWith("/")) {
             this.baseUrl += "/";
         }

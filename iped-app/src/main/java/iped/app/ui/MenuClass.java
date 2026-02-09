@@ -33,6 +33,7 @@ import javax.swing.KeyStroke;
 import iped.app.ui.themes.Theme;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItem;
+import iped.engine.config.BFACClientConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.search.SimilarFacesSearch;
@@ -333,9 +334,13 @@ public class MenuClass extends JPopupMenu {
 
         this.addSeparator();
 
-        openBfacClient = new JMenuItem(Messages.getString("MenuClass.OpenBfacClient")); //$NON-NLS-1$
-        openBfacClient.addActionListener(menuListener);
-        this.add(openBfacClient);
+        // Only add BFAC Client menu item if enabled in config
+        BFACClientConfig bfacClientConfig = ConfigurationManager.get().findObject(BFACClientConfig.class);
+        if (bfacClientConfig != null && bfacClientConfig.isEnabled()) {
+            openBfacClient = new JMenuItem(Messages.getString("MenuClass.OpenBfacClient")); //$NON-NLS-1$
+            openBfacClient.addActionListener(menuListener);
+            this.add(openBfacClient);
+        }
 
         createReport = new JMenuItem(Messages.getString("MenuClass.GenerateReport")); //$NON-NLS-1$
         createReport.addActionListener(menuListener);
