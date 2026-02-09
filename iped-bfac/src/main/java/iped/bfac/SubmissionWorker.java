@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -241,18 +243,21 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 IPEDMultiSource multiSource = (ipedSource instanceof IPEDMultiSource)
                         ? (IPEDMultiSource) ipedSource : null;
 
-                // Submit all upload tasks
-                List<Future<FileUploadResult>> futures = new ArrayList<>();
+                // Submit all upload tasks via CompletionService (results in completion order)
+                CompletionService<FileUploadResult> completionService =
+                        new ExecutorCompletionService<>(uploadExecutor);
+                int submittedCount = 0;
                 for (Map.Entry<Integer, FileHashInfo> entry : filesToUpload.entrySet()) {
                     FileUploadTask task = new FileUploadTask(
                             entry.getKey(), entry.getValue(), apiClient, multiSource,
                             globalBytesUploaded, finalTotalBytesToUpload,
                             logCallback, tokenRenewalCallback, progressCallback,
                             cancelledFlag, authErrorFlag);
-                    futures.add(uploadExecutor.submit(task));
+                    completionService.submit(task);
+                    submittedCount++;
                 }
 
-                // Monitor progress while tasks are running
+                // Collect results in completion order (not submission order)
                 uploadExecutor.shutdown();
 
                 int uploadedCount = 0;
@@ -260,8 +265,9 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 int skippedCount = 0;
                 long totalBytesUploaded = 0;
 
-                for (Future<FileUploadResult> future : futures) {
+                for (int i = 0; i < submittedCount; i++) {
                     try {
+                        Future<FileUploadResult> future = completionService.take();
                         FileUploadResult result = future.get();
 
                         if (result.isSuccess()) {
