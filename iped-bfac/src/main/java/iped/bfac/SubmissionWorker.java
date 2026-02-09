@@ -1,19 +1,19 @@
 package iped.bfac;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.swing.SwingWorker;
 
 import iped.bfac.api.BfacApiClient;
 import iped.bfac.api.FileHashInfo;
-import iped.bfac.api.FileUploadStatus;
 import iped.bfac.api.LoginResult;
 import iped.bfac.api.SendHashResult;
 import iped.bfac.api.SubmissionResult;
@@ -46,6 +46,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
     private final String categoryName;
     private final Set<String> bookmarkNames;
     private final boolean uploadFiles;
+    private final int maxConcurrentUploads;
 
     private volatile boolean cancelled = false;
     private volatile boolean authenticationError = false;
@@ -54,6 +55,10 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
     private int successCount = 0;
     private int errorCount = 0;
     private long lastTokenRenewalTime = 0;
+    private ExecutorService uploadExecutor;
+    private final boolean[] cancelledFlag = new boolean[] { false };
+    private final boolean[] authErrorFlag = new boolean[] { false };
+    private volatile boolean uploadHadErrors = false;
 
     /**
      * Callback interface for communication with the dialog.
@@ -73,7 +78,8 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
 
     public SubmissionWorker(BfacApiClient apiClient, IIPEDSource ipedSource, SubmissionCallback callback,
             boolean isNewSubmission, int submissionId, String submissionName,
-            String comment, String categoryName, Set<String> bookmarkNames, boolean uploadFiles) {
+            String comment, String categoryName, Set<String> bookmarkNames, boolean uploadFiles,
+            int maxConcurrentUploads) {
         this.apiClient = apiClient;
         this.ipedSource = ipedSource;
         this.callback = callback;
@@ -84,6 +90,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
         this.categoryName = categoryName;
         this.bookmarkNames = bookmarkNames;
         this.uploadFiles = uploadFiles;
+        this.maxConcurrentUploads = maxConcurrentUploads;
     }
 
     @Override
@@ -184,11 +191,12 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 publish("Errors: " + errorCount);
             }
 
-            // Step 5: Upload files if requested
+            // Step 5: Upload files if requested (parallel)
             if (uploadFiles && !filesToUpload.isEmpty()) {
                 publish("");
                 publish("=== Starting File Upload ===");
                 publish("Files to upload: " + filesToUpload.size());
+                publish("Concurrent uploads: " + maxConcurrentUploads);
 
                 // Renew token before starting upload (uploads can take days)
                 renewTokenIfNeeded(true);
@@ -196,9 +204,6 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 // Reset progress bar for upload phase
                 setProgress(0);
 
-                int uploadedCount = 0;
-                int uploadErrorCount = 0;
-                long totalBytesUploaded = 0;
                 int totalFilesToUpload = filesToUpload.size();
 
                 // Calculate total bytes to upload for accurate progress
@@ -207,36 +212,96 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                     totalBytesToUpload += info.getFileSize();
                 }
 
-                long bytesUploadedSoFar = 0;
+                // Shared state for parallel uploads
+                final AtomicLong globalBytesUploaded = new AtomicLong(0);
+                final long finalTotalBytesToUpload = totalBytesToUpload;
 
+                // Reset shared flags for this upload phase
+                cancelledFlag[0] = false;
+                authErrorFlag[0] = false;
+
+                // Token renewal callback (synchronized in BfacApiClient.renewToken)
+                Runnable tokenRenewalCallback = () -> renewTokenIfNeeded(false);
+
+                // Thread-safe log callback via SwingWorker.publish
+                java.util.function.Consumer<String> logCallback = msg -> publish(msg);
+
+                // Create thread pool
+                uploadExecutor = Executors.newFixedThreadPool(maxConcurrentUploads);
+
+                // Ensure ipedSource is IPEDMultiSource for file retrieval
+                IPEDMultiSource multiSource = (ipedSource instanceof IPEDMultiSource)
+                        ? (IPEDMultiSource) ipedSource : null;
+
+                // Submit all upload tasks
+                List<Future<FileUploadResult>> futures = new ArrayList<>();
                 for (Map.Entry<Integer, FileHashInfo> entry : filesToUpload.entrySet()) {
-                    if (cancelled || authenticationError) break;
+                    FileUploadTask task = new FileUploadTask(
+                            entry.getKey(), entry.getValue(), apiClient, multiSource,
+                            globalBytesUploaded, finalTotalBytesToUpload,
+                            logCallback, tokenRenewalCallback,
+                            cancelledFlag, authErrorFlag);
+                    futures.add(uploadExecutor.submit(task));
+                }
 
-                    int fileId = entry.getKey();
-                    FileHashInfo hashInfo = entry.getValue();
+                // Monitor progress while tasks are running
+                uploadExecutor.shutdown();
 
-                    long[] bytesUploaded = new long[1]; // Array to allow modification in lambda-like callback
-                    boolean success = uploadFile(fileId, hashInfo, totalBytesToUpload, bytesUploadedSoFar, bytesUploaded);
-                    if (success) {
-                        uploadedCount++;
-                        totalBytesUploaded += hashInfo.getFileSize();
-                        bytesUploadedSoFar += bytesUploaded[0];
-                    } else {
+                int uploadedCount = 0;
+                int uploadErrorCount = 0;
+                int skippedCount = 0;
+                long totalBytesUploaded = 0;
+
+                for (Future<FileUploadResult> future : futures) {
+                    try {
+                        FileUploadResult result = future.get();
+
+                        if (result.isSuccess()) {
+                            if (result.isSkipped()) {
+                                skippedCount++;
+                            } else {
+                                uploadedCount++;
+                            }
+                            totalBytesUploaded += result.getBytesUploaded();
+                        } else {
+                            uploadErrorCount++;
+                            if (result.isAuthenticationError()) {
+                                authenticationError = true;
+                                // Propagate to shared flags so other tasks stop
+                                authErrorFlag[0] = true;
+                            }
+                        }
+
+                        // Update progress based on global bytes uploaded
+                        if (finalTotalBytesToUpload > 0) {
+                            int progress = (int) ((globalBytesUploaded.get() * 100) / finalTotalBytesToUpload);
+                            setProgress(Math.min(progress, 100));
+                        }
+
+                        int processed = uploadedCount + uploadErrorCount + skippedCount;
+                        publish("Processed " + processed + " of " + totalFilesToUpload + " files...");
+
+                    } catch (Exception e) {
                         uploadErrorCount++;
-                        bytesUploadedSoFar += bytesUploaded[0]; // Count partial uploads too
-                        // Stop if authentication error occurred
-                        if (authenticationError) break;
+                        publish("  Error processing upload result: " + e.getMessage());
                     }
-
-                    publish("Uploaded " + (uploadedCount + uploadErrorCount) + " of " + totalFilesToUpload + " files...");
                 }
 
                 publish("");
                 publish("=== File Upload Complete ===");
                 publish("Files uploaded: " + uploadedCount);
+                if (skippedCount > 0) {
+                    publish("Files already in backend (skipped): " + skippedCount);
+                }
                 publish("Total data: " + formatBytes(totalBytesUploaded));
                 if (uploadErrorCount > 0) {
+                    uploadHadErrors = true;
                     publish("Upload errors: " + uploadErrorCount);
+                    if (uploadedCount == 0 && skippedCount == 0) {
+                        publish("ERROR: All file uploads failed!");
+                    } else {
+                        publish("WARNING: " + uploadErrorCount + " of " + totalFilesToUpload + " file(s) failed to upload.");
+                    }
                 }
             } else if (uploadFiles) {
                 publish("");
@@ -276,9 +341,13 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
 
                 if (success) {
                     callback.onLogMessage("");
-                    callback.onLogMessage("Operation completed successfully!");
+                    if (uploadHadErrors) {
+                        callback.onLogMessage("Operation completed with errors. Some files failed to upload.");
+                    } else {
+                        callback.onLogMessage("Operation completed successfully!");
+                    }
                 }
-                callback.onComplete(success);
+                callback.onComplete(success && !uploadHadErrors);
             }
         } catch (Exception e) {
             if (callback != null) {
@@ -290,7 +359,11 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
 
     public void cancelOperation() {
         cancelled = true;
+        cancelledFlag[0] = true;
         cancel(false);
+        if (uploadExecutor != null && !uploadExecutor.isShutdown()) {
+            uploadExecutor.shutdownNow();
+        }
     }
 
     /**
@@ -445,129 +518,6 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
         return (hashInfo.getMd5() != null && !hashInfo.getMd5().isEmpty()) ||
                (hashInfo.getSha1() != null && !hashInfo.getSha1().isEmpty()) ||
                (hashInfo.getSha256() != null && !hashInfo.getSha256().isEmpty());
-    }
-
-    /**
-     * Uploads a file to the backend in segments.
-     * @param fileId The file ID in the backend
-     * @param hashInfo The file hash information
-     * @param totalBytesToUpload Total bytes across all files to upload (for progress calculation)
-     * @param bytesUploadedBefore Bytes already uploaded from previous files
-     * @param bytesUploadedOut Output parameter: bytes uploaded for this file
-     * @return true if upload was successful
-     */
-    private boolean uploadFile(int fileId, FileHashInfo hashInfo, long totalBytesToUpload,
-                               long bytesUploadedBefore, long[] bytesUploadedOut) {
-        bytesUploadedOut[0] = 0;
-
-        try {
-            // Get upload status from backend
-            FileUploadStatus status = apiClient.getUploadStatus(fileId);
-            if (!status.isSuccess()) {
-                publish("  Error: " + status.getErrorMessage());
-                if (status.isUnauthorized()) {
-                    authenticationError = true;
-                }
-                return false;
-            }
-
-            // If already complete, skip
-            if (status.isComplete()) {
-                publish("  File already uploaded: " + hashInfo.getFileName());
-                bytesUploadedOut[0] = hashInfo.getFileSize();
-                return true;
-            }
-
-            // Get the file content from IPED
-            IItem item = findItemByHash(hashInfo);
-            if (item == null) {
-                publish("  Error: Could not find item for file " + hashInfo.getFileName());
-                return false;
-            }
-
-            long fileSize = item.getLength() != null ? item.getLength() : 0;
-            if (fileSize == 0) {
-                publish("  Skipping empty file: " + hashInfo.getFileName());
-                return true;
-            }
-
-            int segmentSize = status.getSegmentSize();
-            long startOffset = status.getUploadedSize();
-
-            publish("  Uploading: " + hashInfo.getFileName() + " (" + formatBytes(fileSize) + ")");
-
-            try (InputStream is = item.getBufferedInputStream()) {
-                // Skip to start offset if resuming
-                if (startOffset > 0) {
-                    is.skip(startOffset);
-                    bytesUploadedOut[0] = startOffset; // Count already uploaded bytes
-                }
-
-                long currentOffset = startOffset;
-                byte[] buffer = new byte[segmentSize];
-
-                while (currentOffset < fileSize && !cancelled) {
-                    // Renew token periodically (every 12 hours) during long uploads
-                    renewTokenIfNeeded(false);
-
-                    int bytesRead = is.read(buffer);
-                    if (bytesRead <= 0) break;
-
-                    byte[] segment = bytesRead == buffer.length ? buffer : Arrays.copyOf(buffer, bytesRead);
-
-                    FileUploadStatus result = apiClient.uploadFileSegment(fileId, currentOffset, segment);
-                    if (!result.isSuccess()) {
-                        publish("    Error uploading segment: " + result.getErrorMessage());
-                        if (result.isUnauthorized()) {
-                            authenticationError = true;
-                        }
-                        return false;
-                    }
-
-                    currentOffset += bytesRead;
-                    bytesUploadedOut[0] = currentOffset;
-
-                    // Update progress after each segment
-                    if (totalBytesToUpload > 0) {
-                        long totalUploaded = bytesUploadedBefore + currentOffset;
-                        int progress = (int) ((totalUploaded * 100) / totalBytesToUpload);
-                        setProgress(Math.min(progress, 100));
-                    }
-
-                    if (result.isComplete()) {
-                        break;
-                    }
-                }
-
-                return true;
-
-            } catch (IOException e) {
-                publish("    Error reading file: " + e.getMessage());
-                return false;
-            }
-
-        } catch (Exception e) {
-            publish("  Error uploading file " + hashInfo.getFileName() + ": " + e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Finds an IPED item by its stored ItemId or hash information.
-     */
-    private IItem findItemByHash(FileHashInfo hashInfo) {
-        if (ipedSource == null) return null;
-
-        // Use stored ItemId if available (much faster)
-        if (hashInfo.getItemId() != null && ipedSource instanceof IPEDMultiSource) {
-            try {
-                return ((IPEDMultiSource) ipedSource).getItemByItemId(hashInfo.getItemId());
-            } catch (Exception e) {
-                // Fall back to hash search
-            }
-        }
-
-        return null;
     }
 
     /**

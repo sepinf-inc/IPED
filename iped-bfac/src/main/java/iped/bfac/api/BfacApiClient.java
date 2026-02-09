@@ -198,7 +198,7 @@ public class BfacApiClient {
      * Renews the access token using the current token.
      * @return LoginResult with success status and message
      */
-    public LoginResult renewToken() {
+    public synchronized LoginResult renewToken() {
         if (accessToken == null || accessToken.isEmpty()) {
             return new LoginResult(false, "No access token available");
         }

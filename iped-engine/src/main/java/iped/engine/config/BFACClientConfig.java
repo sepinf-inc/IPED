@@ -19,9 +19,11 @@ public class BFACClientConfig extends AbstractPropertiesConfigurable {
     private static final String IPED_CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     private static final String BFAC_CONFIG_FILE = "conf/BFACConfig.txt"; //$NON-NLS-1$
     private static final String DEFAULT_BASE_URL = "http://localhost:8000/"; //$NON-NLS-1$
+    private static final int DEFAULT_MAX_CONCURRENT_UPLOADS = 5;
 
     private boolean enabled = false;
     private String baseUrl = DEFAULT_BASE_URL;
+    private int maxConcurrentUploads = DEFAULT_MAX_CONCURRENT_UPLOADS;
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -46,6 +48,18 @@ public class BFACClientConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().isEmpty()) {
             baseUrl = value.trim();
         }
+
+        value = properties.getProperty("maxConcurrentUploads"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            try {
+                maxConcurrentUploads = Integer.parseInt(value.trim());
+                if (maxConcurrentUploads < 1) {
+                    maxConcurrentUploads = DEFAULT_MAX_CONCURRENT_UPLOADS;
+                }
+            } catch (NumberFormatException e) {
+                maxConcurrentUploads = DEFAULT_MAX_CONCURRENT_UPLOADS;
+            }
+        }
     }
 
     /**
@@ -62,5 +76,13 @@ public class BFACClientConfig extends AbstractPropertiesConfigurable {
      */
     public String getBaseUrl() {
         return baseUrl;
+    }
+
+    /**
+     * Gets the maximum number of concurrent file uploads.
+     * @return The max concurrent uploads (default is 5)
+     */
+    public int getMaxConcurrentUploads() {
+        return maxConcurrentUploads;
     }
 }

@@ -855,6 +855,14 @@ public class BfacDialog extends JDialog {
             }
         };
 
+        // Get max concurrent uploads from config
+        int maxConcurrentUploads = 5; // default
+        iped.engine.config.BFACClientConfig bfacClientConfig = iped.engine.config.ConfigurationManager.get()
+                .findObject(iped.engine.config.BFACClientConfig.class);
+        if (bfacClientConfig != null) {
+            maxConcurrentUploads = bfacClientConfig.getMaxConcurrentUploads();
+        }
+
         // Start the submission worker
         currentWorker = new SubmissionWorker(
             apiClient,
@@ -866,7 +874,8 @@ public class BfacDialog extends JDialog {
             comment,
             categoryName,
             new java.util.HashSet<>(selectedBookmarks),
-            uploadFilesCheckBox.isSelected()
+            uploadFilesCheckBox.isSelected(),
+            maxConcurrentUploads
         );
 
         // Listen for progress updates
