@@ -39,6 +39,11 @@ import iped.engine.config.ConfigurationManager;
  */
 public class BfacApiClient {
 
+    static {
+        // Must be set before HttpClient class is loaded to disable hostname verification
+        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(BfacApiClient.class);
     private static final Gson GSON = new Gson();
     private static final Duration TIMEOUT = Duration.ofSeconds(60);
