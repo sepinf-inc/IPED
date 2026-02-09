@@ -33,6 +33,7 @@ public class FileUploadTask implements Callable<FileUploadResult> {
     private final long totalBytesToUpload;
     private final Consumer<String> logCallback;
     private final Runnable tokenRenewalCallback;
+    private final Runnable progressCallback;
     private final boolean[] cancelledFlag;
     private final boolean[] authErrorFlag;
 
@@ -47,13 +48,14 @@ public class FileUploadTask implements Callable<FileUploadResult> {
      * @param totalBytesToUpload Total bytes to upload across all files (for progress)
      * @param logCallback        Callback for log messages (thread-safe publish)
      * @param tokenRenewalCallback Callback to trigger token renewal (synchronized externally)
+     * @param progressCallback   Callback to update progress bar after each segment
      * @param cancelledFlag      Shared cancellation flag [0]
      * @param authErrorFlag      Shared authentication error flag [0]
      */
     public FileUploadTask(int fileId, FileHashInfo hashInfo, BfacApiClient apiClient,
                           IPEDMultiSource ipedSource, AtomicLong globalBytesUploaded,
                           long totalBytesToUpload, Consumer<String> logCallback,
-                          Runnable tokenRenewalCallback,
+                          Runnable tokenRenewalCallback, Runnable progressCallback,
                           boolean[] cancelledFlag, boolean[] authErrorFlag) {
         this.fileId = fileId;
         this.hashInfo = hashInfo;
@@ -63,6 +65,7 @@ public class FileUploadTask implements Callable<FileUploadResult> {
         this.totalBytesToUpload = totalBytesToUpload;
         this.logCallback = logCallback;
         this.tokenRenewalCallback = tokenRenewalCallback;
+        this.progressCallback = progressCallback;
         this.cancelledFlag = cancelledFlag;
         this.authErrorFlag = authErrorFlag;
     }
@@ -88,6 +91,9 @@ public class FileUploadTask implements Callable<FileUploadResult> {
             if (status.isComplete()) {
                 log("  File already uploaded: " + hashInfo.getFileName());
                 globalBytesUploaded.addAndGet(hashInfo.getFileSize());
+                if (progressCallback != null) {
+                    progressCallback.run();
+                }
                 return FileUploadResult.skipped(fileId, hashInfo.getFileName(), hashInfo.getFileSize());
             }
 
@@ -112,6 +118,9 @@ public class FileUploadTask implements Callable<FileUploadResult> {
             // Count already-uploaded bytes in global progress
             if (startOffset > 0) {
                 globalBytesUploaded.addAndGet(startOffset);
+                if (progressCallback != null) {
+                    progressCallback.run();
+                }
             }
 
             try (InputStream is = item.getBufferedInputStream()) {
@@ -145,6 +154,11 @@ public class FileUploadTask implements Callable<FileUploadResult> {
 
                     currentOffset += bytesRead;
                     globalBytesUploaded.addAndGet(bytesRead);
+
+                    // Update progress bar after each segment
+                    if (progressCallback != null) {
+                        progressCallback.run();
+                    }
 
                     if (result.isComplete()) {
                         break;

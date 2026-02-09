@@ -226,6 +226,14 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 // Thread-safe log callback via SwingWorker.publish
                 java.util.function.Consumer<String> logCallback = msg -> publish(msg);
 
+                // Progress callback: updates progress bar after each segment upload
+                Runnable progressCallback = () -> {
+                    if (finalTotalBytesToUpload > 0) {
+                        int progress = (int) ((globalBytesUploaded.get() * 100) / finalTotalBytesToUpload);
+                        setProgress(Math.min(progress, 100));
+                    }
+                };
+
                 // Create thread pool
                 uploadExecutor = Executors.newFixedThreadPool(maxConcurrentUploads);
 
@@ -239,7 +247,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                     FileUploadTask task = new FileUploadTask(
                             entry.getKey(), entry.getValue(), apiClient, multiSource,
                             globalBytesUploaded, finalTotalBytesToUpload,
-                            logCallback, tokenRenewalCallback,
+                            logCallback, tokenRenewalCallback, progressCallback,
                             cancelledFlag, authErrorFlag);
                     futures.add(uploadExecutor.submit(task));
                 }
@@ -270,12 +278,6 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                                 // Propagate to shared flags so other tasks stop
                                 authErrorFlag[0] = true;
                             }
-                        }
-
-                        // Update progress based on global bytes uploaded
-                        if (finalTotalBytesToUpload > 0) {
-                            int progress = (int) ((globalBytesUploaded.get() * 100) / finalTotalBytesToUpload);
-                            setProgress(Math.min(progress, 100));
                         }
 
                         int processed = uploadedCount + uploadErrorCount + skippedCount;
