@@ -1082,12 +1082,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             if (m.getMediaQuery() != null && m.getMediaSize() > 2) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
-                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery())); // $NON-NLS-1$
+                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery()));
             }
             if (!m.getChildPornSets().isEmpty()) {
-                meta.set("hash:status", "pedo"); //$NON-NLS-1$ //$NON-NLS-2$
+                meta.set(ExtraProperties.HASHDB_STATUS, "pedo");
                 for (String set : m.getChildPornSets()) {
-                    meta.add("hash:set", set); //$NON-NLS-1$
+                    meta.add(ExtraProperties.HASHDB_SET, set);
                 }
             }
 
