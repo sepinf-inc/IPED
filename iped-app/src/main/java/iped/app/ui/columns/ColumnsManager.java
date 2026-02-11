@@ -305,7 +305,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
                 regexFields.add(f);
             else if (f.startsWith(LanguageDetectTask.LANGUAGE_PREFIX))
                 languageFields.add(f);
-            else if (f.startsWith(HashDBLookupTask.ATTRIBUTES_PREFIX)
+            else if (f.startsWith(ExtraProperties.HASHDB_PREFIX)
                     || f.startsWith(PhotoDNALookup.PHOTO_DNA_HIT_PREFIX))
                 hashDbFields.add(f);
             else

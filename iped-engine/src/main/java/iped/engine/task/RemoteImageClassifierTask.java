@@ -67,6 +67,7 @@ import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.util.MetadataUtil;
+import iped.properties.ExtraProperties;
 import iped.utils.ImageUtil;
 
 /**
@@ -771,7 +772,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         }
 
         // Skip classification of images/videos with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
-        if (skipHashDBFiles && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
+        if (skipHashDBFiles && evidence.getExtraAttribute(ExtraProperties.HASHDB_STATUS) != null) {
             // Add skip classification info
             evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_HASHDB);
             skipHashDBFilesCount.incrementAndGet();
