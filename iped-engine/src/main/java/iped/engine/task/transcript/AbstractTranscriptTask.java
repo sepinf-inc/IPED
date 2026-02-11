@@ -95,7 +95,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (evidence.getLength() == null || evidence.getLength() == 0 || !evidence.isToAddToCase() || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
             return false;
         }
-        if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
+        if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(ExtraProperties.HASHDB_STATUS) != null) {
             return false;
         }
 
