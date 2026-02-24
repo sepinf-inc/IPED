@@ -164,11 +164,9 @@ public class UfedXmlReader extends DataSourceReader {
         }
 
         // supports any folder with valid XML report inside
-        try (InputStream xmlReport = lookUpXmlReportInputStream(datasource)) {
-            return xmlReport != null;
-        } catch (Exception e) {
-            return false;
-        }
+        InputStream xmlReport = lookUpXmlReportInputStream(datasource);
+        IOUtil.closeQuietly(xmlReport);
+        return xmlReport != null;
     }
 
     private InputStream getXmlInputStream(File file) {
