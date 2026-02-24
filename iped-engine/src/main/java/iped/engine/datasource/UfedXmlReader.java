@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -39,6 +38,8 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -99,6 +100,12 @@ public class UfedXmlReader extends DataSourceReader {
     private final Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
 
     private static final String[] HEADER_STRINGS = { "project id", "extractionType", "sourceExtractions" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    private static final byte[] UFDR_PROTECTION_NO_PASSWORD_REPORT_XML_INITIAL_BYTES = new byte[] { 0x2D, 0x06, 0x52, 0x6D };
+    private static final int UFDR_REPORT_XML_INITIAL_BYTES_TO_READ = 1024;
+
+    private static final String UFDR_EXTENSION = "ufdr";
+    private static final String XML_REPORT_EXTENSION = "xml";
+
 
     private static final String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path"; //$NON-NLS-1$
     private static final String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
@@ -152,41 +159,40 @@ public class UfedXmlReader extends DataSourceReader {
     @Override
     public boolean isSupported(File datasource) {
 
-        if (datasource.getName().toLowerCase().endsWith(".ufdr")) {
+        if (FilenameUtils.isExtension(datasource.getName(), UFDR_EXTENSION)) {
             return true;
         }
 
-        InputStream xmlReport = lookUpXmlReportInputStream(datasource);
-        IOUtil.closeQuietly(xmlReport);
-
-        if (xmlReport != null)
-            return true;
-
-        return false;
+        // supports any folder with valid XML report inside
+        try (InputStream xmlReport = lookUpXmlReportInputStream(datasource)) {
+            return xmlReport != null;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private InputStream getXmlInputStream(File file) {
-        if (file.getName().toLowerCase().endsWith(".xml")) { //$NON-NLS-1$
-            try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) { //$NON-NLS-1$
-                char[] cbuf = new char[1024];
-                int off = 0, i = 0;
-                while (off < cbuf.length && (i = reader.read(cbuf, off, cbuf.length - off)) != -1)
-                    off += i;
-                String header = new String(cbuf, 0, off);
-                for (String str : HEADER_STRINGS)
-                    if (!header.contains(str))
-                        return null;
+        if (FilenameUtils.isExtension(file.getName(), XML_REPORT_EXTENSION)) {
+            try (InputStream fis = new FileInputStream(file)) {
+                byte[] initialBytes = fis.readNBytes(UFDR_REPORT_XML_INITIAL_BYTES_TO_READ);
+                if (!containsHeaderStrings(initialBytes)) {
+                    return null;
+                }
+
                 return new FileInputStream(file);
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        } else if (file.getName().toLowerCase().endsWith(".ufdr")) {
+        } else if (FilenameUtils.isExtension(file.getName(), UFDR_EXTENSION)) {
             try {
                 ufdrFile = file;
                 String xml = "report.xml";
                 if (!getUISF().entryExists(xml)) {
                     xml = "Report.xml";
+                    if (!getUISF().entryExists(xml)) {
+                        return null;
+                    }
                 }
                 return getUISF().getSeekableInputStream(xml);
 
@@ -195,6 +201,21 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
         return null;
+    }
+
+    private boolean isReportXmlProtected(byte[] initialBytes) {
+        int len = UFDR_PROTECTION_NO_PASSWORD_REPORT_XML_INITIAL_BYTES.length;
+        return Arrays.equals(initialBytes, 0, len, UFDR_PROTECTION_NO_PASSWORD_REPORT_XML_INITIAL_BYTES, 0, len);
+    }
+
+    private boolean containsHeaderStrings(byte[] initialBytes) {
+        String header = new String(initialBytes, StandardCharsets.UTF_8);
+        for (String str : HEADER_STRINGS)
+            if (header.contains(str))
+                return true;
+
+        return false;
+
     }
 
     private boolean entryExists(String entryPath) {
@@ -233,16 +254,13 @@ public class UfedXmlReader extends DataSourceReader {
     private InputStream lookUpXmlReportInputStream(File root) {
         if (root.isFile())
             return getXmlInputStream(root);
-        File[] files = root.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.getName().toLowerCase().endsWith(".xml")) {
-                    InputStream is = getXmlInputStream(file);
-                    if (is != null)
-                        return is;
-                }
-            }
+
+        for (File file : FileUtils.listFiles(root, new String[]{XML_REPORT_EXTENSION}, false)) {
+            InputStream is = getXmlInputStream(file);
+            if (is != null)
+                return is;
         }
+
         return null;
     }
 
@@ -261,6 +279,8 @@ public class UfedXmlReader extends DataSourceReader {
         try {
             xmlStream = lookUpXmlReportInputStream(root);
 
+            validateXmlStream(xmlStream);
+
             configureParsers();
 
             SAXParserFactory spf = SAXParserFactory.newInstance();
@@ -272,6 +292,33 @@ public class UfedXmlReader extends DataSourceReader {
             xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
         } finally {
             IOUtil.closeQuietly(xmlStream);
+        }
+    }
+
+    private void validateXmlStream(InputStream xmlStream) throws IOException {
+        if (xmlStream == null) {
+            if (root.isFile()) {
+                throw new RuntimeException("Invalid UFDR file: XML report not found. File: " + root.getAbsolutePath());
+            } else {
+                throw new RuntimeException("Invalid UFDR folder: No XML report has been found. Folder: " + root.getAbsolutePath());
+            }
+        }
+
+        if (root.isFile()) {
+            xmlStream.mark(0);
+            byte[] initialBytes = xmlStream.readNBytes(UFDR_REPORT_XML_INITIAL_BYTES_TO_READ);
+
+            if (isReportXmlProtected(initialBytes)) {
+                throw new RuntimeException(
+                        "Unsupported UFDR file: protection is enabled. Generate the UFDR file again with protection disabled. File: "
+                                + root.getAbsolutePath());
+            }
+
+            if (!containsHeaderStrings(initialBytes)) {
+                throw new RuntimeException("Invalid UFDR file: XML report is not valid. "
+                        + "Protection may be enabled. Generate the UFDR file again with protection disabled. File: " + root.getAbsolutePath());
+            }
+            xmlStream.reset();
         }
     }
 
@@ -317,7 +364,7 @@ public class UfedXmlReader extends DataSourceReader {
         rootItem.setDataSource(evidenceSource);
         rootItem.setIdInDataSource("");
         rootItem.setHasChildren(true);
-        if (root.getName().endsWith(".ufdr")) {
+        if (FilenameUtils.isExtension(root.getName(), UFDR_EXTENSION)) {
             rootItem.setLength(root.length());
             rootItem.setSumVolume(false);
         }
