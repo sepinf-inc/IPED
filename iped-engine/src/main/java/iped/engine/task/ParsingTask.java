@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -55,6 +54,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.configuration.Configurable;
+import iped.content.TikaManager;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.data.IItemReader;
@@ -163,7 +163,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
 
     private static AtomicInteger containersBeingExpanded = new AtomicInteger();
-    private static AtomicBoolean tikaSAXPoolSizeSet = new AtomicBoolean(false);
+    private static volatile boolean initialized = false;
 
     private CategoryToExpandConfig expandConfig;
     private ParsingTaskConfig parsingConfig;
@@ -290,7 +290,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
     }
 
-    @SuppressWarnings("resource")
     private void setEmptyTextCache(IItem evidence) {
         ((Item) evidence).setParsedTextCache(new TextCache());
     }
@@ -776,10 +775,17 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         SplitLargeBinaryConfig splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
         minItemSizeToFragment = splitConfig.getMinItemSizeToFragment();
 
-        setupParsingOptions(configurationManager);
+        setupParsingOptionsAndInitializeTika(configurationManager);
 
         this.autoParser = new StandardParser();
+    }
 
+    private static synchronized void setupParsingOptionsAndInitializeTika(ConfigurationManager configurationManager) {
+        if (!initialized) {
+            setupParsingOptions(configurationManager);
+            TikaManager.initializeTikaConfig();
+            initialized = true;
+        }
     }
 
     public static void setupParsingOptions(ConfigurationManager configurationManager) {
@@ -792,12 +798,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         org.apache.poi.hpsf.CodePageString.setMaxRecordLength(512_000);
 
         // heavy Tika configuration
-        if (!tikaSAXPoolSizeSet.getAndSet(true)) {
-            try {
-                XMLReaderUtils.setPoolSize(Runtime.getRuntime().availableProcessors());
-            } catch (TikaException e) {
-                e.printStackTrace();
-            }
+        try {
+            XMLReaderUtils.setPoolSize(Runtime.getRuntime().availableProcessors());
+        } catch (TikaException e) {
+            LOGGER.error("Error setting XMLReaderUtils poolSize to availableProcessors", e);
         }
 
         // most options below are set using sys props because they are also used by
