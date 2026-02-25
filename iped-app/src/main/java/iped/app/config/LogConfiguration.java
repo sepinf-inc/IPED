@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -32,8 +33,15 @@ public class LogConfiguration {
             logFile = new File(logPath);
         } else {
             logFile = iped.getLogFile();
-            if (logFile == null)
-                logFile = new File(rootPath, "log/IPED-" + df.format(new Date()) + ".log"); //$NON-NLS-1$ //$NON-NLS-2$
+            if (logFile == null) {
+                String name = "IPED-" + df.format(new Date()) + ".log";
+                logFile = new File(rootPath + "/log", name);
+                try {
+                    Files.createFile(logFile.toPath());
+                } catch (IOException e) {
+                    logFile = new File(System.getProperty("java.io.tmpdir"), name);
+                }
+            }
         }
         iped.setLogFile(logFile);
     }
