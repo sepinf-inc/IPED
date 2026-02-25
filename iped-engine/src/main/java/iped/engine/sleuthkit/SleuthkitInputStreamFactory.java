@@ -67,9 +67,9 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
                 if (sleuthkitCase == null) {
                     try {
                         File tskDB = Paths.get(dataSource).toFile();
-                        if (!SleuthkitReader.isTSKPatched()) {
-                            tskDB = getWriteableDBFile(tskDB);
-                        }
+                        //if (!SleuthkitReader.isTSKPatched()) {
+                        tskDB = getWriteableDBFile(tskDB);
+                        //}
                         sleuthkitCase = openSleuthkitCase(tskDB.getAbsolutePath());
 
                     } catch (Exception e) {
