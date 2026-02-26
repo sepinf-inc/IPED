@@ -103,10 +103,15 @@ public class EmailHandler extends BaseModelHandler<Email> {
 
     @Override
     public String getTitle() {
+        String title = StringUtils.firstNonBlank(model.getSubject(), model.getId());
+        int maxTitleLen = 4096;
+        if (title != null && title.length() > maxTitleLen) {
+            title = title.substring(0, maxTitleLen);
+        }
         return new StringBuilder()
                 .append("Email") //
                 .append("-[") //
-                .append(StringUtils.firstNonBlank(model.getSubject(), model.getId())) //
+                .append(title) //
                 .append("]") //
                 .toString();
     }
