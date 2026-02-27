@@ -17,7 +17,7 @@ import os
 import time
 import sys
 from java.lang import System
-from iped.engine.task import HashDBLookupTask
+from iped.properties import ExtraProperties
 from java.awt import Color
 from javax.imageio import ImageIO
 from java.io import ByteArrayOutputStream
@@ -711,7 +711,7 @@ class CSAMDetectorTask:
                     logger.warn(f"CSAMDetector: invalid dimensions for item {item.getName()} {width_meta}x{height_meta}")                        
 
             # Skip classification of images/videos with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
-            if (CSAM_SKIP_HASHDB_FILES and item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) is not None):
+            if (CSAM_SKIP_HASHDB_FILES and item.getExtraAttribute(ExtraProperties.STATUS_PROPERTY) is not None):
                 logger.debug(f"CSAMDetector: skipping item with HashDB hit {item.getName()}")
                 item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_HASHDB)
                 return
