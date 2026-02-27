@@ -285,7 +285,7 @@ class AgeEstimationTask:
 
             try:
                 # skip age estimation for faces within images with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
-                if (skipHashDBFiles and item.getExtraAttribute(ExtraProperties.STATUS_PROPERTY) is not None):
+                if (skipHashDBFiles and item.getExtraAttribute(ExtraProperties.HASHDB_STATUS) is not None):
                     # add skip age estimation info
                     item.setExtraAttribute('faceAge:estimationStatus', 'skipped_hashdb')
                     skipHashDBFilesCount += 1
