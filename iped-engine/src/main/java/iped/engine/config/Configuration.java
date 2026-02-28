@@ -205,6 +205,7 @@ public class Configuration {
         configManager.addObject(new FileSystemConfig());
         configManager.addObject(new AnalysisConfig());
         configManager.addObject(new AIFiltersConfig());
+        configManager.addObject(new AIAssistantConfig());
         configManager.addObject(new ProcessingPriorityConfig());
 
         configManager.addObject(new EnableTaskProperty(FaceRecognitionConfig.enableParam));

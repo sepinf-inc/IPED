@@ -210,7 +210,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public JDialog dialogBar;
     JProgressBar progressBar;
     JComboBox<String> queryComboBox, filterComboBox;
-    JButton searchButton, optionsButton, updateCaseData, helpButton, exportToZip;
+    JButton searchButton, optionsButton, updateCaseData, helpButton, exportToZip, aiAssistantButton;
     JCheckBox checkBox, recursiveTreeList, filterDuplicates;
     JTable resultsTable;
     ResultTableListener resultTableListener;
@@ -280,7 +280,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     boolean isMultiCase;
     public JLabel status;
 
-    private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
+    public static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
     final static String FILTRO_TODOS = Messages.getString("App.NoFilter"); //$NON-NLS-1$
     final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
@@ -520,6 +520,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         helpButton = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
         exportToZip = new JButton(Messages.getString("App.ExportZip")); //$NON-NLS-1$
         checkBox = new JCheckBox("0"); //$NON-NLS-1$
+        
+        // AI Assistant Button
+        aiAssistantButton = new JButton();
+        aiAssistantButton.setIcon(IconUtil.getToolbarIcon("ai-assistant", resPath));
+        aiAssistantButton.setToolTipText(Messages.getString("AIAssistant.Tooltip"));
+        aiAssistantButton.setFocusPainted(false);
+        aiAssistantButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                AIAssistantPanel.getInstance().toggleVisibility();
+            }
+        });
 
         filterComboBox = new JComboBox<String>();
         filterComboBox.setMaximumSize(new Dimension(100, 50));
@@ -564,6 +576,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         topPanel.add(exportToZip);
         exportToZip.setVisible(false);
         topPanel.add(checkBox);
+        topPanel.add(aiAssistantButton);
         topPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
         resultsModel = new ResultTableModel();
@@ -888,6 +901,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                         if (e.getID() == KeyEvent.KEY_RELEASED) {
                             // Shortcut to BookmarkManager Window
                             BookmarksManager.setVisible();
+                        }
+                        return true;
+                    }
+                    if (e.isControlDown() && e.isShiftDown() && e.getKeyCode() == KeyEvent.VK_A) {
+                        if (e.getID() == KeyEvent.KEY_RELEASED) {
+                            // Shortcut to AI Assistant panel
+                            AIAssistantPanel.getInstance().toggleVisibility();
                         }
                         return true;
                     }

@@ -1,0 +1,179 @@
+########################################################################
+# AI Assistant Configuration for IPED
+# 
+# SECURITY NOTICE: This feature is designed for LOCAL/INTRANET use only.
+# All AI endpoints must be local or on your organization's network.
+# No data will be sent to external cloud services.
+########################################################################
+
+# ======================================================================
+# BASIC SETTINGS
+# ======================================================================
+# Enable AI Assistant feature
+# Set to 'true' to enable the AI assistant panel in IPED
+enabled = true
+
+# AI Provider (LOCAL OPTIONS ONLY)
+# Supported values:
+#   OLLAMA          - Ollama (recommended for ease of use)
+#   LM_STUDIO       - LM Studio
+#   VLLM            - vLLM inference server
+#   TEXT_GEN_WEBUI  - Text Generation WebUI (oobabooga)
+#   CUSTOM_LOCAL    - Custom local OpenAI-compatible endpoint
+provider = OLLAMA
+
+# ======================================================================
+# MODEL CONFIGURATION
+# ======================================================================
+# API URL - Must be local or intranet address
+# Default URLs by provider:
+#   Ollama:         http://localhost:11434/api/generate
+#   LM Studio:      http://localhost:1234/v1/chat/completions
+#   vLLM:           http://localhost:8000/v1/chat/completions
+#   Text Gen WebUI: http://localhost:5000/api/v1/generate
+#
+# For intranet deployment, use your server's IP:
+#   apiUrl = http://192.168.1.100:11434/api/generate
+apiUrl = http://localhost:11434/api/generate
+
+# Model name
+# Ollama examples: llama3.2, llama3.1, mistral, codellama, phi3, gemma2
+# For other providers, use the model name configured in that system
+# Recommended models for forensics:
+#   - llama3.2 (3B): Fast, good for summarization
+#   - llama3.1 (8B): Balanced performance
+#   - mistral (7B): Good reasoning
+#   - codellama (7B-13B): Best for code analysis
+modelName = llama3.2
+
+# ======================================================================
+# GENERATION PARAMETERS
+# ======================================================================
+# Maximum tokens in response (100-32000)
+# Higher values allow longer responses but take more time
+# Recommended: 2048 for balanced performance
+maxTokens = 2048
+
+# Temperature (0.0-2.0)
+# Controls randomness in responses
+#   0.0 = Deterministic, factual (recommended for forensics)
+#   0.7 = Balanced creativity and accuracy
+#   1.0+ = More creative but less predictable
+temperature = 0.7
+
+# ======================================================================
+# CONTEXT MANAGEMENT
+# ======================================================================
+# Maximum number of items to include in context
+# When you select multiple files, only this many will be sent to the AI
+# Higher values provide more context but slow down processing
+maxContextItems = 10
+
+# Maximum text length per item (characters)
+# Large documents will be truncated to this length
+# Recommended: 10000-50000 depending on your model's context window
+maxTextLength = 10000
+
+# ======================================================================
+# CONNECTION SETTINGS
+# ======================================================================
+# Connection timeout in milliseconds
+# Time to wait for initial connection to AI service
+connectionTimeoutMs = 5000
+
+# Read timeout in milliseconds
+# Time to wait for AI response (local models can be slow)
+# Increase this if you get timeout errors with large prompts
+readTimeoutMs = 120000
+
+# ======================================================================
+# SECURITY SETTINGS
+# ======================================================================
+# Enforce local-only connections (RECOMMENDED: true)
+# When true, blocks connections to public internet addresses
+# Only localhost (127.0.0.1) and IPv4/IPv6 loopback allowed
+enforceLocalOnly = true
+
+# Allow private network addresses (when enforceLocalOnly = true)
+# When true, allows connections to:
+#   - 192.168.0.0/16 (home/office networks)
+#   - 10.0.0.0/8 (corporate networks)
+#   - 172.16.0.0/12 (corporate networks)
+# Set to false for maximum security (localhost only)
+allowPrivateNetworks = false
+
+# ======================================================================
+# USER INTERFACE SETTINGS
+# ======================================================================
+# Panel width in pixels
+panelWidth = 450
+
+# Auto-hide panel when it loses focus
+# When true, panel closes when you click elsewhere
+autoHideOnFocusLost = false
+
+# ======================================================================
+# CHAT SETTINGS
+# ======================================================================
+# Enable chat history
+# When true, keeps conversation history in the current session
+enableChatHistory = true
+
+# Maximum chat history size (number of messages)
+# Older messages are removed when this limit is reached
+maxChatHistorySize = 50
+
+# Enable streaming responses (EXPERIMENTAL)
+# When supported, shows AI response as it's generated
+# Not all providers support streaming
+streamResponse = false
+
+# ======================================================================
+# CUSTOM SYSTEM PROMPT (OPTIONAL)
+# ======================================================================
+# Custom system prompt to guide AI behavior
+# Leave empty to use default forensics-focused prompts
+# Example: "You are a helpful assistant for digital forensics investigators."
+systemPrompt = 
+
+# ======================================================================
+# SETUP INSTRUCTIONS
+# ======================================================================
+# QUICK START WITH OLLAMA (Recommended):
+# 
+# 1. Install Ollama:
+#    - Download from https://ollama.ai
+#    - Or use: curl https://ollama.ai/install.sh | sh
+# 
+# 2. Download a model:
+#    ollama pull llama3.2
+# 
+# 3. Start Ollama (usually starts automatically)
+#    ollama serve
+# 
+# 4. Enable this config and restart IPED
+# 
+# INTRANET DEPLOYMENT:
+# 
+# To share one AI server across your team:
+# 
+# 1. Install Ollama on a server in your network (e.g., 192.168.1.100)
+# 
+# 2. Configure Ollama to listen on all interfaces:
+#    export OLLAMA_HOST=0.0.0.0:11434
+#    ollama serve
+# 
+# 3. Update this config on all client machines:
+#    apiUrl = http://192.168.1.100:11434/api/generate
+# 
+# 4. Set allowPrivateNetworks = true (already default)
+# 
+# RECOMMENDED MODELS FOR FORENSICS:
+# 
+# - llama3.2:3b (3.2GB) - Fast, good for summaries and basic analysis
+# - llama3.1:8b (4.7GB) - Balanced, recommended for most use cases
+# - mistral:7b (4.1GB) - Good reasoning and pattern detection
+# - codellama:7b (3.8GB) - Best for analyzing code and scripts
+# 
+# Download with: ollama pull <model-name>
+# 
