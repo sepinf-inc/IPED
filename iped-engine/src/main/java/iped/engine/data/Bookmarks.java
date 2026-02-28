@@ -61,6 +61,7 @@ public class Bookmarks implements IBookmarks {
     ArrayList<byte[]> bookmarks;
     TreeMap<Integer, String> bookmarkNames = new TreeMap<Integer, String>();
     TreeMap<Integer, String> bookmarkComments = new TreeMap<Integer, String>();
+    TreeMap<Integer, String> bookmarkQueries = new TreeMap<Integer, String>();
     TreeMap<Integer, KeyStroke> bookmarkKeyStrokes = new TreeMap<Integer, KeyStroke>();
     TreeMap<Integer, Color> bookmarkColors = new TreeMap<Integer, Color>();
     Set<Integer> reportBookmarks = new TreeSet<Integer>();
@@ -278,6 +279,7 @@ public class Bookmarks implements IBookmarks {
 
         bookmarkNames.put(bookmarkId, bookmarkName);
         bookmarkComments.put(bookmarkId, null);
+        bookmarkQueries.put(bookmarkId, null);
         bookmarkKeyStrokes.put(bookmarkId, null);
         if (bookmarkColors == null)
             bookmarkColors = new TreeMap<Integer, Color>();
@@ -291,6 +293,7 @@ public class Bookmarks implements IBookmarks {
             return;
         bookmarkNames.remove(bookmark);
         bookmarkComments.remove(bookmark);
+        bookmarkQueries.remove(bookmark);
         bookmarkKeyStrokes.remove(bookmark);
         if (bookmarkColors == null)
             bookmarkColors = new TreeMap<Integer, Color>();
@@ -329,6 +332,14 @@ public class Bookmarks implements IBookmarks {
 
     public String getBookmarkComment(int bookmarkId) {
         return bookmarkComments.get(bookmarkId);
+    }
+
+    public void setBookmarkQuery(int bookmarkId, String query) {
+        bookmarkQueries.put(bookmarkId, query);
+    }
+
+    public String getBookmarkQuery(int bookmarkId) {
+        return bookmarkQueries.get(bookmarkId);
     }
 
     public synchronized void setBookmarkColor(int bookmarkId, Color color) {
@@ -515,6 +526,7 @@ public class Bookmarks implements IBookmarks {
         this.selectedItens = state.selectedItens;
         this.bookmarkNames = state.bookmarkNames;
         this.bookmarkComments = state.bookmarkComments;
+        this.bookmarkQueries = state.bookmarkQueries;
         this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
         this.reportBookmarks = state.reportBookmarks;
         this.bookmarkColors = state.bookmarkColors;
