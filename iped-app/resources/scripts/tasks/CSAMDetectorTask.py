@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "1.3" # Treats invalid dimensions in images/videos
+__version__ = "1.4" # Auto configurations
 
 import traceback
 import io
@@ -279,6 +279,52 @@ def carregar_e_configurar_modelo():
         caseData.putCaseObject('csam_model_unificado', MODELO_CARREGADO)
         
     return MODELO_CARREGADO
+    
+def detect_best_config():
+    """
+    Detects VRAM and searches for the best available model on disk,
+    following the priority table and respecting hardware constraints.
+    """
+    vram_gb = 0
+    try:
+        import torch
+        if torch.cuda.is_available():
+            vram_bytes = torch.cuda.get_device_properties(0).total_memory
+            vram_gb = vram_bytes / (1024**3)
+            logger.info(f"CSAMDetector: GPU detected with {vram_gb:.2f} GB of VRAM.")
+        else:
+            logger.info("CSAMDetector: GPU not detected. Searching for CPU models.")
+    except Exception:
+        vram_gb = 0
+
+    # Profiles ordered from best to lightest
+    # vram_req: Minimum safety threshold to accept the profile
+    profiles = [
+        {"vram_req": 14.0, "model": "pytorch_EVA02_L_v3_1_1.pth",  "batch": 20},
+        {"vram_req": 10.0, "model": "pytorch_EVA02_L_v3_1_1.pth",  "batch": 10},
+        {"vram_req": 6.0,  "model": "pytorch_EVA02_B_v3_1.pth",    "batch": 10},
+        {"vram_req": 3.0,  "model": "pytorch_S_v3_1.pth",          "batch": 10},
+        {"vram_req": 1.5,  "model": "pytorch_S_v3_1.pth",          "batch": 5},  # Margin for 2GB cards
+        {"vram_req": -1.0, "model": "onnx_B0_tensorflow_v3_1.onnx","batch": 1}, # CPU Fallback 1
+        {"vram_req": -2.0, "model": "MobileNetV4_v3_1.onnx",       "batch": 1}, # CPU Fallback 2
+        {"vram_req": -3.0, "model": "pytorch_B0_v3_1_2_fp32.onnx", "batch": 1}  # CPU Fallback 3          
+    ]
+
+    models_dir = System.getProperty('iped.root') + '/models/'
+    
+    for profile in profiles:
+        # If the hardware meets the memory requirement...
+        if vram_gb >= profile["vram_req"]:
+            model_name = profile["model"]
+            if os.path.exists(os.path.join(models_dir, model_name)):
+                return model_name, profile["batch"]
+            else:
+                # Log a warning if the hardware supported a better model that wasn't found
+                if profile["vram_req"] > 1.0:
+                    logger.warn(f"CSAMDetector: Best model {model_name} not found in {models_dir}. Trying alternative models...")
+
+    # Final fallback if no files are found
+    return "onnx_B0_tensorflow_v3_1.onnx", 1 
 
 # Processes the images as an array of BufferedImage objects
 def processFrameTensors(frames_from_video):
@@ -543,7 +589,20 @@ class CSAMDetectorTask:
             )
             CSAMDetectorTask.enabled = False
             return  
-           
+        
+        if CSAM_MODELFILE.lower() == "auto":
+            # Attempt to retrieve the already detected configuration from the case global object
+            auto_config = caseData.getCaseObject('csam_auto_config_cached')
+            
+            if auto_config is None:
+                # FIRST TIME: Detect, log, and save to caseData
+                CSAM_MODELFILE, CSAM_BATCH_SIZE = detect_best_config()
+                caseData.putCaseObject('csam_auto_config_cached', (CSAM_MODELFILE, CSAM_BATCH_SIZE))
+                logger.info(f"CSAMDetector: Auto-config selected: Model={CSAM_MODELFILE}, BatchSize={CSAM_BATCH_SIZE}")
+            else:
+                # SUBSEQUENT THREADS: Simply retrieve the values silently
+                CSAM_MODELFILE, CSAM_BATCH_SIZE = auto_config
+        
         try:
             model_name_lower = CSAM_MODELFILE.lower()           
             
