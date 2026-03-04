@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.app.ui.ai.AIFiltersLoader;
 import iped.app.ui.columns.ColumnsManagerUI;
+import iped.content.TikaManager;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.EvidenceStatus;
 import iped.engine.core.Manager;
@@ -120,6 +121,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
 
                 SignatureTask.installCustomSignatures();
                 ParsingTask.setupParsingOptions(ConfigurationManager.get());
+                TikaManager.initializeTikaConfig();
                 StandardParser autoParser = new StandardParser();
                 App.get().setAutoParser(autoParser);
 
