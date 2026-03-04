@@ -16,7 +16,7 @@
 #       - pytorch_M_v_3_1.pth       - based on timm/tf_efficientnetv2_m.in21k_ft_in1k, image size 480x480 (precision 0.96, recall 0.97, 123 images/s GPU RTX 5070)
 #       - pytorch_L_in21k_ft_in1k_v3_1.pth - timm/tf_efficientnetv2_l.in21k_ft_in1k, image size 480x480   (precision 0.97, recall 0.96, 78 images/s GPU RTX 5070)
 #       - pytorch_EVA02_B_v3_1.pth  - eva02_base_patch14_448.mim_in22k_ft_in22k_in1k, image size 448x448  (precision 0.97, recall 0.99, 48 images/s GPU RTX 5070)
-#       - pytorch_EVA02_L_v3_1_1.pth  - eva02_large_patch14_448.mim_m38m_ft_in22k_in1k, image size 448x448  (precision 0.991, recall 0.995, 15 images/s GPU RTX 5070)
+#       - pytorch_EVA02_L_v3_1_1.pth  - eva02_large_patch14_448.mim_m38m_ft_in22k_in1k, image size 448x448  (precision 0.989, recall 0.995, 40 images/s GPU RTX 5070)
 #
 #   ONNX MODELS (for CPU, requires only onnxruntime installation  - less then 20MB)
 #       - onnx_B0_tensorflow_v3_1.onnx - converted from tensorflow_B0_v3_1.keras (precision 0,91, recall 0,96, speed 63)
@@ -33,8 +33,8 @@
 #               MobileNetV4_v3_1.onnx/          1
 #               pytorch_B0_v3_1_2_fp32.onnx     1
 # 2 GB          pytorch_S_v3_1.pth              5
-# 4 GB          pytorch_S_v3_1.pth              10
-# 8 GB          pytorch_EVA02_B_v3_1.pth        10
+# 4 GB          pytorch_EVA02_B_v3_1.pth        5
+# 8 GB          pytorch_EVA02_L_v3_1_1.pth      5
 # 12 GB	        pytorch_EVA02_L_v3_1_1.pth      10
 # 16 GB         pytorch_EVA02_L_v3_1_1.pth      20
 ModelFile = auto

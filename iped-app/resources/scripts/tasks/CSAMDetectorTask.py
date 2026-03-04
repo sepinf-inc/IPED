@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "1.4" # Auto configurations
+__version__ = "1.5" # Auto configurations - Mixed Precision Optimizations
 
 import traceback
 import io
@@ -17,7 +17,7 @@ import os
 import time
 import sys
 from java.lang import System
-from iped.engine.task import HashDBLookupTask
+from iped.properties import ExtraProperties
 from java.awt import Color
 from javax.imageio import ImageIO
 from java.io import ByteArrayOutputStream
@@ -47,6 +47,10 @@ CSAMDETECTOR_CATEGORY = 'ai:csamDetector:label'
 IPED_GPU_GLOBAL_SEMAPHORE_STRING = 'IPED_GPU_GLOBAL_SEMAPHORE'
 MODEL_SEMAPHORE = None
 CSAM_IMG_SIZE = 224
+
+# --- Global GPU Optimization Variables ---
+AMP_ENABLED = False
+AMP_DTYPE = None  # Will be set to torch.float16 or torch.float32
 
 # ImageNet normalization constants (used by PyTorch-style ONNX; set up during initialization)
 IMG_MEAN_PYTORCH = None
@@ -113,7 +117,7 @@ AI_CLASSIFICATION_SKIP_DUPLICATE = "duplicate"
 
 def carregar_e_configurar_modelo():
     """Central function that loads the correct model (TF, PyTorch) or checks metadata (TFLite, ONNX)."""
-    global MODELO_CARREGADO, DEVICE, CACHE, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, ONNX_INPUT_NAME, ONNX_OUTPUT_NAME
+    global MODELO_CARREGADO, DEVICE, CACHE, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, ONNX_INPUT_NAME, ONNX_OUTPUT_NAME, AMP_ENABLED, AMP_DTYPE
     
     MODELO_CARREGADO = caseData.getCaseObject('csam_model_unificado')
     
@@ -199,7 +203,22 @@ def carregar_e_configurar_modelo():
                 MODELO_CARREGADO.to(DEVICE)
                 MODELO_CARREGADO.eval()
                 
-                logger.info(f"CSAMDetector: PyTorch model ({model_name_key}, {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}) loaded on {DEVICE}.")
+                log_mode = "FP32 (CPU/Legacy Fallback)"
+                AMP_DTYPE = torch.float32 # Default
+            
+                if DEVICE.type == 'cuda':
+                    major, minor = torch.cuda.get_device_capability(DEVICE)
+                    # Compute Capability >= 7.0 (RTX series) supports FP16 Tensor Cores
+                    if major >= 7:
+                        AMP_ENABLED = True
+                        AMP_DTYPE = torch.float16
+                        log_mode = f"FP16 Mixed Precision (Compute Capability {major}.{minor})"
+                    else:
+                        # Legacy GPUs like P620 (CC 6.1) stay in FP32 for stability
+                        AMP_ENABLED = False
+                        log_mode = f"FP32 Standard Precision (Legacy GPU CC {major}.{minor})"                       
+                
+                logger.info(f"CSAMDetector: PyTorch model ({model_name_key}, {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}) loaded on {DEVICE}, {log_mode}.")
             
             except Exception as e:
                 logger.error(f"CSAMDetector: FATAL ERROR loading PyTorch model: {e}")
@@ -291,7 +310,8 @@ def detect_best_config():
         if torch.cuda.is_available():
             vram_bytes = torch.cuda.get_device_properties(0).total_memory
             vram_gb = vram_bytes / (1024**3)
-            logger.info(f"CSAMDetector: GPU detected with {vram_gb:.2f} GB of VRAM.")
+            capability = torch.cuda.get_device_capability(DEVICE)
+            logger.info(f"CSAMDetector: GPU detected with {vram_gb:.2f} GB of VRAM, capability version {capability}.")
         else:
             logger.info("CSAMDetector: GPU not detected. Searching for CPU models.")
     except Exception:
@@ -300,11 +320,11 @@ def detect_best_config():
     # Profiles ordered from best to lightest
     # vram_req: Minimum safety threshold to accept the profile
     profiles = [
-        {"vram_req": 14.0, "model": "pytorch_EVA02_L_v3_1_1.pth",  "batch": 20},
-        {"vram_req": 10.0, "model": "pytorch_EVA02_L_v3_1_1.pth",  "batch": 10},
-        {"vram_req": 6.0,  "model": "pytorch_EVA02_B_v3_1.pth",    "batch": 10},
-        {"vram_req": 3.0,  "model": "pytorch_S_v3_1.pth",          "batch": 10},
-        {"vram_req": 1.5,  "model": "pytorch_S_v3_1.pth",          "batch": 5},  # Margin for 2GB cards
+        {"vram_req": 14.0, "model": "pytorch_EVA02_L_v3_1_1.pth",  "batch": 20},  # >=16 GB cards
+        {"vram_req": 10.0, "model": "pytorch_EVA02_L_v3_1_1.pth",  "batch": 10},  # 12GB cards
+        {"vram_req": 6.0,  "model": "pytorch_EVA02_L_v3_1_1.pth",  "batch": 5},  # 8GB cards
+        {"vram_req": 3.0,  "model": "pytorch_EVA02_B_v3_1.pth",    "batch": 5},  # 4GB cards
+        {"vram_req": 1.5,  "model": "pytorch_S_v3_1.pth",          "batch": 4},  # Margin for 2GB cards
         {"vram_req": -1.0, "model": "onnx_B0_tensorflow_v3_1.onnx","batch": 1}, # CPU Fallback 1
         {"vram_req": -2.0, "model": "MobileNetV4_v3_1.onnx",       "batch": 1}, # CPU Fallback 2
         {"vram_req": -3.0, "model": "pytorch_B0_v3_1_2_fp32.onnx", "batch": 1}  # CPU Fallback 3          
@@ -770,7 +790,7 @@ class CSAMDetectorTask:
                     logger.warn(f"CSAMDetector: invalid dimensions for item {item.getName()} {width_meta}x{height_meta}")                        
 
             # Skip classification of images/videos with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
-            if (CSAM_SKIP_HASHDB_FILES and item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) is not None):
+            if (CSAM_SKIP_HASHDB_FILES and item.getExtraAttribute(ExtraProperties.HASHDB_STATUS) is not None):
                 logger.debug(f"CSAMDetector: skipping item with HashDB hit {item.getName()}")
                 item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_HASHDB)
                 return
@@ -1013,7 +1033,12 @@ class CSAMDetectorTask:
             
             elif MOTOR_IA == 'pytorch':
                 with torch.no_grad():
-                    outputs = MODELO_CARREGADO(torch.stack(tensores).to(DEVICE))
+                    # If amp_enabled is False or device_dtype is float32, 
+                    # autocast handles it gracefully without performance loss on older hardware.
+                    with torch.amp.autocast(device_type=DEVICE.type, dtype=AMP_DTYPE, enabled=AMP_ENABLED):
+                        outputs = MODELO_CARREGADO(torch.stack(tensores).to(DEVICE))
+                    
+                    # Ensure conversion back to float32 before softmax for stability
                     return torch.nn.functional.softmax(outputs, dim=1).cpu().numpy()
             
             elif MOTOR_IA == 'tflite':                
