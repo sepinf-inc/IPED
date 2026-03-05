@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -35,6 +37,7 @@ import iped.search.IMultiSearchResult;
 import iped.utils.DateUtil;
 import iped.utils.LocalizedFormat;
 import iped.viewers.bookmarks.IBookmarksController;
+import iped.viewers.util.ProgressDialog;
 
 public class BookmarksController implements IBookmarksController {
 
@@ -227,7 +230,6 @@ public class BookmarksController implements IBookmarksController {
     public void askAndImportFromAnotherCase() {
         setupFileChooser();
 
-        // Use showOpenDialog since we are reading/importing a file, not saving one
         if (fileChooser.showOpenDialog(App.get()) != JFileChooser.APPROVE_OPTION) {
             return;
         }
@@ -241,11 +243,23 @@ public class BookmarksController implements IBookmarksController {
             return;
         }
 
+        new Thread(() -> {
+            importFromAnotherCase(sourceCaseFolder);
+        }).start();
+
+    }
+
+    private void importFromAnotherCase(File sourceCaseFolder) {
+
+        IMultiBookmarks currentBookmarks = App.get().appCase.getMultiBookmarks();
+
+        ProgressDialog progress = new ProgressDialog(App.get(), null);
+        progress.setNote(Messages.getString("BookmarksController.ImportFromAnotherCase.Progress.Text"));
+
         // Open the source case to map its bookmarks to the current case
         try (IPEDMultiSource sourceCase = new IPEDMultiSource(new IPEDSource(sourceCaseFolder))) {
 
             IMultiBookmarks sourceBookmarks = sourceCase.getMultiBookmarks();
-            IMultiBookmarks currentBookmarks = App.get().appCase.getMultiBookmarks();
 
             String timestamp = DateUtil.dateToString(new Date());
             String importPrefix = String.format("[%s_%s] - ", Messages.getString("BookmarksController.ImportFromAnotherCase.Prefix"), timestamp);
@@ -254,6 +268,10 @@ public class BookmarksController implements IBookmarksController {
             IPEDSearcher sourceSearcher = new IPEDSearcher(sourceCase, "");
             MultiSearchResult sourceItems = sourceSearcher.multiSearch();
 
+            long totalItems = sourceBookmarks.getBookmarkSet().stream().mapToLong(name -> sourceBookmarks.getBookmarkCount(name)).sum();
+            progress.setMaximum(totalItems);
+
+            AtomicLong count = new AtomicLong(0);
             for (String sourceBookmarkName : sourceBookmarks.getBookmarkSet()) {
 
                 String newBookmarkName = importPrefix + sourceBookmarkName;
@@ -274,11 +292,16 @@ public class BookmarksController implements IBookmarksController {
                         .stream(bookmarkedSourceItems.getIterator().spliterator(), true)
                         .map(sourceCase::getLuceneId)
                         .map(luceneId -> {
+                            if (progress.isCanceled()) {
+                                throw new CancellationException();
+                            }
                             try {
                                 return sourceCase.getReader().document(luceneId);
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 return null;
+                            } finally {
+                                progress.setProgress(count.incrementAndGet());
                             }
                         })
                         .filter(Objects::nonNull)
@@ -306,6 +329,10 @@ public class BookmarksController implements IBookmarksController {
                 if (!currentCaseItemIds.isEmpty()) {
                     currentBookmarks.addBookmark(currentCaseItemIds, newBookmarkName);
                 }
+
+                if (progress.isCanceled()) {
+                    return;
+                }
             }
 
             currentBookmarks.saveState();
@@ -316,11 +343,17 @@ public class BookmarksController implements IBookmarksController {
                             Messages.getString("BookmarksController.ImportFromAnotherCase.Success.Title"), JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            BookmarksManager.get().updateList();
-            BookmarksController.get().updateUI();
-            JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.ImportFromAnotherCase.Error"),
-                            Messages.getString("BookmarksController.ImportFromAnotherCase.Error.Title"), JOptionPane.ERROR_MESSAGE);
+
+            // restore state
+            currentBookmarks.loadState();
+
+            if (!progress.isCanceled()) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.ImportFromAnotherCase.Error"),
+                                Messages.getString("BookmarksController.ImportFromAnotherCase.Error.Title"), JOptionPane.ERROR_MESSAGE);
+            }
+        } finally {
+            progress.close();
         }
     }
 }
