@@ -261,6 +261,7 @@ public class BookmarksController implements IBookmarksController {
 
             IMultiBookmarks sourceBookmarks = sourceCase.getMultiBookmarks();
 
+            Set<String> fieldsToLoad = Collections.singleton(BasicProps.TRACK_ID);
             String timestamp = DateUtil.dateToString(new Date());
             String importPrefix = String.format("[%s_%s] - ", Messages.getString("BookmarksController.ImportFromAnotherCase.Prefix"), timestamp);
 
@@ -296,7 +297,7 @@ public class BookmarksController implements IBookmarksController {
                                 throw new CancellationException();
                             }
                             try {
-                                return sourceCase.getReader().document(luceneId);
+                                return sourceCase.getReader().document(luceneId, fieldsToLoad);
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 return null;
