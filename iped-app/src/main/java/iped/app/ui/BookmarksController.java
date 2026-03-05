@@ -2,14 +2,37 @@ package iped.app.ui;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.TermInSetQuery;
+import org.apache.lucene.util.BytesRef;
+
+import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.data.Bookmarks;
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
+import iped.engine.search.IPEDSearcher;
+import iped.engine.search.MultiSearchResult;
+import iped.engine.util.SaveStateThread;
+import iped.properties.BasicProps;
+import iped.search.IMultiSearchResult;
+import iped.utils.DateUtil;
 import iped.utils.LocalizedFormat;
 import iped.viewers.bookmarks.IBookmarksController;
 
@@ -34,6 +57,8 @@ public class BookmarksController implements IBookmarksController {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         }
     }
+
+
 
     public boolean isUpdatingHistory() {
         return updatingHistory;
@@ -162,6 +187,140 @@ public class BookmarksController implements IBookmarksController {
                         Messages.getString("BookmarksController.SaveError.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             }
 
+        }
+    }
+
+    private File lookupCaseFolderFromBookmark(File bookmarkFile) {
+        if (bookmarkFile == null || bookmarkFile.getParentFile() == null) {
+            return null;
+        }
+
+        File immediateParent = bookmarkFile.getParentFile();
+
+        // 1. Check if the file is in the standard module directory
+        // Expected structure: [Case Folder] / MODULE_DIR / bookmarkFile
+        if (IPEDSource.MODULE_DIR.equals(immediateParent.getName())) {
+            File caseFolder = immediateParent.getParentFile();
+
+            if (caseFolder != null && IPEDSource.checkIfIsCaseFolder(caseFolder)) {
+                return caseFolder;
+            }
+        }
+
+        // 2. Check if the file is in a backup directory
+        // Expected structure: [Case Folder] / MODULE_DIR / BKP_DIR / bookmarkFile
+        if (SaveStateThread.BKP_DIR.equals(immediateParent.getName())) {
+            File moduleDir = immediateParent.getParentFile();
+
+            if (moduleDir != null && moduleDir.getParentFile() != null) {
+                File caseFolder = moduleDir.getParentFile();
+
+                if (IPEDSource.checkIfIsCaseFolder(caseFolder)) {
+                    return caseFolder;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public void askAndImportFromAnotherCase() {
+        setupFileChooser();
+
+        // Use showOpenDialog since we are reading/importing a file, not saving one
+        if (fileChooser.showOpenDialog(App.get()) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File selectedFile = fileChooser.getSelectedFile();
+        File sourceCaseFolder = lookupCaseFolderFromBookmark(selectedFile);
+
+        if (sourceCaseFolder == null) {
+            JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.ImportFromAnotherCase.NotValidCase"),
+                            Messages.getString("BookmarksController.ImportFromAnotherCase.NotValidCase.Title"), JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Open the source case to map its bookmarks to the current case
+        try (IPEDMultiSource sourceCase = new IPEDMultiSource(new IPEDSource(sourceCaseFolder))) {
+
+            IMultiBookmarks sourceBookmarks = sourceCase.getMultiBookmarks();
+            IMultiBookmarks currentBookmarks = App.get().appCase.getMultiBookmarks();
+
+            String timestamp = DateUtil.dateToString(new Date());
+            String importPrefix = String.format("[%s_%s] - ", Messages.getString("BookmarksController.ImportFromAnotherCase.Prefix"), timestamp);
+
+            // Fetch all items from the source case to filter by bookmark later
+            IPEDSearcher sourceSearcher = new IPEDSearcher(sourceCase, "");
+            MultiSearchResult sourceItems = sourceSearcher.multiSearch();
+
+            for (String sourceBookmarkName : sourceBookmarks.getBookmarkSet()) {
+
+                String newBookmarkName = importPrefix + sourceBookmarkName;
+
+                // 1. Recreate bookmark metadata in the current case
+                currentBookmarks.newBookmark(newBookmarkName);
+                currentBookmarks.setBookmarkComment(newBookmarkName, sourceBookmarks.getBookmarkComment(sourceBookmarkName));
+                currentBookmarks.setBookmarkColor(newBookmarkName, sourceBookmarks.getBookmarkColor(sourceBookmarkName));
+
+                KeyStroke stroke = sourceBookmarks.getBookmarkKeyStroke(sourceBookmarkName);
+                if (stroke != null && !BookmarksManager.get().isKeyStrokeAlreadyUsed(stroke)) {
+                    currentBookmarks.setBookmarkKeyStroke(newBookmarkName, stroke);
+                }
+
+                // 2. Extract trackIds from the source case's bookmarked items
+                IMultiSearchResult bookmarkedSourceItems = sourceBookmarks.filterBookmarks(sourceItems, Collections.singleton(sourceBookmarkName));
+                List<BytesRef> trackIds = StreamSupport
+                        .stream(bookmarkedSourceItems.getIterator().spliterator(), true)
+                        .map(sourceCase::getLuceneId)
+                        .map(luceneId -> {
+                            try {
+                                return sourceCase.getReader().document(luceneId);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .map(doc -> doc.get(BasicProps.TRACK_ID))
+                        .filter(StringUtils::isNotBlank)
+                        .map(BytesRef::new)
+                        .collect(Collectors.toList());
+
+                // Skip querying if the bookmark is empty or has no trackable items
+                if (trackIds.isEmpty()) {
+                    continue;
+                }
+
+                // 3. Locate corresponding items in the current case and link them
+                BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+                queryBuilder.add(new TermInSetQuery(BasicProps.TRACK_ID, trackIds), Occur.SHOULD);
+
+                IPEDSearcher currentSearcher = new IPEDSearcher(App.get().appCase, queryBuilder.build());
+                currentSearcher.setRewritequery(false);
+
+                Set<IItemId> currentCaseItemIds = StreamSupport
+                        .stream(currentSearcher.multiSearch().getIterator().spliterator(), true)
+                        .collect(Collectors.toSet());
+
+                if (!currentCaseItemIds.isEmpty()) {
+                    currentBookmarks.addBookmark(currentCaseItemIds, newBookmarkName);
+                }
+            }
+
+            currentBookmarks.saveState();
+            BookmarksManager.get().updateList();
+            BookmarksController.get().updateUI();
+
+            JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.ImportFromAnotherCase.Success"),
+                            Messages.getString("BookmarksController.ImportFromAnotherCase.Success.Title"), JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            BookmarksManager.get().updateList();
+            BookmarksController.get().updateUI();
+            JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.ImportFromAnotherCase.Error"),
+                            Messages.getString("BookmarksController.ImportFromAnotherCase.Error.Title"), JOptionPane.ERROR_MESSAGE);
         }
     }
 }
