@@ -32,7 +32,7 @@
 # 0GB (CPU)     onnx_B0_tensorflow_v3_1.onnx/   1
 #               MobileNetV4_v3_1.onnx/          1
 #               pytorch_B0_v3_1_2_fp32.onnx     1
-# 2 GB          pytorch_S_v3_1.pth              5
+# 2 GB          pytorch_S_v3_1.pth              4
 # 4 GB          pytorch_EVA02_B_v3_1.pth        5
 # 8 GB          pytorch_EVA02_L_v3_1_1.pth      5
 # 12 GB	        pytorch_EVA02_L_v3_1_1.pth      10
