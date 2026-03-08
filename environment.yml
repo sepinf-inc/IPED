@@ -4,10 +4,12 @@ channels:
   - defaults
 dependencies:
   - python=3.10
-  - numpy
+  - "numpy>=1.26,<2"  # insightface C extensions require NumPy 1.x ABI
   - opencv
   - pillow
   - cudnn=9          # required by onnxruntime-gpu 1.19+; install via conda for easiest setup
+  - openjdk=11
+  - maven
   - pip
   - pip:
     - insightface
