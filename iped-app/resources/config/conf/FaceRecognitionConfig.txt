@@ -1,5 +1,10 @@
 # Face recognition feature based on InsightFace (ArcFace + RetinaFace)
-# You must install python and some dependencies: pip install insightface onnxruntime opencv-python numpy
+# Dependencies must be installed in the Python used by the subprocess (see pythonPath below).
+# CPU-only (simplest): install into IPED's bundled Python:
+#   {iped.root}/python/python.exe -m pip install "numpy>=1.26,<2" insightface onnxruntime pillow
+# GPU (faster): create a separate Python env with CUDA/cuDNN and point pythonPath to it:
+#   pip install "numpy>=1.26,<2" insightface onnxruntime-gpu pillow
+# Note: numpy must be <2 because insightface C extensions require the NumPy 1.x ABI.
 # See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 
@@ -31,4 +36,5 @@ minSize = 48
 
 # Optional: path to the Python executable. On Windows, defaults to the bundled {iped.root}/python/pythonw.
 # Set this to use a custom Python environment (e.g. a conda env) that has insightface installed.
-pythonPath = C:\Users\Douglas\miniconda3\envs\iped-face\python.exe
+# Required for GPU support — point to the Python in an env where CUDA/cuDNN DLLs are accessible.
+#pythonPath =

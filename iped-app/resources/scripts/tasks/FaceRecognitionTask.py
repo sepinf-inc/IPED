@@ -159,22 +159,11 @@ class FaceRecognitionTask:
             if not FaceRecognitionTask.enabled:
                 return
 
-            # default help and error messages
-            msg_see_manual = 'See FaceRecognition task setup information at <https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition>.'
-            msg_task_init_error = 'FaceRecognition task could not be initialized and was disabled'
+            # insightface, numpy, and cv2 are only needed in the external subprocess, not in this Jep process.
+            # We validate later when createExternalProcess() is called; if it fails, items are skipped
+            # with an error message pointing to the install instructions.
+            pass
 
-            # check if 'numpy' module is installed (used in this process to convert embeddings)
-            module_name = 'numpy'
-            global np
-            import numpy as np
-            # insightface and cv2 are only needed in the external subprocess, not checked here
-
-        except ModuleNotFoundError:
-            # required module not installed
-            msg = msg_task_init_error + f': \'{module_name}\' module is missing.'
-            logger.error(msg + ' ' + msg_see_manual)
-            FaceRecognitionTask.enabled = False
-            return
         finally:
             initLock.release()
 
@@ -367,6 +356,8 @@ class FaceRecognitionTask:
         except _queue.Empty:
             logger.error("[FaceRecognitionTask] Timed out waiting for face recognition subprocess after 5 min. Check Python path and insightface installation.")
             return
+
+        try:
             if not pingExternalProcess(proc):
                 proc.kill()
                 proc = createExternalProcess()
@@ -411,12 +402,11 @@ class FaceRecognitionTask:
                 line = proc.stdout.readline()
                 face_locations.append(eval(line))
 
-            # Fix 2: read all 512 floats as a single space-separated line (was 512 individual readline calls)
+            # read all floats as a single space-separated line; use plain list (no numpy needed in Jep context)
             face_encodings = []
             for i in range(num_faces):
                 enc_line = proc.stdout.readline()
-                np_array = np.array(enc_line.split(), dtype=np.float32)
-                face_encodings.append(np_array)
+                face_encodings.append([float(x) for x in enc_line.split()])
 
             t3 = time.time()
             with timeLock:
