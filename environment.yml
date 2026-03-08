@@ -4,15 +4,15 @@ channels:
   - defaults
 dependencies:
   - python=3.10
-  - "numpy>=1.26,<2"  # insightface C extensions require NumPy 1.x ABI
+  - numpy
   - opencv
   - pillow
-  - cudnn=9          # required by onnxruntime-gpu 1.19+; install via conda for easiest setup
   - openjdk=11
   - maven
   - pip
   - pip:
-    - insightface
-    - onnxruntime-gpu  # requires cuDNN 9 (>=1.19) — see table below if you have cuDNN 8
-    # cuDNN 8 + CUDA 12.x: pip install onnxruntime-gpu==1.18.1
-    # cuDNN 8 + CUDA 11.8: pip install onnxruntime-gpu==1.16.3
+    - mediapipe       # face detection (Apache 2.0) — used by default 'auraface' model
+    - onnxruntime     # CPU-only; lightweight and sufficient for multi-process parallelism
+    # Optional: install insightface for buffalo_l/buffalo_s models (non-commercial license)
+    # - "numpy>=1.26,<2"  # needed only if using insightface (C extensions require NumPy 1.x ABI)
+    # - insightface

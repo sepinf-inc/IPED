@@ -36,12 +36,12 @@ numCreatedProcsLock = threading.Lock()
 finishCount = 0
 finishLock = threading.Lock()
 
-from java.lang import System
+from java.lang import Runtime, System
 ipedRoot = System.getProperty('iped.root')
 
 bin = 'python' if platform.system().lower() == 'windows' else 'python3'
 
-model_name = 'buffalo_l'
+model_name = 'auraface'
 max_size = 1024
 det_size = 640
 min_det_score = 0.5
@@ -61,9 +61,10 @@ def createProcessQueue():
     global processQueue, maxProcesses
     if processQueue is None:
         if maxProcesses is None:
-            # Fix 1: default to 1 process — avoids loading the 300MB model N times at startup.
-            # GPU users should keep this at 1; CPU users can increase for parallelism.
-            maxProcesses = 1
+            numThreads = Runtime.getRuntime().availableProcessors()
+            # Default to min(4, numThreads/2). Each process loads ~300MB model.
+            # 4 processes balances CPU throughput vs memory usage.
+            maxProcesses = int(max(1, min(4, numThreads / 2)))
         processQueue = queue.Queue(maxProcesses)
 
 def log_stderr(proc):
@@ -171,12 +172,6 @@ class FaceRecognitionTask:
         videoConfig = configuration.findObject(VideoThumbsConfig);
         FaceRecognitionTask.videoSubitems = videoConfig.getVideoThumbsSubitems();
 
-        global terminate, imgError, ping, video
-        terminate = 'terminate_process'
-        imgError = 'image_error'
-        ping = 'ping'
-        video = 'video'
-
         # check if was called from gui the first time
         global maxProcesses, firstInstance
         # load configuration properties
@@ -194,9 +189,6 @@ class FaceRecognitionTask:
         elif platform.system().lower() == 'windows':
             bin = os.path.join(ipedRoot, 'python', 'pythonw')
 
-        numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
-        if maxProcesses is None and numProcs is not None:
-            maxProcesses = int(numProcs)
         maxResolution = extraProps.getProperty(maxResolutionProp)
         global max_size, model_name, det_size, min_det_score, min_size, model_dir
         if maxResolution is not None:
@@ -373,7 +365,6 @@ class FaceRecognitionTask:
             line = proc.stdout.readline().strip()
 
             if not line:
-                time.sleep(3)
                 status = str(proc.poll())
                 logger.warn("[FaceRecognitionTask] Unexpected error from external process while processing {} ({} bytes) exit status=" + status, item.getPath(), item.getLength())
                 proc.kill()
@@ -400,7 +391,7 @@ class FaceRecognitionTask:
             face_locations = []
             for i in range(num_faces):
                 line = proc.stdout.readline()
-                face_locations.append(eval(line))
+                face_locations.append(tuple(int(x) for x in line.strip('() \n').split(',')))
 
             # read all floats as a single space-separated line; use plain list (no numpy needed in Jep context)
             face_encodings = []
