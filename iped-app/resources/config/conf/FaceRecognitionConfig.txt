@@ -3,9 +3,13 @@
 # See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 
-# Number of external face recognition processes. If not set, the number of CPU logical cores will be used.
-# You can set this if you have memory usage problems, e.g. if you are using a GPU with very few memory.
-#numFaceRecognitionProcesses = 4
+# Number of external face recognition processes. Default is 1.
+# Increase only for CPU-only setups where you want parallelism at the cost of loading the model multiple times.
+# When using GPU, keep at 1 — multiple processes compete for the same device.
+#numFaceRecognitionProcesses = 1
+
+# Images sent per subprocess call. Default 1. Set 8-16 for GPU to amortize inference overhead.
+#batchSize = 1
 
 # Max width or height used to resize images before face detection. This dramatically reduces
 # the time of face detection on high resolution images, although small faces are lost.
@@ -27,3 +31,7 @@ minSize = 48
 
 # Optional: directory for InsightFace model files. Defaults to {iped.root}/models/insightface.
 #modelDir =
+
+# Optional: path to the Python executable. On Windows, defaults to the bundled {iped.root}/python/pythonw.
+# Set this to use a custom Python environment (e.g. a conda env) that has insightface installed.
+#pythonPath = C:\path\to\your\python.exe
