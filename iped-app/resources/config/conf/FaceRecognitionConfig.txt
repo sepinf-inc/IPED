@@ -31,4 +31,4 @@ minSize = 48
 
 # Optional: path to the Python executable. On Windows, defaults to the bundled {iped.root}/python/pythonw.
 # Set this to use a custom Python environment (e.g. a conda env) that has insightface installed.
-#pythonPath = C:\path\to\your\python.exe
+pythonPath = C:\Users\Douglas\miniconda3\envs\iped-face\python.exe
