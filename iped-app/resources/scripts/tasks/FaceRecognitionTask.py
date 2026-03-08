@@ -1,6 +1,6 @@
 ﻿'''
-# Python face recognition feature based on Face Recognition Project (https://pypi.org/project/face-recognition/)
-# FaceRecognitionTask.py - By Rui Sant'Ana Junior and Luis Nassif
+# Python face recognition feature based on InsightFace (ArcFace + RetinaFace)
+# FaceRecognitionTask.py - Originally by Rui Sant'Ana Junior and Luis Nassif, updated for InsightFace
 # Requirements: See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 '''
@@ -17,9 +17,11 @@ enableProp = 'enableFaceRecognition'
 configFile = 'FaceRecognitionConfig.txt'
 numFaceRecognitionProcessesProp = 'numFaceRecognitionProcesses'
 maxResolutionProp = 'maxResolution'
-faceDetectionModelProp = 'faceDetectionModel'
-upSamplingProp = 'upSampling'
+insightFaceModelProp = 'insightFaceModel'
+detSizeProp = 'detSize'
+minDetScoreProp = 'minDetScore'
 minSizeProp = 'minSize'
+modelDirProp = 'modelDir'
 
 # External process script
 processScript = 'FaceRecognitionProcess.py'
@@ -34,10 +36,12 @@ ipedRoot = System.getProperty('iped.root')
 
 bin = 'python' if platform.system().lower() == 'windows' else 'python3'
 
-detection_model = 'hog'
+model_name = 'buffalo_l'
 max_size = 1024
-up_sampling = 1
+det_size = 640
+min_det_score = 0.5
 min_size = 48
+model_dir = None
 
 firstInstance = True
 processQueue = None
@@ -69,7 +73,10 @@ def createExternalProcess():
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript), str(max_size), detection_model, str(up_sampling)], 
+            args_list = [bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript), str(max_size), model_name, str(det_size), str(min_det_score)]
+            if model_dir:
+                args_list.append(model_dir)
+            proc = subprocess.Popen(args_list,
                                     stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         
         if pingExternalProcess(proc):
@@ -124,28 +131,18 @@ class FaceRecognitionTask:
             msg_see_manual = 'See FaceRecognition task setup information at <https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition>.'
             msg_task_init_error = 'FaceRecognition task could not be initialized and was disabled'
 
-            # chek if 'face_recognition' module is installed
-            module_name = 'face_recognition'
-            import face_recognition
+            # check if 'insightface' module is installed
+            module_name = 'insightface'
+            import insightface
 
-            # chek if 'opencv-python' module is installed
+            # check if 'opencv-python' module is installed
             module_name = 'opencv-python'
             import cv2
 
-            # chek if 'numpy' module is installed
+            # check if 'numpy' module is installed
             module_name = 'numpy'
             global np
             import numpy as np
-            
-            # check if numpy version is supported (<2.x)
-            np_version_unsupported_min = '2'
-            np_version = np.__version__
-            if np_version >= np_version_unsupported_min:
-                # numpy version is not supported
-                msg = msg_task_init_error + f': \'{module_name}\' module version is {np_version} (must be <{np_version_unsupported_min}.x).'
-                logger.error(msg + ' ' + msg_see_manual)
-                FaceRecognitionTask.enabled = False
-                return
 
         except ModuleNotFoundError:
             # required module not installed
@@ -184,18 +181,26 @@ class FaceRecognitionTask:
         if maxProcesses is None and numProcs is not None:
             maxProcesses = int(numProcs)
         maxResolution = extraProps.getProperty(maxResolutionProp)
-        global max_size, detection_model, up_sampling, min_size
+        global max_size, model_name, det_size, min_det_score, min_size, model_dir
         if maxResolution is not None:
             max_size = int(maxResolution)
-        faceDetectionModel = extraProps.getProperty(faceDetectionModelProp)
-        if faceDetectionModel is not None:
-            detection_model = faceDetectionModel
-        upSampling = extraProps.getProperty(upSamplingProp)
-        if upSampling is not None:
-            up_sampling = int(upSampling)
+        insightFaceModel = extraProps.getProperty(insightFaceModelProp)
+        if insightFaceModel is not None:
+            model_name = insightFaceModel
+        detSizeVal = extraProps.getProperty(detSizeProp)
+        if detSizeVal is not None:
+            det_size = int(detSizeVal)
+        minDetScoreVal = extraProps.getProperty(minDetScoreProp)
+        if minDetScoreVal is not None:
+            min_det_score = float(minDetScoreVal)
         minSize = extraProps.getProperty(minSizeProp)
         if minSize is not None:
             min_size = int(minSize)
+        modelDirVal = extraProps.getProperty(modelDirProp)
+        if modelDirVal is not None:
+            model_dir = modelDirVal
+        elif model_dir is None:
+            model_dir = os.path.join(ipedRoot, 'models', 'insightface')
         
         createProcessQueue()
         return
@@ -361,7 +366,7 @@ class FaceRecognitionTask:
             face_encodings = []
             for i in range(num_faces):
                 encodings_list = []
-                for j in range(128):
+                for j in range(512):
                     line = proc.stdout.readline()
                     encodings_list.append(float(line))
                 np_array = np.array(encodings_list)

@@ -1,15 +1,16 @@
-﻿'''
+'''
 # External process used by FaceRecognitionTask.py to do the hard work to bypass python GIL and allow multiprocess parallelization.
 '''
 import sys
 stdout = sys.stdout
 sys.stdout = sys.stderr
 
-import face_recognition as fr
+import os
 import PIL
 from PIL import Image
 import numpy as np
 import traceback
+from insightface.app import FaceAnalysis
 
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -45,29 +46,38 @@ def convertToRGB(image):
 
 '''
 Main function of external process which will detect and encode faces.
-It is executed out of process to workaroung python GIL bottleneck.
+It is executed out of process to workaround python GIL bottleneck.
 Multiprocessing module does not work with jep-3.9.1.
 '''
 def main():
     max_size = int(sys.argv[1])
-    detection_model = sys.argv[2]
-    up_sampling = int(sys.argv[3])
-    
+    model_name = sys.argv[2]
+    det_size = int(sys.argv[3])
+    min_det_score = float(sys.argv[4])
+    model_dir = sys.argv[5] if len(sys.argv) > 5 else None
+
+    # Set model directory if provided
+    if model_dir:
+        os.environ['INSIGHTFACE_HOME'] = model_dir
+
+    # Initialize InsightFace model once
+    app = FaceAnalysis(name=model_name, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    app.prepare(ctx_id=0, det_size=(det_size, det_size))
+
     while True:
         global processed_files
         if processed_files >= max_files:
-            #print("Restarting face recognition process to clean possible resource leaks", file=sys.stderr)
             break
-        
+
         line = input()
         if line == terminate:
             break
         if line == ping:
             print(ping, file=stdout, flush=True)
             continue
-        
+
         processed_files += 1
-        
+
         code = input()
         if code == video:
             isVideo = True
@@ -75,66 +85,59 @@ def main():
         else:
             isVideo = False
             tiff_orient = int(code)
-            
 
         scale = 1
-        upsample = up_sampling
         try:
             img = PIL.Image.open(line)
             img = convertToRGB(img)
-            
+
             if not isVideo:
                 size = img.size
-                if max(size[0], size[1]) * 2 > max_size:
+                if max(size[0], size[1]) > max_size:
                     scale = max_size / max(size[0], size[1])
                     if size[0] > size[1]:
                         new_size = (max_size, int(size[1] * scale))
                     else:
                         new_size = (int(size[0] * scale), max_size)
-                        
-                    img0 = img
+
                     img = img.resize(new_size, resample=Image.Resampling.BILINEAR)
-                    upsample = 0
-            
+
         except Exception:
             print(imgError, file=stdout, flush=True)
-            #traceback.print_exc()
             continue
-        
+
         img = np.array(img)
         img = rotateImg(img, tiff_orient)
-        
-        try:
-            # Workaround for https://github.com/sepinf-inc/IPED/issues/1307:
-            import cv2
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        except ImportError:
-            cv2 = None
-        
-        face_locations = fr.face_locations(img, number_of_times_to_upsample=upsample, model=detection_model)
-        
-        num_faces = len(face_locations)
+
+        # Convert RGB to BGR for InsightFace
+        img_bgr = img[:, :, ::-1]
+
+        faces = app.get(img_bgr)
+
+        # Filter by detection confidence
+        faces = [f for f in faces if f.det_score >= min_det_score]
+
+        num_faces = len(faces)
         print(str(num_faces), file=stdout, flush=True)
         if num_faces == 0:
             continue
-        
-        for i in range(num_faces):
+
+        for face in faces:
+            x1, y1, x2, y2 = face.bbox.astype(int)
             if scale != 1:
-                face_locations[i] = tuple(int(k / scale) for k in face_locations[i])
-            print(str(face_locations[i]), file=stdout, flush=True)
-        
-        if scale != 1:
-            img = np.array(img0)
-            img = rotateImg(img, tiff_orient)
-        
-        face_encodings = fr.face_encodings(img, face_locations)
-        
-        for i in range(num_faces):
-            for j in range(128):
-                print(str(face_encodings[i][j]), file=stdout, flush=True)
+                x1 = int(x1 / scale)
+                y1 = int(y1 / scale)
+                x2 = int(x2 / scale)
+                y2 = int(y2 / scale)
+            # Convert to (top, right, bottom, left) format for compatibility
+            location = (y1, x2, y2, x1)
+            print(str(location), file=stdout, flush=True)
+
+        for face in faces:
+            embedding = face.embedding
+            for j in range(512):
+                print(str(embedding[j]), file=stdout, flush=True)
     return
-    
+
 if __name__ == "__main__":
      main()
-    
