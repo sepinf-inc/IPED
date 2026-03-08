@@ -23,7 +23,6 @@ minDetScoreProp = 'minDetScore'
 minSizeProp = 'minSize'
 modelDirProp = 'modelDir'
 pythonPathProp = 'pythonPath'
-batchSizeProp = 'batchSize'
 
 # External process script
 processScript = 'FaceRecognitionProcess.py'
@@ -32,6 +31,10 @@ processScript = 'FaceRecognitionProcess.py'
 maxProcesses = None
 numCreatedProcs = 0
 numCreatedProcsLock = threading.Lock()
+
+# Count of finish() calls — used to terminate the subprocess only on the last call
+finishCount = 0
+finishLock = threading.Lock()
 
 from java.lang import System
 ipedRoot = System.getProperty('iped.root')
@@ -44,7 +47,6 @@ det_size = 640
 min_det_score = 0.5
 min_size = 48
 model_dir = None
-batchSize = 1
 
 firstInstance = True
 processQueue = None
@@ -122,54 +124,13 @@ def pingExternalProcess(proc):
         traceback.print_exc()
     return False
 
-def _readFaceResults(proc, item_path, item_length):
-    '''Read one image result block from the subprocess stdout.
-    Returns (num_faces, face_locations, face_encodings) or None on error.'''
-    line = proc.stdout.readline().strip()
-
-    if not line:
-        time.sleep(3)
-        status = str(proc.poll())
-        logger.warn("[FaceRecognitionTask] Unexpected error from external process while processing {} ({} bytes) exit status=" + status, item_path, item_length)
-        return None
-
-    if line == imgError:
-        return imgError
-
-    num_faces = int(line)
-    if num_faces == 0:
-        return (0, [], [])
-
-    face_locations = []
-    for i in range(num_faces):
-        loc_line = proc.stdout.readline()
-        face_locations.append(eval(loc_line))
-
-    # Fix 2: read all 512 floats as a single space-separated line (was 512 individual readline calls)
-    face_encodings = []
-    for i in range(num_faces):
-        enc_line = proc.stdout.readline()
-        np_array = np.array(enc_line.split(), dtype=np.float32)
-        face_encodings.append(np_array)
-
-    return (num_faces, face_locations, face_encodings)
-
 class FaceRecognitionTask:
 
     enabled = None
     videoSubitems = False
 
-    def __init__(self):
-        # Per-instance batch state (Fix 3)
-        self._batch_items = []   # list of (item, img_path, tiff_orient_str, hash) being accumulated
-        self._next_items = []    # items with attributes set, waiting to be forwarded
-
     def isEnabled(self):
         return False if FaceRecognitionTask.enabled is None else FaceRecognitionTask.enabled
-
-    def processQueueEnd(self):
-        # Tell IPED to deliver the queue-end sentinel to process() so we can flush the final partial batch.
-        return True
 
     def getConfigurables(self):
         from iped.engine.config import DefaultTaskPropertiesConfig
@@ -219,7 +180,7 @@ class FaceRecognitionTask:
         video = 'video'
 
         # check if was called from gui the first time
-        global maxProcesses, firstInstance, batchSize
+        global maxProcesses, firstInstance
         # load configuration properties
         extraProps = taskConfig.getConfiguration()
         numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
@@ -259,19 +220,23 @@ class FaceRecognitionTask:
             model_dir = modelDirVal
         elif model_dir is None:
             model_dir = os.path.join(ipedRoot, 'models', 'insightface')
-        batchSizeVal = extraProps.getProperty(batchSizeProp)
-        if batchSizeVal is not None:
-            batchSize = max(1, int(batchSizeVal))
 
         createProcessQueue()
         return
 
     # It is executed after processing all items in case.
     def finish(self):
-        # Safety net: flush any remaining buffered items before terminating
-        self._flushBatch()
+        # Use a counter so that only the LAST worker thread actually terminates the subprocess.
+        # With maxProcesses=1 there is only one proc; if an earlier thread removed it from the
+        # queue and terminated it, remaining threads blocked at processQueue.get() would deadlock.
+        global finishCount
+        with finishLock:
+            finishCount += 1
+            is_last = (finishCount >= numThreads)
 
-        #terminate subprocess
+        if not is_last:
+            return
+
         if not processQueue.empty():
             proc = processQueue.get(block=True)
             if proc.poll() is None:
@@ -280,9 +245,9 @@ class FaceRecognitionTask:
                     proc.wait(2)
                 except:
                     proc.kill()
-                with numCreatedProcsLock:
-                    global numCreatedProcs
-                    numCreatedProcs -= 1
+            with numCreatedProcsLock:
+                global numCreatedProcs
+                numCreatedProcs -= 1
 
         with timeLock:
             global detectTime, featureTime
@@ -304,124 +269,8 @@ class FaceRecognitionTask:
         cache[hash + '_encodings'] = encodings
         cache[hash + '_count'] = count
 
-    def sendToNextTask(self, item):
-        # Hold items that are still buffered in _batch_items; forward everything else.
-        batch_item_objs = [b[0] for b in self._batch_items]
-        if not item.isQueueEnd() and item not in batch_item_objs and item not in self._next_items:
-            self.javaTask.sendToNextTaskSuper(item)
-
-        if len(self._next_items) > 0:
-            localList = list(self._next_items)
-            self._next_items.clear()
-            for i in localList:
-                self.javaTask.sendToNextTaskSuper(i)
-
-        if item.isQueueEnd():
-            self.javaTask.sendToNextTaskSuper(item)
-
-    def _isToProcessBatch(self, item):
-        size = len(self._batch_items)
-        return (size >= batchSize) or (size > 0 and item.isQueueEnd())
-
-    def _flushBatch(self):
-        if not self._batch_items:
-            return
-
-        batch = list(self._batch_items)
-        self._batch_items.clear()
-        n = len(batch)
-
-        # Ensure at least one subprocess exists
-        numCreatedProcsLock.acquire()
-        global numCreatedProcs
-        if numCreatedProcs < maxProcesses:
-            numCreatedProcs += 1
-            numCreatedProcsLock.release()
-            proc = createExternalProcess()
-            processQueue.put(proc, block=True)
-        else:
-            numCreatedProcsLock.release()
-
-        from iped.properties import ExtraProperties
-
-        try:
-            proc = processQueue.get(block=True)
-            if not pingExternalProcess(proc):
-                proc.kill()
-                proc = createExternalProcess()
-
-            t1 = time.time()
-
-            if n == 1:
-                # Single-image path: use existing protocol (no batch: prefix)
-                item, img_path, tiff_orient_str, hash = batch[0]
-                print(img_path, file=proc.stdin, flush=True)
-                print(tiff_orient_str, file=proc.stdin, flush=True)
-            else:
-                # Batch path: send all paths at once
-                print('batch:' + str(n), file=proc.stdin, flush=True)
-                for (item, img_path, tiff_orient_str, hash) in batch:
-                    print(img_path, file=proc.stdin, flush=True)
-                    print(tiff_orient_str, file=proc.stdin, flush=True)
-
-            results = []
-            proc_dead = False
-            for (item, img_path, tiff_orient_str, hash) in batch:
-                if proc_dead:
-                    results.append(None)
-                    continue
-                result = _readFaceResults(proc, item.getPath(), item.getLength())
-                if result is None:
-                    # subprocess crashed; remaining items in this batch will be None
-                    proc.kill()
-                    proc = createExternalProcess()
-                    proc_dead = True
-                results.append(result)
-
-            t2 = time.time()
-            with timeLock:
-                global detectTime, featureTime
-                elapsed = t2 - t1
-                detectTime += elapsed * 0.5
-                featureTime += elapsed * 0.5
-
-        finally:
-            processQueue.put(proc, block=True)
-
-        for i, (item, img_path, tiff_orient_str, hash) in enumerate(batch):
-            result = results[i]
-            if result is None:
-                # Error: don't set any attribute; item proceeds without face data
-                self._next_items.append(item)
-                continue
-            if result == imgError:
-                logger.info("[FaceRecognitionTask] Error loading image {} ({} bytes)", item.getPath(), item.getLength())
-                self.cacheResults(hash, [], [], -1)
-                self._next_items.append(item)
-                continue
-
-            num_faces, face_locations, face_encodings = result
-            if num_faces == 0:
-                item.setExtraAttribute(ExtraProperties.FACE_COUNT, 0)
-                self.cacheResults(hash, [], [], 0)
-            else:
-                face_locations = self.convertTuplesToList(face_locations)
-                face_encodings = list(map(javaConverter.toKnnVector, face_encodings))
-                face_count = len(face_locations)
-                item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
-                item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
-                item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
-                self.cacheResults(hash, face_locations, face_encodings, face_count)
-
-            self._next_items.append(item)
-
     # This function is executed on all case items
     def process(self, item):
-
-        # Queue-end sentinel: flush the final partial batch
-        if item.isQueueEnd():
-            self._flushBatch()
-            return
 
         hash = item.getHash()
         # Only image type items are processed
@@ -486,8 +335,84 @@ class FaceRecognitionTask:
         else:
             return
 
-        tiff_orient_str = video if isVideo else str(tiff_orient)
-        self._batch_items.append((item, img_path, tiff_orient_str, hash))
+        # creates process in parallel
+        numCreatedProcsLock.acquire()
+        global numCreatedProcs
+        if numCreatedProcs < maxProcesses:
+            numCreatedProcs += 1
+            numCreatedProcsLock.release()
+            proc = createExternalProcess()
+            processQueue.put(proc, block=True)
+        else:
+            numCreatedProcsLock.release()
 
-        if self._isToProcessBatch(item):
-            self._flushBatch()
+        try:
+            proc = processQueue.get(block=True)
+            if not pingExternalProcess(proc):
+                proc.kill()
+                proc = createExternalProcess()
+
+            print(img_path, file=proc.stdin, flush=True)
+            if not isVideo:
+                print(str(tiff_orient), file=proc.stdin, flush=True)
+            else:
+                print(video, file=proc.stdin, flush=True)
+
+            t1 = time.time()
+
+            line = proc.stdout.readline().strip()
+
+            if not line:
+                time.sleep(3)
+                status = str(proc.poll())
+                logger.warn("[FaceRecognitionTask] Unexpected error from external process while processing {} ({} bytes) exit status=" + status, item.getPath(), item.getLength())
+                proc.kill()
+                proc = createExternalProcess()
+                return
+
+            if line == imgError:
+                logger.info("[FaceRecognitionTask] Error loading image {} ({} bytes)", item.getPath(), item.getLength())
+                self.cacheResults(hash, [], [], -1)
+                return
+
+            num_faces = int(line)
+
+            t2 = time.time()
+            with timeLock:
+                global detectTime
+                detectTime += t2 - t1
+
+            if num_faces == 0:
+                item.setExtraAttribute(ExtraProperties.FACE_COUNT, 0)
+                self.cacheResults(hash, [], [], 0)
+                return
+
+            face_locations = []
+            for i in range(num_faces):
+                line = proc.stdout.readline()
+                face_locations.append(eval(line))
+
+            # Fix 2: read all 512 floats as a single space-separated line (was 512 individual readline calls)
+            face_encodings = []
+            for i in range(num_faces):
+                enc_line = proc.stdout.readline()
+                np_array = np.array(enc_line.split(), dtype=np.float32)
+                face_encodings.append(np_array)
+
+            t3 = time.time()
+            with timeLock:
+                global featureTime
+                featureTime += t3 - t2
+
+        finally:
+            processQueue.put(proc, block=True)
+
+        face_locations = self.convertTuplesToList(face_locations)
+        face_encodings = list(map(javaConverter.toKnnVector, face_encodings))
+        face_count = len(face_locations)
+
+        item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
+        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
+        item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
+
+        self.cacheResults(hash, face_locations, face_encodings, face_count)

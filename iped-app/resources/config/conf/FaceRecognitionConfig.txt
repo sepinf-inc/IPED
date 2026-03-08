@@ -8,9 +8,6 @@
 # When using GPU, keep at 1 — multiple processes compete for the same device.
 #numFaceRecognitionProcesses = 1
 
-# Images sent per subprocess call. Default 1. Set 8-16 for GPU to amortize inference overhead.
-#batchSize = 1
-
 # Max width or height used to resize images before face detection. This dramatically reduces
 # the time of face detection on high resolution images, although small faces are lost.
 maxResolution = 1024
