@@ -1,7 +1,8 @@
 # Face recognition feature
 # Dependencies must be installed in the Python used by the subprocess (see pythonPath below).
 # For 'auraface' (default — fully open-source, MIT + Apache 2.0):
-#   pip install numpy onnxruntime opencv-python pillow
+#   pip install numpy onnxruntime-gpu opencv-python pillow
+#   (onnxruntime-gpu includes CPU fallback; use plain 'onnxruntime' for CPU-only machines)
 # For 'buffalo_l'/'buffalo_s' (non-commercial InsightFace models):
 #   pip install "numpy>=1.26,<2" insightface onnxruntime pillow
 # See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
@@ -9,8 +10,8 @@
 
 # Number of external face recognition processes. Default is min(4, numThreads/2).
 # Each process loads the model (~300MB), so more processes = more memory.
-# 4 processes balances CPU throughput vs memory on most machines.
-# When using GPU, set to 1 — multiple processes compete for the same device.
+# GPU is auto-detected by onnxruntime; multiple processes still help with I/O overlap.
+# Set to 1 if GPU memory is limited.
 #numFaceRecognitionProcesses = 4
 
 # Max width or height used to resize images before face detection. This dramatically reduces

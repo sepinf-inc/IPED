@@ -26,8 +26,10 @@ import os
 import sys
 import urllib.request
 
-AURAFACE_REC_URL = 'https://huggingface.co/fal/AuraFace-v1/resolve/main/glintr100.onnx'
-RETINAFACE_R50_URL = 'https://github.com/Zeyi-Lin/HivisionIDPhotos/releases/download/pretrained-model/retinaface-resnet50.onnx'
+from FaceRecognitionModelConfig import (
+    AURAFACE_REC_URL, AURAFACE_REC_FILE, AURAFACE_SUBDIR,
+    RETINAFACE_R50_URL, RETINAFACE_R50_FILE,
+)
 
 
 def _download_file(url, fpath, label):
@@ -44,11 +46,11 @@ def _download_file(url, fpath, label):
 
 def download_auraface(dest):
     """Download AuraFace-v1 models: RetinaFace-R50 (~104 MB) + AuraFace recognition (~261 MB)."""
-    model_dir = os.path.join(dest, 'models', 'auraface')
+    model_dir = os.path.join(dest, 'models', AURAFACE_SUBDIR)
     os.makedirs(model_dir, exist_ok=True)
-    _download_file(RETINAFACE_R50_URL, os.path.join(model_dir, 'retinaface-resnet50.onnx'),
+    _download_file(RETINAFACE_R50_URL, os.path.join(model_dir, RETINAFACE_R50_FILE),
                    'RetinaFace-R50 detection model (~104 MB)')
-    _download_file(AURAFACE_REC_URL, os.path.join(model_dir, 'glintr100.onnx'),
+    _download_file(AURAFACE_REC_URL, os.path.join(model_dir, AURAFACE_REC_FILE),
                    'AuraFace-v1 recognition model (~261 MB)')
     return model_dir
 

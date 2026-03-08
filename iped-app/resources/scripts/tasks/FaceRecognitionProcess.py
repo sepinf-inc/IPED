@@ -9,6 +9,7 @@ stdout = sys.stdout
 sys.stdout = sys.stderr
 
 import os
+import onnxruntime
 import cv2
 import PIL
 import PIL.ImageFile
@@ -34,14 +35,15 @@ ARCFACE_REF = np.array([
     [70.7299, 92.2041],   # right mouth corner
 ], dtype=np.float32)
 
-AURAFACE_REC_URL = 'https://huggingface.co/fal/AuraFace-v1/resolve/main/glintr100.onnx'
-
-# Standalone RetinaFace-R50 ONNX model (MIT license, from biubug6's Pytorch_Retinaface)
-RETINAFACE_R50_URL = 'https://github.com/Zeyi-Lin/HivisionIDPhotos/releases/download/pretrained-model/retinaface-resnet50.onnx'
+from FaceRecognitionModelConfig import (
+    AURAFACE_REC_URL, AURAFACE_REC_FILE, AURAFACE_SUBDIR,
+    RETINAFACE_R50_URL, RETINAFACE_R50_FILE,
+)
 RETINAFACE_MIN_SIZES = [[16, 32], [64, 128], [256, 512]]
 RETINAFACE_STEPS = [8, 16, 32]
 RETINAFACE_VARIANCE = [0.1, 0.2]
 RETINAFACE_NMS_THRESH = 0.4
+RETINAFACE_MEAN = np.array([104.0, 117.0, 123.0], dtype=np.float32)
 
 # Cache for prior boxes keyed by (height, width)
 _prior_box_cache = {}
@@ -136,7 +138,7 @@ def detect_faces_retinaface(session, input_name, img_bgr, det_size, score_thresh
     padded[:new_h, :new_w, :] = resized.astype(np.float32)
 
     # Normalize: subtract mean
-    padded -= np.array([104.0, 117.0, 123.0], dtype=np.float32)
+    padded -= RETINAFACE_MEAN
 
     # HWC -> NCHW
     blob = padded.transpose(2, 0, 1)[np.newaxis, ...]
@@ -240,17 +242,32 @@ def load_and_preprocess(img_path, code, max_size):
 
 
 def download_file(url, dest_path, label=None):
-    """Download a file if it doesn't already exist."""
+    """Download a file if it doesn't already exist. Safe for concurrent processes."""
     if os.path.exists(dest_path):
         return dest_path
     import urllib.request
+    import tempfile
     if label:
         sys.stderr.write(f"Downloading {label}...\n")
         sys.stderr.flush()
-    urllib.request.urlretrieve(url, dest_path)
-    size_mb = os.path.getsize(dest_path) / (1024 * 1024)
-    sys.stderr.write(f"  Saved to {dest_path} ({size_mb:.1f} MB)\n")
-    sys.stderr.flush()
+    # Download to a temp file, then atomic rename to avoid races between processes
+    dest_dir = os.path.dirname(dest_path)
+    fd, tmp_path = tempfile.mkstemp(dir=dest_dir, suffix='.tmp')
+    os.close(fd)
+    try:
+        urllib.request.urlretrieve(url, tmp_path)
+        # On Windows, os.rename fails if dest exists; another process may have finished first
+        try:
+            os.rename(tmp_path, dest_path)
+        except OSError:
+            os.remove(tmp_path)
+    except Exception:
+        os.remove(tmp_path)
+        raise
+    if os.path.exists(dest_path):
+        size_mb = os.path.getsize(dest_path) / (1024 * 1024)
+        sys.stderr.write(f"  Saved to {dest_path} ({size_mb:.1f} MB)\n")
+        sys.stderr.flush()
     return dest_path
 
 
@@ -373,33 +390,34 @@ def main():
 
     if use_auraface:
         # Standalone RetinaFace-R50 (MIT) + AuraFace recognition (Apache 2.0)
-        import onnxruntime
-
-        models_dest = os.path.join(model_dir, 'models', 'auraface') if model_dir else '.'
+        models_dest = os.path.join(model_dir, 'models', AURAFACE_SUBDIR) if model_dir else '.'
         os.makedirs(models_dest, exist_ok=True)
 
         # Download RetinaFace-R50 detection model on first use
         det_path = download_file(
             RETINAFACE_R50_URL,
-            os.path.join(models_dest, 'retinaface-resnet50.onnx'),
+            os.path.join(models_dest, RETINAFACE_R50_FILE),
             'RetinaFace-R50 detection model (~104 MB)')
 
         # Download AuraFace recognition model on first use
         rec_path = download_file(
             AURAFACE_REC_URL,
-            os.path.join(models_dest, 'glintr100.onnx'),
+            os.path.join(models_dest, AURAFACE_REC_FILE),
             'AuraFace-v1 recognition model (~261 MB)')
 
         sess_opts = onnxruntime.SessionOptions()
         sess_opts.intra_op_num_threads = 2
         sess_opts.inter_op_num_threads = 1
 
+        # Prefer GPU; ONNX Runtime silently falls back to CPU if CUDA is unavailable
+        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+
         det_session = onnxruntime.InferenceSession(
-            det_path, sess_options=sess_opts, providers=['CPUExecutionProvider'])
+            det_path, sess_options=sess_opts, providers=providers)
         det_input_name = det_session.get_inputs()[0].name
 
         rec_session = onnxruntime.InferenceSession(
-            rec_path, sess_options=sess_opts, providers=['CPUExecutionProvider'])
+            rec_path, sess_options=sess_opts, providers=providers)
         rec_input_name = rec_session.get_inputs()[0].name
 
         det_providers = det_session.get_providers()
@@ -417,7 +435,7 @@ def main():
         kwargs = {}
         if model_dir:
             kwargs['root'] = model_dir
-        app = FaceAnalysis(name=model_name, providers=['CPUExecutionProvider'], **kwargs)
+        app = FaceAnalysis(name=model_name, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'], **kwargs)
         app.prepare(ctx_id=0, det_size=(det_size, det_size))
         providers_used = [m.session.get_providers() for m in app.models.values()]
         sys.stderr.write(f"InsightFace mode: {model_name}\n")

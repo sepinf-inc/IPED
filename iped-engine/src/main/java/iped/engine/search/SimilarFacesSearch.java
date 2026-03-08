@@ -110,7 +110,7 @@ public class SimilarFacesSearch {
                                 int faceIdx = -1;
                                 float bestDist = minDist + 1;
                                 for (int j = 0; j < numRefFaces; j++) {
-                                    float dist = distance(refSimilarityFeatures[j], currentFeatures, bestDist);
+                                    float dist = distance(refSimilarityFeatures[j], currentFeatures);
                                     if (dist < bestDist) {
                                         bestDist = dist;
                                         faceIdx = j;
@@ -185,7 +185,7 @@ public class SimilarFacesSearch {
         return result;
     }
 
-    public static float distance(float[] a, float[] b, float cut) {
+    public static float distance(float[] a, float[] b) {
         if (a.length != b.length) {
             return Float.MAX_VALUE;
         }
@@ -229,7 +229,7 @@ public class SimilarFacesSearch {
                 float[] mi = matchFeatures[i];
                 for (int j = 0; j < refFeatures.length; j++) {
                     float[] rj = refFeatures[j];
-                    if (distance(mi, rj, minDist) <= minDist) {
+                    if (distance(mi, rj) <= minDist) {
                         matchLocations.add((String) ((List<?>) location).get(i));
                         break;
                     }

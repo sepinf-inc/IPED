@@ -69,7 +69,8 @@ def createProcessQueue():
         if maxProcesses is None:
             numThreads = Runtime.getRuntime().availableProcessors()
             # Default to min(4, numThreads/2). Each process loads ~300MB model.
-            # 4 processes balances CPU throughput vs memory usage.
+            # With GPU (auto-detected by onnxruntime), even 1 process is fast;
+            # multiple processes help on CPU-only machines.
             maxProcesses = int(max(1, min(4, numThreads / 2)))
         processQueue = queue.Queue(maxProcesses)
 
@@ -233,8 +234,11 @@ class FaceRecognitionTask:
         if not is_last:
             return
 
-        if not processQueue.empty():
-            proc = processQueue.get(block=True)
+        try:
+            proc = processQueue.get(block=False)
+        except:
+            proc = None
+        if proc is not None:
             if proc.poll() is None:
                 try:
                     print(terminate, file=proc.stdin, flush=True)
