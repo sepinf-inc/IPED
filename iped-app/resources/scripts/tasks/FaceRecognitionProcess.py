@@ -1,7 +1,7 @@
 '''
 # External process used by FaceRecognitionTask.py for face detection + recognition.
 # Supports two modes:
-#   - 'auraface': InsightFace RetinaFace detection + AuraFace recognition
+#   - 'auraface': Standalone RetinaFace-R50 detection (MIT) + AuraFace recognition (Apache 2.0)
 #   - 'buffalo_l'/'buffalo_s': InsightFace full pipeline (non-commercial license)
 '''
 import sys
@@ -35,6 +35,154 @@ ARCFACE_REF = np.array([
 ], dtype=np.float32)
 
 AURAFACE_REC_URL = 'https://huggingface.co/fal/AuraFace-v1/resolve/main/glintr100.onnx'
+
+# Standalone RetinaFace-R50 ONNX model (MIT license, from biubug6's Pytorch_Retinaface)
+RETINAFACE_R50_URL = 'https://github.com/Zeyi-Lin/HivisionIDPhotos/releases/download/pretrained-model/retinaface-resnet50.onnx'
+RETINAFACE_MIN_SIZES = [[16, 32], [64, 128], [256, 512]]
+RETINAFACE_STEPS = [8, 16, 32]
+RETINAFACE_VARIANCE = [0.1, 0.2]
+RETINAFACE_NMS_THRESH = 0.4
+
+# Cache for prior boxes keyed by (height, width)
+_prior_box_cache = {}
+
+
+def generate_prior_boxes(h, w):
+    """Generate anchor/prior boxes for RetinaFace. Cached per (h, w)."""
+    key = (h, w)
+    if key in _prior_box_cache:
+        return _prior_box_cache[key]
+
+    anchors = []
+    for k, step in enumerate(RETINAFACE_STEPS):
+        feat_h = (h + step - 1) // step
+        feat_w = (w + step - 1) // step
+        min_sizes = RETINAFACE_MIN_SIZES[k]
+        for i in range(feat_h):
+            for j in range(feat_w):
+                for min_size in min_sizes:
+                    s_kx = min_size / w
+                    s_ky = min_size / h
+                    cx = (j + 0.5) * step / w
+                    cy = (i + 0.5) * step / h
+                    anchors.append([cx, cy, s_kx, s_ky])
+
+    priors = np.array(anchors, dtype=np.float32)
+    _prior_box_cache[key] = priors
+    return priors
+
+
+def decode_bboxes(loc, priors, variances):
+    """Decode RetinaFace bbox regressions to [x1, y1, x2, y2]."""
+    boxes = np.concatenate([
+        priors[:, :2] + loc[:, :2] * variances[0] * priors[:, 2:],
+        priors[:, 2:] * np.exp(loc[:, 2:] * variances[1]),
+    ], axis=1)
+    # center-size to corner form
+    boxes[:, :2] -= boxes[:, 2:] / 2
+    boxes[:, 2:] += boxes[:, :2]
+    return boxes
+
+
+def decode_landmarks(landms, priors, variances):
+    """Decode RetinaFace 5-point landmark regressions."""
+    decoded = np.zeros_like(landms)
+    for i in range(5):
+        decoded[:, i * 2] = priors[:, 0] + landms[:, i * 2] * variances[0] * priors[:, 2]
+        decoded[:, i * 2 + 1] = priors[:, 1] + landms[:, i * 2 + 1] * variances[0] * priors[:, 3]
+    return decoded
+
+
+def nms(dets, thresh):
+    """Greedy non-maximum suppression. dets: (N, 5) with [x1,y1,x2,y2,score]."""
+    x1 = dets[:, 0]
+    y1 = dets[:, 1]
+    x2 = dets[:, 2]
+    y2 = dets[:, 3]
+    scores = dets[:, 4]
+
+    areas = (x2 - x1) * (y2 - y1)
+    order = scores.argsort()[::-1]
+    keep = []
+
+    while order.size > 0:
+        i = order[0]
+        keep.append(i)
+        xx1 = np.maximum(x1[i], x1[order[1:]])
+        yy1 = np.maximum(y1[i], y1[order[1:]])
+        xx2 = np.minimum(x2[i], x2[order[1:]])
+        yy2 = np.minimum(y2[i], y2[order[1:]])
+        inter = np.maximum(0.0, xx2 - xx1) * np.maximum(0.0, yy2 - yy1)
+        iou = inter / (areas[i] + areas[order[1:]] - inter)
+        inds = np.where(iou <= thresh)[0]
+        order = order[inds + 1]
+
+    return keep
+
+
+def detect_faces_retinaface(session, input_name, img_bgr, det_size, score_thresh):
+    """Run standalone RetinaFace-R50 detection.
+    Returns list of (bbox_xyxy, landmarks_5x2, score) tuples."""
+    orig_h, orig_w = img_bgr.shape[:2]
+
+    # Letterbox resize to det_size x det_size
+    scale_ratio = min(det_size / orig_w, det_size / orig_h)
+    new_w = int(orig_w * scale_ratio)
+    new_h = int(orig_h * scale_ratio)
+    resized = cv2.resize(img_bgr, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+
+    # Pad to det_size x det_size
+    padded = np.zeros((det_size, det_size, 3), dtype=np.float32)
+    padded[:new_h, :new_w, :] = resized.astype(np.float32)
+
+    # Normalize: subtract mean
+    padded -= np.array([104.0, 117.0, 123.0], dtype=np.float32)
+
+    # HWC -> NCHW
+    blob = padded.transpose(2, 0, 1)[np.newaxis, ...]
+
+    # Inference
+    outputs = session.run(None, {input_name: blob})
+    loc, conf, landms = outputs[0][0], outputs[1][0], outputs[2][0]
+
+    # Generate priors for the padded size
+    priors = generate_prior_boxes(det_size, det_size)
+
+    # Decode
+    boxes = decode_bboxes(loc, priors, RETINAFACE_VARIANCE)
+    scores = conf[:, 1]
+    landmarks = decode_landmarks(landms, priors, RETINAFACE_VARIANCE)
+
+    # Scale boxes and landmarks to padded image coords
+    boxes[:, 0::2] *= det_size
+    boxes[:, 1::2] *= det_size
+    landmarks[:, 0::2] *= det_size
+    landmarks[:, 1::2] *= det_size
+
+    # Filter by score
+    mask = scores > score_thresh
+    boxes = boxes[mask]
+    scores = scores[mask]
+    landmarks = landmarks[mask]
+
+    if len(boxes) == 0:
+        return []
+
+    # NMS
+    dets = np.hstack([boxes, scores[:, np.newaxis]])
+    keep = nms(dets, RETINAFACE_NMS_THRESH)
+    boxes = boxes[keep]
+    scores = scores[keep]
+    landmarks = landmarks[keep]
+
+    # Rescale from padded coords to original image coords
+    results = []
+    for i in range(len(boxes)):
+        bbox = boxes[i] / scale_ratio
+        kps = landmarks[i].reshape(5, 2) / scale_ratio
+        results.append((bbox.astype(np.int32), kps.astype(np.float32), float(scores[i])))
+
+    return results
 
 
 # Image rotation, when necessary
@@ -138,9 +286,9 @@ def rescale_bbox(x1, y1, x2, y2, scale):
     return int(x1 / scale), int(y1 / scale), int(x2 / scale), int(y2 / scale)
 
 
-def process_one_image_auraface(img_path, code, app, rec_session, rec_input_name,
-                               max_size, min_det_score):
-    """Process one image using InsightFace detection + AuraFace recognition."""
+def process_one_image_auraface(img_path, code, det_session, det_input_name, det_size,
+                               rec_session, rec_input_name, max_size, min_det_score):
+    """Process one image using standalone RetinaFace detection + AuraFace recognition."""
     try:
         img_rgb, scale = load_and_preprocess(img_path, code, max_size)
     except Exception:
@@ -148,8 +296,7 @@ def process_one_image_auraface(img_path, code, app, rec_session, rec_input_name,
         return
 
     img_bgr = img_rgb[:, :, ::-1]
-    faces = app.get(img_bgr)
-    faces = [f for f in faces if f.det_score >= min_det_score]
+    faces = detect_faces_retinaface(det_session, det_input_name, img_bgr, det_size, min_det_score)
 
     if not faces:
         print('0', file=stdout, flush=True)
@@ -157,11 +304,11 @@ def process_one_image_auraface(img_path, code, app, rec_session, rec_input_name,
 
     aligned_faces = []
     locations = []
-    for face in faces:
-        aligned = align_face_5pt(img_rgb, face.kps.astype(np.float32))
+    for bbox, kps, score in faces:
+        aligned = align_face_5pt(img_rgb, kps)
         if aligned is None:
             continue
-        x1, y1, x2, y2 = face.bbox.astype(int)
+        x1, y1, x2, y2 = bbox
         if scale != 1:
             x1, y1, x2, y2 = rescale_bbox(x1, y1, x2, y2, scale)
         aligned_faces.append(aligned)
@@ -225,22 +372,19 @@ def main():
     use_auraface = (model_name == 'auraface')
 
     if use_auraface:
-        # InsightFace detection (RetinaFace) + AuraFace recognition
-        from insightface.app import FaceAnalysis
+        # Standalone RetinaFace-R50 (MIT) + AuraFace recognition (Apache 2.0)
         import onnxruntime
 
-        # Load InsightFace detection model only (skip recognition model)
-        det_kwargs = {}
-        if model_dir:
-            det_kwargs['root'] = model_dir
-        app = FaceAnalysis(name='buffalo_l', allowed_modules=['detection'],
-                           providers=['CPUExecutionProvider'], **det_kwargs)
-        app.prepare(ctx_id=0, det_size=(det_size, det_size))
-
-        # Download AuraFace recognition model on first use
         models_dest = os.path.join(model_dir, 'models', 'auraface') if model_dir else '.'
         os.makedirs(models_dest, exist_ok=True)
 
+        # Download RetinaFace-R50 detection model on first use
+        det_path = download_file(
+            RETINAFACE_R50_URL,
+            os.path.join(models_dest, 'retinaface-resnet50.onnx'),
+            'RetinaFace-R50 detection model (~104 MB)')
+
+        # Download AuraFace recognition model on first use
         rec_path = download_file(
             AURAFACE_REC_URL,
             os.path.join(models_dest, 'glintr100.onnx'),
@@ -249,19 +393,24 @@ def main():
         sess_opts = onnxruntime.SessionOptions()
         sess_opts.intra_op_num_threads = 2
         sess_opts.inter_op_num_threads = 1
+
+        det_session = onnxruntime.InferenceSession(
+            det_path, sess_options=sess_opts, providers=['CPUExecutionProvider'])
+        det_input_name = det_session.get_inputs()[0].name
+
         rec_session = onnxruntime.InferenceSession(
             rec_path, sess_options=sess_opts, providers=['CPUExecutionProvider'])
         rec_input_name = rec_session.get_inputs()[0].name
 
-        det_providers = [m.session.get_providers() for m in app.models.values()]
+        det_providers = det_session.get_providers()
         rec_providers = rec_session.get_providers()
-        sys.stderr.write(f"AuraFace mode: InsightFace RetinaFace detection + AuraFace recognition\n")
+        sys.stderr.write(f"AuraFace mode: RetinaFace-R50 (MIT) + AuraFace (Apache 2.0)\n")
         sys.stderr.write(f"Providers: det={det_providers}, rec={rec_providers}\n")
         sys.stderr.flush()
 
         def process_fn(img_path, code):
-            process_one_image_auraface(img_path, code, app, rec_session, rec_input_name,
-                                       max_size, min_det_score)
+            process_one_image_auraface(img_path, code, det_session, det_input_name, det_size,
+                                       rec_session, rec_input_name, max_size, min_det_score)
     else:
         # InsightFace mode (buffalo_l, buffalo_s, etc.)
         from insightface.app import FaceAnalysis

@@ -11,7 +11,7 @@ Usage:
 Options:
     --model MODEL   Model name to download (default: auraface).
                     Options:
-                      auraface  - AuraFace-v1 (Apache 2.0, ~285MB) — permissively licensed
+                      auraface  - RetinaFace-R50 (MIT) + AuraFace-v1 (Apache 2.0, ~365MB)
                       buffalo_l - InsightFace (non-commercial, ~300MB) — more accurate
                       buffalo_s - InsightFace (non-commercial, smaller/faster)
     --dest DIR      Destination directory for model files.
@@ -27,7 +27,7 @@ import sys
 import urllib.request
 
 AURAFACE_REC_URL = 'https://huggingface.co/fal/AuraFace-v1/resolve/main/glintr100.onnx'
-MEDIAPIPE_LANDMARKER_URL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task'
+RETINAFACE_R50_URL = 'https://github.com/Zeyi-Lin/HivisionIDPhotos/releases/download/pretrained-model/retinaface-resnet50.onnx'
 
 
 def _download_file(url, fpath, label):
@@ -43,13 +43,13 @@ def _download_file(url, fpath, label):
 
 
 def download_auraface(dest):
-    """Download AuraFace-v1 models: recognition (~261 MB) + MediaPipe landmarker (~3.6 MB)."""
+    """Download AuraFace-v1 models: RetinaFace-R50 (~104 MB) + AuraFace recognition (~261 MB)."""
     model_dir = os.path.join(dest, 'models', 'auraface')
     os.makedirs(model_dir, exist_ok=True)
+    _download_file(RETINAFACE_R50_URL, os.path.join(model_dir, 'retinaface-resnet50.onnx'),
+                   'RetinaFace-R50 detection model (~104 MB)')
     _download_file(AURAFACE_REC_URL, os.path.join(model_dir, 'glintr100.onnx'),
                    'AuraFace-v1 recognition model (~261 MB)')
-    _download_file(MEDIAPIPE_LANDMARKER_URL, os.path.join(model_dir, 'face_landmarker.task'),
-                   'MediaPipe face_landmarker model (~3.6 MB)')
     return model_dir
 
 
@@ -84,7 +84,7 @@ def main():
     print(f'Downloading model "{args.model}" to {dest} ...')
 
     if args.model == 'auraface':
-        print('AuraFace-v1 recognition model (Apache 2.0 license, ~261 MB)')
+        print('RetinaFace-R50 (MIT) + AuraFace-v1 (Apache 2.0), ~365 MB total')
         download_auraface(dest)
     else:
         print(f'InsightFace {args.model} (non-commercial license)')

@@ -11,6 +11,6 @@ dependencies:
   - maven
   - pip
   - pip:
-    - "numpy>=1.26,<2"  # insightface C extensions require NumPy 1.x ABI
-    - insightface     # RetinaFace detection (used by both 'auraface' and 'buffalo_l' modes)
+    - numpy           # use "numpy>=1.26,<2" if installing insightface (its C extensions require NumPy 1.x ABI)
     - onnxruntime     # CPU-only; lightweight and sufficient for multi-process parallelism
+    # - insightface   # only needed for buffalo_l/buffalo_s modes (non-commercial license)

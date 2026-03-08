@@ -1,6 +1,6 @@
 '''
-# Python face recognition feature based on InsightFace (ArcFace + RetinaFace)
-# FaceRecognitionTask.py - Originally by Rui Sant'Ana Junior and Luis Nassif, updated for InsightFace
+# Python face recognition feature based on RetinaFace-R50 (MIT) + AuraFace-v1 (Apache 2.0)
+# FaceRecognitionTask.py - Originally by Rui Sant'Ana Junior and Luis Nassif, updated for ONNX-based detection + recognition
 # Requirements: See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 '''
@@ -47,6 +47,12 @@ det_size = 640
 min_det_score = 0.5
 min_size = 48
 model_dir = None
+
+# Protocol strings (must match FaceRecognitionProcess.py)
+terminate = 'terminate_process'
+imgError = 'image_error'
+ping = 'ping'
+video = 'video'
 
 firstInstance = True
 processQueue = None
@@ -122,7 +128,7 @@ def createExternalProcess():
             proc.kill()
             proc = None
 
-    raise Exception("Error creating external face recognition process! Check that '" + str(bin) + "' has insightface installed.")
+    raise Exception("Error creating external face recognition process! Check that '" + str(bin) + "' has the required dependencies (onnxruntime, opencv-python, numpy, pillow).")
 
 def pingExternalProcess(proc):
     try:
@@ -181,13 +187,13 @@ class FaceRecognitionTask:
             maxProcesses = int(numProcs)
         firstInstance = False
 
-        # configure python path: config property overrides default; on windows default is embedded pythonw
+        # configure python path: config property overrides default; on windows default is embedded python
         global bin
         pythonPathVal = extraProps.getProperty(pythonPathProp)
         if pythonPathVal is not None:
             bin = pythonPathVal
         elif platform.system().lower() == 'windows':
-            bin = os.path.join(ipedRoot, 'python', 'pythonw')
+            bin = os.path.join(ipedRoot, 'python', 'python')
 
         maxResolution = extraProps.getProperty(maxResolutionProp)
         global max_size, model_name, det_size, min_det_score, min_size, model_dir
