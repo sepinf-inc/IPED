@@ -93,26 +93,35 @@ def buildSubprocessEnv():
 def createExternalProcess():
     proc = None
     env = buildSubprocessEnv()
+    logger.info("[FaceRecognitionTask] Starting subprocess: " + str(bin))
     for i in range(3):
         if proc is None or proc.poll() is not None:
             args_list = [bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript), str(max_size), model_name, str(det_size), str(min_det_score)]
             if model_dir:
                 args_list.append(model_dir)
-            proc = subprocess.Popen(args_list,
-                                    stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
-                                    env=env)
+            try:
+                proc = subprocess.Popen(args_list,
+                                        stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
+                                        env=env)
+            except Exception as e:
+                logger.error("[FaceRecognitionTask] Failed to launch subprocess (attempt " + str(i+1) + "): " + str(e))
+                logger.error("[FaceRecognitionTask] Command: " + str(args_list))
+                proc = None
+                continue
 
-        if pingExternalProcess(proc):
+            # Start logging stderr immediately so model-download/import errors are visible
             from threading import Thread
             t = Thread(target=log_stderr, args=(proc,))
             t.daemon = True
             t.start()
+
+        if pingExternalProcess(proc):
             return proc
         else:
             proc.kill()
             proc = None
 
-    raise Exception("Error creating external face recognition process!")
+    raise Exception("Error creating external face recognition process! Check that '" + str(bin) + "' has insightface installed.")
 
 def pingExternalProcess(proc):
     try:
@@ -341,13 +350,23 @@ class FaceRecognitionTask:
         if numCreatedProcs < maxProcesses:
             numCreatedProcs += 1
             numCreatedProcsLock.release()
-            proc = createExternalProcess()
-            processQueue.put(proc, block=True)
+            try:
+                proc = createExternalProcess()
+                processQueue.put(proc, block=True)
+            except Exception as e:
+                with numCreatedProcsLock:
+                    numCreatedProcs -= 1
+                logger.error("[FaceRecognitionTask] Subprocess creation failed — face recognition disabled for this item: " + str(e))
+                return
         else:
             numCreatedProcsLock.release()
 
+        import queue as _queue
         try:
-            proc = processQueue.get(block=True)
+            proc = processQueue.get(block=True, timeout=300)
+        except _queue.Empty:
+            logger.error("[FaceRecognitionTask] Timed out waiting for face recognition subprocess after 5 min. Check Python path and insightface installation.")
+            return
             if not pingExternalProcess(proc):
                 proc.kill()
                 proc = createExternalProcess()
