@@ -56,12 +56,11 @@ def main():
     min_det_score = float(sys.argv[4])
     model_dir = sys.argv[5] if len(sys.argv) > 5 else None
 
-    # Set model directory if provided
+    # Initialize InsightFace model once; root= controls where models are stored/loaded
+    kwargs = {}
     if model_dir:
-        os.environ['INSIGHTFACE_HOME'] = model_dir
-
-    # Initialize InsightFace model once
-    app = FaceAnalysis(name=model_name, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        kwargs['root'] = model_dir
+    app = FaceAnalysis(name=model_name, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'], **kwargs)
     app.prepare(ctx_id=0, det_size=(det_size, det_size))
 
     while True:
@@ -134,7 +133,7 @@ def main():
             print(str(location), file=stdout, flush=True)
 
         for face in faces:
-            embedding = face.embedding
+            embedding = face.normed_embedding  # L2-normalized, required for cosine distance
             for j in range(512):
                 print(str(embedding[j]), file=stdout, flush=True)
     return
