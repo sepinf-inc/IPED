@@ -1,7 +1,7 @@
 # Face recognition feature based on InsightFace (ArcFace + RetinaFace)
 # Dependencies must be installed in the Python used by the subprocess (see pythonPath below).
-# For 'auraface' (default, Apache 2.0 licensed):
-#   pip install mediapipe onnxruntime opencv-python numpy pillow
+# For 'auraface' (default — InsightFace RetinaFace detection + AuraFace recognition):
+#   pip install "numpy>=1.26,<2" insightface onnxruntime opencv-python pillow
 # For 'buffalo_l'/'buffalo_s' (non-commercial InsightFace models):
 #   pip install "numpy>=1.26,<2" insightface onnxruntime pillow
 # See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
@@ -19,11 +19,11 @@ maxResolution = 1024
 
 # Face recognition model. Auto-downloaded on first use.
 # Options:
-#   'auraface'  - MediaPipe + AuraFace-v1 (Apache 2.0, ~261MB, LFW 99.65%) — default
-#   'buffalo_l' - InsightFace (non-commercial license, ~300MB, LFW 99.83%) — more accurate
-#   'buffalo_s' - InsightFace (non-commercial license, smaller/faster)
-# 'auraface' uses MediaPipe (Apache 2.0) for detection and AuraFace (Apache 2.0) for recognition.
-# 'buffalo_l'/'buffalo_s' use InsightFace's full pipeline (non-commercial license).
+#   'auraface'  - InsightFace RetinaFace detection + AuraFace-v1 recognition (~270MB) — default
+#   'buffalo_l' - InsightFace full pipeline (non-commercial license, ~300MB) — more accurate
+#   'buffalo_s' - InsightFace full pipeline (non-commercial license, smaller/faster)
+# 'auraface' uses InsightFace's RetinaFace for detection and AuraFace (Apache 2.0) for recognition.
+# 'buffalo_l'/'buffalo_s' use InsightFace's full pipeline including recognition.
 insightFaceModel = auraface
 
 # Detection input size. Larger values detect smaller faces but are slower.
