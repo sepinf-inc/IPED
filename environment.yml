@@ -1,0 +1,16 @@
+name: iped-face
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - opencv
+  - pillow
+  - cudnn=9          # required by onnxruntime-gpu 1.19+; install via conda for easiest setup
+  - pip
+  - pip:
+    - insightface
+    - onnxruntime-gpu  # requires cuDNN 9 (>=1.19) — see table below if you have cuDNN 8
+    # cuDNN 8 + CUDA 12.x: pip install onnxruntime-gpu==1.18.1
+    # cuDNN 8 + CUDA 11.8: pip install onnxruntime-gpu==1.16.3

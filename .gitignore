@@ -6,3 +6,4 @@ nbactions.xml
 .pydevproject
 /.idea/
 CLAUDE.md
+/models/

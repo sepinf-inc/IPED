@@ -139,4 +139,6 @@ def main():
     return
 
 if __name__ == "__main__":
-     main()
+    main()
+    # Force exit to avoid ONNX Runtime GPU session hanging on cleanup
+    os._exit(0)
