@@ -1,5 +1,6 @@
 package iped.parsers.discord.cache;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -231,14 +232,19 @@ public class Index {
                     try (InputStream naIS = na.getInputStream(dataFiles, externalFiles, null)) {
                         ce = new CacheEntry(naIS, dataFiles, externalFiles);
                         lst.add(ce);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    } catch (EOFException e) {
+                        logger.warn("Entry in cache truncated or invalid.");
                         break;// avoid potential infinite loop
+                    } catch (Exception e) {
+                        e.printStackTrace(); 
+                        break;
                     }
                 }
             } catch (InputStreamNotAvailable e) {
                 continue;
-            } catch (IOException e) {
+            } catch (EOFException e) {
+                logger.warn("Entry in cache truncated or invalid.");
+            } catch (Exception e) {
                 logger.warn("Exception reading CacheEntry of Discord Index " + path, e);
             }
         }
