@@ -398,8 +398,21 @@ public class AD1Extractor implements Closeable {
 
     @Override
     public void close() throws IOException {
-        for (Closeable c : channels)
-            c.close();
+        IOException first = null;
+        for (Closeable c : channels) {
+            try {
+                c.close();
+            } catch (IOException e) {
+                if (first == null) {
+                    first = e;
+                } else {
+                    first.addSuppressed(e);
+                }
+            }
+        }
+        if (first != null) {
+            throw first;
+        }
     }
 
     /**
