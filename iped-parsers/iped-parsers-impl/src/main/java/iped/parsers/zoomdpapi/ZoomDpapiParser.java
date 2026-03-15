@@ -386,32 +386,79 @@ public class ZoomDpapiParser extends AbstractParser {
 
         String query = BasicProps.NAME + ":\"" + masterKeyGuid + "\"";
         List<IItemReader> items = searcher.search(query);
-        if (items.isEmpty()) return null;
+        if (items.isEmpty()) {
+            logger.info("DPAPI master key file not found for GUID: {}", masterKeyGuid);
+            return null;
+        }
 
         // Find SID from path
         String sid = extractSidFromPath(itemInfo != null ? itemInfo.getPath() : null, searcher);
-        if (sid == null) return null;
+        if (sid == null) {
+            logger.info("Could not determine Windows SID from evidence paths");
+            return null;
+        }
 
-        // Try common passwords (minimal set for automated recovery)
-        // In production, the wordlist would be configurable
+        logger.info("Found master key for GUID {} with SID {}, attempting password cracking...", masterKeyGuid, sid);
+
+        // Load embedded wordlist
+        List<String> wordlist = loadEmbeddedWordlist();
+
         for (IItemReader mkItem : items) {
             try (InputStream is = mkItem.getBufferedInputStream()) {
                 byte[] mkData = is.readAllBytes();
-                DPAPIMasterKeyDecryptor mkDecryptor = new DPAPIMasterKeyDecryptor();
 
-                // Try empty password first
-                try {
-                    String masterKeyHex = mkDecryptor.decryptMasterKey(mkData, sid, "");
-                    DPAPIBlobDecryptor blobDecryptor = new DPAPIBlobDecryptor();
-                    byte[] decrypted = blobDecryptor.decryptBlobFromBase64(encryptedBlob, masterKeyHex);
-                    return new String(decrypted, StandardCharsets.UTF_8).trim();
-                } catch (Exception e) { /* password didn't work */ }
+                // Generate hash for cracking
+                HashGenerator hashGen = new HashGenerator();
+                String hash = hashGen.generateHash(mkData, sid, "local");
+                if (hash == null) {
+                    logger.warn("Failed to generate DPAPI hash from master key file");
+                    continue;
+                }
+
+                // Crack password using wordlist
+                PasswordCracker cracker = new PasswordCracker();
+                String password = cracker.crack(hash, wordlist);
+                if (password == null) {
+                    logger.info("Password not found in wordlist ({} entries)", wordlist.size());
+                    continue;
+                }
+
+                logger.info("DPAPI password cracked successfully");
+
+                // Decrypt master key with recovered password
+                DPAPIMasterKeyDecryptor mkDecryptor = new DPAPIMasterKeyDecryptor();
+                String masterKeyHex = mkDecryptor.decryptMasterKey(mkData, sid, password);
+
+                // Decrypt OSKEY blob
+                DPAPIBlobDecryptor blobDecryptor = new DPAPIBlobDecryptor();
+                byte[] decrypted = blobDecryptor.decryptBlobFromBase64(encryptedBlob, masterKeyHex);
+                String oskey = new String(decrypted, StandardCharsets.UTF_8).trim();
+                logger.info("Zoom OSKEY decrypted successfully");
+                return oskey;
+
             } catch (Exception e) {
-                logger.debug("Failed to read master key file", e);
+                logger.debug("Failed to process master key file", e);
             }
         }
 
         return null;
+    }
+
+    private List<String> loadEmbeddedWordlist() {
+        List<String> words = new ArrayList<>();
+        try (InputStream is = getClass().getResourceAsStream("/iped/parsers/zoomdpapi/wordlist.txt");
+             java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    words.add(line);
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to load embedded wordlist: {}", e.getMessage());
+        }
+        return words;
     }
 
     private String parseMasterKeyGuid(String base64Blob) {
