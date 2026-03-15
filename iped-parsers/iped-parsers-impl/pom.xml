@@ -105,6 +105,11 @@
             <type>jar</type>
         </dependency>
         <dependency>
+            <groupId>io.github.willena</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.49.1.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.pcorless.icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
             <version>${icepdf.version}</version>
