@@ -381,23 +381,32 @@ public class ZoomDpapiParser extends AbstractParser {
     }
 
     private String tryDecryptOskey(String encryptedBlob, ItemInfo itemInfo, IItemSearcher searcher) {
-        if (searcher == null) return null;
+        if (searcher == null) {
+            logger.warn("IItemSearcher is null, cannot search for DPAPI master keys");
+            return null;
+        }
 
         // Try to find DPAPI master key files in the evidence
         String masterKeyGuid = parseMasterKeyGuid(encryptedBlob);
-        if (masterKeyGuid == null) return null;
-
-        String query = BasicProps.NAME + ":\"" + masterKeyGuid + "\"";
-        List<IItemReader> items = searcher.search(query);
-        if (items.isEmpty()) {
-            logger.info("DPAPI master key file not found for GUID: {}", masterKeyGuid);
+        if (masterKeyGuid == null) {
+            logger.warn("Could not parse master key GUID from DPAPI blob");
             return null;
         }
+        logger.info("Parsed master key GUID from blob: {}", masterKeyGuid);
+
+        String escapedGuid = searcher.escapeQuery(masterKeyGuid);
+        String query = BasicProps.NAME + ":\"" + escapedGuid + "\"";
+        List<IItemReader> items = searcher.search(query);
+        if (items.isEmpty()) {
+            logger.warn("DPAPI master key file not found for GUID: {} (query: {})", masterKeyGuid, query);
+            return null;
+        }
+        logger.info("Found {} master key file(s) for GUID: {}", items.size(), masterKeyGuid);
 
         // Find SID from path
         String sid = extractSidFromPath(itemInfo != null ? itemInfo.getPath() : null, searcher);
         if (sid == null) {
-            logger.info("Could not determine Windows SID from evidence paths");
+            logger.warn("Could not determine Windows SID from evidence paths");
             return null;
         }
 
@@ -481,28 +490,69 @@ public class ZoomDpapiParser extends AbstractParser {
     }
 
     private String extractSidFromPath(String path, IItemSearcher searcher) {
-        if (path == null) return null;
-
-        // Try to extract SID from the evidence path
-        // Look for S-1-5-21-... pattern in the path or in Microsoft\Protect directories
         java.util.regex.Pattern sidPattern = java.util.regex.Pattern.compile("S-1-5-21-[\\d-]+");
-        java.util.regex.Matcher matcher = sidPattern.matcher(path);
-        if (matcher.find()) return matcher.group();
 
-        // Search for Protect directory in evidence
+        // Strategy 1: Extract SID directly from the INI file path
+        if (path != null) {
+            java.util.regex.Matcher matcher = sidPattern.matcher(path);
+            if (matcher.find()) return matcher.group();
+        }
+
+        // Strategy 2: Find SID from Protect directory children (SID is a folder name)
         if (searcher != null) {
-            String query = BasicProps.NAME + ":\"Protect\" AND " + BasicProps.PATH + ":\"*Microsoft*\"";
+            String query = BasicProps.PATH + ":\"Microsoft\" AND " + BasicProps.PATH + ":\"Protect\"";
             List<IItemReader> items = searcher.search(query);
             for (IItemReader item : items) {
                 String itemPath = item.getPath();
                 if (itemPath != null) {
-                    matcher = sidPattern.matcher(itemPath);
-                    if (matcher.find()) return matcher.group();
+                    java.util.regex.Matcher matcher = sidPattern.matcher(itemPath);
+                    if (matcher.find()) {
+                        logger.info("Extracted SID from evidence: {}", matcher.group());
+                        return matcher.group();
+                    }
                 }
             }
         }
 
+        // Strategy 3: Derive SID from the user's Protect folder relative to the INI path
+        // INI: .../Users/<user>/AppData/Roaming/Zoom/data/Zoom.us.ini
+        // Protect: .../Users/<user>/AppData/Roaming/Microsoft/Protect/<SID>/
+        if (path != null && searcher != null) {
+            String userBase = extractUserBasePath(path);
+            if (userBase != null) {
+                String protectQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(userBase) + "\" AND "
+                        + BasicProps.NAME + ":\"Preferred\"";
+                List<IItemReader> items = searcher.search(protectQuery);
+                for (IItemReader item : items) {
+                    String itemPath = item.getPath();
+                    if (itemPath != null) {
+                        java.util.regex.Matcher matcher = sidPattern.matcher(itemPath);
+                        if (matcher.find()) {
+                            logger.info("Extracted SID from Protect folder: {}", matcher.group());
+                            return matcher.group();
+                        }
+                    }
+                }
+            }
+        }
+
+        logger.warn("Could not determine Windows SID");
         return null;
+    }
+
+    /**
+     * Extracts the user base path (up to and including the username directory).
+     * E.g., "C/C/Users/Nefarious/AppData/..." -> "C/C/Users/Nefarious"
+     */
+    private String extractUserBasePath(String path) {
+        String normalized = path.replace('\\', '/');
+        int usersIdx = normalized.toLowerCase().indexOf("/users/");
+        if (usersIdx < 0) return null;
+        // Find the end of the username directory
+        int userStart = usersIdx + "/users/".length();
+        int userEnd = normalized.indexOf('/', userStart);
+        if (userEnd < 0) return null;
+        return normalized.substring(0, userEnd);
     }
 
     /**
