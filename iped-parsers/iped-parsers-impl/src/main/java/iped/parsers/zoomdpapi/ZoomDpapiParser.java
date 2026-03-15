@@ -360,7 +360,7 @@ public class ZoomDpapiParser extends AbstractParser {
         }
     }
 
-    String extractEncryptedKey(String iniContent) {
+    public String extractEncryptedKey(String iniContent) {
         boolean inSection = false;
         for (String line : iniContent.split("\\r?\\n")) {
             line = line.trim();
