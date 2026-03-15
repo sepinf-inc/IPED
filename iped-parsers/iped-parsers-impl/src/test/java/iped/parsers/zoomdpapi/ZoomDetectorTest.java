@@ -41,14 +41,32 @@ public class ZoomDetectorTest {
         Metadata metadata = new Metadata();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "config.ini");
         MediaType result = detector.detect(new ByteArrayInputStream(new byte[0]), metadata);
-        assertEquals(MediaType.OCTET_STREAM, result);
+        assertNull(result);
     }
 
     @Test
     public void testDetectNoName() throws IOException {
         Metadata metadata = new Metadata();
         MediaType result = detector.detect(new ByteArrayInputStream(new byte[0]), metadata);
-        assertEquals(MediaType.OCTET_STREAM, result);
+        assertNull(result);
+    }
+
+    @Test
+    public void testDetectWithFullPath() throws IOException {
+        Metadata metadata = new Metadata();
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY,
+            "C/Users/Nefarious/AppData/Roaming/Zoom/data/Zoom.us.ini");
+        MediaType result = detector.detect(new ByteArrayInputStream(new byte[0]), metadata);
+        assertEquals(ZoomDpapiParser.ZOOM_INI, result);
+    }
+
+    @Test
+    public void testDetectWithUnixPath() throws IOException {
+        Metadata metadata = new Metadata();
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY,
+            "/home/user/evidence/Zoom/data/Zoom.us.ini");
+        MediaType result = detector.detect(new ByteArrayInputStream(new byte[0]), metadata);
+        assertEquals(ZoomDpapiParser.ZOOM_INI, result);
     }
 
     @Test

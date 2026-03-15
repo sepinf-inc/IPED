@@ -10,11 +10,10 @@ import org.apache.tika.mime.MediaType;
 
 /**
  * Detects Zoom forensic artifacts by filename:
- * - Zoom.us.ini → application/x-zoom-dpapi-ini
+ * - Zoom.us.ini -> application/x-zoom-dpapi-ini
  *
- * The encrypted .enc.db databases cannot be detected by content
- * inspection (no SQLite header), so they are found by the parser
- * via IItemSearcher when processing the INI file.
+ * Returns null when the file is not a Zoom artifact so that
+ * other detectors can still assign the correct MIME type.
  *
  * @author Calil Khalil (Hakal)
  */
@@ -29,10 +28,19 @@ public class ZoomDetector implements Detector {
             name = metadata.get("resourceName");
         }
 
-        if (name != null && name.equalsIgnoreCase("Zoom.us.ini")) {
-            return ZoomDpapiParser.ZOOM_INI;
+        if (name != null) {
+            // Extract just the filename from a potential full path
+            int lastSep = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+            if (lastSep >= 0) {
+                name = name.substring(lastSep + 1);
+            }
+
+            if (name.equalsIgnoreCase("Zoom.us.ini")) {
+                return ZoomDpapiParser.ZOOM_INI;
+            }
         }
 
-        return MediaType.OCTET_STREAM;
+        // Return null to let other detectors handle non-Zoom files
+        return null;
     }
 }
