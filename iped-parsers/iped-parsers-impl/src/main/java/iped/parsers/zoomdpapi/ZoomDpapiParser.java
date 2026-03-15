@@ -122,21 +122,28 @@ public class ZoomDpapiParser extends AbstractParser {
             // Step 1: Read INI and extract OSKEY blob
             byte[] iniBytes = org.apache.commons.io.IOUtils.toByteArray(tis);
             String iniContent = new String(iniBytes, StandardCharsets.UTF_8);
+            logger.info("Processing Zoom.us.ini ({} bytes) from: {}", iniBytes.length, itemInfo != null ? itemInfo.getPath() : "unknown");
+
             String encryptedBlob = extractEncryptedKey(iniContent);
             if (encryptedBlob == null) {
                 logger.warn("No encrypted OSKEY found in Zoom.us.ini: {}", itemInfo != null ? itemInfo.getPath() : "unknown");
                 return;
             }
+            logger.info("Extracted encrypted OSKEY blob ({} chars)", encryptedBlob.length());
 
             // Step 2: Determine the OSKEY
             String oskey = decryptedOskey;
-            if (oskey == null) {
+            if (oskey != null) {
+                logger.info("Using pre-configured decryptedOskey");
+            } else {
+                logger.info("No pre-configured OSKEY, attempting DPAPI decryption...");
                 oskey = tryDecryptOskey(encryptedBlob, itemInfo, searcher);
             }
             if (oskey == null) {
                 logger.warn("Could not decrypt Zoom OSKEY. Set decryptedOskey parameter or provide DPAPI master keys.");
                 return;
             }
+            logger.info("OSKEY available, proceeding with database extraction");
 
             // Step 3: Determine the SID for LocalDataDecryptor
             String sid = extractSidFromPath(itemInfo != null ? itemInfo.getPath() : null, searcher);
