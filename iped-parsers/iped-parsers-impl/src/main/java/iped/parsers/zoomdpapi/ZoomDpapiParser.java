@@ -149,8 +149,7 @@ public class ZoomDpapiParser extends AbstractParser {
             String sid = extractSidFromPath(itemInfo != null ? itemInfo.getPath() : null, searcher);
 
             // Step 4: Find and extract data from Zoom databases
-            String basePath = itemInfo != null ? itemInfo.getPath() : "";
-            String zoomDataDir = basePath.contains("Zoom") ? basePath.substring(0, basePath.lastIndexOf("Zoom") + 4) + "/Data" : "";
+            String iniPath = itemInfo != null ? itemInfo.getPath() : "";
 
             ZoomDataExtractor dataExtractor = new ZoomDataExtractor();
             if (sid != null) {
@@ -173,7 +172,7 @@ public class ZoomDpapiParser extends AbstractParser {
             List<ZoomTimelineEvent> timeline = new ArrayList<>();
 
             // Extract from zoomus.enc.db
-            File zoomusDb = findDatabaseFile("zoomus.enc.db", zoomDataDir, searcher);
+            File zoomusDb = findDatabaseFile("zoomus.enc.db", iniPath, searcher);
             if (zoomusDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(zoomusDb, oskey).createConnection()) {
                     account = dataExtractor.extractUserAccount(conn);
@@ -185,7 +184,7 @@ public class ZoomDpapiParser extends AbstractParser {
             }
 
             // Extract from zoommeeting.enc.db
-            File meetingDb = findDatabaseFile("zoommeeting.enc.db", zoomDataDir, searcher);
+            File meetingDb = findDatabaseFile("zoommeeting.enc.db", iniPath, searcher);
             if (meetingDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(meetingDb, oskey).createConnection()) {
                     messages = dataExtractor.extractMessages(conn);
@@ -196,10 +195,7 @@ public class ZoomDpapiParser extends AbstractParser {
             }
 
             // Extract from calendar-history-meeting.enc.db
-            File calendarDb = findDatabaseFile("calendar-history-meeting.enc.db", zoomDataDir, searcher);
-            if (calendarDb == null) {
-                calendarDb = findDatabaseFile("calendar-history-meeting.enc.db", null, searcher);
-            }
+            File calendarDb = findDatabaseFile("calendar-history-meeting.enc.db", iniPath, searcher);
             if (calendarDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(calendarDb, oskey).createConnection()) {
                     meetings = dataExtractor.extractMeetings(conn);
@@ -509,15 +505,48 @@ public class ZoomDpapiParser extends AbstractParser {
         return null;
     }
 
-    private File findDatabaseFile(String dbName, String zoomDataDir, IItemSearcher searcher) {
+    /**
+     * Finds a Zoom encrypted database file in the evidence tree.
+     *
+     * Uses the same search patterns as WhatsApp/Skype parsers:
+     * 1. Path-based search using the INI file's parent directory (like SkypeParser)
+     * 2. Fallback to name-based search with path proximity filtering (like WhatsAppParser)
+     */
+    private File findDatabaseFile(String dbName, String iniPath, IItemSearcher searcher) {
         if (searcher == null) return null;
 
-        String query = BasicProps.NAME + ":\"" + dbName + "\"";
-        List<IItemReader> items = searcher.search(query);
+        String escapedName = searcher.escapeQuery(dbName);
+        List<IItemReader> items = Collections.emptyList();
+
+        // Strategy 1: Search by path — database is sibling of Zoom.us.ini
+        if (iniPath != null && !iniPath.isEmpty()) {
+            int lastSep = iniPath.lastIndexOf('/');
+            if (lastSep > 0) {
+                String parentPath = iniPath.substring(0, lastSep);
+                String pathQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parentPath) + "\" AND "
+                        + BasicProps.NAME + ":\"" + escapedName + "\"";
+                items = searcher.search(pathQuery);
+                logger.debug("findDatabaseFile path query for {}: {} -> {} results", dbName, pathQuery, items.size());
+            }
+        }
+
+        // Strategy 2: Fallback to name-only search with path proximity (WhatsApp pattern)
+        if (items.isEmpty()) {
+            String nameQuery = BasicProps.NAME + ":\"" + escapedName + "\"";
+            items = searcher.search(nameQuery);
+            logger.debug("findDatabaseFile name query for {}: {} results", dbName, items.size());
+
+            // Filter by path proximity if we have the INI path
+            if (items.size() > 1 && iniPath != null) {
+                IItemReader best = getBestItem(items, iniPath);
+                if (best != null) {
+                    items = Collections.singletonList(best);
+                }
+            }
+        }
 
         for (IItemReader item : items) {
             try {
-                // Write to temp file for SQLCipher access
                 File tempFile = File.createTempFile("zoom_", "_" + dbName);
                 tempFile.deleteOnExit();
                 try (InputStream is = item.getBufferedInputStream();
@@ -528,11 +557,34 @@ public class ZoomDpapiParser extends AbstractParser {
                         fos.write(buf, 0, n);
                     }
                 }
+                logger.info("Extracted database {} ({} bytes) from: {}", dbName, tempFile.length(), item.getPath());
                 return tempFile;
             } catch (Exception e) {
                 logger.debug("Failed to extract database file: {}", dbName, e);
             }
         }
+
+        logger.info("Database file not found: {}", dbName);
         return null;
+    }
+
+    /**
+     * Returns the item whose path is closest to the reference path,
+     * walking up parent directories. Same pattern as WhatsAppParser.getBestItems
+     * and TelegramParser.getBestItem.
+     */
+    private IItemReader getBestItem(List<IItemReader> items, String referencePath) {
+        String path = referencePath.replace('\\', '/');
+        while (path != null && !path.isEmpty()) {
+            int pos = path.lastIndexOf('/');
+            if (pos < 0) break;
+            path = path.substring(0, pos);
+            for (IItemReader item : items) {
+                if (item.getPath() != null && item.getPath().startsWith(path)) {
+                    return item;
+                }
+            }
+        }
+        return items.isEmpty() ? null : items.get(0);
     }
 }
