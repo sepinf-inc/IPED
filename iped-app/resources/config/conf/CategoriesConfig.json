@@ -88,7 +88,7 @@
         {"name": "Messenger", "mimes":["application/messenger-plus", "application/messenger-chat"]},
         {"name": "Skype", "mimes":["application/sqlite-skype", "application/skype",  "application/x-skype-conversation","application/x-ufed-chat-preview-skype"]},
         {"name": "Telegram", "mimes":["application/x-telegram-chat","application/x-ufed-chat-preview-telegram"]},
-        {"name": "Zoom", "mimes":["application/x-zoom-meeting"]},
+        {"name": "Zoom", "mimes":["application/x-zoom-dpapi-ini", "application/x-zoom-meeting"]},
         {"name": "Jabber", "mimes":["application/x-jabber-chat"]},
         {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
