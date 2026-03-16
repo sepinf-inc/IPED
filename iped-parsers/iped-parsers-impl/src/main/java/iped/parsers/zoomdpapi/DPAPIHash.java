@@ -33,8 +33,8 @@ public class DPAPIHash {
             hash.cipherAlgo = parts[3];
             hash.hashAlgo = parts[4];
             hash.rounds = Long.parseLong(parts[5]);
-            hash.salt = DPAPIBlobDecryptor.hexToBytes(parts[6]);
-            hash.ciphertext = DPAPIBlobDecryptor.hexToBytes(parts[8]);
+            hash.salt = CryptoUtil.hexToBytes(parts[6]);
+            hash.ciphertext = CryptoUtil.hexToBytes(parts[8]);
             return hash;
         } catch (Exception e) {
             return null;

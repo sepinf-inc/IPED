@@ -41,11 +41,11 @@ public class HashGenerator {
         String cipherAlgo = getCipherAlgoName(data.readDword());
         byte[] ciphertext = data.readBytes(data.remaining());
 
-        String hexCiphertext = DPAPIBlobDecryptor.bytesToHex(ciphertext);
+        String hexCiphertext = CryptoUtil.bytesToHex(ciphertext);
 
         return "$DPAPImk$2*" + getContextValue(context) + "*" + sid + "*" +
                cipherAlgo + "*" + hashAlgo + "*" + rounds + "*" +
-               DPAPIBlobDecryptor.bytesToHex(salt) + "*" + hexCiphertext.length() + "*" + hexCiphertext;
+               CryptoUtil.bytesToHex(salt) + "*" + hexCiphertext.length() + "*" + hexCiphertext;
     }
 
     private String getHashAlgoName(long algId) {

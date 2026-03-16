@@ -51,6 +51,10 @@ public class DataReader {
     }
 
     public void skip(int bytes) {
+        if (offset + bytes > data.length) {
+            throw new RuntimeException("Buffer overflow: skipping " + bytes +
+                " bytes at offset " + offset + ", available: " + (data.length - offset));
+        }
         offset += bytes;
     }
 

@@ -7,8 +7,6 @@ import org.sqlite.mc.KdfAlgorithm;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.Statement;
-import java.sql.ResultSet;
 
 /**
  * Opens SQLCipher-encrypted Zoom databases using the decrypted OSKEY.
@@ -44,13 +42,4 @@ public class ZoomDatabaseReader {
         return config.createConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
     }
 
-    public boolean testConnection() {
-        try (Connection conn = createConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' LIMIT 1")) {
-            return rs.next();
-        } catch (Exception e) {
-            return false;
-        }
-    }
 }

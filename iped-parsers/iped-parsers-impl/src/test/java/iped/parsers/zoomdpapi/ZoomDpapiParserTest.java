@@ -34,7 +34,6 @@ public class ZoomDpapiParserTest {
         assertEquals("application/x-zoom-dpapi-ini", ZoomDpapiParser.ZOOM_INI.toString());
         assertEquals("application/x-zoom-meeting", ZoomDpapiParser.ZOOM_MEETING.toString());
         assertEquals("message/x-zoom-message", ZoomDpapiParser.ZOOM_MESSAGE.toString());
-        assertEquals("application/x-zoom-account", ZoomDpapiParser.ZOOM_ACCOUNT.toString());
     }
 
     // --- INI parsing tests ---
@@ -88,7 +87,7 @@ public class ZoomDpapiParserTest {
     // --- Report generator tests ---
 
     @Test
-    public void testGenerateMeetingHtml() {
+    public void testGenerateMeetingReport() {
         ZoomMeeting meeting = new ZoomMeeting();
         meeting.setTopic("Test Meeting");
         meeting.setMeetingNo("123456");
@@ -100,18 +99,6 @@ public class ZoomDpapiParserTest {
         msg.setTimestamp(1700000001L);
         meeting.getMessages().add(msg);
 
-        ZoomReportGenerator gen = new ZoomReportGenerator();
-        byte[] html = gen.generateMeetingHtml(meeting);
-        String htmlStr = new String(html);
-
-        assertTrue(htmlStr.contains("Test Meeting"));
-        assertTrue(htmlStr.contains("123456"));
-        assertTrue(htmlStr.contains("Hello"));
-        assertTrue(htmlStr.contains("Alice"));
-    }
-
-    @Test
-    public void testGenerateAccountHtml() {
         ZoomUserAccount account = new ZoomUserAccount();
         account.setEmail("user@test.com");
         account.setClientVersion("5.15.0");
@@ -120,12 +107,23 @@ public class ZoomDpapiParserTest {
         sysInfo.setProcessor("Intel i7");
 
         ZoomReportGenerator gen = new ZoomReportGenerator();
-        byte[] html = gen.generateAccountHtml(account, sysInfo);
+        byte[] html = gen.generateMeetingReport(
+                "S-1-5-21-123", "testOskey", "TestUser",
+                account, sysInfo, null, meeting);
         String htmlStr = new String(html);
 
+        assertTrue(htmlStr.contains("1. Decryption Information"));
+        assertTrue(htmlStr.contains("S-1-5-21-123"));
+        assertTrue(htmlStr.contains("testOskey"));
+        assertTrue(htmlStr.contains("2. Zoom Account"));
         assertTrue(htmlStr.contains("user@test.com"));
         assertTrue(htmlStr.contains("5.15.0"));
         assertTrue(htmlStr.contains("Intel i7"));
+        assertTrue(htmlStr.contains("4. Meeting Details"));
+        assertTrue(htmlStr.contains("Test Meeting"));
+        assertTrue(htmlStr.contains("123456"));
+        assertTrue(htmlStr.contains("Hello"));
+        assertTrue(htmlStr.contains("Alice"));
     }
 
     @Test

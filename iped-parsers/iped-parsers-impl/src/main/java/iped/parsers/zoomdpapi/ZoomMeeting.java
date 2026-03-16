@@ -78,14 +78,4 @@ public class ZoomMeeting {
     public List<ZoomSharedFile> getSharedFiles() { return sharedFiles; }
     public List<ZoomRecording> getRecordings() { return recordings; }
 
-    public String getTitle() {
-        StringBuilder sb = new StringBuilder("Zoom Meeting");
-        if (topic != null && !topic.isBlank()) {
-            sb.append(" - ").append(topic.strip());
-        }
-        if (meetingNo != null && !meetingNo.isBlank()) {
-            sb.append(" (").append(meetingNo.strip()).append(")");
-        }
-        return sb.toString();
-    }
 }

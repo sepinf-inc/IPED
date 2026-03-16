@@ -88,14 +88,14 @@ public class ZoomCrackingTest {
     public void testMD4EmptyString() {
         // MD4("") = 31d6cfe0d16ae931b73c59d7e0c089c0
         byte[] result = PasswordCracker.md4(new byte[0]);
-        assertEquals("31d6cfe0d16ae931b73c59d7e0c089c0", DPAPIBlobDecryptor.bytesToHex(result));
+        assertEquals("31d6cfe0d16ae931b73c59d7e0c089c0", CryptoUtil.bytesToHex(result));
     }
 
     @Test
     public void testMD4KnownValue() {
         // MD4("a") = bde52cb31de33e46245e05fbdbd6fb24
         byte[] result = PasswordCracker.md4("a".getBytes(StandardCharsets.US_ASCII));
-        assertEquals("bde52cb31de33e46245e05fbdbd6fb24", DPAPIBlobDecryptor.bytesToHex(result));
+        assertEquals("bde52cb31de33e46245e05fbdbd6fb24", CryptoUtil.bytesToHex(result));
     }
 
     @Test
@@ -103,7 +103,7 @@ public class ZoomCrackingTest {
         // NTLM hash of "password" = MD4(UTF-16LE("password"))
         byte[] utf16 = "password".getBytes(StandardCharsets.UTF_16LE);
         byte[] result = PasswordCracker.md4(utf16);
-        assertEquals("8846f7eaee8fb117ad06bdd830b7586c", DPAPIBlobDecryptor.bytesToHex(result));
+        assertEquals("8846f7eaee8fb117ad06bdd830b7586c", CryptoUtil.bytesToHex(result));
     }
 
     // --- HashGenerator tests ---

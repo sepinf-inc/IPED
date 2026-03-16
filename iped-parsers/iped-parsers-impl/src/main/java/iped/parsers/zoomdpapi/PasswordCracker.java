@@ -1,8 +1,5 @@
 package iped.parsers.zoomdpapi;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -62,8 +59,8 @@ public class PasswordCracker {
             case 3:
                 byte[] ntlm = md4(passwordBytes);
                 byte[] sidBytes = hash.sid.getBytes(StandardCharsets.UTF_16LE);
-                byte[] d1 = pbkdf2(ntlm, sidBytes, 32, 10000, "sha256");
-                return pbkdf2(d1, sidBytes, 16, 1, "sha256");
+                byte[] d1 = CryptoUtil.pbkdf2(ntlm, sidBytes, 32, 10000, "sha256");
+                return CryptoUtil.pbkdf2(d1, sidBytes, 16, 1, "sha256");
             default: throw new Exception("Unknown context");
         }
     }
@@ -79,7 +76,7 @@ public class PasswordCracker {
         int keyLen = hash.getCipherKeyLength() / 8;
         int ivLen = hash.getIVLength() / 8;
 
-        byte[] derived = pbkdf2(derivedKey, hash.salt, keyLen + ivLen, (int) hash.rounds, hash.hashAlgo);
+        byte[] derived = CryptoUtil.pbkdf2(derivedKey, hash.salt, keyLen + ivLen, (int) hash.rounds, hash.hashAlgo);
         byte[] encKey = Arrays.copyOfRange(derived, 0, keyLen);
         byte[] iv = Arrays.copyOfRange(derived, keyLen, keyLen + ivLen);
 
@@ -101,31 +98,6 @@ public class PasswordCracker {
         Mac mac2 = Mac.getInstance(hmacAlgo);
         mac2.init(new SecretKeySpec(mac1.doFinal(hmacSalt), hmacAlgo));
         return mac2.doFinal(key);
-    }
-
-    private byte[] pbkdf2(byte[] password, byte[] salt, int keyLength, int iterations, String hashAlgo) throws Exception {
-        String hmacAlgo = "Hmac" + hashAlgo.substring(0, 1).toUpperCase() + hashAlgo.substring(1);
-        ByteArrayOutputStream buff = new ByteArrayOutputStream();
-        int block = 1;
-
-        while (buff.size() < keyLength) {
-            ByteBuffer counter = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(block++);
-            byte[] U = new byte[salt.length + 4];
-            System.arraycopy(salt, 0, U, 0, salt.length);
-            System.arraycopy(counter.array(), 0, U, salt.length, 4);
-
-            Mac mac = Mac.getInstance(hmacAlgo);
-            mac.init(new SecretKeySpec(password, hmacAlgo));
-            byte[] derived = mac.doFinal(U);
-
-            for (int r = 0; r < iterations - 1; r++) {
-                mac.init(new SecretKeySpec(password, hmacAlgo));
-                byte[] next = mac.doFinal(derived);
-                for (int j = 0; j < derived.length; j++) derived[j] ^= next[j];
-            }
-            buff.write(derived);
-        }
-        return Arrays.copyOf(buff.toByteArray(), keyLength);
     }
 
     static byte[] md4(byte[] input) {

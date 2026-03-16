@@ -9,6 +9,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Extracts forensic artifacts from decrypted Zoom SQLite databases:
  * user accounts, messages, meetings, participants, shared files,
@@ -20,6 +23,8 @@ import java.util.Map;
  * @author Calil Khalil (Hakal)
  */
 public class ZoomDataExtractor {
+
+    private static final Logger logger = LoggerFactory.getLogger(ZoomDataExtractor.class);
 
     private LocalDataDecryptor localDecryptor;
 
@@ -45,7 +50,7 @@ public class ZoomDataExtractor {
                 acc.setAccountType(rs.getInt("accountType"));
                 return acc;
             }
-        } catch (Exception e) { /* table may not exist */ }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
         return null;
     }
 
@@ -63,11 +68,12 @@ public class ZoomDataExtractor {
                 p.setRoleType(rs.getInt("roleType"));
                 participants.add(p);
             }
-        } catch (Exception e) { /* table may not exist */ }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
         return participants;
     }
 
-    public ZoomSystemInfo extractKeyValues(Connection conn, ZoomUserAccount account, List<ZoomKeyValue> keyValues) {
+    public ZoomSystemInfo extractKeyValues(Connection conn, ZoomUserAccount account,
+                                             List<ZoomMeeting> savedMeetings) {
         ZoomSystemInfo sysInfo = new ZoomSystemInfo();
         ZoomUserAccount acc = account != null ? account : new ZoomUserAccount();
         try (Statement stmt = conn.createStatement();
@@ -75,17 +81,21 @@ public class ZoomDataExtractor {
             while (rs.next()) {
                 String k = rs.getString("key");
                 String v = rs.getString("value");
-                String s = rs.getString("section");
 
                 if (k.endsWith(".enc") && localDecryptor != null && localDecryptor.canDecrypt(v)) {
                     String decrypted = decrypt(v);
                     if (!decrypted.equals(v)) {
-                        ZoomKeyValue kv = new ZoomKeyValue();
-                        kv.setSection(s);
-                        kv.setKey(k);
-                        kv.setValue(decrypted);
-                        kv.setDecrypted(true);
-                        keyValues.add(kv);
+                        if (k.contains("saved.meetingid") && decrypted.contains("|")) {
+                            String[] parts = decrypted.split("\\|");
+                            if (parts.length >= 2) {
+                                ZoomMeeting m = new ZoomMeeting();
+                                m.setMeetingNo(parts[0]);
+                                String topic = parts[1].contains(";") ? parts[1].split(";")[0] : parts[1];
+                                m.setTopic(topic);
+                                m.setMeetingId("saved");
+                                savedMeetings.add(m);
+                            }
+                        }
                     }
                 }
 
@@ -100,11 +110,22 @@ public class ZoomDataExtractor {
                 if ("com.zoom.client.GUID".equals(k)) sysInfo.setClientGuid(v);
                 if ("com.zoom.client.did".equals(k)) sysInfo.setFingerprint(v);
             }
-        } catch (Exception e) { /* table may not exist */ }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
 
         if (sysInfo.getProcessor() != null || sysInfo.getClientGuid() != null) {
             return sysInfo;
         }
+        return null;
+    }
+
+    public String[] extractMeetingIds(Connection conn) {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                 "SELECT DISTINCT confID, sdkMeetingUid FROM zoom_conf_chat_gen2_enc WHERE confID IS NOT NULL")) {
+            if (rs.next()) {
+                return new String[]{rs.getString("confID"), rs.getString("sdkMeetingUid")};
+            }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
         return null;
     }
 
@@ -128,7 +149,7 @@ public class ZoomDataExtractor {
                     messages.add(msg);
                 }
             }
-        } catch (Exception e) { /* table may not exist */ }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
         return messages;
     }
 
@@ -157,7 +178,7 @@ public class ZoomDataExtractor {
                     }
                 }
             }
-        } catch (Exception e) { /* table may not exist */ }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
         return files;
     }
 
@@ -188,7 +209,7 @@ public class ZoomDataExtractor {
                 m.setCloudRecordingStatus(rs.getString("cloud_recording_status"));
                 meetings.add(m);
             }
-        } catch (Exception e) { /* table may not exist */ }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
         return meetings;
     }
 
@@ -212,52 +233,10 @@ public class ZoomDataExtractor {
                 f.setFileType(rs.getInt("file_serv_type"));
                 files.add(f);
             }
-        } catch (Exception e) { /* table may not exist */ }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
         return files;
     }
 
-    public List<ZoomRecording> extractRecordings(Connection conn) {
-        List<ZoomRecording> recordings = new ArrayList<>();
-        // Cloud recordings
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                 "SELECT meeting_id, meeting_no, topic, share_link, recording_url, " +
-                 "preview_url, start_time, duration, passcode " +
-                 "FROM zoom_calendar_cloud_recording")) {
-            while (rs.next()) {
-                ZoomRecording r = new ZoomRecording();
-                r.setMeetingId(rs.getString("meeting_id"));
-                r.setMeetingNo(rs.getString("meeting_no"));
-                r.setTopic(rs.getString("topic"));
-                r.setShareLink(rs.getString("share_link"));
-                r.setRecordingUrl(rs.getString("recording_url"));
-                r.setPreviewUrl(rs.getString("preview_url"));
-                r.setStartTime(rs.getLong("start_time"));
-                r.setDuration(rs.getInt("duration"));
-                r.setPasscode(rs.getString("passcode"));
-                r.setLocal(false);
-                recordings.add(r);
-            }
-        } catch (Exception e) { /* table may not exist */ }
-
-        // Local recordings
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                 "SELECT meeting_id, meeting_no, topic, location, start_time " +
-                 "FROM zoom_calendar_local_recording")) {
-            while (rs.next()) {
-                ZoomRecording r = new ZoomRecording();
-                r.setMeetingId(rs.getString("meeting_id"));
-                r.setMeetingNo(rs.getString("meeting_no"));
-                r.setTopic(rs.getString("topic"));
-                r.setLocation(rs.getString("location"));
-                r.setStartTime(rs.getLong("start_time"));
-                r.setLocal(true);
-                recordings.add(r);
-            }
-        } catch (Exception e) { /* table may not exist */ }
-        return recordings;
-    }
 
     // --- Timeline extraction from zoomus.enc.db ---
 
@@ -278,7 +257,7 @@ public class ZoomDataExtractor {
                 ev.setFileSize(rs.getLong("filesize"));
                 avatarEvents.add(ev);
             }
-        } catch (Exception e) { /* table may not exist */ }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
 
         // Waiting room events
         try (Statement stmt = conn.createStatement();
@@ -308,7 +287,7 @@ public class ZoomDataExtractor {
                     : "Entered waiting room");
                 timeline.add(ev);
             }
-        } catch (Exception e) { /* table may not exist */ }
+        } catch (Exception e) { logger.debug("Table may not exist", e); }
 
         // Correlate avatar events with participants
         List<String[]> participants = getParticipantsByFirstMessage(messages);
@@ -524,10 +503,21 @@ public class ZoomDataExtractor {
     }
 
     private String extractAttr(String xml, String attr) {
-        int start = xml.indexOf(attr + "=\"");
-        if (start < 0) return null;
-        start += attr.length() + 2;
-        int end = xml.indexOf("\"", start);
-        return end > start ? xml.substring(start, end) : null;
+        String search = attr + "=\"";
+        int pos = 0;
+        while (pos < xml.length()) {
+            int start = xml.indexOf(search, pos);
+            if (start < 0) return null;
+            char before = start > 0 ? xml.charAt(start - 1) : ' ';
+            boolean attrStart = attr.startsWith(" ") || before == ' ' || before == '<'
+                    || before == '"' || before == '\'' || !Character.isLetterOrDigit(before);
+            if (start == 0 || attrStart) {
+                int valStart = start + search.length();
+                int end = xml.indexOf("\"", valStart);
+                return end > valStart ? xml.substring(valStart, end) : null;
+            }
+            pos = start + 1;
+        }
+        return null;
     }
 }

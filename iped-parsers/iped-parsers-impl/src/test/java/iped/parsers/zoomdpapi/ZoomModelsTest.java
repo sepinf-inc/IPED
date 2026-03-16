@@ -16,43 +16,6 @@ import org.junit.Test;
 public class ZoomModelsTest {
 
     @Test
-    public void testZoomData() {
-        ZoomData data = new ZoomData("/users/target", "/zoom/ini/path");
-        assertEquals("/users/target", data.getUserPath());
-        assertEquals("/zoom/ini/path", data.getIniFilePath());
-
-        data.setSid("S-1-5-21-123456");
-        assertEquals("S-1-5-21-123456", data.getSid());
-
-        data.setMasterKeyGuid("abc-def-123");
-        assertEquals("abc-def-123", data.getMasterKeyGuid());
-
-        data.setEncryptedBlob("base64blob==");
-        assertEquals("base64blob==", data.getEncryptedBlob());
-        assertEquals("base64blob==", data.getOskeyBase64());
-
-        data.setDecryptedOskey("decryptedKey123");
-        assertEquals("decryptedKey123", data.getDecryptedOskey());
-    }
-
-    @Test
-    public void testMasterKeyData() {
-        MasterKeyData mk = new MasterKeyData("guid-123", "/path/to/key", "S-1-5-21-999");
-        assertEquals("guid-123", mk.getGuid());
-        assertEquals("/path/to/key", mk.getFilePath());
-        assertEquals("S-1-5-21-999", mk.getSid());
-
-        mk.setHash("$DPAPImk$...");
-        assertEquals("$DPAPImk$...", mk.getHash());
-
-        mk.setRecoveredPassword("password123");
-        assertEquals("password123", mk.getRecoveredPassword());
-
-        mk.setDecryptedMasterKey("aabbccdd");
-        assertEquals("aabbccdd", mk.getDecryptedMasterKey());
-    }
-
-    @Test
     public void testZoomUserAccount() {
         ZoomUserAccount account = new ZoomUserAccount();
         account.setFirstName("John");
@@ -87,7 +50,7 @@ public class ZoomModelsTest {
         msg.setId("msg-001");
         msg.setMeetingId("meet-001");
         msg.setBody("Hello world");
-        msg.setTimestamp(1700000000000L);
+        msg.setTimestamp(1700000000L);
         msg.setSenderName("Alice");
         msg.setSenderGuid("guid-alice");
         msg.setMsgType(1);
@@ -136,17 +99,10 @@ public class ZoomModelsTest {
         meeting.setStartTime(1700000000L);
         meeting.setDuration(3600);
 
-        assertEquals("Zoom Meeting - Team Standup (123456789)", meeting.getTitle());
         assertTrue(meeting.getMessages().isEmpty());
         assertTrue(meeting.getParticipants().isEmpty());
         assertTrue(meeting.getSharedFiles().isEmpty());
         assertTrue(meeting.getRecordings().isEmpty());
-    }
-
-    @Test
-    public void testZoomMeetingTitleNoTopic() {
-        ZoomMeeting meeting = new ZoomMeeting();
-        assertEquals("Zoom Meeting", meeting.getTitle());
     }
 
     @Test

@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -64,8 +63,8 @@ import iped.utils.EmptyInputStream;
  * Zoom SQLite databases and extracts meetings, messages, participants,
  * files, recordings, and timeline events.
  *
- * Follows the same pattern as WhatsAppParser: emits meetings as virtual
- * child items with HTML reports, and individual messages as sub-children.
+ * Follows the same pattern as WhatsAppParser: emits a full report as
+ * virtual child item with HTML, and individual messages as sub-children.
  *
  * @author Calil Khalil (Hakal)
  */
@@ -80,7 +79,6 @@ public class ZoomDpapiParser extends AbstractParser {
     public static final MediaType ZOOM_INI = MediaType.application("x-zoom-dpapi-ini");
     public static final MediaType ZOOM_MEETING = MediaType.parse("application/x-zoom-meeting");
     public static final MediaType ZOOM_MESSAGE = MediaType.parse("message/x-zoom-message");
-    public static final MediaType ZOOM_ACCOUNT = MediaType.parse("application/x-zoom-account");
 
     private static final String ZOOM_SECTION = "[ZoomChat]";
     private static final String KEY_NAME = "win_osencrypt_key";
@@ -119,19 +117,18 @@ public class ZoomDpapiParser extends AbstractParser {
         try (TemporaryResources tmp = new TemporaryResources()) {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
-            // Step 1: Read INI and extract OSKEY blob
             byte[] iniBytes = org.apache.commons.io.IOUtils.toByteArray(tis);
             String iniContent = new String(iniBytes, StandardCharsets.UTF_8);
-            logger.info("Processing Zoom.us.ini ({} bytes) from: {}", iniBytes.length, itemInfo != null ? itemInfo.getPath() : "unknown");
+            String iniPath = itemInfo != null ? itemInfo.getPath() : "";
+            logger.info("Processing Zoom.us.ini ({} bytes) from: {}", iniBytes.length, iniPath);
 
             String encryptedBlob = extractEncryptedKey(iniContent);
             if (encryptedBlob == null) {
-                logger.warn("No encrypted OSKEY found in Zoom.us.ini: {}", itemInfo != null ? itemInfo.getPath() : "unknown");
+                logger.warn("No encrypted OSKEY found in Zoom.us.ini: {}", iniPath);
                 return;
             }
             logger.info("Extracted encrypted OSKEY blob ({} chars)", encryptedBlob.length());
 
-            // Step 2: Determine the OSKEY
             String oskey = decryptedOskey;
             if (oskey != null) {
                 logger.info("Using pre-configured decryptedOskey");
@@ -145,11 +142,8 @@ public class ZoomDpapiParser extends AbstractParser {
             }
             logger.info("OSKEY available, proceeding with database extraction");
 
-            // Step 3: Determine the SID for LocalDataDecryptor
-            String sid = extractSidFromPath(itemInfo != null ? itemInfo.getPath() : null, searcher);
-
-            // Step 4: Find and extract data from Zoom databases
-            String iniPath = itemInfo != null ? itemInfo.getPath() : "";
+            String sid = extractSidFromPath(iniPath, searcher);
+            String userProfileName = ZoomReportGenerator.extractUsername(iniPath);
 
             ZoomDataExtractor dataExtractor = new ZoomDataExtractor();
             if (sid != null) {
@@ -160,33 +154,32 @@ public class ZoomDpapiParser extends AbstractParser {
                 }
             }
 
-            // Collect all extracted data
             ZoomUserAccount account = null;
             ZoomSystemInfo sysInfo = null;
             List<ZoomParticipant> participants = new ArrayList<>();
             List<ZoomMessage> messages = new ArrayList<>();
             List<ZoomMeeting> meetings = new ArrayList<>();
+            List<ZoomMeeting> savedMeetings = new ArrayList<>();
             List<ZoomSharedFile> files = new ArrayList<>();
-            List<ZoomRecording> recordings = new ArrayList<>();
-            List<ZoomKeyValue> keyValues = new ArrayList<>();
             List<ZoomTimelineEvent> timeline = new ArrayList<>();
 
-            // Extract from zoomus.enc.db
-            File zoomusDb = findDatabaseFile("zoomus.enc.db", iniPath, searcher);
+            File zoomusDb = findDatabaseFile("zoomus.enc.db", iniPath, searcher, tmp);
             if (zoomusDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(zoomusDb, oskey).createConnection()) {
                     account = dataExtractor.extractUserAccount(conn);
                     participants = dataExtractor.extractParticipants(conn);
-                    sysInfo = dataExtractor.extractKeyValues(conn, account, keyValues);
+                    sysInfo = dataExtractor.extractKeyValues(conn, account, savedMeetings);
+
                 } catch (Exception e) {
                     logger.warn("Failed to extract from zoomus.enc.db", e);
                 }
             }
 
-            // Extract from zoommeeting.enc.db
-            File meetingDb = findDatabaseFile("zoommeeting.enc.db", iniPath, searcher);
+            File meetingDb = findDatabaseFile("zoommeeting.enc.db", iniPath, searcher, tmp);
+            String[] meetingIds = null;
             if (meetingDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(meetingDb, oskey).createConnection()) {
+                    meetingIds = dataExtractor.extractMeetingIds(conn);
                     messages = dataExtractor.extractMessages(conn);
                     files.addAll(dataExtractor.extractFilesFromChat(conn, messages));
                 } catch (Exception e) {
@@ -194,19 +187,31 @@ public class ZoomDpapiParser extends AbstractParser {
                 }
             }
 
-            // Extract from calendar-history-meeting.enc.db
-            File calendarDb = findDatabaseFile("calendar-history-meeting.enc.db", iniPath, searcher);
+            if (meetingIds != null) {
+                String confId = meetingIds[0];
+                String sdkUid = meetingIds[1];
+                for (ZoomMeeting m : savedMeetings) {
+                    if (m.getConfId() == null && m.getTopic() != null) {
+                        m.setConfId(confId);
+                        m.setMeetingId(sdkUid);
+                    }
+                }
+            }
+
+            File calendarDb = findDatabaseFile("calendar-history-meeting.enc.db", iniPath, searcher, tmp);
             if (calendarDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(calendarDb, oskey).createConnection()) {
                     meetings = dataExtractor.extractMeetings(conn);
                     files.addAll(dataExtractor.extractSharedFiles(conn));
-                    recordings = dataExtractor.extractRecordings(conn);
                 } catch (Exception e) {
                     logger.warn("Failed to extract from calendar-history-meeting.enc.db", e);
                 }
             }
 
-            // Extract timeline from zoomus.enc.db (after messages are available)
+            for (ZoomMeeting saved : savedMeetings) {
+                meetings.add(0, saved);
+            }
+
             if (zoomusDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(zoomusDb, oskey).createConnection()) {
                     timeline = dataExtractor.extractTimeline(conn, messages, files);
@@ -215,64 +220,46 @@ public class ZoomDpapiParser extends AbstractParser {
                 }
             }
 
-            // Step 5: Assign messages/files/participants to meetings
             assignDataToMeetings(meetings, messages, files, participants);
 
-            // Step 6: Emit virtual items
             int virtualId = 0;
+            ZoomReportGenerator reportGen = new ZoomReportGenerator();
 
-            // Emit account info
-            if (account != null) {
-                ZoomReportGenerator reportGen = new ZoomReportGenerator();
-                byte[] htmlBytes = reportGen.generateAccountHtml(account, sysInfo);
-
-                Metadata accountMeta = new Metadata();
-                accountMeta.set(TikaCoreProperties.TITLE, "Zoom Account - " + account.getName());
-                accountMeta.set(StandardParser.INDEXER_CONTENT_TYPE, ZOOM_ACCOUNT.toString());
-                accountMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(virtualId));
-                accountMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                extractor.parseEmbedded(new ByteArrayInputStream(htmlBytes), handler, accountMeta, false);
-                virtualId++;
-            }
-
-            // Emit each meeting as a virtual item with its messages as children
             for (ZoomMeeting meeting : meetings) {
                 int meetingVirtualId = virtualId++;
+                String confLabel = meeting.getMeetingNo() != null ? meeting.getMeetingNo()
+                        : (meeting.getConfId() != null ? meeting.getConfId()
+                        : (meeting.getTopic() != null ? meeting.getTopic() : "Unknown"));
 
-                ZoomReportGenerator reportGen = new ZoomReportGenerator();
-                byte[] htmlBytes = reportGen.generateMeetingHtml(meeting);
+                byte[] reportHtml = reportGen.generateMeetingReport(
+                        sid, oskey, userProfileName, account, sysInfo, timeline, meeting);
 
                 Metadata meetingMeta = new Metadata();
-                meetingMeta.set(TikaCoreProperties.TITLE, meeting.getTitle());
+                meetingMeta.set(TikaCoreProperties.TITLE,
+                        "Meeting: " + confLabel + " Report");
                 meetingMeta.set(StandardParser.INDEXER_CONTENT_TYPE, ZOOM_MEETING.toString());
                 meetingMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(meetingVirtualId));
                 meetingMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                 if (meeting.getStartTime() > 0) {
                     meetingMeta.set(TikaCoreProperties.CREATED, new Date(meeting.getStartTime() * 1000));
                 }
-                if (!meeting.getParticipants().isEmpty()) {
-                    for (ZoomParticipant p : meeting.getParticipants()) {
-                        meetingMeta.add(ExtraProperties.PARTICIPANTS, p.getName());
-                    }
+                for (ZoomParticipant p : meeting.getParticipants()) {
+                    meetingMeta.add(ExtraProperties.PARTICIPANTS, p.getName());
                 }
                 if (extractMessages && !meeting.getMessages().isEmpty()) {
                     meetingMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }
 
-                extractor.parseEmbedded(new ByteArrayInputStream(htmlBytes), handler, meetingMeta, false);
+                extractor.parseEmbedded(new ByteArrayInputStream(reportHtml), handler, meetingMeta, false);
 
-                // Emit individual messages as children
                 if (extractMessages) {
                     int msgCount = 0;
                     for (ZoomMessage msg : meeting.getMessages()) {
                         Metadata msgMeta = new Metadata();
-                        String title = meeting.getTitle() + "_message_" + msgCount++;
-                        msgMeta.set(TikaCoreProperties.TITLE, title);
+                        msgMeta.set(TikaCoreProperties.TITLE, "Zoom Message " + msgCount++);
                         msgMeta.set(StandardParser.INDEXER_CONTENT_TYPE, ZOOM_MESSAGE.toString());
                         msgMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(meetingVirtualId));
                         msgMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
                         if (msg.getDate() != null) {
                             msgMeta.set(ExtraProperties.MESSAGE_DATE, msg.getDate());
                             msgMeta.set(TikaCoreProperties.CREATED, msg.getDate());
@@ -284,32 +271,11 @@ public class ZoomDpapiParser extends AbstractParser {
                             msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, msg.getSenderName());
                         }
                         msgMeta.set(ExtraProperties.USER_ACCOUNT_TYPE, ZOOM);
-
                         msgMeta.set(BasicProps.LENGTH, "");
                         extractor.parseEmbedded(new EmptyInputStream(), handler, msgMeta, false);
                         virtualId++;
                     }
                 }
-            }
-
-            // Emit recordings
-            for (ZoomRecording rec : recordings) {
-                Metadata recMeta = new Metadata();
-                String title = "Zoom Recording - " + (rec.getTopic() != null ? rec.getTopic() : rec.getMeetingNo());
-                recMeta.set(TikaCoreProperties.TITLE, title);
-                recMeta.set(StandardParser.INDEXER_CONTENT_TYPE, ZOOM_MEETING.toString());
-                recMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(virtualId++));
-                recMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                StringBuilder body = new StringBuilder();
-                body.append(rec.isLocal() ? "Local Recording" : "Cloud Recording");
-                if (rec.getLocation() != null) body.append("\nLocation: ").append(rec.getLocation());
-                if (rec.getShareLink() != null) body.append("\nShare Link: ").append(rec.getShareLink());
-                if (rec.getPasscode() != null) body.append("\nPasscode: ").append(rec.getPasscode());
-
-                recMeta.set(ExtraProperties.MESSAGE_BODY, body.toString());
-                recMeta.set(BasicProps.LENGTH, "");
-                extractor.parseEmbedded(new EmptyInputStream(), handler, recMeta, false);
             }
 
         } catch (Exception e) {
@@ -321,44 +287,49 @@ public class ZoomDpapiParser extends AbstractParser {
     private void assignDataToMeetings(List<ZoomMeeting> meetings, List<ZoomMessage> messages,
                                        List<ZoomSharedFile> files, List<ZoomParticipant> participants) {
         if (meetings.isEmpty() && !messages.isEmpty()) {
-            // Create a default meeting to hold all messages
             ZoomMeeting defaultMeeting = new ZoomMeeting();
             defaultMeeting.setTopic("Zoom Chat Session");
-            if (!messages.isEmpty()) {
-                defaultMeeting.setMeetingId(messages.get(0).getMeetingId());
-            }
+            defaultMeeting.setMeetingId(messages.get(0).getMeetingId());
             meetings.add(defaultMeeting);
         }
 
         for (ZoomMeeting meeting : meetings) {
-            // Assign messages
             for (ZoomMessage msg : messages) {
                 if (meeting.getMeetingId() != null && meeting.getMeetingId().equals(msg.getMeetingId())) {
                     meeting.getMessages().add(msg);
-                } else if (meeting.getConfId() != null && meeting.getConfId().equals(msg.getMeetingId())) {
+                } else if (meeting.getConfId() != null
+                        && meeting.getConfId().equalsIgnoreCase(msg.getMeetingId())) {
                     meeting.getMessages().add(msg);
                 }
             }
 
-            // If no messages were matched and there's only one meeting, assign all
             if (meeting.getMessages().isEmpty() && meetings.size() == 1) {
                 meeting.getMessages().addAll(messages);
             }
 
-            // Assign files
             for (ZoomSharedFile f : files) {
-                if (meeting.getMeetingId() != null &&
-                    (meeting.getMeetingId().equals(f.getMeetingId()) || meeting.getMeetingId().equalsIgnoreCase(f.getConfId()))) {
+                boolean match = false;
+                if (meeting.getMeetingId() != null) {
+                    match = meeting.getMeetingId().equals(f.getMeetingId())
+                            || meeting.getMeetingId().equalsIgnoreCase(f.getConfId());
+                }
+                if (!match && meeting.getConfId() != null) {
+                    match = meeting.getConfId().equalsIgnoreCase(f.getConfId())
+                            || meeting.getConfId().equalsIgnoreCase(f.getMeetingId());
+                }
+                if (match) {
                     meeting.getSharedFiles().add(f);
                 }
             }
 
-            // Assign participants
+            if (meeting.getSharedFiles().isEmpty() && meetings.size() == 1) {
+                meeting.getSharedFiles().addAll(files);
+            }
+
             if (meeting.getParticipants().isEmpty()) {
                 meeting.getParticipants().addAll(participants);
             }
 
-            // Sort messages
             Collections.sort(meeting.getMessages());
         }
     }
@@ -386,7 +357,6 @@ public class ZoomDpapiParser extends AbstractParser {
             return null;
         }
 
-        // Try to find DPAPI master key files in the evidence
         String masterKeyGuid = parseMasterKeyGuid(encryptedBlob);
         if (masterKeyGuid == null) {
             logger.warn("Could not parse master key GUID from DPAPI blob");
@@ -403,7 +373,6 @@ public class ZoomDpapiParser extends AbstractParser {
         }
         logger.info("Found {} master key file(s) for GUID: {}", items.size(), masterKeyGuid);
 
-        // Find SID from path
         String sid = extractSidFromPath(itemInfo != null ? itemInfo.getPath() : null, searcher);
         if (sid == null) {
             logger.warn("Could not determine Windows SID from evidence paths");
@@ -412,14 +381,12 @@ public class ZoomDpapiParser extends AbstractParser {
 
         logger.info("Found master key for GUID {} with SID {}, attempting password cracking...", masterKeyGuid, sid);
 
-        // Load embedded wordlist
         List<String> wordlist = loadEmbeddedWordlist();
 
         for (IItemReader mkItem : items) {
             try (InputStream is = mkItem.getBufferedInputStream()) {
                 byte[] mkData = is.readAllBytes();
 
-                // Generate hash for cracking
                 HashGenerator hashGen = new HashGenerator();
                 String hash = hashGen.generateHash(mkData, sid, "local");
                 if (hash == null) {
@@ -427,7 +394,6 @@ public class ZoomDpapiParser extends AbstractParser {
                     continue;
                 }
 
-                // Crack password using wordlist
                 PasswordCracker cracker = new PasswordCracker();
                 String password = cracker.crack(hash, wordlist);
                 if (password == null) {
@@ -437,11 +403,9 @@ public class ZoomDpapiParser extends AbstractParser {
 
                 logger.info("DPAPI password cracked successfully");
 
-                // Decrypt master key with recovered password
                 DPAPIMasterKeyDecryptor mkDecryptor = new DPAPIMasterKeyDecryptor();
                 String masterKeyHex = mkDecryptor.decryptMasterKey(mkData, sid, password);
 
-                // Decrypt OSKEY blob
                 DPAPIBlobDecryptor blobDecryptor = new DPAPIBlobDecryptor();
                 byte[] decrypted = blobDecryptor.decryptBlobFromBase64(encryptedBlob, masterKeyHex);
                 String oskey = new String(decrypted, StandardCharsets.UTF_8).trim();
@@ -458,8 +422,12 @@ public class ZoomDpapiParser extends AbstractParser {
 
     private List<String> loadEmbeddedWordlist() {
         List<String> words = new ArrayList<>();
-        try (InputStream is = getClass().getResourceAsStream("/iped/parsers/zoomdpapi/wordlist.txt");
-             java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is, StandardCharsets.UTF_8))) {
+        InputStream is = getClass().getResourceAsStream("/iped/parsers/zoomdpapi/wordlist.txt");
+        if (is == null) {
+            logger.warn("Embedded wordlist resource not found");
+            return words;
+        }
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
@@ -475,7 +443,7 @@ public class ZoomDpapiParser extends AbstractParser {
 
     private String parseMasterKeyGuid(String base64Blob) {
         try {
-            byte[] data = Base64.getDecoder().decode(base64Blob);
+            byte[] data = java.util.Base64.getDecoder().decode(base64Blob);
             if (data.length < 40) return null;
             byte[] guidBytes = new byte[16];
             System.arraycopy(data, 24, guidBytes, 0, 16);
@@ -492,13 +460,11 @@ public class ZoomDpapiParser extends AbstractParser {
     private String extractSidFromPath(String path, IItemSearcher searcher) {
         java.util.regex.Pattern sidPattern = java.util.regex.Pattern.compile("S-1-5-21-[\\d-]+");
 
-        // Strategy 1: Extract SID directly from the INI file path
         if (path != null) {
             java.util.regex.Matcher matcher = sidPattern.matcher(path);
             if (matcher.find()) return matcher.group();
         }
 
-        // Strategy 2: Find SID from Protect directory children (SID is a folder name)
         if (searcher != null) {
             String query = BasicProps.PATH + ":\"Microsoft\" AND " + BasicProps.PATH + ":\"Protect\"";
             List<IItemReader> items = searcher.search(query);
@@ -514,9 +480,6 @@ public class ZoomDpapiParser extends AbstractParser {
             }
         }
 
-        // Strategy 3: Derive SID from the user's Protect folder relative to the INI path
-        // INI: .../Users/<user>/AppData/Roaming/Zoom/data/Zoom.us.ini
-        // Protect: .../Users/<user>/AppData/Roaming/Microsoft/Protect/<SID>/
         if (path != null && searcher != null) {
             String userBase = extractUserBasePath(path);
             if (userBase != null) {
@@ -540,35 +503,23 @@ public class ZoomDpapiParser extends AbstractParser {
         return null;
     }
 
-    /**
-     * Extracts the user base path (up to and including the username directory).
-     * E.g., "C/C/Users/Nefarious/AppData/..." -> "C/C/Users/Nefarious"
-     */
     private String extractUserBasePath(String path) {
         String normalized = path.replace('\\', '/');
         int usersIdx = normalized.toLowerCase().indexOf("/users/");
         if (usersIdx < 0) return null;
-        // Find the end of the username directory
         int userStart = usersIdx + "/users/".length();
         int userEnd = normalized.indexOf('/', userStart);
         if (userEnd < 0) return null;
         return normalized.substring(0, userEnd);
     }
 
-    /**
-     * Finds a Zoom encrypted database file in the evidence tree.
-     *
-     * Uses the same search patterns as WhatsApp/Skype parsers:
-     * 1. Path-based search using the INI file's parent directory (like SkypeParser)
-     * 2. Fallback to name-based search with path proximity filtering (like WhatsAppParser)
-     */
-    private File findDatabaseFile(String dbName, String iniPath, IItemSearcher searcher) {
+    private File findDatabaseFile(String dbName, String iniPath, IItemSearcher searcher,
+                                    TemporaryResources tmpRes) {
         if (searcher == null) return null;
 
         String escapedName = searcher.escapeQuery(dbName);
         List<IItemReader> items = Collections.emptyList();
 
-        // Strategy 1: Search by path — database is sibling of Zoom.us.ini
         if (iniPath != null && !iniPath.isEmpty()) {
             int lastSep = iniPath.lastIndexOf('/');
             if (lastSep > 0) {
@@ -580,13 +531,11 @@ public class ZoomDpapiParser extends AbstractParser {
             }
         }
 
-        // Strategy 2: Fallback to name-only search with path proximity (WhatsApp pattern)
         if (items.isEmpty()) {
             String nameQuery = BasicProps.NAME + ":\"" + escapedName + "\"";
             items = searcher.search(nameQuery);
             logger.debug("findDatabaseFile name query for {}: {} results", dbName, items.size());
 
-            // Filter by path proximity if we have the INI path
             if (items.size() > 1 && iniPath != null) {
                 IItemReader best = getBestItem(items, iniPath);
                 if (best != null) {
@@ -598,7 +547,7 @@ public class ZoomDpapiParser extends AbstractParser {
         for (IItemReader item : items) {
             try {
                 File tempFile = File.createTempFile("zoom_", "_" + dbName);
-                tempFile.deleteOnExit();
+                tmpRes.addResource(() -> tempFile.delete());
                 try (InputStream is = item.getBufferedInputStream();
                      java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile)) {
                     byte[] buf = new byte[8192];
@@ -618,11 +567,6 @@ public class ZoomDpapiParser extends AbstractParser {
         return null;
     }
 
-    /**
-     * Returns the item whose path is closest to the reference path,
-     * walking up parent directories. Same pattern as WhatsAppParser.getBestItems
-     * and TelegramParser.getBestItem.
-     */
     private IItemReader getBestItem(List<IItemReader> items, String referencePath) {
         String path = referencePath.replace('\\', '/');
         while (path != null && !path.isEmpty()) {

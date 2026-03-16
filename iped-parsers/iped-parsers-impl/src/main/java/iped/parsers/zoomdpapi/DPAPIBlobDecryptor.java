@@ -16,17 +16,8 @@ import java.util.Base64;
  */
 public class DPAPIBlobDecryptor {
 
-    private static final int CALG_SHA1 = 0x8004;
-    private static final int CALG_SHA256 = 0x800c;
-    private static final int CALG_SHA384 = 0x800d;
-    private static final int CALG_SHA512 = 0x800e;
-    private static final int CALG_3DES = 0x6603;
-    private static final int CALG_AES_128 = 0x660e;
-    private static final int CALG_AES_192 = 0x660f;
-    private static final int CALG_AES_256 = 0x6610;
-
     public byte[] decryptBlobFromBase64(String base64Blob, String masterKeyHex) throws Exception {
-        return decryptBlob(Base64.getDecoder().decode(base64Blob), hexToBytes(masterKeyHex));
+        return decryptBlob(Base64.getDecoder().decode(base64Blob), CryptoUtil.hexToBytes(masterKeyHex));
     }
 
     public byte[] decryptBlob(byte[] blobData, byte[] masterKey) throws Exception {
@@ -85,11 +76,11 @@ public class DPAPIBlobDecryptor {
         int blockSize;
 
         switch ((int) cipherAlgId) {
-            case CALG_3DES:
+            case CryptoUtil.CALG_3DES:
                 algorithm = "DESede/CBC/NoPadding"; blockSize = 8; break;
-            case CALG_AES_128:
-            case CALG_AES_192:
-            case CALG_AES_256:
+            case CryptoUtil.CALG_AES_128:
+            case CryptoUtil.CALG_AES_192:
+            case CryptoUtil.CALG_AES_256:
                 algorithm = "AES/CBC/NoPadding"; blockSize = 16; break;
             default:
                 throw new Exception("Unsupported cipher: 0x" + Long.toHexString(cipherAlgId));
@@ -118,36 +109,19 @@ public class DPAPIBlobDecryptor {
 
     private String getHmacAlgo(long algId) {
         switch ((int) algId) {
-            case CALG_SHA256: return "HmacSHA256";
-            case CALG_SHA384: return "HmacSHA384";
-            case CALG_SHA512: return "HmacSHA512";
+            case CryptoUtil.CALG_SHA256: return "HmacSHA256";
+            case CryptoUtil.CALG_SHA384: return "HmacSHA384";
+            case CryptoUtil.CALG_SHA512: return "HmacSHA512";
             default: return "HmacSHA1";
         }
     }
 
     private int getKeyLength(long algId) {
         switch ((int) algId) {
-            case CALG_3DES: return 24;
-            case CALG_AES_128: return 16;
-            case CALG_AES_192: return 24;
+            case CryptoUtil.CALG_3DES: return 24;
+            case CryptoUtil.CALG_AES_128: return 16;
+            case CryptoUtil.CALG_AES_192: return 24;
             default: return 32;
         }
-    }
-
-    static byte[] hexToBytes(String hex) {
-        byte[] data = new byte[hex.length() / 2];
-        for (int i = 0; i < hex.length(); i += 2) {
-            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
-                    + Character.digit(hex.charAt(i + 1), 16));
-        }
-        return data;
-    }
-
-    static String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
     }
 }

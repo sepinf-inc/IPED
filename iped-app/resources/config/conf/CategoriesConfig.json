@@ -174,7 +174,7 @@
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
     {"name": "MMS Messages", "mimes": ["application/x-ufed-html-mms", "application/x-ufed-mms"]},
     {"name": "Instant Messages Artifacts", "categories":[
-      {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message", "message/x-zoom-message"]},
+      {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
       {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
       {"name": "Message Attachments", "mimes": ["application/x-ufed-attachment"]},
       {"name": "Shared Contacts"}
@@ -183,7 +183,7 @@
     {"name": "SIM Data", "mimes": ["application/x-ufed-html-simdata", "application/x-ufed-simdata"]},
     {"name": "Calendar", "mimes": ["application/x-ufed-html-calendar", "application/x-ufed-calendarentry", "application/x-ios-calendar-db"]},
     {"name": "Logs", "mimes": ["application/x-ufed-html-logs", "application/x-ufed-logentry"]},
-    {"name": "User Accounts", "mimes": ["application/x-ufed-html-users", "application/x-ufed-useraccount", "application/x-ufed-user", "contact/x-skype-account", "application/x-whatsapp-account", "application/x-telegram-account", "application/x-gdrive-account-info", "application/x-whatsapp-user-xml", "application/x-zoom-account"]},
+    {"name": "User Accounts", "mimes": ["application/x-ufed-html-users", "application/x-ufed-useraccount", "application/x-ufed-user", "contact/x-skype-account", "application/x-whatsapp-account", "application/x-telegram-account", "application/x-gdrive-account-info", "application/x-whatsapp-user-xml"]},
     {"name": "Searches", "mimes": ["application/x-ufed-html-searches", "application/x-ufed-searcheditem"]},
     {"name": "Notes", "mimes": ["application/x-ufed-html-notes", "application/x-ufed-note", "application/x-ios-oldnotes-db", "application/x-ios-notes-db"]},
     {"name": "Wireless Networks", "mimes": ["application/x-ufed-html-wifi", "application/x-ufed-wirelessnetwork"]},

@@ -133,21 +133,21 @@ public class ZoomCryptoTest {
 
     @Test
     public void testHexToBytes() {
-        byte[] result = DPAPIBlobDecryptor.hexToBytes("0102ff");
+        byte[] result = CryptoUtil.hexToBytes("0102ff");
         assertArrayEquals(new byte[]{0x01, 0x02, (byte) 0xFF}, result);
     }
 
     @Test
     public void testBytesToHex() {
-        String hex = DPAPIBlobDecryptor.bytesToHex(new byte[]{0x01, 0x02, (byte) 0xFF});
+        String hex = CryptoUtil.bytesToHex(new byte[]{0x01, 0x02, (byte) 0xFF});
         assertEquals("0102ff", hex);
     }
 
     @Test
     public void testHexRoundTrip() {
         byte[] original = new byte[]{0x00, 0x7F, (byte) 0x80, (byte) 0xFF};
-        String hex = DPAPIBlobDecryptor.bytesToHex(original);
-        byte[] restored = DPAPIBlobDecryptor.hexToBytes(hex);
+        String hex = CryptoUtil.bytesToHex(original);
+        byte[] restored = CryptoUtil.hexToBytes(hex);
         assertArrayEquals(original, restored);
     }
 

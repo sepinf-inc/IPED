@@ -32,7 +32,9 @@ public class ZoomMessage implements Comparable<ZoomMessage> {
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 
     public Date getDate() {
-        return timestamp > 0 ? new Date(timestamp) : null;
+        if (timestamp <= 0) return null;
+        long ms = timestamp > 9999999999L ? timestamp : timestamp * 1000;
+        return new Date(ms);
     }
 
     public String getSenderName() { return senderName; }
