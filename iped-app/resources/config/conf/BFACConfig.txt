@@ -2,8 +2,8 @@
 # Configuration for the BFAC backend API client
 
 # Base URL for the BFAC backend API server
-# Default: https://10.61.86.217:443/
-baseUrl = https://10.61.86.217:443/
+# Default: https://10.61.86.109:443/
+baseUrl = https://10.61.86.109:443/
 
 # Maximum number of concurrent file uploads
 # Default: 5
