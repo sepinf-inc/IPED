@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 import re
 from datetime import datetime
 from typing import List, Any, Dict, Tuple, Optional
+from iped.exception import IPEDException
 
 # configuration properties
 enableProp = 'enableAISummarization'
@@ -22,15 +23,14 @@ configFile = 'AISummarizationConfig.txt'
 BUSY_SLEEP_TIME = 10.0
 NONBUSY_SLEEP_TIME = 1.0
 MAX_ATTEMPTS_NONBUSY_RETRIES = 10
+CONNECTION_TIMEOUT = 5
+REQUEST_TIMEOUT = 7200 # 7200 seconds = 2 hours
 
 # NEW: chat analysis / questions config
 enableChatAnalysisProp = 'enableChatAnalysis'
 questionsProp = 'questions'
 questionAttributesProp = 'questionAttributes'
 
-# bookmarks config - Just for testing purposes, set to False to test bookmarks creation
-# I believe it is better to show AI analysis results in the AI panel.
-analysisBookmarksCreated = True
 
 
 def _parse_list_prop(raw: Optional[str]) -> List[str]:
@@ -140,6 +140,8 @@ def create_summaries_request(
     BUSY_SLEEP: float =  BUSY_SLEEP_TIME,
     NONBUSY_SLEEP: float = NONBUSY_SLEEP_TIME,
     MAX_ATTEMPTS_NONBUSY: int = MAX_ATTEMPTS_NONBUSY_RETRIES,
+    CONNECTION_TIMEOUT: int = CONNECTION_TIMEOUT,
+    REQUEST_TIMEOUT: int = REQUEST_TIMEOUT,
 ) -> Dict[str, Any]:
     """
     - BUSY (code == 'BUSY'): retry forever, sleeping BUSY_SLEEP each time.
@@ -147,6 +149,7 @@ def create_summaries_request(
 
     NOTE: Logging is improved; logic is unchanged.
     """
+    #Trocar para https
     url = f"http://{base_url}/api/create_summaries_from_msgs"
     attempts_other = 0
 
@@ -155,7 +158,7 @@ def create_summaries_request(
             payload: Dict[str, Any] = {"msgs": msgs}
             if questions:                    # NEW
                 payload["questions"] = questions
-            resp = requests.post(url, json=payload)
+            resp = requests.post(url, json=payload, timeout=(CONNECTION_TIMEOUT, REQUEST_TIMEOUT))
             res = _normalize(resp)
         except requests.exceptions.Timeout:
             res = {
@@ -164,6 +167,9 @@ def create_summaries_request(
                 "http_status": 408,
                 "message": "Request timed out.",
             }
+            logger.error(f"[AISummarizationTask]: Error - Request timed out after long time: {REQUEST_TIMEOUT} seconds.")
+            res["ok"] = False
+            return res
         except requests.exceptions.ConnectionError as e:
             res = {
                 "ok": False,
@@ -175,6 +181,13 @@ def create_summaries_request(
             res = {
                 "ok": False,
                 "code": "CLIENT_ERROR",
+                "http_status": 500,
+                "message": str(e),
+            }
+        except Exception as e:
+            res = {
+                "ok": False,
+                "code": "UNKNOWN_ERROR",
                 "http_status": 500,
                 "message": str(e),
             }
@@ -194,11 +207,12 @@ def create_summaries_request(
         attempts_other += 1
         if attempts_other >= MAX_ATTEMPTS_NONBUSY:
             # Final error log with nice formatting
-            logger.error(f"[AISummarizationTask]: Error - {_fmt_error(res)}")
+            logger.error(f"[AISummarizationTask]: Error - tried {attempts_other} times - {_fmt_error(res)}")
+            res["ok"] = False
             return res
 
         # Intermediate warning with nice formatting
-        logger.warn(f"[AISummarizationTask]: Warning - {_fmt_error(res)}")
+        logger.warn(f"[AISummarizationTask]: Warning - tried {attempts_other} times - {_fmt_error(res)}")
         time.sleep(max(0.1, NONBUSY_SLEEP))
 
 
@@ -286,15 +300,21 @@ def getMessagesFromChatHTML(html_text: str) -> Tuple[List[Dict], int]:
         if msg_div.find("span", class_=["fwd"]):
             forwarded = True
 
-        name = msg_div.find("span").get_text(" ", strip=True)
+        name_span = msg_div.find("span", class_="name") or msg_div.find("span")
+        if name_span and "time" in (name_span.get("class") or []):
+            name_span = None
+        name = name_span.get_text(" ", strip=True) if name_span else ""
+
         #print(msg_div.prettify())
         timestamp_span = msg_div.find("span", class_="time")
         if not timestamp_span:
             logger.warn(f"[AISummarizationTask]: Warning - No span timestamp in {msg_div.prettify()}")
-            timestamp = None
-        else:
-            timestamp_raw = timestamp_span.get_text(" ", strip=True)
-            timestamp = _clean_timestamp(timestamp_raw) if timestamp_raw else None
+            continue  # melhor do que timestamp=None
+        timestamp_raw = timestamp_span.get_text(" ", strip=True)
+        timestamp = _clean_timestamp(timestamp_raw) if timestamp_raw else None
+        if not timestamp:
+            logger.warn(f"[AISummarizationTask]: Warning - No span timestamp in {msg_div.prettify()}")
+            continue
 
         # -------------------------------------------------------------------#
         # 1) transcrição de áudio (fica em <i> … </i>)
@@ -311,46 +331,53 @@ def getMessagesFromChatHTML(html_text: str) -> Tuple[List[Dict], int]:
         # -------------------------------------------------------------------#
         # 2) anexo (áudio / vídeo / outro)
         # -------------------------------------------------------------------#
-        if not content:
+        if not content and not kind:
             #kind = "other"
 
             # áudio ➜ ícone <div class="audioImg">
             if msg_div.find("div", class_="audioImg"):
                 kind = "audio"
-                content = f" "
             elif msg_div.find("div", class_="imageImg"):
                 kind = "image"
-                content = f" "
             elif msg_div.find("div", class_="videoImg"):
                 kind = "video"
-                content = f" "
             # vídeo ou imagem ➜ thumbnail <img class="thumb" … title="video|image">
             else:
                 thumb = msg_div.find("img", class_="thumb")
-                if thumb and thumb.get("title"):
-                    title = thumb["title"].lower()
+                if thumb:
+                    title = (thumb.get("title") or "").lower()
                     if "video" in title:
                         kind = "video"
-                        content = f" "
                     elif "image" in title:
                         kind = "image"
-                        content = f" "
+                    elif "file" in title:
+                        kind = "file"
+                    else:
+                        kind = "attachment"  # fallback
 
             #a_tag = msg_div.find("a", href=True)
             #if a_tag:
             #    content = f" "
 
+
+        if kind and not content:
+            caption = _extract_text_nodes(msg_div)  # pode vir vazio
+            if caption:
+                content = caption
+    
         # -------------------------------------------------------------------#
         # 3) texto “puro”
         # -------------------------------------------------------------------#
 
-        if not content:
+        if not content and not kind:
             content = _extract_text_nodes(msg_div)
             kind = "text"        
             
         # ainda vazio? provavelmente só thumbs ou attachments sem link → pula
-        if not content:
-            continue
+        if kind in ("text", "audio transcription"):
+            content = (content or "").strip()
+            if not content:
+                continue
         
         len_mgs_content = len_mgs_content + len(content)
 
@@ -411,7 +438,8 @@ class AISummarizationTask:
         if not self.remoteServiceAddress:
             logger.error('[AISummarizationTask]: Error: Task enabled but remoteServiceAddress not set on config file.')
             self.enabled = False
-            return
+            self.worker.exception = IPEDException(f"[AISummarizationTask]: Error: Task enabled but remoteServiceAddress not set on config file.")
+            raise Exception(f"[AISummarizationTask]: Error: Task enabled but remoteServiceAddress not set on config file.")
 
         self.enableInternalSummarization = (extraProps.getProperty(enableInternalSummarizationProp) or "").lower() == "true"
         self.enableExternalSummarization = (extraProps.getProperty(enableExternalSummarizationProp) or "").lower() == "true"
@@ -426,12 +454,14 @@ class AISummarizationTask:
 
 
         if self.enableChatAnalysis and (len(self.questions) == 0 or len(self.questionAttributes) == 0):
-            logger.error("[AISummarizationTask]: Warning - 'questions' and 'questionAttributes' are not set.")
-            raise Exception(f"[AISummarizationTask]: Warning - 'questions' and 'questionAttributes' are not set.")
+            logger.error("[AISummarizationTask]: Error - 'questions' and 'questionAttributes' are not set.")
+            self.worker.exception = IPEDException(f"[AISummarizationTask]: Error - 'questions' and 'questionAttributes' are not set.")
+            raise Exception(f"[AISummarizationTask]: Error - 'questions' and 'questionAttributes' are not set.")
 
         if self.enableChatAnalysis and len(self.questions) != len(self.questionAttributes):
-            logger.error("[AISummarizationTask]: Warning - 'questions' and 'questionAttributes' have different sizes.")
-            raise Exception(f"[AISummarizationTask]: Warning - 'questions' and 'questionAttributes' have different sizes.")
+            logger.error("[AISummarizationTask]: Error - 'questions' and 'questionAttributes' have different sizes.")
+            self.worker.exception = IPEDException(f"[AISummarizationTask]: Error - 'questions' and 'questionAttributes' have different sizes.")
+            raise Exception(f"[AISummarizationTask]: Error - 'questions' and 'questionAttributes' have different sizes.")
 
         return
 
@@ -453,7 +483,7 @@ class AISummarizationTask:
 
         chatHtml = bytes(b & 0xFF for b in raw_bytes).decode('utf-8', errors='replace')
         msgs, total_len = getMessagesFromChatHTML(chatHtml)
-        if len(msgs) == 0 or total_len < self.minimumContentLength:
+        if len(msgs) == 0 or total_len == 0 or total_len < self.minimumContentLength:
             return
 
         questions = None
@@ -469,6 +499,7 @@ class AISummarizationTask:
         if not res["ok"]:
             logger.error(f"[AISummarizationTask]: Error {item.getName()} - {res['code']} ({res['http_status']}): {res.get('message')}")
             # Exit - server connection problem
+            self.worker.exception = IPEDException(f"[AISummarizationTask]: Error {item.getName()} - {res['code']} ({res['http_status']}): {res.get('message')}")
             raise Exception(f"[AISummarizationTask]: Error {item.getName()} - {res['code']} ({res['http_status']}): {res.get('message')}")
 
 
@@ -524,7 +555,7 @@ class AISummarizationTask:
                 if not isinstance(answers, list):
                     # If this chunk has no answers list, append "0" for each attribute to keep lengths aligned
                     for attr in self.questionAttributes:
-                        per_attr_answers[attr].append("0")
+                        per_attr_answers[attr].append(0)
                     continue
 
                 # For each question index, append its answer to the corresponding attribute array
@@ -533,7 +564,7 @@ class AISummarizationTask:
                         per_attr_answers[attr_name].append(int(answers[q_idx]))
                     else:
                         # No answer for this question in this chunk → default "0"
-                        per_attr_answers[attr_name].append("0")
+                        per_attr_answers[attr_name].append(0)
 
         if len(chunk_summaries) == 0:
             logger.error(
@@ -581,66 +612,5 @@ class AISummarizationTask:
     # Called when task processing is finished. Can be used to cleanup resources.
     # Objects "ipedCase" and "searcher" are provided, so case can be queried for items and bookmarks can be created.
     def finish(self):
-        """
-        Creates bookmarks for all ai:analysis:* attributes after processing.
-        One pair of bookmarks per questionAttribute:
-        - Todos os analisados (score >= 0)
-        - Alta relevância (score >= 750)
-        """
-        from iped.properties import ExtraProperties  
-
-        global analysisBookmarksCreated
-        if analysisBookmarksCreated:
-            return
-
-        # If analysis is disabled or there are no configured attributes, do nothing
-        if not getattr(self, "enableChatAnalysis", False) or not getattr(self, "questionAttributes", None):
-            return
-
-        try:
-            # Loop over each configured question attribute
-            for attr_name in self.questionAttributes:
-                # ai:analysis:<attr>  →  ai\\:analysis\\:<attr> in Lucene query
-                field = f"ai\\:analysis\\:{attr_name}"
-
-                # All analyzed (score >= 0)
-                query_all = f"{field}: [0 TO *]"
-
-                # High relevance (score >= 750)
-                query_high = f"{field}: [750 TO *]"
-
-                # ---- Bookmark: all analyzed for this attribute ----
-                searcher.setQuery(query_all)
-                ids = searcher.search().getIds()
-
-                if len(ids) > 0:
-                    bookmarkId = ipedCase.getBookmarks().newBookmark(
-                        f"IA: {attr_name} - todos analisados"
-                    )
-                    ipedCase.getBookmarks().setBookmarkComment(
-                        bookmarkId,
-                        f"{len(ids)} chats possuem valores em {field} (score >= 0)."
-                    )
-                    ipedCase.getBookmarks().addBookmark(ids, bookmarkId)
-
-                # ---- Bookmark: high relevance for this attribute ----
-                searcher.setQuery(query_high)
-                ids = searcher.search().getIds()
-
-                if len(ids) > 0:
-                    bookmarkId = ipedCase.getBookmarks().newBookmark(
-                        f"IA: {attr_name} - alta relevância"
-                    )
-                    ipedCase.getBookmarks().setBookmarkComment(
-                        bookmarkId,
-                        f"{len(ids)} chats possuem alta relevância em {field} (score >= 750)."
-                    )
-                    ipedCase.getBookmarks().addBookmark(ids, bookmarkId)
-
-            # Persist all bookmark changes once at the end
-            ipedCase.getBookmarks().saveState(True)
-
-            analysisBookmarksCreated = True
-
-        except Exception as e:
-            logger.error(f"[AISummarizationTask]: Error creating analysis bookmarks in finish(): {e}")
+        return
+        
