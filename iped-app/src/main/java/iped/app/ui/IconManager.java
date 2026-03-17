@@ -344,6 +344,7 @@ public class IconManager {
         icon = availableIconsMap.get("zoom");
         if (icon != null) {
             mimeIconMap.put("application/x-zoom-dpapi-ini", icon);
+            mimeIconMap.put("application/x-zoom-meeting", icon);
             mimeIconMap.put("message/x-zoom-message", icon);
         }
 

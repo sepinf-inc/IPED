@@ -246,6 +246,27 @@ public class ZoomDpapiParser extends AbstractParser {
                 for (ZoomParticipant p : meeting.getParticipants()) {
                     meetingMeta.add(ExtraProperties.PARTICIPANTS, p.getName());
                 }
+                String meetingId = meeting.getMeetingId() != null ? meeting.getMeetingId()
+                        : (meeting.getConfId() != null ? meeting.getConfId() : confLabel);
+                meetingMeta.set(ExtraProperties.CONVERSATION_ID, meetingId);
+                meetingMeta.set(ExtraProperties.CONVERSATION_NAME, confLabel);
+                meetingMeta.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT,
+                        meeting.getMessages().size());
+                if (!meeting.getParticipants().isEmpty()) {
+                    for (ZoomParticipant p : meeting.getParticipants()) {
+                        meetingMeta.add(ExtraProperties.CONVERSATION_PARTICIPANTS, p.getName());
+                    }
+                } else {
+                    java.util.LinkedHashSet<String> senders = new java.util.LinkedHashSet<>();
+                    for (ZoomMessage msg : meeting.getMessages()) {
+                        if (msg.getSenderName() != null) {
+                            senders.add(msg.getSenderName());
+                        }
+                    }
+                    for (String sender : senders) {
+                        meetingMeta.add(ExtraProperties.CONVERSATION_PARTICIPANTS, sender);
+                    }
+                }
                 if (extractMessages && !meeting.getMessages().isEmpty()) {
                     meetingMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }

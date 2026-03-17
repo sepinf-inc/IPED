@@ -48,7 +48,6 @@ public class ZoomReportGenerator {
 
         w.append("<header>");
         w.append("<h1>Meeting: ").append(esc(confLabel)).append(" Report</h1>");
-        w.append("<p class=\"meta\">Generated: ").append(sdf.format(new Date())).append(" UTC</p>");
         w.append("</header>");
 
         renderDecryptionSection(w, sid, oskey, userProfileName, sysInfo);
