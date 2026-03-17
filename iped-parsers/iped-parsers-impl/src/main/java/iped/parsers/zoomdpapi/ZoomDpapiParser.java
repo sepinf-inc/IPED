@@ -110,6 +110,7 @@ public class ZoomDpapiParser extends AbstractParser {
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
         ItemInfo itemInfo = context.get(ItemInfo.class);
+        IItemReader currentItem = context.get(IItemReader.class);
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
@@ -120,6 +121,8 @@ public class ZoomDpapiParser extends AbstractParser {
             byte[] iniBytes = org.apache.commons.io.IOUtils.toByteArray(tis);
             String iniContent = new String(iniBytes, StandardCharsets.UTF_8);
             String iniPath = itemInfo != null ? itemInfo.getPath() : "";
+            String evidenceUUID = currentItem != null && currentItem.getDataSource() != null
+                    ? currentItem.getDataSource().getUUID() : null;
             logger.info("Processing Zoom.us.ini ({} bytes) from: {}", iniBytes.length, iniPath);
 
             String encryptedBlob = extractEncryptedKey(iniContent);
@@ -163,7 +166,7 @@ public class ZoomDpapiParser extends AbstractParser {
             List<ZoomSharedFile> files = new ArrayList<>();
             List<ZoomTimelineEvent> timeline = new ArrayList<>();
 
-            File zoomusDb = findDatabaseFile("zoomus.enc.db", iniPath, searcher, tmp);
+            File zoomusDb = findDatabaseFile("zoomus.enc.db", iniPath, searcher, tmp, evidenceUUID);
             if (zoomusDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(zoomusDb, oskey).createConnection()) {
                     account = dataExtractor.extractUserAccount(conn);
@@ -175,7 +178,7 @@ public class ZoomDpapiParser extends AbstractParser {
                 }
             }
 
-            File meetingDb = findDatabaseFile("zoommeeting.enc.db", iniPath, searcher, tmp);
+            File meetingDb = findDatabaseFile("zoommeeting.enc.db", iniPath, searcher, tmp, evidenceUUID);
             String[] meetingIds = null;
             if (meetingDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(meetingDb, oskey).createConnection()) {
@@ -198,7 +201,7 @@ public class ZoomDpapiParser extends AbstractParser {
                 }
             }
 
-            File calendarDb = findDatabaseFile("calendar-history-meeting.enc.db", iniPath, searcher, tmp);
+            File calendarDb = findDatabaseFile("calendar-history-meeting.enc.db", iniPath, searcher, tmp, evidenceUUID);
             if (calendarDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(calendarDb, oskey).createConnection()) {
                     meetings = dataExtractor.extractMeetings(conn);
@@ -535,7 +538,7 @@ public class ZoomDpapiParser extends AbstractParser {
     }
 
     private File findDatabaseFile(String dbName, String iniPath, IItemSearcher searcher,
-                                    TemporaryResources tmpRes) {
+                                    TemporaryResources tmpRes, String evidenceUUID) {
         if (searcher == null) return null;
 
         String escapedName = searcher.escapeQuery(dbName);
@@ -548,13 +551,18 @@ public class ZoomDpapiParser extends AbstractParser {
                 String pathQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parentPath) + "\" AND "
                         + BasicProps.NAME + ":\"" + escapedName + "\"";
                 items = searcher.search(pathQuery);
+                items = filterDeleted(items);
                 logger.debug("findDatabaseFile path query for {}: {} -> {} results", dbName, pathQuery, items.size());
             }
         }
 
         if (items.isEmpty()) {
             String nameQuery = BasicProps.NAME + ":\"" + escapedName + "\"";
+            if (evidenceUUID != null) {
+                nameQuery += " AND " + BasicProps.EVIDENCE_UUID + ":\"" + evidenceUUID + "\"";
+            }
             items = searcher.search(nameQuery);
+            items = filterDeleted(items);
             logger.debug("findDatabaseFile name query for {}: {} results", dbName, items.size());
 
             if (items.size() > 1 && iniPath != null) {
@@ -586,6 +594,16 @@ public class ZoomDpapiParser extends AbstractParser {
 
         logger.info("Database file not found: {}", dbName);
         return null;
+    }
+
+    private List<IItemReader> filterDeleted(List<IItemReader> items) {
+        List<IItemReader> active = new ArrayList<>();
+        for (IItemReader item : items) {
+            if (!item.isDeleted()) {
+                active.add(item);
+            }
+        }
+        return active.isEmpty() ? items : active;
     }
 
     private IItemReader getBestItem(List<IItemReader> items, String referencePath) {
