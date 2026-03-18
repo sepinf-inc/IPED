@@ -2,6 +2,7 @@ package iped.bfac;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -144,7 +145,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
             publish("Sending hashes to server...");
 
             // Track files that need upload (fileId -> hashInfo)
-            Map<Integer, FileHashInfo> filesToUpload = new HashMap<>();
+            Map<Integer, FileHashInfo> filesToUpload = new LinkedHashMap<>();
 
             // Process in batches
             for (int i = 0; i < hashInfos.size() && !cancelled && !authenticationError; i += BATCH_SIZE) {
@@ -410,10 +411,12 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                         new ExecutorCompletionService<>(uploadExecutor);
                 int submittedCount = 0;
                 for (Map.Entry<Integer, FileHashInfo> entry : uploadsForTasks) {
+                    BfacApiClient.BatchFileUploadStatusItem statusItem = statusByFileId.get(entry.getKey());
+                    FileUploadStatus initialStatus = statusItem != null ? statusItem.getStatus() : null;
                     FileUploadTask task = new FileUploadTask(
                             entry.getKey(), entry.getValue(), apiClient, multiSource,
                             globalBytesUploaded, finalTotalBytesToUpload,
-                            logCallback, tokenRenewalCallback, progressCallback,
+                            logCallback, tokenRenewalCallback, progressCallback, initialStatus,
                             cancelledFlag, authErrorFlag);
                     completionService.submit(task);
                     submittedCount++;

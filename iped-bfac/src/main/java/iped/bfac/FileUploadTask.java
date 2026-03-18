@@ -34,6 +34,7 @@ public class FileUploadTask implements Callable<FileUploadResult> {
     private final Consumer<String> logCallback;
     private final Runnable tokenRenewalCallback;
     private final Runnable progressCallback;
+    private final FileUploadStatus initialStatus;
     private final boolean[] cancelledFlag;
     private final boolean[] authErrorFlag;
 
@@ -56,6 +57,7 @@ public class FileUploadTask implements Callable<FileUploadResult> {
                           IPEDMultiSource ipedSource, AtomicLong globalBytesUploaded,
                           long totalBytesToUpload, Consumer<String> logCallback,
                           Runnable tokenRenewalCallback, Runnable progressCallback,
+                          FileUploadStatus initialStatus,
                           boolean[] cancelledFlag, boolean[] authErrorFlag) {
         this.fileId = fileId;
         this.hashInfo = hashInfo;
@@ -66,6 +68,7 @@ public class FileUploadTask implements Callable<FileUploadResult> {
         this.logCallback = logCallback;
         this.tokenRenewalCallback = tokenRenewalCallback;
         this.progressCallback = progressCallback;
+        this.initialStatus = initialStatus;
         this.cancelledFlag = cancelledFlag;
         this.authErrorFlag = authErrorFlag;
     }
@@ -78,7 +81,7 @@ public class FileUploadTask implements Callable<FileUploadResult> {
             }
 
             // Get upload status from backend
-            FileUploadStatus status = apiClient.getUploadStatus(fileId);
+            FileUploadStatus status = initialStatus != null ? initialStatus : apiClient.getUploadStatus(fileId);
             if (!status.isSuccess()) {
                 if (status.isUnauthorized()) {
                     authErrorFlag[0] = true;
