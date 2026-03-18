@@ -570,7 +570,6 @@ public class BfacDialog extends JDialog {
 
         newSubmissionRadio.addActionListener(e -> onSubmissionModeChanged());
         existingSubmissionRadio.addActionListener(e -> onSubmissionModeChanged());
-        existingSubmissionComboBox.addActionListener(e -> syncCategoryWithSelectedSubmission());
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -584,6 +583,7 @@ public class BfacDialog extends JDialog {
         JPanel existingPanel = new JPanel(new BorderLayout(5, 0));
         existingSubmissionComboBox = new JComboBox<>();
         existingSubmissionComboBox.setEnabled(false);
+        existingSubmissionComboBox.addActionListener(e -> syncCategoryWithSelectedSubmission());
         existingPanel.add(existingSubmissionComboBox, BorderLayout.CENTER);
 
         refreshSubmissionsButton = new JButton("↻");
