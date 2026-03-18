@@ -15,10 +15,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.swing.SwingWorker;
 
 import iped.bfac.api.BfacApiClient;
+import iped.bfac.api.BfacApiClient.BatchUploadSegmentInput;
+import iped.bfac.api.BfacApiClient.BatchUploadSegmentResult;
 import iped.bfac.api.FileHashInfo;
 import iped.bfac.api.LoginResult;
 import iped.bfac.api.SendHashResult;
 import iped.bfac.api.SubmissionResult;
+import iped.bfac.api.FileUploadStatus;
 import iped.data.IIPEDSource;
 import iped.data.IItem;
 import iped.data.IItemId;
@@ -243,11 +246,170 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 IPEDMultiSource multiSource = (ipedSource instanceof IPEDMultiSource)
                         ? (IPEDMultiSource) ipedSource : null;
 
+                List<Map.Entry<Integer, FileHashInfo>> pendingUploads = new ArrayList<>(filesToUpload.entrySet());
+                List<Map.Entry<Integer, FileHashInfo>> uploadsForTasks = new ArrayList<>();
+                List<Integer> pendingFileIds = new ArrayList<>();
+                for (Map.Entry<Integer, FileHashInfo> entry : pendingUploads) {
+                    pendingFileIds.add(entry.getKey());
+                }
+                Map<Integer, BfacApiClient.BatchFileUploadStatusItem> statusByFileId = apiClient.getUploadStatusBatch(pendingFileIds);
+
+                int batchUploadedCount = 0;
+                int batchSkippedCount = 0;
+                int batchErrorCount = 0;
+                long batchBytesUploaded = 0;
+
+                int uploadIndex = 0;
+                while (uploadIndex < pendingUploads.size() && !cancelledFlag[0] && !authErrorFlag[0]) {
+                    Map.Entry<Integer, FileHashInfo> currentEntry = pendingUploads.get(uploadIndex);
+                    int currentFileId = currentEntry.getKey();
+                    FileHashInfo currentHashInfo = currentEntry.getValue();
+
+                    BfacApiClient.BatchFileUploadStatusItem currentStatusItem = statusByFileId.get(currentFileId);
+                    if (currentStatusItem == null || !currentStatusItem.isFound() || currentStatusItem.getStatus() == null) {
+                        if (currentStatusItem != null && currentStatusItem.isUnauthorized()) {
+                            authErrorFlag[0] = true;
+                            authenticationError = true;
+                            break;
+                        }
+                        uploadsForTasks.add(currentEntry);
+                        uploadIndex++;
+                        continue;
+                    }
+                    FileUploadStatus currentStatus = currentStatusItem.getStatus();
+
+                    long currentSize = Math.max(0, currentHashInfo.getFileSize());
+                    long groupedLimit = Math.max(1, currentStatus.getSegmentSize());
+                    if (currentStatus.isComplete() || currentStatus.getUploadedSize() > 0 || currentSize == 0 || currentSize > groupedLimit) {
+                        uploadsForTasks.add(currentEntry);
+                        uploadIndex++;
+                        continue;
+                    }
+
+                    List<Integer> groupedIndices = new ArrayList<>();
+                    groupedIndices.add(uploadIndex);
+                    long groupedTotal = currentSize;
+                    int cursor = uploadIndex + 1;
+
+                    while (cursor < pendingUploads.size()) {
+                        Map.Entry<Integer, FileHashInfo> nextEntry = pendingUploads.get(cursor);
+                        BfacApiClient.BatchFileUploadStatusItem nextStatusItem = statusByFileId.get(nextEntry.getKey());
+                        if (nextStatusItem == null || !nextStatusItem.isFound() || nextStatusItem.getStatus() == null) {
+                            break;
+                        }
+                        FileUploadStatus nextStatus = nextStatusItem.getStatus();
+                        if (nextStatus.isComplete() || nextStatus.getUploadedSize() > 0) {
+                            break;
+                        }
+
+                        long nextSize = Math.max(0, nextEntry.getValue().getFileSize());
+                        long nextLimit = Math.max(1, nextStatus.getSegmentSize());
+                        if (nextSize == 0 || nextSize > nextLimit) {
+                            break;
+                        }
+
+                        groupedLimit = Math.min(groupedLimit, nextLimit);
+                        if (groupedTotal + nextSize > groupedLimit) {
+                            break;
+                        }
+
+                        groupedIndices.add(cursor);
+                        groupedTotal += nextSize;
+                        cursor++;
+                    }
+
+                    if (groupedIndices.size() > 1 && multiSource != null) {
+                        List<BatchUploadSegmentInput> segments = new ArrayList<>();
+                        boolean segmentBuildFailed = false;
+
+                        for (Integer groupedIndex : groupedIndices) {
+                            Map.Entry<Integer, FileHashInfo> groupedEntry = pendingUploads.get(groupedIndex);
+                            IItem groupedItem = null;
+                            try {
+                                IItemId itemId = groupedEntry.getValue().getItemId();
+                                if (itemId != null) {
+                                    groupedItem = multiSource.getItemByItemId(itemId);
+                                }
+                                if (groupedItem == null) {
+                                    segmentBuildFailed = true;
+                                    break;
+                                }
+                                long groupedSize = Math.max(0, groupedEntry.getValue().getFileSize());
+                                if (groupedSize > Integer.MAX_VALUE) {
+                                    segmentBuildFailed = true;
+                                    break;
+                                }
+                                byte[] segmentData;
+                                try (java.io.InputStream groupedStream = groupedItem.getBufferedInputStream()) {
+                                    segmentData = groupedStream.readAllBytes();
+                                }
+                                if (segmentData.length != groupedSize) {
+                                    segmentBuildFailed = true;
+                                    break;
+                                }
+                                segments.add(new BatchUploadSegmentInput(
+                                        groupedEntry.getKey(),
+                                        0,
+                                        segmentData.length,
+                                        segmentData));
+                            } catch (Exception e) {
+                                segmentBuildFailed = true;
+                                break;
+                            }
+                        }
+
+                        if (!segmentBuildFailed) {
+                            List<BatchUploadSegmentResult> batchResults = apiClient.uploadFileSegmentsBatch(segments);
+                            Map<Integer, BatchUploadSegmentResult> byFileId = new HashMap<>();
+                            for (BatchUploadSegmentResult item : batchResults) {
+                                byFileId.put(item.getFileId(), item);
+                            }
+
+                            boolean fatalBatchAuthError = false;
+                            for (Integer groupedIndex : groupedIndices) {
+                                Map.Entry<Integer, FileHashInfo> groupedEntry = pendingUploads.get(groupedIndex);
+                                BatchUploadSegmentResult batchResult = byFileId.get(groupedEntry.getKey());
+                                if (batchResult != null && batchResult.isUnauthorized()) {
+                                    authErrorFlag[0] = true;
+                                    authenticationError = true;
+                                    fatalBatchAuthError = true;
+                                    break;
+                                }
+                            }
+                            if (fatalBatchAuthError) {
+                                break;
+                            }
+
+                            for (Integer groupedIndex : groupedIndices) {
+                                Map.Entry<Integer, FileHashInfo> groupedEntry = pendingUploads.get(groupedIndex);
+                                BatchUploadSegmentResult batchResult = byFileId.get(groupedEntry.getKey());
+                                long groupedSize = Math.max(0, groupedEntry.getValue().getFileSize());
+                                if (batchResult != null && batchResult.isSuccess()) {
+                                    batchUploadedCount++;
+                                    batchBytesUploaded += groupedSize;
+                                    globalBytesUploaded.addAndGet(groupedSize);
+                                    if (progressCallback != null) {
+                                        progressCallback.run();
+                                    }
+                                } else {
+                                    uploadsForTasks.add(groupedEntry);
+                                }
+                            }
+
+                            uploadIndex += groupedIndices.size();
+                            continue;
+                        }
+                    }
+
+                    uploadsForTasks.add(currentEntry);
+                    uploadIndex++;
+                }
+
                 // Submit all upload tasks via CompletionService (results in completion order)
                 CompletionService<FileUploadResult> completionService =
                         new ExecutorCompletionService<>(uploadExecutor);
                 int submittedCount = 0;
-                for (Map.Entry<Integer, FileHashInfo> entry : filesToUpload.entrySet()) {
+                for (Map.Entry<Integer, FileHashInfo> entry : uploadsForTasks) {
                     FileUploadTask task = new FileUploadTask(
                             entry.getKey(), entry.getValue(), apiClient, multiSource,
                             globalBytesUploaded, finalTotalBytesToUpload,
@@ -260,10 +422,10 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 // Collect results in completion order (not submission order)
                 uploadExecutor.shutdown();
 
-                int uploadedCount = 0;
-                int uploadErrorCount = 0;
-                int skippedCount = 0;
-                long totalBytesUploaded = 0;
+                int uploadedCount = batchUploadedCount;
+                int uploadErrorCount = batchErrorCount;
+                int skippedCount = batchSkippedCount;
+                long totalBytesUploaded = batchBytesUploaded;
 
                 for (int i = 0; i < submittedCount; i++) {
                     try {

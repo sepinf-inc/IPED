@@ -1,6 +1,7 @@
 package iped.bfac.api;
 
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -48,6 +50,117 @@ public class BfacApiClient {
     private static final Gson GSON = new Gson();
     private static final Duration TIMEOUT = Duration.ofSeconds(60);
     private static final String USER_AGENT = "IPED-BFAC-Client/" + Version.APP_VERSION + " (" + Version.APP_EXT + ")";
+    private static final int MAX_STATUS_BATCH_FILE_IDS = 50;
+
+    public static class BatchUploadSegmentInput {
+        private final int fileId;
+        private final long offset;
+        private final int segmentSize;
+        private final byte[] segmentData;
+
+        public BatchUploadSegmentInput(int fileId, long offset, int segmentSize, byte[] segmentData) {
+            this.fileId = fileId;
+            this.offset = offset;
+            this.segmentSize = segmentSize;
+            this.segmentData = segmentData;
+        }
+
+        public int getFileId() {
+            return fileId;
+        }
+
+        public long getOffset() {
+            return offset;
+        }
+
+        public int getSegmentSize() {
+            return segmentSize;
+        }
+
+        public byte[] getSegmentData() {
+            return segmentData;
+        }
+    }
+
+    public static class BatchUploadSegmentResult {
+        private final int fileId;
+        private final boolean success;
+        private final FileUploadStatus status;
+        private final String error;
+        private final int statusCode;
+
+        public BatchUploadSegmentResult(int fileId, boolean success, FileUploadStatus status, String error, int statusCode) {
+            this.fileId = fileId;
+            this.success = success;
+            this.status = status;
+            this.error = error;
+            this.statusCode = statusCode;
+        }
+
+        public int getFileId() {
+            return fileId;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public FileUploadStatus getStatus() {
+            return status;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public int getStatusCode() {
+            return statusCode;
+        }
+
+        public boolean isUnauthorized() {
+            return statusCode == 401;
+        }
+    }
+
+    public static class BatchFileUploadStatusItem {
+        private final int fileId;
+        private final boolean found;
+        private final FileUploadStatus status;
+        private final String error;
+        private final int statusCode;
+
+        public BatchFileUploadStatusItem(int fileId, boolean found, FileUploadStatus status, String error, int statusCode) {
+            this.fileId = fileId;
+            this.found = found;
+            this.status = status;
+            this.error = error;
+            this.statusCode = statusCode;
+        }
+
+        public int getFileId() {
+            return fileId;
+        }
+
+        public boolean isFound() {
+            return found;
+        }
+
+        public FileUploadStatus getStatus() {
+            return status;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public int getStatusCode() {
+            return statusCode;
+        }
+
+        public boolean isUnauthorized() {
+            return statusCode == 401;
+        }
+    }
 
     private String baseUrl;
     private String accessToken;
@@ -469,6 +582,87 @@ public class BfacApiClient {
         }
     }
 
+    public java.util.Map<Integer, BatchFileUploadStatusItem> getUploadStatusBatch(List<Integer> fileIds) {
+        java.util.Map<Integer, BatchFileUploadStatusItem> byFileId = new java.util.HashMap<>();
+
+        if (fileIds == null || fileIds.isEmpty()) {
+            return byFileId;
+        }
+
+        if (accessToken == null || accessToken.isEmpty()) {
+            for (Integer fileId : fileIds) {
+                byFileId.put(fileId, new BatchFileUploadStatusItem(fileId, false, null, "Not authenticated", 401));
+            }
+            return byFileId;
+        }
+
+        for (int start = 0; start < fileIds.size(); start += MAX_STATUS_BATCH_FILE_IDS) {
+            int end = Math.min(start + MAX_STATUS_BATCH_FILE_IDS, fileIds.size());
+            List<Integer> chunk = fileIds.subList(start, end);
+
+            try {
+                JsonObject payload = new JsonObject();
+                JsonArray fileIdsArray = new JsonArray();
+                for (Integer fileId : chunk) {
+                    fileIdsArray.add(fileId);
+                }
+                payload.add("file_ids", fileIdsArray);
+
+                HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/v1/file-transfer/status-batch")
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(payload)))
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() != 200) {
+                    String errorMsg = "Failed to get batch upload status: " + response.statusCode();
+                    logger.error(errorMsg + " - " + response.body());
+                    for (Integer fileId : chunk) {
+                        byFileId.put(fileId, new BatchFileUploadStatusItem(fileId, false, null, errorMsg, response.statusCode()));
+                    }
+                    continue;
+                }
+
+                JsonObject responseObj = GSON.fromJson(response.body(), JsonObject.class);
+                JsonArray items = responseObj.getAsJsonArray("items");
+                for (JsonElement element : items) {
+                    JsonObject item = element.getAsJsonObject();
+                    int fileId = item.has("file_id") ? item.get("file_id").getAsInt() : -1;
+                    boolean found = item.has("found") && item.get("found").getAsBoolean();
+                    String error = item.has("error") && !item.get("error").isJsonNull()
+                            ? item.get("error").getAsString()
+                            : null;
+                    int statusCode = item.has("status_code") && !item.get("status_code").isJsonNull()
+                            ? item.get("status_code").getAsInt()
+                            : (found ? 200 : 404);
+                    FileUploadStatus status = null;
+                    if (item.has("status") && item.get("status").isJsonObject()) {
+                        JsonObject statusObj = item.getAsJsonObject("status");
+                        status = new FileUploadStatus(
+                                fileId,
+                                statusObj.has("total_size") ? statusObj.get("total_size").getAsLong() : 0,
+                                statusObj.has("uploaded_size") ? statusObj.get("uploaded_size").getAsLong() : 0,
+                                statusObj.has("segment_size") ? statusObj.get("segment_size").getAsInt() : 1024 * 1024,
+                                statusObj.has("is_complete") && statusObj.get("is_complete").getAsBoolean());
+                    }
+                    byFileId.put(fileId, new BatchFileUploadStatusItem(fileId, found, status, error, statusCode));
+                }
+
+                for (Integer fileId : chunk) {
+                    byFileId.putIfAbsent(fileId, new BatchFileUploadStatusItem(fileId, false, null, "Missing status item", 500));
+                }
+            } catch (Exception e) {
+                logger.error("Error getting batch upload status", e);
+                for (Integer fileId : chunk) {
+                    byFileId.put(fileId, new BatchFileUploadStatusItem(fileId, false, null, "Connection error: " + e.getMessage(), -1));
+                }
+            }
+        }
+
+        return byFileId;
+    }
+
     /**
      * Uploads a file segment to the BFAC backend.
      * @param fileId The file ID in the backend
@@ -511,6 +705,132 @@ public class BfacApiClient {
             logger.error("Error uploading segment for file {}", fileId, e);
             return FileUploadStatus.error(fileId, -1, "Connection error: " + e.getMessage());
         }
+    }
+
+    public List<BatchUploadSegmentResult> uploadFileSegmentsBatch(List<BatchUploadSegmentInput> segments) {
+        List<BatchUploadSegmentResult> results = new ArrayList<>();
+
+        if (accessToken == null || accessToken.isEmpty()) {
+            for (BatchUploadSegmentInput item : segments) {
+                results.add(new BatchUploadSegmentResult(
+                        item.getFileId(),
+                        false,
+                        null,
+                        "Not authenticated",
+                        401));
+            }
+            return results;
+        }
+
+        if (segments.isEmpty()) {
+            return results;
+        }
+
+        try {
+            byte[] payload = buildBatchPayload(segments);
+            String manifestJson = buildBatchManifestJson(segments);
+            String boundary = "----IPEDBfacBatch" + UUID.randomUUID().toString().replace("-", "");
+            byte[] multipartBody = buildMultipartBody(boundary, manifestJson, payload);
+
+            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/v1/file-transfer/upload-segments-batch")
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(multipartBody))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                String errorMsg = "Failed to upload batch segments: " + response.statusCode();
+                logger.error(errorMsg + " - " + response.body());
+                for (BatchUploadSegmentInput item : segments) {
+                    results.add(new BatchUploadSegmentResult(item.getFileId(), false, null, errorMsg, response.statusCode()));
+                }
+                return results;
+            }
+
+            JsonObject responseObj = GSON.fromJson(response.body(), JsonObject.class);
+            JsonArray items = responseObj.getAsJsonArray("items");
+            for (JsonElement element : items) {
+                JsonObject item = element.getAsJsonObject();
+                int fileId = item.has("file_id") ? item.get("file_id").getAsInt() : -1;
+                boolean success = item.has("success") && item.get("success").getAsBoolean();
+                String error = item.has("error") && !item.get("error").isJsonNull()
+                        ? item.get("error").getAsString()
+                        : null;
+                int statusCode = item.has("status_code") && !item.get("status_code").isJsonNull()
+                        ? item.get("status_code").getAsInt()
+                        : (success ? 200 : -1);
+                FileUploadStatus status = null;
+                if (item.has("status") && item.get("status").isJsonObject()) {
+                    JsonObject statusObj = item.getAsJsonObject("status");
+                    status = new FileUploadStatus(
+                            fileId,
+                            statusObj.has("total_size") ? statusObj.get("total_size").getAsLong() : 0,
+                            statusObj.has("uploaded_size") ? statusObj.get("uploaded_size").getAsLong() : 0,
+                            statusObj.has("segment_size") ? statusObj.get("segment_size").getAsInt() : 1024 * 1024,
+                            statusObj.has("is_complete") && statusObj.get("is_complete").getAsBoolean());
+                }
+                results.add(new BatchUploadSegmentResult(fileId, success, status, error, statusCode));
+            }
+
+            return results;
+        } catch (Exception e) {
+            logger.error("Error uploading batch segments", e);
+            for (BatchUploadSegmentInput item : segments) {
+                results.add(new BatchUploadSegmentResult(
+                        item.getFileId(),
+                        false,
+                        null,
+                        "Connection error: " + e.getMessage(),
+                        -1));
+            }
+            return results;
+        }
+    }
+
+    private byte[] buildBatchPayload(List<BatchUploadSegmentInput> segments) {
+        ByteArrayOutputStream payload = new ByteArrayOutputStream();
+        for (BatchUploadSegmentInput item : segments) {
+            payload.writeBytes(item.getSegmentData());
+        }
+        return payload.toByteArray();
+    }
+
+    private String buildBatchManifestJson(List<BatchUploadSegmentInput> segments) {
+        JsonArray items = new JsonArray();
+        int payloadOffset = 0;
+        for (BatchUploadSegmentInput item : segments) {
+            JsonObject manifestItem = new JsonObject();
+            manifestItem.addProperty("file_id", item.getFileId());
+            manifestItem.addProperty("offset", item.getOffset());
+            manifestItem.addProperty("length", item.getSegmentData().length);
+            manifestItem.addProperty("payload_offset", payloadOffset);
+            manifestItem.addProperty("segment_size", item.getSegmentSize());
+            items.add(manifestItem);
+            payloadOffset += item.getSegmentData().length;
+        }
+        JsonObject manifest = new JsonObject();
+        manifest.add("items", items);
+        return GSON.toJson(manifest);
+    }
+
+    private byte[] buildMultipartBody(String boundary, String manifestJson, byte[] payload) {
+        ByteArrayOutputStream body = new ByteArrayOutputStream();
+        byte[] newline = "\r\n".getBytes(StandardCharsets.UTF_8);
+        body.writeBytes(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+        body.writeBytes("Content-Disposition: form-data; name=\"manifest\"\r\n".getBytes(StandardCharsets.UTF_8));
+        body.writeBytes("Content-Type: application/json\r\n\r\n".getBytes(StandardCharsets.UTF_8));
+        body.writeBytes(manifestJson.getBytes(StandardCharsets.UTF_8));
+        body.writeBytes(newline);
+        body.writeBytes(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+        body.writeBytes(
+                "Content-Disposition: form-data; name=\"payload\"; filename=\"payload.bin\"\r\n"
+                        .getBytes(StandardCharsets.UTF_8));
+        body.writeBytes("Content-Type: application/octet-stream\r\n\r\n".getBytes(StandardCharsets.UTF_8));
+        body.writeBytes(payload);
+        body.writeBytes(newline);
+        body.writeBytes(("--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+        return body.toByteArray();
     }
 
     /**
