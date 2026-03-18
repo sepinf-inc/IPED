@@ -351,6 +351,8 @@ public class BfacDialog extends JDialog {
                         // If no open submissions, switch to new submission mode
                         newSubmissionRadio.setSelected(true);
                         onSubmissionModeChanged();
+                    } else {
+                        syncCategoryWithSelectedSubmission();
                     }
                 } catch (Exception e) {
                     // Keep empty if loading fails
@@ -380,6 +382,27 @@ public class BfacDialog extends JDialog {
             createSubmissionButton.setText("Create Submission & Upload");
         } else {
             createSubmissionButton.setText("Add to Submission & Upload");
+            syncCategoryWithSelectedSubmission();
+        }
+    }
+
+    private void syncCategoryWithSelectedSubmission() {
+        Submission selectedSubmission = (Submission) existingSubmissionComboBox.getSelectedItem();
+        if (selectedSubmission == null) {
+            return;
+        }
+
+        String submissionCategoryName = selectedSubmission.getCategoryName();
+        if (submissionCategoryName == null || submissionCategoryName.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < categoryComboBox.getItemCount(); i++) {
+            Category category = categoryComboBox.getItemAt(i);
+            if (category != null && submissionCategoryName.equals(category.getName())) {
+                categoryComboBox.setSelectedIndex(i);
+                break;
+            }
         }
     }
 
@@ -547,6 +570,7 @@ public class BfacDialog extends JDialog {
 
         newSubmissionRadio.addActionListener(e -> onSubmissionModeChanged());
         existingSubmissionRadio.addActionListener(e -> onSubmissionModeChanged());
+        existingSubmissionComboBox.addActionListener(e -> syncCategoryWithSelectedSubmission());
 
         gbc.gridx = 0;
         gbc.gridy = 0;
