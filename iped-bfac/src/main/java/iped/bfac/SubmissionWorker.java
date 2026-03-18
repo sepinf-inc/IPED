@@ -129,8 +129,24 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
 
             List<FileHashInfo> hashInfos = collectHashInfoFromBookmarks(bookmarkNames);
 
+            List<FileHashInfo> validHashInfos = new ArrayList<>();
+            int invalidHashInfoCount = 0;
+            for (FileHashInfo hashInfo : hashInfos) {
+                boolean hasValidName = hashInfo.getFileName() != null && !hashInfo.getFileName().trim().isEmpty();
+                boolean hasValidSize = hashInfo.getFileSize() > 0;
+                if (hasValidName && hasValidSize) {
+                    validHashInfos.add(hashInfo);
+                } else {
+                    invalidHashInfoCount++;
+                }
+            }
+            hashInfos = validHashInfos;
+
             totalItems = hashInfos.size();
             publish("Found " + totalItems + " items to process");
+            if (invalidHashInfoCount > 0) {
+                publish("Skipped " + invalidHashInfoCount + " item(s) with invalid metadata for hash submission (empty name or size <= 0).");
+            }
 
             if (totalItems == 0) {
                 publish("");
