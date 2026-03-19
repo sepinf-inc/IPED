@@ -1,3 +1,16 @@
+xx/03/2026: IPED-4.3.1
+#2786: Regression: SharedHashes field being populated with medias received by the local account (@aberenguel)
+#2777: Regression: PhotoDNALookup may miss part of possible hits - regression (@wladimirleite)
+#2687: WhatsApp iOS messages occasionally misidentified as forwarded (@wladimirleite, @gfd2020, @aberenguel)
+#2751: Regression: UFDR parsing failed with email name (@wladimirleite)
+#1694: Regression: Optimize UFDR evidences opening time through some networks (@lfcnassif, @wladimirleite)
+#2795: "hash:status" and "hash:set" being incorrectly used if WhatsApp media messages hit the hash database (@wladimirleite)
+#2797: Previews not displayed in multicases if relatives paths are used (@aberenguel)
+#2761: Bookmark name incorrectly split in Bookmark column (@wladimir leite, @marcosammoura)
+#2799: Files not exported when creating a report from a read-only case (@wladimirleite, @lfcnassif)
+#2824: Fix AD1Extractor.close() to close all channels on failure (@iamsanjaymalakar)
+
+
 31/12/2025: IPED-4.3.0
 News:
 #2438: Adds a new remote task to classify CSAM images, depends on proprietary service/model (@joaomacedo, @hauck-jvsh, @marcosammoura, @wladimirleite)
