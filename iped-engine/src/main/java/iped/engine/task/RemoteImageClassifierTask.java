@@ -36,6 +36,7 @@ import javax.net.ssl.SSLContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -96,6 +97,10 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private boolean validateSSL;
     private double labelingThreshold;
     private int thumbSize = 0;
+
+    private RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(30 * 1000) // 30 seconds connection
+            .setSocketTimeout(10 * 60 * 1000) // 10 minutes socket timeout (classification may take time)
+            .build();
 
     // Labeling classes name in priority order
     private static final List<String> classesName = new ArrayList<>();
@@ -277,6 +282,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         
         try (CloseableHttpClient client = getClient()) {
             HttpGet get = new HttpGet(urlVersion);
+            get.setConfig(requestConfig);
 
             client.execute(get, response -> {
                 int statusCode = response.getStatusLine().getStatusCode();
@@ -601,6 +607,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
         try (CloseableHttpClient client = getClient()) {
             HttpPost post = new HttpPost(urlZip);
+            post.setConfig(requestConfig);
 
             HttpEntity entity = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                     .addBinaryBody("file", zipFile, ContentType.APPLICATION_OCTET_STREAM, zipFile.getName()).build();
