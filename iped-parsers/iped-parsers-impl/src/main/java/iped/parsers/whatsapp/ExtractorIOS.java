@@ -124,6 +124,7 @@ public abstract class ExtractorIOS extends Extractor {
     private boolean hasZSTANZAIDAndZMETADATAColumns = false;
     private boolean hasZMOVIEDURATIONColumn;
     private boolean hasContactIdentifierColumn;
+    private boolean hasMessageInfoTable;
     private SQLException parsingException = null;
 
     public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account,
@@ -203,6 +204,7 @@ public abstract class ExtractorIOS extends Extractor {
                             "ZSTANZAID") && SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMETADATA");
                     hasZMOVIEDURATIONColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMOVIEDURATION");
                     hasContactIdentifierColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWACHATSESSION", "ZCONTACTIDENTIFIER");
+                    hasMessageInfoTable = SQLite3DBParser.containsTable("ZWAMESSAGEINFO", conn);
                 } catch (SQLException e) {
                     if (firstTry || !isSqliteCorruptException(e)) {
                         throw e;
@@ -345,6 +347,11 @@ public abstract class ExtractorIOS extends Extractor {
             sql = isGroupChat ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
         } else {
             sql = isGroupChat ? SELECT_MESSAGES_GROUP_NOZTITLE : SELECT_MESSAGES_USER_NOZTITLE;
+        }
+        
+        if (!hasMessageInfoTable) {
+            sql = sql.replace("LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO ", "");
+            sql = sql.replace("INFO.ZRECEIPTINFO", "NULL");
         }
 
         if (!hasZSTANZAIDAndZMETADATAColumns) {
@@ -759,8 +766,9 @@ public abstract class ExtractorIOS extends Extractor {
         int forwardedMask = 0b1_1000_0000; // 8th and 9th bits
         m.setForwarded((rs.getLong("zflags") & forwardedMask) == forwardedMask);
 
-        byte[] metadata = rs.getBytes("metadata");
+        byte[] metadata = null;
         if (hasZSTANZAIDAndZMETADATAColumns) {
+            metadata = rs.getBytes("metadata");
             m.setUuid(rs.getString("uuid"));
             m.setMetaData(metadata);
         }
