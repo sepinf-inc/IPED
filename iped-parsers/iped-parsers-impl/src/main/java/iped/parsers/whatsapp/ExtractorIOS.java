@@ -217,7 +217,8 @@ public abstract class ExtractorIOS extends Extractor {
                 try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
                     while (rs.next()) {
                         String contactId = rs.getString("contact");
-                        if (contactId.endsWith("@lid")) {
+                        String originalId = contactId; 
+                        if (contactId.endsWith(WAContact.lidSuffix)) {
                             String identifier = rs.getString("identifier");
                             if (StringUtils.isNotBlank(identifier)) {
                                 contactId = identifier;
@@ -227,6 +228,10 @@ public abstract class ExtractorIOS extends Extractor {
                         WAContact remote = contacts.getContact(contactId);
                         if (StringUtils.isNotBlank(subject) && remote.getId().equals(remote.getName())) {
                             remote.setWaName(subject);
+                        }
+                        if (!originalId.equals(contactId)) {
+                            contacts.addContactMapping(originalId, contactId);
+                            System.err.println(originalId +" >>>>> "+ contactId);
                         }
                         Chat c = new Chat(remote);
                         c.setId(rs.getLong("id"));
