@@ -16,7 +16,7 @@ import io
 import os
 import time
 import sys
-from java.lang import System
+from java.lang import System, RuntimeException
 from iped.properties import ExtraProperties
 from java.awt import Color
 from javax.imageio import ImageIO
@@ -1090,6 +1090,20 @@ class CSAMDetectorTask:
                 elif ONNX_MODEL_TYPE == 'tensorflow':
                     return stacked_outputs # Returns direct probabilities
 
+        except Exception as e:
+            error_msg = str(e).lower()
+            # Identify fatal errors that invalidate the GPU context or memory
+            is_cuda_fatal = "cuda error" in error_msg or "illegal memory access" in error_msg
+            is_oom = "out of memory" in error_msg
+
+            if is_cuda_fatal or is_oom:
+                msg_fatal = f"CSAMDetector: FATAL GPU ERROR: {e}. Interrupting IPED to ensure analyst intervention."
+                logger.error(msg_fatal)
+                # Throw the Java exception that forces the IPED engine to stop the task
+                self.worker.exception = RuntimeException(error_msg)
+            
+            raise e
+            
         finally:
             if MODEL_SEMAPHORE is not None:
                 MODEL_SEMAPHORE.release()
