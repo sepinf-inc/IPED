@@ -18,6 +18,7 @@
  */
 package iped.app.ui;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -101,7 +102,12 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
             // only configure PreviewRepository when opening in AppMain (case not being processed)
             if (Manager.getInstance() == null) {
                 App.get().appCase.getAtomicSources().forEach(ipedCase -> {
-                    PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
+                    try {
+                        PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
+                    } catch (IOException e) {
+                        LOGGER.error("Error configuring PreviewRepositoryManager", e);
+                        showErrorDialog(e);
+                    }
                 });
             }
 
