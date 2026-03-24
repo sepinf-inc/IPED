@@ -140,8 +140,8 @@ public class CacheAddr {
                             // size of the data in the files, it is important to obtain the exact size as it
                             // can generate an error in the Botli library, since it does not handle excess
                             // zero bytes
-                            byte[] blocks = (dataStreamSize == null) ? new byte[(numBlocks + 1) * getBlockSize()] : new byte[dataStreamSize];
-                            sis.read(blocks);
+                            int bufLen = (dataStreamSize == null) ? (numBlocks + 1) * getBlockSize() : dataStreamSize;
+                            byte[] blocks = sis.readNBytes(bufLen);
                             return new ByteArrayInputStream(blocks);
                         }
                     }
