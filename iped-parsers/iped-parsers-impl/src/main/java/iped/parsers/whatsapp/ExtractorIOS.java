@@ -233,7 +233,6 @@ public abstract class ExtractorIOS extends Extractor {
                         }
                         if (!originalId.equals(contactId)) {
                             contacts.addContactMapping(originalId, contactId);
-                            System.err.println(originalId +" >>>>> "+ contactId);
                         }
                         Chat c = new Chat(remote);
                         c.setId(rs.getLong("id"));
