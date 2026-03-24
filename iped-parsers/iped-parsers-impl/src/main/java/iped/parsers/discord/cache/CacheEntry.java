@@ -190,7 +190,9 @@ public class CacheEntry {
                 }
 
                 if (longKeyAddress > 0) {
-                    key = new String(longKeyAddressCacheAddress.getInputStream(dataFiles, externalFiles, null).readNBytes(keyDataSize));
+                    try (InputStream is = longKeyAddressCacheAddress.getInputStream(dataFiles, externalFiles, null)) {
+                        key = new String(is.readNBytes(keyDataSize));
+                    }
                 } else {
                     key = new String(keyData);
                 }
