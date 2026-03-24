@@ -1409,12 +1409,24 @@ public abstract class ExtractorIOS extends Extractor {
 
         if (undeleteChatsSessions != null && !undeleteChatsSessions.getTableRows().isEmpty()) {
             for (SqliteRow row : undeleteChatsSessions.getTableRows()) {
-                String contactId = row.getTextValue("ZCONTACTJID"); //$NON-NLS-1$
+                String contactId = row.getTextValue("ZCONTACTJID");
+                String originalId = contactId; 
+                if (contactId.endsWith(WAContact.lidSuffix)) {
+                    String identifier = row.getTextValue("ZCONTACTIDENTIFIER");
+                    if (StringUtils.isNotBlank(identifier)) {
+                        contactId = identifier;
+                    }
+                }
+                if (originalId != null && !originalId.equals(contactId)) {
+                    contacts.addContactMapping(originalId, contactId);
+                }
+
                 WAContact contact = contacts.getContact(contactId);
                 Chat c = new Chat(contact);
-                c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
+                c.setId(row.getIntValue("Z_PK"));
                 c.setDeleted(row.getIntValue("ZREMOVED") != 0 || row.isDeletedRow());
-                c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
+                c.setSubject(row.getTextValue("ZPARTNERNAME"));
+
                 if (contactId.endsWith(WAContact.waGroupSuffix)) {
                     c.setGroupChat(true);
                 } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
