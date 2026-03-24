@@ -263,22 +263,28 @@ public class Index {
     }
 
     public static long readUnsignedInt(InputStream is) throws IOException {
-        byte[] b = new byte[4];
-        is.read(b);
+        byte[] b = is.readNBytes(4);
+        if (b.length < 4) {
+            throw new IOException("End of InputStream reached.");
+        }
         ByteBuffer bb = ByteBuffer.wrap(b);
         bb.order(ByteOrder.LITTLE_ENDIAN);
         return Integer.toUnsignedLong(bb.getInt());
     }
 
     public static long read8bytes(InputStream is) throws IOException {
-        byte b[] = new byte[8];
-        is.read(b);
+        byte b[] = is.readNBytes(8);
+        if (b.length < 8) {
+            throw new IOException("End of InputStream reached.");
+        }
         return ByteBuffer.wrap(b).getLong() & 0xffffffffffffffffL;
     }
 
     public static Date readDate(InputStream is) throws IOException {
-        byte[] buf = new byte[8];
-        is.read(buf);
+        byte buf[] = is.readNBytes(8);
+        if (buf.length < 8) {
+            throw new IOException("End of InputStream reached.");
+        }
         long timestamp = new LittleEndianByteArrayInputStream(buf).readLong();
         return Filetime.filetimeToDate(timestamp * 10);
     }
