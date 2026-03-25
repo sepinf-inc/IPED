@@ -10,48 +10,6 @@
 	<artifactId>iped-viewers-impl</artifactId>
 
     <dependencies>
-                <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-controls</artifactId>
-                        <version>11.0.2</version>
-                        <scope>system</scope>
-                        <systemPath>/tmp/javafx-sdk-11.0.2/lib/javafx.controls.jar</systemPath>
-                </dependency>
-                <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-web</artifactId>
-                        <version>11.0.2</version>
-                        <scope>system</scope>
-                        <systemPath>/tmp/javafx-sdk-11.0.2/lib/javafx.web.jar</systemPath>
-                </dependency>
-                <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-swing</artifactId>
-                        <version>11.0.2</version>
-                        <scope>system</scope>
-                        <systemPath>/tmp/javafx-sdk-11.0.2/lib/javafx.swing.jar</systemPath>
-                </dependency>
-                <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-media</artifactId>
-                        <version>11.0.2</version>
-                        <scope>system</scope>
-                        <systemPath>/tmp/javafx-sdk-11.0.2/lib/javafx.media.jar</systemPath>
-                </dependency>
-                <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-graphics</artifactId>
-                        <version>11.0.2</version>
-                        <scope>system</scope>
-                        <systemPath>/tmp/javafx-sdk-11.0.2/lib/javafx.graphics.jar</systemPath>
-                </dependency>
-                <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-base</artifactId>
-                        <version>11.0.2</version>
-                        <scope>system</scope>
-                        <systemPath>/tmp/javafx-sdk-11.0.2/lib/javafx.base.jar</systemPath>
-                </dependency>
 		<dependency>
 			<groupId>iped</groupId>
 			<artifactId>iped-viewers-api</artifactId>
