@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -63,8 +62,10 @@ public class Chat extends BaseModel {
         return participants.stream().filter(p -> p.isPhoneOwner()).findFirst();
     }
 
-    public List<Party> getOtherParticipants() {
-        return participants.stream().filter(p -> !p.isPhoneOwner()).collect(Collectors.toList());
+    public Parties getOtherParticipants() {
+        Parties others = new Parties();
+        participants.stream().filter(p -> !p.isPhoneOwner()).forEach(p -> others.add(p));
+        return others;
     }
 
     public List<ContactPhoto> getPhotos() {

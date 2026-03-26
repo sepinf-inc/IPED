@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Geographic;
@@ -29,6 +28,7 @@ import iped.parsers.ufed.model.Attachment;
 import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.JumpTarget;
+import iped.parsers.ufed.model.Parties;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.ufed.model.QuotedMessageData;
 import iped.parsers.ufed.model.ReplyMessageData;
@@ -92,13 +92,11 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         } else if (model.getChat() != null) {
 
             // in case "To" is NOT set in InstantMessage, try to...
-            List<Party> otherParticipants;
+            Parties otherParticipants;
             if (model.getFrom().isPresent()) {
 
                 // ...get other participants (without "from")
-                otherParticipants = model.getChat().getParticipants().stream() //
-                        .filter(p -> !p.equals(model.getFrom().get())) //
-                        .collect(Collectors.toList()); //
+                otherParticipants = model.getChat().getOtherParticipants();
             } else {
                 // ...get other participants
                 otherParticipants = model.getChat().getParticipants();

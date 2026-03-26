@@ -8,6 +8,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -201,7 +202,7 @@ public class UfedEmailParser extends AbstractParser {
         xhtml.endElement("tr");
     }
 
-    private void parseParties(String field, List<Party> parties, XHTMLContentHandler xhtml) throws SAXException {
+    private void parseParties(String field, Collection<Party> parties, XHTMLContentHandler xhtml) throws SAXException {
         if (parties.isEmpty()) {
             return;
         }

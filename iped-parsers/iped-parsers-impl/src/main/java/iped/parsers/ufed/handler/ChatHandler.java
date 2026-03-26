@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import iped.data.IItemReader;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.ContactPhoto;
+import iped.parsers.ufed.model.Parties;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.WAContact;
@@ -196,7 +197,7 @@ public class ChatHandler extends BaseModelHandler<Chat> {
         }
 
         Party ownerPartipant = model.getPhoneOwnerParticipant().orElse(null);
-        List<Party> otherParticipants = model.getOtherParticipants();
+        Parties otherParticipants = model.getOtherParticipants();
 
         if (name != null) {
             sb.append(name);

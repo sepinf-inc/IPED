@@ -47,9 +47,9 @@ public class Email extends BaseModel {
     public void setFrom(Party from) {
         this.from = Optional.of(Parties.getPrevInstance(from));
     }
-    public List<Party> getTo() { return to; }
-    public List<Party> getCc() { return cc; }
-    public List<Party> getBcc() { return bcc; }
+    public Parties getTo() { return to; }
+    public Parties getCc() { return cc; }
+    public Parties getBcc() { return bcc; }
     public List<Attachment> getAttachments() { return attachments; }
 
     public boolean isFromPhoneOwner() {
