@@ -26,6 +26,13 @@ MAX_ATTEMPTS_NONBUSY_RETRIES = 10
 CONNECTION_TIMEOUT = 5
 REQUEST_TIMEOUT = 7200 # 7200 seconds = 2 hours
 
+# Remote service communication parameters (configurable props)
+busySleepTimeProp = 'busySleepTime'
+nonBusySleepTimeProp = 'nonBusySleepTime'
+maxAttemptsNonBusyRetriesProp = 'maxAttemptsNonBusyRetries'
+connectionTimeoutProp = 'connectionTimeout'
+requestTimeoutProp = 'requestTimeout'
+
 # NEW: chat analysis / questions config
 enableChatAnalysisProp = 'enableChatAnalysis'
 questionsProp = 'questions'
@@ -150,7 +157,7 @@ def create_summaries_request(
     NOTE: Logging is improved; logic is unchanged.
     """
     #Trocar para https
-    url = f"http://{base_url}/api/create_summaries_from_msgs"
+    url = f"https://{base_url}/api/create_summaries_from_msgs"
     attempts_other = 0
 
     while True:
@@ -158,7 +165,7 @@ def create_summaries_request(
             payload: Dict[str, Any] = {"msgs": msgs}
             if questions:                    # NEW
                 payload["questions"] = questions
-            resp = requests.post(url, json=payload, timeout=(CONNECTION_TIMEOUT, REQUEST_TIMEOUT))
+            resp = requests.post(url, json=payload, verify=False, timeout=(CONNECTION_TIMEOUT, REQUEST_TIMEOUT))
             res = _normalize(resp)
         except requests.exceptions.Timeout:
             res = {
@@ -410,6 +417,13 @@ class AISummarizationTask:
         self.enableExternalSummarizationProp = False
         self.minimumContentLength = 0
 
+        # Remote service communication parameters (defaults can be overridden by props)
+        self.busySleepTime: float = BUSY_SLEEP_TIME
+        self.nonBusySleepTime: float = NONBUSY_SLEEP_TIME
+        self.maxAttemptsNonBusyRetries: int = MAX_ATTEMPTS_NONBUSY_RETRIES
+        self.connectionTimeout: int = CONNECTION_TIMEOUT
+        self.requestTimeout: int = REQUEST_TIMEOUT
+
         # NEW: chat analysis / questions
         self.enableChatAnalysis = False
         self.questions: List[str] = []
@@ -445,6 +459,48 @@ class AISummarizationTask:
         self.enableExternalSummarization = (extraProps.getProperty(enableExternalSummarizationProp) or "").lower() == "true"
 
         self.minimumContentLength = int(extraProps.getProperty(minimumContentLengthProp) or 0)
+
+        # Remote service communication parameters
+        # Keep existing hard-coded values as defaults when props are absent/invalid.
+        try:
+            raw = extraProps.getProperty(busySleepTimeProp)
+            if raw is not None and str(raw).strip() != "":
+                self.busySleepTime = float(raw)
+        except Exception:
+            logger.warn(f"[AISummarizationTask]: Warning - Invalid '{busySleepTimeProp}', using default {BUSY_SLEEP_TIME}.")
+
+        try:
+            raw = extraProps.getProperty(nonBusySleepTimeProp)
+            if raw is not None and str(raw).strip() != "":
+                self.nonBusySleepTime = float(raw)
+        except Exception:
+            logger.warn(f"[AISummarizationTask]: Warning - Invalid '{nonBusySleepTimeProp}', using default {NONBUSY_SLEEP_TIME}.")
+
+        try:
+            raw = extraProps.getProperty(maxAttemptsNonBusyRetriesProp)
+            if raw is not None and str(raw).strip() != "":
+                self.maxAttemptsNonBusyRetries = int(raw)
+        except Exception:
+            logger.warn(
+                f"[AISummarizationTask]: Warning - Invalid '{maxAttemptsNonBusyRetriesProp}', "
+                f"using default {MAX_ATTEMPTS_NONBUSY_RETRIES}."
+            )
+
+        try:
+            raw = extraProps.getProperty(connectionTimeoutProp)
+            if raw is not None and str(raw).strip() != "":
+                self.connectionTimeout = int(raw)
+        except Exception:
+            logger.warn(
+                f"[AISummarizationTask]: Warning - Invalid '{connectionTimeoutProp}', using default {CONNECTION_TIMEOUT}."
+            )
+
+        try:
+            raw = extraProps.getProperty(requestTimeoutProp)
+            if raw is not None and str(raw).strip() != "":
+                self.requestTimeout = int(raw)
+        except Exception:
+            logger.warn(f"[AISummarizationTask]: Warning - Invalid '{requestTimeoutProp}', using default {REQUEST_TIMEOUT}.")
         
         # NEW: chat analysis-related options
         self.enableChatAnalysis = (extraProps.getProperty(enableChatAnalysisProp) or "").lower() == "true"
@@ -493,7 +549,12 @@ class AISummarizationTask:
         res = create_summaries_request(
             msgs,
             self.remoteServiceAddress,
-            questions=questions
+            questions=questions,
+            BUSY_SLEEP=self.busySleepTime,
+            NONBUSY_SLEEP=self.nonBusySleepTime,
+            MAX_ATTEMPTS_NONBUSY=self.maxAttemptsNonBusyRetries,
+            CONNECTION_TIMEOUT=self.connectionTimeout,
+            REQUEST_TIMEOUT=self.requestTimeout,
         )
         
         if not res["ok"]:
