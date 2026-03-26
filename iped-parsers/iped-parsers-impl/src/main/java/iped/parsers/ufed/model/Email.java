@@ -12,9 +12,9 @@ import java.util.Optional;
 public class Email extends BaseModel {
     private static final long serialVersionUID = 8185611534854025504L;
     private Optional<Party> from = Optional.empty();
-    private final List<Party> to = new ArrayList<>();
-    private final List<Party> cc = new ArrayList<>();
-    private final List<Party> bcc = new ArrayList<>();
+    private final Parties to = new Parties();
+    private final Parties cc = new Parties();
+    private final Parties bcc = new Parties();
     private final List<Attachment> attachments = new ArrayList<>();
 
     public Email() {
@@ -43,7 +43,10 @@ public class Email extends BaseModel {
 
     // Child model getters/setters
     public Optional<Party> getFrom() { return from; }
-    public void setFrom(Party from) { this.from = Optional.of(from); }
+
+    public void setFrom(Party from) {
+        this.from = Optional.of(Parties.getPrevInstance(from));
+    }
     public List<Party> getTo() { return to; }
     public List<Party> getCc() { return cc; }
     public List<Party> getBcc() { return bcc; }

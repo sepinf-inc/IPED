@@ -29,7 +29,7 @@ public class Chat extends BaseModel {
     public static final String SOURCE_WHATSAPP_BUSINESS = "WhatsApp Business";
     public static final String SOURCE_TELEGRAM = "Telegram";
 
-    private final List<Party> participants = new ArrayList<>();
+    private final Parties participants = new Parties();
     private final List<ContactPhoto> photos = new ArrayList<>();
 
     private final List<InstantMessage> messages = new ArrayList<>();
@@ -55,7 +55,7 @@ public class Chat extends BaseModel {
     public String getChatType() { return (String) getField("ChatType"); }
 
     // Child model getters
-    public List<Party> getParticipants() {
+    public Parties getParticipants() {
         return participants;
     }
 

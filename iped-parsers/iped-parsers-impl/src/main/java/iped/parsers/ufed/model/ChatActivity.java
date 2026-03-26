@@ -26,6 +26,6 @@ public class ChatActivity extends BaseModel {
     }
 
     public void setParticipant(Party participant) {
-        this.participant = participant;
+        this.participant = Parties.getPrevInstance(participant);
     }
 }

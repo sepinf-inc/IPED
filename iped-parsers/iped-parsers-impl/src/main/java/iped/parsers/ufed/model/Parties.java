@@ -13,6 +13,9 @@ public class Parties implements Iterable<Party>, Collection<Party> {
     private ArrayList<Party> list = new ArrayList<>();
 
     public static Party getPrevInstance(Party party) {
+        if (party == null) {
+            return null;
+        }
         Party prev = allParties.putIfAbsent(party, party);
         return prev != null ? prev : party;
     }

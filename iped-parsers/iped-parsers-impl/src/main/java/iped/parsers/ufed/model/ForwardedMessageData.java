@@ -22,6 +22,6 @@ public class ForwardedMessageData extends BaseModel {
         return originalSender;
     }
     public void setOriginalSender(Party originalSender) {
-        this.originalSender = originalSender;
+        this.originalSender = Parties.getPrevInstance(originalSender);
     }
 }
