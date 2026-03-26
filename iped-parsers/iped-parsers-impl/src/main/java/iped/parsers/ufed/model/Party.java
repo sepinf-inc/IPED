@@ -12,7 +12,7 @@ import iped.parsers.ufed.reference.ReferencedAccountable;
 /**
  * Represents a <model type="Party"> element.
  */
-public class Party extends BaseModel {
+public class Party extends BaseModel implements Comparable<Party> {
 
     private static final long serialVersionUID = -8316756774909953715L;
 
@@ -77,5 +77,21 @@ public class Party extends BaseModel {
         return new EqualsBuilder()
                 .append(getIdentifier(), other.getIdentifier())
                 .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return getIdentifier() != null ? getIdentifier().hashCode() : 0;
+    }
+
+    @Override
+    public int compareTo(Party o) {
+        if (this.getIdentifier() == null) {
+            if (o.getIdentifier() == null) {
+                return 0;
+            }
+            return -1;
+        }
+        return this.getIdentifier().compareTo(o.getIdentifier());
     }
 }

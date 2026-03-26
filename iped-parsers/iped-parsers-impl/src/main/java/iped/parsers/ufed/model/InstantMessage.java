@@ -38,7 +38,7 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
     private transient Chat chat;
     private Party from;
-    private final List<Party> to = new ArrayList<>();
+    private final Parties to = new Parties();
     private final List<Attachment> attachments = new ArrayList<>();
     private final List<Contact> sharedContacts = new ArrayList<>();
     private InstantMessageExtraData messageExtraData = new InstantMessageExtraData();
@@ -82,10 +82,10 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     }
 
     public void setFrom(Party from) {
-        this.from = from;
+        this.from = Parties.getPrevInstance(from);
     }
 
-    public List<Party> getTo() {
+    public Parties getTo() {
         return to;
     }
 
