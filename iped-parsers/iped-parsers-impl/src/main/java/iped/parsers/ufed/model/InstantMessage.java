@@ -39,9 +39,9 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     private transient Chat chat;
     private Party from;
     private final Parties to = new Parties();
-    private final List<Attachment> attachments = new ArrayList<>();
-    private final List<Contact> sharedContacts = new ArrayList<>();
-    private InstantMessageExtraData messageExtraData = new InstantMessageExtraData();
+    private List<Attachment> attachments;
+    private List<Contact> sharedContacts;
+    private InstantMessageExtraData messageExtraData;
 
     private InstantMessage embeddedMessage;
     private ChatActivity activityLog;
@@ -90,14 +90,23 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     }
 
     public List<Attachment> getAttachments() {
+        if (attachments == null) {
+            attachments = new ArrayList<>();
+        }
         return attachments;
     }
 
     public List<Contact> getSharedContacts() {
+        if (sharedContacts == null) {
+            sharedContacts = new ArrayList<>();
+        }
         return sharedContacts;
     }
 
     public InstantMessageExtraData getExtraData() {
+        if (messageExtraData == null) {
+            messageExtraData = new InstantMessageExtraData();
+        }
         return messageExtraData;
     }
 
@@ -135,7 +144,7 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     }
 
     public boolean hasLabel(String label) {
-        return messageExtraData.getMessageLabels().stream().anyMatch(l -> label.equalsIgnoreCase(l.getLabel()));
+        return getExtraData().getMessageLabels().stream().anyMatch(l -> label.equalsIgnoreCase(l.getLabel()));
     }
 
     public boolean isEdited() {
@@ -143,19 +152,19 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     }
 
     public boolean isReplyMessage() {
-        return messageExtraData.getReplyMessage().isPresent()
+        return getExtraData().getReplyMessage().isPresent()
                 || hasLabel("Reply")
-                || messageExtraData.getQuotedMessage().filter(q -> "Reply".equalsIgnoreCase(q.getLabel())).isPresent();
+                || getExtraData().getQuotedMessage().filter(q -> "Reply".equalsIgnoreCase(q.getLabel())).isPresent();
     }
 
     public boolean isForwardedMessage() {
-        return messageExtraData.getForwardedMessage().isPresent()
+        return getExtraData().getForwardedMessage().isPresent()
                 || hasLabel("Forwarded")
-                || messageExtraData.getQuotedMessage().filter(q -> "Forwarded".equalsIgnoreCase(q.getLabel())).isPresent();
+                || getExtraData().getQuotedMessage().filter(q -> "Forwarded".equalsIgnoreCase(q.getLabel())).isPresent();
     }
 
     public Party findForwardedMessageOriginalSender(Chat chat) {
-        Optional<Party> originalSender = messageExtraData.getForwardedMessage().map(ForwardedMessageData::getOriginalSender);
+        Optional<Party> originalSender = getExtraData().getForwardedMessage().map(ForwardedMessageData::getOriginalSender);
         if (originalSender.isPresent()) {
             return originalSender.get();
         }
@@ -174,13 +183,13 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     public InstantMessage findReplyMessage(Chat chat) {
 
         // first search in replyMessage embedded InstantMessage
-        Optional<InstantMessage> replyMessage = messageExtraData.getReplyMessage().map(ReplyMessageData::getInstantMessage);
+        Optional<InstantMessage> replyMessage = getExtraData().getReplyMessage().map(ReplyMessageData::getInstantMessage);
         if (replyMessage.isPresent()) {
             return replyMessage.get();
         }
 
         // search using replyMessage.originalMessageID
-        replyMessage = messageExtraData
+        replyMessage = getExtraData()
                 .getReplyMessage()
                 .map(ReplyMessageData::getOriginalMessageID)
                 .map(id -> findMessageUsingOriginalMessageId(id, chat));
@@ -195,7 +204,7 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     public InstantMessage findQuotedMessage(Chat chat) {
 
         // search using quotedMessage.originalMessageID
-        Optional<InstantMessage> quotedMessage = messageExtraData
+        Optional<InstantMessage> quotedMessage = getExtraData()
                 .getQuotedMessage()
                 .map(QuotedMessageData::getOriginalMessageID)
                 .map(id -> findMessageUsingOriginalMessageId(id, chat));
@@ -204,7 +213,7 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
         }
 
         // search using quotedMessage.referenceId
-        quotedMessage = messageExtraData
+        quotedMessage = getExtraData()
                 .getQuotedMessage()
                 .map(QuotedMessageData::getReferenceId)
                 .map(refId -> findMessageUsingReferenceId(refId, chat));

@@ -27,12 +27,12 @@ public abstract class BaseModel implements Serializable {
 
     private final String modelType;
     private String id;
-    private final Map<String, Object> fields = new TreeMap<>(new FieldsComparator());
-    private final Map<String, String> attributes = new LinkedHashMap<>();
-    private final List<KeyValueModel> additionalInfo = new ArrayList<>();
-    private final Set<JumpTarget> jumpTargets = new HashSet<>();
-    private final List<BaseModel> relatedModels = new ArrayList<>();
-    private final Map<String, List<BaseModel>> otherModelFields = new LinkedHashMap<>();
+    private Map<String, Object> fields;
+    private final Map<String, String> attributes = new LinkedHashMap<>(); // always used
+    private List<KeyValueModel> additionalInfo;
+    private Set<JumpTarget> jumpTargets;
+    private List<BaseModel> relatedModels;
+    private Map<String, List<BaseModel>> otherModelFields;
 
     private transient boolean referenceLoaded = false;
 
@@ -56,11 +56,14 @@ public abstract class BaseModel implements Serializable {
     }
 
     public Object getField(String name) {
-        return fields.get(name);
+        return getFields().get(name);
     }
 
     public Map<String, Object> getFields() {
-        return Collections.unmodifiableMap(fields);
+        if (fields == null) {
+            fields = new TreeMap<>(new FieldsComparator());
+        }
+        return fields;
     }
 
     public void setField(String name, Object value) {
@@ -74,7 +77,7 @@ public abstract class BaseModel implements Serializable {
         default:
             break;
         }
-        this.fields.put(name, value);
+        this.getFields().put(name, value);
     }
 
     public void setAttribute(String name, String value) {
@@ -90,18 +93,30 @@ public abstract class BaseModel implements Serializable {
     }
 
     public List<KeyValueModel> getAdditionalInfo() {
+        if (additionalInfo == null) {
+            additionalInfo = new ArrayList<>();
+        }
         return additionalInfo;
     }
 
     public Set<JumpTarget> getJumpTargets() {
+        if (jumpTargets == null) {
+            jumpTargets = new HashSet<>();
+        }
         return jumpTargets;
     }
 
     public List<BaseModel> getRelatedModels() {
+        if (relatedModels == null) {
+            relatedModels = new ArrayList<>();
+        }
         return relatedModels;
     }
 
     public Map<String, List<BaseModel>> getOtherModelFields() {
+        if (otherModelFields == null) {
+            otherModelFields = new LinkedHashMap<>();
+        }
         return otherModelFields;
     }
 
