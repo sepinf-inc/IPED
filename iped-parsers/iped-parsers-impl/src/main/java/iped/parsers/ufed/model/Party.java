@@ -1,6 +1,5 @@
 package iped.parsers.ufed.model;
 
-import java.util.Date;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -27,9 +26,6 @@ public class Party extends BaseModel implements Comparable<Party> {
     // Specific field getters
     public String getIdentifier() { return (String) getField("Identifier"); }
     public String getName() { return (String) getField("Name"); }
-    public Date getDateDelivered() { return (Date) getField("DateDelivered"); }
-    public Date getDateRead() { return (Date) getField("DateRead"); }
-    public Date getDatePlayed() { return (Date) getField("DatePlayed"); }
 
     public boolean isPhoneOwner() {
         Object value = getField("IsPhoneOwner");
