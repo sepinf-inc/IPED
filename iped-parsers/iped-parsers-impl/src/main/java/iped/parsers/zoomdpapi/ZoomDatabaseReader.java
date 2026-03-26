@@ -39,6 +39,8 @@ public class ZoomDatabaseReader {
             .withKey(decryptedKey)
             .build();
 
+        config.setReadOnly(true);
+
         return config.createConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
     }
 
