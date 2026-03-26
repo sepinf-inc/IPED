@@ -35,7 +35,6 @@ import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -117,8 +116,8 @@ public class ZoomDpapiParser extends AbstractParser {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
 
-        try (TemporaryResources tmp = new TemporaryResources()) {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        try {
+            TikaInputStream tis = TikaInputStream.get(stream);
 
             byte[] iniBytes = org.apache.commons.io.IOUtils.toByteArray(tis);
             String iniContent = new String(iniBytes, StandardCharsets.UTF_8);
