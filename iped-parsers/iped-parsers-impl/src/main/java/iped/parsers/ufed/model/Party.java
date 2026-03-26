@@ -76,12 +76,13 @@ public class Party extends BaseModel implements Comparable<Party> {
 
         return new EqualsBuilder()
                 .append(getIdentifier(), other.getIdentifier())
+                .append(getId(), other.getId())
                 .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return getIdentifier() != null ? getIdentifier().hashCode() : 0;
+        return getIdentifier() != null ? getIdentifier().hashCode() : getId() != null ? getId().hashCode() : 0;
     }
 
     @Override
@@ -91,7 +92,20 @@ public class Party extends BaseModel implements Comparable<Party> {
                 return 0;
             }
             return -1;
+        } else if (o.getIdentifier() == null) {
+            return 1;
         }
-        return this.getIdentifier().compareTo(o.getIdentifier());
+        int comp = this.getIdentifier().compareTo(o.getIdentifier());
+        if (comp == 0) {
+            if (this.getId() == null) {
+                if (o.getId() == null) {
+                    return 0;
+                }
+                return -1;
+            } else if (o.getId() == null) {
+                return 1;
+            }
+        }
+        return comp;
     }
 }
