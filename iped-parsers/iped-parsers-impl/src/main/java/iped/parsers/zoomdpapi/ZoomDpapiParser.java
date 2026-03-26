@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +50,7 @@ import org.xml.sax.SAXException;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
+import iped.parsers.util.Util;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -121,8 +123,7 @@ public class ZoomDpapiParser extends AbstractParser {
             byte[] iniBytes = org.apache.commons.io.IOUtils.toByteArray(tis);
             String iniContent = new String(iniBytes, StandardCharsets.UTF_8);
             String iniPath = itemInfo != null ? itemInfo.getPath() : "";
-            String evidenceUUID = currentItem != null && currentItem.getDataSource() != null
-                    ? currentItem.getDataSource().getUUID() : null;
+            String evidenceUUID = currentItem != null ? currentItem.getDataSource().getUUID() : null;
             logger.info("Processing Zoom.us.ini ({} bytes) from: {}", iniBytes.length, iniPath);
 
             String encryptedBlob = extractEncryptedKey(iniContent);
@@ -166,7 +167,7 @@ public class ZoomDpapiParser extends AbstractParser {
             List<ZoomSharedFile> files = new ArrayList<>();
             List<ZoomTimelineEvent> timeline = new ArrayList<>();
 
-            File zoomusDb = findDatabaseFile("zoomus.enc.db", iniPath, searcher, tmp, evidenceUUID);
+            File zoomusDb = findDatabaseFile("zoomus.enc.db", oskey, iniPath, searcher, evidenceUUID);
             if (zoomusDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(zoomusDb, oskey).createConnection()) {
                     account = dataExtractor.extractUserAccount(conn);
@@ -178,7 +179,7 @@ public class ZoomDpapiParser extends AbstractParser {
                 }
             }
 
-            File meetingDb = findDatabaseFile("zoommeeting.enc.db", iniPath, searcher, tmp, evidenceUUID);
+            File meetingDb = findDatabaseFile("zoommeeting.enc.db", oskey,  iniPath, searcher, evidenceUUID);
             String[] meetingIds = null;
             if (meetingDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(meetingDb, oskey).createConnection()) {
@@ -201,7 +202,7 @@ public class ZoomDpapiParser extends AbstractParser {
                 }
             }
 
-            File calendarDb = findDatabaseFile("calendar-history-meeting.enc.db", iniPath, searcher, tmp, evidenceUUID);
+            File calendarDb = findDatabaseFile("calendar-history-meeting.enc.db", oskey, iniPath, searcher, evidenceUUID);
             if (calendarDb != null) {
                 try (Connection conn = new ZoomDatabaseReader(calendarDb, oskey).createConnection()) {
                     meetings = dataExtractor.extractMeetings(conn);
@@ -537,87 +538,36 @@ public class ZoomDpapiParser extends AbstractParser {
         return normalized.substring(0, userEnd);
     }
 
-    private File findDatabaseFile(String dbName, String iniPath, IItemSearcher searcher,
-                                    TemporaryResources tmpRes, String evidenceUUID) {
+    private File findDatabaseFile(String dbName, String oskey, String iniPath, IItemSearcher searcher, String evidenceUUID) {
         if (searcher == null) return null;
 
-        String escapedName = searcher.escapeQuery(dbName);
-        List<IItemReader> items = Collections.emptyList();
+        List<IItemReader> items = searcher.search(BasicProps.NAME + ":\"" + searcher.escapeQuery(dbName) + "\"");
 
-        if (iniPath != null && !iniPath.isEmpty()) {
-            int lastSep = iniPath.lastIndexOf('/');
-            if (lastSep > 0) {
-                String parentPath = iniPath.substring(0, lastSep);
-                String pathQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parentPath) + "\" AND "
-                        + BasicProps.NAME + ":\"" + escapedName + "\"";
-                items = searcher.search(pathQuery);
-                items = filterDeleted(items);
-                logger.debug("findDatabaseFile path query for {}: {} -> {} results", dbName, pathQuery, items.size());
-            }
-        }
+        String parentPath = Util.getUpToLastSeparator(iniPath, true);
 
-        if (items.isEmpty()) {
-            String nameQuery = BasicProps.NAME + ":\"" + escapedName + "\"";
-            if (evidenceUUID != null) {
-                nameQuery += " AND " + BasicProps.EVIDENCE_UUID + ":\"" + evidenceUUID + "\"";
-            }
-            items = searcher.search(nameQuery);
-            items = filterDeleted(items);
-            logger.debug("findDatabaseFile name query for {}: {} results", dbName, items.size());
+        // Sort items by priority (matching conditions come first):
+        // 1. Exact file name match (dbName)
+        // 2. Exact full path match (parentPath + "/" + dbName)
+        // 3. Path starts with the parent directory
+        // 4. Match evidenceUUID
+        // 5. Not deleted (false comes first)
+        items.sort(Comparator
+                .comparing((IItemReader o) -> !o.getName().equals(dbName))
+                .thenComparing(o -> !o.getPath().equals(parentPath + "/" + dbName))
+                .thenComparing(o -> !o.getPath().startsWith(parentPath))
+                .thenComparing((IItemReader o) -> !o.getDataSource().getUUID().equals(evidenceUUID))
+                .thenComparing(IItemReader::isDeleted));
 
-            if (items.size() > 1 && iniPath != null) {
-                IItemReader best = getBestItem(items, iniPath);
-                if (best != null) {
-                    items = Collections.singletonList(best);
-                }
-            }
-        }
-
+        // Returns the first database file that can be opened with oskey
         for (IItemReader item : items) {
-            try {
-                File tempFile = File.createTempFile("zoom_", "_" + dbName);
-                tmpRes.addResource(() -> tempFile.delete());
-                try (InputStream is = item.getBufferedInputStream();
-                     java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile)) {
-                    byte[] buf = new byte[8192];
-                    int n;
-                    while ((n = is.read(buf)) != -1) {
-                        fos.write(buf, 0, n);
-                    }
-                }
-                logger.info("Extracted database {} ({} bytes) from: {}", dbName, tempFile.length(), item.getPath());
-                return tempFile;
+            try (Connection conn = new ZoomDatabaseReader(item.getTempFile(), oskey).createConnection()) {
+                return item.getTempFile();
             } catch (Exception e) {
-                logger.debug("Failed to extract database file: {}", dbName, e);
+                logger.info("{} is not a valid database for oskey {}: {}", item, oskey, e.getMessage());
             }
         }
 
         logger.info("Database file not found: {}", dbName);
         return null;
-    }
-
-    private List<IItemReader> filterDeleted(List<IItemReader> items) {
-        List<IItemReader> active = new ArrayList<>();
-        for (IItemReader item : items) {
-            if (!item.isDeleted()) {
-                active.add(item);
-            }
-        }
-        return active.isEmpty() ? items : active;
-    }
-
-    private IItemReader getBestItem(List<IItemReader> items, String referencePath) {
-        String path = referencePath.replace('\\', '/');
-        while (path != null && !path.isEmpty()) {
-            int pos = path.lastIndexOf('/');
-            if (pos < 0) break;
-            path = path.substring(0, pos);
-            for (IItemReader item : items) {
-                if (item.getPath() != null && item.getPath().startsWith(path)) {
-                    return item;
-                }
-            }
-        }
-        return items.isEmpty() ? null : items.get(0);
     }
 }
