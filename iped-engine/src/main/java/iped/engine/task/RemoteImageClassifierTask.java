@@ -98,9 +98,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private double labelingThreshold;
     private int thumbSize = 0;
 
-    private RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(30 * 1000) // 30 seconds connection
-            .setSocketTimeout(10 * 60 * 1000) // 10 minutes socket timeout (classification may take time)
-            .build();
+    private RequestConfig requestConfig;
 
     // Labeling classes name in priority order
     private static final List<String> classesName = new ArrayList<>();
@@ -280,6 +278,10 @@ public class RemoteImageClassifierTask extends AbstractTask {
         validateSSL = config.isValidateSSL();
         labelingThreshold = config.getLabelingThreshold();
         
+        requestConfig = RequestConfig.custom().setConnectTimeout(config.getConnectTimeout())
+                .setSocketTimeout(config.getSocketTimeout())
+                .build();
+
         try (CloseableHttpClient client = getClient()) {
             HttpGet get = new HttpGet(urlVersion);
             get.setConfig(requestConfig);
