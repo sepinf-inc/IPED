@@ -2,35 +2,53 @@
 # Must have either tensorflow, onnxruntime, or pytorch with timm installed, see online documentation.
 # To enable the module, set "enableCSAMDetector=true" property in IPEDConfig.txt file
 #
-# Availabel models, with stats for csam class in test dataset (speed is measured in images/s on reference computer with AMD Ryzen 3 5300 CPU):
+# Availabel models for Law Enforcement only, with stats for csam class in test dataset (speed is measured in images/s on reference computer with AMD Ryzen 3 5300 CPU):
 #   TENSORFLOW MODELS (for GPU)
-#    	- tensorflow_B0_v3_1.keras    - EfficientNetV2-B0 using tensorflow, image size 224x224 (precision 0.91, recall 0.96, speed 11)
+#       - tensorflow_B0_v3_1.keras    - EfficientNetV2-B0 using tensorflow, image size 224x224 (precision 0.91, recall 0.96, speed 11)
 #
 #	TFLITE MODELS (for CPU - requires tensorflow installation)
-#		- tflite_B0_v3_1.tflite 	- Converted from tensorflow B0 to tflite with 32-bit floating-point (FP32)  (precision 0.89, recall 0.95, speed 56)
+#       - tflite_B0_v3_1.tflite 	- Converted from tensorflow B0 to tflite with 32-bit floating-point (FP32)  (precision 0.89, recall 0.95, speed 56)
 #
 #   PYTORCH MODELS (for GPU)
 #   	- pytorch_B0_v3_1_2.pth     - based on efficientnetv2_b0.in1k, image size 224x224 (precision 0.91, recall 0.92, speed 25)
 #       - TinyViT-5M-21k.pth		- based on tiny_vit_5m_224.dist_in22k, image size 224x224 (precision 0.94, recall 0.96, speed 21)
-#    	- pytorch_S_v3_1.pth      	- based on tf_efficientnetv2_s.in21k_ft_in1k, image size 384x384 (recommended the use of GPU)  (precision 0.96, recall 0.97, speed 5)
+#    	- pytorch_S_v3_1.pth      	- based on timm/tf_efficientnetv2_s.in21k_ft_in1k, image size 384x384 (precision 0.96, recall 0.97, 220 images/s GPU RTX 5070, 29 images/s Nvidia P620, speed 5)
+#       - pytorch_M_v_3_1.pth       - based on timm/tf_efficientnetv2_m.in21k_ft_in1k, image size 480x480 (precision 0.96, recall 0.97, 123 images/s GPU RTX 5070)
+#       - pytorch_L_in21k_ft_in1k_v3_1.pth - timm/tf_efficientnetv2_l.in21k_ft_in1k, image size 480x480   (precision 0.97, recall 0.96, 78 images/s GPU RTX 5070)
+#       - pytorch_EVA02_B_v3_1.pth  - eva02_base_patch14_448.mim_in22k_ft_in22k_in1k, image size 448x448  (precision 0.97, recall 0.99, 48 images/s GPU RTX 5070)
+#       - pytorch_EVA02_L_v3_1_1.pth  - eva02_large_patch14_448.mim_m38m_ft_in22k_in1k, image size 448x448  (precision 0.989, recall 0.995, 40 images/s GPU RTX 5070)
 #
-#	ONNX MODELS (for CPU, requires only onnxruntime installation  - less then 20MB)
-#       - pytorch_B0_v3_1_2_fp32.onnx - FASTEST MODE ON GPU, converted from pytorch_B0_v3_1_2.pth (precision 0.91, recall 0.92, speed 60)
-#		- TinyViT-5M-21k_fp32.onnx    - converted from TinyViT-5M-21k.pth (precision 0.94, recall 0.96, speed 21)
-#		- pytorch_S_v3_1_fp32.onnx	  - converted from pytorch_S_v3_1.pth to ONNX FP32 (precision 0.96, recall 0.97, speed 5)
+#   ONNX MODELS (for CPU, requires only onnxruntime installation  - less then 20MB)
+#       - onnx_B0_tensorflow_v3_1.onnx - converted from tensorflow_B0_v3_1.keras (precision 0,91, recall 0,96, speed 63)
+#       - MobileNetV4_v3_1.onnx       - converted from mobilenetv4_conv_medium.e500_r224_in1k (precision 0,91, recall 0,95, speed 63)
+#       - pytorch_B0_v3_1_2_fp32.onnx - converted from pytorch_B0_v3_1_2.pth (precision 0.91, recall 0.92, speed 56)
+#       - TinyViT-5M-21k_fp32.onnx    - converted from TinyViT-5M-21k.pth (precision 0.94, recall 0.96, speed 21)
+#       - pytorch_S_v3_1_fp32.onnx	  - converted from pytorch_S_v3_1.pth to ONNX FP32 (precision 0.96, recall 0.97, speed 5)
 #
-ModelFile = pytorch_B0_v3_1_2_fp32.onnx
+
+# Defines the model file to be used, must be in the iped/models directory.
+# Set this property to the value auto, to use defaults according to available hardware:
+# VRAM          MODEL FILE                      BATCH_SIZE
+# 0GB (CPU)     onnx_B0_tensorflow_v3_1.onnx/   1
+#               MobileNetV4_v3_1.onnx/          1
+#               pytorch_B0_v3_1_2_fp32.onnx     1
+# 2 GB          pytorch_S_v3_1.pth              4
+# 4 GB          pytorch_EVA02_B_v3_1.pth        5
+# 8 GB          pytorch_EVA02_L_v3_1_1.pth      5
+# 12 GB	        pytorch_EVA02_L_v3_1_1.pth      10
+# 16 GB         pytorch_EVA02_L_v3_1_1.pth      20
+ModelFile = auto
 
 # Batch size to be used. When using the large models this value should  be reduced to avoid GPU memory exaustion
 # For example, recommended size for 12 GB GPU on large models is 16
 # Ignored when using TFLITE or ONNX models
-BatchSize = 16
+BatchSize = 10
 
 # Minimum image size to be processed, in bytes (use 0 to disable)
 MinimumImageSize = 2048
 
 # Minimum file dimension, in pixels (use 0 to disable)
-SkipDimension = 10
+SkipDimension = 48
 
 # Skip files with hits on IPED HashDB database (known and csam)
 SkipHashDBFiles = true
@@ -53,8 +71,8 @@ CreateBookmarks = false
 # Treshold is the score on the respective class
 CsamThreshold = 0.6
 PornThreshold = 0.5
-CsamMinFrames = 1
-PornMinFrames = 1
+CsamMinFrames = 2
+PornMinFrames = 2
 # If the percentage of csam frames is above this percentage, video is always categorized as csam
 CsamAmbiguityMaxHitsPercentage = 0.2
 # If csam frames is below percentage, and there are ratio more porn frames, classify video as porn
