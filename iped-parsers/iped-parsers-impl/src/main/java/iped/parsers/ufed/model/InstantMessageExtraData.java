@@ -17,6 +17,7 @@ public class InstantMessageExtraData implements Serializable {
     private ForwardedMessageData forwardedMessage;
     private QuotedMessageData quotedMessage;
     private ReplyMessageData replyMessage;
+    private final List<BaseModel> otherData = new ArrayList<>();
 
     public List<MessageLabel> getMessageLabels() {
         return messageLabels;
@@ -44,5 +45,9 @@ public class InstantMessageExtraData implements Serializable {
 
     public void setReplyMessage(ReplyMessageData replyMessage) {
         this.replyMessage = replyMessage;
+    }
+
+    public List<BaseModel> getOtherData() {
+        return otherData;
     }
 }
