@@ -262,19 +262,21 @@ public class ReportGenerator {
             link.getInner().add(img);
             div.getInner().add(link);
 
-            if (message.getMediaItem().getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
+            if (message.getMediaItem()!= null && message.getMediaItem().getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
                 TagHtml transcription = new TagHtml("span");
-                String transcriptionText = Messages.getString("ReportGenerator.TranscriptionTitle");
+                StringBuilder transcriptionText = new StringBuilder();
+                transcriptionText.append(Messages.getString("ReportGenerator.TranscriptionTitle"));
 
                 String confidence = message.getMediaItem().getMetadata().get(ExtraProperties.CONFIDENCE_ATTR);
                 if (confidence != null) {
                     float score = Float.valueOf(confidence) * 100;
-                    transcriptionText += " [" + (int) score + "%]";
+                    transcriptionText.append(" [" + (int) score + "%]");
                 }
-                transcriptionText += ": <i>";
-                transcriptionText += format(message.getMediaItem().getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR));
-                transcriptionText += "</i><br>";
-                transcription.getInner().add(transcriptionText);
+                transcriptionText.append(": <i>");
+                transcriptionText
+                        .append(format(message.getMediaItem().getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR)));
+                transcriptionText.append("</i><br>");
+                transcription.getInner().add(transcriptionText.toString());
                 div.getInner().add(transcription);
             }
 
