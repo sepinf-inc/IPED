@@ -209,6 +209,20 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return null;
     }
 
+    public void setBookmarkQuery(String bookmarkName, String query) {
+        for (IBookmarks m : map.values())
+            m.setBookmarkQuery(m.getBookmarkId(bookmarkName), query);
+    }
+
+    public String getBookmarkQuery(String bookmarkName) {
+        for (IBookmarks m : map.values()) {
+            String query = m.getBookmarkQuery(m.getBookmarkId(bookmarkName));
+            if (query != null)
+                return query;
+        }
+        return null;
+    }
+
     public void setBookmarkColor(String bookmarkName, Color color) {
         for (IBookmarks m : map.values()) {
             int bid = m.getBookmarkId(bookmarkName);

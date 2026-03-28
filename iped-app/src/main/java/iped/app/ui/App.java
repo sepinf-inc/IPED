@@ -69,6 +69,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.RowSorter.SortKey;
@@ -249,6 +250,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll, referencesScroll, referencedByScroll;
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
     JPanel topPanel;
+    JPanel searchPanel;
+    JPanel bookmarkQueryPanel;
+    JPanel searchAndBookmarkQueryPanel;
+    JTextField bookmarkQueryField;
     ClearFilterButton clearAllFilters;
     boolean verticalLayout = false;
 
@@ -285,6 +290,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     final static String FILTRO_TODOS = Messages.getString("App.NoFilter"); //$NON-NLS-1$
     final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
     public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
+    public final static String ACTIVE_BOOKMARK_QUERY_PROPERTY = "ActiveBookmarkQuery"; //$NON-NLS-1$
 
     static int MAX_HITS = 10000;
 
@@ -330,6 +336,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return app;
     }
 
+    public boolean isMultiCase() {
+        return this.isMultiCase;
+    }
+    
     public void setLastSelectedDoc(int lastSelectedDoc) {
         this.lastSelectedDoc = lastSelectedDoc;
     }
@@ -550,13 +560,37 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         similarFacesFilterPanel = new SimilarFacesFilterPanel();
         similarFacesFilterPanel.setVisible(false);
 
+        // Search panel
+        searchPanel = new JPanel();
+        searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.LINE_AXIS));
+        searchPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
+        searchPanel.add(queryComboBox);
+
+        // Bookmark query panel
+        bookmarkQueryPanel = new JPanel();
+        bookmarkQueryPanel.setLayout(new BoxLayout(bookmarkQueryPanel, BoxLayout.LINE_AXIS));
+        bookmarkQueryPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0,0));
+        bookmarkQueryPanel.setVisible(false);
+        bookmarkQueryField = new JTextField();
+        bookmarkQueryField.setEditable(false);
+        bookmarkQueryField.setForeground(Color.GRAY);
+        Border lineBorder = BorderFactory.createLineBorder(alertColor, 2, true);
+        Border paddingBorder = BorderFactory.createEmptyBorder(1, 3, 1, 3);
+        bookmarkQueryField.setBorder(BorderFactory.createCompoundBorder(lineBorder, paddingBorder));
+        bookmarkQueryPanel.add(new JLabel(tab + Messages.getString("BookmarksManager.QueryTooltip") + ": ")); //$NON-NLS-1$
+        bookmarkQueryPanel.add(bookmarkQueryField);
+
+        // Container panel for Search panel and Bookmark query panel, so they share space equally
+        searchAndBookmarkQueryPanel = new JPanel();
+        searchAndBookmarkQueryPanel.setLayout(new BorderLayout());
+        searchAndBookmarkQueryPanel.add(searchPanel, BorderLayout.CENTER);
+
         topPanel.add(filterComboBox);
         topPanel.add(filterDuplicates);
         topPanel.add(clearAllFilters);
         topPanel.add(similarImageFilterPanel);
         topPanel.add(similarFacesFilterPanel);
-        topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
-        topPanel.add(queryComboBox);
+        topPanel.add(searchAndBookmarkQueryPanel);
         topPanel.add(optionsButton);
         if (processingManager != null)
             topPanel.add(updateCaseData);
@@ -1678,6 +1712,30 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicatesTable.repaint();
         referencesTable.repaint();
         referencedByTable.repaint();
+    }
+
+    public void updateBookmarkQueryPanelVisibility(String query) {
+        // Hide bookmark panel if bookmark query mode is 'hidden' or if there is no active bookmark query
+        // Adjust container panel layout accordingly
+        if (BookmarksManager.isHiddenBookmarkQueryMode()) {
+            bookmarkQueryField.setText("");
+            bookmarkQueryPanel.setVisible(false);
+            searchAndBookmarkQueryPanel.remove(bookmarkQueryPanel);
+        } else {
+            if (query != null && !query.trim().isEmpty()) {
+                bookmarkQueryField.setText(query);
+                bookmarkQueryField.setCaretPosition(0);
+                bookmarkQueryPanel.setVisible(true);
+                bookmarkQueryPanel.setPreferredSize(new Dimension(searchAndBookmarkQueryPanel.getWidth() / 2, 0));
+                searchAndBookmarkQueryPanel.add(bookmarkQueryPanel, BorderLayout.WEST);
+            } else {
+                bookmarkQueryField.setText("");
+                bookmarkQueryPanel.setVisible(false);
+                searchAndBookmarkQueryPanel.remove(bookmarkQueryPanel);
+            }
+        }
+        searchAndBookmarkQueryPanel.revalidate();
+        searchAndBookmarkQueryPanel.repaint();
     }
 
     private class SpaceKeyListener extends KeyAdapter {
