@@ -258,7 +258,18 @@ public class Extractor {
                 while (rs.next()) {
                     byte[] data = rs.getBytes("data");
                     long mid = rs.getLong("mid");
-                    Message message = new Message(mid, chat);
+                    Message message = null;
+                    if (data == null) {
+                        data = rs.getBytes("mediaData");
+                        mid = rs.getLong("mdmid");
+                        logger.warn("Message with mid {} has no data, trying to decode media data", mid);
+                        message = new Message(mid, chat);
+                        message.setDeleted(true);
+                        message.setRecoveryString("Recovered from media data");
+                    } else {
+                        message = new Message(mid, chat);
+                    }
+
                     androidDecoder.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
                     androidDecoder.getMessageData(message);
                     long fromid = androidDecoder.getRemetenteId();
@@ -626,8 +637,10 @@ public class Extractor {
     }
 
     private String getAndroidExtractMessagesSQL() throws SQLException {
-        return "SELECT m.*,md.data as mediaData FROM " + findTableVersion("messages", 5) + " m left join "
-                + findTableVersion("media", 5) + " md on (md.mid=m.mid and  m.uid=md.uid) where m.uid=? order by date";
+        return "SELECT m.*,md.data as mediaData, md.mid as mdmid FROM " + findTableVersion("messages", 5)
+                + " m full join "
+                + findTableVersion("media", 5)
+                + " md on (md.mid=m.mid and  m.uid=md.uid) where IFNULL(m.uid, md.uid)=?   order by IFNULL(m.date,md.date)";
     }
 
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";

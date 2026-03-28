@@ -56,6 +56,8 @@ public class Message implements MessageInterface {
     private String url;
     private String linkTitle;
     private PoolData poolData;
+    private boolean isDeleted = false;
+    private String recoveryString = null;
 
     public long getId() {
         return id;
@@ -281,6 +283,22 @@ public class Message implements MessageInterface {
 
     public void setPoolData(PoolData poolData) {
         this.poolData = poolData;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public String getRecoveryString() {
+        return recoveryString;
+    }
+
+    public void setRecoveryString(String recoveryString) {
+        this.recoveryString = recoveryString;
     }
 }
 
