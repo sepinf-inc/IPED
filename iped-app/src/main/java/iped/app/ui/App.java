@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -356,7 +356,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public MenuClass getContextMenu() {
         IItemId id = resultTableListener.getSelectedItemId();
-        IItem item = id == null ? null : appCase.getItemByItemId(id); 
+        IItem item = id == null ? null : appCase.getItemByItemId(id);
         return new MenuClass(item);
     }
 
@@ -482,6 +482,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.setTitle(Version.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         this.setSize(new Dimension(800, 600));
         this.setExtendedState(Frame.MAXIMIZED_BOTH);
+        this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         this.addWindowListener(this);
         this.setIconImages(IconUtil.getIconImages("search", "/iped/app/icon"));
         this.setVisible(true);
@@ -1006,7 +1007,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
         butFaceSearch.setEnabled(false);
-        
+
         galleryTabDock.addSeparator();
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
@@ -1508,6 +1509,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowClosing(WindowEvent e) {
+        // Check if BFAC upload is in progress
+        if (!iped.bfac.BfacDialog.confirmApplicationClose(this)) {
+            return; // User cancelled, don't close
+        }
         removeAllDockables();
         this.dispose();
         destroy();
