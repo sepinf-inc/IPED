@@ -12,7 +12,7 @@
 #1694: Regression: Optimize UFDR evidences opening time through some networks (@lfcnassif, @wladimirleite)
 #2795: "hash:status" and "hash:set" being incorrectly used if WhatsApp media messages hit the hash database (@wladimirleite)
 #2797: Previews not displayed in multicases if relatives paths are used (@aberenguel)
-#2761: Bookmark name incorrectly split in Bookmark column (@wladimir leite, @marcosammoura)
+#2761: Bookmark name incorrectly split in Bookmark column (@wladimirleite, @marcosammoura)
 #2799: Files not exported when creating a report from a read-only case (@wladimirleite, @lfcnassif)
 #2849: Fail to parse very old WhatsApp iOS databases (@wladimirleite)
 #2834: Report generation fails due to inconsistency of data type for field html:image:og:image:height (@wladimirleite, @lfcnassif)
