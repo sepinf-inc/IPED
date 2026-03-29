@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
@@ -33,8 +34,6 @@ import iped.utils.IOUtil;
 
 public class Util {
 
-    private static final String imageThumbsDir = "../../../../iped/thumbs/"; //$NON-NLS-1$
-    private static final String videoThumbsDir = "../../../../iped/view/"; //$NON-NLS-1$
     private static final int MAX_PREVIEW_SIZE = 128;
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 
@@ -450,4 +449,28 @@ public class Util {
         }
     }
 
+    public static String getUpToLastSeparator(String input, boolean includeSeparator) {
+        if (StringUtils.isEmpty(input)) {
+            return input;
+        }
+
+        int slashIndex = StringUtils.lastIndexOf(input, "/");
+        int arrowsIndex = StringUtils.lastIndexOf(input, ">>");
+
+        // If neither separator is found, return the original string
+        if (slashIndex == -1 && arrowsIndex == -1) {
+            return input;
+        }
+
+        // Compare indices to find which separator occurs last
+        if (slashIndex > arrowsIndex) {
+            // "/" is the last separator (length is 1)
+            int endIndex = includeSeparator ? slashIndex + 1 : slashIndex;
+            return StringUtils.substring(input, 0, endIndex);
+        } else {
+            // ">>" is the last separator (length is 2)
+            int endIndex = includeSeparator ? arrowsIndex + 2 : arrowsIndex;
+            return StringUtils.substring(input, 0, endIndex);
+        }
+    }
 }
