@@ -707,6 +707,10 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         App.get().appCase.getMultiBookmarks().saveState();
     }
 
+    public boolean isKeyStrokeAlreadyUsed(KeyStroke stroke) {
+        return keystrokeToBookmark.containsKey(stroke);
+    }
+
     // alt key remove from bookmark
     private KeyStroke getRemoveKey(KeyStroke k) {
         return KeyStroke.getKeyStroke(k.getKeyCode(), k.getModifiers() | KeyEvent.ALT_DOWN_MASK, true);
