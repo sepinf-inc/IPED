@@ -249,6 +249,7 @@ public class Extractor {
         String SQL = getAndroidExtractMessagesSQL();
         try (PreparedStatement stmt = conn.prepareStatement(SQL)) {
             stmt.setLong(1, chat.getId());
+            stmt.setLong(2, chat.getId());
             ResultSet rs = stmt.executeQuery();
             ChatGroup cg = null;
             if (chat.isGroupOrChannel()) {
@@ -637,10 +638,13 @@ public class Extractor {
     }
 
     private String getAndroidExtractMessagesSQL() throws SQLException {
-        return "SELECT m.*,md.data as mediaData, md.mid as mdmid FROM " + findTableVersion("messages", 5)
-                + " m full join "
-                + findTableVersion("media", 5)
-                + " md on (md.mid=m.mid and  m.uid=md.uid) where IFNULL(m.uid, md.uid)=?   order by IFNULL(m.date,md.date)";
+        String tmessage = findTableVersion("messages", 5);
+        String tmedia = findTableVersion("media", 5);
+
+        return "SELECT m.mid, m.data, null as mediaData, null as mdmid " + "FROM " + tmessage + " m " + "WHERE m.uid=? "
+                + "UNION ALL " + "SELECT null as mid, null as data, md.data as mediaData, md.mid as mdmid " + "FROM "
+                + tmessage + " m " + "RIGHT JOIN " + tmedia + " md ON (md.mid=m.mid AND m.uid=md.uid) "
+                + "WHERE m.mid IS NULL AND md.uid=?";
     }
 
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
