@@ -5,6 +5,7 @@ import java.util.List;
 import iped.data.IItem;
 import iped.engine.task.HashDBLookupTask;
 import iped.parsers.util.ItemInfo;
+import iped.properties.ExtraProperties;
 
 public class ItemInfoFactory {
 
@@ -17,7 +18,7 @@ public class ItemInfoFactory {
 
     // Check if there is a single status, and it is "known"
     private static boolean isKnown(IItem evidence) {
-        Object hashDbStatus = evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE);
+        Object hashDbStatus = evidence.getExtraAttribute(ExtraProperties.HASHDB_STATUS);
         if (hashDbStatus != null) {
             if (hashDbStatus instanceof List) {
                 @SuppressWarnings("unchecked")

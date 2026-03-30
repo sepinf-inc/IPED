@@ -149,7 +149,7 @@ public class BaseModelHandler<T extends BaseModel> {
         if (!newSharedHashes.isEmpty()) {
             Property sharedHashesProperty = Property.internalTextBag(ExtraProperties.SHARED_HASHES);
             HashSet<String> sharedHashes = new HashSet<>(Arrays.asList(metadata.getValues(sharedHashesProperty)));
-            if (sharedHashes.addAll(newLinkedItems)) {
+            if (sharedHashes.addAll(newSharedHashes)) {
                 metadata.set(sharedHashesProperty, sharedHashes.toArray(new String[] {}));
             }
         }

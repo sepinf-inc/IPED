@@ -93,6 +93,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,6 +123,8 @@ public abstract class ExtractorIOS extends Extractor {
     private boolean hasZTitleColumn = false;
     private boolean hasZSTANZAIDAndZMETADATAColumns = false;
     private boolean hasZMOVIEDURATIONColumn;
+    private boolean hasContactIdentifierColumn;
+    private boolean hasMessageInfoTable;
     private SQLException parsingException = null;
 
     public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account,
@@ -200,6 +203,8 @@ public abstract class ExtractorIOS extends Extractor {
                     hasZSTANZAIDAndZMETADATAColumns = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMESSAGE",
                             "ZSTANZAID") && SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMETADATA");
                     hasZMOVIEDURATIONColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMOVIEDURATION");
+                    hasContactIdentifierColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWACHATSESSION", "ZCONTACTIDENTIFIER");
+                    hasMessageInfoTable = SQLite3DBParser.containsTable("ZWAMESSAGEINFO", conn);
                 } catch (SQLException e) {
                     if (firstTry || !isSqliteCorruptException(e)) {
                         throw e;
@@ -208,15 +213,30 @@ public abstract class ExtractorIOS extends Extractor {
                     }
                 }
 
-                String chatListQuery = hasProfilePictureItemTable ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_PPIC;
+                String chatListQuery = hasContactIdentifierColumn ? SELECT_CHAT_LIST_IDENTIFIER
+                        : hasProfilePictureItemTable ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_PPIC;
 
                 try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
                     while (rs.next()) {
-                        String contactId = rs.getString("contact"); //$NON-NLS-1$
+                        String contactId = rs.getString("contact");
+                        String originalId = contactId; 
+                        if (contactId.endsWith(WAContact.lidSuffix)) {
+                            String identifier = rs.getString("identifier");
+                            if (StringUtils.isNotBlank(identifier)) {
+                                contactId = identifier;
+                            }
+                        }
+                        String subject = Util.getUTF8String(rs, "subject");
                         WAContact remote = contacts.getContact(contactId);
+                        if (StringUtils.isNotBlank(subject) && remote.getId().equals(remote.getName())) {
+                            remote.setWaName(subject);
+                        }
+                        if (!originalId.equals(contactId)) {
+                            contacts.addContactMapping(originalId, contactId);
+                        }
                         Chat c = new Chat(remote);
-                        c.setId(rs.getLong("id")); //$NON-NLS-1$
-                        c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
+                        c.setId(rs.getLong("id"));
+                        c.setSubject(subject);
                         if (contactId.endsWith(WAContact.waGroupSuffix)) {
                             c.setGroupChat(true);
                         } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
@@ -225,7 +245,7 @@ public abstract class ExtractorIOS extends Extractor {
                             c.setBroadcast(true);
                         }
                         c.setDeleted(rs.getInt("ZREMOVED") != 0);
-                        remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
+                        remote.setAvatarPath(rs.getString("avatarPath"));
                         if (recoverDeletedRecords) {
                             activeChats.add(c.getId());
                         }
@@ -326,6 +346,11 @@ public abstract class ExtractorIOS extends Extractor {
             sql = isGroupChat ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
         } else {
             sql = isGroupChat ? SELECT_MESSAGES_GROUP_NOZTITLE : SELECT_MESSAGES_USER_NOZTITLE;
+        }
+        
+        if (!hasMessageInfoTable) {
+            sql = sql.replace("LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO ", "");
+            sql = sql.replace("INFO.ZRECEIPTINFO", "NULL");
         }
 
         if (!hasZSTANZAIDAndZMETADATAColumns) {
@@ -737,10 +762,12 @@ public abstract class ExtractorIOS extends Extractor {
         if (receiptInfo != null) {
             decodeReceiptInfo(m, receiptInfo);
         }
-        m.setForwarded(rs.getInt("forwarded") > 0);
+        int forwardedMask = 0b1_1000_0000; // 8th and 9th bits
+        m.setForwarded((rs.getLong("zflags") & forwardedMask) == forwardedMask);
 
-        byte[] metadata = rs.getBytes("metadata");
+        byte[] metadata = null;
         if (hasZSTANZAIDAndZMETADATAColumns) {
+            metadata = rs.getBytes("metadata");
             m.setUuid(rs.getString("uuid"));
             m.setMetaData(metadata);
         }
@@ -1382,12 +1409,24 @@ public abstract class ExtractorIOS extends Extractor {
 
         if (undeleteChatsSessions != null && !undeleteChatsSessions.getTableRows().isEmpty()) {
             for (SqliteRow row : undeleteChatsSessions.getTableRows()) {
-                String contactId = row.getTextValue("ZCONTACTJID"); //$NON-NLS-1$
+                String contactId = row.getTextValue("ZCONTACTJID");
+                String originalId = contactId; 
+                if (contactId.endsWith(WAContact.lidSuffix)) {
+                    String identifier = row.getTextValue("ZCONTACTIDENTIFIER");
+                    if (StringUtils.isNotBlank(identifier)) {
+                        contactId = identifier;
+                    }
+                }
+                if (originalId != null && !originalId.equals(contactId)) {
+                    contacts.addContactMapping(originalId, contactId);
+                }
+
                 WAContact contact = contacts.getContact(contactId);
                 Chat c = new Chat(contact);
-                c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
+                c.setId(row.getIntValue("Z_PK"));
                 c.setDeleted(row.getIntValue("ZREMOVED") != 0 || row.isDeletedRow());
-                c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
+                c.setSubject(row.getTextValue("ZPARTNERNAME"));
+
                 if (contactId.endsWith(WAContact.waGroupSuffix)) {
                     c.setGroupChat(true);
                 } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
@@ -1792,16 +1831,22 @@ public abstract class ExtractorIOS extends Extractor {
     /**
      * Static query strings
      */
-    private static final String SELECT_CHAT_LIST = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath, ZREMOVED " //$NON-NLS-1$
-            + "FROM ZWACHATSESSION " //$NON-NLS-1$
-            + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID " //$NON-NLS-1$
-            + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
+    private static final String SELECT_CHAT_LIST_IDENTIFIER = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, "
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath, ZREMOVED, ZCONTACTIDENTIFIER AS identifier "
+            + "FROM ZWACHATSESSION "
+            + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID "
+            + "ORDER BY ZLASTMESSAGEDATE DESC";
 
-    private static final String SELECT_CHAT_LIST_NO_PPIC = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath, 0 as ZREMOVED " //$NON-NLS-1$
-            + "FROM ZWACHATSESSION " //$NON-NLS-1$
-            + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
+    private static final String SELECT_CHAT_LIST = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, "
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath, ZREMOVED, NULL AS identifier  "
+            + "FROM ZWACHATSESSION "
+            + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID "
+            + "ORDER BY ZLASTMESSAGEDATE DESC";
+
+    private static final String SELECT_CHAT_LIST_NO_PPIC = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, "
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath, 0 as ZREMOVED, NULL AS identifier "
+            + "FROM ZWACHATSESSION "
+            + "ORDER BY ZLASTMESSAGEDATE DESC";
 
     private static final String SELECT_PUSH_NAMES = "select ZJID as jid, ZPUSHNAME as pushname from ZWAPROFILEPUSHNAME";
     
@@ -1815,7 +1860,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1830,7 +1875,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1846,7 +1891,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, NULL as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$           
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1861,7 +1906,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, NULL as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$          
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$

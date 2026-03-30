@@ -1003,14 +1003,22 @@ public class WhatsAppParser extends SQLite3DBParser {
     private String formatContact(WAContact contact, Map<String, String> cache) {
         String result = cache.get(contact.getId());
         if (result == null) {
-            if (contact.getName() == null || contact.getName().isBlank()) {
-                result = contact.getFullId();
-            } else if (contact.getName().strip().equals(contact.getId())) {
-                result = contact.getFullId();
-            } else if (contact.getFullId().isBlank()) {
-                result = contact.getName().strip();
-            } else {
-                result = contact.getName().strip() + " (" + contact.getFullId().strip() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            result = contact.getName();
+            String number = contact.getFullId();
+            if (number.endsWith(WAContact.lidSuffix)) {
+                number = contact.getId();
+            }
+            if (number.endsWith(WAContact.waSuffix)) {
+                number = number.substring(0, number.length() - WAContact.waSuffix.length());
+            }
+            result = result == null ? "" : result.trim();
+            number = number == null ? "" : number.trim();
+            if (!number.isEmpty()) {
+                if (result.isEmpty()) {
+                    result = number;
+                } else if (!number.equals(result)) {
+                    result += " (" + number + ")";
+                }
             }
             cache.put(contact.getId(), result);
         }
@@ -1082,12 +1090,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             if (m.getMediaQuery() != null && m.getMediaSize() > 2) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
-                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery())); // $NON-NLS-1$
+                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery()));
             }
             if (!m.getChildPornSets().isEmpty()) {
-                meta.set("hash:status", "pedo"); //$NON-NLS-1$ //$NON-NLS-2$
+                meta.set(ExtraProperties.HASHDB_STATUS, "pedo");
                 for (String set : m.getChildPornSets()) {
-                    meta.add("hash:set", set); //$NON-NLS-1$
+                    meta.add(ExtraProperties.HASHDB_SET, set);
                 }
             }
 

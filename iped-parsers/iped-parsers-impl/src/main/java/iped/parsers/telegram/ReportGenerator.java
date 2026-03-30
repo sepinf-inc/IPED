@@ -27,6 +27,7 @@ import java.util.List;
 
 import iped.data.IItemReader;
 import iped.parsers.util.Messages;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
@@ -260,6 +261,25 @@ public class ReportGenerator {
 
             link.getInner().add(img);
             div.getInner().add(link);
+
+            if (message.getMediaItem()!= null && message.getMediaItem().getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
+                TagHtml transcription = new TagHtml("span");
+                StringBuilder transcriptionText = new StringBuilder();
+                transcriptionText.append(Messages.getString("ReportGenerator.TranscriptionTitle"));
+
+                String confidence = message.getMediaItem().getMetadata().get(ExtraProperties.CONFIDENCE_ATTR);
+                if (confidence != null) {
+                    float score = Float.valueOf(confidence) * 100;
+                    transcriptionText.append(" [" + (int) score + "%]");
+                }
+                transcriptionText.append(": <i>");
+                transcriptionText
+                        .append(format(message.getMediaItem().getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR)));
+                transcriptionText.append("</i><br>");
+                transcription.getInner().add(transcriptionText.toString());
+                div.getInner().add(transcription);
+            }
+
             out.println(div.toString());
 
         } else {
