@@ -323,11 +323,6 @@ public class SleuthkitReader extends DataSourceReader {
 
         int sectorSize = args.getBlocksize();
 
-        String password = getEvidencePassword(image);
-        if (password != null) {
-            setImagePassword(output, image.getName(), password);
-        }
-
         firstId = null;
         lastId = null;
         sleuthIdToId.clear();
@@ -422,7 +417,10 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.notify();
                 }
 
-                addImage = sleuthCase.makeAddImageProcess(timezone, true, false, "");
+                String password = getEvidencePassword(image);
+
+                addImage = sleuthCase.makeAddImageProcess(timezone, true, false, "", password);
+
                 addImageInBackground(addImage, image, sectorSize);
 
             }
