@@ -41,8 +41,8 @@ public class VideoThumbsMaker {
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
-    private String ffmpeg = Loader.load(org.bytedeco.ffmpeg.ffmpeg.class);
-    private String ffprobe = Loader.load(org.bytedeco.ffmpeg.ffprobe.class);
+    private static final String ffmpeg = Loader.load(org.bytedeco.ffmpeg.ffmpeg.class);
+    private static final String ffprobe = Loader.load(org.bytedeco.ffmpeg.ffprobe.class);
     private Boolean videoThumbsOriginalDimension = false;
     private int maxDimensionSize = 1024;
     private int compression = 50;
