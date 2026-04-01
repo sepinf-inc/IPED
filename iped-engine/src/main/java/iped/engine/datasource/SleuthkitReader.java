@@ -98,7 +98,7 @@ public class SleuthkitReader extends DataSourceReader {
     private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitReader.class);
 
     private static final String RANGE_ID_FILE = "data/SleuthkitIdsPerImage.txt";
-    private static final String PASSWORD_PER_IMAGE = "data/PasswordPerImage.txt";
+    public static final String PASSWORD_PER_IMAGE = "data/PasswordPerImage.txt";
 
     // TODO update @deleteDatasource() when updating TSK
     public static final String MIN_TSK_VER_TESTED = "4.11.0";

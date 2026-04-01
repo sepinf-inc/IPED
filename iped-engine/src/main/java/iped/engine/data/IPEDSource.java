@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -49,10 +50,13 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Bits;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
 
 import iped.data.IBookmarks;
 import iped.data.IIPEDSource;
@@ -79,6 +83,7 @@ import iped.exception.IPEDException;
 import iped.properties.BasicProps;
 import iped.utils.IOUtil;
 import iped.utils.SelectImagePathWithDialog;
+import iped.utils.UTF8Properties;
 
 public class IPEDSource implements IIPEDSource {
 
@@ -90,6 +95,10 @@ public class IPEDSource implements IIPEDSource {
     public static final String LIB_DIR = "lib"; //$NON-NLS-1$
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
     public static final String PREV_TEMP_INFO_PATH = DATA_DIR + "/prevTempDir.txt"; //$NON-NLS-1$
+
+    // key in acquisition tool settings; the password for decrypting an image
+    // @see: org.sleuthkit.datamodel.SleuthkitCase.IMAGE_PASSWORD_KEY
+    private static final String IMAGE_PASSWORD_KEY = "imagePassword";
 
     /**
      * workaround para JVM não coletar objeto, nesse caso Sleuthkit perde referencia
@@ -228,7 +237,7 @@ public class IPEDSource implements IIPEDSource {
             populateEvidenceUUIDs();
             countTotalItems();
 
-            SleuthkitReader.loadImagePasswords(moduleDir);
+            migrateImagesPassword();
 
             loadLeafCategories();
             loadCategoryTree();
@@ -253,6 +262,47 @@ public class IPEDSource implements IIPEDSource {
                 throw (RuntimeException) e;
             }
             throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+     private void migrateImagesPassword() {
+
+        if (sleuthCase == null) {
+            return;
+        }
+
+        File file = new File(moduleDir, SleuthkitReader.PASSWORD_PER_IMAGE);
+        if (!file.exists()) {
+            return;
+        }
+
+        // This block handles a data migration scenario for backward compatibility.
+        // In previous versions of IPED, passwords for encrypted disk images were stored in a separate properties file.
+        // This code checks if the password is not yet stored in the Sleuthkit database (as part of the DataSource acquisition details).
+        // If it's not, it reads the password from the old properties file and updates the DataSource object,
+        // effectively migrating the password to the new storage mechanism used by TSK (The Sleuth Kit).
+        // This allows IPED to seamlessly open older cases.
+        UTF8Properties props = new UTF8Properties();
+        try {
+            props.load(file);
+            for (DataSource ds : sleuthCase.getDataSources()) {
+                if (!StringUtils.contains(ds.getAcquisitionToolSettings(), IMAGE_PASSWORD_KEY)) {
+                    // if password is not in the DB yet, get it from props and set it
+                    String password = props.getProperty(ds.getName() + "_PASSWORD");
+                    if (password != null) {
+                        Map<String, Object> acquisitionToolMap = new HashMap<>();
+                        acquisitionToolMap.put(IMAGE_PASSWORD_KEY, password);
+                        String acquisitionToolJson = (new Gson()).toJson(acquisitionToolMap);
+
+                        ds.setAcquisitionToolDetails(ds.getAcquisitionToolName(), ds.getAcquisitionToolVersion(),
+                                acquisitionToolJson);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error(
+                    "Error migrating image passwords from properties file to Sleuthkit database. " +
+                    "This may cause issues opening encrypted images if the password is not already stored in the database: " + casePath, e);
         }
     }
 
