@@ -120,20 +120,41 @@ public class VideoProcessResult implements Closeable {
         if (info == null)
             return;
 
-        videoDuration = getDuration(info);
-        dimension = getDimension(info);
-        videoStream = getVideoStream(info, false);
+        videoDuration = getDuration(info, "ID_LENGTH="); //$NON-NLS-1$
+        dimension = getDimension(info, "ID_VIDEO_WIDTH=", "ID_VIDEO_HEIGHT="); //$NON-NLS-1$ //$NON-NLS-2$
+        videoStream = getVideoStream(info, false, false);
         if (videoStream == null) {
-            videoStream = getVideoStream(info, true);
+            videoStream = getVideoStream(info, true, false);
         }
-        rotation = getRotation(info);
+        rotation = getRotation(info, "_ROTATE="); //$NON-NLS-1$
 
-        setFPS(getFPS(info));
-        setBitRate(getBitRate(info));
+        setFPS(getFPS(info, "ID_VIDEO_FPS=")); //$NON-NLS-1$
+        setBitRate(getBitRate(info, "ID_VIDEO_BITRATE=")); //$NON-NLS-1$
         setVideoFormat(getStringInfo(info, "ID_VIDEO_FORMAT")); //$NON-NLS-1$
         setVideoCodec(getStringInfo(info, "ID_VIDEO_CODEC")); //$NON-NLS-1$
 
         getClipInfos(info);
+
+    }
+
+    public void setVideoInfoFFprobe(String info) throws Exception {
+        if (info == null)
+            return;
+
+        videoDuration = getDuration(info, "duration="); //$NON-NLS-1$
+        dimension = getDimension(info, "coded_width=", "coded_height="); //$NON-NLS-1$ //$NON-NLS-2$
+        videoStream = getVideoStream(info, false, true);
+        if (videoStream == null) {
+            videoStream = getVideoStream(info, true, true);
+        }
+        rotation = getRotation(info, "rotation="); //$NON-NLS-1$
+
+        setFPS(getFPS(info, "avg_frame_rate=")); //$NON-NLS-1$
+        setBitRate(getBitRate(info, "bit_rate=")); //$NON-NLS-1$
+        setVideoFormat(getStringInfo(info, "codec_name")); //$NON-NLS-1$
+        setVideoCodec(getStringInfo(info, "codec_long_name")); //$NON-NLS-1$
+
+        getClipTags(info);
 
     }
 
@@ -162,8 +183,22 @@ public class VideoProcessResult implements Closeable {
         }
     }
 
-    private long getDuration(String info) throws Exception {
-        String s1 = "ID_LENGTH="; //$NON-NLS-1$
+    private void getClipTags(String info) throws Exception {
+        String nameKey = "TAG:"; //$NON-NLS-1$
+        int p1 = -1;
+        while (true) {
+            p1 = info.indexOf(nameKey, p1);
+            if (p1 == -1)
+                break;
+            int p2 = info.indexOf('\n', p1);
+            String[] nameValue = info.substring(p1 + nameKey.length(), p2).trim().split("=");
+
+            if (nameValue.length == 2) clipInfos.put(nameValue[0], nameValue[1]);
+            p1++;
+        }
+    }
+
+    private long getDuration(String info, String s1) throws Exception {
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
             return -1;
@@ -178,24 +213,24 @@ public class VideoProcessResult implements Closeable {
         }
     }
 
-    private float getFPS(String info) throws Exception {
-        String s1 = "ID_VIDEO_FPS="; //$NON-NLS-1$
+    private float getFPS(String info, String s1) throws Exception {
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
             return -1;
         }
         int p2 = info.indexOf('\n', p1);
-        String s = info.substring(p1 + s1.length(), p2);
+        String[] s = info.substring(p1 + s1.length(), p2).trim().split("/");
         try {
-            return Float.parseFloat(s.trim());
+            if (s.length > 1) return Float.parseFloat(s[0])/Float.parseFloat(s[1]);
+            else if (s.length == 1) return Float.parseFloat(s[0]);
+            else return -1;
 
         } catch (NumberFormatException e) {
             return -1;
         }
     }
 
-    private int getRotation(String info) throws Exception {
-        String s1 = "_ROTATE="; //$NON-NLS-1$
+    private int getRotation(String info, String s1) throws Exception {
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
             return 0;
@@ -220,8 +255,7 @@ public class VideoProcessResult implements Closeable {
         return s.trim();
     }
 
-    private long getBitRate(String info) throws Exception {
-        String s1 = "ID_VIDEO_BITRATE="; //$NON-NLS-1$
+    private long getBitRate(String info, String s1) throws Exception {
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
             return -1;
@@ -236,8 +270,8 @@ public class VideoProcessResult implements Closeable {
         }
     }
 
-    private String getVideoStream(String info, boolean alt) throws Exception {
-        String s1 = alt ? ", -vid " : "Video stream found, -vid ";
+    private String getVideoStream(String info, boolean alt, boolean useFFprobe) throws Exception {
+        String s1 = useFFprobe ? "index=" : alt ? ", -vid " : "Video stream found, -vid ";
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
             return null;
@@ -256,8 +290,7 @@ public class VideoProcessResult implements Closeable {
         return s;
     }
 
-    private Dimension getDimension(String info) throws Exception {
-        String s1 = "ID_VIDEO_WIDTH="; //$NON-NLS-1$
+    private Dimension getDimension(String info, String s1, String s3) throws Exception {
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
             return null;
@@ -266,7 +299,6 @@ public class VideoProcessResult implements Closeable {
         if (p2 < 0) {
             return null;
         }
-        String s3 = "ID_VIDEO_HEIGHT="; //$NON-NLS-1$
         int p3 = info.indexOf(s3);
         if (p3 < 0) {
             return null;
