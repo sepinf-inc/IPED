@@ -27,6 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -101,7 +102,8 @@ public class SleuthkitReader extends DataSourceReader {
 
     // TODO update @deleteDatasource() when updating TSK
     public static final String MIN_TSK_VER_TESTED = "4.11.0";
-    public static final String MAX_TSK_VER_TESTED = "4.12.0";
+    public static final String MAX_TSK_VER_TESTED = "4.14.0";
+    public static final List<String> UNTESTED_TSK_VERS = Arrays.asList("4.13.0");
 
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -290,7 +292,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         if (majorVerExpected != majorVerFound || minorVerFound < minorVerExpected)
             throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER_TESTED); //$NON-NLS-1$ //$NON-NLS-2$
-        if (minorVerFound > maxMinorVerTested)
+        if (minorVerFound > maxMinorVerTested || UNTESTED_TSK_VERS.contains(tskVer))
             LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;
