@@ -497,44 +497,6 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
     
-    public static synchronized void loadImagePasswords(File output) {
-        File file = new File(output, PASSWORD_PER_IMAGE);
-        if (file.exists()) {
-            UTF8Properties props = new UTF8Properties();
-            try {
-                props.load(file);
-                for (String key : props.stringPropertyNames()) {
-                    setEnvVar(key, props.getProperty(key));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private static synchronized void setImagePassword(File output, String imageName, String password) {
-        String envVar = imageName + "_PASSWORD";
-        setEnvVar(envVar, password);
-
-        File file = new File(output, PASSWORD_PER_IMAGE);
-        UTF8Properties props = new UTF8Properties();
-        try {
-            if (file.exists()) {
-                props.load(file);
-            }
-            props.setProperty(envVar, password);
-            props.store(file);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void setEnvVar(String envVar, String value) {
-        Util.setEnvVar(envVar, value);
-        SleuthkitClient.addEnvVar(envVar, value);
-    }
-
     public void read(File image) throws Exception {
         read(image, null);
     }
