@@ -172,7 +172,7 @@ public class VideoThumbsMaker {
         }
 
         // Calls FFprobe as a fallback to get video info
-        if (result.getDimension() == null || result.getDimension().width == 0 || result.getDimension().height == 0) {
+        if (result.getDimension() == null || result.getDimension().width == 0 || result.getDimension().height == 0 || result.getVideoDuration() <= 0) {
             cmds = new ArrayList<String>(Arrays.asList(new String[] { ffprobe, "-v", "error", "-select_streams", "v", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                     "-show_entries", "stream:format:program", "-of", "default=nw=1", "-i", in.getPath()})); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
