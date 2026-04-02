@@ -100,12 +100,6 @@ public class IPEDSource implements IIPEDSource {
     // @see: org.sleuthkit.datamodel.SleuthkitCase.IMAGE_PASSWORD_KEY
     private static final String IMAGE_PASSWORD_KEY = "imagePassword";
 
-    /**
-     * workaround para JVM não coletar objeto, nesse caso Sleuthkit perde referencia
-     * para FS_INFO
-     */
-    private static List<SleuthkitCase> tskCaseList = Collections.synchronizedList(new ArrayList<SleuthkitCase>());
-
     private File casePath;
     private File moduleDir;
     private File index;
@@ -217,8 +211,6 @@ public class IPEDSource implements IIPEDSource {
 
                 if (!isReport)
                     updateImagePathsToAbsolute(casePath, sleuthFile);
-
-                tskCaseList.add(sleuthCase);
             }
 
             AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
@@ -708,7 +700,6 @@ public class IPEDSource implements IIPEDSource {
             // causes "case is closed" error in some cases
             // sleuthCase.close();
             sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(tmpCaseFile.getAbsolutePath());
-            tskCaseList.add(sleuthCase);
         }
     }
 

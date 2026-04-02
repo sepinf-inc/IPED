@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -24,6 +25,8 @@ import iped.utils.SeekableInputStreamFactory;
 public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(SleuthkitInputStreamFactory.class);
+
+    private static final ConcurrentHashMap<String, SleuthkitCase> sleuthkitCaseMap = new ConcurrentHashMap<>();
 
     private SleuthkitCase sleuthkitCase;
     private Content content;
@@ -90,14 +93,20 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
      * @return
      * @throws TskCoreException
      */
-    public static SleuthkitCase openSleuthkitCase(String tskDBPath) throws TskCoreException {
-        Properties sysProps = System.getProperties();
-        SleuthkitCase sleuthkitCase = SleuthkitCase.openCase(tskDBPath);
-        for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
-            sysProps.setProperty(entry.getKey().toString(), entry.getValue().toString());
-        }
-        System.setProperties(sysProps);
-        return sleuthkitCase;
+    public static SleuthkitCase openSleuthkitCase(String tskDBPath) {
+        return sleuthkitCaseMap.computeIfAbsent(tskDBPath, (key) -> {
+            Properties sysProps = System.getProperties();
+            try {
+                SleuthkitCase sleuthkitCase = SleuthkitCase.openCase(tskDBPath);
+                for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
+                    sysProps.setProperty(entry.getKey().toString(), entry.getValue().toString());
+                }
+                System.setProperties(sysProps);
+                return sleuthkitCase;
+            } catch (TskCoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public static File getWriteableDBFile(File sleuthkitDB) throws IOException {
