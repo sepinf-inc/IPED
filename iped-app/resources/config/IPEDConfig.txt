@@ -170,4 +170,4 @@ enableHTMLReport = true
 # Enables remote image classifier.
 # It performs classification of image and video files.
 # Advanced settings can be modified in file "conf/RemoteImageClassifierConfig.txt"
-enableRemoteImageClassifier = true
+enableRemoteImageClassifier = false

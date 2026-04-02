@@ -7,19 +7,19 @@ locale = en
 
 # Temporary directory for processing: "default" uses the system temporary folder.
 # Configure it on a folder free of antivirus, system indexing or restoring. Using a SSD disk is highly recommended.
-indexTemp = D:\temp
+indexTemp = default
 
 # Enable if indexTemp is on a SSD disk. Optimizations are made that can improve processing speed up to 2x.
 # Do not enable it if indexTemp is NOT on SSD or you will have performance problems.
-indexTempOnSSD = true
+indexTempOnSSD = false
 
 # Enable if output/case folder is on SSD. If enabled, index is created directly in case folder,
 # not in indexTemp, so you will need less free space in temp folder.
-outputOnSSD = true
+outputOnSSD = false
 
 # Number of processing threads/workers: "default" uses the number of CPU logical cores.
 # If you have memory usage problems, you can decrease it or increase java heap memory (-Xms).
-numThreads = 48
+numThreads = default
 
 # Full path for IPED hash database. It is highly recommended to store it on a fast disk, 
 # preferably SSD, and not the same used as "indexTemp", if other disk is available.
