@@ -393,7 +393,7 @@ public class ReportGenerator {
                     "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">"); //$NON-NLS-1$
         }
         if (message.isDeleted()) {
-            out.println("<br><span class=\"recovered\">"); //$NON-NLS-1$
+            out.println("<span class=\"recovered\">"); //$NON-NLS-1$
             out.print(format(message.getRecoveryString()));
             out.println("</span><br>"); //$NON-NLS-1$
         }
