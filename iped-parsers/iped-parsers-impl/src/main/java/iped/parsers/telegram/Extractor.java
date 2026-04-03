@@ -42,6 +42,7 @@ import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
+import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 
@@ -266,7 +267,7 @@ public class Extractor {
                         logger.warn("Message with mid {} has no data, trying to decode media data", mid);
                         message = new Message(mid, chat);
                         message.setDeleted(true);
-                        message.setRecoveryString("Recovered from media data");
+                        message.setRecoveryString(Messages.getString("TelegramReport.RecoveredMessage"));
                     } else {
                         message = new Message(mid, chat);
                     }
