@@ -343,7 +343,7 @@
         </dependency>
         <dependency>
             <groupId>org.bytedeco</groupId>
-            <artifactId>ffmpeg-platform-gpl</artifactId>
+            <artifactId>ffmpeg-platform</artifactId>
             <version>8.0.1-1.5.13</version>
     	</dependency>
      </dependencies>
