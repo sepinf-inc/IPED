@@ -245,8 +245,8 @@ public class Extractor {
         return l;
     }
 
-    protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
-        ArrayList<Message> msgs = new ArrayList<Message>();
+    protected ArrayList<MessageMultiMedia> extractMessages(Chat chat) throws Exception {
+        ArrayList<MessageMultiMedia> msgs = new ArrayList<>();
         String SQL = getAndroidExtractMessagesSQL();
         try (PreparedStatement stmt = conn.prepareStatement(SQL)) {
             stmt.setLong(1, chat.getId());
@@ -264,13 +264,19 @@ public class Extractor {
                     if (data == null) {
                         data = rs.getBytes("mediaData");
                         mid = rs.getLong("mdmid");
-                        logger.warn("Message with mid {} has no data, trying to decode media data", mid);
+                        logger.debug("Message with mid {} has no data, trying to decode media data", mid);
                         message = new Message(mid, chat);
                         message.setDeleted(true);
                         message.setRecoveryString(Messages.getString("TelegramReport.RecoveredMessage"));
                     } else {
                         message = new Message(mid, chat);
                     }
+                    // if has media data use it to decode the message
+                    if (rs.getBytes("mediaData") != null) {
+                        data = rs.getBytes("mediaData");
+                        logger.debug("Message with mid {} has media data", mid);
+                    }
+                   
 
                     androidDecoder.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
                     androidDecoder.getMessageData(message);
@@ -308,8 +314,23 @@ public class Extractor {
                         }
                         message.setType(msg_decoded);
                     }
+                    if (msgs.size() > 0 && msgs.get(msgs.size() - 1).getId() == message.getId()) {
+                        logger.debug(
+                                "Message with mid {} is part of a media group, adding to the last MessageMultiMedia",
+                                mid);
+                        MessageMultiMedia last = msgs.get(msgs.size() - 1);
+                        last.addMessage(message);
 
-                    msgs.add(message);
+                    } else {
+                        MessageMultiMedia mmm = new MessageMultiMedia(message.getId(), chat);
+                        mmm.setFrom(message.getFrom());
+                        mmm.setFromMe(message.isFromMe());
+                        mmm.setDeleted(message.isDeleted());
+                        mmm.addMessage(message);
+                        msgs.add(mmm);
+                    }
+
+
                 }
             }
         }
@@ -357,8 +378,8 @@ public class Extractor {
 
     }
 
-    protected ArrayList<Message> extractMessagesIOS(Chat chat) throws SQLException {
-        ArrayList<Message> msgs = new ArrayList<Message>();
+    protected ArrayList<MessageMultiMedia> extractMessagesIOS(Chat chat) throws SQLException {
+        ArrayList<MessageMultiMedia> msgs = new ArrayList<MessageMultiMedia>();
         if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
                 ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
@@ -403,7 +424,12 @@ public class Extractor {
                         }
     
                         message.setFrom(getContact(message.getFrom().getId()));
-                        msgs.add(message);
+                        MessageMultiMedia mmm = new MessageMultiMedia(message.getId(), chat);
+                        mmm.setFrom(message.getFrom());
+                        mmm.setFromMe(message.isFromMe());
+                        mmm.setDeleted(message.isDeleted());
+                        mmm.addMessage(message);
+                        msgs.add(mmm);
                     }
                 }
             }
@@ -602,8 +628,8 @@ public class Extractor {
         return userAccount;
     }
 
-    private static final Comparator<Message> MSG_TIME_COMPARATOR = new Comparator<Message>() {
-        public int compare(Message o1, Message o2) {
+    private static final Comparator<MessageMultiMedia> MSG_TIME_COMPARATOR = new Comparator<MessageMultiMedia>() {
+        public int compare(MessageMultiMedia o1, MessageMultiMedia o2) {
             boolean o1Empty = o1 == null || o1.getTimeStamp() == null;
             boolean o2Empty = o2 == null || o2.getTimeStamp() == null;
             if (o1Empty && o2Empty) {
@@ -642,10 +668,11 @@ public class Extractor {
         String tmessage = findTableVersion("messages", 5);
         String tmedia = findTableVersion("media", 5);
 
-        return "SELECT m.mid, m.data, null as mediaData, null as mdmid " + "FROM " + tmessage + " m " + "WHERE m.uid=? "
-                + "UNION ALL " + "SELECT null as mid, null as data, md.data as mediaData, md.mid as mdmid " + "FROM "
+        return "SELECT * FROM (SELECT m.mid, m.data, md.data as mediaData, md.mid as mdmid " + "FROM " + tmessage + " m "
+                + " LEFT JOIN " + tmedia + " md ON (md.mid=m.mid AND m.uid=md.uid)  WHERE m.uid=? "
+                + "UNION ALL " + "SELECT m.mid as mid, m.data as data, md.data as mediaData, md.mid as mdmid " + "FROM "
                 + tmessage + " m " + "RIGHT JOIN " + tmedia + " md ON (md.mid=m.mid AND m.uid=md.uid) "
-                + "WHERE m.mid IS NULL AND md.uid=?";
+                + "WHERE m.mid IS NULL AND md.uid=?) ORDER BY IFNULL(mid,mdmid)";
     }
 
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";

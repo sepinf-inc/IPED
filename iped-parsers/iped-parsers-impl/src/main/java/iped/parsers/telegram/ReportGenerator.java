@@ -136,23 +136,25 @@ public class ReportGenerator {
 
         String lastDate = null;
         while (currentMsg < c.getMessages().size()) {
-            Message m = c.getMessages().get(currentMsg++);
-            String thisDate = null;
-            if (m.getTimeStamp() != null) {
-                thisDate = dateFormat.format(m.getTimeStamp());
-            }
-            if (thisDate != null && (lastDate == null || !lastDate.equals(thisDate))) {
-                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                        + thisDate + "</div></div>"); //$NON-NLS-1$
-                lastDate = thisDate;
-            }
+            MessageMultiMedia mmm = c.getMessages().get(currentMsg++);
+            for (Message m : mmm.getMessages()) {
+                String thisDate = null;
+                if (m.getTimeStamp() != null) {
+                    thisDate = dateFormat.format(m.getTimeStamp());
+                }
+                if (thisDate != null && (lastDate == null || !lastDate.equals(thisDate))) {
+                    out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                            + thisDate + "</div></div>"); //$NON-NLS-1$
+                    lastDate = thisDate;
+                }
 
-            printMessage(out, m);
+                printMessage(out, m);
 
-            if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
-                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                        + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
-                break;
+                if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
+                    out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                            + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+                    break;
+                }
             }
         }
 
