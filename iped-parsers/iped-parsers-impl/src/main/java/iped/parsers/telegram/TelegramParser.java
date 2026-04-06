@@ -166,13 +166,19 @@ public class TelegramParser extends SQLite3DBParser {
             Contact account = searchAndroidAccount(searcher, dbPath);
 
             e.extractChatList();
-
-            for (Chat c : e.getChatList()) {
-                c.getMessages().addAll(e.extractMessages(c));
+            Chat c;
+            while ((c = e.extractMessages()) != null) {
                 if (e.getUserAccount() != null) {
                     account = e.getUserAccount();
                 }
                 generateChat(c, account, e, searcher, handler, extractor);
+            }
+            // gerar os chats sem mensagens
+            for (Chat ch : e.getChatList()) {
+                if (ch.getMessages().isEmpty()) {
+                    generateChat(ch, account, e, searcher, handler, extractor);
+                }
+
             }
 
         } catch (Exception e1) {
