@@ -137,6 +137,7 @@ public class ReportGenerator {
         String lastDate = null;
         while (currentMsg < c.getMessages().size()) {
             MessageMultiMedia mmm = c.getMessages().get(currentMsg++);
+
             for (Message m : mmm.getMessages()) {
                 String thisDate = null;
                 if (m.getTimeStamp() != null) {
@@ -150,11 +151,12 @@ public class ReportGenerator {
 
                 printMessage(out, m);
 
-                if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
-                    out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                            + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
-                    break;
-                }
+
+            }
+            if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
+                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                        + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+                break;
             }
         }
 
