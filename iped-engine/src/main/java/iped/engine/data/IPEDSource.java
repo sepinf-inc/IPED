@@ -21,6 +21,8 @@ package iped.engine.data;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -36,6 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -55,6 +58,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteException;
 
 import com.google.gson.Gson;
 
@@ -196,21 +200,17 @@ public class IPEDSource implements IIPEDSource {
 
             isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
 
-            File sleuthFile = new File(casePath, SLEUTH_DB);
-            if (sleuthFile.exists()) {
+            Path sleuthFile = casePath.toPath().resolve(SLEUTH_DB);
+            if (Files.exists(sleuthFile)) {
                 if (SleuthkitReader.sleuthCase != null)
                     // workaroud para demora ao abrir o caso enquanto tsk_loaddb não termina
                     sleuthCase = SleuthkitReader.sleuthCase;
                 else {
-                    // Unpatched TSK doesn't work with a read-only DB, must be writeable
-                    if (!SleuthkitReader.isTSKPatched()) {
-                        sleuthFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
-                    }
-                    sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(sleuthFile.getAbsolutePath());
+                    sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(sleuthFile);
                 }
 
                 if (!isReport)
-                    updateImagePathsToAbsolute(casePath, sleuthFile);
+                    fixImagePathsToLocalEnvironment(casePath, sleuthFile.toFile());
             }
 
             AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
@@ -633,7 +633,7 @@ public class IPEDSource implements IIPEDSource {
         }
     }
 
-    private void updateImagePathsToAbsolute(File casePath, File sleuthFile) throws Exception {
+    private void fixImagePathsToLocalEnvironment(File casePath, File sleuthFile) throws Exception {
         char letter = casePath.getAbsolutePath().charAt(0);
         boolean isWindowsNetworkShare = casePath.getAbsolutePath().startsWith("\\\\");
         Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
@@ -647,13 +647,12 @@ public class IPEDSource implements IIPEDSource {
                     if (new File(newPath).exists())
                         newPaths.add(newPath);
                 } else if ((new File(path).exists() && path.contains(File.separator))
-                        || (System.getProperty("os.name").startsWith("Windows")
-                                && path.toLowerCase().contains("physicaldrive"))) {
+                        || (SystemUtils.IS_OS_WINDOWS && path.toLowerCase().contains("physicaldrive"))) {
                     newPaths = null;
                     break;
                 } else {
                     path = path.replace("/", File.separator).replace("\\", File.separator);
-                    String newPath = letter + path.substring(1);
+                    String newPath = new File(path).isAbsolute() && SystemUtils.IS_OS_WINDOWS ? letter + path.substring(1) : path;
                     if (new File(newPath).exists())
                         newPaths.add(newPath);
                     else {
@@ -678,8 +677,7 @@ public class IPEDSource implements IIPEDSource {
             }
             if (newPaths != null)
                 if (newPaths.size() > 0) {
-                    testCanWriteToCase(sleuthFile);
-                    sleuthCase.setImagePaths(id, newPaths);
+                    updateImagePaths(id, newPaths);
                 } else if (iw == null) {
                     if (askImagePathIfNotFound) {
                         askNewImagePath(id, paths, sleuthFile);
@@ -690,16 +688,32 @@ public class IPEDSource implements IIPEDSource {
         }
     }
 
-    File tmpCaseFile = null;
+    private void updateImagePaths(long imgId, List<String> newPaths) throws IOException, TskCoreException {
+        try {
 
-    private void testCanWriteToCase(File sleuthFile) throws TskCoreException, IOException {
-        if (tmpCaseFile != null) return;
-        File writeableDBFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
-        if (writeableDBFile != sleuthFile){
-            tmpCaseFile = writeableDBFile;
-            // causes "case is closed" error in some cases
-            // sleuthCase.close();
-            sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(tmpCaseFile.getAbsolutePath());
+            sleuthCase.setImagePaths(imgId, newPaths);
+
+        } catch (TskCoreException e) {
+
+            // This only happens in patched versions of TSK prior to 4.14.0, where the sleuthCase.setImagePaths 
+            // method does not support transient image paths in read-only cases.
+            // The workaround is to create a temporary copy of the Sleuthkit database in a writable location and update the image paths there.
+            if (e.getCause() instanceof SQLiteException && e.getCause().getMessage().contains("SQLITE_READONLY")) {
+
+                // Do not close sleuthCase here. It is cached in SleuthkitInputStreamFactory.sleuthkitCasesMap
+                // and may still be referenced by other code paths.
+                // sleuthCase.close();
+
+                Path currentDBPath = Paths.get(sleuthCase.getDbDirPath(), sleuthCase.getDatabaseName());
+                Path tmpDBPath = SleuthkitInputStreamFactory.getWriteableDBPath(currentDBPath, true);
+                sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(tmpDBPath);
+
+                // set newPaths in the new writable sleuthCase instance
+                sleuthCase.setImagePaths(imgId, newPaths);
+
+            } else {
+                throw e;
+            }
         }
     }
 
@@ -718,8 +732,7 @@ public class IPEDSource implements IIPEDSource {
                     throw new IOException(Messages.getString("IPEDSource.ImgFragNotFound") + basePath + ext); //$NON-NLS-1$
                 newPaths.add(basePath + ext);
             }
-        testCanWriteToCase(sleuthFile);
-        sleuthCase.setImagePaths(imgId, newPaths);
+        updateImagePaths(imgId, newPaths);
     }
 
     public String getItemProperty(int id, String propertyName) {
