@@ -136,19 +136,23 @@ public class ReportGenerator {
 
         String lastDate = null;
         while (currentMsg < c.getMessages().size()) {
-            Message m = c.getMessages().get(currentMsg++);
-            String thisDate = null;
-            if (m.getTimeStamp() != null) {
-                thisDate = dateFormat.format(m.getTimeStamp());
-            }
-            if (thisDate != null && (lastDate == null || !lastDate.equals(thisDate))) {
-                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                        + thisDate + "</div></div>"); //$NON-NLS-1$
-                lastDate = thisDate;
-            }
+            MessageMultiMedia mmm = c.getMessages().get(currentMsg++);
 
-            printMessage(out, m);
+            for (Message m : mmm.getMessages()) {
+                String thisDate = null;
+                if (m.getTimeStamp() != null) {
+                    thisDate = dateFormat.format(m.getTimeStamp());
+                }
+                if (thisDate != null && (lastDate == null || !lastDate.equals(thisDate))) {
+                    out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                            + thisDate + "</div></div>"); //$NON-NLS-1$
+                    lastDate = thisDate;
+                }
 
+                printMessage(out, m);
+
+
+            }
             if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -392,6 +396,12 @@ public class ReportGenerator {
             out.println(
                     "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">"); //$NON-NLS-1$
         }
+        if (message.isDeleted()) {
+            out.println("<span class=\"recovered\">"); //$NON-NLS-1$
+            out.print(format(message.getRecoveryString()));
+            out.println("</span><br>"); //$NON-NLS-1$
+        }
+
         Contact contact = message.getFrom();
         if (contact != null) {
             out.println("<span style=\"font-family: Arial; color: #b4c74b;\">" //$NON-NLS-1$
