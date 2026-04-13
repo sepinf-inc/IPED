@@ -13,6 +13,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import iped.app.processing.Main;
 import iped.engine.io.FilterOutputStream;
+import iped.utils.IOUtil;
 
 public class LogConfiguration {
 
@@ -32,8 +33,14 @@ public class LogConfiguration {
             logFile = new File(logPath);
         } else {
             logFile = iped.getLogFile();
-            if (logFile == null)
-                logFile = new File(rootPath, "log/IPED-" + df.format(new Date()) + ".log"); //$NON-NLS-1$ //$NON-NLS-2$
+            if (logFile == null) {
+                String name = "IPED-" + df.format(new Date()) + ".log";
+                logFile = new File(rootPath + "/log", name);
+                logFile.getParentFile().mkdirs();
+                if (!IOUtil.canCreateFile(logFile.getParentFile())) {
+                    logFile = new File(System.getProperty("java.io.tmpdir"), name);
+                }
+            }
         }
         iped.setLogFile(logFile);
     }

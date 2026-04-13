@@ -16,7 +16,6 @@ import org.sqlite.SQLiteException;
 
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
-import iped.engine.datasource.SleuthkitReader;
 import iped.io.SeekableInputStream;
 import iped.utils.EmptyInputStream;
 import iped.utils.IOUtil;
@@ -67,9 +66,12 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
                 if (sleuthkitCase == null) {
                     try {
                         File tskDB = Paths.get(dataSource).toFile();
-                        if (!SleuthkitReader.isTSKPatched()) {
-                            tskDB = getWriteableDBFile(tskDB);
-                        }
+                        // Workaround for https://github.com/sepinf-inc/IPED/issues/2799
+                        // Condition below was commented for now, but probably there is a better
+                        // solution than always copying the DB, which should be avoided when possible
+                        //if (!SleuthkitReader.isTSKPatched()) {
+                        tskDB = getWriteableDBFile(tskDB);
+                        //}
                         sleuthkitCase = openSleuthkitCase(tskDB.getAbsolutePath());
 
                     } catch (Exception e) {

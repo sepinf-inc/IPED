@@ -7,6 +7,7 @@ public class WAContact {
     public static final String waGroupSuffix = "@g.us";
     public static final String waStatusSuffix = "@status";
     public static final String waNewsletterSuffix = "@newsletter";
+    public static final String lidSuffix = "@lid";
 
     private String id;
 
