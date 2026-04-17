@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -56,6 +56,8 @@ import iped.app.ui.utils.UiScale;
 import iped.data.IIPEDSource;
 import iped.data.IItem;
 import iped.data.IItemId;
+import iped.engine.config.BFACClientConfig;
+import iped.engine.config.ConfigurationManager;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.preview.PreviewRepositoryManager;
@@ -438,6 +440,18 @@ public class MenuListener implements ActionListener {
                     e1.printStackTrace();
                     JOptionPane.showMessageDialog(App.get(), e1.getMessage());
                 }
+            }
+
+        } else if (e.getSource() == menu.openBfacClient) {
+            // Check if BFAC Client is enabled before opening dialog
+            BFACClientConfig bfacClientConfig = ConfigurationManager.get().findObject(BFACClientConfig.class);
+            if (bfacClientConfig != null && bfacClientConfig.isEnabled()) {
+                iped.bfac.BfacDialog bfacDialog = iped.bfac.BfacDialog.getInstance(App.get());
+                bfacDialog.setIPEDSource(App.get().appCase);
+                bfacDialog.setBookmarks(App.get().appCase.getMultiBookmarks().getBookmarkSet());
+                bfacDialog.showDialog();
+            } else {
+                LOGGER.warn("BFAC Client is disabled in configuration");
             }
 
         } else if (e.getSource() == menu.createReport) {
