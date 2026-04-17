@@ -22,3 +22,9 @@ skipHashDBFiles = true
 
 # Validate server SSL certificate
 validateSSL = false
+
+# Timeout to get a connection in milliseconds 
+connectTimeout = 30000
+
+# Timeout waiting for results from service in milliseconds
+socketTimeout =  180000
