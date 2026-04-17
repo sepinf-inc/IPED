@@ -172,7 +172,6 @@ enableHTMLReport = true
 # Advanced settings can be modified in file "conf/RemoteImageClassifierConfig.txt"
 enableRemoteImageClassifier = false
 
-
 # Enables BFAC Client
 # It connects to BFAC Server for submitting hashes and files for the BFAC known files database.
 # Advanced settings can be modified in file "conf/BFACConfig.txt"
