@@ -104,7 +104,7 @@ public class RemoteImageExternalClassifierTask extends AbstractTask {
     private static final String AI_CLASSIFICATION_SKIP_SIZE = "skippedSize";
     private static final String AI_CLASSIFICATION_SKIP_DIMENSION = "skippedDimension";
     private static final String AI_CLASSIFICATION_SKIP_HASHDB = "skippedHashDB";
-    private static final String AI_REVIEW_PRIORITY_ATTR = aiPrefix + "reviewPriority";
+    public static final String AI_REVIEW_PRIORITY_ATTR = aiPrefix + "reviewPriority";
     private static final String AI_EXTERNAL_EMBEDDINGS_ATTR = aiPrefix + "externalEmbeddings";
 
     // Classifications cache (avoids classification of duplicates)
