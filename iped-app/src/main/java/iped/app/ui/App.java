@@ -467,6 +467,24 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             e.printStackTrace();
         }
         if (processingFinished) {
+            // Request graceful shutdown of JavaFX runtime.
+            // This stops the JavaFX Application Thread and disposes
+            // WebView / Media / EmbeddedScene resources cleanly.
+            try {
+                javafx.application.Platform.exit();
+            } catch (Throwable t) {
+            }
+
+            // Give JavaFX a short time to process pending shutdown events,
+            // render callbacks, GTK messages, and scene disposal.
+            // Helps avoid EmbeddedScene / GlassScene race-condition exceptions.
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+            }
+
+            // Force JVM termination after graceful shutdown window.
+            // Ensures background threads do not keep IPED alive.
             System.exit(0);
         }
     }
