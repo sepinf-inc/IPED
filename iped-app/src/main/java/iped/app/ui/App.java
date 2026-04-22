@@ -1508,9 +1508,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowClosing(WindowEvent e) {
-        removeAllDockables();
-        this.dispose();
+        // Hide the window immediately so the user sees instant close feedback.
+        // This avoids further UI interaction while shutdown is running.
+        setVisible(false);
+
+        // IMPORTANT:
+        // Dispose viewers FIRST (JavaFX/WebView/media/native components).
+        // Some viewers tear down asynchronously and may still receive GTK/render
+        // callbacks for a short time. If Swing containers are removed first,
+        // JavaFX EmbeddedScene may throw NullPointerException during shutdown.
         destroy();
+
+        SwingUtilities.invokeLater(() -> {
+            removeAllDockables();
+            dispose();
+        });
     }
 
     @Override
