@@ -2,10 +2,14 @@ package iped.engine.sleuthkit;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -16,6 +20,7 @@ import org.sqlite.SQLiteException;
 
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
+import iped.engine.datasource.SleuthkitReader;
 import iped.io.SeekableInputStream;
 import iped.utils.EmptyInputStream;
 import iped.utils.IOUtil;
@@ -24,6 +29,8 @@ import iped.utils.SeekableInputStreamFactory;
 public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(SleuthkitInputStreamFactory.class);
+
+    private static final ConcurrentHashMap<Path, SleuthkitCase> sleuthkitCaseMap = new ConcurrentHashMap<>();
 
     private SleuthkitCase sleuthkitCase;
     private Content content;
@@ -65,14 +72,8 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
             synchronized (this) {
                 if (sleuthkitCase == null) {
                     try {
-                        File tskDB = Paths.get(dataSource).toFile();
-                        // Workaround for https://github.com/sepinf-inc/IPED/issues/2799
-                        // Condition below was commented for now, but probably there is a better
-                        // solution than always copying the DB, which should be avoided when possible
-                        //if (!SleuthkitReader.isTSKPatched()) {
-                        tskDB = getWriteableDBFile(tskDB);
-                        //}
-                        sleuthkitCase = openSleuthkitCase(tskDB.getAbsolutePath());
+                        logger.info("Opening Sleuthkit case for data source: " + dataSource);
+                        sleuthkitCase = openSleuthkitCase(Paths.get(dataSource));
 
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -88,26 +89,48 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
      * 
      * @param tskDB
      * @return
-     * @throws TskCoreException
      */
-    public static SleuthkitCase openSleuthkitCase(String tskDBPath) throws TskCoreException {
-        Properties sysProps = System.getProperties();
-        SleuthkitCase sleuthkitCase = SleuthkitCase.openCase(tskDBPath);
-        for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
-            sysProps.setProperty(entry.getKey().toString(), entry.getValue().toString());
+    public synchronized static SleuthkitCase openSleuthkitCase(Path tskDBPath) throws IOException, TskCoreException {
+        Path normalizedDBPath = tskDBPath.toAbsolutePath().normalize();
+
+        if (!SleuthkitReader.isTSKPatched()) {
+            normalizedDBPath = getWriteableDBPath(normalizedDBPath, false).toAbsolutePath().normalize();
         }
-        System.setProperties(sysProps);
-        return sleuthkitCase;
+
+        return sleuthkitCaseMap.computeIfAbsent(normalizedDBPath, (key) -> {
+
+            Properties sysProps = System.getProperties();
+            try {
+                SleuthkitCase sleuthkitCase = SleuthkitCase.openCase(key.toString());
+
+                return sleuthkitCase;
+
+            } catch (TskCoreException e) {
+                throw new RuntimeException(e);
+
+            } finally {
+
+                // restore system properties after openCase
+                for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
+                    sysProps.setProperty(entry.getKey().toString(), entry.getValue().toString());
+                }
+                System.setProperties(sysProps);
+            }
+        });
     }
 
-    public static File getWriteableDBFile(File sleuthkitDB) throws IOException {
-        if (!IOUtil.canWrite(sleuthkitDB) || !IOUtil.canCreateFile(sleuthkitDB.getParentFile())) {
-            File tmpCaseFile = new File(System.getProperty("java.io.basetmpdir"), //$NON-NLS-1$
-                    "sleuthkit-" + sleuthkitDB.lastModified() + ".db"); //$NON-NLS-1$
-            if (!tmpCaseFile.exists() || tmpCaseFile.length() != sleuthkitDB.length()) {
-                IOUtil.copyFile(sleuthkitDB, tmpCaseFile);
+    public static Path getWriteableDBPath(Path sleuthkitDB, boolean alwaysGetCopy) throws IOException {
+        if (alwaysGetCopy || !IOUtil.canWrite(sleuthkitDB.toFile()) || !IOUtil.canCreateFile(sleuthkitDB.getParent().toFile())) {
+
+            String tmpCaseDBName = "sleuthkit-" + Files.getLastModifiedTime(sleuthkitDB).to(TimeUnit.SECONDS) + ".db";
+            Path tmpCasePath = Paths.get(System.getProperty("java.io.basetmpdir"), tmpCaseDBName);
+
+            if (!Files.exists(tmpCasePath) || Files.size(tmpCasePath) != Files.size(sleuthkitDB)) {
+                Files.copy(sleuthkitDB, tmpCasePath, StandardCopyOption.REPLACE_EXISTING);
             }
-            return tmpCaseFile;
+            tmpCasePath.toFile().setWritable(true);
+
+            return tmpCasePath;
         }
         return sleuthkitDB;
     }
