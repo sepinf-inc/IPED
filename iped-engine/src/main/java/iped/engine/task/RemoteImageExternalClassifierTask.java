@@ -177,6 +177,36 @@ public class RemoteImageExternalClassifierTask extends AbstractTask {
         }
     }
 
+    static boolean shouldReplaceReviewPriority(String currentPriority, String newPriority) {
+        if (newPriority == null || newPriority.isBlank()) {
+            return false;
+        }
+        if (currentPriority == null || currentPriority.isBlank()) {
+            return true;
+        }
+        return getReviewPriorityRank(newPriority) > getReviewPriorityRank(currentPriority);
+    }
+
+    static int getReviewPriorityRank(String reviewPriority) {
+        if (reviewPriority == null) {
+            return Integer.MIN_VALUE;
+        }
+        switch (reviewPriority) {
+            case "VERY_HIGH":
+                return 5;
+            case "HIGH":
+                return 4;
+            case "MEDIUM":
+                return 3;
+            case "LOW":
+                return 2;
+            case "VERY_LOW":
+                return 1;
+            default:
+                return Integer.MIN_VALUE;
+        }
+    }
+
     /**
      * Represents a Zip archive holding files to be sent for classification.
      */
@@ -432,7 +462,8 @@ public class RemoteImageExternalClassifierTask extends AbstractTask {
 
                 // New API payload
                 JsonNode reviewPriority = item.get("reviewPriority");
-                if (reviewPriority != null && !reviewPriority.isNull() && !reviewPriority.asText().isBlank()) {
+                if (reviewPriority != null && !reviewPriority.isNull() && !reviewPriority.asText().isBlank()
+                        && shouldReplaceReviewPriority(res.getReviewPriority(), reviewPriority.asText())) {
                     res.setReviewPriority(reviewPriority.asText());
                 }
                 JsonNode embeddings = item.get("embeddings");
