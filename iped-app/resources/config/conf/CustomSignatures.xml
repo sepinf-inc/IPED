@@ -1703,4 +1703,8 @@
     	<sub-class-of type="application/x-lnk"/>
     </mime-type>
 
+    <mime-type type="application/x-zoom-meeting">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
 </mime-info>
