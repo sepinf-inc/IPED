@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
+import org.apache.lucene.queryparser.flexible.standard.parser.EscapeQuerySyntaxImpl;
+import org.apache.lucene.queryparser.flexible.standard.parser.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
@@ -18,6 +21,7 @@ import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.SimpleFilterNode;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.search.LoadIndexFields;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.SimpleNodeFilterSearch;
 
@@ -26,6 +30,7 @@ public class AIFiltersLoader {
         AIFiltersConfig config = ConfigurationManager.get().findObject(AIFiltersConfig.class);
         SimpleFilterNode root = (SimpleFilterNode) config.getRootAIFilter().clone();
 
+        expandWildcards(root);
         sortChildrenNodes(root, (Comparator<SimpleFilterNode>) new SimpleFilterNode.LocalizedNameComparator());
         updateCount(App.get().appCase, root);
         removeEmptyTopLevel(root);
@@ -40,6 +45,42 @@ public class AIFiltersLoader {
             Collections.sort(node.getChildren(), comparator);
         for (SimpleFilterNode child : node.getChildren()) {
             sortChildrenNodes(child, comparator);
+        }
+    }
+
+    private static void expandWildcards(SimpleFilterNode root) {
+        for (int i = 0; i < root.getChildren().size(); i++) {
+            SimpleFilterNode node = root.getChildren().get(i);
+            String prop = node.getProperty().trim();
+            if (prop.endsWith("*")) {
+                root.getChildren().remove(i);
+                String[] fields = LoadIndexFields.getFields(App.get().appCase.getAtomicSources());
+                prop = prop.substring(0, prop.length() - 1);
+                try {
+                    prop = EscapeQuerySyntaxImpl.discardEscapeChar(prop).toString();
+                    for (String field : fields) {
+                        if (field.startsWith(prop)) {
+                            SimpleFilterNode add = (SimpleFilterNode) node.clone();
+                            String s = field.substring(prop.length()).trim();
+                            if (s.toLowerCase().endsWith("score")) {
+                                s = Character.toUpperCase(s.charAt(0)) + s.substring(1, s.length() - 5);
+                                for (int j = 1; j < s.length(); j++) {
+                                    if (Character.isUpperCase(s.charAt(j)) && !Character.isUpperCase(s.charAt(j - 1))) {
+                                        s = s.substring(0, j) + ' ' + s.substring(j++);
+                                    }
+                                }
+                            }
+                            add.setSuffix(s);
+                            field = QueryParserUtil.escape(field);
+                            add.setProperty(field);
+                            root.getChildren().add(i++, add);
+                        }
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                i--;
+            }
         }
     }
 
