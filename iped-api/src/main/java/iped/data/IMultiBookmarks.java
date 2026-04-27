@@ -99,6 +99,10 @@ public interface IMultiBookmarks extends Serializable {
 
     void setBookmarkComment(String texto, String comment);
 
+    void setBookmarkQuery(String bookmarkName, String query);
+    
+    String getBookmarkQuery(String bookmarkName);
+
     Color getBookmarkColor(String bookmarkName);
 
     void setBookmarkColor(String bookmarkName, Color color);
