@@ -67,7 +67,6 @@ public class CalendarSection implements ParabenSection {
 
             item.setIdInDataSource("paraben-calendar-" + e.id);
 
-            // HTML
             String html = buildHtml(e);
             byte[] bytes = html.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
@@ -76,24 +75,18 @@ public class CalendarSection implements ParabenSection {
 
             item.setLength((long) bytes.length);
 
-            // =====================================================
-            // 🔥 METADATA
-            // =====================================================
-
             item.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
             item.getMetadata().set(BasicProps.CATEGORY, "Calendar");
 
             item.getMetadata().set(BasicProps.NAME, name);
             item.getMetadata().add(BasicProps.TYPE, normalize(e.status));
 
-            // 🔥 fechas
             if (e.startEpoch != null) {
                 Date d = ParabenDateUtil.fromEpoch(e.startEpoch);
                 if (d != null)
                     item.setCreationDate(d);
             }
 
-            // extra metadata
             item.getMetadata().add("paraben:calendar:summary", normalize(e.summary));
             item.getMetadata().add("paraben:calendar:location", normalize(e.location));
             item.getMetadata().add("paraben:calendar:description", normalize(e.description));
@@ -144,10 +137,6 @@ public class CalendarSection implements ParabenSection {
             Manager.getInstance().addItemToQueue(item);
         }
     }
-
-    // =====================================================
-    // 🔥 PARSEO
-    // =====================================================
 
     private List<EventData> extractEvents(List<File> xmlChain) throws Exception {
 
@@ -305,9 +294,6 @@ public class CalendarSection implements ParabenSection {
 
         return list;
     }
-    // =====================================================
-    // HTML
-    // =====================================================
 
     private String buildHtml(EventData e) {
 
@@ -337,10 +323,6 @@ public class CalendarSection implements ParabenSection {
         return "<tr><td><b>" + k + "</b></td><td>" + normalize(v) + "</td></tr>";
     }
 
-    // =====================================================
-    // UTILS
-    // =====================================================
-
     private boolean isEmpty(EventData e) {
         return normalize(e.summary).equals("-");
     }
@@ -366,10 +348,6 @@ public class CalendarSection implements ParabenSection {
 
         return "";
     }
-
-    // =====================================================
-    // DTO
-    // =====================================================
 
     private static class EventData {
         String id;

@@ -25,9 +25,6 @@ import java.util.*;
 
 public class HtmlTemplate {
 
-    // =====================================================
-    // 📊 TABLA SIMPLE
-    // =====================================================
     public static String buildTable(String title, Map<String, String> data) {
 
         StringBuilder html = new StringBuilder();
@@ -59,9 +56,6 @@ public class HtmlTemplate {
         return html.toString();
     }
 
-    // =====================================================
-    // 💬 DTO MENSAJE
-    // =====================================================
     public static class MessageBubble {
         public String sender;
         public String senderId;
@@ -70,9 +64,6 @@ public class HtmlTemplate {
         public boolean isSystem;
     }
 
-    // =====================================================
-    // 💬 TEMPLATE FACEBOOK CHAT
-    // =====================================================
     public static String buildFacebookChat(String chatName,
             List<MessageBubble> messages,
             String ownerId) {
@@ -109,9 +100,6 @@ public class HtmlTemplate {
         html.append("<div class='container'>");
         html.append("<h2>").append(chatName).append("</h2>");
 
-        // =====================================================
-        // 👥 PARTICIPANTES
-        // =====================================================
         Map<String, String> participants = new LinkedHashMap<>();
 
         for (MessageBubble m : messages) {
@@ -144,9 +132,6 @@ public class HtmlTemplate {
 
         html.append("</div>");
 
-        // =====================================================
-        // 💬 MENSAJES
-        // =====================================================
         for (MessageBubble m : messages) {
 
             boolean isOwner = ownerId != null && ownerId.equals(m.senderId);
@@ -164,7 +149,6 @@ public class HtmlTemplate {
                     .append(cssClass)
                     .append("'>");
 
-            // 👤 Siempre mostrar identidad (clave forense)
             html.append("<div class='sender'>")
                     .append((m.sender == null ? "Unknown" : m.sender))
                     .append(" [")
@@ -172,7 +156,6 @@ public class HtmlTemplate {
                     .append("]")
                     .append("</div>");
 
-            // 🧾 contenido
             html.append("<div>")
                     .append(escapeHtml(
                             (m.text == null || m.text.trim().isEmpty())
@@ -195,9 +178,6 @@ public class HtmlTemplate {
         return html.toString();
     }
 
-    // =====================================================
-    // 📸 INSTAGRAM CONTACTS VIEW
-    // =====================================================
     public static String buildInstagramContacts(String title, List<Map<String, String>> contacts) {
 
         StringBuilder html = new StringBuilder();
@@ -240,14 +220,12 @@ public class HtmlTemplate {
 
             html.append("<div class='contact'>");
 
-            // 📸 imagen
             if (pic != null && !pic.isEmpty()) {
                 html.append("<img class='avatar' src='").append(pic).append("'/>");
             } else {
                 html.append("<div class='avatar' style='background:#ccc;'></div>");
             }
 
-            // 👤 info
             html.append("<div class='info'>");
 
             html.append("<div class='username'>")
@@ -264,7 +242,6 @@ public class HtmlTemplate {
 
             html.append("</div>");
 
-            // 🔘 follow status
             if ("Yes".equalsIgnoreCase(following)) {
                 html.append("<div class='follow yes'>Following</div>");
             } else {
@@ -280,9 +257,6 @@ public class HtmlTemplate {
         return html.toString();
     }
 
-    // =====================================================
-    // 📱 INSTAGRAM ACCOUNT (OWNER)
-    // =====================================================
     public static String buildInstagramAccount(String title, Map<String, String> data) {
 
         StringBuilder html = new StringBuilder();
@@ -338,9 +312,6 @@ public class HtmlTemplate {
         return html.toString();
     }
 
-    // =====================================================
-    // 💬 TEMPLATE INSTAGRAM CHAT
-    // =====================================================
     public static String buildInstagramChat(String chatName,
             List<MessageBubble> messages,
             String ownerId) {
@@ -348,7 +319,7 @@ public class HtmlTemplate {
         StringBuilder html = new StringBuilder();
 
         html.append("<html><head>");
-        html.append("<meta charset='UTF-8'>"); // 🔥 IMPORTANTE (acentos)
+        html.append("<meta charset='UTF-8'>");
         html.append("<style>");
 
         html.append("body { font-family: Arial, sans-serif; background:#fafafa; margin:0; padding:10px; }");
@@ -359,8 +330,8 @@ public class HtmlTemplate {
 
         html.append(".msg { max-width:70%; padding:10px; margin:6px; border-radius:15px; clear:both; }");
 
-        html.append(".left { background:#e5e5ea; float:left; }"); // recibido
-        html.append(".right { background:#0095f6; color:white; float:right; }"); // owner
+        html.append(".left { background:#e5e5ea; float:left; }");
+        html.append(".right { background:#0095f6; color:white; float:right; }");
 
         html.append(".system { background:#d1d5db; color:#000; text-align:center; margin:10px auto; float:none; }");
 
@@ -373,9 +344,6 @@ public class HtmlTemplate {
         html.append("<div class='container'>");
         html.append("<h2>").append(chatName).append("</h2>");
 
-        // =====================================================
-        // 👥 PARTICIPANTES
-        // =====================================================
         Map<String, String> participants = new LinkedHashMap<>();
 
         for (MessageBubble m : messages) {
@@ -407,9 +375,6 @@ public class HtmlTemplate {
 
         html.append("</div>");
 
-        // =====================================================
-        // 💬 MENSAJES
-        // =====================================================
         for (MessageBubble m : messages) {
 
             boolean isOwner = ownerId != null && ownerId.equals(m.senderId);
@@ -426,7 +391,6 @@ public class HtmlTemplate {
                     .append(cssClass)
                     .append("'>");
 
-            // 👤 identidad SIEMPRE visible (clave forense)
             html.append("<div class='sender'>")
                     .append(m.sender == null ? "Unknown" : m.sender)
                     .append(" [")
@@ -434,7 +398,6 @@ public class HtmlTemplate {
                     .append("]")
                     .append("</div>");
 
-            // 🧾 contenido
             html.append("<div>")
                     .append((m.text == null || m.text.trim().isEmpty())
                             ? "[Attachment / Content]"

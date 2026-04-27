@@ -45,16 +45,10 @@ public class SmsMmsSection implements ParabenSection {
 
         List<MessageData> messages = extractMessages(xmlChain);
 
-        // =====================================================
-        // 📭 CASO: NO HAY MENSAJES
-        // =====================================================
         if (messages.isEmpty()) {
             return;
         }
 
-        // =====================================================
-        // 📩 MENSAJES
-        // =====================================================
         for (MessageData m : messages) {
 
             if (isEmpty(m))
@@ -74,9 +68,6 @@ public class SmsMmsSection implements ParabenSection {
 
             item.setIdInDataSource("paraben-msg-" + m.id);
 
-            // =====================================================
-            // 🧾 HTML
-            // =====================================================
             String html = buildHtml(m);
             byte[] bytes = html.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
@@ -85,9 +76,6 @@ public class SmsMmsSection implements ParabenSection {
 
             item.setLength((long) bytes.length);
 
-            // =====================================================
-            // 🔥 METADATA
-            // =====================================================
             item.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
             item.getMetadata().set(BasicProps.CATEGORY, "Messages");
 
@@ -104,7 +92,6 @@ public class SmsMmsSection implements ParabenSection {
                 item.getMetadata().add(ExtraProperties.COMMUNICATION_TO, phone);
             }
 
-            // 📅 fecha real
             if (m.dateEpoch != null) {
                 Date d = ParabenDateUtil.fromEpoch(m.dateEpoch);
                 if (d != null) {
@@ -121,9 +108,6 @@ public class SmsMmsSection implements ParabenSection {
             item.getMetadata().add("paraben:message:box", normalize(m.box));
             item.getMetadata().add("entity:type", "message");
 
-            // =====================================================
-            // 🔄 DIRECCIÓN
-            // =====================================================
             String direction = "Unknown";
             String box = normalize(m.box).toLowerCase();
 
@@ -140,9 +124,6 @@ public class SmsMmsSection implements ParabenSection {
         }
     }
 
-    // =====================================================
-    // 🔍 PARSEO
-    // =====================================================
     private List<MessageData> extractMessages(List<File> xmlChain) throws Exception {
 
         List<MessageData> list = new ArrayList<>();
@@ -162,7 +143,6 @@ public class SmsMmsSection implements ParabenSection {
                 String nodeType = get(node, "NodeType");
                 String title = get(node, "Title");
 
-                // ✔ detectar SMS/MMS/RCS correctamente
                 if (nodeType == null || !nodeType.contains("SMS"))
                     continue;
 
@@ -230,9 +210,6 @@ public class SmsMmsSection implements ParabenSection {
         return list;
     }
 
-    // =====================================================
-    // HTML
-    // =====================================================
     private String buildHtml(MessageData m) {
 
         StringBuilder html = new StringBuilder();
@@ -259,9 +236,6 @@ public class SmsMmsSection implements ParabenSection {
         return "<tr><td><b>" + k + "</b></td><td>" + normalize(v) + "</td></tr>";
     }
 
-    // =====================================================
-    // UTILS
-    // =====================================================
     private boolean isEmpty(MessageData m) {
         return normalize(m.body).equals("-") && normalize(m.address).equals("-");
     }
@@ -281,9 +255,6 @@ public class SmsMmsSection implements ParabenSection {
         return n.getLength() > 0 ? n.item(0).getTextContent() : "";
     }
 
-    // =====================================================
-    // DTO
-    // =====================================================
     private static class MessageData {
         String id;
         String address;

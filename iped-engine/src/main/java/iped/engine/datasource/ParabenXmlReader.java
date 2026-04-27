@@ -55,9 +55,6 @@ public class ParabenXmlReader extends DataSourceReader {
         this.listOnly = listOnly;
     }
 
-    // =====================================================
-    // 🔍 DETECCIÓN
-    // =====================================================
     @Override
     public boolean isSupported(File datasource) {
 
@@ -94,9 +91,6 @@ public class ParabenXmlReader extends DataSourceReader {
         }
     }
 
-    // =====================================================
-    // 🚀 ENTRY POINT
-    // =====================================================
     @Override
     public void read(File root) throws Exception {
         read(root, null);
@@ -115,11 +109,9 @@ public class ParabenXmlReader extends DataSourceReader {
         File baseXml = new File(root, "Data_Structure.xml");
 
         List<File> xmlChain = collectXmlChain(root, baseXml);
-        // 🔥 índice global (une todos los XML)
+
         Map<String, List<org.w3c.dom.Element>> index = buildIndex(xmlChain);
-        // =====================================================
-        // 🧠 DATASET XML (para parsers)
-        // =====================================================
+
         Item xmlDataset = new Item();
 
         xmlDataset.setName("Paraben XML Dataset");
@@ -134,10 +126,10 @@ public class ParabenXmlReader extends DataSourceReader {
         xmlDataset.getMetadata().set("Content-Type", "application/x-paraben-xml");
         xmlDataset.getMetadata().set(Metadata.CONTENT_TYPE, "application/xml");
         xmlDataset.getMetadata().set("Content-Type", "application/x-paraben-xml");
-        // 🔥 CLAVE
+
         xmlDataset.setExtraAttribute("paraben_dataset", "true");
         xmlDataset.getMetadata().set("paraben:isDataset", "true");
-        // XMLs
+
         for (File xml : xmlChain) {
             xmlDataset.getMetadata().add("paraben:xml", xml.getAbsolutePath());
         }
@@ -179,15 +171,12 @@ public class ParabenXmlReader extends DataSourceReader {
         for (File xml : xmlChain) {
             LOGGER.info("📄 Parsing XML: {}", xml.getName());
 
-            handler.setCurrentXml(xml.getName()); // 🔥 CLAVE
+            handler.setCurrentXml(xml.getName());
 
             parser.parse(xml, handler);
         }
     }
 
-    // =====================================================
-    // 🌳 ROOT ITEM
-    // =====================================================
     private void addRootItem(File root, Item parent) throws InterruptedException {
 
         if (listOnly) {
@@ -215,9 +204,6 @@ public class ParabenXmlReader extends DataSourceReader {
         caseData.incDiscoveredEvidences(1);
     }
 
-    // =====================================================
-    // 🔗 XML CHAIN
-    // =====================================================
     private List<File> collectXmlChain(File root, File baseXml) throws Exception {
 
         List<File> list = new ArrayList<>();
@@ -252,9 +238,6 @@ public class ParabenXmlReader extends DataSourceReader {
         return list;
     }
 
-    // =====================================================
-    // 🧠 GLOBAL NODE INDEX (UNE TODOS LOS XML)
-    // =====================================================
     private Map<String, List<org.w3c.dom.Element>> buildIndex(List<File> xmlChain) throws Exception {
 
         Map<String, List<org.w3c.dom.Element>> map = new HashMap<>();
@@ -288,9 +271,6 @@ public class ParabenXmlReader extends DataSourceReader {
         return map;
     }
 
-    // =====================================================
-    // 🧠 SAX HANDLER
-    // =====================================================
     private class ParabenHandler extends DefaultHandler {
 
         private File root;
@@ -329,7 +309,7 @@ public class ParabenXmlReader extends DataSourceReader {
                 if ("Binary".equals(type)) {
                     inBinary = true;
                     props.clear();
-                    propsTag.clear(); // 🔥 IMPORTANTE
+                    propsTag.clear();
                     itemId = null;
                 }
             }
@@ -388,7 +368,7 @@ public class ParabenXmlReader extends DataSourceReader {
                         }
 
                     } catch (InterruptedException e) {
-                        throw new SAXException(e); // 👈 igual que UFED
+                        throw new SAXException(e);
                     }
 
                     inBinary = false;

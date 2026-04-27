@@ -65,9 +65,7 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
                         || !isUnderApp(node, "Facebook Messenger")) {
                     continue;
                 }
-                // =====================================================
-                // 👤 OWNER ACCOUNT (UNA SOLA VEZ)
-                // =====================================================
+
                 String ownerId = extractOwnerId(index);
 
                 if (ownerId != null && !createdAccounts.contains(ownerId)) {
@@ -98,9 +96,7 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
                     caseData.incDiscoveredEvidences(1);
                     Manager.getInstance().addItemToQueue(account);
                 }
-                // =====================================================
-                // 📦 CONTENEDOR
-                // =====================================================
+
                 Item rootConv = new Item();
 
                 rootConv.setName("Facebook Messenger Conversations");
@@ -118,9 +114,6 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
                 caseData.incDiscoveredEvidences(1);
                 Manager.getInstance().addItemToQueue(rootConv);
 
-                // =====================================================
-                // 💬 CHATS (GridValue)
-                // =====================================================
                 NodeList chats = node.getElementsByTagName("Node");
 
                 for (int j = 0; j < chats.getLength(); j++) {
@@ -154,9 +147,6 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
                     caseData.incDiscoveredEvidences(1);
                     Manager.getInstance().addItemToQueue(chatItem);
 
-                    // =====================================================
-                    // 📨 MENSAJES
-                    // =====================================================
                     NodeList rows = chatNode.getElementsByTagName("Row");
 
                     for (int k = 0; k < rows.getLength(); k++) {
@@ -192,8 +182,6 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
 
                         chatMap.computeIfAbsent(chatId, key -> new ArrayList<>()).add(bubble);
 
-                        // detectar owner (simple)
-                        // detectar owner real
                         Item msg = new Item();
                         String senderId = data.get("Sender ID");
 
@@ -227,12 +215,8 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
 
                         msg.setIdInDataSource("paraben-fb-msg-" + data.get("Message ID"));
 
-                        // =====================================================
-                        // 🧾 HTML
-                        // =====================================================
                         Map<String, String> htmlData = new LinkedHashMap<>(data);
 
-                        // 🔥 asegurar contenido visible
                         if (text != null && !text.trim().isEmpty()) {
                             htmlData.put("Message", text);
                         }
@@ -245,9 +229,6 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
 
                         msg.setLength((long) bytes.length);
 
-                        // =====================================================
-                        // 🧬 METADATA
-                        // =====================================================
                         msg.getMetadata().set(BasicProps.CATEGORY, "Chat");
 
                         msg.getMetadata().set(BasicProps.NAME,
@@ -260,9 +241,7 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
 
                         msg.getMetadata().add("facebook:sender", sender);
                         msg.getMetadata().add("facebook:sender_id", data.get("Sender ID"));
-                        // =====================================================
-                        // 📞 MODELO DE COMUNICACIÓN (IPED)
-                        // =====================================================
+
                         if (sender != null) {
                             msg.getMetadata().add(ExtraProperties.COMMUNICATION_FROM, sender);
                         }
@@ -271,7 +250,6 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
                             msg.getMetadata().add(ExtraProperties.COMMUNICATION_TO, ownerId);
                         }
 
-                        // 📅 fecha real
                         String epochMsg = data.get("Time_tag");
                         if (epochMsg != null) {
                             Date d = ParabenDateUtil.fromEpoch(epochMsg);
@@ -297,9 +275,6 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
                         caseData.incDiscoveredEvidences(1);
                         Manager.getInstance().addItemToQueue(msg);
 
-                        // =====================================================
-                        // 📎 ATTACHMENT BINARIO
-                        // =====================================================
                         if (fullLink != null && !fullLink.isEmpty()) {
 
                             File f = new File(root, fullLink);
@@ -332,9 +307,7 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
                             }
                         }
                     }
-                    // =====================================================
-                    // 💬 HTML CHAT (burbujas)
-                    // =====================================================
+
                     List<HtmlTemplate.MessageBubble> bubbles = chatMap.get(chatId);
 
                     if (bubbles != null && !bubbles.isEmpty()) {
@@ -371,9 +344,6 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
         }
     }
 
-    // =====================================================
-    // 🔍 UTILS
-    // =====================================================
     private String extractOwnerId(Map<String, List<Element>> index) {
 
         List<Element> nodes = index.get("Recovered Settings");
@@ -471,9 +441,6 @@ public class FacebookMessengerConversationsSection implements ParabenSection {
         return el.hasAttribute(attr) ? el.getAttribute(attr) : "";
     }
 
-    // =====================================================
-    // 🔥 NUEVO FILTRO ROBUSTO
-    // =====================================================
     private boolean isUnderApp(Element node, String appName) {
 
         Node current = node;

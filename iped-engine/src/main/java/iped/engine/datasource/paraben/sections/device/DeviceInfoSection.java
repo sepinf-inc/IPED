@@ -59,10 +59,8 @@ public class DeviceInfoSection implements ParabenSection {
         deviceNode.setIdInDataSource("paraben-device");
         deviceNode.setHash("");
 
-        // 🔥 PARSEAR XML
         Map<String, String> props = extractProps(xmlChain);
 
-        // 🔥 GENERAR HTML
         String html = HtmlTemplate.buildTable("Device Info", props);
 
         byte[] bytes = html.getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -72,12 +70,7 @@ public class DeviceInfoSection implements ParabenSection {
 
         deviceNode.setLength((long) bytes.length);
 
-        // 🔥 IMPORTANTE para indexación
         deviceNode.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
-
-        // =====================================================
-        // 🔥 METADATA
-        // =====================================================
 
         deviceNode.getMetadata().set(BasicProps.CATEGORY, "Device Info");
 
@@ -97,7 +90,6 @@ public class DeviceInfoSection implements ParabenSection {
                 ExtraProperties.DECODED_DATA,
                 true);
 
-        // =====================================================
         caseData.incDiscoveredEvidences(1);
         Manager.getInstance().addItemToQueue(deviceNode);
     }
@@ -124,7 +116,6 @@ public class DeviceInfoSection implements ParabenSection {
 
                 String type = types.item(0).getTextContent();
 
-                // 🔥 SOLO DEVICE INFO
                 if (!"DSCase.Phone".equals(type))
                     continue;
 
@@ -136,7 +127,7 @@ public class DeviceInfoSection implements ParabenSection {
 
                     String name = prop.getElementsByTagName("PropertyName")
                             .item(0).getTextContent();
-                    // 🔥 IGNORAR propiedades de adquisición
+
                     if ("Program timestamp".equalsIgnoreCase(name) ||
                             "Acquisition Type".equalsIgnoreCase(name)) {
                         continue;

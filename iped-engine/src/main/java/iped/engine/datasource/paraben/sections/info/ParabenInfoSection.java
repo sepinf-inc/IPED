@@ -59,7 +59,6 @@ public class ParabenInfoSection implements ParabenSection {
 
         item.setIdInDataSource("paraben-info");
 
-        // HTML
         String html = HtmlTemplate.buildTable("Paraben Info", props);
 
         byte[] bytes = html.getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -71,7 +70,6 @@ public class ParabenInfoSection implements ParabenSection {
         item.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
         item.getMetadata().set(BasicProps.CATEGORY, "Case Info");
 
-        // metadata indexable
         for (Map.Entry<String, String> e : props.entrySet()) {
             item.getMetadata().add("paraben:info:" + e.getKey(), e.getValue());
         }
@@ -84,28 +82,19 @@ public class ParabenInfoSection implements ParabenSection {
 
         Map<String, String> props = new LinkedHashMap<>();
 
-        File xml = xmlChain.get(0); // principal
+        File xml = xmlChain.get(0);
 
         Document doc = DocumentBuilderFactory.newInstance()
                 .newDocumentBuilder()
                 .parse(xml);
 
-        // =========================
-        // 🔹 PRODUCT INFO
-        // =========================
         props.put("Program Name", get(doc, "ProductName"));
         props.put("Program Version", get(doc, "ProductVersion"));
         props.put("Program Site", get(doc, "ProductSite"));
 
-        // =========================
-        // 🔹 EXPORT SETTINGS
-        // =========================
         props.put("UTC Zone", get(doc, "UtcZone"));
-        props.put("UTC Offset (minutes)", get(doc, "UtcOffset")); // esto es offset en minutos
+        props.put("UTC Offset (minutes)", get(doc, "UtcOffset"));
 
-        // =========================
-        // 🔹 NODE PRINCIPAL (DEVICE ROOT)
-        // =========================
         NodeList nodes = doc.getElementsByTagName("Node");
 
         for (int i = 0; i < nodes.getLength(); i++) {
@@ -121,13 +110,9 @@ public class ParabenInfoSection implements ParabenSection {
             if (!"DSCase.Phone".equals(type))
                 continue;
 
-            // 🔥 título del caso (dispositivo)
             props.put("Device Title", getFromNode(node, "Title"));
             props.put("Device ItemID", getFromNode(node, "ItemID"));
 
-            // =========================
-            // 🔹 PROPERTIES (acquisition)
-            // =========================
             NodeList properties = node.getElementsByTagName("Property");
 
             for (int j = 0; j < properties.getLength(); j++) {
@@ -140,7 +125,6 @@ public class ParabenInfoSection implements ParabenSection {
                 if ("Program timestamp".equalsIgnoreCase(name)) {
                     props.put("Acquisition Timestamp", value);
 
-                    // epoch (Tag)
                     String epoch = getFromNode(prop, "Tag");
                     if (!epoch.isEmpty()) {
                         props.put("Acquisition Timestamp (epoch)", epoch);

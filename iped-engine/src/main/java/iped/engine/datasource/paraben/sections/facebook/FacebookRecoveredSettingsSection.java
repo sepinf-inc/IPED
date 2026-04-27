@@ -45,9 +45,6 @@ public class FacebookRecoveredSettingsSection implements ParabenSection {
 
         List<RecoveredRow> rows = extractRecovered(xmlChain);
 
-        // =====================================================
-        // 🔍 VALIDAR QUE HAYA DATOS REALES
-        // =====================================================
         boolean hasUsefulData = false;
 
         for (RecoveredRow r : rows) {
@@ -63,9 +60,6 @@ public class FacebookRecoveredSettingsSection implements ParabenSection {
         if (!hasUsefulData)
             return;
 
-        // =====================================================
-        // 🔥 HTML (solo valores legibles)
-        // =====================================================
         Map<String, String> htmlData = new LinkedHashMap<>();
 
         for (RecoveredRow r : rows) {
@@ -79,9 +73,6 @@ public class FacebookRecoveredSettingsSection implements ParabenSection {
         if (htmlData.isEmpty())
             return;
 
-        // =====================================================
-        // 🔥 ITEM PRINCIPAL
-        // =====================================================
         Item item = new Item();
 
         item.setName("Facebook Recovered Settings");
@@ -109,9 +100,6 @@ public class FacebookRecoveredSettingsSection implements ParabenSection {
         caseData.incDiscoveredEvidences(1);
         Manager.getInstance().addItemToQueue(item);
 
-        // =====================================================
-        // 🔥 ITEMS HIJOS (binarios recuperados)
-        // =====================================================
         boolean hasBinaryChildren = false;
 
         for (RecoveredRow r : rows) {
@@ -152,9 +140,6 @@ public class FacebookRecoveredSettingsSection implements ParabenSection {
         }
     }
 
-    // =====================================================
-    // 🔍 EXTRAER "Recovered Settings"
-    // =====================================================
     private List<RecoveredRow> extractRecovered(List<File> xmlChain) throws Exception {
 
         List<RecoveredRow> list = new ArrayList<>();
@@ -222,10 +207,6 @@ public class FacebookRecoveredSettingsSection implements ParabenSection {
         return list;
     }
 
-    // =====================================================
-    // 🔧 UTILS
-    // =====================================================
-
     private String get(Element el, String tag) {
         NodeList n = el.getElementsByTagName(tag);
         return n.getLength() > 0 ? n.item(0).getTextContent() : "";
@@ -240,9 +221,6 @@ public class FacebookRecoveredSettingsSection implements ParabenSection {
         return el.hasAttribute(attr) ? el.getAttribute(attr) : "";
     }
 
-    // =====================================================
-    // DTO
-    // =====================================================
     private static class RecoveredRow {
         String key;
         String value;

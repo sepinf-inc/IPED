@@ -30,7 +30,6 @@ import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Date;
 
-// SE ENCARGA DE EXTRAER METADATOS DE BINARIOS CONTENIDOS EN EL XML.
 public class ParabenItemBuilder {
 
     public static Item build(
@@ -48,16 +47,12 @@ public class ParabenItemBuilder {
 
         Item item = new Item();
 
-        // 🔹 NAME
         item.setName(resolveName(itemId, props));
-
-        // 🔹 PATH
         item.setPath(resolvePath(rootItem, props, item.getName()));
 
         item.setParent(rootItem);
         item.setHasChildren(false);
 
-        // 🔹 CONTENT
         item.setInputStreamFactory(new FileInputStreamFactory(file.toPath()));
         item.setLength(file.length());
         item.setIdInDataSource(file.getAbsolutePath());
@@ -65,7 +60,7 @@ public class ParabenItemBuilder {
         item.setExtraAttribute(
                 ExtraProperties.DATASOURCE_READER,
                 "ParabenXmlReader");
-        // 🔹 METADATA (simple)
+
         props.forEach((k, v) -> {
             item.getMetadata().add("paraben:" + normalize(k), v);
         });
@@ -73,7 +68,7 @@ public class ParabenItemBuilder {
         if (currentXml != null) {
             item.getMetadata().add("paraben:source_xml", currentXml);
         }
-        // 🔹 nombre físico exportado (forense clave)
+
         item.getMetadata().add("paraben:item_id", itemId);
 
         String link = props.get("Link");
@@ -81,22 +76,16 @@ public class ParabenItemBuilder {
             item.getMetadata().add("paraben:link", link);
         }
 
-        // 🔹 HASHES
-        // MD5 → hash principal de IPED
         if (props.containsKey("MD5")) {
             item.setHash(props.get("MD5"));
         }
 
-        // SHA1 → metadata adicional
         if (props.containsKey("SHA1")) {
             item.getMetadata().add("sha1", props.get("SHA1"));
         }
 
-        // 🔹 DATES (usar Tag si existe)
-        // 🔹 DATES (usar TAG si existe, por propiedad)
         try {
 
-            // 🔥 CREATION
             if (propsTag.containsKey("Creation time")) {
                 long ts = Long.parseLong(propsTag.get("Creation time"));
                 item.setCreationDate(new Date(ts));
@@ -106,7 +95,6 @@ public class ParabenItemBuilder {
                 item.setCreationDate(df.parse(props.get("Creation time")));
             }
 
-            // 🔥 LAST ACCESS
             if (propsTag.containsKey("Last access time")) {
                 long ts = Long.parseLong(propsTag.get("Last access time"));
                 item.setAccessDate(new Date(ts));
@@ -116,7 +104,6 @@ public class ParabenItemBuilder {
                 item.setAccessDate(df.parse(props.get("Last access time")));
             }
 
-            // 🔥 MODIFICATION
             if (propsTag.containsKey("Last modification time")) {
                 long ts = Long.parseLong(propsTag.get("Last modification time"));
                 item.setModificationDate(new Date(ts));
@@ -131,8 +118,6 @@ public class ParabenItemBuilder {
 
         return item;
     }
-
-    // =====================================================
 
     private static File resolveFile(File root, String itemId, Map<String, String> props) {
 

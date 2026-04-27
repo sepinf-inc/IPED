@@ -66,7 +66,6 @@ public class UserActivityTimelineSection implements ParabenSection {
 
             item.setIdInDataSource("paraben-timeline-" + r.id);
 
-            // 🔥 HTML individual
             String html = buildHtmlSingle(r);
 
             byte[] bytes = html.getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -76,10 +75,6 @@ public class UserActivityTimelineSection implements ParabenSection {
 
             item.setLength((long) bytes.length);
 
-            // =====================================================
-            // 🔥 BASIC PROPS
-            // =====================================================
-
             item.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
             item.getMetadata().set(BasicProps.CATEGORY, "Timeline");
 
@@ -87,16 +82,10 @@ public class UserActivityTimelineSection implements ParabenSection {
             item.getMetadata().set(BasicProps.TYPE, normalize(r.type));
             item.getMetadata().set(BasicProps.CONTENT, normalize(r.packageName));
 
-            // 🔥 TIME (epoch)
-            // 🔥 TIME (epoch → Date real)
             Date d = ParabenDateUtil.fromEpoch(r.epoch);
             if (d != null) {
                 item.setCreationDate(d);
             }
-
-            // =====================================================
-            // 🔥 EXTRA METADATA
-            // =====================================================
 
             item.getMetadata().add("paraben:timeline:id", r.id);
             item.getMetadata().add("paraben:timeline:time", normalize(r.time));
@@ -109,9 +98,6 @@ public class UserActivityTimelineSection implements ParabenSection {
         }
     }
 
-    // =====================================================
-    // 🔥 PARSEO
-    // =====================================================
     private List<RowData> extractTimeline(List<File> xmlChain) throws Exception {
 
         List<RowData> list = new ArrayList<>();
@@ -184,9 +170,6 @@ public class UserActivityTimelineSection implements ParabenSection {
         return list;
     }
 
-    // =====================================================
-    // 🔥 HTML POR EVENTO
-    // =====================================================
     private String buildHtmlSingle(RowData r) {
 
         StringBuilder html = new StringBuilder();
@@ -223,9 +206,6 @@ public class UserActivityTimelineSection implements ParabenSection {
         return n.getLength() > 0 ? n.item(0).getTextContent() : "";
     }
 
-    // =====================================================
-    // 🔥 DTO
-    // =====================================================
     private static class RowData {
         String id;
         String time;

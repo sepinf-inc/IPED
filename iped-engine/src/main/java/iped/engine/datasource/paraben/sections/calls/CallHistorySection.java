@@ -50,9 +50,6 @@ public class CallHistorySection implements ParabenSection {
 
         LOGGER.info("📞 CallHistorySection START");
 
-        // =====================================================
-        // 🔍 PARSEO XML
-        // =====================================================
         for (File xml : xmlChain) {
 
             LOGGER.info("📄 Parsing XML: {}", xml.getName());
@@ -111,9 +108,6 @@ public class CallHistorySection implements ParabenSection {
         }
     }
 
-    // =====================================================
-    // 📞 CREAR ITEM INDIVIDUAL
-    // =====================================================
     private void createCallItem(Item rootItem,
             Map<String, String> data,
             ICaseData caseData) throws Exception {
@@ -135,13 +129,9 @@ public class CallHistorySection implements ParabenSection {
         call.setParent(rootItem);
         call.setHasChildren(false);
 
-        // ✔ MIME correcto (NO text/html)
         call.setMediaType(
                 org.apache.tika.mime.MediaType.parse("application/x-paraben-call"));
 
-        // =====================================================
-        // 📅 FECHA
-        // =====================================================
         String epoch = data.get("Date_tag");
         Date callDate = null;
 
@@ -152,9 +142,6 @@ public class CallHistorySection implements ParabenSection {
             }
         }
 
-        // =====================================================
-        // 🧾 HTML
-        // =====================================================
         String html = HtmlTemplate.buildTable("Call Record", data);
         byte[] bytes = html.getBytes(StandardCharsets.UTF_8);
 
@@ -163,12 +150,8 @@ public class CallHistorySection implements ParabenSection {
 
         call.setLength((long) bytes.length);
 
-        // 🔥 ESTE ES EL CLAVE PARA EL PREVIEW
         call.getMetadata().set(BasicProps.CONTENT, html);
 
-        // =====================================================
-        // 🔥 BASIC PROPS
-        // =====================================================
         call.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
         call.getMetadata().set(BasicProps.CATEGORY, "Communication");
         call.getMetadata().set(BasicProps.NAME,
@@ -176,9 +159,6 @@ public class CallHistorySection implements ParabenSection {
         call.getMetadata().set(BasicProps.TYPE,
                 type != null ? type : "Call");
 
-        // =====================================================
-        // 📞 MODELO DE COMUNICACIÓN
-        // =====================================================
         if (number != null) {
             call.getMetadata().add(ExtraProperties.COMMUNICATION_TO, number);
         }
@@ -192,9 +172,6 @@ public class CallHistorySection implements ParabenSection {
                     ExtraProperties.COMMUNICATION_DATE, callDate);
         }
 
-        // =====================================================
-        // 🔎 METADATA FORENSE
-        // =====================================================
         call.getMetadata().add("paraben:call:number", number);
         call.getMetadata().add("paraben:call:type", type);
         call.getMetadata().add("paraben:call:duration", data.get("Duration"));
@@ -214,7 +191,6 @@ public class CallHistorySection implements ParabenSection {
         LOGGER.info("📦 Call item created: {}", call.getName());
     }
 
-    // =====================================================
     private String normalizeDirection(String type) {
 
         if (type == null)

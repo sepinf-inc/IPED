@@ -40,15 +40,11 @@ public class FacebookMessengerCurrentSettingsSection implements ParabenSection {
             ICaseData caseData,
             Map<String, List<Element>> index) throws Exception {
 
-        // 🔥 usar index
         List<Element> nodes = index.get("Current Settings");
 
         if (nodes == null || nodes.isEmpty())
             return;
 
-        // =====================================================
-        // 📦 CONTENEDOR
-        // =====================================================
         Item parent = new Item();
 
         parent.setName("Facebook Messenger - Current Settings");
@@ -66,9 +62,6 @@ public class FacebookMessengerCurrentSettingsSection implements ParabenSection {
         Manager.getInstance().addItemToQueue(parent);
         caseData.incDiscoveredEvidences(1);
 
-        // =====================================================
-        // 🔁 ROWS
-        // =====================================================
         for (Element node : nodes) {
 
             NodeList rows = node.getElementsByTagName("Row");
@@ -82,9 +75,6 @@ public class FacebookMessengerCurrentSettingsSection implements ParabenSection {
                 String key = data.get("Key");
                 String value = data.get("Value");
 
-                // =====================================================
-                // 📄 ITEM
-                // =====================================================
                 Item item = new Item();
 
                 item.setName(key != null && !key.isEmpty() ? key : "Setting");
@@ -97,9 +87,6 @@ public class FacebookMessengerCurrentSettingsSection implements ParabenSection {
 
                 item.setIdInDataSource("paraben-fb-current-" + i);
 
-                // =====================================================
-                // 🧾 HTML
-                // =====================================================
                 String html = buildHtml(data);
                 byte[] bytes = html.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
@@ -108,9 +95,6 @@ public class FacebookMessengerCurrentSettingsSection implements ParabenSection {
 
                 item.setLength((long) bytes.length);
 
-                // =====================================================
-                // 🧬 METADATA
-                // =====================================================
                 item.getMetadata().set(BasicProps.CATEGORY, "Settings");
                 item.getMetadata().set(BasicProps.NAME, key);
                 item.getMetadata().add("paraben:key", key);
@@ -121,10 +105,6 @@ public class FacebookMessengerCurrentSettingsSection implements ParabenSection {
             }
         }
     }
-
-    // =====================================================
-    // 🔧 UTILS
-    // =====================================================
 
     private Map<String, String> extractRow(Element row) {
 

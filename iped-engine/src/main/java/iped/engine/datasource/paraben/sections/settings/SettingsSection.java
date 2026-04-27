@@ -59,7 +59,6 @@ public class SettingsSection implements ParabenSection {
 
         item.setIdInDataSource("paraben-settings");
 
-        // HTML
         String html = HtmlTemplate.buildTable("System Settings", settings);
         byte[] bytes = html.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
@@ -67,10 +66,6 @@ public class SettingsSection implements ParabenSection {
                 .insertIntoStorage(item, bytes, bytes.length);
 
         item.setLength((long) bytes.length);
-
-        // =====================================================
-        // 🔥 METADATA
-        // =====================================================
 
         item.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
         item.getMetadata().set(BasicProps.CATEGORY, "Settings");
@@ -85,10 +80,6 @@ public class SettingsSection implements ParabenSection {
         caseData.incDiscoveredEvidences(1);
         Manager.getInstance().addItemToQueue(item);
     }
-
-    // =====================================================
-    // 🔥 PARSEO
-    // =====================================================
 
     private Map<String, String> extractSettings(List<File> xmlChain) throws Exception {
 
@@ -148,10 +139,6 @@ public class SettingsSection implements ParabenSection {
 
         return map;
     }
-
-    // =====================================================
-    // UTILS
-    // =====================================================
 
     private String normalizeKey(String k) {
         return k.toLowerCase()

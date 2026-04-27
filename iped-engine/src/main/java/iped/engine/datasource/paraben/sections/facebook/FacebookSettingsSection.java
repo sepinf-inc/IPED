@@ -45,9 +45,6 @@ public class FacebookSettingsSection implements ParabenSection {
 
         List<SettingRow> rows = extractSettings(xmlChain);
 
-        // =====================================================
-        // 🔍 VALIDAR DATOS REALES
-        // =====================================================
         boolean hasUsefulData = false;
 
         for (SettingRow r : rows) {
@@ -61,9 +58,6 @@ public class FacebookSettingsSection implements ParabenSection {
         if (!hasUsefulData)
             return;
 
-        // =====================================================
-        // 🔥 HTML DATA LIMPIA
-        // =====================================================
         Map<String, String> htmlData = new LinkedHashMap<>();
 
         for (SettingRow r : rows) {
@@ -77,9 +71,6 @@ public class FacebookSettingsSection implements ParabenSection {
         if (htmlData.isEmpty())
             return;
 
-        // =====================================================
-        // 🔥 ITEM PRINCIPAL
-        // =====================================================
         Item item = new Item();
 
         item.setName("Facebook Settings");
@@ -100,9 +91,6 @@ public class FacebookSettingsSection implements ParabenSection {
 
         item.setLength((long) bytes.length);
 
-        // =====================================================
-        // 🔥 METADATA
-        // =====================================================
         item.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
         item.getMetadata().set(BasicProps.CATEGORY, "Applications");
 
@@ -115,7 +103,6 @@ public class FacebookSettingsSection implements ParabenSection {
 
             item.getMetadata().add("facebook:setting:" + normKey, r.value);
 
-            // 🔥 detecciones útiles
             if (r.key.contains("logged_in_user_scoped")) {
                 String userId = extractUserId(r.key);
                 if (userId != null) {
@@ -136,9 +123,6 @@ public class FacebookSettingsSection implements ParabenSection {
         Manager.getInstance().addItemToQueue(item);
     }
 
-    // =====================================================
-    // 🔍 EXTRAER SETTINGS (GridValue)
-    // =====================================================
     private List<SettingRow> extractSettings(List<File> xmlChain) throws Exception {
 
         List<SettingRow> list = new ArrayList<>();
@@ -194,7 +178,6 @@ public class FacebookSettingsSection implements ParabenSection {
                         }
                     }
 
-                    // 🔥 FILTRO DURO
                     if (data.key != null && !data.key.trim().isEmpty()
                             && data.value != null && !data.value.trim().isEmpty()) {
 
@@ -206,10 +189,6 @@ public class FacebookSettingsSection implements ParabenSection {
 
         return list;
     }
-
-    // =====================================================
-    // 🔧 UTILS
-    // =====================================================
 
     private String extractUserId(String key) {
         try {
@@ -239,9 +218,6 @@ public class FacebookSettingsSection implements ParabenSection {
         return el.hasAttribute(attr) ? el.getAttribute(attr) : "";
     }
 
-    // =====================================================
-    // DTO
-    // =====================================================
     private static class SettingRow {
         String key;
         String value;

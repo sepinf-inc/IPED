@@ -80,7 +80,6 @@ public class FacebookMessengerRecoveredSettingsSection implements ParabenSection
                 item.setMediaType(
                         org.apache.tika.mime.MediaType.parse("application/x-paraben-fb-setting"));
 
-                // HTML simple
                 String html = buildHtml(data);
                 byte[] bytes = html.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 

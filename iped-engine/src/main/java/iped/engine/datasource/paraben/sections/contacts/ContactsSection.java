@@ -55,7 +55,6 @@ public class ContactsSection implements ParabenSection {
             String phone = normalizePhone(c.phone);
             String email = normalize(c.email);
 
-            // 🔥 deduplicación
             String key = name + "|" + phone + "|" + email;
             if (!seen.add(key))
                 continue;
@@ -72,7 +71,6 @@ public class ContactsSection implements ParabenSection {
 
             item.setIdInDataSource("paraben-contact-" + c.id);
 
-            // HTML
             String html = buildHtml(c);
             byte[] bytes = html.getBytes("UTF-8");
 
@@ -80,10 +78,6 @@ public class ContactsSection implements ParabenSection {
                     .insertIntoStorage(item, bytes, bytes.length);
 
             item.setLength((long) bytes.length);
-
-            // =====================================================
-            // 🔥 METADATA
-            // =====================================================
 
             item.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
             item.getMetadata().set(BasicProps.CATEGORY, "Contacts");
@@ -117,7 +111,6 @@ public class ContactsSection implements ParabenSection {
 
             item.getMetadata().add("entity:type", "contact");
 
-            // 🔥 FOTO → referencia
             if (c.photoLink != null && !c.photoLink.isEmpty()) {
 
                 String normalizedPath = c.photoLink.replace("Binary Files/", "");
@@ -135,9 +128,6 @@ public class ContactsSection implements ParabenSection {
         }
     }
 
-    // =====================================================
-    // 🔥 PARSEO XML
-    // =====================================================
     private List<ContactData> extractContacts(List<File> xmlChain) throws Exception {
 
         List<ContactData> list = new ArrayList<>();
@@ -224,9 +214,6 @@ public class ContactsSection implements ParabenSection {
         return list;
     }
 
-    // =====================================================
-    // 🔥 HTML
-    // =====================================================
     private String buildHtml(ContactData c) {
 
         StringBuilder html = new StringBuilder();
@@ -262,10 +249,6 @@ public class ContactsSection implements ParabenSection {
         return "<tr><td><b>" + k + "</b></td><td>" + normalize(v) + "</td></tr>";
     }
 
-    // =====================================================
-    // UTILS
-    // =====================================================
-
     private boolean isEmptyContact(ContactData c) {
         return normalize(c.name).equals("-")
                 && normalize(c.phone).equals("-")
@@ -294,9 +277,6 @@ public class ContactsSection implements ParabenSection {
         return (n != null && n.getLength() > 0) ? n.item(0).getTextContent() : null;
     }
 
-    // =====================================================
-    // DTO
-    // =====================================================
     private static class ContactData {
         String id;
         String name;

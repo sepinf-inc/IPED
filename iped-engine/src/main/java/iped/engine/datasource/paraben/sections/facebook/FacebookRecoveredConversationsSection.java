@@ -58,9 +58,6 @@ public class FacebookRecoveredConversationsSection implements ParabenSection {
                 if (!"Recovered Conversations".equalsIgnoreCase(title))
                     continue;
 
-                // =====================================================
-                // 🔍 VALIDAR QUE HAYA CHATS REALES
-                // =====================================================
                 NodeList children = node.getElementsByTagName("Node");
 
                 List<Element> validChats = new ArrayList<>();
@@ -76,13 +73,9 @@ public class FacebookRecoveredConversationsSection implements ParabenSection {
                     }
                 }
 
-                // ❌ si no hay chats válidos → no crear nada
                 if (validChats.isEmpty())
                     continue;
 
-                // =====================================================
-                // 📦 ITEM CONTENEDOR
-                // =====================================================
                 Item parentItem = new Item();
 
                 parentItem.setName("Facebook Recovered Conversations");
@@ -101,9 +94,6 @@ public class FacebookRecoveredConversationsSection implements ParabenSection {
                 caseData.incDiscoveredEvidences(1);
                 Manager.getInstance().addItemToQueue(parentItem);
 
-                // =====================================================
-                // 💬 HIJOS (chats recuperados)
-                // =====================================================
                 for (Element childNode : validChats) {
 
                     String childTitle = get(childNode, "Title");
@@ -131,7 +121,6 @@ public class FacebookRecoveredConversationsSection implements ParabenSection {
         }
     }
 
-    // =====================================================
     private String get(Element el, String tag) {
         NodeList n = el.getElementsByTagName(tag);
         return n.getLength() > 0 ? n.item(0).getTextContent() : "";

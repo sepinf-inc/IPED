@@ -55,15 +55,11 @@ public class FacebookConversationsSection implements ParabenSection {
 
                 String title = get(node, "Title");
 
-                // 🔥 FIX CLAVE → FILTRAR SOLO FACEBOOK
                 if (!"Conversations".equalsIgnoreCase(title)
                         || !isUnderApp(node, "Facebook")) {
                     continue;
                 }
 
-                // =====================================================
-                // 🔍 VALIDAR QUE HAYA CHATS REALES
-                // =====================================================
                 NodeList children = node.getElementsByTagName("Node");
 
                 List<Element> validChats = new ArrayList<>();
@@ -79,13 +75,9 @@ public class FacebookConversationsSection implements ParabenSection {
                     }
                 }
 
-                // ❌ si no hay chats válidos → no crear nada
                 if (validChats.isEmpty())
                     continue;
 
-                // =====================================================
-                // 📦 ITEM CONTENEDOR
-                // =====================================================
                 Item parentItem = new Item();
 
                 parentItem.setName("Facebook Conversations");
@@ -103,9 +95,6 @@ public class FacebookConversationsSection implements ParabenSection {
                 caseData.incDiscoveredEvidences(1);
                 Manager.getInstance().addItemToQueue(parentItem);
 
-                // =====================================================
-                // 💬 HIJOS (chats)
-                // =====================================================
                 for (Element childNode : validChats) {
 
                     String childTitle = get(childNode, "Title");
@@ -133,9 +122,6 @@ public class FacebookConversationsSection implements ParabenSection {
         }
     }
 
-    // =====================================================
-    // 🔥 MÉTODO NUEVO (CLAVE)
-    // =====================================================
     private boolean isUnderApp(Element node, String appName) {
 
         Node current = node;
@@ -155,7 +141,6 @@ public class FacebookConversationsSection implements ParabenSection {
         return false;
     }
 
-    // =====================================================
     private String get(Element el, String tag) {
         NodeList n = el.getElementsByTagName(tag);
         return n.getLength() > 0 ? n.item(0).getTextContent() : "";

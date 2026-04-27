@@ -41,7 +41,6 @@ public class ApplicationSection implements ParabenSection {
             ICaseData caseData,
             Map<String, List<Element>> index) throws Exception {
 
-        // 🔥 usar index (CLAVE)
         List<Element> appNodes = index.get("Installed Application List");
         List<Element> permNodes = index.get("Application Permissions");
 
@@ -53,7 +52,6 @@ public class ApplicationSection implements ParabenSection {
         if (permNodes != null) {
             Map<String, Map<String, String>> perms = extractPermissions(permNodes);
 
-            // 🔥 merge
             for (String key : apps.keySet()) {
                 if (perms.containsKey(key)) {
                     apps.get(key).permissions = perms.get(key);
@@ -61,7 +59,6 @@ public class ApplicationSection implements ParabenSection {
             }
         }
 
-        // 🔥 crear items
         for (AppData app : apps.values()) {
 
             Item item = new Item();
@@ -86,7 +83,6 @@ public class ApplicationSection implements ParabenSection {
 
             item.setLength((long) bytes.length);
 
-            // 🔥 METADATA
             item.getMetadata().set(BasicProps.LENGTH, String.valueOf(bytes.length));
             item.getMetadata().set(BasicProps.CATEGORY, "Applications");
 
@@ -110,10 +106,6 @@ public class ApplicationSection implements ParabenSection {
             Manager.getInstance().addItemToQueue(item);
         }
     }
-
-    // =====================================================
-    // 🔥 APPS
-    // =====================================================
 
     private Map<String, AppData> extractApps(List<Element> nodes) {
 
@@ -180,10 +172,6 @@ public class ApplicationSection implements ParabenSection {
         return map;
     }
 
-    // =====================================================
-    // 🔥 PERMISSIONS
-    // =====================================================
-
     private Map<String, Map<String, String>> extractPermissions(List<Element> nodes) {
 
         Map<String, Map<String, String>> map = new HashMap<>();
@@ -237,10 +225,6 @@ public class ApplicationSection implements ParabenSection {
 
         return map;
     }
-
-    // =====================================================
-    // HTML
-    // =====================================================
 
     private String buildHtml(AppData a, File root) {
 
@@ -318,9 +302,6 @@ public class ApplicationSection implements ParabenSection {
             return null;
         }
     }
-    // =====================================================
-    // DTO
-    // =====================================================
 
     private static class AppData {
         String key;
