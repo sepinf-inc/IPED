@@ -81,7 +81,7 @@
     ]},
     {"name": "Databases", "mimes": ["application/x-edb", "application/x-edb-table", "application/irpf", "application/x-msaccess", "application/x-dbf", "application/vnd.oasis.opendocument.database", "application/x-sqlite3", "application/x-mysql-db", "application/x-berkeley-db", "application/x-mssql-data", "application/x-database-table"]},
     {"name": "Compressed Archives", "mimes": ["application/x-tika-ooxml", "application/zlib", "application/applefile", "application/vnd.ms-tnef", "application/zip", "application/x-rar-compressed", "application/x-tar", "application/gzip", "application/x-gzip", "application/x-xz", "application/x-bzip", "application/x-bzip2", "application/x-7z-compressed", "application/x-arj", "application/x-gtar", "application/x-archive", "application/x-cpio", "application/x-tika-unix-dump", "application/x-snappy-framed", "application/x-snappy", "application/x-snappy-raw", "application/x-compress", "application/x-java-pack200", "application/x-lzma", "application/x-lz4", "application/x-lz4-block", "application/x-brotli", "application/zstd", "application/deflate64", "image/x-emf-compressed", "application/x-lzfse"]},
-    {"name": "Contacts", "mimes": ["text/x-vcard", "application/x-vcard-html", "application/windows-adress-book", "application/outlook-contact", "application/x-livecontacts", "application/x-livecontacts-table", "contact/x-skype-contact", "application/x-whatsapp-wadb", "application/x-whatsapp-contactsv2", "contact/x-whatsapp-contact", "application/x-ufed-html-contacts", "application/x-ufed-contact", "contact/x-telegram-contact", "application/x-ios-addressbook-db", "application/x-win10-mail-contact"]},
+    {"name": "Contacts", "mimes": ["text/x-vcard", "application/x-vcard-html", "application/windows-adress-book", "application/outlook-contact", "application/x-livecontacts", "application/x-livecontacts-table", "contact/x-skype-contact", "application/x-whatsapp-wadb", "application/x-whatsapp-contactsv2", "contact/x-whatsapp-contact", "application/x-ufed-html-contacts", "application/x-ufed-contact", "contact/x-telegram-contact", "application/x-ios-addressbook-db", "application/x-win10-mail-contact", "application/x-paraben-contact"]},
     {"name": "Chats", "categories":[
         {"name": "WhatsApp", "mimes":["application/x-whatsapp-db", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chat","application/x-ufed-chat-preview-whatsapp"]},
         {"name": "Threema", "mimes":["application/x-threema-chat", "application/x-threema-chatstorage", "application/x-ufed-chat-preview-threema"]},
@@ -89,7 +89,7 @@
         {"name": "Skype", "mimes":["application/sqlite-skype", "application/skype",  "application/x-skype-conversation","application/x-ufed-chat-preview-skype"]},
         {"name": "Telegram", "mimes":["application/x-telegram-chat","application/x-ufed-chat-preview-telegram"]},
         {"name": "Jabber", "mimes":["application/x-jabber-chat"]},
-        {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
+        {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook", "application/x-paraben-facebook-messenger-chat-html", "application/x-facebook-recovered-blob"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
         {"name": "Signal", "mimes":["application/x-ufed-chat-preview-signal"]},
         {"name": "Snapchat", "mimes":["application/x-ufed-chat-preview-snapchat"]},
@@ -101,7 +101,7 @@
     {"name": "Open Financial Exchange", "mimes": ["application/x-ofx-v1","application/x-ofx-v2","application/x-ofc"]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
     {"name": "Programs and Libraries", 
-        "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"],
+        "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication", "application/x-paraben-app"],
         "categories":[{"name": "Android Applications", "mimes": ["application/vnd.android.package-archive"]}]
         },
         
@@ -134,6 +134,9 @@
       {"name": "Virtual disks", "mimes": ["application/x-wim-image", "application/x-vmdk", "application/x-vhd", "application/x-vdi", "application/x-vhdx"]},
       {"name": "Other disks", "mimes": ["application/x-disk-image"]}
     ]},
+    {"name": "Paraben", "categories":[
+      {"name": "Paraben Info", "mimes": ["application/x-paraben-info"]}
+    ]},
     {"name": "Brazilian Software", "categories":[
       {"name": "Internal Revenue of Brazil", "categories":[
         {"name": "Tax Returns and Receipts IRPF"},
@@ -163,7 +166,7 @@
     {"name": "Calls", "categories":[ 
         {"name": "Discord Calls", "mimes":["call/x-discord-call"]},
         {"name": "Facebook Calls", "mimes":[]},
-        {"name": "Phone Calls", "mimes":[]},
+        {"name": "Phone Calls", "mimes":["application/x-paraben-call-history", "application/x-paraben-call"]},
         {"name": "Signal Calls", "mimes":[]},
         {"name": "Telegram Calls", "mimes":["call/x-telegram-call"]},
         {"name": "Threema Calls", "mimes":["call/x-threema-call"]},
@@ -173,23 +176,23 @@
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
     {"name": "MMS Messages", "mimes": ["application/x-ufed-html-mms", "application/x-ufed-mms"]},
     {"name": "Instant Messages Artifacts", "categories":[
-      {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
+      {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message", "application/x-paraben-message", "application/x-paraben-facebook-recovered-conversations", "application/x-paraben-facebook-recovered-conversations", "application/x-facebook-chat", "application/x-paraben-facebook-messenger-message"]},
       {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
       {"name": "Message Attachments", "mimes": ["application/x-ufed-attachment"]},
       {"name": "Shared Contacts"}
     ]},
     {"name": "Bluetooth Devices", "mimes": ["application/x-ufed-html-bluetooth", "application/x-ufed-bluetoothdevice"]},
     {"name": "SIM Data", "mimes": ["application/x-ufed-html-simdata", "application/x-ufed-simdata"]},
-    {"name": "Calendar", "mimes": ["application/x-ufed-html-calendar", "application/x-ufed-calendarentry", "application/x-ios-calendar-db"]},
+    {"name": "Calendar", "mimes": ["application/x-ufed-html-calendar", "application/x-ufed-calendarentry", "application/x-ios-calendar-db", "application/x-paraben-calendar"]},
     {"name": "Logs", "mimes": ["application/x-ufed-html-logs", "application/x-ufed-logentry"]},
-    {"name": "User Accounts", "mimes": ["application/x-ufed-html-users", "application/x-ufed-useraccount", "application/x-ufed-user", "contact/x-skype-account", "application/x-whatsapp-account", "application/x-telegram-account", "application/x-gdrive-account-info", "application/x-whatsapp-user-xml"]},
+    {"name": "User Accounts", "mimes": ["application/x-ufed-html-users", "application/x-ufed-useraccount", "application/x-ufed-user", "contact/x-skype-account", "application/x-whatsapp-account", "application/x-telegram-account", "application/x-gdrive-account-info", "application/x-whatsapp-user-xml", "application/x-paraben-facebook-account"]},
     {"name": "Searches", "mimes": ["application/x-ufed-html-searches", "application/x-ufed-searcheditem"]},
     {"name": "Notes", "mimes": ["application/x-ufed-html-notes", "application/x-ufed-note", "application/x-ios-oldnotes-db", "application/x-ios-notes-db"]},
     {"name": "Wireless Networks", "mimes": ["application/x-ufed-html-wifi", "application/x-ufed-wirelessnetwork"]},
     {"name": "Notifications", "mimes": ["application/x-ufed-html-notifications", "application/x-ufed-notification"]},
     {"name": "Locations", "mimes": ["application/x-ufed-html-locations", "application/x-ufed-location", "application/x-ios-locations-db", "application/x-apple-location"]},
     {"name": "Cookies", "mimes": ["application/x-ufed-html-cookies", "application/x-ufed-cookie"]},
-    {"name": "Configuration", "mimes": ["application/x-ufed-html-configurations"]},
+    {"name": "Configuration", "mimes": ["application/x-ufed-html-configurations", "application/x-paraben-settings", "application/x-paraben-facebook-settings", "application/x-paraben-facebook-settings-recovered", "application/x-paraben-fb-recovered-settings", "application/x-paraben-fb-current-settings", "application/x-paraben-fb-setting"]},
     {"name": "Passwords", "mimes": ["application/x-ufed-html-passwords", "application/x-ufed-password"]},
     {"name": "Autofill", "mimes": ["application/x-ufed-html-autofill", "application/x-ufed-autofill"]},
     {"name": "Cell Towers", "mimes": ["application/x-ufed-html-celltowers", "application/x-ufed-celltower"]},
@@ -199,11 +202,11 @@
     {"name": "Recordings", "mimes": ["application/x-ufed-html-recordings", "application/x-ufed-recording", "application/x-ios-voicemail-db"]},
     {"name": "Mobile Cards", "mimes": ["application/x-ufed-mobilecard"]},
     {"name": "Applications Usage", "mimes": ["application/x-ufed-appsusagelog", "application/x-ufed-applicationusage"]},
-    {"name": "Device Information", "mimes": ["application/x-ufed-deviceinfo", "application/x-ufed-deviceinfoentry"]},
+    {"name": "Device Information", "mimes": ["application/x-ufed-deviceinfo", "application/x-ufed-deviceinfoentry", "application/x-paraben-device"]},
     {"name": "Activities Sensor", "mimes": ["application/x-ufed-activitysensordata", "application/x-ufed-activitysensordatameasurement", "application/x-ufed-activitysensordatasample"]},
     {"name": "Credit Cards", "mimes": ["application/x-ufed-creditcard"]},
     {"name": "Device Connectivity", "mimes": ["application/x-ufed-deviceconnectivity"]},
-    {"name": "Device Events", "mimes": ["application/x-ufed-deviceevent"]},
+    {"name": "Device Events", "mimes": ["application/x-ufed-deviceevent", "application/x-paraben-timeline"]},
     {"name": "File Downloads", "mimes": ["application/x-ufed-filedownload"]},
     {"name": "File Uploads", "mimes": ["application/x-ufed-fileupload"]},
     {"name": "Financial Accounts", "mimes": ["application/x-ufed-financialaccount"]},
