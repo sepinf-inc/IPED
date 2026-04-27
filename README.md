@@ -2,6 +2,14 @@
 
 IPED is an open source software that can be used to process and analyze digital evidence, often seized at crime scenes by law enforcement or in a corporate investigation by private examiners.
 
+## Getting Started
+
+To get started with IPED, you can:
+
+- **Download**: Get the latest version from [GitHub Releases](https://github.com/sepinf-inc/IPED/releases)
+- **Documentation**: Access the [IPED Wiki](https://github.com/sepinf-inc/IPED/wiki) for comprehensive guides
+- **Quick Start**: Run IPED with `java -jar iped.jar` to launch the graphical interface
+
 ## History
 
 IPED - Digital Evidence Processor and Indexer (translated from Portuguese) is a tool implemented in java and originally and still developed by digital forensic experts from Brazilian Federal Police since 2012. Although it was always open source, only in 2019 its code was officially published.
