@@ -55,6 +55,10 @@ public class Bookmarks implements IBookmarks {
     public static String EXT = "." + Version.APP_EXT.toLowerCase(); //$NON-NLS-1$
     public static String STATEFILENAME = "bookmarks" + EXT; //$NON-NLS-1$
 
+    public static String PATH_SEPARATOR = "\uE000\u276F\uE001";  // '❯' for internal state
+    public static String PATH_SEPARATOR_DISPLAY = "\u200B\u276F\u200B"; // '❯' for display
+    public static String PATH_SEPARATOR_DISPLAY_FORMATTED = " " + PATH_SEPARATOR_DISPLAY + " ";
+
     static int bookmarkBits = Byte.SIZE;
 
     boolean[] selected;
@@ -284,6 +288,17 @@ public class Bookmarks implements IBookmarks {
         bookmarkColors.put(bookmarkId, null);
 
         return bookmarkId;
+    }
+
+    @Override
+    public synchronized int newBookmarkHierarchy(List<String> path) {
+        StringBuilder currentPath = new StringBuilder();
+        int lastId = -1;
+        for (int i = 0; i < path.size(); i++) {
+            currentPath.append(i == 0 ? "" : PATH_SEPARATOR).append(path.get(i));
+            lastId = newBookmark(currentPath.toString());
+        }
+        return lastId;
     }
 
     public synchronized void delBookmark(int bookmark) {
