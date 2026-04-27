@@ -272,7 +272,7 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j</artifactId>
-            <version>4.4.4</version>
+            <version>5.26.21</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
