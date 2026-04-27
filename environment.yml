@@ -1,0 +1,16 @@
+name: iped-face
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - opencv
+  - pillow
+  - openjdk=11
+  - maven
+  - pip
+  - pip:
+    - numpy           # use "numpy>=1.26,<2" if installing insightface (its C extensions require NumPy 1.x ABI)
+    - onnxruntime     # CPU-only; lightweight and sufficient for multi-process parallelism
+    # - insightface   # only needed for buffalo_l/buffalo_s modes (non-commercial license)

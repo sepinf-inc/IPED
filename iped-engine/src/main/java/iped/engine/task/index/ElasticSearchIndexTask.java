@@ -87,7 +87,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
 
-    public static final int FACE_SIZE = 128;
+    public static final int FACE_SIZE = 512;
 
     private static boolean isEnabled = false;
 
@@ -287,7 +287,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         // mapping faces as nested field
         var faces_mapping = new HashMap<String, Object>();
         faces_mapping.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method",
-                Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+                Map.of("name", "hnsw", "space_type", "cosinesimil", "engine", "nmslib")));
         faces_mapping.put("face_location", Collections.singletonMap("type", "short"));
         properties.put("faces", Map.of("type", "nested", "properties", faces_mapping));
 

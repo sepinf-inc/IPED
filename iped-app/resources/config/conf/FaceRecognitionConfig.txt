@@ -1,24 +1,45 @@
-# Face recognition feature based on Face Recognition Project (https://pypi.org/project/face-recognition/)
-# You must install python and some dependencies, see: See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
+# Face recognition feature
+# Dependencies must be installed in the Python used by the subprocess (see pythonPath below).
+# For 'auraface' (default — fully open-source, MIT + Apache 2.0):
+#   pip install numpy onnxruntime-gpu opencv-python pillow
+#   (onnxruntime-gpu includes CPU fallback; use plain 'onnxruntime' for CPU-only machines)
+# For 'buffalo_l'/'buffalo_s' (non-commercial InsightFace models):
+#   pip install "numpy>=1.26,<2" insightface onnxruntime pillow
+# See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 
-# Number of external face recognition processes. If not set, the number of CPU logical cores will be used.
-# You can set this if you have memory usage problems, e.g. if you are using a GPU with very few memory.
+# Number of external face recognition processes. Default is min(4, numThreads/2).
+# Each process loads the model (~300MB), so more processes = more memory.
+# GPU is auto-detected by onnxruntime; multiple processes still help with I/O overlap.
+# Set to 1 if GPU memory is limited.
 #numFaceRecognitionProcesses = 4
 
 # Max width or height used to resize images before face detection. This dramatically reduces
 # the time of face detection on high resolution images, although small faces are lost.
-# This could be increased, but processing time will take much longer.
 maxResolution = 1024
 
-# Face detection algorithm. Possible values: 'hog' or 'cnn'.
-# The last is more accurate, but is much more slower. It should be used just with a good GPU.
-faceDetectionModel = hog
+# Face recognition model. Auto-downloaded on first use.
+# Options:
+#   'auraface'  - RetinaFace-R50 detection (MIT) + AuraFace-v1 recognition (Apache 2.0) (~365MB) — default
+#   'buffalo_l' - InsightFace full pipeline (non-commercial license, ~300MB) — more accurate
+#   'buffalo_s' - InsightFace full pipeline (non-commercial license, smaller/faster)
+# 'auraface' is fully open-source (MIT + Apache 2.0), no insightface package needed.
+# 'buffalo_l'/'buffalo_s' require the insightface package (non-commercial license).
+insightFaceModel = auraface
 
-# Number of times the image will be upsampled before recognition. Default is 1x (doubles the image size).
-# This improves detection of small faces. But is limited by maxResolution setting.
-upSampling = 1
+# Detection input size. Larger values detect smaller faces but are slower.
+detSize = 640
 
-# Minimum size (in pixels) to apply face recognition to an image. 
-# Images with either dimension (height or width) smaller than this threshold are ignored by this task.   
+# Minimum detection confidence score (0.0 to 1.0). Faces below this threshold are discarded.
+minDetScore = 0.5
+
+# Minimum size (in pixels) to apply face recognition to an image.
+# Images with either dimension (height or width) smaller than this threshold are ignored by this task.
 minSize = 48
+
+# Optional: directory for InsightFace model files. Defaults to {iped.root}/models/insightface.
+#modelDir =
+
+# Optional: path to the Python executable. On Windows, defaults to the bundled {iped.root}/python/python.
+# Set this to use a custom Python environment (e.g. a conda env) with the required dependencies.
+#pythonPath =
