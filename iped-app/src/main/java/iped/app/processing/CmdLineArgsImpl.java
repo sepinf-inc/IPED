@@ -119,6 +119,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = noLinkedItemsOption, description = "do not export automatically to report items linked to chats")
     private boolean noLinkedItems = false;
 
+    public static final String pdfReportOption = "--pdfreport";
+    @Parameter(names = pdfReportOption, description = "export html report to PDF")
+    private boolean pdfReport = false;
+
     @Parameter(names = "--portable", description = "use relative references to forensic images, so case can be moved to other machines if the images are on the same volume")
     private boolean portable;
 
@@ -241,6 +245,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Override
     public boolean isNoLinkedItems() {
         return noLinkedItems;
+    }
+
+    @Override
+    public boolean isPdfReport() {
+        return pdfReport;
     }
 
     @Override
