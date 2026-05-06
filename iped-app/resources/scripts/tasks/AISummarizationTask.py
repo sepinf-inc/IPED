@@ -1,4 +1,5 @@
 import requests, time
+import urllib3
 #need to install requests lib: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py requests
 #also numpy for some reason: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py "numpy<2.0" 
 # git add iped-app/resources/scripts/tasks/AISummarizationTask.py
@@ -7,9 +8,12 @@ import requests, time
 import json
 from bs4 import BeautifulSoup, NavigableString, Tag
 import re
+import threading
 from datetime import datetime
 from typing import List, Any, Dict, Tuple, Optional
 from iped.exception import IPEDException
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # configuration properties
 enableProp = 'enableAISummarization'
@@ -37,6 +41,16 @@ requestTimeoutProp = 'requestTimeout'
 enableChatAnalysisProp = 'enableChatAnalysis'
 questionsProp = 'questions'
 questionAttributesProp = 'questionAttributes'
+
+# Statistics keys used to aggregate results across workers
+statsNumFinishesKey = 'ai_summarization_num_finishes'
+statsProcessedChatsKey = 'ai_summarization_processed_chats'
+statsProcessedCharsKey = 'ai_summarization_processed_chars'
+statsElapsedTimeKey = 'ai_summarization_elapsed_time'
+statsNextProgressLogKey = 'ai_summarization_next_progress_log'
+statsProgressLogInterval = 100
+
+statsLock = threading.Lock()
 
 
 
@@ -429,6 +443,11 @@ class AISummarizationTask:
         self.questions: List[str] = []
         self.questionAttributes: List[str] = []
 
+        # Per-worker statistics, aggregated across workers in finish().
+        self.processedChatsCount = 0
+        self.processedChatsChars = 0
+        self.processedChatsElapsedTime = 0.0
+
         return
 
     # Returns if this task is enabled or not. This could access options read by init() method.
@@ -531,6 +550,7 @@ class AISummarizationTask:
         if (item.getMetadata().get(ExtraProperties.COMMUNICATION_PREFIX + "isEmpty")  or "").lower() == "true":
             return
 
+        start_time = time.time()
         inputStream = item.getBufferedInputStream()
         try:
             raw_bytes = inputStream.readAllBytes()
@@ -651,6 +671,33 @@ class AISummarizationTask:
                     f"{full_attr_name} for {item.getName()}: {e}"
                 )
 
+        elapsed_time = time.time() - start_time
+        self.processedChatsCount += 1
+        self.processedChatsChars += total_len
+        self.processedChatsElapsedTime += elapsed_time
+        self._updateAndLogProgressStats(total_len, elapsed_time)
+
+    def _updateAndLogProgressStats(self, chat_chars: int, elapsed_time: float):
+        with statsLock:
+            total_processed_chats = caseData.getCaseObject(statsProcessedChatsKey) or 0
+            total_processed_chars = caseData.getCaseObject(statsProcessedCharsKey) or 0
+            total_elapsed_time = caseData.getCaseObject(statsElapsedTimeKey) or 0.0
+            next_progress_log = caseData.getCaseObject(statsNextProgressLogKey) or statsProgressLogInterval
+
+            total_processed_chats += 1
+            total_processed_chars += chat_chars
+            total_elapsed_time += elapsed_time
+
+            caseData.putCaseObject(statsProcessedChatsKey, total_processed_chats)
+            caseData.putCaseObject(statsProcessedCharsKey, total_processed_chars)
+            caseData.putCaseObject(statsElapsedTimeKey, total_elapsed_time)
+
+            if total_processed_chats >= next_progress_log:
+                logger.info('AISummarizationTask: Progress - chats processed: ' + str(total_processed_chats))
+                logger.info('AISummarizationTask: Progress - average chat characters processed: ' + str(round(total_processed_chars / total_processed_chats, 3)))
+                logger.info('AISummarizationTask: Progress - average processing time per chat (s): ' + str(round(total_elapsed_time / total_processed_chats, 3)))
+                caseData.putCaseObject(statsNextProgressLogKey, next_progress_log + statsProgressLogInterval)
+
     
     # Process an Item object. This method is executed on all case items.
     # It can access any method of Item class and store results as a new extra attribute.
@@ -673,5 +720,21 @@ class AISummarizationTask:
     # Called when task processing is finished. Can be used to cleanup resources.
     # Objects "ipedCase" and "searcher" are provided, so case can be queried for items and bookmarks can be created.
     def finish(self):
+        with statsLock:
+            num_finishes = caseData.getCaseObject(statsNumFinishesKey)
+            if num_finishes is None:
+                num_finishes = 0
+            num_finishes += 1
+            caseData.putCaseObject(statsNumFinishesKey, num_finishes)
+
+            total_processed_chats = caseData.getCaseObject(statsProcessedChatsKey) or 0
+            total_processed_chars = caseData.getCaseObject(statsProcessedCharsKey) or 0
+            total_elapsed_time = caseData.getCaseObject(statsElapsedTimeKey) or 0.0
+
+            if num_finishes == numThreads and total_processed_chats > 0:
+                logger.info('AISummarizationTask: Chats processed: ' + str(total_processed_chats))
+                logger.info('AISummarizationTask: Total chat characters processed: ' + str(total_processed_chars))
+                logger.info('AISummarizationTask: Average chat characters processed: ' + str(round(total_processed_chars / total_processed_chats, 3)))
+                logger.info('AISummarizationTask: Average processing time per chat (s): ' + str(round(total_elapsed_time / total_processed_chats, 3)))
         return
         
