@@ -32,8 +32,10 @@ import iped.app.ui.viewers.AttachmentSearcherImpl;
 import iped.app.ui.viewers.HexSearcherImpl;
 import iped.app.ui.viewers.TextViewer;
 import iped.engine.config.AgeEstimationConfig;
+import iped.engine.config.AIFiltersConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FaceRecognitionConfig;
+import iped.engine.data.SimpleFilterNode;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
 import iped.io.URLUtil;
@@ -56,6 +58,7 @@ import iped.viewers.SummaryViewer;
 import iped.viewers.ReferencedFileViewer;
 import iped.viewers.TiffViewer;
 import iped.viewers.api.AbstractViewer;
+import iped.viewers.api.MessageNavigator;
 import iped.viewers.components.HitsTable;
 import iped.viewers.util.LibreOfficeFinder;
 
@@ -101,7 +104,15 @@ public class ViewerController {
                 return IndexItem.isNumeric(field);
             }
         });
-        viewers.add(new SummaryViewer());
+        SummaryViewer summaryViewer = new SummaryViewer();
+        summaryViewer.setMessageNavigator(new MessageNavigator() {
+            @Override
+            public void navigateToMessage(String messageId) {
+                ViewerController.this.navigateToMessage(messageId);
+            }
+        });
+        summaryViewer.setAnalysisLevels(loadAnalysisLevels());
+        viewers.add(summaryViewer);
         viewers.add(viewersRepository = new MultiViewer());
 
         // These are content-specific viewers (inside a single ViewersRepository)
@@ -186,6 +197,86 @@ public class ViewerController {
 
     public HtmlLinkViewer getHtmlLinkViewer() {
         return linkViewer;
+    }
+
+    private void navigateToMessage(String messageId) {
+        if (messageId == null || messageId.isBlank() || file == null || contentType == null) {
+            return;
+        }
+        SwingUtilities.invokeLater(() -> {
+            linkViewer.setElementIDToScroll(messageId);
+            viewersRepository.loadFile(file, contentType, highlightTerms);
+            changeToViewer(viewersRepository);
+        });
+    }
+
+    private List<SummaryViewer.AnalysisLevel> loadAnalysisLevels() {
+        Map<String, Integer> thresholds = new HashMap<>();
+        ConfigurationManager configManager = ConfigurationManager.get();
+        AIFiltersConfig config = configManager == null ? null : configManager.findObject(AIFiltersConfig.class);
+        if (config != null) {
+            SimpleFilterNode analysisNode = findAnalysisNode(config.getRootAIFilter());
+            if (analysisNode != null) {
+                for (SimpleFilterNode child : analysisNode.getChildren()) {
+                    Integer minimumScore = parseMinimumScore(child.getValue());
+                    if (minimumScore != null) {
+                        thresholds.put(child.getFullName(), minimumScore);
+                    }
+                }
+            }
+        }
+        thresholds.putIfAbsent("Analysis.Very High", 800);
+        thresholds.putIfAbsent("Analysis.High", 600);
+        thresholds.putIfAbsent("Analysis.Medium", 300);
+        thresholds.putIfAbsent("Analysis.Low", 150);
+        thresholds.putIfAbsent("Analysis.Very Low", Integer.MIN_VALUE);
+
+        List<SummaryViewer.AnalysisLevel> levels = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : thresholds.entrySet()) {
+            levels.add(new SummaryViewer.AnalysisLevel(entry.getValue(), entry.getKey()));
+        }
+        levels.sort((a, b) -> Integer.compare(b.getMinimumScore(), a.getMinimumScore()));
+        return levels;
+    }
+
+    private SimpleFilterNode findAnalysisNode(SimpleFilterNode node) {
+        if (node == null) {
+            return null;
+        }
+        if ("Analysis.Analyzed Chats".equals(node.getFullName())) {
+            return node;
+        }
+        for (SimpleFilterNode child : node.getChildren()) {
+            SimpleFilterNode found = findAnalysisNode(child);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private Integer parseMinimumScore(String range) {
+        if (range == null) {
+            return null;
+        }
+        String trimmedRange = range.trim();
+        if (!trimmedRange.startsWith("[") || !trimmedRange.endsWith("]")) {
+            return null;
+        }
+        String body = trimmedRange.substring(1, trimmedRange.length() - 1).trim();
+        int separator = body.indexOf(" TO ");
+        if (separator < 0) {
+            return null;
+        }
+        String lowerBound = body.substring(0, separator).trim();
+        if ("*".equals(lowerBound)) {
+            return Integer.MIN_VALUE;
+        }
+        try {
+            return Integer.valueOf(lowerBound);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public void dispose() {
