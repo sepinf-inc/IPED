@@ -17,11 +17,22 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # configuration properties
 enableProp = 'enableAISummarization'
-enableInternalSummarizationProp = 'enableInternalChatSummarization' # This is for IPED internal chats parsers (WhatsApp, Telegram etc.)
-enableExternalSummarizationProp = 'enableExternalChatSummarization' # This is for external (UFED) chat parsers - x-ufed-chat-preview
+parsersToUseProp = 'parsersToUse'
 minimumContentLengthProp = 'minimumContentLength' # Minimum item content length 
 remoteServiceAddressProp = 'remoteServiceAddress'
 configFile = 'AISummarizationConfig.txt'
+
+INTERNAL_CHAT_MIMES = {
+    "application/x-whatsapp-chat",
+    "application/x-telegram-chat",
+    "application/x-threema-chat",
+}
+EXTERNAL_CHAT_MIME_PREFIX = "application/x-ufed-chat-preview"
+UFED_INTERNAL_EQUIVALENT_CHAT_MIMES = {
+    "application/x-ufed-chat-preview-whatsapp",
+    "application/x-ufed-chat-preview-telegram",
+    "application/x-ufed-chat-preview-threema",
+}
 
 # Remote service communication parameters
 BUSY_SLEEP_TIME = 10.0
@@ -427,8 +438,7 @@ class AISummarizationTask:
     def __init__(self):
         self.enabled = False
         self.remoteServiceAddress = None
-        self.enableInternalSummarizationProp = False
-        self.enableExternalSummarizationProp = False
+        self.parsersToUse = "internal"
         self.minimumContentLength = 0
 
         # Remote service communication parameters (defaults can be overridden by props)
@@ -474,8 +484,14 @@ class AISummarizationTask:
             self.worker.exception = IPEDException(f"[AISummarizationTask]: Error: Task enabled but remoteServiceAddress not set on config file.")
             raise Exception(f"[AISummarizationTask]: Error: Task enabled but remoteServiceAddress not set on config file.")
 
-        self.enableInternalSummarization = (extraProps.getProperty(enableInternalSummarizationProp) or "").lower() == "true"
-        self.enableExternalSummarization = (extraProps.getProperty(enableExternalSummarizationProp) or "").lower() == "true"
+        rawParsersToUse = (extraProps.getProperty(parsersToUseProp) or "internal").strip().lower()
+        if rawParsersToUse not in ("internal", "external"):
+            logger.warn(
+                f"[AISummarizationTask]: Warning - Invalid '{parsersToUseProp}' value "
+                f"'{rawParsersToUse}', using 'internal'."
+            )
+            rawParsersToUse = "internal"
+        self.parsersToUse = rawParsersToUse
 
         self.minimumContentLength = int(extraProps.getProperty(minimumContentLengthProp) or 0)
 
@@ -705,14 +721,20 @@ class AISummarizationTask:
         if not self.enabled:
             return
 
-        # Process chats parsed by internal IPED parsers
-        mimes = {"application/x-whatsapp-chat", "application/x-telegram-chat", "application/x-threema-chat"}
-        if self.enableInternalSummarization and item.getMediaType().toString() in mimes:
-            self.processChat(item)
+        mediaType = item.getMediaType().toString()
+
+        # "internal" uses IPED-native chat parsers and only UFED previews that do not
+        # have an equivalent internal parser, avoiding duplicate summarization.
+        if self.parsersToUse == "internal":
+            if mediaType in INTERNAL_CHAT_MIMES:
+                self.processChat(item)
+                return
+            if mediaType.startswith(EXTERNAL_CHAT_MIME_PREFIX) and mediaType not in UFED_INTERNAL_EQUIVALENT_CHAT_MIMES:
+                self.processChat(item)
             return
 
-        # Process external (UFED) chats 
-        if self.enableExternalSummarization and "x-ufed-chat-preview" in item.getMediaType().toString():
+        # "external" uses only UFED chat previews.
+        if mediaType.startswith(EXTERNAL_CHAT_MIME_PREFIX):
             self.processChat(item)
             return
 

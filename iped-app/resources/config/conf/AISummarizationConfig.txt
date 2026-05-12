@@ -12,11 +12,11 @@ maxAttemptsNonBusyRetries = 10
 connectionTimeout = 5
 requestTimeout = 7200
 
-# Enables automatic summarization of internally parsed chats (WhatsApp, Telegram etc.) using AI models.
-enableInternalChatSummarization = true
-
-# Enables automatic summarization of externally parsed chats (UFED) using AI models.
-enableExternalChatSummarization = true
+# Select which chat parsers should feed summarization.
+# internal: use IPED internal chat MIME types (currently WhatsApp, Telegram and Threema)
+#           and only UFED chat previews without an equivalent internal parser.
+# external: use only UFED chat previews.
+parsersToUse = internal
 
 # Minimum item content length to perform summarization in characters
 minimumContentLength = 1000
