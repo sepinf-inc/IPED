@@ -1,6 +1,11 @@
 package iped.viewers;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -251,9 +256,7 @@ public class SummaryViewer extends HtmlViewer {
 
     @Override
     public void loadFile(final IStreamSource content, String contentType, final Set<String> terms) {
-        // Reuse HtmlViewer's highlighter: set highlightTerms and load HTML directly in the WebEngine.
         this.highlightTerms = terms;
-        this.tmpFile = null; // ensure the "location endsWith(tmpFile)" early-return never triggers
 
         javafx.application.Platform.runLater(() -> {
             if (!(content instanceof IItemReader) || !hasSummary(content)) {
@@ -371,7 +374,20 @@ public class SummaryViewer extends HtmlViewer {
             html.append("</body></html>");
 
             webEngine.setJavaScriptEnabled(true);
-            webEngine.loadContent(html.toString());
+            webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
+            try {
+                if (tmpFile == null) {
+                    tmpFile = File.createTempFile("summary", ".html");
+                    tmpFile.deleteOnExit();
+                }
+                // Load from a UTF-8 temp file instead of loadContent(...) because some
+                // supplementary Unicode characters were rendered incorrectly in WebView.
+                Files.write(tmpFile.toPath(), html.toString().getBytes(StandardCharsets.UTF_8),
+                        StandardOpenOption.TRUNCATE_EXISTING);
+                webEngine.load(tmpFile.toURI().toURL().toString());
+            } catch (IOException e) {
+                webEngine.loadContent(html.toString());
+            }
         });
     }
 }
