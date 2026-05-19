@@ -278,3 +278,8 @@ A árvore de releases está em `ReleaseNotes.txt` (180 KB) — referência detal
 | **CSAM** | Child Sexual Abuse Material. |
 | **DIE** | "Detector of Indecent Exposure" — RandomForest local de nudez. |
 | **NER** | Named Entity Recognition (Stanford CoreNLP). |
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
