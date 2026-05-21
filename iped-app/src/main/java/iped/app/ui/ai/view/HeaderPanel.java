@@ -12,50 +12,52 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /**
- * Painel modularizado para o cabeçalho da aplicação.
- * Encapsula o título, botão de controle da sidebar e rótulo de status do backend.
+ * Modular panel for the application header.
+ * Encapsulates the title, sidebar toggle button, and backend status label.
  */
 public class HeaderPanel extends JPanel {
 
     private final JLabel statusLabel;
 
     public HeaderPanel(String titleText, ActionListener toggleSidebarListener) {
-        // Inicializa o JPanel base com BorderLayout
+        
+        // Initialize the base JPanel with BorderLayout
         super(new BorderLayout());
 
-        // Botão de alternância da barra lateral (Sidebar)
+        // Sidebar toggle button
         JButton toggleSidebarBtn = new JButton("☰");
         toggleSidebarBtn.setMargin(new Insets(2, 6, 2, 6));
         toggleSidebarBtn.setFocusPainted(false);
         toggleSidebarBtn.setToolTipText("Toggle Sidebar");
-        // Executa a ação injetada pela classe principal
+        
+        // Execute the action injected by the main class
         toggleSidebarBtn.addActionListener(toggleSidebarListener);
 
-        // Rótulo do título
+        // Title label
         JLabel titleLabel = new JLabel(titleText);
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
 
-        // Área do título (Botão + Texto)
+        // Title area (button + text)
         JPanel titleArea = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         titleArea.add(toggleSidebarBtn);
         titleArea.add(titleLabel);
 
-        // Inicialização do rótulo de status
+        // Initialize status label
         statusLabel = new JLabel("● Connected to local backend server");
-        statusLabel.setForeground(new Color(0, 150, 0)); // Verde para ativo
+        statusLabel.setForeground(new Color(0, 150, 0)); // Green for active
 
-        // Agrupamento do título e status no lado esquerdo
+        // Group title and status on the left side
         JPanel leftPanel = new JPanel(new BorderLayout(0, 5));
         leftPanel.add(titleArea, BorderLayout.NORTH);
         leftPanel.add(statusLabel, BorderLayout.SOUTH);
 
-        // Adiciona os componentes ao painel principal (this)
+        // Add components to the main panel (this)
         add(leftPanel, BorderLayout.WEST);
         setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
     }
 
     /**
-     * Permite que controladores externos atualizem o estado visual do status do backend.
+     * Allows external controllers to update the backend status visual state.
      */
     public void updateStatus(String text, Color color) {
         statusLabel.setText(text);
