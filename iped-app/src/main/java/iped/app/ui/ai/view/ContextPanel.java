@@ -23,13 +23,12 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
-import iped.app.ui.ai.context.AIContextManager;
 import iped.app.ui.ai.model.ContextFileEntry;
 import iped.data.IItem;
 
 /**
- * Encapsulated component responsible for displaying and managing the interface
- * for files added to the AI context. Applies SRP and reacts directly to the AIContextManager.
+ * Encapsulated component responsible for displaying the interface for files added to the AI context.
+ * Applies SRP and acts strictly as a Passive View, delegating all state changes to the ContextListener.
  */
 public class ContextPanel extends JPanel {
 
@@ -43,7 +42,16 @@ public class ContextPanel extends JPanel {
     private JButton clearContextButton;
     private TitledBorder contextBorder;
 
-    private final AIContextManager contextManager;
+    private final ContextListener listener;
+
+    /**
+     * Contract for the ContextPanel's event listener, allowing external components (e.g., Controller)
+     * to intercept user interactions such as clearing the context or removing an individual file.
+     */
+    public interface ContextListener {
+        void onClearContextRequested();
+        void onRemoveFileRequested(IItem item);
+    }
 
     /**
      * Internal utility class responsible for rendering the capacity overflow line.
@@ -61,13 +69,15 @@ public class ContextPanel extends JPanel {
         }
     }
 
-    public ContextPanel(AIContextManager contextManager) {
-        this.contextManager = contextManager;
+    /**
+     * Constructs the ContextPanel as a passive UI component.
+     * @param listener The external controller listening to UI interaction events.
+     */
+    public ContextPanel(ContextListener listener) {
+        this.listener = listener;
         
         configureLayout();
         initComponents();
-        setupContextListener();
-        refreshContextUI();
     }
 
     private void configureLayout() {
@@ -101,7 +111,11 @@ public class ContextPanel extends JPanel {
         clearContextButton = new JButton("Clear");
         clearContextButton.setMargin(new Insets(0, 5, 0, 5));
         clearContextButton.setEnabled(false);
-        clearContextButton.addActionListener(e -> contextManager.clearContext());
+        clearContextButton.addActionListener(e -> {
+            if (listener != null) {
+                listener.onClearContextRequested();
+            }
+        });
 
         JPanel actionPanel = new JPanel(new BorderLayout());
         actionPanel.add(clearContextButton, BorderLayout.NORTH);
@@ -182,33 +196,37 @@ public class ContextPanel extends JPanel {
 
                 if (e.getX() < cellBounds.x + cellBounds.width - CONTEXT_REMOVE_HOTZONE_PX) return;
 
-                contextManager.removeContextFile(((ContextFileEntry) value).getItem());
+                if (listener != null) {
+                    listener.onRemoveFileRequested(((ContextFileEntry) value).getItem());
+                }
             }
         });
     }
 
-    private void setupContextListener() {
-        // The panel itself listens to its own state to redraw the list when the state changes
-        contextManager.addContextChangeListener(event -> refreshContextUI());
-    }
-
     /**
-     * Synchronizes the file UI with the actual domain state.
+     * Synchronizes the file UI components with the state data supplied by the controller.
+     * @param entries The reactive UI list entries representing current domain facts.
      */
-    public void refreshContextUI() {
-        List<ContextFileEntry> entries = contextManager.getContextEntriesForUI();
-        List<IItem> validFiles = contextManager.getContextFiles();
-        int invalidCount = entries.size() - validFiles.size();
+    public void updateContextData(List<ContextFileEntry> entries) {
         contextListModel.clear();
 
-        if (entries.isEmpty()) {
+        if (entries == null || entries.isEmpty()) {
             contextEmptyLabel.setVisible(true);
             contextList.setVisible(false);
             clearContextButton.setEnabled(false);
+            contextBorder.setTitle("Added Context (0 files)");
         } else {
             contextEmptyLabel.setVisible(false);
             contextList.setVisible(true);
             clearContextButton.setEnabled(true);
+
+            int validCount = 0;
+            for (ContextFileEntry entry : entries) {
+                if (entry.isValidForContext()) {
+                    validCount++;
+                }
+            }
+            int invalidCount = entries.size() - validCount;
 
             int visibleCount = Math.min(CONTEXT_VISIBLE_ITEMS, entries.size());
             for (int i = 0; i < visibleCount; i++) {
@@ -217,15 +235,15 @@ public class ContextPanel extends JPanel {
 
             if (entries.size() > CONTEXT_VISIBLE_ITEMS) {
                 int hiddenCount = entries.size() - CONTEXT_VISIBLE_ITEMS;
-                String summaryText = "+ " + hiddenCount + " more items (" + validFiles.size() + " valid, " + invalidCount + " rejected)";
+                String summaryText = "+ " + hiddenCount + " more items (" + validCount + " valid, " + invalidCount + " rejected)";
                 contextListModel.addElement(new ContextSummaryRow(summaryText));
             }
-        }
 
-        if (invalidCount > 0) {
-            contextBorder.setTitle("Added Context (" + validFiles.size() + " valid, " + invalidCount + " rejected)");
-        } else {
-            contextBorder.setTitle("Added Context (" + validFiles.size() + " valid)");
+            if (invalidCount > 0) {
+                contextBorder.setTitle("Added Context (" + validCount + " valid, " + invalidCount + " rejected)");
+            } else {
+                contextBorder.setTitle("Added Context (" + validCount + " valid)");
+            }
         }
 
         repaint();

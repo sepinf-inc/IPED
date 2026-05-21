@@ -21,11 +21,10 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
 import iped.app.ui.ai.model.Conversation;
-import iped.app.ui.ai.context.ConversationManager;
-import iped.app.ui.ai.util.ConversationPersistence;
 
 /**
- * Sidebar component posponsable for displaying the list of conversations and allowing users to create, select, or delete conversations.
+ * Sidebar component responsible for displaying the list of conversations and allowing users to create, select, or delete conversations.
+ * Refactored to act strictly as a Passive View (MVP Pattern), delegating logic to the injected listener.
  */
 public class SidebarPanel extends JPanel {
 
@@ -36,26 +35,23 @@ public class SidebarPanel extends JPanel {
     private final Component parentFrame;
     private final SidebarListener listener;
 
-    private final ConversationManager conversationManager;
-
     /**
-     * Contract for the SidebarPanel's event listener, allowing external components to react to user interactions
+     * Contract for the SidebarPanel's event listener, allowing external components (e.g., Controller) 
+     * to react to user interactions without coupling the view to business logic or persistence.
      */
     public interface SidebarListener {
         void onConversationSelected(Conversation conversation);
         void onNewChatRequested();
-        void onConversationDeleted(Conversation conversation, boolean isActiveDeleted);
+        void onDeleteRequested(Conversation conversation);
     }
 
     /**
      * Constructs the SidebarPanel with necessary dependencies and initializes the UI components.
-     * 
      * @param parentFrame Parent component used for dialog positioning.
      * @param listener    External listener to handle sidebar events (selection, creation, deletion).
      */
-    public SidebarPanel(Component parentFrame, SidebarListener listener, ConversationManager conversationManager) {
+    public SidebarPanel(Component parentFrame, SidebarListener listener) {
         this.parentFrame = parentFrame;
-        this.conversationManager = conversationManager; // dependency injection via constructor
         this.listener = listener;
         
         configurePanelLayout();
@@ -137,11 +133,8 @@ public class SidebarPanel extends JPanel {
                     return;
                 }
                 
-                Conversation active = conversationManager.getActiveConversation();
-                if (selected != null && (active == null || !active.getId().equals(selected.getId()))) {
-                    if (listener != null) {
-                        listener.onConversationSelected(selected);
-                    }
+                if (selected != null && listener != null) {
+                    listener.onConversationSelected(selected);
                 }
             }
         });
@@ -156,12 +149,15 @@ public class SidebarPanel extends JPanel {
     }
 
     /**
-     *  Sincronized method to refresh the conversation list UI based on the current state of ConversationManager.
+     * Updates the conversation list UI based on the provided list of conversations.
+     * @param conversations List of Conversation objects to display in the sidebar.
      */
-    public void refreshSidebarList() {
+    public void updateConversationsList(List<Conversation> conversations) {
         conversationListModel.clear();
-        for (Conversation conv : conversationManager.getConversations()) {
-            conversationListModel.addElement(conv);
+        if (conversations != null) {
+            for (Conversation conv : conversations) {
+                conversationListModel.addElement(conv);
+            }
         }
         conversationList.repaint();
     }
@@ -177,30 +173,8 @@ public class SidebarPanel extends JPanel {
             JOptionPane.YES_NO_OPTION,
             JOptionPane.WARNING_MESSAGE);
             
-        if (confirm == JOptionPane.YES_OPTION) {
-            // Removes logically and physically
-            ConversationPersistence.deleteConversation(conv.getId());
-            conversationManager.removeConversation(conv);
-            
-            Conversation active = conversationManager.getActiveConversation();
-            boolean isActiveDeleted = (active == null || active.getId().equals(conv.getId()));
-            
-            // Repositions the conversation pointer if the active conversation has been deleted
-            if (isActiveDeleted) {
-                List<Conversation> remaining = ConversationManager.getInstance().getConversations();
-                if (!remaining.isEmpty()) {
-                    conversationManager.setActiveConversation(remaining.get(0));
-                } else {
-                    conversationManager.setActiveConversation(null);
-                }
-            }
-            
-            // Notifies the external listener of side updates (e.g., clear screen)
-            if (listener != null) {
-                listener.onConversationDeleted(conv, isActiveDeleted);
-            }
-            
-            refreshSidebarList();
+        if (confirm == JOptionPane.YES_OPTION && listener != null) {
+            listener.onDeleteRequested(conv);
         }
     }
 }
