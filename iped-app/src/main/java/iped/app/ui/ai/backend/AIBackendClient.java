@@ -16,8 +16,6 @@ import java.time.Duration;
 import java.util.function.Consumer;
 import java.util.List;
 import java.util.ArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Concrete implementation of {@link AIBackendService} responsible for handling
