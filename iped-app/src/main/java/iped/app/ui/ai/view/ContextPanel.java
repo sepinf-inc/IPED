@@ -21,7 +21,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
-import javax.swing.border.TitledBorder;
 
 import iped.app.ui.ai.model.ContextFileEntry;
 import iped.data.IItem;
@@ -38,9 +37,9 @@ public class ContextPanel extends JPanel {
 
     private JList<Object> contextList;
     private DefaultListModel<Object> contextListModel;
+    private JLabel contextTitleLabel;
     private JLabel contextEmptyLabel;
     private JButton clearContextButton;
-    private TitledBorder contextBorder;
 
     private final ContextListener listener;
     private boolean isLocked = false;
@@ -83,8 +82,12 @@ public class ContextPanel extends JPanel {
 
     private void configureLayout() {
         setLayout(new BorderLayout(5, 5));
-        contextBorder = BorderFactory.createTitledBorder("Added Context (0 files)");
-        setBorder(contextBorder);
+        setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), ""),
+            BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+        contextTitleLabel = new JLabel("Added Context (0 files)");
+        contextTitleLabel.setFont(contextTitleLabel.getFont().deriveFont(Font.BOLD));
+        add(contextTitleLabel, BorderLayout.NORTH);
     }
 
     private void initComponents() {
@@ -133,13 +136,11 @@ public class ContextPanel extends JPanel {
         this.isLocked = locked;
         clearContextButton.setEnabled(!locked && contextListModel.getSize() > 0);
         
-        String currentTitle = contextBorder.getTitle();
+        String currentTitle = contextTitleLabel.getText();
         if (currentTitle != null) {
-            if (locked && !currentTitle.endsWith("[LOCKED]")) {
-                contextBorder.setTitle(currentTitle + " [LOCKED]");
-            } else if (!locked && currentTitle.endsWith(" [LOCKED]")) {
-                contextBorder.setTitle(currentTitle.replace(" [LOCKED]", ""));
-            }
+            String baseTitle = currentTitle.replace(" [LOCKED]", "");
+            String lockText = locked ? " [LOCKED]" : "";
+            contextTitleLabel.setText(baseTitle + lockText);
         }
         
         contextList.repaint();
@@ -240,7 +241,7 @@ public class ContextPanel extends JPanel {
             contextEmptyLabel.setVisible(true);
             contextList.setVisible(false);
             clearContextButton.setEnabled(false);
-            contextBorder.setTitle("Added Context (0 files)");
+            contextTitleLabel.setText("Added Context (0 files)");
         } else {
             contextEmptyLabel.setVisible(false);
             contextList.setVisible(true);
@@ -268,9 +269,9 @@ public class ContextPanel extends JPanel {
 
             String lockText = isLocked ? " [LOCKED]" : "";
             if (invalidCount > 0) {
-                contextBorder.setTitle("Added Context (" + validCount + " valid, " + invalidCount + " rejected)" + lockText);
+                contextTitleLabel.setText("Added Context (" + validCount + " valid, " + invalidCount + " rejected)" + lockText);
             } else {
-                contextBorder.setTitle("Added Context (" + validCount + " valid)" + lockText);
+                contextTitleLabel.setText("Added Context (" + validCount + " valid)" + lockText);
             }
         }
 

@@ -13,8 +13,10 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import iped.app.ui.App;
@@ -479,7 +481,16 @@ public class AIAssistantController {
     private JPanel createTasksPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder("Quick Actions"));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), ""),
+            BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+
+        JLabel titleLabel = new JLabel("Quick Actions");
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(java.awt.Font.BOLD));
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(6));
 
         Map<String, String> taskPrompts = new java.util.HashMap<>();
         taskPrompts.put("Summarize", "Resuma o arquivo fornecido.");
