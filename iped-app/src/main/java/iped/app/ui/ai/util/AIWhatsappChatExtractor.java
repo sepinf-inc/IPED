@@ -18,6 +18,8 @@ import iped.parsers.whatsapp.WhatsAppParser;
  */
 public class AIWhatsappChatExtractor {
 
+    private final String whatsAppChatContentType = WhatsAppParser.WHATSAPP_CHAT.toString();
+
     /**
      * <p>
     * Basic validation to check whether the item is a WhatsApp chat by content type.
@@ -31,7 +33,6 @@ public class AIWhatsappChatExtractor {
             return false;
         }
 
-        String whatsAppChatContentType = WhatsAppParser.WHATSAPP_CHAT.toString();
         if (item.getMediaType() != null && whatsAppChatContentType.equals(item.getMediaType().toString())) {
             return true;
         }
@@ -44,7 +45,7 @@ public class AIWhatsappChatExtractor {
      * Extracts the raw file content from the IItem into a UTF-8 encoded String.
      * @param item The IPED evidence item containing the chat log.
      * @return The complete, raw HTML string.
-     * @throws IllegalArgumentException if the item fails basic HTML validation.
+     * @throws IllegalArgumentException if the item is null.
      * @throws IllegalStateException if the underlying file stream cannot be opened.
      * @throws Exception if reading the stream fails due to an I/O error.
      */
@@ -68,8 +69,6 @@ public class AIWhatsappChatExtractor {
                 buffer.write(data, 0, nRead);
             }
 
-            // WhatsApp HTML exports heavily utilize emojis and international characters.
-            // Forcing UTF-8 is strictly required here.
             return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
         }
     }
