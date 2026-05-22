@@ -43,6 +43,7 @@ public class ContextPanel extends JPanel {
     private TitledBorder contextBorder;
 
     private final ContextListener listener;
+    private boolean isLocked = false;
 
     /**
      * Contract for the ContextPanel's event listener, allowing external components (e.g., Controller)
@@ -112,7 +113,7 @@ public class ContextPanel extends JPanel {
         clearContextButton.setMargin(new Insets(0, 5, 0, 5));
         clearContextButton.setEnabled(false);
         clearContextButton.addActionListener(e -> {
-            if (listener != null) {
+            if (!isLocked && listener != null) {
                 listener.onClearContextRequested();
             }
         });
@@ -122,6 +123,27 @@ public class ContextPanel extends JPanel {
 
         add(listContainer, BorderLayout.CENTER);
         add(actionPanel, BorderLayout.EAST);
+    }
+
+    /**
+     * Blocks or unblocks the context modification actions based on the conversation state.
+     * When locked, the user cannot add or remove files from the context, and the UI reflects this state visually.
+     */
+    public void setLocked(boolean locked) {
+        this.isLocked = locked;
+        clearContextButton.setEnabled(!locked && contextListModel.getSize() > 0);
+        
+        String currentTitle = contextBorder.getTitle();
+        if (currentTitle != null) {
+            if (locked && !currentTitle.endsWith("[LOCKED]")) {
+                contextBorder.setTitle(currentTitle + " [LOCKED]");
+            } else if (!locked && currentTitle.endsWith(" [LOCKED]")) {
+                contextBorder.setTitle(currentTitle.replace(" [LOCKED]", ""));
+            }
+        }
+        
+        contextList.repaint();
+        repaint();
     }
 
     private void setupCellRenderer() {
@@ -159,7 +181,8 @@ public class ContextPanel extends JPanel {
         textLabel.setFont(list.getFont());
         textLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
 
-        JLabel removeLabel = new JLabel("X");
+        // Removes "X" if the panel is locked
+        JLabel removeLabel = new JLabel(isLocked ? "" : "X");
         removeLabel.setOpaque(false);
         removeLabel.setFont(list.getFont().deriveFont(Font.BOLD));
         removeLabel.setForeground(new Color(160, 0, 0));
@@ -183,6 +206,9 @@ public class ContextPanel extends JPanel {
         contextList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Ignores clicks when the panel is locked
+                if (isLocked) return;
+
                 if (e.getButton() != MouseEvent.BUTTON1) return;
 
                 int index = contextList.locationToIndex(e.getPoint());
@@ -218,7 +244,8 @@ public class ContextPanel extends JPanel {
         } else {
             contextEmptyLabel.setVisible(false);
             contextList.setVisible(true);
-            clearContextButton.setEnabled(true);
+            // deactivate clear button if locked
+            clearContextButton.setEnabled(!isLocked);
 
             int validCount = 0;
             for (ContextFileEntry entry : entries) {
@@ -239,10 +266,11 @@ public class ContextPanel extends JPanel {
                 contextListModel.addElement(new ContextSummaryRow(summaryText));
             }
 
+            String lockText = isLocked ? " [LOCKED]" : "";
             if (invalidCount > 0) {
-                contextBorder.setTitle("Added Context (" + validCount + " valid, " + invalidCount + " rejected)");
+                contextBorder.setTitle("Added Context (" + validCount + " valid, " + invalidCount + " rejected)" + lockText);
             } else {
-                contextBorder.setTitle("Added Context (" + validCount + " valid)");
+                contextBorder.setTitle("Added Context (" + validCount + " valid)" + lockText);
             }
         }
 

@@ -393,13 +393,25 @@ public class AIAssistantController {
         if (chatAreaView != null) {
             List<AIChatMessage> renderableMessages = new ArrayList<>();
             Conversation activeConv = conversationManager.getActiveConversation();
+            
+            boolean hasMessages = false;
+            
             if (activeConv != null) {
                 renderableMessages.addAll(activeConv.getMessages());
+                hasMessages = activeConv.hasAssistantReply();
             }
+            
             if (chatAreaView.getCurrentDraftMessage() != null) {
                 renderableMessages.add(chatAreaView.getCurrentDraftMessage());
+                hasMessages = true; // if there's a draft we already lock
             }
+            
             chatAreaView.renderHistoricalMessages(renderableMessages);
+            
+            // Bussines rule: blocks context editing if assistant has replied or there's a draft
+            if (contextView != null) {
+                contextView.setLocked(hasMessages);
+            }
         }
     }
 
