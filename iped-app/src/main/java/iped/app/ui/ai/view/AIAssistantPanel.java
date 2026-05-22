@@ -6,8 +6,12 @@ import java.awt.Cursor;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.awt.event.KeyAdapter;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseMotionAdapter;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -79,6 +83,31 @@ public class AIAssistantPanel {
         frame = new JFrame(title);
         frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
         frame.setResizable(true);
+
+        // --- BEGIN GLOBAL BLOCKING WITH A "HOLE" (GLASS PANE) ---
+        JPanel glassPane = new JPanel() {
+            @Override
+            public boolean contains(int x, int y) {
+                // If HeaderPanel exists, check whether the click lands in its area
+                if (headerPanel != null && headerPanel.isVisible()) {
+                    // Convert glass pane coordinates to HeaderPanel coordinates
+                    Point p = SwingUtilities.convertPoint(this, x, y, headerPanel);
+                    // If HeaderPanel contains this point, return false (click passes through)
+                    if (headerPanel.contains(p)) {
+                        return false; 
+                    }
+                }
+                // For the rest of the screen, the glass pane is solid and blocks clicks
+                return super.contains(x, y);
+            }
+        };
+        glassPane.setOpaque(false); 
+        glassPane.addMouseListener(new MouseAdapter() {}); 
+        glassPane.addMouseMotionListener(new MouseMotionAdapter() {}); 
+        glassPane.addKeyListener(new KeyAdapter() {}); 
+        glassPane.setFocusTraversalKeysEnabled(false); 
+        frame.setGlassPane(glassPane);
+        // --- END GLOBAL BLOCKING ---
     }
 
     /**
@@ -133,13 +162,27 @@ public class AIAssistantPanel {
     }
 
     /**
-     * Toggles the processing state visual cues across subcomponents.
+     * Toggles the processing state visual cues across subcomponents and locks the UI.
      */
     public void setProcessing(boolean processing) {
         this.processing = processing;
         if (chatAreaPanel != null) {
             chatAreaPanel.setProcessing(processing);
         }
+        
+        // Enable or disable the transparent shield
+        frame.getGlassPane().setVisible(processing);
+        
+        if (processing) {
+            // Steal focus for the shield to prevent keyboard interaction with buttons
+            frame.getGlassPane().requestFocusInWindow();
+        } else {
+            // When the AI finishes responding, restore focus to the text input
+            if (chatAreaPanel != null) {
+                chatAreaPanel.requestFocusToInput();
+            }
+        }
+
         frame.setCursor(processing ? Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR) : Cursor.getDefaultCursor());
     }
 
