@@ -360,7 +360,7 @@ public class AIAssistantController {
         chatAreaView.getInputArea().setText("");
         mainView.setProcessing(true);
         
-        AIChatMessage assistantDraft = AIChatMessage.now("Assistant", "", "assistant");
+        AIChatMessage assistantDraft = AIChatMessage.create("Assistant", "", "assistant");
         chatAreaView.startMessageStreaming(assistantDraft);
         
         coordinator.askQuestion(
@@ -384,7 +384,7 @@ public class AIAssistantController {
     }
 
     private void addMessage(String sender, String message, String type) {
-        AIChatMessage chatMessage = AIChatMessage.now(sender, message, type);
+        AIChatMessage chatMessage = AIChatMessage.create(sender, message, type);
         conversationManager.addMessageToActive(chatMessage);
         refreshChatArea();
     }

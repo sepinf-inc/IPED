@@ -11,8 +11,6 @@ import iped.app.ui.ai.util.AIWhatsappChatExtractor;
 import iped.app.ui.ai.util.SummaryValueExtractor;
 import iped.data.IItem;
 import iped.engine.lucene.analysis.CategoryTokenizer;
-import iped.parsers.standard.StandardParser;
-import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
 
 /**
@@ -289,9 +287,9 @@ public class AIContextManager {
         };
 
         for (String key : keys) {
-            Boolean parsed = parseBooleanValue(readFirstValue(item, key));
-            if (parsed != null) {
-                return parsed;
+            String value = readFirstValue(item, key);
+            if (value != null) {
+                return Boolean.parseBoolean(value.trim().toLowerCase());
             }
         }
         return null;
@@ -326,20 +324,6 @@ public class AIContextManager {
             return values[0];
         }
 
-        return null;
-    }
-
-    private Boolean parseBooleanValue(String raw) {
-        if (raw == null) {
-            return null;
-        }
-        String normalized = raw.trim().toLowerCase();
-        if ("true".equals(normalized) || "1".equals(normalized)) {
-            return Boolean.TRUE;
-        }
-        if ("false".equals(normalized) || "0".equals(normalized)) {
-            return Boolean.FALSE;
-        }
         return null;
     }
 }

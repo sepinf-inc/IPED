@@ -61,19 +61,4 @@ public class Conversation {
         }
         return false;
     }
-
-    /**
-     * Auto-generates a title based on the first user message if the title is default
-     */
-    public void autoGenerateTitle() {
-        if ("New Conversation".equals(this.title) && !messages.isEmpty()) {
-            for (AIChatMessage msg : messages) {
-                if ("user".equals(msg.getType())) {
-                    String content = msg.getContent();
-                    this.title = content.length() > 30 ? content.substring(0, 27) + "..." : content;
-                    break;
-                }
-            }
-        }
-    }
 }
