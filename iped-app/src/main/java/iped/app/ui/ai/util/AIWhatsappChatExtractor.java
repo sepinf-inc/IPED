@@ -18,37 +18,39 @@ import iped.parsers.whatsapp.WhatsAppParser;
  */
 public class AIWhatsappChatExtractor {
 
+    private final String whatsAppChatContentType = WhatsAppParser.WHATSAPP_CHAT.toString();
+
     /**
      * <p>
-     * Basic validation to check if the item is an HTML file.
+    * Basic validation to check whether the item is a WhatsApp chat by content type.
      * Handles standard files and virtual files extracted from databases (which may lack extensions).
      * <p>
      * @param item The IPED evidence item to inspect.
-     * @return true if the file indicates HTML or WhatsApp chat content; false otherwise.
+    * @return true if the file indicates WhatsApp chat content; false otherwise.
      */
-    public boolean isPotentiallyValidChat(IItem item) {
+    public boolean isWhatsAppChatType(IItem item) {
         if (item == null) {
             return false;
         }
 
-        String chatContentType = WhatsAppParser.WHATSAPP_CHAT.toString();
-        if (item.getMediaType() != null && chatContentType.equals(item.getMediaType().toString())) {
+        if (item.getMediaType() != null && whatsAppChatContentType.equals(item.getMediaType().toString())) {
             return true;
         }
 
-        return item.getMetadata() != null && chatContentType.equals(item.getMetadata().get(StandardParser.INDEXER_CONTENT_TYPE));
+        return item.getMetadata() != null
+            && whatsAppChatContentType.equals(item.getMetadata().get(StandardParser.INDEXER_CONTENT_TYPE));
     }
 
     /**
      * Extracts the raw file content from the IItem into a UTF-8 encoded String.
      * @param item The IPED evidence item containing the chat log.
      * @return The complete, raw HTML string.
-     * @throws IllegalArgumentException if the item fails basic HTML validation.
+     * @throws IllegalArgumentException if the item is null.
      * @throws IllegalStateException if the underlying file stream cannot be opened.
      * @throws Exception if reading the stream fails due to an I/O error.
      */
     public String extractHtml(IItem item) throws Exception {
-        if (!isPotentiallyValidChat(item)) {
+        if (!isWhatsAppChatType(item)) {
             throw new IllegalArgumentException("Selected file does not appear to be a WhatsApp chat export.");
         }
 
@@ -67,8 +69,6 @@ public class AIWhatsappChatExtractor {
                 buffer.write(data, 0, nRead);
             }
 
-            // WhatsApp HTML exports heavily utilize emojis and international characters.
-            // Forcing UTF-8 is strictly required here.
             return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
         }
     }
