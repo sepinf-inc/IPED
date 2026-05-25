@@ -7,6 +7,7 @@ import javax.swing.JTable;
 
 import iped.data.IItemId;
 import iped.geo.MapSelectionListener;
+import iped.geo.js.GetResultsJSWorker;
 import iped.geo.kml.GetResultsKMLWorker;
 import iped.properties.BasicProps;
 
@@ -33,7 +34,7 @@ public class AppMapSelectionListener implements MapSelectionListener {
 
         for (int i = 0; i < mapaPanel.getResultsProvider().getResults().getLength(); i++) {
             IItemId item = mapaPanel.getResultsProvider().getResults().getItem(i);
-            String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+            String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
 
             if (Arrays.binarySearch(mids, gid) >= 0) {
                 int row = t.convertRowIndexToView(i);
