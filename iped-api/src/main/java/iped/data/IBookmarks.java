@@ -93,6 +93,10 @@ public interface IBookmarks extends Serializable {
 
     String getBookmarkComment(int bookmarkId);
 
+    void setBookmarkQuery(int bookmarkId, String query);
+    
+    String getBookmarkQuery(int bookmarkId);
+
     void setBookmarkColor(int bookmarkId, Color color);
 
     Color getBookmarkColor(int bookmarkId);
