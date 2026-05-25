@@ -108,6 +108,7 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
     private static ExternalParser readParser(Element parserDef) throws TikaException {
         ExternalParser parser = new ExternalParser();
 
+        String appendStr = null;
         NodeList children = parserDef.getChildNodes();
         Element checkElement = null;
         for (int i = 0; i < children.getLength(); i++) {
@@ -122,6 +123,8 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
                     parser.setSupportedTypes(readMimeTypes(child));
                 } else if (child.getTagName().equals(METADATA_TAG)) {
                     parser.setMetadataExtractionPatterns(readMetadataPatterns(child));
+                } else if (child.getTagName().equals(APPENDCONTENT_TAG)) {
+                    appendStr = getString(child);
                 } else if (child.getTagName().equals(PARSER_NAME_TAG)) {
                     parser.setParserName(getString(child));
                 } else if (child.getTagName().equals(WIN_TOOL_PATH)) {
@@ -133,6 +136,17 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
                 } else if (child.getTagName().equals(LINES_TO_IGNORE)) {
                     parser.setLinesToIgnore(Integer.valueOf(getString(child)));
                 }
+            }
+        }
+        if (appendStr != null) {
+            parser.setOutputExtractionScheme(ExternalParser.APPEND);
+            if (!"".equals(appendStr.trim())) {
+                parser.setOutputExtractionScheme(Integer.parseInt(appendStr));
+            }
+        } else {
+            if (parser.getMetadataExtractionPatterns() != null && parser.getMetadataExtractionPatterns().size() > 0) {
+                parser.setOutputExtractionScheme(ExternalParser.IGNORE);// if metadata extraction is defined, default
+                                                                        // behavior is to ignore text content
             }
         }
         if (checkElement != null) {
