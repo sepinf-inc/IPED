@@ -99,7 +99,9 @@ public class ConversationPersistence {
                 try (FileReader reader = new FileReader(file)) {
                     Conversation conv = GSON.fromJson(reader, Conversation.class);
                     if (conv != null) {
-                        conversations.add(conv);
+                        if (!"deleted".equals(conv.getStatus())) {
+                            conversations.add(conv);
+                        }
                     }
                 } catch (Exception e) {
                     System.err.println("Failed to load AI conversation file " + file.getName() + ": " + e.getMessage());
@@ -113,15 +115,11 @@ public class ConversationPersistence {
     }
 
     /**
-     * Deletes the JSON file associated with the given conversation ID.
+     * Flags the conversation as deleted by removing, but does not permanently delete the file
      */
-    public static void deleteConversation(String conversationId) {
-        File dir = getStorageDirectory();
-        if (dir == null || conversationId == null) return;
-
-        File chatFile = new File(dir, "chat_" + conversationId + ".json");
-        if (chatFile.exists()) {
-            chatFile.delete();
-        }
+    public static void deleteConversation(Conversation conversation) {
+        if (conversation == null) return;
+        conversation.setStatus("deleted");
+        saveConversation(conversation);
     }
 }
