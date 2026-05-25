@@ -213,7 +213,7 @@ public class AIAssistantController {
     }
 
     private void deleteChat(Conversation conv) {
-        ConversationPersistence.deleteConversation(conv.getId());
+        ConversationPersistence.deleteConversation(conv);
         conversationManager.removeConversation(conv);
         
         Conversation active = conversationManager.getActiveConversation();
