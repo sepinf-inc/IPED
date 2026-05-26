@@ -378,7 +378,13 @@ public class AIAssistantController {
                 });
             }),
             (errorMessage) -> SwingUtilities.invokeLater(() -> {
-                chatAreaView.forceDiscardStreaming();
+                AIChatMessage partialDraft = chatAreaView.salvageStreamingDraft();
+
+                if (partialDraft != null && !partialDraft.getContent().isEmpty()) {
+                    conversationManager.addMessageToActive(partialDraft);
+                    sidebarView.updateConversationsList(conversationManager.getConversations());
+                }
+
                 addMessage("System Error", errorMessage, "error");
                 mainView.setProcessing(false);
             })

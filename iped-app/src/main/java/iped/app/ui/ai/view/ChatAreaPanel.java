@@ -261,4 +261,19 @@ public class ChatAreaPanel extends JPanel {
             }
         });
     }
+
+    public AIChatMessage salvageStreamingDraft() {
+        streamAnimator.resetState();
+
+        AIChatMessage salvaged = currentDraftMessage;
+        if (salvaged != null && salvaged.getContent() != null && !salvaged.getContent().isEmpty()) {
+            markdownRenderer.commitDraft();
+        } else {
+            markdownRenderer.discardDraft();
+            salvaged = null;
+        }
+
+        currentDraftMessage = null;
+        return salvaged;
+    }
 }
