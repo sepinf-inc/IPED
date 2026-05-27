@@ -308,6 +308,17 @@ public class AIAssistantController {
         sidebarView.setSelectedValue(conv, true);
     }
 
+    /**
+     * Starts a new conversation by carrying over the current context and merging
+     * additional pending items.
+     *
+     * This method is used by the auto-fork flow when the active conversation
+     * already has an assistant reply and its context is no longer directly editable
+     * from the ContextPanel UI.
+     *
+     * The previous conversation remains unchanged; the new one becomes the active
+     * editable workspace.
+    */
     public void startNewConversationWithCurrentContext(List<IItem> pendingItems) {
         Conversation newConversation = conversationManager.startNewConversation();
 
@@ -416,9 +427,12 @@ public class AIAssistantController {
             
             chatAreaView.renderHistoricalMessages(renderableMessages);
             
-            // Bussines rule: blocks context editing if assistant has replied or there's a draft
+            // Business rule: once a conversation has an assistant reply, or while an
+            // assistant draft is streaming, direct context editing in the panel is disabled
+            // Additional files must be added through the auto-fork flow, which starts a new
+            // conversation and carries the previous context forward
             if (contextView != null) {
-                contextView.setLocked(hasMessages);
+                contextView.setContextEditLocked(hasMessages);
             }
         }
     }

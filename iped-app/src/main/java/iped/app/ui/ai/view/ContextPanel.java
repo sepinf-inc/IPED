@@ -42,7 +42,7 @@ public class ContextPanel extends JPanel {
     private JButton clearContextButton;
 
     private final ContextListener listener;
-    private boolean isLocked = false;
+    private boolean isContextEditLocked = false;
 
     /**
      * Contract for the ContextPanel's event listener, allowing external components (e.g., Controller)
@@ -116,7 +116,7 @@ public class ContextPanel extends JPanel {
         clearContextButton.setMargin(new Insets(0, 5, 0, 5));
         clearContextButton.setEnabled(false);
         clearContextButton.addActionListener(e -> {
-            if (!isLocked && listener != null) {
+            if (!isContextEditLocked && listener != null) {
                 listener.onClearContextRequested();
             }
         });
@@ -129,11 +129,18 @@ public class ContextPanel extends JPanel {
     }
 
     /**
-     * Blocks or unblocks the context modification actions based on the conversation state.
-     * When locked, the user cannot add or remove files from the context, and the UI reflects this state visually.
-     */
-    public void setLocked(boolean locked) {
-        this.isLocked = locked;
+     * Enables or disables direct context-edit actions in this panel for the
+     * currently displayed conversation.
+     *
+     * This is a UI-only edit lock: it prevents the user from removing items or
+     * clearing the context from the panel once the conversation already contains
+     * an assistant reply or an in-flight draft.
+     *
+     * It does NOT prevent the controller from creating a new conversation and
+     * programmatically populating its context (auto-fork flow).
+    */
+    public void setContextEditLocked(boolean locked) {
+        this.isContextEditLocked = locked;
         clearContextButton.setEnabled(!locked && contextListModel.getSize() > 0);
         
         String currentTitle = contextTitleLabel.getText();
@@ -182,8 +189,8 @@ public class ContextPanel extends JPanel {
         textLabel.setFont(list.getFont());
         textLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
 
-        // Removes "X" if the panel is locked
-        JLabel removeLabel = new JLabel(isLocked ? "" : "X");
+        // Hide the per-item remove "X" while direct context editing is disabled.
+        JLabel removeLabel = new JLabel(isContextEditLocked ? "" : "X");
         removeLabel.setOpaque(false);
         removeLabel.setFont(list.getFont().deriveFont(Font.BOLD));
         removeLabel.setForeground(new Color(160, 0, 0));
@@ -207,8 +214,8 @@ public class ContextPanel extends JPanel {
         contextList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Ignores clicks when the panel is locked
-                if (isLocked) return;
+                // Ignore direct remove clicks while context editing is disabled for this conversation view
+                if (isContextEditLocked) return;
 
                 if (e.getButton() != MouseEvent.BUTTON1) return;
 
@@ -245,8 +252,8 @@ public class ContextPanel extends JPanel {
         } else {
             contextEmptyLabel.setVisible(false);
             contextList.setVisible(true);
-            // deactivate clear button if locked
-            clearContextButton.setEnabled(!isLocked);
+            // Disable "Clear Context" only for the current conversation's panel-level edit flow
+            clearContextButton.setEnabled(!isContextEditLocked);
 
             int validCount = 0;
             for (ContextFileEntry entry : entries) {
@@ -267,7 +274,7 @@ public class ContextPanel extends JPanel {
                 contextListModel.addElement(new ContextSummaryRow(summaryText));
             }
 
-            String lockText = isLocked ? " [LOCKED]" : "";
+            String lockText = isContextEditLocked ? " [LOCKED]" : "";
             if (invalidCount > 0) {
                 contextTitleLabel.setText("Added Context (" + validCount + " valid, " + invalidCount + " rejected)" + lockText);
             } else {

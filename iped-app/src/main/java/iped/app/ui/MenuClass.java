@@ -449,7 +449,7 @@ public class MenuClass extends JPopupMenu {
         } else {
             int result = JOptionPane.showConfirmDialog(
                     null,
-                    "This context has already been used in an active chat.\n Would you like to start a new conversation with both the previously uploaded files and the newly added ones?",
+                    "This conversation’s context is no longer directly editable because it already contains an assistant reply. Start a new conversation that keeps the current context and adds the newly selected files?",
                     "New Chat",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE);
