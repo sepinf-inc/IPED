@@ -85,12 +85,38 @@ public class ConversationManager {
             
             // If this is the first user message, generate the title
             if ("New Conversation".equals(activeConversation.getTitle()) && "user".equals(message.getType())) {
-                activeConversation.autoGenerateTitle();
+                autoGenerateTitle(activeConversation);
             }
             
             // Save to disk asynchronously
             final Conversation convToSave = activeConversation;
             new Thread(() -> ConversationPersistence.saveConversation(convToSave)).start();
+        }
+    }
+
+    /**
+    * Auto-generates a title based on the first user message if the title is default
+    */
+    public void autoGenerateTitle(Conversation conversation) {
+        if (conversation == null) return;
+
+        if (!"New Conversation".equals(conversation.getTitle())) {
+            return;
+        }
+
+        for (AIChatMessage msg : conversation.getMessages()) {
+            if ("user".equals(msg.getType())) {
+                String content = msg.getContent();
+
+                if (content != null && !content.isBlank()) {
+                    String title = content.length() > 30
+                            ? content.substring(0, 27) + "..."
+                            : content;
+
+                    conversation.setTitle(title);
+                }
+                break;
+            }
         }
     }
 }

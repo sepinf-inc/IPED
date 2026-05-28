@@ -7,6 +7,7 @@ import java.util.UUID;
 public class Conversation {
     private String id;
     private String title;
+    private String status; // e.g. "active", "deleted"
     private long createdAt;
     private long lastModified;
     private List<Integer> contextIds;
@@ -15,18 +16,22 @@ public class Conversation {
 
     public Conversation() {
         this.id = UUID.randomUUID().toString(); //  Universally Unique Identifier
+        this.title = "New Conversation";
+        this.status = "active";
         this.createdAt = System.currentTimeMillis();
         this.lastModified = this.createdAt;
         this.contextIds = new ArrayList<>();
         this.chatHashes = new ArrayList<>();
         this.messages = new ArrayList<>();
-        this.title = "New Conversation";
     }
 
     // Standard Getters and Setters
     public String getId() { return id; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
     
     public long getCreatedAt() { return createdAt; }
     public long getLastModified() { return lastModified; }
@@ -60,20 +65,5 @@ public class Conversation {
             }
         }
         return false;
-    }
-
-    /**
-     * Auto-generates a title based on the first user message if the title is default
-     */
-    public void autoGenerateTitle() {
-        if ("New Conversation".equals(this.title) && !messages.isEmpty()) {
-            for (AIChatMessage msg : messages) {
-                if ("user".equals(msg.getType())) {
-                    String content = msg.getContent();
-                    this.title = content.length() > 30 ? content.substring(0, 27) + "..." : content;
-                    break;
-                }
-            }
-        }
     }
 }

@@ -7,12 +7,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
 
 import iped.app.ui.ai.model.ContextFileEntry;
-import iped.app.ui.ai.util.SummaryValueExtractor;
+import iped.app.ui.ai.util.ContextItemValidator;
 import iped.data.IItem;
-import iped.engine.lucene.analysis.CategoryTokenizer;
-import iped.parsers.standard.StandardParser;
-import iped.parsers.whatsapp.WhatsAppParser;
-import iped.properties.ExtraProperties;
 
 /**
  * Singleton manager responsible for maintaining the AI context file list.
@@ -44,6 +40,8 @@ public class AIContextManager {
     
     /** Listener list for context change events */
     private final EventListenerList listeners;
+
+    private final ContextItemValidator validator = new ContextItemValidator();
     
     /**
      * Private constructor to enforce singleton pattern.
@@ -192,7 +190,7 @@ public class AIContextManager {
                 continue;
             }
 
-            String rejectionReason = getRejectionReason(item);
+            String rejectionReason = validator.getRejectionReason(item);
             if (rejectionReason != null) {
                 if (invalidEntries.removeIf(entry -> entry.getItem().getId() == item.getId())) {
                     changedAny = true;
@@ -221,142 +219,4 @@ public class AIContextManager {
         }
     }
 
-    private String getRejectionReason(IItem item) {
-        if (!isWhatsAppChatItem(item)) {
-            return "Rejected: Not a WhatsApp chat item.";
-        }
-
-        if (hasEmptyFilesCategory(item)) {
-            return "Rejected: Category is Empty Files.";
-        }
-
-        if (SummaryValueExtractor.hasSummary(item)) {
-            return null;
-        }
-
-        Boolean isEmpty = readCommunicationIsEmpty(item);
-        if (Boolean.TRUE.equals(isEmpty)) {
-            return "Rejected: Communication is empty.";
-        }
-        return null;
-    }
-
-    private boolean isWhatsAppChatItem(IItem item) {
-        if (item == null) {
-            return false;
-        }
-
-        String chatContentType = WhatsAppParser.WHATSAPP_CHAT.toString();
-        if (item.getMediaType() != null && chatContentType.equals(item.getMediaType().toString())) {
-            return true;
-        }
-
-        if (item.getMetadata() != null) {
-            String indexedContentType = item.getMetadata().get(StandardParser.INDEXER_CONTENT_TYPE);
-            if (chatContentType.equals(indexedContentType)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private boolean hasEmptyFilesCategory(IItem item) {
-        if (item == null) {
-            return false;
-        }
-
-        if (item.getCategorySet() != null) {
-            for (String category : item.getCategorySet()) {
-                if (isEmptyFilesCategoryValue(category)) {
-                    return true;
-                }
-            }
-        }
-
-        String categories = item.getCategories();
-        if (categories != null && !categories.isBlank()) {
-            String[] splitCategories = categories.split(String.valueOf(CategoryTokenizer.SEPARATOR));
-            for (String category : splitCategories) {
-                if (isEmptyFilesCategoryValue(category)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private boolean isEmptyFilesCategoryValue(String value) {
-        if (value == null) {
-            return false;
-        }
-
-        String normalized = value.trim().toLowerCase();
-        return normalized.equals("empty files") || normalized.contains("empty files");
-    }
-
-    private Boolean readCommunicationIsEmpty(IItem item) {
-        if (item == null) {
-            return null;
-        }
-
-        String[] keys = {
-            ExtraProperties.COMMUNICATION_PREFIX + "isEmpty"
-        };
-
-        for (String key : keys) {
-            Boolean parsed = parseBooleanValue(readFirstValue(item, key));
-            if (parsed != null) {
-                return parsed;
-            }
-        }
-        return null;
-    }
-
-    private String readFirstValue(IItem item, String key) {
-        Object extra = item.getExtraAttribute(key);
-        if (extra != null) {
-            if (extra instanceof String) {
-                return (String) extra;
-            }
-            if (extra instanceof Boolean) {
-                return String.valueOf(extra);
-            }
-            if (extra instanceof String[] && ((String[]) extra).length > 0) {
-                return ((String[]) extra)[0];
-            }
-            return String.valueOf(extra);
-        }
-
-        if (item.getMetadata() == null) {
-            return null;
-        }
-
-        String value = item.getMetadata().get(key);
-        if (value != null) {
-            return value;
-        }
-
-        String[] values = item.getMetadata().getValues(key);
-        if (values != null && values.length > 0) {
-            return values[0];
-        }
-
-        return null;
-    }
-
-    private Boolean parseBooleanValue(String raw) {
-        if (raw == null) {
-            return null;
-        }
-        String normalized = raw.trim().toLowerCase();
-        if ("true".equals(normalized) || "1".equals(normalized)) {
-            return Boolean.TRUE;
-        }
-        if ("false".equals(normalized) || "0".equals(normalized)) {
-            return Boolean.FALSE;
-        }
-        return null;
-    }
 }

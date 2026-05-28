@@ -82,6 +82,10 @@ public class AIChatCoordinator {
 
         // Offload heavy lifting to a background thread
         new Thread(() -> {
+
+            // Flag used to discern whether the hashes and context ids need clearing
+            boolean initializationCompleted = !needsInitialization;
+
             try {
                 // Step A: Initialize the Chat
                 if (needsInitialization) {
@@ -115,6 +119,9 @@ public class AIChatCoordinator {
                         // Save the hydrated object to disk
                         ConversationPersistence.saveConversation(activeConv);
                     }
+
+                    // Update the flag
+                    initializationCompleted = true;
                 }
 
                 // Step B: Stream the response
@@ -145,9 +152,13 @@ public class AIChatCoordinator {
 
             } catch (Exception e) {
                 onError.accept("Backend error: " + e.getMessage());
-                // Invalidate the cache on error so the next attempt tries a fresh upload
-                currentContextItemIds.clear();
-                currentChatHashes.clear();
+
+                // Only invalidate cache if initialization itself failed
+                // If error happened during streaming, preserve the hashes so the user can retry
+                if (!initializationCompleted) {
+                    currentContextItemIds.clear();
+                    currentChatHashes.clear();
+                }
             } finally {
                 onComplete.run(); 
             }

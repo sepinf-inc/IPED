@@ -20,7 +20,7 @@ public class AIChatMessage {
         this.time = time;
     }
 
-    public static AIChatMessage now(String sender, String content, String type) {
+    public static AIChatMessage create(String sender, String content, String type) {
         String time = new SimpleDateFormat("HH:mm").format(new Date());
         return new AIChatMessage(sender, content, type, time);
     }
