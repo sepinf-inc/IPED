@@ -53,6 +53,7 @@ import iped.utils.ByteArrayImageInputStream;
 import iped.utils.EmptyInputStream;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
+import iped.utils.ImageUtil;
 import iped.utils.LimitedSeekableInputStream;
 import iped.utils.SeekableByteChannelImpl;
 import iped.utils.SeekableFileInputStream;
@@ -1358,7 +1359,13 @@ public class Item implements IItem {
     }
 
     public void setThumb(byte[] thumb) {
-        this.thumb = thumb;
+        if (ImageUtil.isImageValid(thumb)) {
+            this.thumb = thumb;
+        } else {
+            // Reject the invalid image data
+            // zero size thumb means thumb error
+            this.thumb = new byte[0];
+        }
     }
 
     public ISeekableInputStreamFactory getInputStreamFactory() {

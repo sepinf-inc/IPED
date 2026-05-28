@@ -103,7 +103,7 @@ class SearchHardwareWallets:
                     newSubItem(self, item, hwInfo, subItemID, w)
                     subItemID += 1
         elif re.match(setupapi_regex, item.getName()):
-            ''' setupapi.dev.log examples
+            r''' setupapi.dev.log examples
             >>>  [Setup online Device Install (Hardware initiated) - USB\VID_0C45&PID_64AD\6&2e9d4003&0&4]
             >>>  Section start 2014/06/26 15:43:49.248
             '''
