@@ -314,4 +314,16 @@ public class AIAssistantPanel {
     public JPanel getTasksPanel() {
         return tasksPanel;
     }
+
+    /**
+     * Exposes the context addition workflow to external UI components (e.g., IPED context menus).
+     * Delegates all state evaluation and routing logic to the {@link AIAssistantController}.
+     *
+     * @param itemsToAdd The list of items selected by the investigator to add to the AI context.
+     */
+    public void addItemsToContext(List<IItem> itemsToAdd) {
+        if (controller != null) {
+            controller.addItemsToContext(itemsToAdd);
+        }
+    }
 }

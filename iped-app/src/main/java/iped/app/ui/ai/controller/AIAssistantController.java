@@ -531,4 +531,58 @@ public class AIAssistantController {
         
         return panel;
     }
+
+    /**
+     * Evaluates the current chat state and orchestrates the addition of new items to the AI context.
+     * <p>
+     * This method enforces the "context-edit lock" behavior:
+     * <ul>
+     * <li>If a response is currently streaming, it blocks the addition to prevent race conditions.</li>
+     * <li>If the active conversation is "sealed" (contains an assistant reply), it prompts the user 
+     * to auto-fork into a new conversation merging the old and new contexts.</li>
+     * <li>If the conversation is empty or a draft, it appends the items normally.</li>
+     * </ul>
+     *
+     * @param itemsToAdd The list of IPED items selected by the user.
+     */
+    public void addItemsToContext(List<IItem> itemsToAdd) {
+        if (itemsToAdd == null || itemsToAdd.isEmpty()) {
+            return;
+        }
+
+        if (mainView.isProcessing()) {
+            JOptionPane.showMessageDialog(
+                    mainView.getFrame(),
+                    "Aguarde a resposta atual terminar antes de adicionar novos itens ao contexto.",
+                    "AI Assistant",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        Conversation activeConversation = conversationManager.getActiveConversation();
+
+        if (activeConversation == null) {
+            startNewConversationWithCurrentContext(itemsToAdd);
+            return;
+        }
+
+        if (!activeConversation.hasAssistantReply()) {
+            contextManager.addContextFiles(itemsToAdd);
+            mainView.showFrame();
+            return;
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+                mainView.getFrame(),
+                "This conversation’s context is no longer directly editable because it already contains an assistant reply. Start a new conversation that keeps the current context and adds the newly selected files?",
+                "New Chat",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (result == JOptionPane.YES_OPTION) {
+            startNewConversationWithCurrentContext(itemsToAdd); // Auto-Fork
+        } else if (result == JOptionPane.NO_OPTION) {
+            mainView.showFrame();
+        }
+    }
 }

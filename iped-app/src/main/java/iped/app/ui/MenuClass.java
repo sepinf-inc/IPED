@@ -31,12 +31,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 
-import iped.app.ui.ai.context.AIContextManager;
-import iped.app.ui.ai.context.ConversationManager;
-import iped.app.ui.ai.model.Conversation;
 import iped.app.ui.ai.view.AIAssistantPanel;
 import iped.app.ui.themes.Theme;
 import iped.app.ui.themes.ThemeManager;
@@ -353,7 +348,7 @@ public class MenuClass extends JPopupMenu {
             }
 
             if (!itemsToAdd.isEmpty()) {
-                openAIAssistantWithItems(itemsToAdd);
+                AIAssistantPanel.getInstance().addItemsToContext(itemsToAdd);
             }
         });
         this.add(addAllHighlightedToAIContext);
@@ -368,7 +363,7 @@ public class MenuClass extends JPopupMenu {
             List<IItem> itemsToAdd = getCheckedItems();
             
             if (!itemsToAdd.isEmpty()) {
-                openAIAssistantWithItems(itemsToAdd);
+                AIAssistantPanel.getInstance().addItemsToContext(itemsToAdd);
             }
         });
         this.add(addAllCheckedToAIContext);
@@ -426,40 +421,6 @@ public class MenuClass extends JPopupMenu {
     
         // Fetch the actual IItem using IPED's appCase directly
         return App.get().appCase.getItemByItemId(itemId); 
-    }
-
-    private void openAIAssistantWithItems(List<IItem> itemsToAdd) {
-        Conversation activeConversation = ConversationManager.getInstance().getActiveConversation();
-        AIAssistantPanel assistantPanel = AIAssistantPanel.getInstance();
-
-        if (assistantPanel.isProcessing()) {
-            JOptionPane.showMessageDialog(
-                    null,
-                    "Aguarde a resposta atual terminar antes de adicionar novos itens ao contexto.",
-                    "AI Assistant",
-                    JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        
-        if (activeConversation == null) {
-            assistantPanel.startNewConversationWithCurrentContext(itemsToAdd);
-        } else if (!activeConversation.hasAssistantReply()) {
-            AIContextManager.getInstance().addContextFiles(itemsToAdd);
-            assistantPanel.showFrame();
-        } else {
-            int result = JOptionPane.showConfirmDialog(
-                    null,
-                    "This conversation’s context is no longer directly editable because it already contains an assistant reply. Start a new conversation that keeps the current context and adds the newly selected files?",
-                    "New Chat",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE);
-
-            if (result == JOptionPane.YES_OPTION) {
-                assistantPanel.startNewConversationWithCurrentContext(itemsToAdd);
-            } else if (result == JOptionPane.NO_OPTION) {
-                assistantPanel.showFrame();
-            }
-        }
     }
 
     public void addExportTreeMenuItems(JComponent menu) {
