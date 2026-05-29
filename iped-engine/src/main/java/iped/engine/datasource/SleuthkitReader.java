@@ -103,9 +103,9 @@ public class SleuthkitReader extends DataSourceReader {
     public static final String PASSWORD_PER_IMAGE = "data/PasswordPerImage.txt";
 
     // TODO update @deleteDatasource() when updating TSK
-    public static final String MIN_TSK_VER_TESTED = "4.11.0";
-    public static final String MAX_TSK_VER_TESTED = "4.14.0";
-    public static final List<String> UNTESTED_TSK_VERS = Arrays.asList("4.13.0");
+    public static final String MIN_TSK_VER_TESTED = "4.13.0";
+    public static final String MAX_TSK_VER_TESTED = "4.15.0";
+    public static final List<String> UNTESTED_TSK_VERS = Arrays.asList("4.13.", "4.14.");
 
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -293,8 +293,8 @@ public class SleuthkitReader extends DataSourceReader {
         int maxMinorVerTested = Integer.valueOf(MAX_TSK_VER_TESTED.split("\\.")[1]);
 
         if (majorVerExpected != majorVerFound || minorVerFound < minorVerExpected)
-            throw new RuntimeException("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER_TESTED);
-        if (minorVerFound > maxMinorVerTested || UNTESTED_TSK_VERS.contains(tskVer))
+            throw new RuntimeException("Sleuthkit version " + tskVer + " not supported. Install version " + MAX_TSK_VER_TESTED);
+        if (minorVerFound > maxMinorVerTested || UNTESTED_TSK_VERS.stream().anyMatch(tskVer::startsWith))
             LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;
