@@ -35,6 +35,10 @@
             <version>2.4.0-p1</version>
             <exclusions>
         		<exclusion>
+          			<groupId>com.drewnoakes</groupId>
+    				<artifactId>metadata-extractor</artifactId>
+        		</exclusion>
+        		<exclusion>
           			<groupId>com.pff</groupId>
     				<artifactId>java-libpst</artifactId>
         		</exclusion>
@@ -124,6 +128,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+		<dependency>
+			<groupId>com.drewnoakes</groupId>
+			<artifactId>metadata-extractor</artifactId>
+			<version>2.20.0</version>
+		</dependency>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>java-dbf</artifactId>
