@@ -12,6 +12,7 @@
     
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
+		<javacpp.ffmpeg.version>8.0.1-1.5.13</javacpp.ffmpeg.version>
     </properties>
     
     <repositories>
@@ -307,7 +308,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
+			<!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
             <version>1.27.1</version>
         </dependency>
         <dependency>
@@ -341,10 +342,24 @@
             <artifactId>HikariCP</artifactId>
             <version>7.0.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>ffmpeg-platform</artifactId>
-            <version>8.0.1-1.5.13</version>
-    	</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>ffmpeg</artifactId>
+			<version>${javacpp.ffmpeg.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>ffmpeg</artifactId>
+			<version>${javacpp.ffmpeg.version}</version>
+			<classifier>windows-x86_64</classifier>
+		</dependency>
+
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>ffmpeg</artifactId>
+			<version>${javacpp.ffmpeg.version}</version>
+			<classifier>linux-x86_64</classifier>
+		</dependency>
      </dependencies>
 </project>
