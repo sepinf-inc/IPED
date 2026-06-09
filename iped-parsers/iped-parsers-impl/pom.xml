@@ -71,6 +71,12 @@
   		    <groupId>org.apache.tika</groupId>
 		    <artifactId>tika-parser-sqlite3-module</artifactId>
 		    <version>${tika.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.xerial</groupId>
+                    <artifactId>sqlite-jdbc</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
 		<dependency>
   		    <groupId>net.java.dev.jna</groupId>
@@ -103,15 +109,9 @@
             <version>1.9.41.6</version>
         </dependency>
         <dependency>
-            <groupId>org.xerial</groupId>
-            <artifactId>sqlite-jdbc</artifactId>
-            <version>${xerial.sqlite.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>io.github.willena</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>3.49.1.0</version>
+            <version>${willena.sqlite.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.pcorless.icepdf</groupId>
