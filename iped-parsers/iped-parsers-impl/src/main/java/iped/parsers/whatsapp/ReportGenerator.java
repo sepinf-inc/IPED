@@ -47,7 +47,6 @@ public class ReportGenerator {
     private static final String locationIcon = "<img class=\"location\">";
     private static final String forwardedIcon = "<img class=\"fwd\">";
     private static final String viewOnceIcon = "<img class=\"vo\">";
-    private static final String waSuffix = "@s.whatsapp.net";
 
     public ReportGenerator() {
     }
@@ -1627,9 +1626,12 @@ public class ReportGenerator {
                 WAContact contact = contactsDirectory.getContact(number);
                 if (contact != null) {
                     name = contact.getName();
+                    if (number.endsWith(WAContact.lidSuffix)) {
+                        number = contact.getId(); 
+                    }
                 }
-                if (number.endsWith(waSuffix)) {
-                    number = number.substring(0, number.length() - waSuffix.length());
+                if (number.endsWith(WAContact.waSuffix)) {
+                    number = number.substring(0, number.length() - WAContact.waSuffix.length());
                 }
             }
         }

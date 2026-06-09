@@ -12,6 +12,7 @@ import java.awt.image.ColorConvertOp;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -837,5 +838,27 @@ public class ImageUtil {
         WritableRaster raster = source.copyData(null);
 
         return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
+    }
+
+    /**
+     * Checks if a given byte array represents a structurally valid image.
+     * 
+     * @param imageData The byte array of the image/thumbnail.
+     * @return true if the image is valid and can be decoded, false otherwise.
+     */
+    public static boolean isImageValid(byte[] imageData) {
+        if (imageData == null || imageData.length < 10) {
+            return false;
+        }
+
+        try (InputStream is = new ByteArrayInputStream(imageData)) {
+            // ImageIO.read returns a BufferedImage if successful,
+            // or null if no registered ImageReader claims to be able to read the stream.
+            return ImageIO.read(is) != null;
+        } catch (Exception e) {
+            // Any parsing error (like unexpected EOF from carved fragments) means it's
+            // structurally invalid
+            return false;
+        }
     }
 }

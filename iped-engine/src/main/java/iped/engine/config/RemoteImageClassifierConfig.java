@@ -22,6 +22,8 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
     private static final String SKIP_DIMENSION = "skipDimension";
     private static final String SKIP_HASH_DB_FILES = "skipHashDBFiles";
     private static final String VALIDATE_SSL = "validateSSL";
+    private static final String CONNECT_TIMEOUT = "connectTimeout";
+    private static final String SOCKET_TIMEOUT = "socketTimeout";
 
     // URL of the service/central node used by the RemoteImageClassifier implementation
     private String url;
@@ -43,6 +45,12 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
 
     // Validate server SSL certificate
     private boolean validateSSL = false;
+
+    // Connect timeout in milliseconds
+    private int connectTimeout = 30 * 1000;
+
+    // Socket timeout in milliseconds
+    private int socketTimeout = 3 * 60 * 1000;
 
     @Override
     public String getTaskEnableProperty() {
@@ -80,6 +88,14 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
 
     public boolean isValidateSSL() {
         return validateSSL;
+    }
+
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public int getSocketTimeout() {
+        return socketTimeout;
     }
 
     @Override
@@ -131,6 +147,16 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(VALIDATE_SSL);
         if (value != null && !value.trim().isEmpty())
             validateSSL = Boolean.valueOf(value.trim());
+
+        value = properties.getProperty(CONNECT_TIMEOUT);
+        if (value != null && !value.trim().isEmpty()) {
+            connectTimeout = Integer.valueOf(value.trim());
+        }
+
+        value = properties.getProperty(SOCKET_TIMEOUT);
+        if (value != null && !value.trim().isEmpty()) {
+            socketTimeout = Integer.valueOf(value.trim());
+        }
     
     }
 

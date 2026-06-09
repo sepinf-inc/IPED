@@ -1,5 +1,7 @@
 package iped.parsers.discord;
-
+import java.util.zip.GZIPInputStream;
+import java.io.PushbackInputStream;
+import org.brotli.dec.BrotliInputStream;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -31,7 +33,8 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -142,15 +145,46 @@ public class DiscordParser extends AbstractParser {
 
         try (InputStream is = TikaInputStream.get(indexFile, new TemporaryResources())) {
 
+            InputStream jsonStream = getDecompressedStream(is);
+
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            List<DiscordRoot> discordRoot = null;
+            List<DiscordRoot> discordRoot = new java.util.ArrayList<>();
             try {
-                discordRoot = mapper.readValue(is, new TypeReference<List<DiscordRoot>>() {
-                });
-            } catch (JsonProcessingException ex) {
+                JsonNode rootNode = mapper.readTree(jsonStream);
+
+                if (rootNode != null) {
+                    if (rootNode.isArray()) {
+                        discordRoot = mapper.convertValue(rootNode, new TypeReference<List<DiscordRoot>>() {});
+                        
+                    } else if (rootNode.isObject()) {
+                        if (rootNode.has("author") && rootNode.has("timestamp")) {
+                            DiscordRoot singleMsg = mapper.convertValue(rootNode, DiscordRoot.class);
+                            discordRoot.add(singleMsg);
+                        } else if (rootNode.has("messages")) {
+                            JsonNode msgsNode = rootNode.get("messages");
+                            if (msgsNode.isArray()) {
+                                for (JsonNode innerNode : msgsNode) {
+                                    if (innerNode.isArray()) {
+                                        List<DiscordRoot> innerList = mapper.convertValue(innerNode, new TypeReference<List<DiscordRoot>>() {});
+                                        discordRoot.addAll(innerList);
+                                    } else {
+                                        DiscordRoot msg = mapper.convertValue(innerNode, DiscordRoot.class);
+                                        discordRoot.add(msg);
+                                    }
+                                }
+                            }
+                        } else {
+                            LOGGER.warn("JSON object ignored in DiscordParser (not a message or query):" + item.getPath());
+                        }
+                    }
+                }
+            } catch (Exception ex) {
                 LOGGER.warn("Invalid JSON inside cache entry " + item.getPath(), ex);
+            }
+
+            if (discordRoot == null) {
                 discordRoot = Collections.emptyList();
             }
 
@@ -265,7 +299,7 @@ public class DiscordParser extends AbstractParser {
             List<IItemReader> mes = searcher.search(commonQuery + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + ME_URL + "\"");
             for (IItemReader mei : mes) {
                 if (mei.getName().equals("@me")) {
-                    try (InputStream is2 = mei.getBufferedInputStream()) {
+                    try (InputStream is2 = getDecompressedStream(mei.getBufferedInputStream())) {
                         try {
                             byte[] mebytes = is2.readAllBytes();
                             me = mapper.readValue(mebytes, new TypeReference<DiscordAuthor>() {
@@ -282,12 +316,14 @@ public class DiscordParser extends AbstractParser {
 
                             if (me.getAvatar() != null) {
                                 byte[] meavatar = avatarCache.get(me.getAvatar());
-                                memeta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(meavatar));
+                                if (meavatar != null && meavatar.length > 0) {
+                                    memeta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(meavatar));
+                                }
                             }
                             memeta.set(StandardParser.INDEXER_CONTENT_TYPE, DISCORD_ACCOUNT.toString());
                             extractor.parseEmbedded(new ByteArrayInputStream(mebytes), handler, memeta, false);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            LOGGER.warn("Failed to extract internal data from Discord account:" + mei.getName());
                         }
                     }
                 }
@@ -358,5 +394,22 @@ public class DiscordParser extends AbstractParser {
             extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
 
         }
+    }
+    
+    private InputStream getDecompressedStream(InputStream is) throws IOException {
+        PushbackInputStream pb = new PushbackInputStream(is, 2);
+        byte[] sig = pb.readNBytes(2);
+        pb.unread(sig);
+
+        // Verify the GZIP signature (1F 8B)
+        if (sig.length == 2 && sig[0] == (byte) 0x1F && sig[1] == (byte) 0x8B) {
+            return new GZIPInputStream(pb);
+        } 
+        // If it's not pure JSON (which always starts with '{', '[' or a space), it assumes Brotli
+        else if (sig.length > 0 && sig[0] != '{' && sig[0] != '[' && sig[0] != ' ' && sig[0] != '\n' && sig[0] != '\r' && sig[0] != '\t') {
+            return new BrotliInputStream(pb);
+        }
+        
+        return pb; // Returns as plain text if not compressed.
     }
 }
