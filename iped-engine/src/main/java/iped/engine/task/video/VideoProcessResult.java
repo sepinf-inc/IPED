@@ -120,18 +120,18 @@ public class VideoProcessResult implements Closeable {
         if (info == null)
             return;
 
-        videoDuration = getDuration(info, "ID_LENGTH="); //$NON-NLS-1$
-        dimension = getDimension(info, "ID_VIDEO_WIDTH=", "ID_VIDEO_HEIGHT="); //$NON-NLS-1$ //$NON-NLS-2$
+        videoDuration = getDuration(info, "ID_LENGTH=");
+        dimension = getDimension(info, "ID_VIDEO_WIDTH=", "ID_VIDEO_HEIGHT=");
         videoStream = getVideoStream(info, false, false);
         if (videoStream == null) {
             videoStream = getVideoStream(info, true, false);
         }
-        rotation = getRotation(info, "_ROTATE="); //$NON-NLS-1$
+        rotation = getRotation(info, "_ROTATE=");
 
-        setFPS(getFPS(info, "ID_VIDEO_FPS=")); //$NON-NLS-1$
-        setBitRate(getBitRate(info, "ID_VIDEO_BITRATE=")); //$NON-NLS-1$
-        setVideoFormat(getStringInfo(info, "ID_VIDEO_FORMAT")); //$NON-NLS-1$
-        setVideoCodec(getStringInfo(info, "ID_VIDEO_CODEC")); //$NON-NLS-1$
+        setFPS(getFPS(info, "ID_VIDEO_FPS="));
+        setBitRate(getBitRate(info, "ID_VIDEO_BITRATE="));
+        setVideoFormat(getStringInfo(info, "ID_VIDEO_FORMAT"));
+        setVideoCodec(getStringInfo(info, "ID_VIDEO_CODEC"));
 
         getClipInfos(info);
 
@@ -141,21 +141,20 @@ public class VideoProcessResult implements Closeable {
         if (info == null)
             return;
 
-        videoDuration = getDuration(info, "duration="); //$NON-NLS-1$
-        dimension = getDimension(info, "coded_width=", "coded_height="); //$NON-NLS-1$ //$NON-NLS-2$
+        videoDuration = getDuration(info, "duration=");
+        dimension = getDimension(info, "coded_width=", "coded_height=");
         videoStream = getVideoStream(info, false, true);
         if (videoStream == null) {
             videoStream = getVideoStream(info, true, true);
         }
-        rotation = getRotation(info, "rotation="); //$NON-NLS-1$
+        rotation = getRotation(info, "rotation=");
 
-        setFPS(getFPS(info, "avg_frame_rate=")); //$NON-NLS-1$
-        setBitRate(getBitRate(info, "bit_rate=")); //$NON-NLS-1$
-        setVideoFormat(getStringInfo(info, "codec_name")); //$NON-NLS-1$
-        setVideoCodec(getStringInfo(info, "codec_long_name")); //$NON-NLS-1$
+        setFPS(getFPS(info, "avg_frame_rate="));
+        setBitRate(getBitRate(info, "bit_rate="));
+        setVideoFormat(getStringInfo(info, "codec_name"));
+        setVideoCodec(getStringInfo(info, "codec_long_name"));
 
         getClipTags(info);
-
     }
 
     private void getClipInfos(String info) throws Exception {
@@ -184,7 +183,7 @@ public class VideoProcessResult implements Closeable {
     }
 
     private void getClipTags(String info) throws Exception {
-        String nameKey = "TAG:"; //$NON-NLS-1$
+        String nameKey = "TAG:";
         int p1 = -1;
         while (true) {
             p1 = info.indexOf(nameKey, p1);
@@ -221,9 +220,11 @@ public class VideoProcessResult implements Closeable {
         int p2 = info.indexOf('\n', p1);
         String[] s = info.substring(p1 + s1.length(), p2).trim().split("/");
         try {
-            if (s.length > 1) return Float.parseFloat(s[0])/Float.parseFloat(s[1]);
-            else if (s.length == 1) return Float.parseFloat(s[0]);
-            else return -1;
+            if (s.length > 1)
+                return Float.parseFloat(s[0]) / Float.parseFloat(s[1]);
+            if (s.length == 1)
+                return Float.parseFloat(s[0]);
+            return -1;
 
         } catch (NumberFormatException e) {
             return -1;
@@ -355,5 +356,4 @@ public class VideoProcessResult implements Closeable {
             subTmp.delete();
         }
     }
-
 }
