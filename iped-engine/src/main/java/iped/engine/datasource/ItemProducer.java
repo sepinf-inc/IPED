@@ -70,8 +70,15 @@ public class ItemProducer extends Thread implements Closeable {
 
     private void installDataSourceReaders() throws Exception {
 
-        Class<? extends DataSourceReader>[] readerList = new Class[] { SleuthkitReader.class,
-                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class,
+        Class<? extends DataSourceReader>[] readerList = new Class[] {
+                SleuthkitReader.class,
+                IPEDReader.class,
+                UfedXmlReader.class,
+
+                // 👇 ESTE ES TUYO
+                ParabenXmlReader.class,
+
+                AD1DataSourceReader.class,
                 FolderTreeReader.class // deve ser o último
         };
 
@@ -131,7 +138,7 @@ public class ItemProducer extends Thread implements Closeable {
                         .getCaseObject(SkipCommitedTask.PARENTS_WITH_LOST_SUBITEMS);
                 if (parentsWithLostSubitems != null && parentsWithLostSubitems.size() > 0) {
                     try (IPEDReader reader = new IPEDReader(caseData, output, listOnly)) {
-                    	reader.read(parentsWithLostSubitems, manager);	
+                        reader.read(parentsWithLostSubitems, manager);
                     }
                 }
 
