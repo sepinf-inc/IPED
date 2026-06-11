@@ -1,12 +1,18 @@
 package iped.parsers.zoomdpapi;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.util.Arrays;
-import java.util.List;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -15,6 +21,11 @@ import org.junit.Test;
  * @author Calil Khalil (Hakal)
  */
 public class ZoomCrackingTest {
+
+    @BeforeClass
+    public static void setUp() {
+        Security.addProvider(new BouncyCastleProvider());
+    }
 
     // --- DPAPIHash parsing tests ---
 
@@ -85,24 +96,24 @@ public class ZoomCrackingTest {
     // --- MD4 implementation test ---
 
     @Test
-    public void testMD4EmptyString() {
+    public void testMD4EmptyString() throws NoSuchAlgorithmException {
         // MD4("") = 31d6cfe0d16ae931b73c59d7e0c089c0
-        byte[] result = PasswordCracker.md4(new byte[0]);
+        byte[] result = MessageDigest.getInstance("MD4").digest(new byte[0]);
         assertEquals("31d6cfe0d16ae931b73c59d7e0c089c0", CryptoUtil.bytesToHex(result));
     }
 
     @Test
-    public void testMD4KnownValue() {
+    public void testMD4KnownValue() throws NoSuchAlgorithmException {
         // MD4("a") = bde52cb31de33e46245e05fbdbd6fb24
-        byte[] result = PasswordCracker.md4("a".getBytes(StandardCharsets.US_ASCII));
+        byte[] result = MessageDigest.getInstance("MD4").digest("a".getBytes(StandardCharsets.US_ASCII));
         assertEquals("bde52cb31de33e46245e05fbdbd6fb24", CryptoUtil.bytesToHex(result));
     }
 
     @Test
-    public void testMD4NTLM() {
+    public void testMD4NTLM() throws NoSuchAlgorithmException {
         // NTLM hash of "password" = MD4(UTF-16LE("password"))
         byte[] utf16 = "password".getBytes(StandardCharsets.UTF_16LE);
-        byte[] result = PasswordCracker.md4(utf16);
+        byte[] result = MessageDigest.getInstance("MD4").digest(utf16);
         assertEquals("8846f7eaee8fb117ad06bdd830b7586c", CryptoUtil.bytesToHex(result));
     }
 
