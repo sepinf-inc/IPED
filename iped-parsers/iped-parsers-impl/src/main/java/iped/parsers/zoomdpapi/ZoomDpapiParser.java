@@ -47,6 +47,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
+import iped.dictionary.PasswordDictionaryFactory;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Util;
@@ -137,7 +138,7 @@ public class ZoomDpapiParser extends AbstractParser {
                 logger.info("Using pre-configured decryptedOskey");
             } else {
                 logger.info("No pre-configured OSKEY, attempting DPAPI decryption...");
-                oskey = tryDecryptOskey(encryptedBlob, itemInfo, searcher);
+                oskey = tryDecryptOskey(context, encryptedBlob, itemInfo, searcher);
             }
             if (oskey == null) {
                 logger.warn("Could not decrypt Zoom OSKEY. Set decryptedOskey parameter or provide DPAPI master keys.");
@@ -375,7 +376,7 @@ public class ZoomDpapiParser extends AbstractParser {
         return null;
     }
 
-    private String tryDecryptOskey(String encryptedBlob, ItemInfo itemInfo, IItemSearcher searcher) {
+    private String tryDecryptOskey(ParseContext context,String encryptedBlob, ItemInfo itemInfo, IItemSearcher searcher) {
         if (searcher == null) {
             logger.warn("IItemSearcher is null, cannot search for DPAPI master keys");
             return null;
@@ -405,7 +406,12 @@ public class ZoomDpapiParser extends AbstractParser {
 
         logger.info("Found master key for GUID {} with SID {}, attempting password cracking...", masterKeyGuid, sid);
 
-        List<String> wordlist = loadEmbeddedWordlist();
+        PasswordDictionaryFactory passwordDictFactory = context.get(PasswordDictionaryFactory.class);
+        if (passwordDictFactory == null) {
+            logger.warn("PasswordDictionaryFactory is not available, cannot attempt password cracking");
+            return null;
+        }
+        Iterable<String> wordlist = passwordDictFactory.createPasswordDictionary();
 
         for (IItemReader mkItem : items) {
             try (InputStream is = mkItem.getBufferedInputStream()) {
@@ -421,11 +427,11 @@ public class ZoomDpapiParser extends AbstractParser {
                 PasswordCracker cracker = new PasswordCracker();
                 String password = cracker.crack(hash, wordlist);
                 if (password == null) {
-                    logger.info("Password not found in wordlist ({} entries)", wordlist.size());
+                    logger.info("Password not found in wordlist");
                     continue;
                 }
 
-                logger.info("DPAPI password cracked successfully");
+                logger.info("DPAPI password cracked successfully: {}", password);
 
                 DPAPIMasterKeyDecryptor mkDecryptor = new DPAPIMasterKeyDecryptor();
                 String masterKeyHex = mkDecryptor.decryptMasterKey(mkData, sid, password);
@@ -442,27 +448,6 @@ public class ZoomDpapiParser extends AbstractParser {
         }
 
         return null;
-    }
-
-    private List<String> loadEmbeddedWordlist() {
-        List<String> words = new ArrayList<>();
-        InputStream is = getClass().getResourceAsStream("/iped/parsers/zoomdpapi/wordlist.txt");
-        if (is == null) {
-            logger.warn("Embedded wordlist resource not found");
-            return words;
-        }
-        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (!line.isEmpty()) {
-                    words.add(line);
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to load embedded wordlist: {}", e.getMessage());
-        }
-        return words;
     }
 
     private String parseMasterKeyGuid(String base64Blob) {

@@ -22,7 +22,7 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class PasswordCracker {
 
-    public String crack(String hashLine, List<String> passwords) {
+    public String crack(String hashLine, Iterable<String> passwords) {
         DPAPIHash hash = DPAPIHash.parse(hashLine);
         if (hash == null) return null;
 

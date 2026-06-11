@@ -58,6 +58,7 @@ import iped.configuration.Configurable;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.data.IItemReader;
+import iped.dictionary.PasswordDictionary;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -74,6 +75,7 @@ import iped.engine.core.Worker;
 import iped.engine.data.CaseData;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
+import iped.engine.dictionary.PasswordDictionaryIterableFactoryImpl;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.ParsingReader;
 import iped.engine.search.ItemSearcher;
@@ -233,6 +235,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
         context.set(ItemInfo.class, itemInfo);
         context.set(OCROutputFolder.class, new OCROutputFolder(output));
+        context.set(PasswordDictionaryIterableFactory.class, new PasswordDictionaryIterableFactoryImpl());
 
         if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
             context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
