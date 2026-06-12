@@ -188,6 +188,9 @@ public class ExtraProperties {
 
     public static final String FACE_AGE_LABELS = "faceAge:labels";
 
+    public static final String SUMMARY = "ai:summary";
+    public static final String CHUNK_IDS = "ai:chunkIds";
+
     public static final String HASHDB_PREFIX = "hashDb:";
     public static final String STATUS_PROPERTY = "status";
     public static final String SET_PROPERTY = "set";
