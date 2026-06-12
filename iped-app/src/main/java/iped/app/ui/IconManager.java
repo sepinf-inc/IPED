@@ -341,6 +341,13 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-chat-preview-telegram", icon);
         }
 
+        icon = availableIconsMap.get("zoom");
+        if (icon != null) {
+            mimeIconMap.put("application/x-zoom-dpapi-ini", icon);
+            mimeIconMap.put("application/x-zoom-meeting", icon);
+            mimeIconMap.put("message/x-zoom-message", icon);
+        }
+
         icon = availableIconsMap.get("apple-config");
         if (icon != null) {
             mimeIconMap.put("application/x-plist-itunes", icon);
