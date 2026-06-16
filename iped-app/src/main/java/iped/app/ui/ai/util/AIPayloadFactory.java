@@ -2,7 +2,9 @@ package iped.app.ui.ai.util;
 
 import iped.app.ui.ai.model.ContextFileEntry;
 import iped.app.ui.ai.backend.AIInitMultiChatRequest;
+import iped.app.ui.ai.backend.AIInitMultiChatFullRequest;
 import iped.app.ui.ai.backend.AIInitMultiChatRequest.SummarizedChat;
+import iped.app.ui.ai.util.AIWhatsappChatExtractor;
 import iped.data.IItem;
 import iped.properties.ExtraProperties;
 
@@ -92,6 +94,46 @@ public class AIPayloadFactory {
 
         // Return the final wrapper DTO
         return new AIInitMultiChatRequest(summarizedChats);
+    }
+
+    /**
+     * Builds a payload for the Full Multi-Chat initialization endpoint.
+     * This bypasses summaries entirely and extracts the raw HTML from the IPED items.
+     *
+     * @param contextEntries The valid files currently in the AI context.
+     * @return A populated request object containing a list of raw HTML strings.
+     * @throws IllegalArgumentException if no valid HTML content could be extracted.
+     */
+    public static AIInitMultiChatFullRequest buildMultiChatFullRequest(List<ContextFileEntry> contextEntries) {
+        List<String> rawHtmlContents = new ArrayList<>();
+        
+        AIWhatsappChatExtractor extractor = new AIWhatsappChatExtractor();
+
+        for (ContextFileEntry entry : contextEntries) {
+            // Skip files that failed baseline validation
+            if (!entry.isValidForContext()) {
+                continue;
+            }
+
+            try {
+                // Pull the raw HTML from the IPED IItem
+                String rawHtml = extractor.extractHtml(entry.getItem());
+                
+                if (rawHtml != null && !rawHtml.trim().isEmpty()) {
+                    rawHtmlContents.add(rawHtml);
+                } else {
+                    System.err.println("Warning: Extracted HTML was empty for item ID " + entry.getItem().getId());
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to extract HTML for item ID " + entry.getItem().getId() + ": " + e.getMessage());
+            }
+        }
+
+        if (rawHtmlContents.isEmpty()) {
+            throw new IllegalArgumentException("No valid HTML content was extracted for the full multi-chat analysis.");
+        }
+
+        return new AIInitMultiChatFullRequest(rawHtmlContents);
     }
 
     /**
