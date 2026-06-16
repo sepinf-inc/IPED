@@ -3,6 +3,7 @@ package iped.app.ui.ai;
 import iped.app.ui.ai.backend.AIBackendService;
 import iped.app.ui.ai.backend.AIInitMultiChatRequest;
 import iped.app.ui.ai.backend.AIStreamChatRequest;
+import iped.app.ui.ai.backend.AIInitMultiChatFullRequest;
 import iped.app.ui.ai.util.AIWhatsappChatExtractor;
 import iped.app.ui.ai.util.AIPayloadFactory;
 import iped.app.ui.ai.util.ConversationPersistence;
@@ -27,6 +28,8 @@ import java.util.stream.Collectors;
  * </p>
  */
 public class AIChatCoordinator {
+
+    private static final int MAX_FULL_CHAT_FILES = 5;
 
     private final AIBackendService backendService;
     private final AIWhatsappChatExtractor extractor;
@@ -99,8 +102,13 @@ public class AIChatCoordinator {
                         String html = extractor.extractHtml(item);
                         String hash = backendService.initChat(html);
                         currentChatHashes.add(hash);
+                    } else if (validEntries.size() <= MAX_FULL_CHAT_FILES) {
+                        // Multi chat full (raw HTML - fewer than 6 chats)
+                        AIInitMultiChatFullRequest request = AIPayloadFactory.buildMultiChatFullRequest(validEntries);
+                        List<String> hashes = backendService.initMultiChatFull(request);
+                        currentChatHashes.addAll(hashes);
                     } else {
-                        // Multi chat
+                        // Normal Multi chat (summarized, 6 or more chats)
                         AIInitMultiChatRequest request = AIPayloadFactory.buildMultiChatRequest(validEntries);
                         List<String> hashes = backendService.initMultiChat(request);
                         currentChatHashes.addAll(hashes);
@@ -136,10 +144,20 @@ public class AIChatCoordinator {
                     });
                 } else if (currentChatHashes.size() > 1) {
                     // Multi chat stream
-                    backendService.streamMultiChatResponse(currentChatHashes, question, chatHistory, token -> {
-                        uiCallback.accept(token);
-                        fullResponse.append(token);
-                    });
+                    // Check context size to route to the correct endpoint)
+                    if (validEntries.size() <= MAX_FULL_CHAT_FILES) {
+                        // Multi chat full stream
+                        backendService.streamMultiChatFullResponse(currentChatHashes, question, chatHistory, token -> {
+                            uiCallback.accept(token);
+                            fullResponse.append(token);
+                        });
+                    } else {
+                        // Multi chat summarized stream
+                        backendService.streamMultiChatResponse(currentChatHashes, question, chatHistory, token -> {
+                            uiCallback.accept(token);
+                            fullResponse.append(token);
+                        });
+                    }
                 } else {
                     throw new IllegalStateException("Cannot stream response: No active chat hashes found.");
                 }
