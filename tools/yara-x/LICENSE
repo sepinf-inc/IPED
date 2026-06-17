@@ -1,0 +1,7 @@
+PLACEHOLDER — populated at release-build time with the LICENSE file from
+https://github.com/VirusTotal/yara-x (BSD 3-clause).
+
+This file MUST be replaced with the actual upstream YARA-X license text before
+the native binaries (`win64/yara_x_capi.dll`, `linux64/libyara_x_capi.so`)
+are shipped. See `licenses/YARA-X.txt` for the canonical copy used by IPED's
+third-party license aggregation.

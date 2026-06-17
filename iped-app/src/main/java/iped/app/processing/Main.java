@@ -38,6 +38,8 @@ import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.YaraConfig;
 import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
 import iped.engine.preview.PreviewRepositoryManager;
@@ -177,6 +179,21 @@ public class Main {
 
     protected void startManager() {
         try {
+            if (cmdLineParams.isYaraOnly()) {
+                // --yara-only goes through the normal Manager flow (DataSourceReader →
+                // pipeline → IndexTask). The CLI parser already enforced that -d is
+                // present and the case folder exists; isContinue() now also returns
+                // true for yara-only mode so SkipCommitedTask loads the committed
+                // trackIDs, and IndexTask switches to updateDocuments for those items.
+                YaraConfig yaraConfig = ConfigurationManager.get().findObject(YaraConfig.class);
+                if (yaraConfig == null || !yaraConfig.isEnabled()) {
+                    throw new IPEDException(
+                            "--yara-only requires enableYara=true in IPEDConfig.txt (or in the chosen -profile). "
+                                    + "Otherwise YaraScanTask would not run and updateDocuments would wipe the existing yara:* fields.");
+                }
+                LOGGER.info("--yara-only mode: refreshing YARA matches over case at {}", output.getParentFile().getAbsolutePath());
+            }
+
             manager = new Manager(dataSource, output, keywords);
             cmdLineParams.saveIntoCaseData(manager.getCaseData());
             manager.process();

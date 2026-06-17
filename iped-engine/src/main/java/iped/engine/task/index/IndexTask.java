@@ -15,6 +15,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.Term;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -102,7 +103,10 @@ public class IndexTask extends AbstractTask {
             return;
         }
 
-        if (SkipCommitedTask.isAlreadyCommited(evidence)) {
+        boolean isCommitted = SkipCommitedTask.isAlreadyCommited(evidence);
+        CmdLineArgs cmdArgs = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        boolean yaraOnly = cmdArgs != null && cmdArgs.isYaraOnly();
+        if (isCommitted && !yaraOnly) {
             evidence.setToIgnore(true);
             return;
         }
@@ -146,7 +150,16 @@ public class IndexTask extends AbstractTask {
         FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
                 indexConfig.getTextOverlapSize());
         try {
-            worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader));
+            if (isCommitted && yaraOnly) {
+                // Replace the existing docs (parent + content fragments) sharing this
+                // trackID. updateDocuments(Term, Iterable) deletes all matching docs
+                // atomically and adds the new block — which is exactly the semantics we
+                // need to refresh yara:* fields without leaving stale yara matches behind.
+                Term trackIdTerm = new Term(IndexItem.TRACK_ID, Util.getTrackID(evidence));
+                worker.writer.updateDocuments(trackIdTerm, new DocumentsIterable(evidence, fragReader));
+            } else {
+                worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader));
+            }
 
         } catch (IOException e) {
             if (IOUtil.isDiskFull(e))
