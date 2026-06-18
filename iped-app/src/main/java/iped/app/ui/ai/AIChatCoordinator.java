@@ -169,8 +169,15 @@ public class AIChatCoordinator {
                 chatHistory.add(new AIStreamChatRequest.AIMessage("assistant", fullResponse.toString()));
 
             } catch (Exception e) {
+                String errorMessage = e.getMessage(); 
                 onError.accept("Backend error: " + e.getMessage());
 
+                // If the backend restarted and its cache was wiped, it will throw a "not found" error.
+                // Clear the hashes to force the next attempt to re-upload the HTM
+                if (errorMessage != null && (errorMessage.toLowerCase().contains("nao encontrado") || errorMessage.toLowerCase().contains("não encontrado"))) {
+                    currentChatHashes.clear();
+                }
+                
                 // Only invalidate cache if initialization itself failed
                 // If error happened during streaming, preserve the hashes so the user can retry
                 if (!initializationCompleted) {
