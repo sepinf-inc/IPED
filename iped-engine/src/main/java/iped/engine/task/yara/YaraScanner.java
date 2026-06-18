@@ -28,8 +28,8 @@ import com.sun.jna.ptr.PointerByReference;
  * <p>For each matching rule the collector iterates patterns ({@code yrx_rule_iter_patterns})
  * and within each pattern iterates matches ({@code yrx_pattern_iter_matches}),
  * slicing bytes from the current scan buffer and encoding them as lowercase hex
- * (cap configurable via {@code matchHexMaxBytes}). These bytes feed both the
- * {@code yara:matches} JSON and the text-viewer highlight in the UI (FR-008a).</p>
+ * (cap configurable via {@code matchHexMaxBytes}). These bytes populate the per-rule
+ * {@code yara:match:<namespace>/<name>} facet and the text-viewer highlight in the UI (FR-008a).</p>
  */
 public final class YaraScanner implements AutoCloseable {
 

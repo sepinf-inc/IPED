@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Helpers that convert the raw bytes captured by a {@link MatchedString} (stored
- * lowercase-hex inside {@code yara:matches} JSON) into the human-friendly form
+ * as lowercase hex) into the human-friendly form
  * that feeds two surfaces in the IPED UI:
  *
  * <ul>

@@ -419,7 +419,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             // IndexTask then updates the existing documents in place. The flag implies
             // --continue (SkipCommitedTask must load committed trackIDs so IndexTask
             // knows which docs to update vs add) and rejects flags that conflict with
-            // that semantics. See specs/001-yara-rules-engine/contracts/cli-yara-only.contract.md.
+            // that semantics.
             if (datasources == null || datasources.isEmpty()) {
                 throw new ParameterException(
                         "--yara-only requires -d/-data pointing at the original datasource(s) so item content can be re-read.");

@@ -13,8 +13,7 @@ import iped.utils.UTF8Properties;
  * and exposes operational parameters (rule directories, size/timeout limits,
  * scan behaviour).
  *
- * <p>The full file schema is documented in
- * {@code specs/001-yara-rules-engine/contracts/YaraConfig.txt.contract.md}.</p>
+ * <p>The full file schema is documented inline in {@code conf/YaraConfig.txt}.</p>
  *
  * @see iped.engine.config.AbstractTaskPropertiesConfig
  */

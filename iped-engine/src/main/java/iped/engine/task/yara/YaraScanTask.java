@@ -1,6 +1,5 @@
 package iped.engine.task.yara;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -120,7 +119,12 @@ public class YaraScanTask extends AbstractTask {
                 logger.warn("YaraScanTask: failed to create per-worker scanner — task disabled for this worker");
                 return;
             }
-            timeoutSeconds = Math.max(0, config.getPerItemTimeoutMs() / 1000);
+            // Ceil ms->s: the config accepts perItemTimeoutMs >= 100, but the YARA-X
+            // C API only supports whole-second granularity. Plain integer division
+            // would truncate any sub-second value to 0 (= no timeout), so round up to
+            // keep at least a 1 s limit.
+            int timeoutMs = config.getPerItemTimeoutMs();
+            timeoutSeconds = (timeoutMs <= 0) ? 0 : Math.max(1, (timeoutMs + 999) / 1000);
         }
     }
 
@@ -179,15 +183,26 @@ public class YaraScanTask extends AbstractTask {
         if (!isItemEligible(evidence)) {
             return;
         }
+        long maxBytes = config.getMaxFileSizeBytes();
         Long lengthBoxed = evidence.getLength();
         long length = (lengthBoxed == null) ? 0L : lengthBoxed;
-        if (length > config.getMaxFileSizeBytes()) {
+        if (length > maxBytes) {
             itemsSkippedSize.incrementAndGet();
             return;
         }
-        byte[] buffer = readItemContent(evidence, (int) length);
+        // Read with a hard cap regardless of the declared length: getLength() can be
+        // unknown (null/0) or wrong for some streams -- and is not consulted at all
+        // when scanAllItems=true -- so relying on it alone would let the read pull an
+        // arbitrarily large item into memory and silently bypass maxFileSizeBytes.
+        byte[] buffer = readItemContent(evidence, maxBytes);
         if (buffer == null) {
             itemsSkippedNoStream.incrementAndGet();
+            return;
+        }
+        if (buffer.length > maxBytes) {
+            // Stream turned out larger than maxFileSizeBytes (declared length was
+            // unknown/too small) -- skip as oversize instead of scanning a truncation.
+            itemsSkippedSize.incrementAndGet();
             return;
         }
 
@@ -230,24 +245,22 @@ public class YaraScanTask extends AbstractTask {
         return evidence.getMediaType() != null;
     }
 
+    /** Largest byte[] the JVM can reliably allocate (mirrors JDK internal headroom). */
+    private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
+
     /**
-     * Reads the full item content up to {@code length} bytes. Returns {@code null} if
-     * the stream could not be opened or an I/O failure occurred.
+     * Reads item content up to {@code maxBytes} plus one sentinel byte, so the caller
+     * can detect that the stream exceeded the cap without ever buffering more than
+     * {@code maxBytes + 1} in memory. Returns {@code null} if the stream could not be
+     * opened or an I/O failure occurred.
      */
-    private byte[] readItemContent(IItem evidence, int length) {
+    private byte[] readItemContent(IItem evidence, long maxBytes) {
         try (InputStream in = evidence.getBufferedInputStream()) {
             if (in == null) {
                 return null;
             }
-            // The length supplied by the caller has already passed the maxFileSizeBytes check,
-            // so readAllBytes is safe here.
-            byte[] bytes;
-            if (in instanceof BufferedInputStream) {
-                bytes = in.readAllBytes();
-            } else {
-                bytes = in.readAllBytes();
-            }
-            return bytes;
+            long cap = Math.min(maxBytes + 1, (long) MAX_ARRAY_LENGTH);
+            return in.readNBytes((int) cap);
         } catch (IOException e) {
             logger.debug("YaraScanTask: I/O error reading item {}: {}", evidence.getId(), e.getMessage());
             return null;
@@ -255,8 +268,8 @@ public class YaraScanTask extends AbstractTask {
     }
 
     /**
-     * Populates the YARA fields on the item. Deterministic ordering
-     * (Constitution Principle IV): tags in a {@link LinkedHashSet} that
+     * Populates the YARA fields on the item. Deterministic ordering: tags in a
+     * {@link LinkedHashSet} that
      * preserves union insertion order; per-rule match values collected in a
      * {@link LinkedHashSet} (dedup while preserving encounter order) then
      * written sorted lexicographically so the {@link iped.engine.task.index.IndexItem}

@@ -65,9 +65,8 @@ public interface CmdLineArgs {
     /**
      * Quando {@code true}, o IPED roda apenas o pipeline YARA-X sobre um caso
      * já processado (sem ingerir nova evidência), atualizando os campos
-     * {@code yara:rule}/{@code yara:tag}/{@code yara:matches} no índice
-     * Lucene existente. Ver {@code specs/001-yara-rules-engine/research.md}
-     * §R-08 e {@code contracts/cli-yara-only.contract.md}.
+     * {@code yara:tag} e {@code yara:match:<namespace>/<name>} no índice
+     * Lucene existente.
      *
      * <p>Default {@code false} (modo padrão de processamento). O método é
      * {@code default} para preservar compatibilidade com implementações

@@ -37,8 +37,8 @@ import iped.utils.UTF8Properties;
  * Integration test of the full {@link YaraScanTask} pipeline against the real
  * {@code libyara-x-capi}. Loads a small rule catalog from a temp directory,
  * compiles via {@link YaraEngine}, and runs the task's {@link YaraScanTask#process}
- * on in-memory {@link Item}s to verify that {@code yara:rule}, {@code yara:tag}
- * and {@code yara:matches} are populated correctly (FR-001 / FR-003 / FR-004 /
+ * on in-memory {@link Item}s to verify that the {@code yara:tag} and per-rule
+ * {@code yara:match:<namespace>/<name>} fields are populated correctly (FR-001 / FR-003 / FR-004 /
  * FR-005 / FR-006 / FR-012).
  *
  * <p>Skipped via {@link org.junit.Assume} when {@code libyara-x-capi} is not

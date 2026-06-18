@@ -7,14 +7,13 @@
 # To enable the feature, set "enableYara = true" in IPEDConfig.txt
 # (or in the profile's IPEDConfig.txt).
 #
-# Full schema for this file:
-#   specs/001-yara-rules-engine/contracts/YaraConfig.txt.contract.md
+# Each option below is documented inline.
 ########################################################################
 
 # Directories containing YARA rules in source format (.yar, .yara) — YARA-X
 # compiles the catalog at runtime during case startup. Pre-compiled formats
 # (.yarc from classic YARA or YARA-X's own serialization) are NOT accepted
-# in v1; see specs/001-yara-rules-engine/research.md §R-01.
+# in v1.
 #
 # Multiple paths can be separated by ";" (Windows) or ":" (Linux).
 # When empty, the feature is effectively disabled for the case.

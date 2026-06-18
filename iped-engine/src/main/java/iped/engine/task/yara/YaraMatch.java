@@ -10,10 +10,7 @@ import java.util.Objects;
 /**
  * Result of applying a single YARA rule to an item.
  *
- * <p>Immutable after construction; collections are defensively copied. See
- * {@code specs/001-yara-rules-engine/data-model.md} for the full data model and
- * {@code specs/001-yara-rules-engine/contracts/lucene-fields.contract.md} for the
- * JSON format used during persistence.</p>
+ * <p>Immutable after construction; collections are defensively copied.</p>
  */
 public final class YaraMatch {
 
@@ -45,7 +42,7 @@ public final class YaraMatch {
         return name;
     }
 
-    /** Full identifier {@code "namespace/name"}, used as the key in the Lucene {@code yara:rule} field. */
+    /** Full identifier {@code "namespace/name"}, used as the key in the {@code yara:match:<namespace>/<name>} field. */
     public String getIdentifier() {
         return namespace + "/" + name;
     }

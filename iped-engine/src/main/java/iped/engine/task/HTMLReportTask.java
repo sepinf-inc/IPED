@@ -727,8 +727,8 @@ public class HTMLReportTask extends AbstractTask {
                 fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemHash"), reg.hash);
 
             // Fill extra properties (per-rule yara:match:* fields render as ordinary
-            // multi-valued metadata; the legacy yara:matches JSON block was removed
-            // in rev-5 along with the yara:matches field itself — see research.md R-05).
+            // multi-valued metadata; the legacy yara:matches JSON block was removed as
+            // redundant with the per-rule fields).
             for (String property : selectedProperties) {
                 if (!basicReportProps.contains(property)) {
                     String propertyValue = ipedCase.getItemProperty(reg.evidenceId, property);
@@ -844,8 +844,6 @@ public class HTMLReportTask extends AbstractTask {
             replaceFirst(it, PROP_VALUE_PLACEHOLDER, propertyValue);
         }
     }
-
-    // YARA match rendering moved to iped.engine.task.yara.YaraReportRenderer (testable in isolation).
 
     private String getComments(String bookmark) {
         String comments = labelcomments.get(bookmark);

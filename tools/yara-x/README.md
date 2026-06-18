@@ -2,9 +2,7 @@
 
 This directory ships the **YARA-X 1.x** runtime (`libyara-x-capi`) that the
 `YaraScanTask` consumes via JNA. YARA-X is the official Rust rewrite of YARA by
-Victor M. Alvarez and is the successor of the classic libyara — IPED migrated
-to YARA-X on 2026-05-19 (see `specs/001-yara-rules-engine/research.md` §R-01
-for the rationale).
+Victor M. Alvarez and is the successor of the classic libyara.
 
 ## Layout
 
@@ -16,7 +14,7 @@ tools/yara-x/
 │   ├── yara_x_capi.dll        (21,542,400 bytes — YARA-X 1.16.0, MSVC x86_64)
 │   └── yara_x.h               (39,444 bytes — C header, kept for reference)
 └── linux64/
-    └── (empty — see "Linux build" section below)
+    └── libyara_x_capi.so      (31,940,896 bytes — YARA-X 1.16.0, built from source)
 ```
 
 The Java side loads the library via `Native.load("yara_x_capi", LibYaraX.class)`
@@ -56,8 +54,10 @@ superfície consumida pelo `YaraEngine.java`.
 
 ## Como atualizar a versão do `libyara-x-capi`
 
-Diferente do YARA clássico, o upstream do YARA-X **publica binários
-self-contained pré-compilados** para Windows e Linux — sem build manual.
+Diferente do YARA clássico, o upstream do YARA-X publica um binário
+self-contained pré-compilado para **Windows** (MSVC). Para **Linux x86_64** o
+release 1.16.0 não traz prebuilt da C API, então a `.so` é compilada do fonte
+(ver a seção "Linux (x86_64)" abaixo).
 
 1. **Identifique a versão alvo** em https://github.com/VirusTotal/yara-x/releases.
    Procure os assets que começam com `libyara-x-capi-vX.Y.Z-...`.
@@ -134,7 +134,7 @@ mvn -pl iped-engine -Dtest='YaraEngineTest' -DfailIfNoTests=false test
 
 ## Por que YARA-X e não libyara clássica?
 
-Resumo (detalhe completo em `specs/001-yara-rules-engine/research.md` §R-01):
+Resumo:
 
 - O upstream do YARA clássico entrou em modo manutenção; novas features migraram
   para YARA-X.

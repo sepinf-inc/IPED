@@ -28,10 +28,9 @@ import com.sun.jna.ptr.PointerByReference;
  *
  * <p>YARA-X is the official Rust rewrite of YARA by Victor M. Alvarez (same
  * author as classic YARA). IPED migrated from classic libyara 4.x to YARA-X
- * on 2026-05-19 — see {@code specs/001-yara-rules-engine/research.md} §R-01.</p>
+ * on 2026-05-19 (Rust rewrite, successor of the classic libyara C library).</p>
  *
- * <p>Intentionally minimal surface (see
- * {@code specs/001-yara-rules-engine/research.md} → R-02):</p>
+ * <p>Intentionally minimal surface:</p>
  * <ul>
  *   <li>{@code yrx_compiler_create/destroy/ban_module/new_namespace/add_source_with_origin/errors_json/build}
  *       — catalog compilation;</li>
@@ -49,8 +48,8 @@ import com.sun.jna.ptr.PointerByReference;
  * done via {@code yrx_rule_iter_patterns} → {@code yrx_pattern_iter_matches}
  * in {@link YaraScanner}. Bytes are sliced from the current scan buffer and
  * encoded as lowercase hex, truncated at {@code YaraConfig.matchHexMaxBytes}
- * — feeds both the {@code yara:matches} JSON and the text-viewer highlight
- * (FR-008a, see {@code research.md} §R-05 and §R-02).</p>
+ * — feeds the per-rule {@code yara:match:*} facet and the text-viewer highlight
+ * (FR-008a).</p>
  */
 public final class YaraEngine implements AutoCloseable {
 
@@ -73,7 +72,7 @@ public final class YaraEngine implements AutoCloseable {
     public static final int YRX_NOT_SUPPORTED = 10;
 
     /**
-     * Identifier reported in {@code yara:matches.engineVersion}.
+     * Engine version identifier, surfaced in the catalog-compiled log line.
      *
      * <p>The YARA-X C API does not expose the version programmatically, so it is
      * hardcoded here to match exactly the {@code libyara-x-capi} binary bundled
