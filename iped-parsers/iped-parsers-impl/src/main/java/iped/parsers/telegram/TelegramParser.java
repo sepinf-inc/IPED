@@ -28,7 +28,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.Base64;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -434,7 +434,7 @@ public class TelegramParser extends SQLite3DBParser {
 
         if (nl.getLength() > 0) {
             Element e = (Element) nl.item(0);
-            byte[] b = DatatypeConverter.parseBase64Binary(e.getTextContent());
+            byte[] b = Base64.getMimeDecoder().decode(e.getTextContent());
             Contact user = Contact.getContactFromBytes(b, d);
             return user;
         }

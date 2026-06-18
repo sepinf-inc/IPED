@@ -5,7 +5,6 @@ import java.util.Date;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartsPanel;
-import scala.Array;
 
 /*
  * Represent a cache timeperiod entry on cache persistance
@@ -105,8 +104,8 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
         if (docids != null) {
             pos = (int) eventOrds.rangeCardinality(0, ord);
             RoaringBitmap[] ldocids = new RoaringBitmap[docids.length + 1];
-            Array.copy(docids, 0, ldocids, 0, pos);
-            Array.copy(docids, pos, ldocids, pos + 1, docids.length - pos);
+            System.arraycopy(docids, 0, ldocids, 0, pos);
+            System.arraycopy(docids, pos, ldocids, pos + 1, docids.length - pos);
             docids = ldocids;
         } else {
             docids = new RoaringBitmap[1];
@@ -126,8 +125,8 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
             pos = (int) eventOrds.rangeCardinality(0, ord);
             if (pos >= docids.length) {
                 RoaringBitmap[] ldocids = new RoaringBitmap[docids.length + 1];
-                Array.copy(docids, 0, ldocids, 0, pos);
-                Array.copy(docids, pos, ldocids, pos + 1, docids.length - pos);
+                System.arraycopy(docids, 0, ldocids, 0, pos);
+                System.arraycopy(docids, pos, ldocids, pos + 1, docids.length - pos);
                 docids = ldocids;
             }
         } else {

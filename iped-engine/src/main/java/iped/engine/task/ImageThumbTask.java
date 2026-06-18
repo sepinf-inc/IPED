@@ -272,6 +272,7 @@ public class ImageThumbTask extends ThumbTask {
             stats.incTimeouts();
             evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
             logger.warn("Timeout creating thumb: " + evidence); //$NON-NLS-1$
+            logger.debug("Timeout creating thumb: " + evidence, e); 
         }
 
     }
