@@ -125,7 +125,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = "--downloadInternetData", description = "download Internet data to enrich evidence data processing. E.g. media files still available in WhatsApp servers and not found in the evidence")
     private boolean downloadInternetData;
 
-    @Parameter(names = "--yara-only", description = "rerun the pipeline over an already processed case to refresh YARA-X matches in the existing Lucene index. Requires -d (the original datasource(s) so item content can be re-read) and -o (the case output dir). Implies --continue: committed items keep flowing through the pipeline so their full doc is rebuilt, and IndexTask updates them in place. Incompatible with --append/--restart/-remove/explicit --continue.")
+    @Parameter(names = "--yara-only", description = "[EXPERIMENTAL] rerun the pipeline over an already processed case to refresh YARA-X matches in the existing Lucene index. Requires -d (the original datasource(s) so item content can be re-read) and -o (the case output dir). Implies --continue: committed items keep flowing through the pipeline so their full doc is rebuilt, and IndexTask updates them in place. Incompatible with --append/--restart/-remove/explicit --continue. Known limitation: re-indexing may leave stale text fragments and can reassign leaf-item ids; prefer a full reprocess for production cases.")
     private boolean yaraOnly;
     
     @Parameter(names = { "-splash" }, description = "custom message to be shown in the splash screen")

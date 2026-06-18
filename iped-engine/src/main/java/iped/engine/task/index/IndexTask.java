@@ -151,10 +151,17 @@ public class IndexTask extends AbstractTask {
                 indexConfig.getTextOverlapSize());
         try {
             if (isCommitted && yaraOnly) {
-                // Replace the existing docs (parent + content fragments) sharing this
-                // trackID. updateDocuments(Term, Iterable) deletes all matching docs
-                // atomically and adds the new block — which is exactly the semantics we
-                // need to refresh yara:* fields without leaving stale yara matches behind.
+                // --yara-only re-index (EXPERIMENTAL): refresh an already-committed item's
+                // yara:* fields. updateDocuments(Term, Iterable) deletes the docs matching
+                // the trackId and atomically adds the new block.
+                //
+                // KNOWN LIMITATION: only the parent (metadata) doc carries trackId; the
+                // content-fragment docs carry fragParentId but NOT trackId, so they are
+                // NOT removed here -- re-running --yara-only can leave stale content
+                // fragments behind. Leaf items are also re-assigned a new id on reprocess
+                // (SkipCommitedTask only restores ids for containers/dirs/roots/split-text
+                // items), which can change the parent id. Treat --yara-only as experimental
+                // until the re-index path is hardened.
                 Term trackIdTerm = new Term(IndexItem.TRACK_ID, Util.getTrackID(evidence));
                 worker.writer.updateDocuments(trackIdTerm, new DocumentsIterable(evidence, fragReader));
             } else {
