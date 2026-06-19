@@ -40,6 +40,8 @@ import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.YaraConfig;
+import iped.engine.task.yara.YaraEngine;
+import iped.engine.task.yara.YaraRulesetLoader;
 import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
 import iped.engine.preview.PreviewRepositoryManager;
@@ -190,6 +192,22 @@ public class Main {
                     throw new IPEDException(
                             "--yara-only requires enableYara=true in IPEDConfig.txt (or in the chosen -profile). "
                                     + "Otherwise YaraScanTask would not run and updateDocuments would wipe the existing yara:* fields.");
+                }
+                // Fail fast if the YARA engine would not actually run: enableYara=true alone is
+                // not enough (the native lib may be unavailable, the catalog empty, or no
+                // .yar/.yara files found). In any of those cases YaraScanTask stays disabled and
+                // the re-index below would strip the previously stored yara:* fields.
+                if (yaraConfig.getRuleDirectories().isEmpty()) {
+                    throw new IPEDException(
+                            "--yara-only: no ruleDirectories configured in conf/YaraConfig.txt — aborting to avoid wiping existing yara:* fields.");
+                }
+                if (YaraRulesetLoader.discover(yaraConfig.getRuleDirectories()).isEmpty()) {
+                    throw new IPEDException("--yara-only: no .yar/.yara rule files found under "
+                            + yaraConfig.getRuleDirectories() + " — aborting to avoid wiping existing yara:* fields.");
+                }
+                if (!YaraEngine.ensureAvailable(yaraConfig.getEngineLibraryHint())) {
+                    throw new IPEDException(
+                            "--yara-only: libyara-x-capi could not be loaded — aborting to avoid wiping existing yara:* fields.");
                 }
                 LOGGER.info("--yara-only mode: refreshing YARA matches over case at {}", output.getParentFile().getAbsolutePath());
             }
