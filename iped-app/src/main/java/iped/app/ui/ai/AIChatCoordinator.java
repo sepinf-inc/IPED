@@ -231,7 +231,7 @@ public class AIChatCoordinator {
     /**
      * Calculates the total number of chunks across a list of chat files.
      */
-    private int calculateTotalChunks(List<ContextFileEntry> entries) {
+    public static int calculateTotalChunks(List<ContextFileEntry> entries) {
         int total = 0;
         for (ContextFileEntry entry : entries) {
             IItem item = entry.getItem();
