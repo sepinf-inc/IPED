@@ -48,4 +48,24 @@ public interface AIBackendService {
      * @throws AIBackendException if the streaming connection fails or returns an error token
      */
     void streamMultiChatResponse(List<String> chatHashes, String question, List<AIStreamChatRequest.AIMessage> history, Consumer<String> eventHandler) throws AIBackendException;
+
+    // --- MULTI-CHAT-FULL ENDPOINTS ---
+
+    /**
+     * Initializes a full multi-chat session by sending raw HTML contents.
+     * @param request The initialization payload containing a list of raw HTML strings.
+     * @return A list of successfully generated MD5 chat hashes.
+     * @throws AIBackendException if the server rejects the HTML or is unreachable.
+     */
+    List<String> initMultiChatFull(AIInitMultiChatFullRequest request) throws AIBackendException;
+
+    /**
+     * Streams the response for a full multi-chat session using Server-Sent Events.
+     * @param chatHashes   The list of session hashes returned by initMultiChatFull.
+     * @param question     The user's prompt.
+     * @param history      The chat history providing multi-turn conversational memory.
+     * @param eventHandler Callback triggered for every SSE token received.
+     * @throws AIBackendException if the streaming connection fails.
+     */
+    void streamMultiChatFullResponse(List<String> chatHashes, String question, List<AIStreamChatRequest.AIMessage> history, Consumer<String> eventHandler) throws AIBackendException;
 }

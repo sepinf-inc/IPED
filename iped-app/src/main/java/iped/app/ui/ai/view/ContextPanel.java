@@ -39,6 +39,7 @@ public class ContextPanel extends JPanel {
     private DefaultListModel<Object> contextListModel;
     private JLabel contextTitleLabel;
     private JLabel contextEmptyLabel;
+    private JLabel chatModeLabel;
     private JButton clearContextButton;
 
     private final ContextListener listener;
@@ -85,9 +86,19 @@ public class ContextPanel extends JPanel {
         setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), ""),
             BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+
+        JPanel topPanel = new JPanel(new BorderLayout());
         contextTitleLabel = new JLabel("Added Context (0 files)");
         contextTitleLabel.setFont(contextTitleLabel.getFont().deriveFont(Font.BOLD));
-        add(contextTitleLabel, BorderLayout.NORTH);
+        topPanel.add(contextTitleLabel, BorderLayout.WEST);
+
+        chatModeLabel = new JLabel("Modo Chat Resumido ativo");
+        chatModeLabel.setForeground(new Color(200, 100, 0));
+        chatModeLabel.setFont(chatModeLabel.getFont().deriveFont(Font.BOLD, 10f));
+        chatModeLabel.setVisible(false);
+        topPanel.add(chatModeLabel, BorderLayout.EAST);
+
+        add(topPanel, BorderLayout.NORTH);
     }
 
     private void initComponents() {
@@ -126,6 +137,12 @@ public class ContextPanel extends JPanel {
 
         add(listContainer, BorderLayout.CENTER);
         add(actionPanel, BorderLayout.EAST);
+    }
+
+    public void setSummarizedMode(boolean summarized) {
+        if (chatModeLabel != null) {
+            chatModeLabel.setVisible(summarized);
+        }
     }
 
     /**

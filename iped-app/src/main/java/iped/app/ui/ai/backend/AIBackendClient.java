@@ -1,6 +1,7 @@
 package iped.app.ui.ai.backend;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -37,7 +38,7 @@ public class AIBackendClient implements AIBackendService {
 
     private static final String THINKING_BLOCK_PREFIX = "[[AI_THINKING]]";
     private static final String THINKING_BLOCK_SUFFIX = "[[/AI_THINKING]]";
-    
+
     private final AIBackendConfig config;
     private final HttpClient httpClient;
     private final Gson gson;
@@ -149,71 +150,13 @@ public class AIBackendClient implements AIBackendService {
 
             // response as an InputStream so we can process data as it arrives.
             HttpResponse<java.io.InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-            
+
             if (response.statusCode() != 200) {
                 throw new AIBackendException("Backend returned HTTP " + response.statusCode());
             }
 
-            // Process the Server-Sent Events (SSE) stream
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
-                String line;
-
-                // Add a flag to track the first final token
-                boolean isFirstFinalToken = true;
-                boolean isThinkingBlockOpen = false;
-                
-                // Blocks here until a new line arrives over the network, then processes it
-                while ((line = reader.readLine()) != null) {
-                    // SSE protocol dictates data lines begin with "data: "
-                    if (line.startsWith("data: ")) {
-                        String jsonData = line.substring(6).trim(); // Strips the "data: "
-                        
-                        // Ignore keep-alive pings or the final closure signal
-                        if (jsonData.isEmpty() || jsonData.equals("[DONE]")) continue;
-
-                        // Parse the JSON, figure what type of message it is
-                        JsonObject eventObj = JsonParser.parseString(jsonData).getAsJsonObject();
-                        String type = eventObj.has("type") ? eventObj.get("type").getAsString() : "";
-                        
-                        // Handle thinking_done which has no content field
-                        if (type.equals("thinking_done")) {
-                            if (isThinkingBlockOpen) {
-                                eventHandler.accept(THINKING_BLOCK_SUFFIX + "\n");
-                                isThinkingBlockOpen = false;
-                            }
-                            continue;
-                        }
-                        
-                        // Isolate the actual content for other event types
-                        if (eventObj.has("content")) {
-                            String content = eventObj.get("content").getAsString();
-                            
-                            if (type.equals("status")) {
-                                // Format metadata in italics for the UI, with explicit 'status' indication
-                                eventHandler.accept("\n_**[Status]:** " + content + "_\n");
-                            } else if (type.equals("thinking")) {
-                                if (!isThinkingBlockOpen) {
-                                    // Emit a dedicated block marker to avoid markdown parsing conflicts
-                                    eventHandler.accept("\n" + THINKING_BLOCK_PREFIX);
-                                    isThinkingBlockOpen = true;
-                                }
-
-                                eventHandler.accept(content);
-                            } else if (type.equals("final")) {
-                                // Check the flag before appending
-                                if (isFirstFinalToken) {
-                                    eventHandler.accept("\n**[FINAL ANSWER]:**\n" + content);
-                                    isFirstFinalToken = false;
-                                } else {
-                                    eventHandler.accept(content);
-                                }
-                            } else if (type.equals("error")) {
-                                throw new AIBackendException("Backend Streaming Error: " + content);
-                            }
-                        }
-                    }
-                }
-            }
+            // Process the Server-Sent Events (SSE) stream using helper method
+            processSseStream(response, eventHandler);
 
         } catch (Exception e) {
             throw new AIBackendException("Failed to stream chat response: " + e.getMessage(), e);
@@ -294,68 +237,194 @@ public class AIBackendClient implements AIBackendService {
                     .build();
 
             HttpResponse<java.io.InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-            
+
             if (response.statusCode() != 200) {
                 throw new AIBackendException("Backend returned HTTP " + response.statusCode());
             }
-            
-            // The SSE parsing logic is identical to the single-chat stream
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
-                String line;
 
-                // Add a flag to track the first final token
-                boolean isFirstFinalToken = true;
-                boolean isThinkingBlockOpen = false;
+            // Process the Server-Sent Events (SSE) stream using the helper method
+            processSseStream(response, eventHandler);
 
-                while ((line = reader.readLine()) != null) {
-                    if (line.startsWith("data: ")) {
-                        String jsonData = line.substring(6).trim();
+        } catch (Exception e) {
+            throw new AIBackendException("Failed to stream multi-chat response: " + e.getMessage(), e);
+        }
+    }
 
-                        if (jsonData.isEmpty() || jsonData.equals("[DONE]")) continue;
+    /**
+     * Synchronously initializes a full multi-chat session using raw HTML content.
+     * <p>
+     * Unlike the summarized multi-chat flow, this endpoint sends complete chat
+     * contents to the backend. The backend processes each chat independently and
+     * returns an array containing either a generated hash or an error for each item.
+     * </p>
+     *
+     * @param requestPayload The full multi-chat initialization payload containing
+     *                       raw chat HTML content
+     * @return A list of chat hashes successfully initialized by the backend
+     * @throws AIBackendException if the request fails or no chats can be initialized
+     */
+    @Override
+    public List<String> initMultiChatFull(AIInitMultiChatFullRequest requestPayload) throws AIBackendException {
+        try {
+            String jsonBody = gson.toJson(requestPayload);
 
-                        JsonObject eventObj = JsonParser.parseString(jsonData).getAsJsonObject();
-                        String type = eventObj.has("type") ? eventObj.get("type").getAsString() : "";
-                        
-                        // Handle thinking_done which has no content field
-                        if (type.equals("thinking_done")) {
-                            if (isThinkingBlockOpen) {
-                                eventHandler.accept(THINKING_BLOCK_SUFFIX + "\n");
-                                isThinkingBlockOpen = false;
-                            }
-                            continue;
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(config.getBaseUrl() + "/api/init_multichat_full"))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .header("Accept", "application/json")
+                    .header("Authorization", "Bearer " + config.getApiKey())
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                throw new AIBackendException("Backend returned HTTP " + response.statusCode() + ": " + response.body());
+            }
+
+            JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
+            JsonArray responseArray = root.getAsJsonArray("response");
+
+            List<String> hashes = new ArrayList<>();
+
+            if (responseArray != null) {
+                for (JsonElement element : responseArray) {
+                    JsonObject item = element.getAsJsonObject();
+                    JsonElement responseVal = item.get("response");
+
+                    // The backend returns false if the content is not HTML.
+                    // We only want to collect valid MD5 hashes (which are returned as strings).
+                    if (responseVal != null && responseVal.isJsonPrimitive() && responseVal.getAsJsonPrimitive().isString()) {
+                        hashes.add(responseVal.getAsString());
+                    } else if (item.has("error")) {
+                        System.err.println("Backend rejected a chat during initMultiChatFull: " + item.get("error").getAsString());
+                    }
+                }
+            }
+
+            // Fail only if every chat was rejected
+            if (hashes.isEmpty()) {
+                throw new AIBackendException("Backend failed to initialize any full multi-chat hashes. Check if the HTML is valid.");
+            }
+
+            return hashes;
+
+        } catch (Exception e) {
+            throw new AIBackendException("Failed to initialize full multi-chat: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Streams a response for a full multi-chat session using Server-Sent Events (SSE).
+     * <p>
+     * The request payload is identical to the summarized multi-chat flow. The only
+     * difference is the backend endpoint, which operates on sessions initialized
+     * with raw HTML chat content.
+     * </p>
+     *
+     * @param chatHashes   Hashes returned during full multi-chat initialization
+     * @param question     User question
+     * @param history      Previous conversation messages
+     * @param eventHandler Callback that receives streamed content chunks
+     * @throws AIBackendException if the request or stream fails
+     */
+    @Override
+    public void streamMultiChatFullResponse(List<String> chatHashes, String question, List<AIStreamChatRequest.AIMessage> history, Consumer<String> eventHandler) throws AIBackendException {
+        try {
+            // Reuse the existing MultiChat DTO since the payload structure is identical
+            AIMultiChatStreamRequest payload = new AIMultiChatStreamRequest(chatHashes, question, history);
+            String jsonBody = gson.toJson(payload);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(config.getBaseUrl() + "/api/multichat_full/stream"))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .header("Accept", "application/json")
+                    .header("Authorization", "Bearer " + config.getApiKey())
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<java.io.InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+
+            if (response.statusCode() != 200) {
+                throw new AIBackendException("Backend returned HTTP " + response.statusCode());
+            }
+
+            // Process the Server-Sent Events (SSE) stream using the helper
+            processSseStream(response, eventHandler);
+
+        } catch (Exception e) {
+            throw new AIBackendException("Failed to stream full multi-chat response: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Helper method to parse Server-Sent Events (SSE) from the backend input stream
+     *
+     * @param response     The HTTP response containing the InputStream
+     * @param eventHandler Callback invoked for each streamed content chunk
+     * @throws Exception if parsing or reading the stream fails
+     */
+    private void processSseStream(HttpResponse<java.io.InputStream> response, Consumer<String> eventHandler) throws Exception {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
+            String line;
+
+            // Add a flag to track the first final token
+            boolean isFirstFinalToken = true;
+            boolean isThinkingBlockOpen = false;
+
+            // Blocks here until a new line arrives over the network, then processes it
+            while ((line = reader.readLine()) != null) {
+                // SSE protocol dictates data lines begin with "data: "
+                if (line.startsWith("data: ")) {
+                    String jsonData = line.substring(6).trim(); // Strips the "data: "
+
+                    // Ignore keep-alive pings or the final closure signal
+                    if (jsonData.isEmpty() || jsonData.equals("[DONE]")) {
+                        continue;
+                    }
+
+                    // Parse the JSON, figure what type of message it is
+                    JsonObject eventObj = JsonParser.parseString(jsonData).getAsJsonObject();
+                    String type = eventObj.has("type") ? eventObj.get("type").getAsString() : "";
+
+                    // Handle thinking_done which has no content field
+                    if (type.equals("thinking_done")) {
+                        if (isThinkingBlockOpen) {
+                            eventHandler.accept(THINKING_BLOCK_SUFFIX + "\n");
+                            isThinkingBlockOpen = false;
                         }
-                        
-                        if (eventObj.has("content")) {
-                            String content = eventObj.get("content").getAsString();
-                            
-                            if (type.equals("status")) {
-                                // Format metadata in italics for the UI, with explicit 'status' indication
-                                eventHandler.accept("\n_**[Status]:** " + content + "_\n");
-                            } else if (type.equals("thinking")) {
-                                if (!isThinkingBlockOpen) {
-                                    // Emit a dedicated block marker to avoid markdown parsing conflicts
-                                    eventHandler.accept("\n" + THINKING_BLOCK_PREFIX);
-                                    isThinkingBlockOpen = true;
-                                }
+                        continue;
+                    }
 
-                                eventHandler.accept(content);
-                            } else if (type.equals("final")) {
-                                // Check the flag before appending
-                                if (isFirstFinalToken) {
-                                    eventHandler.accept("\n**[FINAL ANSWER]:**\n" + content);
-                                    isFirstFinalToken = false;
-                                } else {
-                                    eventHandler.accept(content);
-                                }   
-                            } else if (type.equals("error")) {
-                                throw new AIBackendException("Backend Streaming Error: " + content);
+                    // Isolate the actual content for other event types
+                    if (eventObj.has("content")) {
+                        String content = eventObj.get("content").getAsString();
+
+                        if (type.equals("status")) {
+                            // Format metadata in italics for the UI, with explicit 'status' indication
+                            eventHandler.accept("\n_**[Status]:** " + content + "_\n");
+                        } else if (type.equals("thinking")) {
+                            if (!isThinkingBlockOpen) {
+                                // Emit a dedicated block marker to avoid markdown parsing conflicts
+                                eventHandler.accept("\n" + THINKING_BLOCK_PREFIX);
+                                isThinkingBlockOpen = true;
                             }
+
+                            eventHandler.accept(content);
+                        } else if (type.equals("final")) {
+                            // Check the flag before appending
+                            if (isFirstFinalToken) {
+                                eventHandler.accept("\n**[FINAL ANSWER]:**\n" + content);
+                                isFirstFinalToken = false;
+                            } else {
+                                eventHandler.accept(content);
+                            }
+                        } else if (type.equals("error")) {
+                            throw new AIBackendException("Backend Streaming Error: " + content);
                         }
                     }
                 }
             }
-        } catch (Exception e) {
-            throw new AIBackendException("Failed to stream multi-chat response: " + e.getMessage(), e);
         }
     }
 }

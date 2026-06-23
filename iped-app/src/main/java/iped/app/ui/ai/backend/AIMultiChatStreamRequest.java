@@ -3,11 +3,9 @@ package iped.app.ui.ai.backend;
 import java.util.List;
 
 /**
- * A Data Transfer Object (DTO) representing the payload sent to query a Multi-Chat session
+ * A Data Transfer Object (DTO) for streaming both Summarized and Full multi-chat responses
  * <p>
- * This request is sent to the {@code /api/multichat/stream} endpoint. It combines 
- * multiple chat session IDs, the user's current prompt, and the ongoing conversational 
- * memory into a single JSON structure.
+ * Maps to the backend's MultiChatConversationRequest schema
  * </p>
  */
 public class AIMultiChatStreamRequest {

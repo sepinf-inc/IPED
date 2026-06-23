@@ -87,7 +87,16 @@ public class AIAssistantController {
 
         // 5. Render initial state (messages, lists, context, etc.)
         sidebarView.updateConversationsList(conversationManager.getConversations());
-        contextView.updateContextData(contextManager.getContextEntriesForUI());
+        
+        List<iped.app.ui.ai.model.ContextFileEntry> initialEntries = contextManager.getContextEntriesForUI();
+        contextView.updateContextData(initialEntries);
+        
+        List<iped.app.ui.ai.model.ContextFileEntry> validE = initialEntries.stream()
+                .filter(iped.app.ui.ai.model.ContextFileEntry::isValidForContext)
+                .collect(Collectors.toList());
+        int totalChunks = AIChatCoordinator.calculateTotalChunks(validE);
+        contextView.setSummarizedMode(validE.size() > 1 && totalChunks > 10);
+        
         refreshChatArea();
     }
 
@@ -162,7 +171,15 @@ public class AIAssistantController {
                 // 1. Inject new data into the passive view for rendering on the correct thread
                 SwingUtilities.invokeLater(() -> {
                     if (contextView != null) {
-                        contextView.updateContextData(contextManager.getContextEntriesForUI());
+                        List<iped.app.ui.ai.model.ContextFileEntry> uiEntries = contextManager.getContextEntriesForUI();
+                        contextView.updateContextData(uiEntries);
+                        
+                        List<iped.app.ui.ai.model.ContextFileEntry> validEntries = uiEntries.stream()
+                                .filter(iped.app.ui.ai.model.ContextFileEntry::isValidForContext)
+                                .collect(Collectors.toList());
+                        int totalChunks = AIChatCoordinator.calculateTotalChunks(validEntries);
+                        boolean isSummarized = validEntries.size() > 1 && totalChunks > 10;
+                        contextView.setSummarizedMode(isSummarized);
                     }
                 });
 

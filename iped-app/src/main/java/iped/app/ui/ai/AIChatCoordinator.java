@@ -3,6 +3,7 @@ package iped.app.ui.ai;
 import iped.app.ui.ai.backend.AIBackendService;
 import iped.app.ui.ai.backend.AIInitMultiChatRequest;
 import iped.app.ui.ai.backend.AIStreamChatRequest;
+import iped.app.ui.ai.backend.AIInitMultiChatFullRequest;
 import iped.app.ui.ai.util.AIWhatsappChatExtractor;
 import iped.app.ui.ai.util.AIPayloadFactory;
 import iped.app.ui.ai.util.ConversationPersistence;
@@ -12,11 +13,13 @@ import iped.app.ui.ai.model.Conversation;
 import iped.app.ui.ai.context.AIContextManager;
 import iped.app.ui.ai.context.ConversationManager;
 import iped.data.IItem;
+import iped.properties.ExtraProperties;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.Collection;
 
 /**
  * The central orchestrator that coordinates the flow of data between the UI, 
@@ -63,6 +66,9 @@ public class AIChatCoordinator {
                 .stream()
                 .filter(ContextFileEntry::isValidForContext)
                 .collect(Collectors.toList());
+        
+        // Calculate the total chunks across all selected chats
+        final int totalChunks = calculateTotalChunks(validEntries);
 
         // If a question is typed before the background thread finishes restoring the UI, 
         // this safely blocks the user for that fraction of a second.
@@ -99,8 +105,13 @@ public class AIChatCoordinator {
                         String html = extractor.extractHtml(item);
                         String hash = backendService.initChat(html);
                         currentChatHashes.add(hash);
+                    } else if (totalChunks <= 10) {
+                        // Multi chat full (raw HTML - fewer than 11 chunks)
+                        AIInitMultiChatFullRequest request = AIPayloadFactory.buildMultiChatFullRequest(validEntries);
+                        List<String> hashes = backendService.initMultiChatFull(request);
+                        currentChatHashes.addAll(hashes);
                     } else {
-                        // Multi chat
+                        // Normal Multi chat (summarized, 11 or more chunks)
                         AIInitMultiChatRequest request = AIPayloadFactory.buildMultiChatRequest(validEntries);
                         List<String> hashes = backendService.initMultiChat(request);
                         currentChatHashes.addAll(hashes);
@@ -136,10 +147,20 @@ public class AIChatCoordinator {
                     });
                 } else if (currentChatHashes.size() > 1) {
                     // Multi chat stream
-                    backendService.streamMultiChatResponse(currentChatHashes, question, chatHistory, token -> {
-                        uiCallback.accept(token);
-                        fullResponse.append(token);
-                    });
+                    // Check chunk size to route to the correct endpoint
+                    if (totalChunks <= 10) {
+                        // Multi chat full stream
+                        backendService.streamMultiChatFullResponse(currentChatHashes, question, chatHistory, token -> {
+                            uiCallback.accept(token);
+                            fullResponse.append(token);
+                        });
+                    } else {
+                        // Multi chat summarized stream
+                        backendService.streamMultiChatResponse(currentChatHashes, question, chatHistory, token -> {
+                            uiCallback.accept(token);
+                            fullResponse.append(token);
+                        });
+                    }
                 } else {
                     throw new IllegalStateException("Cannot stream response: No active chat hashes found.");
                 }
@@ -151,8 +172,15 @@ public class AIChatCoordinator {
                 chatHistory.add(new AIStreamChatRequest.AIMessage("assistant", fullResponse.toString()));
 
             } catch (Exception e) {
+                String errorMessage = e.getMessage(); 
                 onError.accept("Backend error: " + e.getMessage());
 
+                // If the backend restarted and its cache was wiped, it will throw a "not found" error.
+                // Clear the hashes to force the next attempt to re-upload the HTM
+                if (errorMessage != null && (errorMessage.toLowerCase().contains("nao encontrado") || errorMessage.toLowerCase().contains("não encontrado"))) {
+                    currentChatHashes.clear();
+                }
+                
                 // Only invalidate cache if initialization itself failed
                 // If error happened during streaming, preserve the hashes so the user can retry
                 if (!initializationCompleted) {
@@ -198,5 +226,46 @@ public class AIChatCoordinator {
                 }
             }
         }
+    }
+
+    /**
+     * Calculates the total number of chunks across a list of chat files.
+     */
+    public static int calculateTotalChunks(List<ContextFileEntry> entries) {
+        int total = 0;
+        for (ContextFileEntry entry : entries) {
+            IItem item = entry.getItem();
+            if (item == null) continue;
+            
+            int count = 0;
+            
+            // Try ExtraAttributes (Runtime memory)
+            Object extraValue = item.getExtraAttribute(ExtraProperties.CHUNK_IDS);
+            if (extraValue instanceof java.util.Collection<?>) {
+                count = ((Collection<?>) extraValue).size();
+            } else if (extraValue instanceof Object[]) {
+                count = ((Object[]) extraValue).length;
+            } else if (extraValue instanceof String) {
+                String str = ((String) extraValue).trim();
+                if (!str.isEmpty()) {
+                    count = str.split(",").length;
+                }
+            } 
+            // Try Lucene Metadata (Disk)
+            else if (item.getMetadata() != null) {
+                String[] values = item.getMetadata().getValues(ExtraProperties.CHUNK_IDS);
+                if (values != null && values.length > 0) {
+                    count = values.length;
+                } else {
+                    String single = item.getMetadata().get(ExtraProperties.CHUNK_IDS);
+                    if (single != null && !single.trim().isEmpty()) {
+                        count = single.split(",").length;
+                    }
+                }
+            }
+            
+            total += count;
+        }
+        return total;
     }
 }
