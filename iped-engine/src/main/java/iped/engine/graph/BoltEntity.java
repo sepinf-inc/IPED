@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.NotFoundException;
 
 /**
  * Base for the detached, read-only {@code org.neo4j.graphdb} snapshots returned by
@@ -42,6 +43,11 @@ abstract class BoltEntity implements Entity {
 
     @Override
     public Object getProperty(String key) {
+        // Match the org.neo4j.graphdb.Entity contract: callers (e.g. GraphModel.getLabel) rely on
+        // NotFoundException to probe for absent properties; returning null would surface as an NPE.
+        if (!properties.containsKey(key)) {
+            throw new NotFoundException("No such property '" + key + "'.");
+        }
         return properties.get(key);
     }
 

@@ -104,7 +104,7 @@ public class GraphGenerator {
         try {
             int result = process.waitFor();
             if (result != 0) {
-                LOGGER.error("Graph post-import operations failed with exit code {}.", result);
+                throw new IOException("Graph post-import operations failed with exit code " + result + ".");
             }
         } catch (InterruptedException e) {
             process.destroy();
