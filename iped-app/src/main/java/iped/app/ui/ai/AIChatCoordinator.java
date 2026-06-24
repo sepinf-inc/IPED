@@ -194,6 +194,28 @@ public class AIChatCoordinator {
     }
 
 
+    /**
+     * Placeholder for agent-style chat. No context files, no chat hashes, no initialization.
+     * The actual connection to a local agent (e.g. opencode) will be implemented later.
+     * <p>
+     * For now, echoes the question back to allow UI testing of the agent flow.
+     */
+    public void askAgentQuestion(String question, Consumer<String> uiCallback, Runnable onComplete, Consumer<String> onError) {
+        new Thread(() -> {
+            try {
+                uiCallback.accept("**[Agent]:** Thinking...\n\n");
+                chatHistory.add(new AIStreamChatRequest.AIMessage("user", question));
+                chatHistory.add(new AIStreamChatRequest.AIMessage("assistant", question));
+                uiCallback.accept(question);
+                uiCallback.accept("\n\n");
+            } catch (Exception e) {
+                onError.accept("Agent error: " + e.getMessage());
+            } finally {
+                onComplete.run();
+            }
+        }).start();
+    }
+
     public void clearHistory() {
         this.chatHistory.clear();
 

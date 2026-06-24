@@ -62,7 +62,15 @@ public class ConversationManager {
      * Initializes a fresh, empty conversation and sets it as active.
      */
     public Conversation startNewConversation() {
+        return startNewConversation(false);
+    }
+
+    /**
+     * Initializes a fresh conversation with the specified agent flag and sets it as active.
+     */
+    public Conversation startNewConversation(boolean isAgent) {
         Conversation newConv = new Conversation();
+        newConv.setAgentConversation(isAgent);
         setActiveConversation(newConv);
         return newConv;
     }

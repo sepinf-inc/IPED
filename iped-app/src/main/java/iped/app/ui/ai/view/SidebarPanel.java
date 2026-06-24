@@ -15,8 +15,10 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
@@ -42,6 +44,7 @@ public class SidebarPanel extends JPanel {
     public interface SidebarListener {
         void onConversationSelected(Conversation conversation);
         void onNewChatRequested();
+        void onNewAgentChatRequested();
         void onDeleteRequested(Conversation conversation);
     }
 
@@ -65,13 +68,19 @@ public class SidebarPanel extends JPanel {
     }
 
     private void initComponents() {
-        // Initializes the "New Chat" button with styling and action listener
+        // Initializes the "New Chat" button with dropdown menu
         newChatButton = new JButton("+ New Chat");
         newChatButton.setFont(newChatButton.getFont().deriveFont(Font.BOLD));
         newChatButton.addActionListener(e -> {
-            if (listener != null) {
-                listener.onNewChatRequested();
-            }
+            if (listener == null) return;
+            JPopupMenu menu = new JPopupMenu();
+            JMenuItem newChatItem = new JMenuItem("New Chat");
+            newChatItem.addActionListener(ev -> listener.onNewChatRequested());
+            menu.add(newChatItem);
+            JMenuItem newAgentItem = new JMenuItem("New Agent Chat");
+            newAgentItem.addActionListener(ev -> listener.onNewAgentChatRequested());
+            menu.add(newAgentItem);
+            menu.show(newChatButton, 0, newChatButton.getHeight());
         });
         add(newChatButton, BorderLayout.NORTH);
 
@@ -98,7 +107,11 @@ public class SidebarPanel extends JPanel {
             if (value instanceof Conversation) {
                 Conversation conv = (Conversation) value;
                 
-                JLabel textLabel = new JLabel(conv.getTitle());
+                String displayText = conv.getTitle();
+                if (conv.isAgentConversation()) {
+                    displayText += " (Agent)";
+                }
+                JLabel textLabel = new JLabel(displayText);
                 textLabel.setFont(list.getFont());
                 textLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
                 

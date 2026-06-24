@@ -109,6 +109,11 @@ public class AIAssistantController {
             }
 
             @Override
+            public void onNewAgentChatRequested() {
+                startNewAgentChat();
+            }
+
+            @Override
             public void onDeleteRequested(Conversation conversation) {
                 deleteChat(conversation);
             }
@@ -187,7 +192,7 @@ public class AIAssistantController {
                 if (isSwitchingChats) return; // Abort if the system is switching chats
                 
                 Conversation activeConv = conversationManager.getActiveConversation();
-                if (activeConv != null) {
+                if (activeConv != null && !activeConv.isAgentConversation()) {
                     List<Integer> currentIds = contextManager.getContextFiles().stream()
                             .map(IItem::getId)
                             .collect(Collectors.toList());
@@ -222,12 +227,25 @@ public class AIAssistantController {
 
     private void startNewChat() {
         conversationManager.startNewConversation();
+        mainView.setContextPanelVisible(true);
         clearChatScreenAndMemory();
         contextManager.clearContext();
         sidebarView.updateConversationsList(conversationManager.getConversations());
         refreshChatArea();
         
         addMessage("System", "Started a new conversation session.", "system");
+        chatAreaView.getInputArea().requestFocusInWindow();
+    }
+
+    private void startNewAgentChat() {
+        conversationManager.startNewConversation(true);
+        mainView.setContextPanelVisible(false);
+        clearChatScreenAndMemory();
+        contextManager.clearContext();
+        sidebarView.updateConversationsList(conversationManager.getConversations());
+        refreshChatArea();
+        
+        addMessage("System", "Started a new agent conversation session.", "system");
         chatAreaView.getInputArea().requestFocusInWindow();
     }
 
@@ -257,11 +275,20 @@ public class AIAssistantController {
     private void loadConversation(Conversation conv) {
         isSwitchingChats = true;
         conversationManager.setActiveConversation(conv);
-        
+        mainView.setContextPanelVisible(!conv.isAgentConversation());
+
         if (coordinator != null) {
             coordinator.loadHistoricalContext(conv.getChatHashes(), conv.getContextIds(), conv.getMessages());
         }
-        
+
+        if (conv.isAgentConversation()) {
+            isSwitchingChats = false;
+            if (chatAreaView != null) chatAreaView.forceDiscardStreaming();
+            refreshChatArea();
+            sidebarView.setSelectedValue(conv, true);
+            return;
+        }
+
         contextManager.clearContext();
         
         new Thread(() -> {
@@ -381,8 +408,9 @@ public class AIAssistantController {
 
         if (!ensureChatServiceInitialized()) return;
 
-        if (conversationManager.getActiveConversation() == null) {
-            conversationManager.startNewConversation();
+        Conversation activeConv = conversationManager.getActiveConversation();
+        if (activeConv == null) {
+            activeConv = conversationManager.startNewConversation();
             sidebarView.updateConversationsList(conversationManager.getConversations());
         }
 
@@ -392,31 +420,58 @@ public class AIAssistantController {
         
         AIChatMessage assistantDraft = AIChatMessage.create("Assistant", "", "assistant");
         chatAreaView.startMessageStreaming(assistantDraft);
-        
-        coordinator.askQuestion(
-            text, 
-            (token) -> SwingUtilities.invokeLater(() -> chatAreaView.enqueueStreamingToken(token)),
-            () -> SwingUtilities.invokeLater(() -> {
-                chatAreaView.pruneStreaming(() -> {
-                    if (!assistantDraft.getContent().isEmpty()) {
-                        conversationManager.addMessageToActive(assistantDraft);
+
+        if (activeConv.isAgentConversation()) {
+            coordinator.askAgentQuestion(
+                text,
+                (token) -> SwingUtilities.invokeLater(() -> chatAreaView.enqueueStreamingToken(token)),
+                () -> SwingUtilities.invokeLater(() -> {
+                    chatAreaView.pruneStreaming(() -> {
+                        if (!assistantDraft.getContent().isEmpty()) {
+                            conversationManager.addMessageToActive(assistantDraft);
+                            sidebarView.updateConversationsList(conversationManager.getConversations());
+                        }
+                        mainView.setProcessing(false);
+                    });
+                }),
+                (errorMessage) -> SwingUtilities.invokeLater(() -> {
+                    AIChatMessage partialDraft = chatAreaView.salvageStreamingDraft();
+
+                    if (partialDraft != null && !partialDraft.getContent().isEmpty()) {
+                        conversationManager.addMessageToActive(partialDraft);
                         sidebarView.updateConversationsList(conversationManager.getConversations());
                     }
+
+                    addMessage("System Error", errorMessage, "error");
                     mainView.setProcessing(false);
-                });
-            }),
-            (errorMessage) -> SwingUtilities.invokeLater(() -> {
-                AIChatMessage partialDraft = chatAreaView.salvageStreamingDraft();
+                })
+            );
+        } else {
+            coordinator.askQuestion(
+                text, 
+                (token) -> SwingUtilities.invokeLater(() -> chatAreaView.enqueueStreamingToken(token)),
+                () -> SwingUtilities.invokeLater(() -> {
+                    chatAreaView.pruneStreaming(() -> {
+                        if (!assistantDraft.getContent().isEmpty()) {
+                            conversationManager.addMessageToActive(assistantDraft);
+                            sidebarView.updateConversationsList(conversationManager.getConversations());
+                        }
+                        mainView.setProcessing(false);
+                    });
+                }),
+                (errorMessage) -> SwingUtilities.invokeLater(() -> {
+                    AIChatMessage partialDraft = chatAreaView.salvageStreamingDraft();
 
-                if (partialDraft != null && !partialDraft.getContent().isEmpty()) {
-                    conversationManager.addMessageToActive(partialDraft);
-                    sidebarView.updateConversationsList(conversationManager.getConversations());
-                }
+                    if (partialDraft != null && !partialDraft.getContent().isEmpty()) {
+                        conversationManager.addMessageToActive(partialDraft);
+                        sidebarView.updateConversationsList(conversationManager.getConversations());
+                    }
 
-                addMessage("System Error", errorMessage, "error");
-                mainView.setProcessing(false);
-            })
-        );
+                    addMessage("System Error", errorMessage, "error");
+                    mainView.setProcessing(false);
+                })
+            );
+        }
     }
 
     private void addMessage(String sender, String message, String type) {
@@ -577,6 +632,15 @@ public class AIAssistantController {
         }
 
         Conversation activeConversation = conversationManager.getActiveConversation();
+
+        if (activeConversation != null && activeConversation.isAgentConversation()) {
+            JOptionPane.showMessageDialog(
+                    mainView.getFrame(),
+                    "Agent conversations do not support context files.",
+                    "AI Assistant",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
         if (activeConversation == null) {
             startNewConversationWithCurrentContext(itemsToAdd);
