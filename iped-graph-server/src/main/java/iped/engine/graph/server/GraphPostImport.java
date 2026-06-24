@@ -136,7 +136,7 @@ public class GraphPostImport {
                 inputs.put(input.getId(), input);
 
                 Node evidence = (Node) cols.get("evidence");
-                inputs.put(evidence.getId(), evidence);
+                evidences.put(evidence.getId(), evidence);
 
                 String name = getName((String) cols.get("name"));
                 if (currentName == null || (name.length() > currentName.length() && !isHashLikeContact(name))) {
@@ -149,6 +149,12 @@ public class GraphPostImport {
                 if (count % 1000 == 0) {
                     System.out.println("Grouped " + count + " " + label + " contacts.");
                 }
+            }
+
+            // Flush the last accumulated contact group: the in-loop createGroup only runs on a contact
+            // change, so without this the final contact of each label would be dropped.
+            if (currentContact != null) {
+                createGroup(tx, currentName, inputs, evidences, currentContact);
             }
 
             tx.commit();
