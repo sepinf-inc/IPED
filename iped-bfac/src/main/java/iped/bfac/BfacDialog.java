@@ -20,14 +20,12 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
-import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -36,7 +34,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
@@ -49,6 +46,7 @@ import iped.bfac.api.LoginResult;
 import iped.bfac.api.Submission;
 import iped.bfac.api.ValidationResult;
 import iped.bfac.localization.Messages;
+import iped.bfac.ui.BookmarkSelectionPanel;
 import iped.data.IIPEDSource;
 
 /**
@@ -87,8 +85,7 @@ public class BfacDialog extends JDialog {
     private JLabel loginStatusLabel;
 
     // Submission panel components
-    private JList<String> bookmarkList;
-    private DefaultListModel<String> bookmarkListModel;
+    private BookmarkSelectionPanel bookmarkSelectionPanel;
     private JRadioButton newSubmissionRadio;
     private JRadioButton existingSubmissionRadio;
     private JComboBox<Submission> existingSubmissionComboBox;
@@ -238,6 +235,10 @@ public class BfacDialog extends JDialog {
      */
     public void setIPEDSource(IIPEDSource ipedSource) {
         this.ipedSource = ipedSource;
+        if (bookmarkSelectionPanel != null) {
+            bookmarkSelectionPanel.setMultiBookmarks(
+                    ipedSource != null ? ipedSource.getMultiBookmarks() : null);
+        }
     }
 
     /**
@@ -524,25 +525,15 @@ public class BfacDialog extends JDialog {
             TitledBorder.LEFT,
             TitledBorder.TOP));
 
-        bookmarkListModel = new DefaultListModel<>();
-        // Mock bookmarks for demonstration
-        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.MalwareSamples"));
-        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.SuspiciousFiles"));
-        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.DocumentsToAnalyze"));
-        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.EncryptedFiles"));
-        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.UnknownExecutables"));
-
-        bookmarkList = new JList<>(bookmarkListModel);
-        bookmarkList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        bookmarkList.setVisibleRowCount(6);
-
-        JScrollPane bookmarkScrollPane = new JScrollPane(bookmarkList);
-        bookmarkScrollPane.setPreferredSize(new Dimension(400, 120));
-        bookmarkPanel.add(bookmarkScrollPane, BorderLayout.CENTER);
-
-        JLabel bookmarkHintLabel = new JLabel(Messages.getString("BfacDialog.BookmarkHint"));
-        bookmarkHintLabel.setFont(new Font("SansSerif", Font.ITALIC, 11));
-        bookmarkPanel.add(bookmarkHintLabel, BorderLayout.SOUTH);
+        String[] demoLabels = {
+            Messages.getString("BfacDialog.DemoBookmark.MalwareSamples"),
+            Messages.getString("BfacDialog.DemoBookmark.SuspiciousFiles"),
+            Messages.getString("BfacDialog.DemoBookmark.DocumentsToAnalyze"),
+            Messages.getString("BfacDialog.DemoBookmark.EncryptedFiles"),
+            Messages.getString("BfacDialog.DemoBookmark.UnknownExecutables")
+        };
+        bookmarkSelectionPanel = new BookmarkSelectionPanel(demoLabels);
+        bookmarkPanel.add(bookmarkSelectionPanel, BorderLayout.CENTER);
 
         centerPanel.add(bookmarkPanel);
         centerPanel.add(Box.createVerticalStrut(10));
@@ -788,7 +779,7 @@ public class BfacDialog extends JDialog {
     }
 
     private void onCreateSubmission() {
-        List<String> selectedBookmarks = bookmarkList.getSelectedValuesList();
+        List<String> selectedBookmarks = bookmarkSelectionPanel.getCheckedBookmarks();
 
         if (selectedBookmarks.isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(this,
@@ -946,7 +937,7 @@ public class BfacDialog extends JDialog {
         // Clear form
         submissionNameField.setText("");
         submissionCommentArea.setText("");
-        bookmarkList.clearSelection();
+        bookmarkSelectionPanel.clearSelection();
         uploadFilesCheckBox.setSelected(false);
     }
 
@@ -955,10 +946,10 @@ public class BfacDialog extends JDialog {
      * @param bookmarks Set of bookmark names from the case
      */
     public void setBookmarks(Set<String> bookmarks) {
-        bookmarkListModel.clear();
-        for (String bookmark : bookmarks) {
-            bookmarkListModel.addElement(bookmark);
+        if (ipedSource != null) {
+            bookmarkSelectionPanel.setMultiBookmarks(ipedSource.getMultiBookmarks());
         }
+        bookmarkSelectionPanel.setBookmarks(bookmarks);
     }
 
     // Main method for testing the dialog standalone
