@@ -80,6 +80,9 @@ public class BfacDialog extends JDialog {
     // Worker for session validation on dialog open
     private SwingWorker<ValidationResult, Void> sessionValidationWorker;
 
+    // Prevents multiple connection-error dialogs when parallel API calls fail
+    private boolean connectionErrorShown;
+
     // Login panel components
     private JLabel serverUrlLabel;
     private JTextField usernameField;
@@ -302,6 +305,30 @@ public class BfacDialog extends JDialog {
     }
 
     /**
+     * Shows a user-friendly connection error and closes the dialog after the user dismisses it.
+     * @param detailMessage technical detail (e.g. exception message), may be null
+     */
+    private void showBackendConnectionErrorAndClose(String detailMessage) {
+        if (connectionErrorShown) {
+            return;
+        }
+        connectionErrorShown = true;
+
+        StringBuilder message = new StringBuilder(Messages.getString("BfacDialog.BackendConnectionError"));
+        message.append("\n\n").append(Messages.getString("BfacDialog.BackendUrl", apiClient.getBaseUrl()));
+        if (detailMessage != null && !detailMessage.isEmpty()) {
+            message.append("\n\n").append(Messages.getString("BfacDialog.ConnectionDetails", detailMessage));
+        }
+
+        JOptionPane.showMessageDialog(
+                this,
+                message.toString(),
+                Messages.getString("BfacDialog.BackendConnectionErrorTitle"),
+                JOptionPane.ERROR_MESSAGE);
+        closeAndCleanup();
+    }
+
+    /**
      * Validates the current session with the server in a background thread.
      * If the session is invalid (401), returns to the login panel.
      */
@@ -325,14 +352,15 @@ public class BfacDialog extends JDialog {
                         loadOpenSubmissionsInBackground();
                     } else if (result.getStatusCode() == 401) {
                         showLoginAfterSessionExpired();
+                    } else if (result.getStatusCode() == -1 || apiClient.wasLastCallConnectionError()) {
+                        showBackendConnectionErrorAndClose(result.getMessage());
                     } else {
-                        // Other error (e.g., connection error), stay on submission panel
                         loadCategoriesInBackground();
                         loadOpenSubmissionsInBackground();
                     }
                 } catch (Exception e) {
-                    loadCategoriesInBackground();
-                    loadOpenSubmissionsInBackground();
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    showBackendConnectionErrorAndClose(cause.getMessage());
                 }
             }
         };
@@ -356,13 +384,20 @@ public class BfacDialog extends JDialog {
                         showLoginAfterSessionExpired();
                         return;
                     }
+                    if (apiClient.wasLastCallConnectionError()) {
+                        showBackendConnectionErrorAndClose(null);
+                        return;
+                    }
                     List<Category> categories = get();
                     categoryComboBox.removeAllItems();
                     for (Category category : categories) {
                         categoryComboBox.addItem(category);
                     }
                 } catch (Exception e) {
-                    // Keep default categories if loading fails
+                    if (apiClient.wasLastCallConnectionError()) {
+                        Throwable cause = e.getCause() != null ? e.getCause() : e;
+                        showBackendConnectionErrorAndClose(cause.getMessage());
+                    }
                 }
             }
         }.execute();
@@ -388,6 +423,10 @@ public class BfacDialog extends JDialog {
                         showLoginAfterSessionExpired();
                         return;
                     }
+                    if (apiClient.wasLastCallConnectionError()) {
+                        showBackendConnectionErrorAndClose(null);
+                        return;
+                    }
                     List<Submission> submissions = get();
                     existingSubmissionComboBox.removeAllItems();
                     for (Submission submission : submissions) {
@@ -401,7 +440,10 @@ public class BfacDialog extends JDialog {
                         syncCategoryWithSelectedSubmission();
                     }
                 } catch (Exception e) {
-                    // Keep empty if loading fails
+                    if (apiClient.wasLastCallConnectionError()) {
+                        Throwable cause = e.getCause() != null ? e.getCause() : e;
+                        showBackendConnectionErrorAndClose(cause.getMessage());
+                    }
                 } finally {
                     refreshSubmissionsButton.setEnabled(true);
                     existingSubmissionComboBox.setEnabled(existingSubmissionRadio.isSelected());

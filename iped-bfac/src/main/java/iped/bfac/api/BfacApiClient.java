@@ -169,6 +169,7 @@ public class BfacApiClient {
     private HttpClient httpClient;
     private BfacConfig config;
     private boolean lastCallUnauthorized;
+    private boolean lastCallConnectionError;
 
     public BfacApiClient() {
         this.config = BfacConfig.getInstance();
@@ -882,6 +883,7 @@ public class BfacApiClient {
             }
 
         } catch (IOException e) {
+            markConnectionError();
             logger.error("Connection error getting categories", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -986,6 +988,7 @@ public class BfacApiClient {
             }
 
         } catch (IOException e) {
+            markConnectionError();
             logger.error("Connection error getting submissions", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -1050,12 +1053,25 @@ public class BfacApiClient {
         return lastCallUnauthorized;
     }
 
+    /**
+     * Returns whether the most recent API call failed due to a network/connection error.
+     * @return true if the last call could not reach the server
+     */
+    public boolean wasLastCallConnectionError() {
+        return lastCallConnectionError;
+    }
+
     private void beginApiCall() {
         lastCallUnauthorized = false;
+        lastCallConnectionError = false;
     }
 
     private void markUnauthorized() {
         lastCallUnauthorized = true;
+    }
+
+    private void markConnectionError() {
+        lastCallConnectionError = true;
     }
 
     /**
@@ -1094,6 +1110,7 @@ public class BfacApiClient {
             }
 
         } catch (IOException e) {
+            markConnectionError();
             String errorMsg = "Connection error: " + e.getMessage();
             logger.error("Session validation failed", e);
             return new ValidationResult(false, -1, errorMsg);
