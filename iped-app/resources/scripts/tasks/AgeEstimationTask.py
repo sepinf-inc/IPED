@@ -191,7 +191,7 @@ class AgeEstimationTask:
                                 deviceError = True
                                 logger.error(error_msg)
                             from java.lang import RuntimeException
-                            worker.exception = RuntimeException(error_msg)
+                            self.worker.exception = RuntimeException(error_msg)
                             return
             else:
                 if device is None:

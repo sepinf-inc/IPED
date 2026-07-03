@@ -285,7 +285,7 @@ public class UfedModelHandler extends DefaultHandler {
                 } else if (child instanceof ReplyMessageData) {
                     extraData.setReplyMessage((ReplyMessageData) child);
                 } else {
-                    logger.error("Unknown InstantMessageExtraData child '{}' => {} (id={}). Ignoring...", fieldName, child.getClass().getSimpleName(), child.getId());
+                    extraData.getOtherData().add(child);
                 }
             } else if ("Position".equals(fieldName) && child instanceof Coordinate) {
                 message.setPosition((Coordinate) child);

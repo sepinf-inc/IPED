@@ -125,10 +125,6 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
             requestTime = 0;
     }
 
-    public static synchronized void addEnvVar(String key, String value) {
-        newEnvVars.put(key, value);
-    }
-
     public static SleuthkitClient get() {
 
         synchronized (lock) {
