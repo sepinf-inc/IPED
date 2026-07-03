@@ -1,4 +1,4 @@
-# BFAC (Base Federal de Arquivos Conhecidos) Backend Configuration
+# BFAC (Banco Federal de Arquivos Conhecidos) Backend Configuration
 # Configuration for the BFAC backend API client
 
 # Base URL for the BFAC backend API server

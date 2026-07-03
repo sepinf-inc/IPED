@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <name>iped-bfac</name>
-    <description>Integration module for BFAC (Base Federal de Arquivos Conhecidos) - allows submitting files and hashes from IPED cases to BFAC backend</description>
+    <description>Integration module for BFAC (Banco Federal de Arquivos Conhecidos) - allows submitting files and hashes from IPED cases to BFAC backend</description>
 
     <dependencies>
         <dependency>

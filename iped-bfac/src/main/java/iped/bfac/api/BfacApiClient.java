@@ -31,12 +31,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import iped.bfac.config.BfacConfig;
+import iped.bfac.localization.Messages;
 import iped.engine.Version;
 import iped.engine.config.BFACClientConfig;
 import iped.engine.config.ConfigurationManager;
 
 /**
- * HTTP client for communicating with the BFAC (Base Federal de Arquivos Conhecidos) backend API.
+ * HTTP client for communicating with the BFAC (Banco Federal de Arquivos Conhecidos) backend API.
  * Handles authentication, submission creation, and file/hash uploads.
  */
 public class BfacApiClient {
@@ -279,29 +280,29 @@ public class BfacApiClient {
                 config.saveUsername(username);
 
                 logger.info("Login successful for user: {}", username);
-                return new LoginResult(true, "Login successful");
+                return new LoginResult(true, Messages.getString("BfacApiClient.LoginSuccessful"));
 
             } else if (response.statusCode() == 401) {
                 logger.warn("Login failed: Invalid credentials for user: {}", username);
-                return new LoginResult(false, "Invalid username or password");
+                return new LoginResult(false, Messages.getString("BfacApiClient.InvalidCredentials"));
 
             } else {
-                String errorMsg = "Login failed with status " + response.statusCode() + ": " + response.body();
+                String errorMsg = Messages.getString("BfacApiClient.LoginFailedStatus", response.statusCode(), response.body());
                 logger.error(errorMsg);
                 return new LoginResult(false, errorMsg);
             }
 
         } catch (IOException e) {
-            String errorMsg = "Connection error: " + e.getMessage();
+            String errorMsg = Messages.getString("BfacApiClient.ConnectionError", e.getMessage());
             logger.error("Login failed due to connection error", e);
             return new LoginResult(false, errorMsg);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return new LoginResult(false, "Login interrupted");
+            return new LoginResult(false, Messages.getString("BfacApiClient.LoginInterrupted"));
 
         } catch (Exception e) {
-            String errorMsg = "Unexpected error: " + e.getMessage();
+            String errorMsg = Messages.getString("BfacApiClient.UnexpectedError", e.getMessage());
             logger.error("Login failed due to unexpected error", e);
             return new LoginResult(false, errorMsg);
         }
@@ -313,7 +314,7 @@ public class BfacApiClient {
      */
     public synchronized LoginResult renewToken() {
         if (accessToken == null || accessToken.isEmpty()) {
-            return new LoginResult(false, "No access token available");
+            return new LoginResult(false, Messages.getString("BfacApiClient.NoAccessToken"));
         }
 
         try {
@@ -331,22 +332,22 @@ public class BfacApiClient {
                 config.saveCredentials(tokenResponse);
 
                 logger.info("Token renewed successfully");
-                return new LoginResult(true, "Token renewed");
+                return new LoginResult(true, Messages.getString("BfacApiClient.TokenRenewed"));
 
             } else {
-                String errorMsg = "Token renewal failed with status " + response.statusCode();
+                String errorMsg = Messages.getString("BfacApiClient.TokenRenewalFailedStatus", response.statusCode());
                 logger.warn(errorMsg);
                 return new LoginResult(false, errorMsg);
             }
 
         } catch (IOException e) {
-            String errorMsg = "Connection error: " + e.getMessage();
+            String errorMsg = Messages.getString("BfacApiClient.ConnectionError", e.getMessage());
             logger.error("Token renewal failed", e);
             return new LoginResult(false, errorMsg);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return new LoginResult(false, "Token renewal interrupted");
+            return new LoginResult(false, Messages.getString("BfacApiClient.TokenRenewalInterrupted"));
         }
     }
 
@@ -359,7 +360,7 @@ public class BfacApiClient {
      */
     public SubmissionResult createSubmission(String name, String comment, String categoryName) {
         if (accessToken == null || accessToken.isEmpty()) {
-            return new SubmissionResult(false, -1, "Not authenticated");
+            return new SubmissionResult(false, -1, Messages.getString("BfacApiClient.NotAuthenticated"));
         }
 
         try {
@@ -382,10 +383,10 @@ public class BfacApiClient {
                 JsonObject data = responseObj.getAsJsonObject("data");
                 int submissionId = data.get("id").getAsInt();
                 logger.info("Created submission {} with ID {}", name, submissionId);
-                return new SubmissionResult(true, submissionId, "Submission created successfully");
+                return new SubmissionResult(true, submissionId, Messages.getString("BfacApiClient.SubmissionCreated"));
 
             } else {
-                String errorMsg = "Failed to create submission: " + response.statusCode();
+                String errorMsg = Messages.getString("BfacApiClient.CreateSubmissionFailedStatus", response.statusCode());
                 try {
                     JsonObject errorObj = GSON.fromJson(response.body(), JsonObject.class);
                     if (errorObj.has("detail")) {
@@ -399,13 +400,13 @@ public class BfacApiClient {
             }
 
         } catch (IOException e) {
-            String errorMsg = "Connection error: " + e.getMessage();
+            String errorMsg = Messages.getString("BfacApiClient.ConnectionError", e.getMessage());
             logger.error("Failed to create submission", e);
             return new SubmissionResult(false, -1, errorMsg, -1);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return new SubmissionResult(false, -1, "Operation interrupted", -1);
+            return new SubmissionResult(false, -1, Messages.getString("BfacApiClient.OperationInterrupted"), -1);
         }
     }
 

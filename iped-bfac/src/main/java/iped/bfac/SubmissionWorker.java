@@ -23,6 +23,7 @@ import iped.bfac.api.LoginResult;
 import iped.bfac.api.SendHashResult;
 import iped.bfac.api.SubmissionResult;
 import iped.bfac.api.FileUploadStatus;
+import iped.bfac.localization.Messages;
 import iped.data.IIPEDSource;
 import iped.data.IItem;
 import iped.data.IItemId;
@@ -104,11 +105,11 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
         try {
             // Step 1: Create or use existing submission
             if (isNewSubmission) {
-                publish("Creating submission '" + submissionName + "'...");
+                publish(Messages.getString("SubmissionWorker.CreatingSubmission", submissionName));
                 SubmissionResult result = apiClient.createSubmission(submissionName, comment, categoryName);
 
                 if (!result.isSuccess()) {
-                    publish("ERROR: " + result.getMessage());
+                    publish(Messages.getString("SubmissionWorker.ErrorPrefix", result.getMessage()));
                     if (result.isUnauthorized()) {
                         authenticationError = true;
                     }
@@ -116,16 +117,16 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 }
 
                 submissionId = result.getSubmissionId();
-                publish("Submission created with ID: " + submissionId);
+                publish(Messages.getString("SubmissionWorker.SubmissionCreatedWithId", submissionId));
             } else {
-                publish("Using existing submission: " + submissionName + " (ID: " + submissionId + ")");
+                publish(Messages.getString("SubmissionWorker.UsingExistingSubmission", submissionName, submissionId));
             }
 
             if (cancelled || authenticationError) return false;
 
             // Step 2: Collect items from bookmarks
             publish("");
-            publish("Collecting items from selected bookmarks...");
+            publish(Messages.getString("SubmissionWorker.CollectingItems"));
 
             List<FileHashInfo> hashInfos = collectHashInfoFromBookmarks(bookmarkNames);
 
@@ -143,14 +144,14 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
             hashInfos = validHashInfos;
 
             totalItems = hashInfos.size();
-            publish("Found " + totalItems + " items to process");
+            publish(Messages.getString("SubmissionWorker.FoundItemsToProcess", totalItems));
             if (invalidHashInfoCount > 0) {
-                publish("Skipped " + invalidHashInfoCount + " item(s) with invalid metadata for hash submission (empty name or size <= 0).");
+                publish(Messages.getString("SubmissionWorker.SkippedInvalidMetadata", invalidHashInfoCount));
             }
 
             if (totalItems == 0) {
                 publish("");
-                publish("No items found in selected bookmarks.");
+                publish(Messages.getString("SubmissionWorker.NoItemsInBookmarks"));
                 return true;
             }
 
@@ -158,7 +159,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
 
             // Step 3: Send hashes in batches
             publish("");
-            publish("Sending hashes to server...");
+            publish(Messages.getString("SubmissionWorker.SendingHashes"));
 
             // Track files that need upload (fileId -> hashInfo)
             Map<Integer, FileHashInfo> filesToUpload = new LinkedHashMap<>();
@@ -182,7 +183,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                         errorCount++;
                         // Check for authentication error
                         if (result.isUnauthorized()) {
-                            publish("ERROR: Authentication failed. Session expired.");
+                            publish(Messages.getString("SubmissionWorker.AuthFailedSessionExpired"));
                             authenticationError = true;
                             break;
                         }
@@ -193,32 +194,32 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 // Update progress
                 int progress = (processedItems * 100) / totalItems;
                 setProgress(progress);
-                publish("Processed " + processedItems + " of " + totalItems + " items...");
+                publish(Messages.getString("SubmissionWorker.ProcessedItems", processedItems, totalItems));
             }
 
             if (cancelled || authenticationError) {
                 if (cancelled) {
                     publish("");
-                    publish("Operation cancelled by user.");
+                    publish(Messages.getString("SubmissionWorker.OperationCancelled"));
                 }
                 return false;
             }
 
             // Step 4: Hash summary
             publish("");
-            publish("=== Hash Upload Complete ===");
-            publish("Total items: " + totalItems);
-            publish("Successfully sent: " + successCount);
+            publish(Messages.getString("SubmissionWorker.HashUploadComplete"));
+            publish(Messages.getString("SubmissionWorker.TotalItems", totalItems));
+            publish(Messages.getString("SubmissionWorker.SuccessfullySent", successCount));
             if (errorCount > 0) {
-                publish("Errors: " + errorCount);
+                publish(Messages.getString("SubmissionWorker.Errors", errorCount));
             }
 
             // Step 5: Upload files if requested (parallel)
             if (uploadFiles && !filesToUpload.isEmpty()) {
                 publish("");
-                publish("=== Starting File Upload ===");
-                publish("Files to upload: " + filesToUpload.size());
-                publish("Concurrent uploads: " + maxConcurrentUploads);
+                publish(Messages.getString("SubmissionWorker.StartingFileUpload"));
+                publish(Messages.getString("SubmissionWorker.FilesToUpload", filesToUpload.size()));
+                publish(Messages.getString("SubmissionWorker.ConcurrentUploads", maxConcurrentUploads));
 
                 // Renew token before starting upload (uploads can take days)
                 renewTokenIfNeeded(true);
@@ -468,39 +469,39 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                         }
 
                         int processed = uploadedCount + uploadErrorCount + skippedCount;
-                        publish("Processed " + processed + " of " + totalFilesToUpload + " files...");
+                        publish(Messages.getString("SubmissionWorker.ProcessedFiles", processed, totalFilesToUpload));
 
                     } catch (Exception e) {
                         uploadErrorCount++;
-                        publish("  Error processing upload result: " + e.getMessage());
+                        publish(Messages.getString("SubmissionWorker.ErrorProcessingUploadResult", e.getMessage()));
                     }
                 }
 
                 publish("");
-                publish("=== File Upload Complete ===");
-                publish("Files uploaded: " + uploadedCount);
+                publish(Messages.getString("SubmissionWorker.FileUploadComplete"));
+                publish(Messages.getString("SubmissionWorker.FilesUploaded", uploadedCount));
                 if (skippedCount > 0) {
-                    publish("Files already in backend (skipped): " + skippedCount);
+                    publish(Messages.getString("SubmissionWorker.FilesSkipped", skippedCount));
                 }
-                publish("Total data: " + formatBytes(totalBytesUploaded));
+                publish(Messages.getString("SubmissionWorker.TotalData", formatBytes(totalBytesUploaded)));
                 if (uploadErrorCount > 0) {
                     uploadHadErrors = true;
-                    publish("Upload errors: " + uploadErrorCount);
+                    publish(Messages.getString("SubmissionWorker.UploadErrors", uploadErrorCount));
                     if (uploadedCount == 0 && skippedCount == 0) {
-                        publish("ERROR: All file uploads failed!");
+                        publish(Messages.getString("SubmissionWorker.AllFileUploadsFailed"));
                     } else {
-                        publish("WARNING: " + uploadErrorCount + " of " + totalFilesToUpload + " file(s) failed to upload.");
+                        publish(Messages.getString("SubmissionWorker.SomeFileUploadsFailed", uploadErrorCount, totalFilesToUpload));
                     }
                 }
             } else if (uploadFiles) {
                 publish("");
-                publish("No files need to be uploaded (all already exist in backend).");
+                publish(Messages.getString("SubmissionWorker.NoFilesToUpload"));
             }
 
             return true;
 
         } catch (Exception e) {
-            publish("ERROR: " + e.getMessage());
+            publish(Messages.getString("SubmissionWorker.ErrorPrefix", e.getMessage()));
             return false;
         }
     }
@@ -522,7 +523,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 // Check if there was an authentication error
                 if (authenticationError) {
                     callback.onLogMessage("");
-                    callback.onLogMessage("ERROR: Authentication failed. Please log in again.");
+                    callback.onLogMessage(Messages.getString("SubmissionWorker.AuthFailedLoginAgain"));
                     callback.onAuthenticationError();
                     callback.onComplete(false);
                     return;
@@ -531,16 +532,16 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 if (success) {
                     callback.onLogMessage("");
                     if (uploadHadErrors) {
-                        callback.onLogMessage("Operation completed with errors. Some files failed to upload.");
+                        callback.onLogMessage(Messages.getString("SubmissionWorker.CompletedWithErrors"));
                     } else {
-                        callback.onLogMessage("Operation completed successfully!");
+                        callback.onLogMessage(Messages.getString("SubmissionWorker.CompletedSuccessfully"));
                     }
                 }
                 callback.onComplete(success && !uploadHadErrors);
             }
         } catch (Exception e) {
             if (callback != null) {
-                callback.onLogMessage("ERROR: " + e.getMessage());
+                callback.onLogMessage(Messages.getString("SubmissionWorker.ErrorPrefix", e.getMessage()));
                 callback.onComplete(false);
             }
         }
@@ -570,15 +571,15 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
             return true; // Token still valid, no need to renew
         }
 
-        publish("Renewing authentication token...");
+        publish(Messages.getString("SubmissionWorker.RenewingToken"));
         LoginResult result = apiClient.renewToken();
 
         if (result.isSuccess()) {
             lastTokenRenewalTime = currentTime;
-            publish("Token renewed successfully.");
+            publish(Messages.getString("SubmissionWorker.TokenRenewed"));
             return true;
         } else {
-            publish("WARNING: Token renewal failed: " + result.getMessage());
+            publish(Messages.getString("SubmissionWorker.TokenRenewalFailed", result.getMessage()));
             return false;
         }
     }
@@ -591,13 +592,13 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
         List<FileHashInfo> hashInfos = new ArrayList<>();
 
         if (ipedSource == null) {
-            publish("WARNING: No IPED source configured. Cannot collect items.");
-            publish("This is a test/demo mode.");
+            publish(Messages.getString("SubmissionWorker.NoIpedSource"));
+            publish(Messages.getString("SubmissionWorker.DemoMode"));
             return hashInfos;
         }
 
         if (!(ipedSource instanceof IPEDMultiSource)) {
-            publish("WARNING: IPED source is not a multi-source. Cannot collect items.");
+            publish(Messages.getString("SubmissionWorker.NotMultiSource"));
             return hashInfos;
         }
 
@@ -606,12 +607,12 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
         try {
             IMultiBookmarks multiBookmarks = multiSource.getMultiBookmarks();
             if (multiBookmarks == null) {
-                publish("WARNING: No bookmarks available.");
+                publish(Messages.getString("SubmissionWorker.NoBookmarks"));
                 return hashInfos;
             }
 
             // Use IPEDSearcher to get all items, then filter by bookmarks
-            publish("Searching for items in selected bookmarks...");
+            publish(Messages.getString("SubmissionWorker.SearchingBookmarks"));
 
             IPEDSearcher searcher = new IPEDSearcher(multiSource, "*:*");
             searcher.setNoScoring(true);
@@ -621,7 +622,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
             IMultiSearchResult filteredResults = multiBookmarks.filterBookmarks(allResults, bookmarkNames);
 
             int totalItems = filteredResults.getLength();
-            publish("Found " + totalItems + " items in selected bookmarks.");
+            publish(Messages.getString("SubmissionWorker.FoundItemsInBookmarks", totalItems));
 
             // Iterate over filtered results
             int processed = 0;
@@ -643,7 +644,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
 
                     processed++;
                     if (processed % 1000 == 0) {
-                        publish("Collected " + processed + " of " + totalItems + " items...");
+                        publish(Messages.getString("SubmissionWorker.CollectedItems", processed, totalItems));
                     }
 
                 } catch (Exception e) {
@@ -652,7 +653,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
             }
 
         } catch (Exception e) {
-            publish("ERROR collecting items: " + e.getMessage());
+            publish(Messages.getString("SubmissionWorker.ErrorCollectingItems", e.getMessage()));
             e.printStackTrace();
         }
 

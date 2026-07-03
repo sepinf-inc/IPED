@@ -48,6 +48,7 @@ import iped.bfac.api.Category;
 import iped.bfac.api.LoginResult;
 import iped.bfac.api.Submission;
 import iped.bfac.api.ValidationResult;
+import iped.bfac.localization.Messages;
 import iped.data.IIPEDSource;
 
 /**
@@ -108,7 +109,7 @@ public class BfacDialog extends JDialog {
     private JButton closeButton;
 
     private BfacDialog(JFrame parent) {
-        super(parent, "BFAC - Base Federal de Arquivos Conhecidos", false); // Non-modal
+        super(parent, Messages.getString("BfacDialog.Title"), false); // Non-modal
         this.parentFrame = parent;
         this.apiClient = new BfacApiClient();
         initComponents();
@@ -160,9 +161,8 @@ public class BfacDialog extends JDialog {
         if (isUploadInProgress()) {
             int result = JOptionPane.showConfirmDialog(
                 this,
-                "An upload is currently in progress. If you close this window, the upload will be interrupted.\n\n" +
-                "Do you want to close anyway?",
-                "Upload in Progress",
+                Messages.getString("BfacDialog.UploadInProgressConfirm"),
+                Messages.getString("BfacDialog.UploadInProgressTitle"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE
             );
@@ -209,9 +209,8 @@ public class BfacDialog extends JDialog {
 
         int result = JOptionPane.showConfirmDialog(
             parent,
-            "BFAC: An upload is currently in progress. If you close the application, the upload will be interrupted.\n\n" +
-            "Do you want to close anyway?",
-            "Upload in Progress",
+            Messages.getString("BfacDialog.AppCloseUploadInProgressConfirm"),
+            Messages.getString("BfacDialog.UploadInProgressTitle"),
             JOptionPane.YES_NO_OPTION,
             JOptionPane.WARNING_MESSAGE
         );
@@ -253,7 +252,8 @@ public class BfacDialog extends JDialog {
 
         // If already authenticated, validate session with server
         if (apiClient.isAuthenticated()) {
-            userInfoLabel.setText("Logged in as: " + (storedUsername != null ? storedUsername : "user"));
+            userInfoLabel.setText(Messages.getString("BfacDialog.LoggedInAs",
+                    storedUsername != null ? storedUsername : Messages.getString("BfacDialog.DefaultUser")));
             cardLayout.show(cardPanel, CARD_SUBMISSION);
 
             // Validate session in background
@@ -284,7 +284,7 @@ public class BfacDialog extends JDialog {
                     } else if (result.getStatusCode() == 401) {
                         // Session expired, return to login
                         loginStatusLabel.setForeground(Color.ORANGE);
-                        loginStatusLabel.setText("Session expired. Please login again.");
+                        loginStatusLabel.setText(Messages.getString("BfacDialog.SessionExpiredLoginAgain"));
                         cardLayout.show(cardPanel, CARD_LOGIN);
                     } else {
                         // Other error (e.g., connection error), stay on submission panel
@@ -379,9 +379,9 @@ public class BfacDialog extends JDialog {
 
         // Update button text
         if (isNewSubmission) {
-            createSubmissionButton.setText("Create Submission & Upload");
+            createSubmissionButton.setText(Messages.getString("BfacDialog.CreateSubmissionAndUpload"));
         } else {
-            createSubmissionButton.setText("Add to Submission & Upload");
+            createSubmissionButton.setText(Messages.getString("BfacDialog.AddToSubmissionAndUpload"));
             syncCategoryWithSelectedSubmission();
         }
     }
@@ -429,7 +429,7 @@ public class BfacDialog extends JDialog {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Title
-        JLabel titleLabel = new JLabel("Login BFAC", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel(Messages.getString("BfacDialog.LoginTitle"), SwingConstants.CENTER);
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -444,7 +444,7 @@ public class BfacDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        panel.add(new JLabel("Server URL:"), gbc);
+        panel.add(new JLabel(Messages.getString("BfacDialog.ServerUrl")), gbc);
 
         serverUrlLabel = new JLabel(apiClient.getBaseUrl());
         serverUrlLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
@@ -457,7 +457,7 @@ public class BfacDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.EAST;
-        panel.add(new JLabel("Username:"), gbc);
+        panel.add(new JLabel(Messages.getString("BfacDialog.Username")), gbc);
 
         usernameField = new JTextField(25);
         gbc.gridx = 1;
@@ -468,7 +468,7 @@ public class BfacDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.anchor = GridBagConstraints.EAST;
-        panel.add(new JLabel("Password:"), gbc);
+        panel.add(new JLabel(Messages.getString("BfacDialog.Password")), gbc);
 
         passwordField = new JPasswordField(25);
         passwordField.addActionListener(e -> onLogin()); // Allow ENTER key to submit
@@ -477,7 +477,7 @@ public class BfacDialog extends JDialog {
         panel.add(passwordField, gbc);
 
         // Login button
-        loginButton = new JButton("Login");
+        loginButton = new JButton(Messages.getString("BfacDialog.Login"));
         loginButton.addActionListener(e -> onLogin());
         gbc.gridx = 0;
         gbc.gridy = 4;
@@ -503,11 +503,11 @@ public class BfacDialog extends JDialog {
 
         // Top panel with user info and logout
         JPanel topPanel = new JPanel(new BorderLayout());
-        userInfoLabel = new JLabel("Logged in as: user@example.com");
+        userInfoLabel = new JLabel(Messages.getString("BfacDialog.LoggedInAs", Messages.getString("BfacDialog.DefaultUser")));
         userInfoLabel.setFont(new Font("SansSerif", Font.ITALIC, 12));
         topPanel.add(userInfoLabel, BorderLayout.WEST);
 
-        logoutButton = new JButton("Logout");
+        logoutButton = new JButton(Messages.getString("BfacDialog.Logout"));
         logoutButton.addActionListener(e -> onLogout());
         topPanel.add(logoutButton, BorderLayout.EAST);
         panel.add(topPanel, BorderLayout.NORTH);
@@ -520,17 +520,17 @@ public class BfacDialog extends JDialog {
         JPanel bookmarkPanel = new JPanel(new BorderLayout(5, 5));
         bookmarkPanel.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createEtchedBorder(),
-            "Select Bookmarks",
+            Messages.getString("BfacDialog.SelectBookmarks"),
             TitledBorder.LEFT,
             TitledBorder.TOP));
 
         bookmarkListModel = new DefaultListModel<>();
         // Mock bookmarks for demonstration
-        bookmarkListModel.addElement("Malware Samples");
-        bookmarkListModel.addElement("Suspicious Files");
-        bookmarkListModel.addElement("Documents to Analyze");
-        bookmarkListModel.addElement("Encrypted Files");
-        bookmarkListModel.addElement("Unknown Executables");
+        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.MalwareSamples"));
+        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.SuspiciousFiles"));
+        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.DocumentsToAnalyze"));
+        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.EncryptedFiles"));
+        bookmarkListModel.addElement(Messages.getString("BfacDialog.DemoBookmark.UnknownExecutables"));
 
         bookmarkList = new JList<>(bookmarkListModel);
         bookmarkList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -540,7 +540,7 @@ public class BfacDialog extends JDialog {
         bookmarkScrollPane.setPreferredSize(new Dimension(400, 120));
         bookmarkPanel.add(bookmarkScrollPane, BorderLayout.CENTER);
 
-        JLabel bookmarkHintLabel = new JLabel("Hold Ctrl to select multiple bookmarks");
+        JLabel bookmarkHintLabel = new JLabel(Messages.getString("BfacDialog.BookmarkHint"));
         bookmarkHintLabel.setFont(new Font("SansSerif", Font.ITALIC, 11));
         bookmarkPanel.add(bookmarkHintLabel, BorderLayout.SOUTH);
 
@@ -551,7 +551,7 @@ public class BfacDialog extends JDialog {
         JPanel detailsPanel = new JPanel(new GridBagLayout());
         detailsPanel.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createEtchedBorder(),
-            "Submission",
+            Messages.getString("BfacDialog.Submission"),
             TitledBorder.LEFT,
             TitledBorder.TOP));
 
@@ -560,9 +560,9 @@ public class BfacDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
 
         // Radio buttons for new/existing submission
-        newSubmissionRadio = new JRadioButton("Create new submission");
+        newSubmissionRadio = new JRadioButton(Messages.getString("BfacDialog.CreateNewSubmission"));
         newSubmissionRadio.setSelected(true);
-        existingSubmissionRadio = new JRadioButton("Use existing submission");
+        existingSubmissionRadio = new JRadioButton(Messages.getString("BfacDialog.UseExistingSubmission"));
 
         ButtonGroup submissionModeGroup = new ButtonGroup();
         submissionModeGroup.add(newSubmissionRadio);
@@ -586,8 +586,8 @@ public class BfacDialog extends JDialog {
         existingSubmissionComboBox.addActionListener(e -> syncCategoryWithSelectedSubmission());
         existingPanel.add(existingSubmissionComboBox, BorderLayout.CENTER);
 
-        refreshSubmissionsButton = new JButton("↻");
-        refreshSubmissionsButton.setToolTipText("Refresh submissions list");
+        refreshSubmissionsButton = new JButton("\u21BB"); // Clockwise open circle arrow (refresh)
+        refreshSubmissionsButton.setToolTipText(Messages.getString("BfacDialog.RefreshSubmissions.tooltip"));
         refreshSubmissionsButton.setEnabled(false);
         refreshSubmissionsButton.addActionListener(e -> loadOpenSubmissionsInBackground());
         existingPanel.add(refreshSubmissionsButton, BorderLayout.EAST);
@@ -605,7 +605,7 @@ public class BfacDialog extends JDialog {
         // Submission name
         gbc.gridx = 0;
         gbc.gridy = 3;
-        detailsPanel.add(new JLabel("Name:"), gbc);
+        detailsPanel.add(new JLabel(Messages.getString("BfacDialog.Name")), gbc);
 
         submissionNameField = new JTextField(30);
         gbc.gridx = 1;
@@ -618,7 +618,7 @@ public class BfacDialog extends JDialog {
         gbc.gridy = 4;
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
-        detailsPanel.add(new JLabel("Category:"), gbc);
+        detailsPanel.add(new JLabel(Messages.getString("BfacDialog.Category")), gbc);
 
         categoryComboBox = new JComboBox<>();
         // Categories will be loaded from API after login
@@ -631,7 +631,7 @@ public class BfacDialog extends JDialog {
         gbc.gridy = 5;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.NORTHWEST;
-        detailsPanel.add(new JLabel("Comment:"), gbc);
+        detailsPanel.add(new JLabel(Messages.getString("BfacDialog.Comment")), gbc);
 
         submissionCommentArea = new JTextArea(2, 30);
         submissionCommentArea.setLineWrap(true);
@@ -649,7 +649,7 @@ public class BfacDialog extends JDialog {
         gbc.fill = GridBagConstraints.NONE;
         gbc.weighty = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        uploadFilesCheckBox = new JCheckBox("Upload files (not just hashes)", true);
+        uploadFilesCheckBox = new JCheckBox(Messages.getString("BfacDialog.UploadFiles"), true);
         detailsPanel.add(uploadFilesCheckBox, gbc);
 
         centerPanel.add(detailsPanel);
@@ -658,7 +658,7 @@ public class BfacDialog extends JDialog {
 
         // Bottom panel with create button
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        createSubmissionButton = new JButton("Create Submission & Upload");
+        createSubmissionButton = new JButton(Messages.getString("BfacDialog.CreateSubmissionAndUpload"));
         createSubmissionButton.addActionListener(e -> onCreateSubmission());
         bottomPanel.add(createSubmissionButton);
         panel.add(bottomPanel, BorderLayout.SOUTH);
@@ -671,7 +671,7 @@ public class BfacDialog extends JDialog {
         panel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         // Title
-        JLabel titleLabel = new JLabel("Upload Progress", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel(Messages.getString("BfacDialog.UploadProgress"), SwingConstants.CENTER);
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
         panel.add(titleLabel, BorderLayout.NORTH);
 
@@ -693,18 +693,18 @@ public class BfacDialog extends JDialog {
         progressLogArea.setEditable(false);
         progressLogArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane logScrollPane = new JScrollPane(progressLogArea);
-        logScrollPane.setBorder(BorderFactory.createTitledBorder("Log"));
+        logScrollPane.setBorder(BorderFactory.createTitledBorder(Messages.getString("BfacDialog.Log")));
         centerPanel.add(logScrollPane);
 
         panel.add(centerPanel, BorderLayout.CENTER);
 
         // Bottom panel with buttons
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        cancelButton = new JButton("Cancel");
+        cancelButton = new JButton(Messages.getString("BfacDialog.Cancel"));
         cancelButton.addActionListener(e -> onCancel());
         bottomPanel.add(cancelButton);
 
-        closeButton = new JButton("Close");
+        closeButton = new JButton(Messages.getString("BfacDialog.Close"));
         closeButton.setEnabled(false);
         closeButton.addActionListener(e -> onClose());
         bottomPanel.add(closeButton);
@@ -722,7 +722,7 @@ public class BfacDialog extends JDialog {
 
         if (username.isEmpty() || password.isEmpty()) {
             loginStatusLabel.setForeground(Color.RED);
-            loginStatusLabel.setText("Please enter username and password");
+            loginStatusLabel.setText(Messages.getString("BfacDialog.EnterCredentials"));
             return;
         }
 
@@ -733,7 +733,7 @@ public class BfacDialog extends JDialog {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         loginStatusLabel.setForeground(Color.BLUE);
-        loginStatusLabel.setText("Logging in...");
+        loginStatusLabel.setText(Messages.getString("BfacDialog.LoggingIn"));
 
         // Perform login in background thread
         new SwingWorker<LoginResult, Void>() {
@@ -750,7 +750,7 @@ public class BfacDialog extends JDialog {
                         // Clear password from memory
                         passwordField.setText("");
 
-                        userInfoLabel.setText("Logged in as: " + username);
+                        userInfoLabel.setText(Messages.getString("BfacDialog.LoggedInAs", username));
                         loginStatusLabel.setText(" ");
 
                         // Load categories and open submissions from API
@@ -764,7 +764,7 @@ public class BfacDialog extends JDialog {
                     }
                 } catch (Exception e) {
                     loginStatusLabel.setForeground(Color.RED);
-                    loginStatusLabel.setText("Error: " + e.getMessage());
+                    loginStatusLabel.setText(Messages.getString("BfacDialog.Error", e.getMessage()));
                 } finally {
                     // Re-enable UI
                     loginButton.setEnabled(true);
@@ -792,8 +792,8 @@ public class BfacDialog extends JDialog {
 
         if (selectedBookmarks.isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(this,
-                "Please select at least one bookmark.",
-                "No Bookmarks Selected",
+                Messages.getString("BfacDialog.NoBookmarksSelected"),
+                Messages.getString("BfacDialog.NoBookmarksSelectedTitle"),
                 javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -808,8 +808,8 @@ public class BfacDialog extends JDialog {
             submissionName = submissionNameField.getText().trim();
             if (submissionName.isEmpty()) {
                 javax.swing.JOptionPane.showMessageDialog(this,
-                    "Please enter a submission name.",
-                    "Name Required",
+                    Messages.getString("BfacDialog.NameRequired"),
+                    Messages.getString("BfacDialog.NameRequiredTitle"),
                     javax.swing.JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -817,8 +817,8 @@ public class BfacDialog extends JDialog {
             Category selectedCategory = (Category) categoryComboBox.getSelectedItem();
             if (selectedCategory == null) {
                 javax.swing.JOptionPane.showMessageDialog(this,
-                    "Please select a category.",
-                    "Category Required",
+                    Messages.getString("BfacDialog.CategoryRequired"),
+                    Messages.getString("BfacDialog.CategoryRequiredTitle"),
                     javax.swing.JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -828,8 +828,8 @@ public class BfacDialog extends JDialog {
             Submission selectedSubmission = (Submission) existingSubmissionComboBox.getSelectedItem();
             if (selectedSubmission == null) {
                 javax.swing.JOptionPane.showMessageDialog(this,
-                    "Please select an existing submission.",
-                    "Submission Required",
+                    Messages.getString("BfacDialog.SubmissionRequired"),
+                    Messages.getString("BfacDialog.SubmissionRequiredTitle"),
                     javax.swing.JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -868,12 +868,12 @@ public class BfacDialog extends JDialog {
                 javax.swing.SwingUtilities.invokeLater(() -> {
                     javax.swing.JOptionPane.showMessageDialog(
                         BfacDialog.this,
-                        "Your session has expired. Please log in again.",
-                        "Session Expired",
+                        Messages.getString("BfacDialog.SessionExpired"),
+                        Messages.getString("BfacDialog.SessionExpiredTitle"),
                         javax.swing.JOptionPane.WARNING_MESSAGE
                     );
                     cardLayout.show(cardPanel, CARD_LOGIN);
-                    loginStatusLabel.setText("Session expired. Please log in again.");
+                    loginStatusLabel.setText(Messages.getString("BfacDialog.SessionExpiredLoginAgain"));
                     loginStatusLabel.setForeground(java.awt.Color.RED);
                 });
             }
@@ -923,7 +923,7 @@ public class BfacDialog extends JDialog {
         // Cancel the current worker if running
         if (currentWorker != null && !currentWorker.isDone()) {
             currentWorker.cancelOperation();
-            appendLog("Cancelling operation...");
+            appendLog(Messages.getString("BfacDialog.CancellingOperation"));
             return; // Let the worker finish and update UI
         }
 

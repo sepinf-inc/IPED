@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import iped.bfac.api.BfacApiClient;
 import iped.bfac.api.FileHashInfo;
 import iped.bfac.api.FileUploadStatus;
+import iped.bfac.localization.Messages;
 import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
@@ -77,7 +78,7 @@ public class FileUploadTask implements Callable<FileUploadResult> {
     public FileUploadResult call() {
         try {
             if (cancelledFlag[0] || authErrorFlag[0]) {
-                return FileUploadResult.error(fileId, hashInfo.getFileName(), 0, "Cancelled");
+                return FileUploadResult.error(fileId, hashInfo.getFileName(), 0, Messages.getString("FileUploadTask.Cancelled"));
             }
 
             // Get upload status from backend
@@ -92,7 +93,7 @@ public class FileUploadTask implements Callable<FileUploadResult> {
 
             // If already complete, skip
             if (status.isComplete()) {
-                log("  File already uploaded: " + hashInfo.getFileName());
+                log(Messages.getString("FileUploadTask.FileAlreadyUploaded", hashInfo.getFileName()));
                 globalBytesUploaded.addAndGet(hashInfo.getFileSize());
                 if (progressCallback != null) {
                     progressCallback.run();
@@ -104,19 +105,19 @@ public class FileUploadTask implements Callable<FileUploadResult> {
             IItem item = findItem();
             if (item == null) {
                 return FileUploadResult.error(fileId, hashInfo.getFileName(), 0,
-                        "Could not find item for file " + hashInfo.getFileName());
+                        Messages.getString("FileUploadTask.ItemNotFound", hashInfo.getFileName()));
             }
 
             long fileSize = item.getLength() != null ? item.getLength() : 0;
             if (fileSize == 0) {
-                log("  Skipping empty file: " + hashInfo.getFileName());
+                log(Messages.getString("FileUploadTask.SkippingEmptyFile", hashInfo.getFileName()));
                 return FileUploadResult.skipped(fileId, hashInfo.getFileName(), 0);
             }
 
             int segmentSize = status.getSegmentSize();
             long startOffset = status.getUploadedSize();
 
-            log("  Uploading: " + hashInfo.getFileName() + " (" + formatBytes(fileSize) + ")");
+            log(Messages.getString("FileUploadTask.Uploading", hashInfo.getFileName(), formatBytes(fileSize)));
 
             // Count already-uploaded bytes in global progress
             if (startOffset > 0) {
@@ -169,22 +170,22 @@ public class FileUploadTask implements Callable<FileUploadResult> {
                 }
 
                 if (cancelledFlag[0]) {
-                    return FileUploadResult.error(fileId, hashInfo.getFileName(), currentOffset, "Cancelled");
+                    return FileUploadResult.error(fileId, hashInfo.getFileName(), currentOffset, Messages.getString("FileUploadTask.Cancelled"));
                 }
                 if (authErrorFlag[0]) {
-                    return FileUploadResult.authError(fileId, hashInfo.getFileName(), currentOffset, "Authentication error");
+                    return FileUploadResult.authError(fileId, hashInfo.getFileName(), currentOffset, Messages.getString("FileUploadTask.AuthenticationError"));
                 }
 
                 return FileUploadResult.success(fileId, hashInfo.getFileName(), currentOffset);
 
             } catch (IOException e) {
                 logger.error("Error reading file {}", hashInfo.getFileName(), e);
-                return FileUploadResult.error(fileId, hashInfo.getFileName(), 0, "Error reading file: " + e.getMessage());
+                return FileUploadResult.error(fileId, hashInfo.getFileName(), 0, Messages.getString("FileUploadTask.ErrorReadingFile", e.getMessage()));
             }
 
         } catch (Exception e) {
             logger.error("Error uploading file {}", hashInfo.getFileName(), e);
-            return FileUploadResult.error(fileId, hashInfo.getFileName(), 0, "Error: " + e.getMessage());
+            return FileUploadResult.error(fileId, hashInfo.getFileName(), 0, Messages.getString("FileUploadTask.Error", e.getMessage()));
         }
     }
 
