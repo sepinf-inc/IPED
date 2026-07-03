@@ -137,6 +137,9 @@ public class SummaryViewer extends HtmlViewer {
 
     // Escapes the summary text as HTML and then applies the supported markdown subset.
     private static String renderSummaryMarkup(String text) {
+        String html = SimpleHTMLEncoder.htmlEncode(text).replace("\n", "<br>");
+        Matcher matcher = BOLD_PATTERN.matcher(html);
+        StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
             matcher.appendReplacement(sb, Matcher.quoteReplacement("<strong>" + matcher.group(1) + "</strong>"));
         }

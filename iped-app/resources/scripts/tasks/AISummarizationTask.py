@@ -640,11 +640,11 @@ class AISummarizationTask:
             summary = entry.get("summary")
             if isinstance(summary, str) and summary.strip():
                 chunk_summaries.append(summary)
-
-            # --- chunk ids ---
-            chunk_id = entry.get("chunk_id")
-            if isinstance(chunk_id, str) and chunk_id.strip():
-                chunk_ids.append(chunk_id)
+                # Keep chunk ids aligned with the summaries, even when an id is missing.
+                chunk_id = entry.get("chunk_id")
+                chunk_ids.append(
+                    chunk_id if isinstance(chunk_id, str) and chunk_id.strip() else ""
+                )
 
             # --- answers per question / attribute ---
             if per_attr_answers:

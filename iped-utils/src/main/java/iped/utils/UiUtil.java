@@ -51,7 +51,7 @@ public class UiUtil {
             sb.append("color:");
             sb.append(getHexRGB(c));
             sb.append(";");
-            sb.append("\">").append(msg).append("</p>");
+            sb.append("\">").append(SimpleHTMLEncoder.htmlEncode(msg)).append("</div>");
         }
         sb.append("</body></html>");
         return sb.toString();

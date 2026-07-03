@@ -62,7 +62,7 @@ public class AIFiltersLoader {
                         if (field.startsWith(prop)) {
                             SimpleFilterNode add = (SimpleFilterNode) node.clone();
                             String s = field.substring(prop.length()).trim();
-                            if (s.toLowerCase().endsWith("score")) {
+                            if (s.length() > 5 && s.toLowerCase().endsWith("score")) {
                                 s = Character.toUpperCase(s.charAt(0)) + s.substring(1, s.length() - 5);
                                 for (int j = 1; j < s.length(); j++) {
                                     if (Character.isUpperCase(s.charAt(j)) && !Character.isUpperCase(s.charAt(j - 1))) {

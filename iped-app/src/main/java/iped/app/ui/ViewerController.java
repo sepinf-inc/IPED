@@ -522,12 +522,13 @@ public class ViewerController {
             for (int i = 0; i < viewers.size(); i++) {
                 AbstractViewer viewer = viewers.get(i);
                 if (viewer instanceof SummaryViewer) {
-                    DefaultSingleCDockable dock = dockPerViewer.get(viewer);
-                    dockPerViewer.remove(viewer);
+                    DefaultSingleCDockable dock = dockPerViewer.remove(viewer);
                     viewers.remove(i);
-                    CControl cControl = dock.getControl();
-                    if (cControl != null) {
-                        cControl.removeDockable(dock);
+                    if (dock != null) {
+                        CControl cControl = dock.getControl();
+                        if (cControl != null) {
+                            cControl.removeDockable(dock);
+                        }
                     }
                     break;
                 }
