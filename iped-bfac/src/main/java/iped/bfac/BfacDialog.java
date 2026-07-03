@@ -29,7 +29,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -47,6 +46,7 @@ import iped.bfac.api.Submission;
 import iped.bfac.api.ValidationResult;
 import iped.bfac.localization.Messages;
 import iped.bfac.ui.BookmarkSelectionPanel;
+import iped.bfac.ui.UploadProgressPanel;
 import iped.data.IIPEDSource;
 
 /**
@@ -102,11 +102,8 @@ public class BfacDialog extends JDialog {
     private JLabel userInfoLabel;
     private JPanel newSubmissionFieldsPanel;
 
-    // Progress panel components
-    private JProgressBar progressBar;
-    private JTextArea progressLogArea;
-    private JButton cancelButton;
-    private JButton closeButton;
+    // Progress panel
+    private UploadProgressPanel uploadProgressPanel;
 
     private BfacDialog(JFrame parent) {
         super(parent, Messages.getString("BfacDialog.Title"), false); // Non-modal
@@ -461,7 +458,20 @@ public class BfacDialog extends JDialog {
 
         cardPanel.add(createLoginPanel(), CARD_LOGIN);
         cardPanel.add(createSubmissionPanel(), CARD_SUBMISSION);
-        cardPanel.add(createProgressPanel(), CARD_PROGRESS);
+
+        uploadProgressPanel = new UploadProgressPanel();
+        uploadProgressPanel.setListener(new UploadProgressPanel.Listener() {
+            @Override
+            public void onCancel() {
+                BfacDialog.this.onCancel();
+            }
+
+            @Override
+            public void onClose() {
+                BfacDialog.this.onClose();
+            }
+        });
+        cardPanel.add(uploadProgressPanel, CARD_PROGRESS);
 
         getContentPane().add(cardPanel);
 
@@ -705,54 +715,6 @@ public class BfacDialog extends JDialog {
         return panel;
     }
 
-    private JPanel createProgressPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
-
-        // Title
-        JLabel titleLabel = new JLabel(Messages.getString("BfacDialog.UploadProgress"), SwingConstants.CENTER);
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
-        panel.add(titleLabel, BorderLayout.NORTH);
-
-        // Center panel with progress bar and log
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-
-        // Progress bar
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setStringPainted(true);
-        progressBar.setString("0%");
-        progressBar.setPreferredSize(new Dimension(500, 25));
-        progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
-        centerPanel.add(progressBar);
-        centerPanel.add(Box.createVerticalStrut(15));
-
-        // Progress log
-        progressLogArea = new JTextArea(12, 50);
-        progressLogArea.setEditable(false);
-        progressLogArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        JScrollPane logScrollPane = new JScrollPane(progressLogArea);
-        logScrollPane.setBorder(BorderFactory.createTitledBorder(Messages.getString("BfacDialog.Log")));
-        centerPanel.add(logScrollPane);
-
-        panel.add(centerPanel, BorderLayout.CENTER);
-
-        // Bottom panel with buttons
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        cancelButton = new JButton(Messages.getString("BfacDialog.Cancel"));
-        cancelButton.addActionListener(e -> onCancel());
-        bottomPanel.add(cancelButton);
-
-        closeButton = new JButton(Messages.getString("BfacDialog.Close"));
-        closeButton.setEnabled(false);
-        closeButton.addActionListener(e -> onClose());
-        bottomPanel.add(closeButton);
-
-        panel.add(bottomPanel, BorderLayout.SOUTH);
-
-        return panel;
-    }
-
     // Event handlers
 
     private void onLogin() {
@@ -880,23 +842,21 @@ public class BfacDialog extends JDialog {
 
         // Switch to progress panel
         cardLayout.show(cardPanel, CARD_PROGRESS);
-        progressLogArea.setText("");
-        progressBar.setValue(0);
-        progressBar.setString("0%");
-        cancelButton.setEnabled(true);
-        closeButton.setEnabled(false);
+        uploadProgressPanel.reset();
+        uploadProgressPanel.startTracking();
 
         // Create callback for worker communication
         SubmissionWorker.SubmissionCallback callback = new SubmissionWorker.SubmissionCallback() {
             @Override
             public void onLogMessage(String message) {
-                appendLog(message);
+                uploadProgressPanel.appendLog(message);
             }
 
             @Override
             public void onComplete(boolean success) {
-                cancelButton.setEnabled(false);
-                closeButton.setEnabled(true);
+                uploadProgressPanel.stopTracking();
+                uploadProgressPanel.setCancelEnabled(false);
+                uploadProgressPanel.setCloseEnabled(true);
                 currentWorker = null;
             }
 
@@ -932,43 +892,37 @@ public class BfacDialog extends JDialog {
         // Listen for progress updates
         currentWorker.addPropertyChangeListener(evt -> {
             if ("progress".equals(evt.getPropertyName())) {
-                int progress = (Integer) evt.getNewValue();
-                progressBar.setValue(progress);
-                progressBar.setString(progress + "%");
+                uploadProgressPanel.setProgress((Integer) evt.getNewValue());
+            } else if ("uploadBytes".equals(evt.getPropertyName())) {
+                long[] bytes = (long[]) evt.getNewValue();
+                if (bytes != null && bytes.length == 2) {
+                    uploadProgressPanel.setUploadBytes(bytes[0], bytes[1]);
+                }
             }
         });
 
         currentWorker.execute();
     }
 
-    private void appendLog(String message) {
-        progressLogArea.append(message + "\n");
-        progressLogArea.setCaretPosition(progressLogArea.getDocument().getLength());
-    }
-
     private void onCancel() {
         // Cancel the current worker if running
         if (currentWorker != null && !currentWorker.isDone()) {
             currentWorker.cancelOperation();
-            appendLog(Messages.getString("BfacDialog.CancellingOperation"));
+            uploadProgressPanel.appendLog(Messages.getString("BfacDialog.CancellingOperation"));
             return; // Let the worker finish and update UI
         }
 
         // Return to submission panel
+        uploadProgressPanel.stopTracking();
+        uploadProgressPanel.reset();
         cardLayout.show(cardPanel, CARD_SUBMISSION);
-        progressBar.setValue(0);
-        progressBar.setString("0%");
-        cancelButton.setEnabled(true);
-        closeButton.setEnabled(false);
     }
 
     private void onClose() {
         // Return to submission panel
+        uploadProgressPanel.stopTracking();
+        uploadProgressPanel.reset();
         cardLayout.show(cardPanel, CARD_SUBMISSION);
-        progressBar.setValue(0);
-        progressBar.setString("0%");
-        cancelButton.setEnabled(true);
-        closeButton.setEnabled(false);
 
         // Clear form
         submissionNameField.setText("");

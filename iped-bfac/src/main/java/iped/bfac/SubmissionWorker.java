@@ -238,6 +238,7 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 // Shared state for parallel uploads
                 final AtomicLong globalBytesUploaded = new AtomicLong(0);
                 final long finalTotalBytesToUpload = totalBytesToUpload;
+                notifyUploadBytes(0, finalTotalBytesToUpload);
 
                 // Reset shared flags for this upload phase
                 cancelledFlag[0] = false;
@@ -252,8 +253,10 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
                 // Progress callback: updates progress bar after each segment upload
                 Runnable progressCallback = () -> {
                     if (finalTotalBytesToUpload > 0) {
-                        int progress = (int) ((globalBytesUploaded.get() * 100) / finalTotalBytesToUpload);
+                        long uploaded = globalBytesUploaded.get();
+                        int progress = (int) ((uploaded * 100) / finalTotalBytesToUpload);
                         setProgress(Math.min(progress, 100));
+                        notifyUploadBytes(uploaded, finalTotalBytesToUpload);
                     }
                 };
 
@@ -718,5 +721,9 @@ public class SubmissionWorker extends SwingWorker<Boolean, String> {
         if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
         if (bytes < 1024 * 1024 * 1024) return String.format("%.1f MB", bytes / (1024.0 * 1024));
         return String.format("%.1f GB", bytes / (1024.0 * 1024 * 1024));
+    }
+
+    private void notifyUploadBytes(long uploaded, long total) {
+        firePropertyChange("uploadBytes", null, new long[] { uploaded, total });
     }
 }
