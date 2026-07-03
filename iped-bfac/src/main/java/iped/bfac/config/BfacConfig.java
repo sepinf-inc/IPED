@@ -100,6 +100,13 @@ public class BfacConfig {
     }
 
     /**
+     * Reloads credentials from disk, discarding any cached in-memory copy.
+     */
+    public void reloadCredentials() {
+        this.credentials = loadJsonFile(CREDENTIALS_FILE);
+    }
+
+    /**
      * Gets the configuration from the config.json file.
      * @return JsonObject with configuration or empty object if file doesn't exist
      */

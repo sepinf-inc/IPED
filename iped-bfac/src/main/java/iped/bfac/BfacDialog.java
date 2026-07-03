@@ -77,6 +77,9 @@ public class BfacDialog extends JDialog {
     // Worker for background submission
     private SubmissionWorker currentWorker;
 
+    // Worker for session validation on dialog open
+    private SwingWorker<ValidationResult, Void> sessionValidationWorker;
+
     // Login panel components
     private JLabel serverUrlLabel;
     private JTextField usernameField;
@@ -145,6 +148,7 @@ public class BfacDialog extends JDialog {
         if (parentFrame != null && parentFrame.getState() == Frame.ICONIFIED) {
             parentFrame.setState(Frame.NORMAL);
         }
+        checkStoredSessionOnOpen();
         setVisible(true);
         toFront();
         requestFocus();
@@ -242,33 +246,74 @@ public class BfacDialog extends JDialog {
     }
 
     /**
-     * Initialize dialog state from stored credentials if available.
+     * Pre-fills username from stored config during construction.
      */
     private void initFromStoredCredentials() {
-        // Pre-fill username if stored
+        String storedUsername = apiClient.getStoredUsername();
+        if (storedUsername != null && !storedUsername.isEmpty()) {
+            usernameField.setText(storedUsername);
+        }
+    }
+
+    /**
+     * Checks stored credentials and validates the session with the backend when opening the dialog.
+     */
+    private void checkStoredSessionOnOpen() {
         String storedUsername = apiClient.getStoredUsername();
         if (storedUsername != null && !storedUsername.isEmpty()) {
             usernameField.setText(storedUsername);
         }
 
-        // If already authenticated, validate session with server
-        if (apiClient.isAuthenticated()) {
+        if (apiClient.hasStoredCredentials()) {
+            apiClient.reloadStoredCredentials();
             userInfoLabel.setText(Messages.getString("BfacDialog.LoggedInAs",
                     storedUsername != null ? storedUsername : Messages.getString("BfacDialog.DefaultUser")));
             cardLayout.show(cardPanel, CARD_SUBMISSION);
-
-            // Validate session in background
-            validateSessionInBackground(storedUsername);
+            validateSessionInBackground();
+        } else {
+            cardLayout.show(cardPanel, CARD_LOGIN);
         }
+    }
+
+    /**
+     * Clears credentials and returns to the login panel after session expiration (401).
+     * @param showModalMessage if true, shows a warning dialog (e.g. during upload)
+     */
+    private void showLoginAfterSessionExpired(boolean showModalMessage) {
+        apiClient.logout();
+
+        String storedUsername = apiClient.getStoredUsername();
+        if (storedUsername != null && !storedUsername.isEmpty()) {
+            usernameField.setText(storedUsername);
+        }
+
+        if (showModalMessage) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    Messages.getString("BfacDialog.SessionExpired"),
+                    Messages.getString("BfacDialog.SessionExpiredTitle"),
+                    JOptionPane.WARNING_MESSAGE);
+        }
+
+        loginStatusLabel.setForeground(Color.ORANGE);
+        loginStatusLabel.setText(Messages.getString("BfacDialog.SessionExpiredLoginAgain"));
+        cardLayout.show(cardPanel, CARD_LOGIN);
+    }
+
+    private void showLoginAfterSessionExpired() {
+        showLoginAfterSessionExpired(false);
     }
 
     /**
      * Validates the current session with the server in a background thread.
      * If the session is invalid (401), returns to the login panel.
-     * @param storedUsername The stored username for display purposes
      */
-    private void validateSessionInBackground(String storedUsername) {
-        new SwingWorker<ValidationResult, Void>() {
+    private void validateSessionInBackground() {
+        if (sessionValidationWorker != null && !sessionValidationWorker.isDone()) {
+            return;
+        }
+
+        sessionValidationWorker = new SwingWorker<ValidationResult, Void>() {
             @Override
             protected ValidationResult doInBackground() {
                 return apiClient.validateSession();
@@ -279,27 +324,22 @@ public class BfacDialog extends JDialog {
                 try {
                     ValidationResult result = get();
                     if (result.isValid()) {
-                        // Session is valid, load data
                         loadCategoriesInBackground();
                         loadOpenSubmissionsInBackground();
                     } else if (result.getStatusCode() == 401) {
-                        // Session expired, return to login
-                        loginStatusLabel.setForeground(Color.ORANGE);
-                        loginStatusLabel.setText(Messages.getString("BfacDialog.SessionExpiredLoginAgain"));
-                        cardLayout.show(cardPanel, CARD_LOGIN);
+                        showLoginAfterSessionExpired();
                     } else {
                         // Other error (e.g., connection error), stay on submission panel
-                        // but still try to load data (might work with cached token)
                         loadCategoriesInBackground();
                         loadOpenSubmissionsInBackground();
                     }
                 } catch (Exception e) {
-                    // On error, stay on submission panel and try to load data
                     loadCategoriesInBackground();
                     loadOpenSubmissionsInBackground();
                 }
             }
-        }.execute();
+        };
+        sessionValidationWorker.execute();
     }
 
     /**
@@ -315,6 +355,10 @@ public class BfacDialog extends JDialog {
             @Override
             protected void done() {
                 try {
+                    if (apiClient.wasLastCallUnauthorized()) {
+                        showLoginAfterSessionExpired();
+                        return;
+                    }
                     List<Category> categories = get();
                     categoryComboBox.removeAllItems();
                     for (Category category : categories) {
@@ -343,6 +387,10 @@ public class BfacDialog extends JDialog {
             @Override
             protected void done() {
                 try {
+                    if (apiClient.wasLastCallUnauthorized()) {
+                        showLoginAfterSessionExpired();
+                        return;
+                    }
                     List<Submission> submissions = get();
                     existingSubmissionComboBox.removeAllItems();
                     for (Submission submission : submissions) {
@@ -854,19 +902,7 @@ public class BfacDialog extends JDialog {
 
             @Override
             public void onAuthenticationError() {
-                // Clear credentials and return to login screen
-                apiClient.logout();
-                javax.swing.SwingUtilities.invokeLater(() -> {
-                    javax.swing.JOptionPane.showMessageDialog(
-                        BfacDialog.this,
-                        Messages.getString("BfacDialog.SessionExpired"),
-                        Messages.getString("BfacDialog.SessionExpiredTitle"),
-                        javax.swing.JOptionPane.WARNING_MESSAGE
-                    );
-                    cardLayout.show(cardPanel, CARD_LOGIN);
-                    loginStatusLabel.setText(Messages.getString("BfacDialog.SessionExpiredLoginAgain"));
-                    loginStatusLabel.setForeground(java.awt.Color.RED);
-                });
+                javax.swing.SwingUtilities.invokeLater(() -> showLoginAfterSessionExpired(true));
             }
         };
 

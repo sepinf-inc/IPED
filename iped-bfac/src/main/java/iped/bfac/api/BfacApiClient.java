@@ -52,6 +52,7 @@ public class BfacApiClient {
     private static final Duration TIMEOUT = Duration.ofSeconds(60);
     private static final String USER_AGENT = "IPED-BFAC-Client/" + Version.APP_VERSION + " (" + Version.APP_EXT + ")";
     private static final int MAX_STATUS_BATCH_FILE_IDS = 50;
+    private static final String SESSION_USER_ENDPOINT = "api/auth/users/me";
 
     public static class BatchUploadSegmentInput {
         private final int fileId;
@@ -167,6 +168,7 @@ public class BfacApiClient {
     private String accessToken;
     private HttpClient httpClient;
     private BfacConfig config;
+    private boolean lastCallUnauthorized;
 
     public BfacApiClient() {
         this.config = BfacConfig.getInstance();
@@ -839,6 +841,7 @@ public class BfacApiClient {
      * @return List of Category objects, or empty list on error
      */
     public List<Category> getCategories() {
+        beginApiCall();
         List<Category> categories = new ArrayList<>();
 
         if (accessToken == null || accessToken.isEmpty()) {
@@ -873,6 +876,7 @@ public class BfacApiClient {
 
             } else if (response.statusCode() == 401) {
                 logger.warn("Authentication failed when getting categories");
+                markUnauthorized();
             } else {
                 logger.error("Failed to get categories: status {}", response.statusCode());
             }
@@ -896,6 +900,7 @@ public class BfacApiClient {
      * @return PaginationResult containing submissions and pagination metadata
      */
     public PaginationResult<Submission> getSubmissions(boolean closed, String cursor, int limit) {
+        beginApiCall();
         PaginationResult<Submission> result = new PaginationResult<>();
         List<Submission> submissions = new ArrayList<>();
 
@@ -975,6 +980,7 @@ public class BfacApiClient {
 
             } else if (response.statusCode() == 401) {
                 logger.warn("Authentication failed when getting submissions");
+                markUnauthorized();
             } else {
                 logger.error("Failed to get submissions: status {}", response.statusCode());
             }
@@ -1021,36 +1027,62 @@ public class BfacApiClient {
     }
 
     /**
+     * Checks if stored credentials exist on disk.
+     * @return true if access token is available in credentials.json
+     */
+    public boolean hasStoredCredentials() {
+        return config.hasStoredCredentials();
+    }
+
+    /**
+     * Reloads the access token from the credentials file on disk.
+     */
+    public void reloadStoredCredentials() {
+        config.reloadCredentials();
+        this.accessToken = config.getAccessToken();
+    }
+
+    /**
+     * Returns whether the most recent API call failed with HTTP 401.
+     * @return true if the last call was unauthorized
+     */
+    public boolean wasLastCallUnauthorized() {
+        return lastCallUnauthorized;
+    }
+
+    private void beginApiCall() {
+        lastCallUnauthorized = false;
+    }
+
+    private void markUnauthorized() {
+        lastCallUnauthorized = true;
+    }
+
+    /**
      * Validates the current session by making a request to the server.
      * This is useful to check if a cached token is still valid.
      * @return ValidationResult with success status and HTTP status code
      */
     public ValidationResult validateSession() {
+        beginApiCall();
         if (accessToken == null || accessToken.isEmpty()) {
             return new ValidationResult(false, 0, "No access token available");
         }
 
         try {
-            // Use the renew_token endpoint to validate and refresh the token
-            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + "api/auth/users/renew_token")
-                    .POST(HttpRequest.BodyPublishers.noBody())
+            HttpRequest request = newAuthenticatedRequestBuilder(baseUrl + SESSION_USER_ENDPOINT)
+                    .GET()
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                JsonObject tokenResponse = GSON.fromJson(response.body(), JsonObject.class);
-                this.accessToken = tokenResponse.get("access_token").getAsString();
-
-                // Save renewed credentials
-                config.saveCredentials(tokenResponse);
-
-                logger.info("Session validated and token renewed");
+                logger.info("Session validated successfully");
                 return new ValidationResult(true, 200, "Session valid");
 
             } else if (response.statusCode() == 401) {
                 logger.warn("Session validation failed: token expired or invalid");
-                // Clear invalid credentials
+                markUnauthorized();
                 this.accessToken = null;
                 config.clearCredentials();
                 return new ValidationResult(false, 401, "Session expired");
