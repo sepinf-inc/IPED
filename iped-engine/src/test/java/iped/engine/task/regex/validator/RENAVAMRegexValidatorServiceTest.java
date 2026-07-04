@@ -102,7 +102,13 @@ public class RENAVAMRegexValidatorServiceTest {
 
     @Test
     public void testFormatStripsNonDigits() {
-        assertEquals("00123456789", service.format("00123456789"));
+        assertEquals("00123456789", service.format(".123.456.789"));
+    }
+
+    @Test
+    public void testValidateStripsNonDigits() {
+        // ".001.234.567-89" strips to "00123456789", check digit 9 — valid
+        assertTrue(service.validate(".001.234.567-89"));
     }
 
 }
