@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import iped.utils.IOUtil;
 
@@ -14,6 +16,10 @@ public class ReportGenerator {
 
     private static final String TEMPLATE;
     private static final String CSS;
+
+    // Single-pass substitution prevents user data containing ${placeholder}
+    // from being re-processed by subsequent replace() calls (template injection).
+    private static final Pattern PLACEHOLDER = Pattern.compile("\\$\\{(css|title|messages|javascript)\\}");
 
     static {
         TEMPLATE = readResource("/iped/parsers/signal/signal-html-template.txt");
@@ -53,11 +59,18 @@ public class ReportGenerator {
             messages.append(renderMessage(m, chat));
         }
 
-        String html = TEMPLATE
-                .replace("${css}", CSS)
-                .replace("${title}", escapeHtml(chat.getTitle()))
-                .replace("${messages}", messages.toString())
-                .replace("${javascript}", "");
+        final String escapedTitle  = escapeHtml(chat.getTitle());
+        final String messagesBlock = messages.toString();
+
+        String html = PLACEHOLDER.matcher(TEMPLATE).replaceAll(mr -> {
+            switch (mr.group(1)) {
+                case "css":        return Matcher.quoteReplacement(CSS);
+                case "title":      return Matcher.quoteReplacement(escapedTitle);
+                case "messages":   return Matcher.quoteReplacement(messagesBlock);
+                case "javascript": return "";
+                default:           return Matcher.quoteReplacement(mr.group(0));
+            }
+        });
 
         return html.getBytes(StandardCharsets.UTF_8);
     }

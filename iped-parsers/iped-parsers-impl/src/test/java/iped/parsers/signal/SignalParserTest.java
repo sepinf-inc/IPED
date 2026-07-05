@@ -234,6 +234,41 @@ public class SignalParserTest extends AbstractPkgTest {
                 EXPECTED_MESSAGE_DOCS, tracker.messageDates.size());
     }
 
+    // ── Template injection prevention ────────────────────────────────────────
+
+    public void testTemplateInjectionInGroupTitle() throws Exception {
+        // A group named "${messages}" or "${javascript}" must not cause the template
+        // placeholders to be re-evaluated after substitution (report corruption / evidence
+        // integrity attack). The ReportGenerator uses single-pass Matcher.replaceAll() to
+        // prevent this. We verify by directly exercising the HTML generator.
+        SignalContact injectedGroup = new SignalContact(99L, null, null, null, null, null, "INJECT001");
+        SignalChat chat = new SignalChat();
+        chat.setId(99L);
+        chat.setContact(injectedGroup);
+        chat.setGroupTitle("${messages}");  // attacker-controlled group name
+        chat.setMessages(new java.util.ArrayList<>());
+
+        ReportGenerator gen = new ReportGenerator();
+        byte[] html = gen.generateChatHtml(chat);
+        String output = new String(html, java.nio.charset.StandardCharsets.UTF_8);
+
+        // The literal string "${messages}" must appear in the title position,
+        // NOT cause message duplication or blank-out.
+        assertTrue("Injected placeholder must appear escaped in title",
+                output.contains("${messages}"));
+        // Must not contain a second &lt;div class=&quot;messages&quot;&gt; block
+        // from the title position (template duplication check).
+        int messagesBlockCount = countOccurrences(output, "<div class=\"messages\">");
+        assertEquals("Messages block must appear exactly once (no duplication from title injection)",
+                1, messagesBlockCount);
+    }
+
+    private static int countOccurrences(String text, String sub) {
+        int count = 0, idx = 0;
+        while ((idx = text.indexOf(sub, idx)) != -1) { count++; idx += sub.length(); }
+        return count;
+    }
+
     // ── extractMessages flag ──────────────────────────────────────────────────
 
     public void testNoMessagesWhenExtractDisabled() throws Exception {
