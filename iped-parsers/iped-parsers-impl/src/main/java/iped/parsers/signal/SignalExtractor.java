@@ -43,12 +43,49 @@ public class SignalExtractor {
             "SELECT COUNT(*) FROM sqlite_master WHERE type='table' " +
             "AND name IN ('recipient','thread','message')";
 
+    // Identifies the device owner: the recipient who appears most frequently as
+    // the sender in outgoing messages (from_recipient_id for type & 31 in {0..5}).
+    // Returns the full recipient row in one query using a correlated subquery.
+    private static final String SELECT_SELF =
+            "SELECT r._id, r.e164, r.profile_given_name, r.profile_family_name, " +
+            "r.profile_joined_name, r.system_joined_name, r.group_id " +
+            "FROM recipient r " +
+            "WHERE r._id = (" +
+            "  SELECT from_recipient_id FROM message " +
+            "  WHERE (type & 31) IN (0,1,2,3,4,5) AND from_recipient_id > 0 " +
+            "  GROUP BY from_recipient_id ORDER BY COUNT(*) DESC LIMIT 1" +
+            ")";
+
     private final Connection connection;
     private final String itemPath;
 
     public SignalExtractor(Connection connection, String itemPath) {
         this.connection = connection;
         this.itemPath = itemPath;
+    }
+
+    /**
+     * Identifies the device owner by finding the recipient who most frequently
+     * appears as sender in outgoing messages. Returns null when no outgoing
+     * messages exist or the recipient cannot be resolved.
+     */
+    public SignalContact findSelfContact() {
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery(SELECT_SELF)) {
+            if (rs.next()) {
+                return new SignalContact(
+                        rs.getLong("_id"),
+                        rs.getString("e164"),
+                        rs.getString("profile_given_name"),
+                        rs.getString("profile_family_name"),
+                        rs.getString("profile_joined_name"),
+                        rs.getString("system_joined_name"),
+                        rs.getString("group_id"));
+            }
+        } catch (SQLException e) {
+            LOGGER.warn("Could not identify device owner from {}: {}", itemPath, e.getMessage());
+        }
+        return null;
     }
 
     public boolean isValidSignalDatabase() {

@@ -91,7 +91,8 @@ public class SignalParser extends SQLite3DBParser {
                     return;
                 }
                 List<SignalChat> chats = signalExtractor.extractChats();
-                createReports(chats, handler, extractor);
+                SignalContact selfContact = signalExtractor.findSelfContact();
+                createReports(chats, selfContact, handler, extractor);
             } finally {
                 try { connection.close(); } catch (SQLException e) { /* ignore */ }
             }
@@ -102,8 +103,8 @@ public class SignalParser extends SQLite3DBParser {
         }
     }
 
-    private void createReports(List<SignalChat> chats, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+    private void createReports(List<SignalChat> chats, SignalContact selfContact,
+            ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
 
         int chatVirtualId = 0;
         for (SignalChat chat : chats) {
@@ -122,10 +123,16 @@ public class SignalParser extends SQLite3DBParser {
 
             if (chat.isGroupChat()) {
                 chatMeta.add(ExtraProperties.GROUP_ID, chat.getContact().getGroupId());
+                // Self first (device owner); then members, excluding self to avoid duplication
+                if (selfContact != null)
+                    chatMeta.add(ExtraProperties.PARTICIPANTS, selfContact.getFullId());
                 for (SignalContact member : chat.getParticipants()) {
-                    chatMeta.add(ExtraProperties.PARTICIPANTS, member.getFullId());
+                    if (selfContact == null || member.getId() != selfContact.getId())
+                        chatMeta.add(ExtraProperties.PARTICIPANTS, member.getFullId());
                 }
             } else if (chat.getContact() != null) {
+                if (selfContact != null)
+                    chatMeta.add(ExtraProperties.PARTICIPANTS, selfContact.getFullId());
                 chatMeta.add(ExtraProperties.PARTICIPANTS, chat.getContact().getFullId());
             }
 
@@ -136,14 +143,17 @@ public class SignalParser extends SQLite3DBParser {
             extractor.parseEmbedded(new ByteArrayInputStream(reportBytes), handler, chatMeta, false);
 
             if (extractMessages) {
-                extractMessages(chatTitle, chat, chatVirtualId, handler, extractor);
+                extractMessages(chatTitle, chat, selfContact, chatVirtualId, handler, extractor);
             }
             chatVirtualId++;
         }
     }
 
-    private void extractMessages(String chatTitle, SignalChat chat, int parentVirtualId,
-            ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+    private void extractMessages(String chatTitle, SignalChat chat, SignalContact selfContact,
+            int parentVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor)
+            throws SAXException, IOException {
+
+        String selfId = selfContact != null ? selfContact.getFullId() : "";
 
         int msgCount = 0;
         for (SignalMessage m : chat.getMessages()) {
@@ -170,7 +180,7 @@ public class SignalParser extends SQLite3DBParser {
 
             SignalContact contact = chat.getContact();
             if (m.isFromMe()) {
-                msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, "");
+                msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, selfId);
                 // For groups, TO is the chat title; for individual, TO is the contact
                 if (chat.isGroupChat()) {
                     msgMeta.add(org.apache.tika.metadata.Message.MESSAGE_TO, chatTitle);
@@ -188,7 +198,7 @@ public class SignalParser extends SQLite3DBParser {
                     msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_TO, chatTitle);
                 } else if (contact != null) {
                     msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, contact.getFullId());
-                    msgMeta.add(org.apache.tika.metadata.Message.MESSAGE_TO, "");
+                    msgMeta.add(org.apache.tika.metadata.Message.MESSAGE_TO, selfId);
                 }
             }
 

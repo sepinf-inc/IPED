@@ -19,6 +19,8 @@ import iped.parsers.standard.StandardParser;
  *     2 – Bob Costa   (+5511999990002) [system_joined_name]
  *     3 – Group placeholder (GRP001FORENSICS)
  *     4 – phone-only  (+5511999990004) [no name fields]
+ *     5 – Device Owner (+5511999990005) [profile_joined_name] — self (device owner;
+ *         from_recipient_id on all outgoing messages; member of the group)
  *
  *   Threads (DESC by date → group first, then phone-only, then alice):
  *     2 – Group "Operacao Digital"  (date=1700001000000)
@@ -48,6 +50,7 @@ public class SignalParserTest extends AbstractPkgTest {
 
     private static final String ALICE_FULL_ID = "Alice Walker (+5511999990001)";
     private static final String BOB_FULL_ID   = "Bob Costa (+5511999990002)";
+    private static final String SELF_FULL_ID  = "Device Owner (+5511999990005)";
 
     private EmbeddedSignalParser parse(boolean extractMessages) throws Exception {
         SignalParser parser = new SignalParser();
@@ -193,8 +196,22 @@ public class SignalParserTest extends AbstractPkgTest {
         EmbeddedSignalParser tracker = parse(true);
         assertTrue("Outgoing call must have phone contact as TO",
                 tracker.messageTos.contains("+5511999990004"));
-        assertTrue("Must have at least one outgoing-direction marker (empty MESSAGE_FROM)",
-                tracker.messageFroms.stream().anyMatch(String::isEmpty));
+        assertTrue("Outgoing messages must carry self as MESSAGE_FROM",
+                tracker.messageFroms.contains(SELF_FULL_ID));
+    }
+
+    // ── Phase 2: device owner (self) in PARTICIPANTS ──────────────────────────
+
+    public void testSelfInParticipants() throws Exception {
+        // Self (device owner, identified from from_recipient_id on outgoing messages)
+        // must appear as the first PARTICIPANTS entry in every chat, matching the
+        // convention established by the WhatsApp and Threema parsers.
+        EmbeddedSignalParser tracker = parse(true);
+        long selfCount = tracker.participants.stream()
+                .filter(p -> p.equals(SELF_FULL_ID))
+                .count();
+        assertEquals("Self must appear as participant in every chat",
+                EXPECTED_CHAT_DOCS, (int) selfCount);
     }
 
     public void testGroupParticipantAlice() throws Exception {

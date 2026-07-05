@@ -105,9 +105,9 @@ public abstract class AbstractPkgTest extends TestCase {
             if (to != null)
                 messageTos.add(to);
 
-            String p = metadata.get(ExtraProperties.PARTICIPANTS);
-            if (p != null)
-                participants.add(p);
+            String[] parts = metadata.getValues(ExtraProperties.PARTICIPANTS);
+            if (parts != null)
+                for (String p : parts) participants.add(p);
 
             String date = metadata.get(ExtraProperties.MESSAGE_DATE);
             if (date != null)
