@@ -42,6 +42,12 @@ public class RENAVAMRegexValidatorServiceTest {
         assertTrue(service.validate("00000000310"));
     }
 
+    @Test
+    public void testValidRemainderOneGivesCheckZero() {
+        // base=0100000005, sum=12, rem=1 → check=0 (condition is rem<=1, not rem==0)
+        assertTrue(service.validate("01000000050"));
+    }
+
     // --- invalid check digit ---
 
     @Test
