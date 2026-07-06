@@ -50,6 +50,7 @@ public class SignalParser extends SQLite3DBParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(SIGNAL_DB);
 
+    // ReportGenerator uses ThreadLocal formatters; singleton is safe
     private static final ReportGenerator REPORT_GEN = new ReportGenerator();
 
     private boolean extractMessages = true;
@@ -97,6 +98,10 @@ public class SignalParser extends SQLite3DBParser {
                 try { connection.close(); } catch (SQLException e) { /* ignore */ }
             }
 
+        } catch (SAXException e) {
+            // Let SAXException (including WriteLimitReachedException) propagate so
+            // Tika's pipeline stop mechanism works correctly
+            throw e;
         } catch (Exception e) {
             LOGGER.warn("Error parsing Signal database", e);
             throw new TikaException("SignalParser error", e);
@@ -138,6 +143,11 @@ public class SignalParser extends SQLite3DBParser {
 
             if (extractMessages && indexableCount > 0)
                 chatMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+
+            if (!extractor.shouldParseEmbedded(chatMeta)) {
+                chatVirtualId++;
+                continue;
+            }
 
             byte[] reportBytes = REPORT_GEN.generateChatHtml(chat);
             extractor.parseEmbedded(new ByteArrayInputStream(reportBytes), handler, chatMeta, false);
@@ -201,6 +211,9 @@ public class SignalParser extends SQLite3DBParser {
                     msgMeta.add(org.apache.tika.metadata.Message.MESSAGE_TO, selfId);
                 }
             }
+
+            if (!extractor.shouldParseEmbedded(msgMeta))
+                continue;
 
             extractor.parseEmbedded(new EmptyInputStream(), handler, msgMeta, false);
         }

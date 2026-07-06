@@ -88,7 +88,7 @@ public class SignalParserTest extends AbstractPkgTest {
         long msgCount = tracker.contentTypes.stream()
                 .filter(t -> t.equals(SignalParser.SIGNAL_MESSAGE.toString()))
                 .count();
-        // 9 raw messages; 1 system (type=14) filtered → 8 indexed
+        // 10 raw rows; 1 system (type=14) filtered → 9 indexed (3+3+3)
         assertEquals("System messages must be excluded from indexed message count",
                 EXPECTED_MESSAGE_DOCS, (int) msgCount);
     }

@@ -10,9 +10,14 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import iped.utils.IOUtil;
 
 public class ReportGenerator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReportGenerator.class);
 
     private static final String TEMPLATE;
     private static final String CSS;
@@ -158,12 +163,19 @@ public class ReportGenerator {
 
     private static String readResource(String path) {
         InputStream is = ReportGenerator.class.getResourceAsStream(path);
-        if (is == null)
+        if (is == null) {
+            LOGGER.warn("Signal report resource not found on classpath: {}", path);
             return "";
+        }
         try {
             byte[] bytes = IOUtil.loadInputStream(is);
-            return bytes != null ? new String(bytes, StandardCharsets.UTF_8) : "";
+            if (bytes == null) {
+                LOGGER.warn("Failed to read Signal report resource: {}", path);
+                return "";
+            }
+            return new String(bytes, StandardCharsets.UTF_8);
         } catch (IOException e) {
+            LOGGER.warn("Error loading Signal report resource {}: {}", path, e.getMessage());
             return "";
         }
     }
