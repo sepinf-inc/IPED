@@ -19,7 +19,6 @@ package iped.parsers.mail;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -71,6 +70,7 @@ import iped.parsers.util.Util;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
+import iped.utils.StringUtil;
 
 /**
  * Uses apache-mime4j to parse emails. Each part is treated with the
@@ -290,7 +290,7 @@ public class RFC822Parser extends AbstractParser {
                     MailboxList mailboxList = fromField.getMailboxList();
                     if (fromField.isValidField() && mailboxList != null) {
                         for (int i = 0; i < mailboxList.size(); i++) {
-                            String from = decodeIfUtf8(getDisplayString(mailboxList.get(i)));
+                            String from = StringUtil.decodeIfUtf8(getDisplayString(mailboxList.get(i)));
                             metadata.add(Message.MESSAGE_FROM, from);
                             metadata.add(TikaCoreProperties.CREATOR, from);
                         }
@@ -302,12 +302,12 @@ public class RFC822Parser extends AbstractParser {
                         if (from.endsWith(">")) { //$NON-NLS-1$
                             from = from.substring(0, from.length() - 1);
                         }
-                        from = decodeIfUtf8(from);
+                        from = StringUtil.decodeIfUtf8(from);
                         metadata.add(Message.MESSAGE_FROM, from);
                         metadata.add(TikaCoreProperties.CREATOR, from);
                     }
                 } else if (fieldname.equalsIgnoreCase("Subject")) { //$NON-NLS-1$
-                    String subject = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
+                    String subject = StringUtil.decodeIfUtf8(((UnstructuredField) parsedField).getValue());
                     metadata.set(TikaCoreProperties.TITLE, subject);
                     metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 
@@ -364,30 +364,6 @@ public class RFC822Parser extends AbstractParser {
                     throw me;
                 }
             }
-        }
-
-        private String decodeIfUtf8(String value) {
-            boolean isUtf8 = false;
-            int idx = value.indexOf('Ã');
-            if (idx > -1 && idx < value.length() - 1) {
-                int c_ = value.codePointAt(idx + 1);
-                if (c_ >= 0x0080 && c_ <= 0x00BC)
-                    isUtf8 = true;
-            }
-            if (isUtf8) {
-                try {
-                    byte[] buf16 = value.getBytes("UTF-16LE"); //$NON-NLS-1$
-                    byte[] buf8 = new byte[buf16.length / 2];
-                    for (int i = 0; i < buf8.length; i++)
-                        buf8[i] = buf16[i * 2];
-                    value = new String(buf8, "UTF-8"); //$NON-NLS-1$
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-
-            }
-
-            return value;
         }
 
         private String getRFC2231Value(String paramName, Map<String, String> params) {
@@ -448,14 +424,14 @@ public class RFC822Parser extends AbstractParser {
             if (toField.isValidField()) {
                 AddressList addressList = toField.getAddressList();
                 for (int i = 0; i < addressList.size(); ++i) {
-                    String recipient = decodeIfUtf8(getDisplayString(addressList.get(i)));
+                    String recipient = StringUtil.decodeIfUtf8(getDisplayString(addressList.get(i)));
                     metadata.add(metadataField, recipient);
                     MetadataUtil.fillRecipientAddress(metadata, recipient);
                 }
             } else {
                 String to = stripOutFieldPrefix(field, addressListType);
                 for (String eachTo : to.split(",")) { //$NON-NLS-1$
-                    String recipient = decodeIfUtf8(eachTo.trim());
+                    String recipient = StringUtil.decodeIfUtf8(eachTo.trim());
                     metadata.add(metadataField, recipient);
                     MetadataUtil.fillRecipientAddress(metadata, recipient);
                 }
@@ -499,7 +475,7 @@ public class RFC822Parser extends AbstractParser {
         @Override
         public void endHeader() throws MimeException {
             if (attachName != null) {
-                attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
+                attachName = StringUtil.decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
             }
         }
 
