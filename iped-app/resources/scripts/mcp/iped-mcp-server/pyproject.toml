@@ -1,0 +1,18 @@
+[project]
+name = "iped-mcp-server"
+version = "0.1.0"
+description = "MCP server for IPED Digital Forensic Tool using PyJnius for direct Java access"
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp>=0.5.0",
+    "pyjnius>=1.6.1",
+    "pydantic>=2.0",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+iped-mcp-server = "iped_mcp_server.main:main"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
