@@ -14,6 +14,7 @@ import iped.app.ui.ai.context.AIContextManager;
 import iped.app.ui.ai.context.ConversationManager;
 import iped.data.IItem;
 import iped.properties.ExtraProperties;
+import iped.app.ui.ai.agent.OpenCodeAgentService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class AIChatCoordinator {
     private List<Integer> currentContextItemIds = new ArrayList<>();
 
     private final List<AIStreamChatRequest.AIMessage> chatHistory = new ArrayList<>();
+    private final OpenCodeAgentService agentService = new OpenCodeAgentService();
 
     /**
      * Constructs a new coordinator.
@@ -201,19 +203,7 @@ public class AIChatCoordinator {
      * For now, echoes the question back to allow UI testing of the agent flow.
      */
     public void askAgentQuestion(String question, Consumer<String> uiCallback, Runnable onComplete, Consumer<String> onError) {
-        new Thread(() -> {
-            try {
-                uiCallback.accept("**[Agent]:** Thinking...\n\n");
-                chatHistory.add(new AIStreamChatRequest.AIMessage("user", question));
-                chatHistory.add(new AIStreamChatRequest.AIMessage("assistant", question));
-                uiCallback.accept(question);
-                uiCallback.accept("\n\n");
-            } catch (Exception e) {
-                onError.accept("Agent error: " + e.getMessage());
-            } finally {
-                onComplete.run();
-            }
-        }).start();
+        agentService.askAgentQuestion(question, uiCallback, onComplete, onError);
     }
 
     public void clearHistory() {
@@ -222,6 +212,7 @@ public class AIChatCoordinator {
         // Also clear chat currentChatHashes and currentContextItemIds
         currentChatHashes.clear();
         currentContextItemIds.clear();
+        this.agentService.clearHistory();
     }
 
     /**
@@ -245,6 +236,16 @@ public class AIChatCoordinator {
                 // We do NOT send "system" or "error" messages back to the LLM.
                 if ("user".equals(msg.getType()) || "assistant".equals(msg.getType())) {
                     this.chatHistory.add(new AIStreamChatRequest.AIMessage(msg.getType(), msg.getContent()));
+                }
+            }
+        }
+
+        // Restore agent history if needed
+        this.agentService.clearHistory();
+        if (uiMessages != null) {
+            for (AIChatMessage msg : uiMessages) {
+                if ("user".equals(msg.getType()) || "assistant".equals(msg.getType())) {
+                    this.agentService.getChatHistory().add(new AIStreamChatRequest.AIMessage(msg.getType(), msg.getContent()));
                 }
             }
         }
