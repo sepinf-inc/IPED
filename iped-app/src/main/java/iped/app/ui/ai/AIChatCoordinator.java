@@ -10,6 +10,7 @@ import iped.app.ui.ai.util.ConversationPersistence;
 import iped.app.ui.ai.model.ContextFileEntry;
 import iped.app.ui.ai.model.AIChatMessage;
 import iped.app.ui.ai.model.Conversation;
+import iped.app.ui.ai.model.StandardConversation;
 import iped.app.ui.ai.context.AIContextManager;
 import iped.app.ui.ai.context.ConversationManager;
 import iped.data.IItem;
@@ -122,15 +123,15 @@ public class AIChatCoordinator {
                     // Update cache state
                     currentContextItemIds = newContextIds; 
 
-                    // Save the backend state to the Conversation Manager so it persists
                     Conversation activeConv = ConversationManager.getInstance().getActiveConversation();
-                    if (activeConv != null) {
-                        activeConv.setContextIds(new ArrayList<>(currentContextItemIds));
-                        activeConv.setChatHashes(new ArrayList<>(currentChatHashes));
-                        activeConv.updateLastModified();
+                    if (activeConv instanceof StandardConversation) {
+                        StandardConversation std = (StandardConversation) activeConv;
+                        std.setContextIds(new ArrayList<>(currentContextItemIds));
+                        std.setChatHashes(new ArrayList<>(currentChatHashes));
+                        std.updateLastModified();
 
                         // Save the hydrated object to disk
-                        ConversationPersistence.saveConversation(activeConv);
+                        ConversationPersistence.saveConversation(std);
                     }
 
                     // Update the flag

@@ -30,6 +30,8 @@ import iped.app.ui.ai.context.ContextChangeListener;
 import iped.app.ui.ai.context.ConversationManager;
 import iped.app.ui.ai.model.AIChatMessage;
 import iped.app.ui.ai.model.Conversation;
+import iped.app.ui.ai.model.StandardConversation;
+import iped.app.ui.ai.model.AgentConversation;
 import iped.app.ui.ai.util.ConversationPersistence;
 import iped.app.ui.ai.view.AIAssistantPanel;
 import iped.app.ui.ai.view.ChatAreaPanel;
@@ -192,15 +194,16 @@ public class AIAssistantController {
                 if (isSwitchingChats) return; // Abort if the system is switching chats
                 
                 Conversation activeConv = conversationManager.getActiveConversation();
-                if (activeConv != null && !activeConv.isAgentConversation()) {
+                if (activeConv instanceof StandardConversation) {
+                    StandardConversation stdConv = (StandardConversation) activeConv;
                     List<Integer> currentIds = contextManager.getContextFiles().stream()
                             .map(IItem::getId)
                             .collect(Collectors.toList());
                     
-                    activeConv.setContextIds(currentIds);
-                    activeConv.updateLastModified();
+                    stdConv.setContextIds(currentIds);
+                    stdConv.updateLastModified();
                     
-                    final Conversation convToSave = activeConv;
+                    final Conversation convToSave = stdConv;
                     new Thread(() -> ConversationPersistence.saveConversation(convToSave)).start();
                 }
             }
@@ -276,11 +279,16 @@ public class AIAssistantController {
         isSwitchingChats = true;
         conversationManager.setActiveConversation(conv);
         mainView.setContextPanelVisible(!conv.isAgentConversation());
-
+ 
         if (coordinator != null) {
-            coordinator.loadHistoricalContext(conv.getChatHashes(), conv.getContextIds(), conv.getMessages());
+            if (conv instanceof StandardConversation) {
+                StandardConversation std = (StandardConversation) conv;
+                coordinator.loadHistoricalContext(std.getChatHashes(), std.getContextIds(), conv.getMessages());
+            } else {
+                coordinator.loadHistoricalContext(null, null, conv.getMessages());
+            }
         }
-
+ 
         if (conv.isAgentConversation()) {
             isSwitchingChats = false;
             if (chatAreaView != null) chatAreaView.forceDiscardStreaming();
@@ -294,32 +302,35 @@ public class AIAssistantController {
         new Thread(() -> {
             List<IItem> restoredItems = new ArrayList<>();
             try {
-                if (conv.getChatHashes() != null && !conv.getChatHashes().isEmpty()) {
-                    for (String hash : conv.getChatHashes()) {
-                        try {
-                            IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, "hash:" + hash);
-                            MultiSearchResult result = searcher.multiSearch();
-                            if (result != null && result.getLength() > 0) {
-                                IItemId qualifiedItemId = result.getItem(0);
-                                IItem item = App.get().appCase.getItemByItemId(qualifiedItemId);
-                                if (item != null) restoredItems.add(item);
+                if (conv instanceof StandardConversation) {
+                    StandardConversation std = (StandardConversation) conv;
+                    if (std.getChatHashes() != null && !std.getChatHashes().isEmpty()) {
+                        for (String hash : std.getChatHashes()) {
+                            try {
+                                IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, "hash:" + hash);
+                                MultiSearchResult result = searcher.multiSearch();
+                                if (result != null && result.getLength() > 0) {
+                                    IItemId qualifiedItemId = result.getItem(0);
+                                    IItem item = App.get().appCase.getItemByItemId(qualifiedItemId);
+                                    if (item != null) restoredItems.add(item);
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Could not restore context item hash: " + hash);
                             }
-                        } catch (Exception e) {
-                            System.err.println("Could not restore context item hash: " + hash);
                         }
-                    }
-                } else if (conv.getContextIds() != null && !conv.getContextIds().isEmpty()) {
-                    for (Integer itemId : conv.getContextIds()) {
-                        try {
-                            IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, "id:" + itemId);
-                            MultiSearchResult result = searcher.multiSearch();
-                            if (result != null && result.getLength() > 0) {
-                                IItemId qualifiedItemId = result.getItem(0);
-                                IItem item = App.get().appCase.getItemByItemId(qualifiedItemId);
-                                if (item != null) restoredItems.add(item);
+                    } else if (std.getContextIds() != null && !std.getContextIds().isEmpty()) {
+                        for (Integer itemId : std.getContextIds()) {
+                            try {
+                                IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, "id:" + itemId);
+                                MultiSearchResult result = searcher.multiSearch();
+                                if (result != null && result.getLength() > 0) {
+                                    IItemId qualifiedItemId = result.getItem(0);
+                                    IItem item = App.get().appCase.getItemByItemId(qualifiedItemId);
+                                    if (item != null) restoredItems.add(item);
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Could not restore context item ID: " + itemId);
                             }
-                        } catch (Exception e) {
-                            System.err.println("Could not restore context item ID: " + itemId);
                         }
                     }
                 }
@@ -335,7 +346,12 @@ public class AIAssistantController {
                                     .map(IItem::getId).collect(Collectors.toList());
                             
                             if (coordinator != null) {
-                                coordinator.loadHistoricalContext(conv.getChatHashes(), freshIds, conv.getMessages());
+                                if (conv instanceof StandardConversation) {
+                                    StandardConversation std = (StandardConversation) conv;
+                                    coordinator.loadHistoricalContext(std.getChatHashes(), freshIds, conv.getMessages());
+                                } else {
+                                    coordinator.loadHistoricalContext(null, freshIds, conv.getMessages());
+                                }
                             }
                             contextManager.addContextFiles(restoredItems);
                         }
@@ -381,8 +397,11 @@ public class AIAssistantController {
             }
         }
 
-        newConversation.setContextIds(contextIds);
-        newConversation.setChatHashes(new ArrayList<>());
+        if (newConversation instanceof StandardConversation) {
+            StandardConversation std = (StandardConversation) newConversation;
+            std.setContextIds(contextIds);
+            std.setChatHashes(new ArrayList<>());
+        }
         newConversation.setMessages(new ArrayList<>());
         newConversation.updateLastModified();
 

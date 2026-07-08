@@ -2,6 +2,8 @@ package iped.app.ui.ai.context;
 
 import iped.app.ui.ai.model.AIChatMessage;
 import iped.app.ui.ai.model.Conversation;
+import iped.app.ui.ai.model.StandardConversation;
+import iped.app.ui.ai.model.AgentConversation;
 import iped.app.ui.ai.util.ConversationPersistence;
 
 import java.util.ArrayList;
@@ -69,8 +71,7 @@ public class ConversationManager {
      * Initializes a fresh conversation with the specified agent flag and sets it as active.
      */
     public Conversation startNewConversation(boolean isAgent) {
-        Conversation newConv = new Conversation();
-        newConv.setAgentConversation(isAgent);
+        Conversation newConv = isAgent ? new AgentConversation() : new StandardConversation();
         setActiveConversation(newConv);
         return newConv;
     }

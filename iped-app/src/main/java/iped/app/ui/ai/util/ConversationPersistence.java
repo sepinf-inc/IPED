@@ -3,6 +3,8 @@ package iped.app.ui.ai.util;
 import iped.engine.data.IPEDMultiSource;
 import iped.app.ui.App;
 import iped.app.ui.ai.model.Conversation;
+import iped.app.ui.ai.model.StandardConversation;
+import iped.app.ui.ai.model.AgentConversation;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -75,7 +77,8 @@ public class ConversationPersistence {
         File dir = getStorageDirectory();
         if (dir == null || conversation == null) return;
 
-        File chatFile = new File(dir, "chat_" + conversation.getId() + ".json");
+        String prefix = conversation.isAgentConversation() ? "agent_" : "chat_";
+        File chatFile = new File(dir, prefix + conversation.getId() + ".json");
         
         try (FileWriter writer = new FileWriter(chatFile)) {
             GSON.toJson(conversation, writer);
@@ -93,11 +96,16 @@ public class ConversationPersistence {
         
         if (dir == null || !dir.exists()) return conversations;
 
-        File[] files = dir.listFiles((d, name) -> name.startsWith("chat_") && name.endsWith(".json"));
+        File[] files = dir.listFiles((d, name) -> 
+            (name.startsWith("chat_") || name.startsWith("agent_")) && name.endsWith(".json")
+        );
         if (files != null) {
             for (File file : files) {
                 try (FileReader reader = new FileReader(file)) {
-                    Conversation conv = GSON.fromJson(reader, Conversation.class);
+                    Class<? extends Conversation> targetClass = file.getName().startsWith("agent_")
+                            ? AgentConversation.class
+                            : StandardConversation.class;
+                    Conversation conv = GSON.fromJson(reader, targetClass);
                     if (conv != null) {
                         if (!"deleted".equals(conv.getStatus())) {
                             conversations.add(conv);
