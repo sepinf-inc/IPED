@@ -11,6 +11,7 @@ import iped.app.ui.ai.model.ContextFileEntry;
 import iped.app.ui.ai.model.AIChatMessage;
 import iped.app.ui.ai.model.Conversation;
 import iped.app.ui.ai.model.StandardConversation;
+import iped.app.ui.ai.model.AgentConversation;
 import iped.app.ui.ai.context.AIContextManager;
 import iped.app.ui.ai.context.ConversationManager;
 import iped.data.IItem;
@@ -198,13 +199,22 @@ public class AIChatCoordinator {
 
 
     /**
-     * Placeholder for agent-style chat. No context files, no chat hashes, no initialization.
-     * The actual connection to a local agent (e.g. opencode) will be implemented later.
-     * <p>
-     * For now, echoes the question back to allow UI testing of the agent flow.
+     * Agent-style chat with session persistence.
+     * Captures and reuses opencode session ID to maintain conversation context.
      */
     public void askAgentQuestion(String question, Consumer<String> uiCallback, Runnable onComplete, Consumer<String> onError) {
-        agentService.askAgentQuestion(question, uiCallback, onComplete, onError);
+        Conversation activeConv = ConversationManager.getInstance().getActiveConversation();
+        
+        // Callback to capture session ID when found
+        Consumer<String> onSessionIdFound = sessionId -> {
+            if (activeConv instanceof AgentConversation) {
+                AgentConversation agentConv = (AgentConversation) activeConv;
+                agentConv.setSessionId(sessionId);
+                ConversationPersistence.saveConversation(agentConv);
+            }
+        };
+        
+        agentService.askAgentQuestion(question, uiCallback, onSessionIdFound, onComplete, onError);
     }
 
     public void clearHistory() {
