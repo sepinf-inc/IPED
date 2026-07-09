@@ -28,7 +28,7 @@ def register_tools():
     mcp.tool(name="get_document_content", description="Get the raw binary content of a document as base64.")(documents.get_document_content)
     mcp.tool(name="get_document_text", description="Get the extracted/parsed text content of a document.")(documents.get_document_text)
     mcp.tool(name="read", description="Read both the metadata and text content of a document/message by source ID and document ID.")(documents.read)
-    mcp.tool(name="read_batch", description="Read both the metadata and text content of multiple documents/messages in a single batch call.")(documents.read_batch)
+    mcp.tool(name="read_batch", description="Read both the metadata and text content of multiple documents/messages in a single batch call. Safety limit: max 50 items.")(documents.read_batch)
 
     mcp.tool(name="list_bookmarks", description="List all bookmark names available in the currently open case.")(bookmarks.list_bookmarks)
     mcp.tool(name="get_bookmark", description="Get all documents in a bookmark by bookmark name.")(bookmarks.get_bookmark)

@@ -84,7 +84,13 @@ async def read_batch(doc_ids: list[int], source_id: int = 0) -> str:
         doc_ids: List of document IDs within the source
         source_id: Source ID (use 0 for single-case)
     """
-    results = []
+    MAX_BATCH_SIZE = 50
+    warning_msg = ""
+    if len(doc_ids) > MAX_BATCH_SIZE:
+        warning_msg = f"[AVISO] O lote de leitura fornecido possui {len(doc_ids)} itens, o que excede o limite máximo de segurança de {MAX_BATCH_SIZE} itens por chamada. Para evitar travamentos e lentidão, apenas os primeiros {MAX_BATCH_SIZE} itens foram lidos. Por favor, refine a sua busca ou leia os itens em grupos menores.\n\n"
+        doc_ids = doc_ids[:MAX_BATCH_SIZE]
+
+    results = [warning_msg] if warning_msg else []
     for doc_id in doc_ids:
         results.append(f"=== DOCUMENT ID: {doc_id} ===")
         try:
