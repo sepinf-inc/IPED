@@ -22,6 +22,7 @@ def register_tools():
     mcp.tool(name="search", description="Search items using a Lucene query string. Supports IPED's Lucene query syntax.")(search.search)
     mcp.tool(name="search_by_type", description="Search items by file type extension (e.g., pdf, jpg, docx).")(search.search_by_type)
     mcp.tool(name="search_by_name", description="Search items by name pattern using wildcards.")(search.search_by_name)
+    mcp.tool(name="get_searchable_fields", description="Get all searchable metadata field names in the open case and their data types (e.g. String, Date, Integer).")(search.get_searchable_fields)
 
     mcp.tool(name="get_document", description="Get metadata/properties of a document by source ID and document ID.")(documents.get_document)
     mcp.tool(name="get_document_content", description="Get the raw binary content of a document as base64.")(documents.get_document_content)

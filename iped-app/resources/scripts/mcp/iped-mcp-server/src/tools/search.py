@@ -38,3 +38,8 @@ async def search_by_name(name_pattern: str, source_id: Optional[int] = None) -> 
         source_id: Optional source ID to restrict search
     """
     return case_manager.search(f"name:{name_pattern}", source_id)
+
+
+async def get_searchable_fields() -> dict:
+    """Get all searchable metadata field names in the open case and their data types (e.g. String, Date, Integer)."""
+    return case_manager.get_searchable_fields()

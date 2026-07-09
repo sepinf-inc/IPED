@@ -334,5 +334,14 @@ class IPEDCaseManager:
                     result.append({"source_id": 0, "id": item_id})
             return result
 
+    def get_searchable_fields(self) -> dict:
+        MetadataUtil = get_class("iped.parsers.util.MetadataUtil")
+        types_map = MetadataUtil.getMetadataTypes()
+        result = {}
+        for entry in types_map.entrySet():
+            class_name = str(entry.getValue().getName()).split(".")[-1]
+            result[str(entry.getKey())] = class_name
+        return result
+
 
 case_manager = IPEDCaseManager()
