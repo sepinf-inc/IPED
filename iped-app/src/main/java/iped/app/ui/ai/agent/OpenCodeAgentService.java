@@ -21,18 +21,18 @@ public class OpenCodeAgentService {
     private final List<AIStreamChatRequest.AIMessage> chatHistory = new ArrayList<>();
     private static final Pattern SESSION_ID_PATTERN = Pattern.compile("\"sessionID\":\"(ses_[^\"]+)\"");
 
-    public void askAgentQuestion(String question, Consumer<String> uiCallback, Consumer<String> onSessionIdFound, Runnable onComplete, Consumer<String> onError) {
+    public void askAgentQuestion(String question, Consumer<String> uiCallback, Consumer<String> onSessionIdFound, String sessionId, Runnable onComplete, Consumer<String> onError) {
         new Thread(() -> {
             try {
                 uiCallback.accept("**[Agent]:** Executando opencode...\n\n");
 
-                // 1. Localizar o diretório do mcp-server dinamicamente
+                // 1. Locate the mcp-server directory dynamically
                 File mcpServerDir = findMcpServerDir();
 
-                // 2. Resolver caminho do executável do opencode
+                // 2. Resolve the opencode executable path
                 String opencodeCmd = resolveOpencodeCommand();
 
-                // 3. Construir o comando
+                // 3. Build the command
                 List<String> command = new ArrayList<>();
                 boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
                 if (isWindows && !opencodeCmd.endsWith(".cmd") && !opencodeCmd.endsWith(".bat") && !opencodeCmd.endsWith(".exe")) {
@@ -45,11 +45,17 @@ public class OpenCodeAgentService {
                 command.add("--auto");
                 command.add("--format");
                 command.add("json");
+                
+                // Add session ID if available to maintain context
+                if (sessionId != null && !sessionId.isEmpty()) {
+                    command.add("--session");
+                    command.add(sessionId);
+                }
 
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.directory(mcpServerDir);
 
-                // Configurar variável de ambiente OPENCODE_CONFIG caso o opencode.json exista
+                // Set OPENCODE_CONFIG environment variable if opencode.json exists
                 File configFile = new File(mcpServerDir, "opencode.json");
                 if (configFile.exists()) {
                     pb.environment().put("OPENCODE_CONFIG", configFile.getAbsolutePath());
@@ -58,10 +64,10 @@ public class OpenCodeAgentService {
                 pb.redirectErrorStream(true);
                 Process process = pb.start();
 
-                // Fechar stdin do subprocesso para evitar que ele trave esperando entrada
+                // Close subprocess stdin to prevent it from blocking waiting for input
                 process.getOutputStream().close();
 
-                // 4. Ler saída em tempo real, extrair session ID e converter JSON para texto
+                // 4. Read output in real-time, extract session ID and convert JSON to text
                 StringBuilder fullResponse = new StringBuilder();
                 StringBuilder buffer = new StringBuilder();
                 boolean sessionIdExtracted = false;
@@ -73,43 +79,43 @@ public class OpenCodeAgentService {
                         String chunk = new String(charBuffer, 0, charsRead);
                         buffer.append(chunk);
                         
-                        // Tentar extrair session ID do buffer acumulado
+                        // Try to extract session ID from accumulated buffer
                         if (!sessionIdExtracted) {
                             String bufferContent = buffer.toString();
                             Matcher matcher = SESSION_ID_PATTERN.matcher(bufferContent);
                             if (matcher.find()) {
-                                String sessionId = matcher.group(1);
-                                onSessionIdFound.accept(sessionId);
+                                String extractedSessionId = matcher.group(1);
+                                onSessionIdFound.accept(extractedSessionId);
                                 sessionIdExtracted = true;
                             }
                         }
                         
-                        // Processar JSON Lines e converter para texto
+                        // Process JSON Lines and convert to text
                         String textContent = extractTextFromJsonLines(buffer.toString());
                         if (!textContent.isEmpty()) {
                             uiCallback.accept(textContent);
                             fullResponse.append(textContent);
                         }
                         
-                        // Limpar buffer após processamento bem-sucedido
+                        // Clear buffer after successful processing
                         buffer.setLength(0);
                     }
                 }
 
                 int exitCode = process.waitFor();
                 if (exitCode != 0) {
-                    String errMsg = "O processo opencode terminou com código de erro: " + exitCode;
-                    uiCallback.accept("\n\n**[Erro do Agent]:** " + errMsg + "\n");
+                    String errMsg = "The opencode process terminated with error code: " + exitCode;
+                    uiCallback.accept("\n\n**[Agent Error]:** " + errMsg + "\n");
                     onError.accept(errMsg);
                 } else {
-                    // Salvar no histórico local da conversa
+                    // Save to local conversation history
                     chatHistory.add(new AIStreamChatRequest.AIMessage("user", question));
                     chatHistory.add(new AIStreamChatRequest.AIMessage("assistant", fullResponse.toString()));
                 }
 
             } catch (Exception e) {
-                String errMsg = "Erro no Agent: " + e.getMessage();
-                uiCallback.accept("\n\n**[Erro do Agent]:** " + errMsg + "\n");
+                String errMsg = "Agent Error: " + e.getMessage();
+                uiCallback.accept("\n\n**[Agent Error]:** " + errMsg + "\n");
                 onError.accept(errMsg);
             } finally {
                 onComplete.run();
@@ -118,8 +124,8 @@ public class OpenCodeAgentService {
     }
 
     /**
-     * Extrai conteúdo legível do formato JSON Lines do opencode.
-     * Mantém o mesmo formato visual: model info, tool calls, e texto.
+     * Extracts readable content from the OpenCode JSON Lines format.
+     * Preserves the same visual format: model info, tool calls, and text.
      */
     private String extractTextFromJsonLines(String jsonLines) {
         StringBuilder output = new StringBuilder();
@@ -133,32 +139,32 @@ public class OpenCodeAgentService {
                 String type = json.has("type") ? json.get("type").getAsString() : null;
                 
                 if ("step_start".equals(type)) {
-                    // step_start não produz texto visível diretamente
-                    // O modelo aparece no texto normal
+                    // step_start does not produce visible text directly
+                    // The model appears in the regular text
                 } else if ("text".equals(type)) {
-                    // Extrair conteúdo de texto
+                    // Extract text's content
                     String text = extractTextContent(json);
                     if (text != null && !text.isEmpty()) {
                         output.append(text);
                     }
                 } else if ("tool_use".equals(type)) {
-                    // Extrair tool calls mantendo o formato original
+                    // Extract tool calls while preserving the original format
                     String toolInfo = extractToolInfo(json);
                     if (toolInfo != null && !toolInfo.isEmpty()) {
                         output.append(toolInfo).append("\n");
                     }
                 } else if ("step_finish".equals(type)) {
-                    // Ignorar step_finish
+                    // Ignore step_finish
                 } else {
-                    // Para outros tipos, tentar extrair texto diretamente
+                    // For other types, try to extract the text directly
                     String text = extractTextContent(json);
                     if (text != null && !text.isEmpty()) {
                         output.append(text);
                     }
                 }
             } catch (Exception e) {
-                // Se falhar na parsing, ignora esta linha
-                // Isso pode acontecer com chunks parciais
+                // If parsing fails, ignore this line
+                // This can happen with partial chunks
             }
         }
         
@@ -166,15 +172,15 @@ public class OpenCodeAgentService {
     }
 
     /**
-     * Extrai o conteúdo de texto do JSON, lidando com campos aninhados.
+     * Extracts text content from the JSON, handling nested fields.
      */
     private String extractTextContent(JsonObject json) {
-        // Tentar extrair de "text" field diretamente
+        // Try to extract directly from the "text" field
         if (json.has("text")) {
             return unescapeJsonString(json.get("text").getAsString());
         }
         
-        // Tentar extrair de "part" -> "text"
+        // Try to extract from "part" -> "text"
         if (json.has("part")) {
             JsonObject part = json.getAsJsonObject("part");
             if (part.has("text")) {
@@ -182,7 +188,7 @@ public class OpenCodeAgentService {
             }
         }
         
-        // Tentar extrair de "parts" array
+        // Try to extract from the "parts" array
         if (json.has("parts")) {
             var parts = json.getAsJsonArray("parts");
             for (var i = 0; i < parts.size(); i++) {
@@ -193,12 +199,12 @@ public class OpenCodeAgentService {
             }
         }
         
-        // Tentar extrair de "content" field
+        // Try to extract from the "content" field
         if (json.has("content")) {
             return unescapeJsonString(json.get("content").getAsString());
         }
         
-        // Tentar extrair de "part" -> "content"
+        // Try to extract from "part" -> "content"
         if (json.has("part")) {
             JsonObject part = json.getAsJsonObject("part");
             if (part.has("content")) {
@@ -210,11 +216,11 @@ public class OpenCodeAgentService {
     }
 
     /**
-     * Extrai informações de tool calls do JSON.
-     * Formato: "? toolName {arguments}"
+     * Extracts tool call information from the JSON.
+     * Format: "? toolName {arguments}"
      */
     private String extractToolInfo(JsonObject json) {
-        // Extrair do "part" object
+        // Extract from the "part" object
         if (!json.has("part")) {
             return null;
         }
@@ -223,14 +229,14 @@ public class OpenCodeAgentService {
         String toolName = null;
         String arguments = null;
         
-        // Tentar extrair tool name de diferentes campos
+        // Try to extract the tool name from different fields
         if (part.has("tool")) {
             toolName = part.get("tool").getAsString();
         } else if (part.has("toolName")) {
             toolName = part.get("toolName").getAsString();
         }
         
-        // Tentar extrair arguments
+        // Try to extract the arguments
         if (part.has("state")) {
             JsonObject state = part.getAsJsonObject("state");
             if (state.has("input")) {
@@ -242,7 +248,7 @@ public class OpenCodeAgentService {
             return null;
         }
         
-        // Formatar output no estilo original
+        // Format the output in the original style
         StringBuilder result = new StringBuilder();
         result.append("? ").append(toolName);
         
@@ -259,15 +265,15 @@ public class OpenCodeAgentService {
     }
 
     /**
-     * Remove escaping de strings JSON.
+     * Removes JSON string escaping.
      */
     private String unescapeJsonString(String text) {
         if (text == null) return "";
         return text.replace("\\n", "\n")
-                  .replace("\\r", "\r")
-                  .replace("\\t", "\t")
-                  .replace("\\\"", "\"")
-                  .replace("\\\\", "\\");
+                .replace("\\r", "\r")
+                .replace("\\t", "\t")
+                .replace("\\\"", "\"")
+                .replace("\\\\", "\\");
     }
 
     private File findMcpServerDir() {
@@ -275,24 +281,24 @@ public class OpenCodeAgentService {
         try {
             appRoot = iped.engine.config.Configuration.getInstance().appRoot;
         } catch (Throwable t) {
-            // A configuração pode não estar ativa/inicializada em testes ou ambientes específicos
+            // Configuration may not be active/initialized in tests or specific environments
         }
 
         if (appRoot != null) {
-            // 1. Caminho de produção/instalação empacotada
+            // 1. Production/packaged installation path
             File prodPath = new File(appRoot, "scripts/mcp/iped-mcp-server");
             if (prodPath.exists() && prodPath.isDirectory()) {
                 return prodPath;
             }
 
-            // 2. Caminho de desenvolvimento
+            // 2. Development path
             File devPath = new File(appRoot, "resources/scripts/mcp/iped-mcp-server");
             if (devPath.exists() && devPath.isDirectory()) {
                 return devPath;
             }
         }
 
-        // 3. Fallback para execução direta sem appRoot
+        // 3. Fallback for direct execution without appRoot
         File fallbackPath = new File("iped-app/resources/scripts/mcp/iped-mcp-server");
         if (fallbackPath.exists() && fallbackPath.isDirectory()) {
             return fallbackPath;
@@ -304,7 +310,7 @@ public class OpenCodeAgentService {
     private String resolveOpencodeCommand() {
         boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
         if (isWindows) {
-            // Tenta localizar no diretório AppData npm padrão do Windows
+            // Try to locate the standard Windows AppData npm directory
             String appData = System.getenv("APPDATA");
             if (appData != null) {
                 File npmOpencode = new File(appData, "npm/opencode.cmd");
@@ -313,7 +319,7 @@ public class OpenCodeAgentService {
                 }
             }
             
-            // Backup em USERPROFILE caso APPDATA falhe
+            // Fallback to USERPROFILE if APPDATA is unavailable
             String userProfile = System.getenv("USERPROFILE");
             if (userProfile != null) {
                 File npmOpencode = new File(userProfile, "AppData/Roaming/npm/opencode.cmd");
@@ -323,7 +329,7 @@ public class OpenCodeAgentService {
             }
         }
         
-        // Fallback para comando padrão global resolvido pelo OS
+        // Fallback to the default global command resolved by the OS
         return "opencode";
     }
 

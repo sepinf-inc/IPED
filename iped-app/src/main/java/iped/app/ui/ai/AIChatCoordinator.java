@@ -205,16 +205,22 @@ public class AIChatCoordinator {
     public void askAgentQuestion(String question, Consumer<String> uiCallback, Runnable onComplete, Consumer<String> onError) {
         Conversation activeConv = ConversationManager.getInstance().getActiveConversation();
         
-        // Callback to capture session ID when found
-        Consumer<String> onSessionIdFound = sessionId -> {
+        // Get existing session ID if available
+        String sessionId = null;
+        if (activeConv instanceof AgentConversation) {
+            sessionId = ((AgentConversation) activeConv).getSessionId();
+        }
+        
+        // Callback to capture session ID when found (for new conversations)
+        Consumer<String> onSessionIdFound = newSessionId -> {
             if (activeConv instanceof AgentConversation) {
                 AgentConversation agentConv = (AgentConversation) activeConv;
-                agentConv.setSessionId(sessionId);
+                agentConv.setSessionId(newSessionId);
                 ConversationPersistence.saveConversation(agentConv);
             }
         };
         
-        agentService.askAgentQuestion(question, uiCallback, onSessionIdFound, onComplete, onError);
+        agentService.askAgentQuestion(question, uiCallback, onSessionIdFound, sessionId, onComplete, onError);
     }
 
     public void clearHistory() {
