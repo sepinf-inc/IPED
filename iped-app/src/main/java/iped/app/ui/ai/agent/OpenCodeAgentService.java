@@ -90,15 +90,22 @@ public class OpenCodeAgentService {
                             }
                         }
                         
-                        // Process JSON Lines and convert to text
-                        String textContent = extractTextFromJsonLines(buffer.toString());
-                        if (!textContent.isEmpty()) {
-                            uiCallback.accept(textContent);
-                            fullResponse.append(textContent);
+                        // Process only complete JSON Lines and convert to text
+                        int lastNewLine = buffer.lastIndexOf("\n");
+                        if (lastNewLine != -1) {
+                            String completeLines = buffer.substring(0, lastNewLine + 1);
+                            String remaining = buffer.substring(lastNewLine + 1);
+                            
+                            String textContent = extractTextFromJsonLines(completeLines);
+                            if (!textContent.isEmpty()) {
+                                uiCallback.accept(textContent);
+                                fullResponse.append(textContent);
+                            }
+                            
+                            // Keep the incomplete part in the buffer
+                            buffer.setLength(0);
+                            buffer.append(remaining);
                         }
-                        
-                        // Clear buffer after successful processing
-                        buffer.setLength(0);
                     }
                 }
 
@@ -250,7 +257,7 @@ public class OpenCodeAgentService {
         
         // Format the output in the original style
         StringBuilder result = new StringBuilder();
-        result.append("? ").append(toolName);
+        result.append("[Agente]: ").append(toolName);
         
         if (arguments != null) {
             // Format arguments nicely - remove outer quotes if JSON string
