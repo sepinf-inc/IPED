@@ -7,7 +7,12 @@ from ..case_manager import case_manager
 def _format_props(props: dict) -> str:
     lines = []
     for k, v in props.items():
-        if v is not None and v != "" and v != 0:
+        if k == "metadata":
+            if v:
+                lines.append("\n--- Forensic Metadata ---")
+                for mk, mv in v.items():
+                    lines.append(f"  {mk}: {mv}")
+        elif v is not None and v != "" and v != 0:
             lines.append(f"{k}: {v}")
     return "\n".join(lines)
 
@@ -60,3 +65,25 @@ async def get_document_thumbnail(source_id: int, doc_id: int) -> Optional[str]:
     if data is None:
         return None
     return base64.b64encode(data).decode("utf-8")
+
+
+async def read(source_id: int, doc_id: int) -> str:
+    """Read both the metadata and text content of a document by its source ID and document ID.
+
+    Args:
+        source_id: Source ID (use 0 for single-case)
+        doc_id: Document ID within the source
+    """
+    try:
+        props = case_manager.get_item(doc_id, source_id)
+        props_str = _format_props(props)
+    except Exception as e:
+        props_str = f"Error getting metadata: {e}"
+
+    try:
+        text = case_manager.get_item_text(doc_id, source_id)
+        text_str = text if text else "[No text content extracted]"
+    except Exception as e:
+        text_str = f"Error getting text content: {e}"
+
+    return f"--- METADATA ---\n{props_str}\n\n--- CONTENT ---\n{text_str}"

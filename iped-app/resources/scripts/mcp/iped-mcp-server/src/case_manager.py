@@ -89,46 +89,70 @@ class IPEDCaseManager:
             }]
 
     def search(self, query: str, source_id: Optional[int] = None) -> dict:
+        import re
+        
+        # Auto-escape unescaped colons in known IPED fields (e.g. Communication:From -> Communication\:From)
+        fields = [
+            "Communication:From", 
+            "Communication:To", 
+            "Communication:Direction", 
+            "Communication:Date", 
+            "Communication:Participants"
+        ]
+        escaped_query = query
+        for f in fields:
+            pattern = r"(?<!\\)" + re.escape(f)
+            escaped_query = re.sub(pattern, f.replace(":", "\\:"), escaped_query)
+
         IPEDSearcher = get_class("iped.engine.search.IPEDSearcher")
 
-        if source_id is not None and self._is_multi:
-            atomic = self._multi_source.getAtomicSourceBySourceId(source_id)
-            searcher = IPEDSearcher(atomic, query)
-            searcher.setNoScoring(True)
-            java_result = searcher.search()
-            length = java_result.getLength()
-            ids = [java_result.getId(i) for i in range(length)]
+        try:
+            if source_id is not None and self._is_multi:
+                atomic = self._multi_source.getAtomicSourceBySourceId(source_id)
+                searcher = IPEDSearcher(atomic, escaped_query)
+                searcher.setNoScoring(True)
+                java_result = searcher.search()
+                length = java_result.getLength()
+                ids = [java_result.getId(i) for i in range(length)]
+                return {
+                    "source_id": source_id,
+                    "total": length,
+                    "ids": ids,
+                }
+            elif self._is_multi:
+                searcher = IPEDSearcher(self._multi_source, escaped_query)
+                searcher.setNoScoring(True)
+                java_result = searcher.multiSearch()
+                length = java_result.getLength()
+                items = []
+                for i in range(length):
+                    item_id = java_result.getItem(i)
+                    items.append({
+                        "source_id": item_id.getSourceId(),
+                        "id": item_id.getId(),
+                    })
+                return {
+                    "total": length,
+                    "items": items,
+                }
+            else:
+                searcher = IPEDSearcher(self._source, escaped_query)
+                searcher.setNoScoring(True)
+                java_result = searcher.search()
+                length = java_result.getLength()
+                ids = [java_result.getId(i) for i in range(length)]
+                return {
+                    "source_id": 0,
+                    "total": length,
+                    "ids": ids,
+                }
+        except Exception as e:
+            logger.error("Error executing Lucene search for query '%s' (escaped: '%s'): %s", query, escaped_query, e)
             return {
-                "source_id": source_id,
-                "total": length,
-                "ids": ids,
-            }
-        elif self._is_multi:
-            searcher = IPEDSearcher(self._multi_source, query)
-            searcher.setNoScoring(True)
-            java_result = searcher.multiSearch()
-            length = java_result.getLength()
-            items = []
-            for i in range(length):
-                item_id = java_result.getItem(i)
-                items.append({
-                    "source_id": item_id.getSourceId(),
-                    "id": item_id.getId(),
-                })
-            return {
-                "total": length,
-                "items": items,
-            }
-        else:
-            searcher = IPEDSearcher(self._source, query)
-            searcher.setNoScoring(True)
-            java_result = searcher.search()
-            length = java_result.getLength()
-            ids = [java_result.getId(i) for i in range(length)]
-            return {
-                "source_id": 0,
-                "total": length,
-                "ids": ids,
+                "total": 0,
+                "error": f"Search failed (invalid syntax or field name): {str(e)}",
+                "ids": [],
+                "items": []
             }
 
     def get_item(self, item_id: int, source_id: int = 0) -> dict:
@@ -188,6 +212,19 @@ class IPEDCaseManager:
             props["bookmarks"] = list(labels) if labels else []
         except Exception:
             props["bookmarks"] = []
+
+        try:
+            metadata = item.getMetadata()
+            if metadata is not None:
+                meta_dict = {}
+                for name in metadata.names():
+                    values = metadata.getValues(name)
+                    if values:
+                        val_list = [str(v) for v in values]
+                        meta_dict[str(name)] = val_list if len(val_list) > 1 else val_list[0]
+                props["metadata"] = meta_dict
+        except Exception as e:
+            logger.warning("Error getting item metadata: %s", e)
 
         return props
 
