@@ -75,3 +75,32 @@ async def read(source_id: int, doc_id: int) -> str:
         text_str = f"Error getting text content: {e}"
 
     return f"--- METADATA ---\n{props_str}\n\n--- CONTENT ---\n{text_str}"
+
+
+async def read_batch(doc_ids: list[int], source_id: int = 0) -> str:
+    """Read both the metadata and text content of multiple documents by their IDs in a single batch call.
+
+    Args:
+        doc_ids: List of document IDs within the source
+        source_id: Source ID (use 0 for single-case)
+    """
+    results = []
+    for doc_id in doc_ids:
+        results.append(f"=== DOCUMENT ID: {doc_id} ===")
+        try:
+            props = case_manager.get_item(doc_id, source_id)
+            props_str = _format_props(props)
+            results.append(f"--- METADATA ---\n{props_str}")
+        except Exception as e:
+            results.append(f"--- METADATA ---\nError getting metadata: {e}")
+
+        try:
+            text = case_manager.get_item_text(doc_id, source_id)
+            text_str = text if text else "[No text content extracted]"
+            results.append(f"--- CONTENT ---\n{text_str}")
+        except Exception as e:
+            results.append(f"--- CONTENT ---\nError getting text content: {e}")
+        
+        results.append("\n" + "="*40 + "\n")
+        
+    return "\n".join(results)
