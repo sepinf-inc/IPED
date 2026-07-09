@@ -54,18 +54,6 @@ async def get_document_text(source_id: int, doc_id: int) -> Optional[str]:
     return case_manager.get_item_text(doc_id, source_id)
 
 
-async def get_document_thumbnail(source_id: int, doc_id: int) -> Optional[str]:
-    """Get the thumbnail image of a document as base64 JPEG.
-
-    Args:
-        source_id: Source ID (use 0 for single-case)
-        doc_id: Document ID within the source
-    """
-    data = case_manager.get_item_thumbnail(doc_id, source_id)
-    if data is None:
-        return None
-    return base64.b64encode(data).decode("utf-8")
-
 
 async def read(source_id: int, doc_id: int) -> str:
     """Read both the metadata and text content of a document by its source ID and document ID.
