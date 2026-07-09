@@ -102,8 +102,8 @@ public class OpenCodeAgentService {
                 return prodPath;
             }
 
-            // 2. Caminho de desenvolvimento executado a partir da raiz do repositório
-            File devPath = new File(appRoot, "iped-app/resources/scripts/mcp/iped-mcp-server");
+            // 2. Caminho de desenvolvimento
+            File devPath = new File(appRoot, "resources/scripts/mcp/iped-mcp-server");
             if (devPath.exists() && devPath.isDirectory()) {
                 return devPath;
             }
