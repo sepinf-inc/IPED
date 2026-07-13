@@ -1,0 +1,10 @@
+# Enable a randomized processing queue, which typically speeds up processing by preventing multiple 
+# similar items, which compete for the same resources, from being processed simultaneously. 
+randomOrder = true
+
+# Maximum processing queue size (number of items). The default value is "auto", which sets the queue
+# size based on the maximum Java heap size. Explicit values should be set carefully: a queue that's 
+# too small will slow down processing, and a setting that's too large will waste memory. Typical 
+# values range from 100,000 to 1,000,000.
+maxQueueSize = auto
+   

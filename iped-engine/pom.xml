@@ -4,16 +4,17 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.3.0-snapshot</version>
+        <version>4.4.0-SNAPSHOT</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
     <packaging>jar</packaging>
-    
+
     <properties>
-    	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
+        <release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
+        <javacpp.ffmpeg.version>8.0.1-1.5.13</javacpp.ffmpeg.version>
     </properties>
-    
+
     <repositories>
 	    <repository>
 	      <id>maven-cognitiveservices-speech</id>
@@ -28,6 +29,11 @@
     </repositories>
     
     <dependencies>
+		<dependency>
+		    <groupId>org.apache.httpcomponents</groupId>
+		    <artifactId>httpmime</artifactId>
+		    <version>4.5.13</version>
+		</dependency>
         <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core-java11</artifactId>
@@ -65,11 +71,6 @@
     	    <artifactId>photodna-api</artifactId>
     	    <version>1.0</version>
 	    </dependency>
-    	<dependency>
-    		<groupId>com.eatthepath</groupId>
-    		<artifactId>jvptree</artifactId>
-    		<version>0.2</version>
-		</dependency>
     	<dependency>
             <groupId>iped</groupId>
             <artifactId>iped-ahocorasick</artifactId>
@@ -121,11 +122,6 @@
             <version>${sleuthkit.version}</version>
             <type>jar</type>
         </dependency>
-        <dependency>
-			<groupId>com.microsoft.sqlserver</groupId>
-			<artifactId>mssql-jdbc</artifactId>
-			<version>6.2.0.jre8</version>
-		</dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
@@ -202,19 +198,14 @@
     		<version>1.3.3-3</version>
 		</dependency>
         <dependency>
-            <groupId>org.mapdb</groupId>
-            <artifactId>mapdb</artifactId>
-            <version>1.0.9</version>
-        </dependency>
-        <dependency>
             <groupId>com.mchange</groupId>
             <artifactId>mchange-commons-java</artifactId>
-            <version>0.2.20</version>
+            <version>0.4.0</version>
         </dependency>
         <dependency>
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
-            <version>0.9.5.5</version>
+            <version>0.12.0</version>
         </dependency>
         <dependency>
   			<groupId>org.apache.pdfbox</groupId>
@@ -340,6 +331,34 @@
             <groupId>org.openjdk.nashorn</groupId>
             <artifactId>nashorn-core</artifactId>
             <version>15.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.3.232</version>
+        </dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>7.0.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>${javacpp.ffmpeg.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>${javacpp.ffmpeg.version}</version>
+            <classifier>windows-x86_64</classifier>
+		</dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>${javacpp.ffmpeg.version}</version>
+            <classifier>linux-x86_64</classifier>
         </dependency>
      </dependencies>
 </project>

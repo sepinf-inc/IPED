@@ -7,7 +7,7 @@
     <typesToProcess>application/x-thumbs; application/x-thumbcache</typesToProcess>
 -->
     <typesToNotProcess>application/x-raw-image; application/x-ewf-image; application/x-ewf2-image; application/x-vmdk; application/x-vmdk-data; application/x-vhd; application/x-vhdx</typesToNotProcess>
-    <typesToNotProcess>application/x-tika-msoffice; video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>
+    <typesToNotProcess>application/x-tika-msoffice; audio; video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>
     <typesToNotProcess>application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;</typesToNotProcess>
     <typesToNotProcess>message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst</typesToNotProcess>
     <typesToNotProcess>application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar;</typesToNotProcess>
@@ -55,13 +55,33 @@
             <maxLength>100000000</maxLength>
         </carverType>
         
-         <carverType>
+        <carverType>
             <name>MOV</name>
             <carverClass>iped.carvers.custom.MOVCarver</carverClass>
             <minLength>100000</minLength>
             <maxLength>500000000</maxLength>
         </carverType>
-        
+
+        <carverType>
+            <name>MATROSKA</name>
+            <carverClass>iped.carvers.custom.MatroskaCarver</carverClass>
+            <signatures>
+                <headerSignature>\1a\45\df\a3</headerSignature>
+            </signatures>
+            <minLength>40000</minLength>
+            <maxLength>1000000000</maxLength>
+        </carverType>
+
+        <carverType>
+            <name>OPUS</name>
+            <carverClass>iped.carvers.custom.OpusCarver</carverClass>
+            <signatures>
+                <headerSignature>OggS\00\02</headerSignature>
+            </signatures>
+            <minLength>1000</minLength>
+            <maxLength>10000000</maxLength>
+        </carverType>
+
         <carverType>
             <name>7ZIP</name>
             <carverClass>iped.carvers.custom.SevenZipCarver</carverClass>
@@ -430,6 +450,24 @@
             <mediaType>video/mpeg</mediaType>
             <carverClass>iped.carvers.standard.FromFarthestHeaderCarver</carverClass>
         </carverType>
+
+        <carverType>
+            <name>MPG2</name>
+            <signatures>
+                <headerSignature>\00\00\01\b3\0a\00</headerSignature>
+                <headerSignature>\00\00\01\b3\0b\00</headerSignature>
+                <headerSignature>\00\00\01\b3\0f\00</headerSignature>
+                <headerSignature>\00\00\01\b3\14\00</headerSignature>
+                <headerSignature>\00\00\01\b3\16\00</headerSignature>
+                <headerSignature>\00\00\01\b3\16\01</headerSignature>
+                <footerSignature>\00\00\01\b7</footerSignature>
+            </signatures>
+            <minLength>100000</minLength>
+            <maxLength>500000000</maxLength>
+            <mediaType>video/mpeg</mediaType>
+            <carverClass>iped.carvers.standard.FromFarthestHeaderCarver</carverClass>
+        </carverType>
+
 <!--
         <carverType>
             <name>TIF</name>
@@ -441,18 +479,8 @@
             <maxLength>1000000</maxLength>
             <mediaType>image/tiff</mediaType>
         </carverType>
-
-        <carverType>
-            <name>MPG2</name>
-            <signatures>
-                <headerSignature>\00\00\01\b3</headerSignature>
-                <footerSignature>\00\00\01\b7</footerSignature>
-            </signatures>
-            <minLength>100000</minLength>
-            <maxLength>300000000</maxLength>
-            <mediaType>video/mpeg</mediaType>
-        </carverType>
 -->
+
      </carverTypes>
 
 </carverconfig>

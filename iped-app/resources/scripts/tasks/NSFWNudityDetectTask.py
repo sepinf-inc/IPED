@@ -60,7 +60,7 @@ def isImage(item):
     return item.getMediaType() is not None and item.getMediaType().toString().startswith('image')
        
 def isSupportedVideo(item):
-    return item.getMediaType() is not None and item.getMediaType().toString().startswith('video') and item.getViewFile() is not None
+    return item.getMediaType() is not None and item.getMediaType().toString().startswith('video') and (item.getViewFile() is not None or item.hasPreview())
     
 def supported(item):
     return item.getLength() is not None and item.getLength() > 0 and (isImage(item) or isSupportedVideo(item))
@@ -88,8 +88,8 @@ class NSFWNudityDetectTask:
     
     def __init__(self):
         self.itemList = []
+        self.nextTaskList = []
         self.imageList = []
-        self.queued = False
 
     def isEnabled(self):
         return enabled
@@ -119,39 +119,25 @@ class NSFWNudityDetectTask:
         num_finishes += 1
         caseData.putCaseObject('num_finishes', num_finishes)
         
-        times = caseData.getCaseObject('nsfw_times')
-        if times is None:
-            times = [0, 0, 0, 0]
-            
-        times[0] += videoFramesTime / numThreads
-        times[1] += arrayConvTime / numThreads
-        times[2] += predictTime / numThreads
-        times[3] += loadImgTime / numThreads
-        caseData.putCaseObject('nsfw_times', times)
-        
         if num_finishes == numThreads:
-            logger.info('Time(s) to get video frames: ' + str(times[0]))
-            logger.info('Time(s) to convert java arrays: ' + str(times[1]))
-            logger.info('Time(s) to NSFW prediction: ' + str(times[2]))
-            logger.info('Time(s) to load images: ' + str(times[3]))
+            logger.info('Time(s) to get video frames: ' + str(videoFramesTime / numThreads))
+            logger.info('Time(s) to convert java arrays: ' + str(arrayConvTime / numThreads))
+            logger.info('Time(s) to NSFW prediction: ' + str(predictTime / numThreads))
+            logger.info('Time(s) to load images: ' + str(loadImgTime / numThreads))
     
     
     def sendToNextTask(self, item):
+        if not item.isQueueEnd() and item not in self.itemList and item not in self.nextTaskList:
+            self.javaTask.sendToNextTaskSuper(item)
         
-        if not item.isQueueEnd() and not self.queued:
-            javaTask.get().sendToNextTaskSuper(item)
-            return
-        
-        if self.isToProcessBatch(item):
-        
-            for i in self.itemList:
-                javaTask.get().sendToNextTaskSuper(i)
-            
-            self.itemList.clear()
-            self.imageList.clear()
+        if len(self.nextTaskList) > 0:
+            localList = list(self.nextTaskList)
+            self.nextTaskList.clear()
+            for i in localList:
+                self.javaTask.sendToNextTaskSuper(i)
             
         if item.isQueueEnd():
-            javaTask.get().sendToNextTaskSuper(item)
+            self.javaTask.sendToNextTaskSuper(item)
     
     def isToProcessBatch(self, item):
         size = len(self.itemList)
@@ -159,8 +145,6 @@ class NSFWNudityDetectTask:
     
     
     def process(self, item):
-        
-        self.queued = False
     
         if not item.isQueueEnd() and not supported(item):
             return
@@ -194,11 +178,10 @@ class NSFWNudityDetectTask:
                 if img is None:    
                     item.setExtraAttribute('nsfw_error', 1)
                     return
-                
-                x = image.img_to_array(img)
+                from tensorflow.keras import utils
+                x = utils.img_to_array(img)
                 self.imageList.append(x)
                 self.itemList.append(item)
-                self.queued = True
             
         except Exception as e:
             item.setExtraAttribute('nsfw_error', 2)
@@ -206,12 +189,21 @@ class NSFWNudityDetectTask:
             
         if self.isToProcessBatch(item):
             processImages(self.imageList, self.itemList)
+            self.nextTaskList.extend(self.itemList)
+            self.itemList.clear()
+            self.imageList.clear()
     
     
 def processVideoFrames(item):
     global videoFramesTime
     t = time.time()
-    frames = ImageUtil.getBmpFrames(item.getViewFile())
+    imgFile = None
+    if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+        imgFile = item.getViewFile()
+    elif item.hasPreview():
+        from iped.engine.preview import PreviewRepositoryManager
+        imgFile = PreviewRepositoryManager.get(moduleDir).readPreview(item, True).getFile()
+    frames = ImageUtil.getBmpFrames(imgFile)
     videoFramesTime += time.time() - t 
     list = []
     scores = []
@@ -219,8 +211,8 @@ def processVideoFrames(item):
     for i in range(numFrames):
         input = convertJavaByteArray(frames.get(i))
         img = loadRawImage(input)
-        from keras.preprocessing import image
-        x = image.img_to_array(img)
+        from tensorflow.keras import utils
+        x = utils.img_to_array(img)
         list.append(x)
         if batchSize == 1 or (i > 0 and i % batchSize == 0) or i == (numFrames - 1):
             preds = makePrediction(list)

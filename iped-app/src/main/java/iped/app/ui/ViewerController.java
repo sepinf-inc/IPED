@@ -13,12 +13,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.apache.tika.Tika;
+import org.apache.tika.io.TikaInputStream;
 
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
@@ -28,9 +30,13 @@ import iped.app.ui.controls.CSelButton;
 import iped.app.ui.viewers.AttachmentSearcherImpl;
 import iped.app.ui.viewers.HexSearcherImpl;
 import iped.app.ui.viewers.TextViewer;
+import iped.engine.config.AgeEstimationConfig;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FaceRecognitionConfig;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
 import iped.io.URLUtil;
+import iped.properties.ExtraProperties;
 import iped.viewers.ATextViewer;
 import iped.viewers.AudioViewer;
 import iped.viewers.CADViewer;
@@ -60,6 +66,7 @@ import iped.viewers.util.LibreOfficeFinder;
 public class ViewerController {
     private final List<AbstractViewer> viewers = new ArrayList<>();
     private final ATextViewer textViewer;
+    private final MetadataViewer metadataViewer;
     private final HtmlLinkViewer linkViewer;
     private final MultiViewer viewersRepository;
     private final Map<AbstractViewer, DefaultSingleCDockable> dockPerViewer = new HashMap<>();
@@ -81,7 +88,7 @@ public class ViewerController {
         // These viewers will have their own docking frame
         viewers.add(new HexViewerPlus(owner, new HexSearcherImpl()));
         viewers.add(textViewer = new TextViewer());
-        viewers.add(new MetadataViewer() {
+        viewers.add(metadataViewer = new MetadataViewer() {
             @Override
             public boolean isFixed() {
                 return isFixed;
@@ -105,7 +112,9 @@ public class ViewerController {
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
         viewersRepository.addViewer(new AudioViewer(new AttachmentSearcherImpl()));
-        viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
+        viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl(), () -> {
+            changeToViewer(metadataViewer);
+        }));
 
         new Thread() {
             public void run() {
@@ -307,6 +316,11 @@ public class ViewerController {
                     butToolbar.setEnabled(toolbarSupport == 1);
                     butToolbar.setSelected(toolbarSupport == 1 && viewer.isToolbarVisible());
                 }
+
+                CButton butSearch = (CButton) dock.getAction("searchInViewer");
+                if (butSearch != null) {
+                    butSearch.setEnabled(viewer.isSearchSupported());
+                }
             }
         } else {
             if (clean) {
@@ -349,7 +363,9 @@ public class ViewerController {
                 if (tika == null) {
                     tika = new Tika();
                 }
-                viewType = tika.detect(viewFile.getTempFile());
+                try (TikaInputStream stream = TikaInputStream.get(viewFile.getSeekableInputStream())) {
+                    viewType = tika.detect(stream);
+                }
                 return;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -371,5 +387,34 @@ public class ViewerController {
             }
         }
         return result;
+    }
+
+    public void notifyAppLoaded() {
+
+        boolean faceRecognitionEnabled = Optional
+                .ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(FaceRecognitionConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasFaceRecognitionInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_COUNT) != null;
+        boolean enableHighlightFacesButton = faceRecognitionEnabled || hasFaceRecognitionInIndex;
+
+        boolean ageEstimationEnabled = Optional
+                .ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(AgeEstimationConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasAgeEstimationInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_AGE_LABELS) != null;
+        boolean enableAgeEstimationCombo = ageEstimationEnabled || hasAgeEstimationInIndex;
+
+        viewersRepository
+                .getViewerList()
+                .stream()
+                .filter(ImageViewer.class::isInstance)
+                .map(ImageViewer.class::cast)
+                .forEach(viewer -> {
+                    viewer.setEnableHighlightFacesButton(enableHighlightFacesButton);
+                    viewer.setEnableAgeEstimationCombo(enableAgeEstimationCombo);
+                });
     }
 }

@@ -163,9 +163,9 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         metadataCloudGraphItem.add("doc_id", entry.getDoc_id());
         metadataCloudGraphItem.add("parent_doc_id", entry.getParent_doc_id());
         if (!hashSets.isEmpty()) {
-            metadataCloudGraphItem.set("hashDb:status", "pedo");
+            metadataCloudGraphItem.set(ExtraProperties.STATUS_PROPERTY, "pedo");
             for (String set : hashSets) {
-                metadataCloudGraphItem.add("hashDb:set", set);
+                metadataCloudGraphItem.add(ExtraProperties.SET_PROPERTY, set);
             }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {
@@ -318,7 +318,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         xHandler.characters("Parent Doc ID");
         xHandler.endElement("th");
         xHandler.startElement("th");
-        xHandler.characters("Found in Child Porn Alert Hashset");
+        xHandler.characters("Found in CSAM Alert Hash Set");
         xHandler.endElement("th");
 
         xHandler.endElement("tr");

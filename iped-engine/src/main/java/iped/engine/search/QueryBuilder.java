@@ -7,12 +7,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.IntPoint;
@@ -330,28 +332,31 @@ public class QueryBuilder {
     }
 
     public Set<String> getQueryStrings(String queryText) {
+
+        Set<String> result = new HashSet<>();
         Query query = null;
         if (queryText != null) {
             try {
                 query = getQuery(queryText, spaceAnalyzer);
-
+                result.addAll(getQueryStrings(query));
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
 
-        Set<String> result = getQueryStrings(query);
-
-        if (queryText != null) {
             try {
                 query = getQuery(queryText, ipedCase.getAnalyzer());
+                result.addAll(getQueryStrings(query));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
+            try {
+                query = getQuery(queryText, new KeywordAnalyzer());
+                result.addAll(getQueryStrings(query));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
-        result.addAll(getQueryStrings(query));
 
         logger.info("Expanded query terms: {}", result.toString());
 

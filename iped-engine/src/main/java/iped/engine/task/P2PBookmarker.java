@@ -1,5 +1,10 @@
 package iped.engine.task;
 
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_ID;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_NAME;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_PHONE;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_USERNAME;
+
 import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
@@ -8,7 +13,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
+import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +28,7 @@ import iped.parsers.ares.AresParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatParser;
 import iped.parsers.bittorrent.TransmissionResumeParser;
+import iped.parsers.chat.PartyStringBuilderFactory;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
 import iped.parsers.gdrive.GDriveCloudGraphParser;
@@ -30,9 +38,10 @@ import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.threema.ThreemaParser;
-import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.search.SearchResult;
 
 public class P2PBookmarker {
@@ -91,7 +100,7 @@ public class P2PBookmarker {
         p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(),
                 new P2PProgram(HashTask.HASH.SHA256.toString(), "WhatsApp", new Color(32, 146, 90)));
 
-        p2pPrograms.put(UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString(),
+        p2pPrograms.put(UfedChatParser.UFED_CHAT_PREVIEW_MIME.toString(),
                 new P2PProgram(IndexItem.HASH.toString(), "UFED_Chats", new Color(0, 160, 160)));
 
         P2PProgram progSkype = new P2PProgram(IndexItem.HASH, "Skype", new Color(50, 150, 220));
@@ -125,7 +134,7 @@ public class P2PBookmarker {
                 int luceneId = ipedSrc.getLuceneId(p2pItems.getId(i));
                 Document doc = ipedSrc.getReader().document(luceneId);
                 String mediaType = doc.get(IndexItem.CONTENTTYPE);
-                P2PProgram program = p2pPrograms.get(mediaType);
+                P2PProgram program = lookupProgram(mediaType, p2pPrograms);
                 if (program == null) {
                     continue;
                 }
@@ -163,13 +172,26 @@ public class P2PBookmarker {
                     continue;
 
                 String bookmarkSufix = program.appName;
-                if (UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString().equals(mediaType)) {
-                    String source = doc.get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+                if (MediaTypes.isInstanceOf(MediaType.parse(mediaType), UfedChatParser.UFED_CHAT_PREVIEW_MIME)) {
+                    String source = doc.get(ExtraProperties.UFED_META_PREFIX + "Source");
                     if (source != null)
                         bookmarkSufix = source;
-                    String phoneOwner = doc.get(UFEDChatParser.META_PHONE_OWNER);
-                    if (phoneOwner != null && !phoneOwner.isEmpty())
-                        bookmarkSufix += " by " + phoneOwner; //$NON-NLS-1$
+                    String account = doc.get(ExtraProperties.CONVERSATION_ACCOUNT);
+                    if (StringUtils.isNotBlank(account)) {
+                        if (source != null) {
+                            String formattedAccount = PartyStringBuilderFactory
+                                    .getBuilder(source)
+                                    .withUserId(doc.get(ExtraProperties.CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_ID))
+                                    .withName(doc.get(ExtraProperties.CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_NAME))
+                                    .withPhoneNumber(doc.get(ExtraProperties.CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_PHONE))
+                                    .withUsername(doc.get(ExtraProperties.CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_USERNAME))
+                                    .build();
+                            if (StringUtils.isNotBlank(formattedAccount)) {
+                                account = formattedAccount;
+                            }
+                        }
+                        bookmarkSufix += " by " + account;
+                    }
                 }
 
                 int labelId = ipedSrc.getBookmarks()
@@ -190,7 +212,25 @@ public class P2PBookmarker {
         } finally {
             ipedSrc.close();
         }
-
     }
 
+    private P2PProgram lookupProgram(String mediaTypeStr, HashMap<String, P2PProgram> p2pPrograms) {
+
+        if (p2pPrograms.containsKey(mediaTypeStr)) {
+            return p2pPrograms.get(mediaTypeStr);
+        }
+
+        MediaType mediaType = MediaType.parse(mediaTypeStr);
+        P2PProgram program = p2pPrograms.entrySet().stream()
+                .filter(e -> MediaTypes.isInstanceOf(mediaType, MediaType.parse(e.getKey())))
+                .map(e -> e.getValue())
+                .findFirst()
+                .orElse(null);
+
+        if (program != null) {
+            p2pPrograms.put(mediaTypeStr, program);
+        }
+
+        return program;
+    }
 }

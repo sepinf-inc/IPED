@@ -1,8 +1,10 @@
 package iped.parsers.util;
 
-import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+
+import iped.localization.LocaleResolver;
+
 import java.text.MessageFormat;
 
 public class Messages {
@@ -16,9 +18,7 @@ public class Messages {
 
     public static String get(String key) {
         if (RESOURCE_BUNDLE == null) {
-            String str = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
-            Locale locale = str != null ? Locale.forLanguageTag(str) : Locale.getDefault();
-            RESOURCE_BUNDLE = iped.localization.Messages.getExternalBundle(BUNDLE_NAME, locale);
+            RESOURCE_BUNDLE = iped.localization.Messages.getExternalBundle(BUNDLE_NAME, LocaleResolver.getLocale());
         }
         try {
             return RESOURCE_BUNDLE.getString(key);

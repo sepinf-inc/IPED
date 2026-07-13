@@ -12,10 +12,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,11 +41,16 @@ import org.apache.lucene.search.Query;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IItemId;
+import iped.engine.config.AgeEstimationConfig;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FaceRecognitionConfig;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
+import iped.localization.LocaleResolver;
+import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
 import iped.utils.UTF8Properties;
 import iped.viewers.api.IFilter;
@@ -68,6 +76,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     private HashMap<String, String> localizationMap = new HashMap<>();
     private volatile boolean updatingCombo = false;
     private JComboBox<String> comboFilter;
+    private Map<String, Boolean> skipComboFilterConditions = new HashMap<>();
 
     JDialog dialog;
 
@@ -89,7 +98,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     private static final File getGlobalFilterFile() {
         String name = "ipedFilters"; //$NON-NLS-1$
-        String locale = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+        String locale = LocaleResolver.getLocaleString();
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".txt"; //$NON-NLS-1$
@@ -114,6 +123,15 @@ public class FilterManager implements ActionListener, ListSelectionListener {
             }
             filters.load(defaultFilter);
 
+            // Remove obsolete default filters
+            Iterator<Entry<Object, Object>> it = filters.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<Object, Object> entry = it.next();
+                if (entry.getValue().toString().trim().equalsIgnoreCase("OBSOLETE")) {
+                    it.remove();
+                }
+            }
+
             // fix filter values saved by old versions, see #1392
             for (Entry<Object, Object> entry : filters.entrySet()) {
                 if (entry.getValue().toString().contains("\\\\:")) {
@@ -121,10 +139,24 @@ public class FilterManager implements ActionListener, ListSelectionListener {
                 }
             }
 
+            // register filters to skip the exhibition in comboFilter
+            registerSkipComboFilterCondition("Files with Faces", FaceRecognitionConfig.enableParam, ExtraProperties.FACE_COUNT);
+            registerSkipComboFilterCondition("Files with Child Faces", AgeEstimationConfig.enableParam, ExtraProperties.FACE_AGE_LABELS);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
         updateFilter();
+    }
+
+    private void registerSkipComboFilterCondition(String filterName, String enablePropertyName, String indexedFieldName) {
+        boolean propertyEnabled = Optional
+                .ofNullable(ConfigurationManager.get().getEnableTaskConfigurable(enablePropertyName))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasFieldInCase = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(indexedFieldName) != null;
+
+        skipComboFilterConditions.put(filterName, !propertyEnabled && !hasFieldInCase);
     }
 
     private void updateFilter() {
@@ -138,6 +170,12 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         List<String> filternames = filters.keySet().stream().map(i -> (String) i).collect(Collectors.toList());
         Collections.sort(filternames, new FilterComparator());
         for (String filter : filternames) {
+
+            // skip filters that uses of non-enabled features
+            if (skipComboFilterConditions.containsKey(filter) && skipComboFilterConditions.get(filter)) {
+                continue;
+            }
+
             String localizedName = MessagesFilter.get(filter, filter);
             localizationMap.put(localizedName, filter);
             comboFilter.addItem(localizedName);

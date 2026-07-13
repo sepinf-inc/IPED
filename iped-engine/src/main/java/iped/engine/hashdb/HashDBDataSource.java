@@ -22,6 +22,7 @@ import org.sqlite.SQLiteConfig.Encoding;
 import org.sqlite.SQLiteConfig.JournalMode;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
+import iped.properties.ExtraProperties;
 import iped.utils.HashValue;
 
 public class HashDBDataSource {
@@ -40,8 +41,8 @@ public class HashDBDataSource {
     public static final String photoDna = "photoDna";
     private static final int photoDnaBase64Len = 192;
 
-    private static final String propertySet = "set";
-    private static final String propertyStatus = "status";
+    private static final String propertySet = ExtraProperties.SET_PROPERTY;
+    private static final String propertyStatus = ExtraProperties.STATUS_PROPERTY;
     private static final String pedoStatus = "pedo";
 
     public HashDBDataSource(File dbFile) throws Exception {
@@ -189,6 +190,7 @@ public class HashDBDataSource {
                 if (!setHashIds.contains(item.getHashId())) {
                     Collections.swap(photoDNAHashSet, i, photoDNAHashSet.size() - 1);
                     photoDNAHashSet.remove(photoDNAHashSet.size() - 1);
+                    i--;
                 }
             }
         }

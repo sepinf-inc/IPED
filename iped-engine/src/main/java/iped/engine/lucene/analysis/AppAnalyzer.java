@@ -27,11 +27,11 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
-import iped.engine.datasource.UfedXmlReader;
 import iped.engine.task.HashTask;
 import iped.engine.task.PhotoDNATask;
 import iped.engine.task.index.IndexItem;
 import iped.localization.LocalizedProperties;
+import iped.properties.ExtraProperties;
 
 /*
  * Define analizadores, tokenizadores implicitamente, de indexação específicos para cada propriedade, 
@@ -46,7 +46,10 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
-        analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
+        analyzerPerField.put(ExtraProperties.UFED_ID, new KeywordAnalyzer());
+        analyzerPerField.put(ExtraProperties.UFED_FILE_ID, new KeywordAnalyzer());
+        analyzerPerField.put(ExtraProperties.UFED_JUMP_TARGETS, new KeywordAnalyzer());
+        analyzerPerField.put(ExtraProperties.UFED_COORDINATE_ID, new KeywordAnalyzer());
 
         analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());

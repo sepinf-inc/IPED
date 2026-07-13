@@ -18,20 +18,21 @@ public class BookmarksController implements IBookmarksController {
     public static final String HISTORY_DIV = Messages.getString("BookmarksController.HistoryDelimiter"); //$NON-NLS-1$
 
     private static JFileChooser fileChooser;
-    private static SearchStateFilter filter;
 
     private boolean multiSetting = false;
 
     private boolean updatingHistory = false;
 
     private BookmarksController() {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                fileChooser = new JFileChooser();
-                fileChooser.setCurrentDirectory(App.get().appCase.getCaseDir());
-                filter = new SearchStateFilter();
-            }
-        });
+    }
+
+    private static void setupFileChooser() {
+        if (fileChooser == null) {
+            fileChooser = new JFileChooser();
+            fileChooser.setCurrentDirectory(App.get().appCase.getCaseDir());
+            fileChooser.setFileFilter(new SearchStateFilter());
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        }
     }
 
     public boolean isUpdatingHistory() {
@@ -107,8 +108,7 @@ public class BookmarksController implements IBookmarksController {
     }
 
     public void askAndLoadState() {
-        fileChooser.setFileFilter(filter);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        setupFileChooser();
         if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             try {
@@ -145,8 +145,7 @@ public class BookmarksController implements IBookmarksController {
     }
 
     public void askAndSaveState() {
-        fileChooser.setFileFilter(filter);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        setupFileChooser();
         if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             if (!file.getName().endsWith(Bookmarks.EXT))

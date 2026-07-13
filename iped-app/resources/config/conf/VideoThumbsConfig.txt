@@ -11,7 +11,7 @@ Layout = 320,4,5
 
 # Compression level of the generated image file.
 # From 0 to 100, 0 - is very high compression and very low quality, 100 - higher quality and minimum compression.
-compression = 50
+compression = 60
 
 # Timeouts (in seconds) used by the mplayer monitor.
 # Change with caution, because high values can slow down processing of corrupted videos.

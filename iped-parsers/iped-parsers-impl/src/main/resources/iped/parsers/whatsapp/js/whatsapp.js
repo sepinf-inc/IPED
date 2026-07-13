@@ -1,4 +1,4 @@
-function openImage(url2, url1){
+function openImage(url2, url1) {
     if (navigator.userAgent.search("JavaFX") >= 0) return;
     const aux = new Image();
     aux.onload = () => window.location = url1;
@@ -6,15 +6,15 @@ function openImage(url2, url1){
     aux.src = url1;
 }
 
-function openAudio(url2, url1){
+function openAudio(url2, url1) {
     openAV(url2, url1, 'audio');
 }
 
-function openVideo(url2, url1){
+function openVideo(url2, url1) {
     openAV(url2, url1, 'video');
 }
 
-function openAV(url2, url1, type){
+function openAV(url2, url1, type) {
     if (navigator.userAgent.search("JavaFX") >= 0) return;
     const aux = document.createElement(type);
     aux.style.display = 'none';
@@ -30,7 +30,7 @@ function openAV(url2, url1, type){
     document.body.append(aux);
 }
 
-function openOther(url2, url1){
+function openOther(url2, url1) {
     if (navigator.userAgent.search("JavaFX") >= 0) return;
     window.location = url2;
 }
@@ -68,44 +68,44 @@ function createMediaControls() {
     });
 }
 
-function showMessage(message){
+function showMessage(message) {
     var fragMessageClose = document.getElementById('fragMessageClose').value;
-    show_prompt("",message,false,fragMessageClose);
+    show_prompt("", message, false, fragMessageClose);
     return false;
 }
 
-function goToAnchorId(id){
+function goToAnchorId(id) {
     var scroll_padding_top = document.getElementById('topbar').getBoundingClientRect().height;
     var r = document.querySelector(':root');
     var rs = getComputedStyle(r);
-    if (rs.getPropertyValue('--scroll-padding-top') != scroll_padding_top+'px')
-        r.style.setProperty('--scroll-padding-top', scroll_padding_top+'px');
+    if (rs.getPropertyValue('--scroll-padding-top') != scroll_padding_top + 'px')
+        r.style.setProperty('--scroll-padding-top', scroll_padding_top + 'px');
     var div = document.getElementById(id);
     var scrollY = window.scrollY;
-    if (div){
+    if (div) {
         var top = div.getBoundingClientRect().top;
         location.hash = '';
         window.scrollTo(0, top + scrollY);
-        location.href="#"+id;
-        if (top > scroll_padding_top){
+        location.href = "#" + id;
+        if (top > scroll_padding_top) {
             window.scrollTo(0, scrollY);
         }
-    }else{ // Id not found, can be in previous pages
+    } else { // Id not found, can be in previous pages
         var input;
         var fragMessageChat = document.getElementById('fragMessageChat').value;
         var fragMessageId = document.getElementById('fragMessageId').value;
         var fragMessageClose = document.getElementById('fragMessageClose').value;
         var i = 0;
-        while( true ){
-            input = document.getElementById('frag'+i);
-            if (input){
-                if (id <= input.value){
-                    show_prompt("",fragMessageChat + " " + i + "</br> "+fragMessageId+" "+id,false,fragMessageClose);
+        while (true) {
+            input = document.getElementById('frag' + i);
+            if (input) {
+                if (id <= input.value) {
+                    show_prompt("", fragMessageChat + " " + i + "</br> " + fragMessageId + " " + id, false, fragMessageClose);
                     break;
-                }else{
+                } else {
                     i = i + 1;
                 }
-            }else{
+            } else {
                 break;
             }
         }
@@ -113,7 +113,7 @@ function goToAnchorId(id){
     }
 }
 
-/* Author: https://github.com/lecoa/Vanilla-JS-Prompt */ 
+/* Author: https://github.com/lecoa/Vanilla-JS-Prompt */
 function show_prompt(title, message, pribtnHide = false, pribtnLabel = "Close", secBtnLabel = '', secBtnAction = '') {
     document.getElementById("modal-alert-title").innerHTML = title;
     document.getElementById("modal-alert-content").innerHTML = message;
@@ -143,3 +143,14 @@ if (navigator.userAgent.search("JavaFX") < 0) {
         document.addEventListener("DOMContentLoaded", createMediaControls);
     }
 }
+
+const topHeight = document.getElementById('topbar').offsetHeight;
+document.getElementById('conversation').style.paddingTop = `${topHeight}px`;
+
+window.addEventListener('load', () => {
+    const modal = document.getElementById('loading-modal');
+    if (modal) {
+        modal.classList.add('fade-out');
+        setTimeout(() => modal.remove(), 300);
+    }
+});

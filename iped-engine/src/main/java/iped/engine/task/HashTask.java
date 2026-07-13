@@ -100,7 +100,9 @@ public class HashTask extends AbstractTask {
                 System.setProperty(WhatsAppParser.SHA256_ENABLED_SYSPROP, Boolean.TRUE.toString());
             }
         }
-
+        if (isEnabled()) {
+            System.setProperty(WhatsAppParser.HASH_TASK_ENABLED_SYSPROP, Boolean.TRUE.toString());
+        }
     }
 
     @Override

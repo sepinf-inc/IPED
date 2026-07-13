@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.io.IStreamSource;
 import iped.properties.MediaTypes;
+import iped.viewers.search.HitsUpdater;
 
 /**
  * Classe base para todas as interfaces gráficas de visualizadores.
@@ -122,6 +123,11 @@ public abstract class AbstractViewer {
 
     abstract public void scrollToNextHit(boolean forward);
 
+    public void scrollToNextHit(boolean forward, boolean wrap, HitsUpdater hitsUpdater) {
+        // Default behavior ignores wrapping and the updater
+        scrollToNextHit(forward, false, null);
+    }
+    
     /**
      * May be overridden when hits navigation is not supported.
      * 
@@ -148,6 +154,13 @@ public abstract class AbstractViewer {
 
     public boolean isToolbarVisible() {
         return isToolbarVisible;
+    }
+
+    public boolean isSearchSupported() {
+        return false;
+    }
+
+    public void searchInViewer(String term, HitsUpdater hitsUpdater) {
     }
 
     public void copyScreen() {

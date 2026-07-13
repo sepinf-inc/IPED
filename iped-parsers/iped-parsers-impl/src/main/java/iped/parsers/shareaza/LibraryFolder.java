@@ -49,12 +49,22 @@ public class LibraryFolder extends ShareazaEntity {
         this.indexToFile = indexToFile;
     }
 
-    public String getInheritedShared() {
-        String resp = shared;
-        if (resp.equals("Unknown") && parentFolder != null) { //$NON-NLS-1$
-            resp = parentFolder.getInheritedShared();
+    public String getParentFolderShared() {
+        if (parentFolder != null) {
+            return parentFolder.getShared();
         }
-        return resp;
+        return Util.TRI_STATE_UNKNOWN;
+    }
+
+    public String getSharedFlag() {
+        return shared;
+    }
+
+    public String getShared() {
+        if (Util.TRI_STATE_UNKNOWN.equals(shared) && parentFolder != null) {
+            return parentFolder.getShared();
+        }
+        return shared;
     }
 
     @Override
@@ -64,9 +74,9 @@ public class LibraryFolder extends ShareazaEntity {
             shared = Util.decodeTriState(ar.readInt());
         } else {
             if (ar.readByte() == 0) {
-                shared = "False"; //$NON-NLS-1$
+                shared = Util.TRI_STATE_FALSE;
             } else {
-                shared = "Unknown"; //$NON-NLS-1$
+                shared = Util.TRI_STATE_UNKNOWN;
             }
         }
         if (version >= 3) {
@@ -98,7 +108,7 @@ public class LibraryFolder extends ShareazaEntity {
         f.out("Files: " + nFiles); //$NON-NLS-1$
         f.out("Volume: " + nVolume); //$NON-NLS-1$
         f.out("Path: " + path); //$NON-NLS-1$
-        f.out("Shared: " + getInheritedShared()); //$NON-NLS-1$
+        f.out("Shared: " + getShared()); //$NON-NLS-1$
         f.out("Expanded: " + expanded); //$NON-NLS-1$
         for (LibraryFolder folder : folders) {
             folder.write(f);

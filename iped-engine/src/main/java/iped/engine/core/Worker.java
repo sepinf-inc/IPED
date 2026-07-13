@@ -107,8 +107,10 @@ public class Worker extends Thread {
         TaskInstaller taskInstaller = new TaskInstaller();
         taskInstaller.installProcessingTasks(this);
         doTaskChaining();
-        initTasks();
+    }
 
+    public void init() throws Exception {
+        initTasks();
     }
 
     private void doTaskChaining() {
@@ -247,7 +249,7 @@ public class Worker extends Thread {
                         Thread.sleep(100);
                     }
                     synchronized (manager.getProcessingQueues()) {
-                        evidence = manager.getProcessingQueues().pollFirstFromCurrentQueue();
+                        evidence = manager.getProcessingQueues().pollFromCurrentQueue();
                         if (evidence == null) {
                             sleep = true;
                             continue;
@@ -267,7 +269,7 @@ public class Worker extends Thread {
                 } else {
                     IItem queueEnd = evidence;
                     if (manager.getProcessingQueues().isNoItemInQueueOrBeingProcessed()) {
-                        manager.getProcessingQueues().addLastToCurrentQueue(queueEnd);
+                        manager.getProcessingQueues().addToCurrentQueue(queueEnd);
                         evidence = null;
 
                         LOGGER.debug(this.getName() + " going to wait queue change.");
@@ -280,7 +282,7 @@ public class Worker extends Thread {
                             }
                         }
                     } else {
-                        manager.getProcessingQueues().addLastToCurrentQueue(queueEnd);
+                        manager.getProcessingQueues().addToCurrentQueue(queueEnd);
                         long timeSinceLastItemProcessed = System.currentTimeMillis() - lastItemProcessingTime;
                         if (itemsBeingProcessed > 0 && timeSinceLastItemProcessed >= MIN_WAIT_TIME_TO_SEND_QUEUE_END) {
                             LOGGER.debug(

@@ -132,20 +132,20 @@ public class CacheAddr {
             case BLOCK_4096:
                 for (IItemReader dataFile : dataFiles)
                     if (dataFile.getName().equals(("data_" + fileSelector))) {
-                        SeekableInputStream sis = dataFile.getSeekableInputStream();
-                        sis.seek(8192 + startBlock * getBlockSize());
+                        try (SeekableInputStream sis = dataFile.getSeekableInputStream()) {
+                            sis.seek(8192 + startBlock * getBlockSize());
 
-                        // If the value of the StreamSize data variable is null, it takes all available
-                        // blocks for that cache entry. The variable dataStreamSize represents the exact
-                        // size of the data in the files, it is important to obtain the exact size as it
-                        // can generate an error in the Botli library, since it does not handle excess
-                        // zero bytes
-                        byte[] blocks = (dataStreamSize == null) ? new byte[(numBlocks + 1) * getBlockSize()] : new byte[dataStreamSize];
-                        sis.read(blocks);
-                        return new ByteArrayInputStream(blocks);
+                            // If the value of the StreamSize data variable is null, it takes all available
+                            // blocks for that cache entry. The variable dataStreamSize represents the exact
+                            // size of the data in the files, it is important to obtain the exact size as it
+                            // can generate an error in the Botli library, since it does not handle excess
+                            // zero bytes
+                            int bufLen = (dataStreamSize == null) ? (numBlocks + 1) * getBlockSize() : dataStreamSize;
+                            byte[] blocks = sis.readNBytes(bufLen);
+                            return new ByteArrayInputStream(blocks);
+                        }
                     }
         }
-
         throw new InputStreamNotAvailable();
     }
 

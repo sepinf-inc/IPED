@@ -51,7 +51,7 @@ import iped.parsers.discord.DiscordParser;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
-import iped.parsers.ufed.UfedMessage;
+import iped.parsers.ufed.model.Party;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.BasicProps;
@@ -251,7 +251,6 @@ public class GraphTask extends AbstractTask {
                 || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType)
                 || DiscordParser.MSG_MIME_TYPE.equals(mediaType)
                 || DiscordParser.ATTACH_MIME_TYPE.equals(mediaType)
-                || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(mediaType)
                 || MediaTypes.UFED_MESSAGE_MIME.toString().equals(mediaType)) {
             return "message";
         }
@@ -451,7 +450,7 @@ public class GraphTask extends AbstractTask {
             return;
         }
         if (MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)
-                && UfedMessage.SYSTEM_MESSAGE.equals(sender)) {
+                && Party.SYSTEM_MESSAGE.equalsIgnoreCase(sender)) {
             return;
         }
 

@@ -2,6 +2,7 @@ package iped.parsers.discord;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
@@ -163,9 +164,12 @@ public class DiscordHTMLReport {
                     Iterator<IItemReader> it = searcher.searchIterable(query).iterator();
                     // if hash exists, at least 1 item will be returned
                     IItemReader item = it.next();
-                    byte buff[] = item.getBufferedInputStream().readAllBytes();
-                    out.println("<lottie-player src=\"data:application/json;base64, " + Base64.getEncoder().encodeToString(buff)
-                            + "\" background=\"transparent\"  speed=\"1\"  style=\"width: 300px; height: 300px;\" loop controls autoplay><lottie-player>");
+                    try (InputStream in = item.getBufferedInputStream()) {
+                        byte buff[] = in.readAllBytes();
+                        out.println("<lottie-player src=\"data:application/json;base64, " + Base64.getEncoder().encodeToString(buff)
+                                + "\" background=\"transparent\"  speed=\"1\"  style=\"width: 300px; height: 300px;\" loop controls autoplay><lottie-player>");
+                    }
+
                 }
             }
 

@@ -27,6 +27,7 @@ import java.util.List;
 
 import iped.data.IItemReader;
 import iped.parsers.util.Messages;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
@@ -135,19 +136,23 @@ public class ReportGenerator {
 
         String lastDate = null;
         while (currentMsg < c.getMessages().size()) {
-            Message m = c.getMessages().get(currentMsg++);
-            String thisDate = null;
-            if (m.getTimeStamp() != null) {
-                thisDate = dateFormat.format(m.getTimeStamp());
-            }
-            if (thisDate != null && (lastDate == null || !lastDate.equals(thisDate))) {
-                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                        + thisDate + "</div></div>"); //$NON-NLS-1$
-                lastDate = thisDate;
-            }
+            MessageMultiMedia mmm = c.getMessages().get(currentMsg++);
 
-            printMessage(out, m);
+            for (Message m : mmm.getMessages()) {
+                String thisDate = null;
+                if (m.getTimeStamp() != null) {
+                    thisDate = dateFormat.format(m.getTimeStamp());
+                }
+                if (thisDate != null && (lastDate == null || !lastDate.equals(thisDate))) {
+                    out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                            + thisDate + "</div></div>"); //$NON-NLS-1$
+                    lastDate = thisDate;
+                }
 
+                printMessage(out, m);
+
+
+            }
             if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -260,6 +265,25 @@ public class ReportGenerator {
 
             link.getInner().add(img);
             div.getInner().add(link);
+
+            if (message.getMediaItem()!= null && message.getMediaItem().getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
+                TagHtml transcription = new TagHtml("span");
+                StringBuilder transcriptionText = new StringBuilder();
+                transcriptionText.append(Messages.getString("ReportGenerator.TranscriptionTitle"));
+
+                String confidence = message.getMediaItem().getMetadata().get(ExtraProperties.CONFIDENCE_ATTR);
+                if (confidence != null) {
+                    float score = Float.valueOf(confidence) * 100;
+                    transcriptionText.append(" [" + (int) score + "%]");
+                }
+                transcriptionText.append(": <i>");
+                transcriptionText
+                        .append(format(message.getMediaItem().getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR)));
+                transcriptionText.append("</i><br>");
+                transcription.getInner().add(transcriptionText.toString());
+                div.getInner().add(transcription);
+            }
+
             out.println(div.toString());
 
         } else {
@@ -372,6 +396,12 @@ public class ReportGenerator {
             out.println(
                     "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">"); //$NON-NLS-1$
         }
+        if (message.isDeleted()) {
+            out.println("<span class=\"recovered\">"); //$NON-NLS-1$
+            out.print(format(message.getRecoveryString()));
+            out.println("</span><br>"); //$NON-NLS-1$
+        }
+
         Contact contact = message.getFrom();
         if (contact != null) {
             out.println("<span style=\"font-family: Arial; color: #b4c74b;\">" //$NON-NLS-1$

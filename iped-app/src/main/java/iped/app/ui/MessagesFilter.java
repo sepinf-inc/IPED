@@ -1,8 +1,9 @@
 package iped.app.ui;
 
-import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+
+import iped.localization.LocaleResolver;
 
 public class MessagesFilter {
 
@@ -24,9 +25,7 @@ public class MessagesFilter {
     public static String get(String key) {
 
         if (RESOURCE_BUNDLE == null) {
-            String localeStr = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
-            Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-            RESOURCE_BUNDLE = iped.localization.Messages.getExternalBundle(BUNDLE_NAME, locale);
+            RESOURCE_BUNDLE = iped.localization.Messages.getExternalBundle(BUNDLE_NAME, LocaleResolver.getLocale());
         }
         return RESOURCE_BUNDLE.getString(key);
     }

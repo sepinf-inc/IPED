@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
@@ -37,6 +38,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItemReader;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
@@ -84,6 +86,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         storeSharedHashes(folders.getAlbumRoot(), folders.getIndexToFile(), metadata);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
+        IItemReader item = context.get(IItemReader.class);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
@@ -125,13 +128,32 @@ public class ShareazaLibraryDatParser extends AbstractParser {
 
         if (extractEntries) {
             BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, LIBRARY_DAT_ENTRY_MIME_TYPE);
+            bme.addPropertyExclusion(LibraryFolders.class, "indexToFile");
             bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
             bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
             bme.addPropertyExclusion(LibraryFile.class, "parentFolder");
+            bme.addPropertyExclusion(LibraryFile.class, "hashDBHit");
+            bme.addPropertyExclusion(LibraryFile.class, "hashSetHits");
+            bme.addPropertyExclusion(LibraryFile.class, "sharedSources");
+            bme.addPropertyExclusion(LibraryFolder.class, "shared");
+            bme.registerCollectionPropertyToMerge(LibraryFolder.class, "libraryFiles");
+            bme.registerCollectionPropertyToMerge(LibraryFolder.class, "libraryFolders");
+            bme.registerCollectionPropertyToMerge(AlbumFolder.class, "albumFolders");
+            bme.registerCollectionPropertyToMerge(AlbumFolder.class, "albumFileIndexes");
             bme.registerClassNameProperty(LibraryFolder.class, "path");
             bme.registerClassNameProperty(AlbumFolder.class, "name");
-            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
-            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${md5}");
+            bme.registerTransformationMapping(AlbumFolder.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
+            bme.registerTransformationMapping(LibraryFolders.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
+            bme.registerTransformationMapping(LibraryFolder.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "${sha1 != null ? \"sha-1:\" + sha1 : null}");
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${shared != null && shared ? (md5 != null ? md5 : sha1) : null}");
+            bme.registerTransformationMapping(LibraryFile.class, BasicProps.NAME, "Library-Entry-[${name}].dat");
+
+            String albumLibraryFilesQuery = String.format(
+                    "path:\"%s\" && p2p\\:index:(${T(org.apache.commons.lang3.StringUtils).join(albumFileIndexes, ',')})",
+                    searcher.escapeQuery(item.getPath()));
+            bme.registerTransformationMapping(AlbumFolder.class, ExtraProperties.LINKED_ITEMS, albumLibraryFilesQuery);
+
             bme.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
         }
 
@@ -149,7 +171,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         for (LibraryFolder folder : library.getLibraryFolders().getLibraryFolders())
             numRegistros += countLibraryFiles(folder);
         numRegistros += countLibraryFiles(library.getLibraryFolders().getAlbumRoot(), library.getLibraryFolders().getIndexToFile());
-        metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(numRegistros));
+        metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, Integer.toString(numRegistros));
 
         int hashDBHits = countHashDBHits(library.getLibraryFolders());
 
@@ -168,14 +190,16 @@ public class ShareazaLibraryDatParser extends AbstractParser {
     }
 
     private void storeSharedHashes(LibraryFile file, Metadata metadata) {
-        if (file.isShared() && file.getMd5() != null && file.getMd5().length() == 32) {
-            metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
-        }
-        if (file.isShared() && file.getSha1() != null && file.getSha1().length() == 40) {
-            metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
-        }
-        if (file.isShared() && file.getEd2k() != null && file.getEd2k().length() == 32) {
-            metadata.add(ExtraProperties.SHARED_HASHES, file.getEd2k());
+        if (BooleanUtils.isTrue(file.getShared())) {
+            if (file.getMd5() != null && file.getMd5().length() == 32) {
+                metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
+            }
+            if (file.getSha1() != null && file.getSha1().length() == 40) {
+                metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
+            }
+            if (file.getEd2k() != null && file.getEd2k().length() == 32) {
+                metadata.add(ExtraProperties.SHARED_HASHES, file.getEd2k());
+            }
         }
     }
 

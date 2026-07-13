@@ -39,6 +39,10 @@ public class BasicProps {
     public static final String TIMESTAMP = "timeStamp";
     public static final String TIME_EVENT = "timeEvent";
 
+    public static final String TRACK_ID = "trackId";
+    public static final String PARENT_TRACK_ID = "parentTrackId";
+    public static final String CONTAINER_TRACK_ID = "containerTrackId";
+
     public static final Set<String> SET = getBasicProps();
 
     private static Set<String> getBasicProps() {

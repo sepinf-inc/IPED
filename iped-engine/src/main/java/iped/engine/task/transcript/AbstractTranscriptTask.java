@@ -40,7 +40,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.HashDBLookupTask;
+import iped.engine.task.HashTask;
 import iped.engine.task.video.VideoThumbTask;
 import iped.exception.IPEDException;
 import iped.properties.ExtraProperties;
@@ -94,7 +94,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (evidence.getLength() == null || evidence.getLength() == 0 || !evidence.isToAddToCase() || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
             return false;
         }
-        if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
+        if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(ExtraProperties.HASHDB_STATUS) != null) {
             return false;
         }
 
@@ -189,6 +189,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             createConnection();
         }
 
+        if (transcriptConfig.isEnabled()) {
+            checkDependency(HashTask.class);
+        }
     }
 
     public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath, Function<File, TextAndScore> transcribeWavPart) throws Exception {
@@ -372,8 +375,12 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
         if (evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null && evidence.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR) != null)
             return;
+        
+        String hash = evidence.getHash();
+        if (hash == null || hash.isEmpty())
+            return;
 
-        TextAndScore prevResult = getTextFromDb(evidence.getHash());
+        TextAndScore prevResult = getTextFromDb(hash);
         if (prevResult != null) {
             evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(prevResult.score));
             evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, prevResult.text);

@@ -204,8 +204,11 @@ public class Configuration {
         configManager.addObject(new OCRConfig());
         configManager.addObject(new FileSystemConfig());
         configManager.addObject(new AnalysisConfig());
+        configManager.addObject(new AIFiltersConfig());
+        configManager.addObject(new ProcessingPriorityConfig());
 
         configManager.addObject(new EnableTaskProperty(FaceRecognitionConfig.enableParam));
+        configManager.addObject(new EnableTaskProperty(AgeEstimationConfig.enableParam));
 
         TaskInstallerConfig taskConfig = new TaskInstallerConfig();
         configManager.addObject(taskConfig);

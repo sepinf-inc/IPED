@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -98,6 +99,26 @@ public abstract class BaseItemSearchContext extends TestCase {
             @Override
             public File getViewFile() {
                 // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public boolean hasPreview() {
+                return false;
+            }
+
+            @Override
+            public File getPreviewBaseFolder() {
+                return null;
+            }
+
+            @Override
+            public String getPreviewExt() {
+                return null;
+            }
+
+            @Override
+            public SeekableInputStream getPreviewSeekeableInputStream() throws SQLException, IOException {
                 return null;
             }
 
@@ -215,7 +236,14 @@ public abstract class BaseItemSearchContext extends TestCase {
             @Override
             public void setViewFile(File viewFile) {
                 // TODO Auto-generated method stub
+            }
 
+            @Override
+            public void setHasPreview(boolean b) {
+            }
+
+            @Override
+            public void setPreviewExt(String viewExt) {
             }
 
             @Override

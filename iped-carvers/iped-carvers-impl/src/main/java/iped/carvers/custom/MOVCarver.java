@@ -28,7 +28,7 @@ public class MOVCarver extends AbstractCarver {
     private int defaultMaxLength = 500000000;
 
     public MOVCarver() throws DecoderException {
-        carverTypes = new CarverType[6];
+        carverTypes = new CarverType[7];
 
         carverTypes[0] = new CarverType();
         carverTypes[0].addHeader("????ftypmp41");
@@ -36,7 +36,8 @@ public class MOVCarver extends AbstractCarver {
         carverTypes[0].addHeader("????ftypMSNV");
         carverTypes[0].addHeader("????ftypFACE");
         carverTypes[0].addHeader("????ftypdash");
-        carverTypes[0].addHeader("????ftypisom");
+        carverTypes[0].addHeader("????ftypiso");
+        carverTypes[0].addHeader("????ftypmp4v");
         carverTypes[0].setMimeType(MediaType.parse("video/mp4"));
 
         carverTypes[1] = new CarverType();
@@ -56,7 +57,11 @@ public class MOVCarver extends AbstractCarver {
         carverTypes[4].setMimeType(MediaType.parse("video/quicktime"));
 
         carverTypes[5] = new CarverType();
-        carverTypes[5].addHeader("????ftypmp42");
+        carverTypes[5].addHeader("????ftypheic");
+        carverTypes[5].setMimeType(MediaType.parse("image/heic"));
+
+        carverTypes[6] = new CarverType();
+        carverTypes[6].addHeader("????ftypmp42");
 
         for (int i = 0; i < carverTypes.length; i++) {
             carverTypes[i].setMaxLength(defaultMaxLength);

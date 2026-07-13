@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.3.0-snapshot</version>
+        <version>4.4.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>iped-app</artifactId>
@@ -377,7 +377,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>sleuthkit-dlls</artifactId>
-                                    <version>4.11.1-p3</version>
+                                    <version>4.15.0-p1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>

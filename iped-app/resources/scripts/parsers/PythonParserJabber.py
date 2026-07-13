@@ -64,7 +64,7 @@ class PythonParserJabber:
     
     
     def parse(self, stream, handler, metadata, context):
-        '''
+        r'''
          Parses each item found in case of the supported types.
          
          Parameters:
@@ -102,7 +102,7 @@ class PythonParserJabber:
         # uncomment if used below
         tmpResources = TemporaryResources()
         try:
-            '''
+            r'''
             Read file contents from the stream using the java.io.InputStream API.
             Do not hold too much data in memory. If you neUtil.readResourceAsString("wachat-html-template.txt")ed, you can spool to file
             using the following code to create a temp file with the contents:
@@ -130,7 +130,7 @@ class PythonParserJabber:
             #host_system = "sistema_%s_%s"%(app,client)
             host_system = "System"
             participants = [client, temp_to_date.split(" at ",1)[0].split("with ",1)[1]]
-            message_day = re.search("\d{2}/\d{2}/\d{4}",temp_to_date).group(0)
+            message_day = re.search(r"\d{2}/\d{2}/\d{4}",temp_to_date).group(0)
             filedate = os.path.basename(origFileName).replace(".html","").replace("BRT","")
             filedate_tz = datetime.strptime(filedate, '%Y-%m-%d.%f%z').tzinfo
             # host_system_messages = ["arquivo","envio"]
@@ -153,7 +153,7 @@ class PythonParserJabber:
                 curr_msg = html_message.next_sibling
                 curr_metadata = html_message
 
-                '''
+                r'''
                 Found some cases in which the message is contained within further tags
                 <font color="#A82F2F"><font size="2">(16:10:56)</font> <b>FIDEL:</b></font> <body>Já tá promto</body><br/>
                 '''
@@ -190,7 +190,7 @@ class PythonParserJabber:
                     message_sender = message_sender.text.rsplit("/",1)[0].strip(":")
                     nicknames_set.add(message_sender)
                 else:
-                    '''
+                    r'''
                     it could be a system message, such as:
                     <html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>Conversation with alice@dukgo.com at 05/02/2017 16:32:47 on bob@xmpp.cm/ (jabber)</title></head><body><h3>Conversation with alice@dukgo.com at 05/02/2017 16:32:47 on bob@xmpp.cm/ (jabber)</h3>
                     <font size="2">(16:32:51)</font><b> Tentando iniciar uma conversa privada com alice@dukgo.com...</b><br/>
@@ -199,7 +199,7 @@ class PythonParserJabber:
                     message_sender = host_system
 
                 assert message_sender
-                message_time = re.search("\d{2}:\d{2}:\d{2}",curr_metadata.text).group(0)
+                message_time = re.search(r"\d{2}:\d{2}:\d{2}",curr_metadata.text).group(0)
                 dateobj = datetime.strptime("%sT%s"%(message_day,message_time),"%d/%m/%YT%H:%M:%S")
                 idict["message_date"] = dateobj.replace(tzinfo = filedate_tz).isoformat()
                 idict["message_sender"] = message_sender
@@ -246,7 +246,7 @@ class PythonParserJabber:
 
             # Code below generates html in whatsapp format. For now we are giving
             # preference to original jabber html, so this is commented out.
-            ''' 
+            r'''
             formatted_msgs = []
             for res in new_messages_list:
                 if not isinstance(res["msg"], str):

@@ -10,6 +10,7 @@ iped.engine.task.regex.validator.ScriptValidatorService
 iped.engine.task.regex.validator.crypto.BitcoinAddressValidatorService
 iped.engine.task.regex.validator.crypto.BCHAddressValidatorService
 iped.engine.task.regex.validator.crypto.EthereumAddressValidatorService
+iped.engine.task.regex.validator.crypto.TronAddressValidatorService
 iped.engine.task.regex.validator.crypto.RippleAddressValidatorService
 iped.engine.task.regex.validator.PhoneRegexValidatorService
 iped.engine.task.regex.validator.PlacaRegexValidatorService
@@ -19,3 +20,4 @@ iped.engine.task.regex.validator.RIFRegexValidatorService
 iped.engine.task.regex.validator.crypto.DogeCoinAddressValidatorService
 iped.engine.task.regex.validator.crypto.DashAddressValidatorService
 iped.engine.task.regex.validator.crypto.LiteCoinAddressValidatorService
+iped.engine.task.regex.validator.CryptoSeedPhraseValidatorService

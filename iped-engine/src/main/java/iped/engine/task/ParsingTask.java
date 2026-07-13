@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -67,9 +68,9 @@ import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.config.SplitLargeBinaryConfig;
+import iped.engine.core.Manager;
 import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
-import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.CaseData;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
@@ -314,9 +315,17 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 task = new ParsingTask(worker, autoParser);
                 task.parsingConfig = this.parsingConfig;
                 task.expandConfig = this.expandConfig;
-                task.safeProcess(evidence);
-
+                task.evidence = evidence;
+                task.getTikaContext();
+                if (task.extractEmbedded && containersBeingExpanded.incrementAndGet() > max_expanding_containers) {
+                    task.reEnqueueItem(evidence);
+                 } else {
+                    task.safeProcess();
+                 }
             } finally {
+                if (task != null && task.extractEmbedded) {
+                    containersBeingExpanded.decrementAndGet();
+                }
                 String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
                 long st = task == null ? 0 : task.subitemsTime;
                 long diff = System.nanoTime() / 1000 - start;
@@ -328,9 +337,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                     timesPerParser.merge(parserName, diff - st, Long::sum);
                 }
             }
-
         }
-
     }
 
     private String getParserName(Parser parser, String contentType) {
@@ -348,21 +355,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         return autoParser.hasSpecificParser(evidence.getMetadata());
     }
 
-    private void safeProcess(IItem evidence) throws Exception {
-
-        this.evidence = evidence;
-
-        context = getTikaContext();
+    private void safeProcess() throws Exception {
 
         if (this.extractEmbedded) {
-            if (containersBeingExpanded.incrementAndGet() > max_expanding_containers) {
-                containersBeingExpanded.decrementAndGet();
-                super.reEnqueueItem(evidence);
-                return;
-            }
             // Don't expand subitem if its hash is equal to parent container hash, could lead to infinite recursion.
             // See https://github.com/sepinf-inc/IPED/issues/1814
-            if (evidence.isSubItem() && evidence.getHash() != null && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
+            if (evidence.isSubItem() && StringUtils.isNotEmpty(evidence.getHash()) && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
                 return;
             }
         }
@@ -373,9 +371,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         } catch (IOException e) {
             LOGGER.warn("{} Error opening: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
-            if (this.extractEmbedded) {
-                containersBeingExpanded.decrementAndGet();
-            }
             return;
         }
 
@@ -423,9 +418,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         } finally {
             // IOUtil.closeQuietly(tis);
-            if (this.extractEmbedded) {
-                containersBeingExpanded.decrementAndGet();
-            }
             IOUtil.closeQuietly(reader);
             if (numSubitems > 0) {
                 evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
@@ -448,7 +440,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             int charCount = Integer.parseInt(value);
             evidence.setExtraAttribute(OCRParser.OCR_CHAR_COUNT, charCount);
             metadata.remove(OCRParser.OCR_CHAR_COUNT);
-            if (charCount >= 100 && evidence.getMediaType().getType().equals("image")) { //$NON-NLS-1$
+            if (charCount >= 100 && MetadataUtil.isImageType(evidence.getMediaType())) {
                 evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
             }
         }
@@ -458,8 +450,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             metadata.remove(ExtraProperties.THUMBNAIL_BASE64);
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
             try {
-                File thumbFile = getThumbFile(evidence);
-                saveThumb(evidence, thumbFile);
+                if (evidence.getHash() != null) {
+                    File thumbFile = getThumbFile(evidence);
+                    saveThumb(evidence, thumbFile);
+                }
             } catch (Throwable t) {
                 LOGGER.warn("Error saving thumb of " + evidence.toString(), t);
             } finally {
@@ -486,11 +480,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             evidence.getMetadata().remove(EntropyTask.COMPRESS_RATIO);
             evidence.setExtraAttribute(EntropyTask.COMPRESS_RATIO, Double.valueOf(compressRatio));
         }
-        
-        if (MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
-            evidence.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(evidence.getId()));
-        }
-
     }
 
     @Override
@@ -676,6 +665,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
             checkRecursiveZipBomb(subItem);
 
+            // set the subItem openContainer with the object passed in the inputStrem of the call parseEmbedded()
+            // it will be used in the parser of the the subitem
+            if (inputStream instanceof TikaInputStream) {
+                subItem.setOpenContainer(TikaInputStream.cast(inputStream).getOpenContainer());
+            }
+
             if ("".equals(metadata.get(BasicProps.LENGTH))) {
                 subItem.setLength(null);
             }
@@ -688,10 +683,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             if (reader.setTimeoutPaused(true)) {
                 long start = System.nanoTime() / 1000;
                 try {
-
-                    ProcessTime time = ProcessTime.AUTO;
-
-                    worker.processNewItem(subItem, time);
+                    // Add subitems to queue and blocks if queue is full. It shouldn't deadlock
+                    // because we have at least 2 workers and a maximum of workers/2 expanding
+                    // containers, so at least 1 worker is consuming items from the queue.
+                    Manager.getInstance().getProcessingQueues().addItem(subItem);
+                    caseData.incDiscoveredEvidences(1);
                     Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
 
@@ -820,7 +816,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
         } else {
             LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
-            max_expanding_containers = Math.max(localConfig.getNumThreads() / 2, 1);
+            if (localConfig.getNumThreads() < 2) {
+                // Just 1 worker can cause a deadlock if a big container is being expanded due to max queue size
+                throw new IPEDException("You should have at least 2 processing workers! Please adjust '" + LocalConfig.NUM_THREADS + "' option.");
+            }
+            max_expanding_containers = localConfig.getNumThreads() / 2;
         }
 
         String appRoot = Configuration.getInstance().appRoot;
