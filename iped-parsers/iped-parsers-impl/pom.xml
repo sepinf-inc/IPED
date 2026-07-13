@@ -199,9 +199,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>black.ninia</groupId>
+            <groupId>org.ninia</groupId>
             <artifactId>jep</artifactId>
-            <version>4.2.2</version>
+            <version>4.3.1</version>
         </dependency>
         <dependency>
             <groupId>net.sf</groupId>

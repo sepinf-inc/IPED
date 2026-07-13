@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -65,14 +66,14 @@ public class PythonParser extends AbstractParser {
             config.redirectStdout(System.out);
             SharedInterpreter.setConfig(config);
 
-            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            if (SystemUtils.IS_OS_WINDOWS) {
                 String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
                 if (ipedRoot != null && new File(ipedRoot).exists()) {
-                    PyConfig pyConfig = new PyConfig();
+                    PyConfig pyConfig = PyConfig.python();
                     String pythonHome = ipedRoot + "/python";
-                    pyConfig.setPythonHome(pythonHome);
-                    pyConfig.setIgnoreEnvironmentFlag(1);
-                    pyConfig.setNoUserSiteDirectory(1);
+                    pyConfig.setHome(pythonHome);
+                    pyConfig.setUseEnvironment(false);
+                    pyConfig.setUserSiteDirectory(false);
                     MainInterpreter.setInitParams(pyConfig);
                     System.load(pythonHome + "/vcruntime140.dll");
                     System.load(pythonHome + "/python39.dll");
@@ -86,7 +87,7 @@ public class PythonParser extends AbstractParser {
     }
 
     @SuppressWarnings("unchecked")
-    public PythonParser(){
+    public PythonParser() {
 
         synchronized (this.getClass()) {
             if (inited) {
