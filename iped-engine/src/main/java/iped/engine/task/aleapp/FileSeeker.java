@@ -2,8 +2,11 @@ package iped.engine.task.aleapp;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -15,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.search.IItemSearcher;
+import iped.utils.IOUtil;
 
 public class FileSeeker {
 
@@ -24,6 +28,8 @@ public class FileSeeker {
 
     private String rootPath;
     private IItemSearcher searcher;
+    private final List<Path> tempDirs = new ArrayList<>();
+    private final List<String> translatedKeys = new ArrayList<>();
 
     public String data_folder = "";
 
@@ -56,8 +62,11 @@ public class FileSeeker {
                         try {
                             // export db file
                             Path tempDir = Files.createTempDirectory("sqlite_tmp");
+                            tempDirs.add(tempDir);
                             Path tempDB = tempDir.resolve(item.getName());
-                            Files.copy(item.getBufferedInputStream(), tempDB);
+                            try (InputStream is = item.getBufferedInputStream()) {
+                                Files.copy(is, tempDB);
+                            }
                             tempDB.toFile().deleteOnExit();
 
                             // export .db-wal and .db-journal files
@@ -75,6 +84,7 @@ public class FileSeeker {
                             }
 
                             AleappTask.getTranslatedPaths().put(tempDB.toString(), item.getPath());
+                            translatedKeys.add(tempDB.toString());
 
                             return tempDB.toString();
                         } catch (IOException e) {
@@ -94,5 +104,15 @@ public class FileSeeker {
 
     // https://github.com/abrignoni/ALEAPP/blob/v3.4.0/scripts/search_files.py#L27
     public void cleanup() {
+        for (Path dir : tempDirs) {
+            try {
+                IOUtil.deleteDirectory(dir.toFile(), false);
+            } catch (IOException e) {
+                logger.warn("Failed to clean up temp dir: {}", dir, e);
+            }
+        }
+        tempDirs.clear();
+        translatedKeys.forEach(AleappTask.getTranslatedPaths()::remove);
+        translatedKeys.clear();
     }
 }

@@ -364,6 +364,7 @@ public class AleappTask extends AbstractTask {
     @SuppressWarnings("unchecked")
     private void processPluginEvidence(IItem pluginEvidence) {
 
+        FileSeeker seeker = null;
         try {
             stateThreadLocal.set(new State(caseData, worker, pluginEvidence));
 
@@ -377,7 +378,7 @@ public class AleappTask extends AbstractTask {
             // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L386)
             IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
             String rootPath = StringUtils.substringBefore(pluginEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
-            FileSeeker seeker = new FileSeeker(rootPath, searcher);
+            seeker = new FileSeeker(rootPath, searcher);
             HashSet<String> filesFound = new HashSet<>();
             for (String regex : plugin.getSearchRegexes()) {
                 filesFound.addAll((Collection<String>) seeker.search(regex, false));
@@ -408,6 +409,9 @@ public class AleappTask extends AbstractTask {
                 pluginEvidence.setToIgnore(true);
             }
         } finally {
+            if (seeker != null) {
+                seeker.cleanup();
+            }
             stateThreadLocal.remove();
         }
     }
