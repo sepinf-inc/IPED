@@ -23,6 +23,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.function.FailableRunnable;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,7 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import jep.Jep;
+import jep.JepException;
 import jep.SharedInterpreter;
 import jep.python.PyObject;
 
@@ -161,6 +163,22 @@ public class AleappTask extends AbstractTask {
         }
     }
 
+    private void executePythonCode(FailableRunnable<Exception> task) throws Exception {
+        Exception ret = getExecutor().submit(() -> {
+            try {
+                task.run();
+            } catch (Exception e) {
+                return e;
+            }
+            return null;
+
+        }).get();
+
+        if (ret != null) {
+            throw ret;
+        }
+    }
+
     public void initialize() throws Exception {
         if (!initialized) {
             synchronized (this) {
@@ -173,68 +191,56 @@ public class AleappTask extends AbstractTask {
     }
 
     private void doSetup() throws Exception {
+        executePythonCode(() -> {
+            jep = new SharedInterpreter();
 
-        jep = new SharedInterpreter();
+            jep.exec("import sys");
+            jep.exec("sys.path.append('" + config.getAleappFolder().getCanonicalPath() + "')");
 
-        jep.exec("import sys");
-        jep.exec("sys.path.append('" + config.getAleappFolder().getCanonicalPath() + "')");
+            interceptor = new AleappInterceptors(caseData);
+            interceptor.install(jep);
 
-        interceptor = new AleappInterceptors(caseData);
-        interceptor.install(jep);
+            // load all available plugins
+            // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L181)
+            jep.exec("import scripts.plugin_loader as plugin_loader");
+            jep.exec("loader = plugin_loader.PluginLoader()");
+            jep.exec("available_plugins = list(loader.plugins)");
 
-        // load all available plugins
-        // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L181)
-        jep.exec("import scripts.plugin_loader as plugin_loader");
-        jep.exec("loader = plugin_loader.PluginLoader()");
-        jep.exec("available_plugins = list(loader.plugins)");
+            @SuppressWarnings("unchecked")
+            List<PyObject> availablePlugins = (List<PyObject>) jep.getValue("available_plugins");
 
-        @SuppressWarnings("unchecked")
-        List<PyObject> availablePlugins = (List<PyObject>) jep.getValue("available_plugins");
+            selectedPlugins = availablePlugins
+                    .stream()
+                    .map(PluginSpec::new)
+                    .filter(plugin -> config.isPluginIncluded(plugin.getModuleName()))
+                    .collect(Collectors.toMap(PluginSpec::getName, Function.identity()));
 
-        selectedPlugins = availablePlugins
-                .stream()
-                .map(PluginSpec::new)
-                .filter(plugin -> config.isPluginIncluded(plugin.getModuleName()))
-                .collect(Collectors.toMap(PluginSpec::getName, Function.identity()));
-
-        if (!outputParametersCreated.getAndSet(true)) {
-            // Sets the reportFolder (can be executed once, due to os.makedirs() in OutputParameters constructor
-            // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
-            jep.exec("from scripts.ilapfuncs import OutputParameters");
-            jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
-            outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
-            deviceInfoPath = jep.getValue("OutputParameters.screen_output_file_path_devinfo", String.class);
-        } else {
-            jep.set("OutputParameters.screen_output_file_path_devinfo", deviceInfoPath);
-        }
+            if (!outputParametersCreated.getAndSet(true)) {
+                // Sets the reportFolder (can be executed once, due to os.makedirs() in OutputParameters constructor
+                // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
+                jep.exec("from scripts.ilapfuncs import OutputParameters");
+                jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
+                outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
+                deviceInfoPath = jep.getValue("OutputParameters.screen_output_file_path_devinfo", String.class);
+            } else {
+                jep.set("OutputParameters.screen_output_file_path_devinfo", deviceInfoPath);
+            }
+        });
     }
 
     @Override
     public void process(IItem item) throws Exception {
 
-        Exception ret = getExecutor().submit(() -> {
+        initialize();
 
-            try {
-                initialize();
-
-                if (isExtractionRoot(item)) {
-                    processExtractionRoot(item);
-                } else if (isCaseEvidence(item)) {
-                    processCaseEvidence(item);
-                } else if (isPluginEvidence(item)) {
-                    processPluginEvidence(item);
-                } else if (isDeviceInfoEvidence(item)) {
-                    processDeviceInfoEvidence(item);
-                }
-            } catch (Exception e) {
-                return e;
-            }
-            return null;
-
-        }).get();
-
-        if (ret != null) {
-            throw ret;
+        if (isExtractionRoot(item)) {
+            processExtractionRoot(item);
+        } else if (isCaseEvidence(item)) {
+            processCaseEvidence(item);
+        } else if (isPluginEvidence(item)) {
+            processPluginEvidence(item);
+        } else if (isDeviceInfoEvidence(item)) {
+            processDeviceInfoEvidence(item);
         }
     }
 
@@ -253,7 +259,7 @@ public class AleappTask extends AbstractTask {
             realExt = FilenameUtils.getExtension(realName);
         }
 
-        return dumpStartFolderNames.contains(realName) || StringUtils.equalsAnyIgnoreCase(realExt, UFDR_EXT, ZIP_EXT);
+        return dumpStartFolderNames.contains(realName) || StringUtils.equalsAnyIgnoreCase(realExt, UFDR_EXT);
     }
 
     private boolean isCaseEvidence(IItem evidence) {
@@ -283,7 +289,8 @@ public class AleappTask extends AbstractTask {
         caseEvidence.setPath(rootEvidence.getPath() + "/" + name);
         caseEvidence.setIdInDataSource("");
         caseEvidence.setHasChildren(true);
-        caseEvidence.setExtraAttribute(BasicProps.TREENODE, Boolean.valueOf(true));
+        caseEvidence.setExtraAttribute(BasicProps.TREENODE, true);
+        caseEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
 
         String extractionType;
         if (AndroidBackupParser.SUPPORTED_TYPES.contains(rootEvidence.getMediaType())) {
@@ -407,9 +414,11 @@ public class AleappTask extends AbstractTask {
 
     private void processDeviceInfoEvidence(IItem deviceInfoEvidence) throws Exception {
 
-        // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L432
-        jep.exec("import scripts.ilapfuncs");
-        jep.exec("scripts.ilapfuncs.write_device_info()");
+        executePythonCode(() -> {
+            // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L432
+            jep.exec("import scripts.ilapfuncs");
+            jep.exec("scripts.ilapfuncs.write_device_info()");
+        });
 
         byte[] deviceInfoBytes = Files.readAllBytes(Paths.get(deviceInfoPath));
         if (deviceInfoBytes.length > 0) {
@@ -435,14 +444,19 @@ public class AleappTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        getExecutor().execute(() -> {
-            if (jep != null) {
-                jep.close();
-            }
-            jep = null;
-        });
-        executor.shutdown();
-        executor.awaitTermination(10, TimeUnit.SECONDS);
-        executor = null;
+        if (jep != null) {
+            executePythonCode(() -> {
+                try {
+                    jep.close();
+                } catch (JepException e) {
+                }
+                jep = null;
+            });
+        }
+        if (executor != null) {
+            executor.shutdown();
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+            executor = null;
+        }
     }
 }
