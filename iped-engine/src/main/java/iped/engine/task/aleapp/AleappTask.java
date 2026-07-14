@@ -12,12 +12,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -86,12 +90,8 @@ public class AleappTask extends AbstractTask {
     private static String outputFolderBase;
     private static String deviceInfoPath;
 
-    private static final ThreadLocal<Jep> jepThreadLocal = new ThreadLocal<>() {
-        @Override
-        protected Jep initialValue() {
-            return new SharedInterpreter();
-        }
-    };
+    private ExecutorService executor;
+    private Jep jep;
 
     private static final ThreadLocal<State> stateThreadLocal = new ThreadLocal<>();
 
@@ -122,12 +122,18 @@ public class AleappTask extends AbstractTask {
         }
     }
 
-    public static State getState() {
-        return stateThreadLocal.get();
+    private ExecutorService getExecutor() {
+        if (executor == null) {
+            BasicThreadFactory factory = new BasicThreadFactory.Builder()
+                .namingPattern("AleappTask-%d-" + Thread.currentThread().getName())
+                .build();
+            executor = Executors.newSingleThreadExecutor(factory);
+        }
+        return executor;
     }
 
-    public static Jep getJep() {
-        return jepThreadLocal.get();
+    public static State getState() {
+        return stateThreadLocal.get();
     }
 
     public static Map<String, String> getTranslatedPaths() {
@@ -167,7 +173,8 @@ public class AleappTask extends AbstractTask {
     }
 
     private void doSetup() throws Exception {
-        Jep jep = getJep();
+
+        jep = new SharedInterpreter();
 
         jep.exec("import sys");
         jep.exec("sys.path.append('" + config.getAleappFolder().getCanonicalPath() + "')");
@@ -205,16 +212,29 @@ public class AleappTask extends AbstractTask {
     @Override
     public void process(IItem item) throws Exception {
 
-        initialize();
+        Exception ret = getExecutor().submit(() -> {
 
-        if (isExtractionRoot(item)) {
-            processExtractionRoot(item);
-        } else if (isCaseEvidence(item)) {
-            processCaseEvidence(item);
-        } else if (isPluginEvidence(item)) {
-            processPluginEvidence(item);
-        } else if (isDeviceInfoEvidence(item)) {
-            processDeviceInfoEvidence(item);
+            try {
+                initialize();
+
+                if (isExtractionRoot(item)) {
+                    processExtractionRoot(item);
+                } else if (isCaseEvidence(item)) {
+                    processCaseEvidence(item);
+                } else if (isPluginEvidence(item)) {
+                    processPluginEvidence(item);
+                } else if (isDeviceInfoEvidence(item)) {
+                    processDeviceInfoEvidence(item);
+                }
+            } catch (Exception e) {
+                return e;
+            }
+            return null;
+
+        }).get();
+
+        if (ret != null) {
+            throw ret;
         }
     }
 
@@ -386,7 +406,6 @@ public class AleappTask extends AbstractTask {
     }
 
     private void processDeviceInfoEvidence(IItem deviceInfoEvidence) throws Exception {
-        Jep jep = getJep();
 
         // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L432
         jep.exec("import scripts.ilapfuncs");
@@ -416,7 +435,14 @@ public class AleappTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        jepThreadLocal.get().close();
-        jepThreadLocal.remove();
+        getExecutor().execute(() -> {
+            if (jep != null) {
+                jep.close();
+            }
+            jep = null;
+        });
+        executor.shutdown();
+        executor.awaitTermination(10, TimeUnit.SECONDS);
+        executor = null;
     }
 }
