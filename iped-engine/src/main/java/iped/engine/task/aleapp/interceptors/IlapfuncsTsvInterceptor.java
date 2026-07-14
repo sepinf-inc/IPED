@@ -54,17 +54,6 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         // set hasChildren, so plugin will not be ignored in AleappTask.processPluginEvidence()
         state.getPluginItem().setHasChildren(true);
 
-        // create node for tsv
-        Item tsvNode = (Item) state.getPluginItem().createChildItem();
-        tsvNode.setName(tsvName);
-        tsvNode.setExtension("");
-        tsvNode.setPath(state.getPluginItem().getPath() + "/" + tsvName);
-        tsvNode.setIdInDataSource("");
-        tsvNode.setHasChildren(true);
-        tsvNode.setExtraAttribute(BasicProps.TREENODE, Boolean.valueOf(true));
-
-        state.getWorker().processNewItem(tsvNode);
-
         // linkedItems for subItems
         String linkedItem = null;
         if (sourceFile != null) {
@@ -83,11 +72,11 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         IntStream.range(0, dataList.size()).forEach(index -> {
 
             String subItemName = tsvName + "-" + index;
-            Item subItem = (Item) tsvNode.createChildItem();
+            Item subItem = (Item) state.getPluginItem().createChildItem();
             subItem.setMediaType(mediaType);
             subItem.setName(subItemName);
             subItem.setExtension("");
-            subItem.setPath(tsvNode.getPath() + "/" + subItemName);
+            subItem.setPath(state.getPluginItem().getPath() + "/" + subItemName);
             subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             subItem.setSubItem(true);
             subItem.setSubitemId(index);
