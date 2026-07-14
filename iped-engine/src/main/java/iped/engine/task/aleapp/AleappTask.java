@@ -83,7 +83,7 @@ public class AleappTask extends AbstractTask {
 
     private static Path outputFolder;
     private static AtomicBoolean outputParametersCreated = new AtomicBoolean();
-    private static String reportFolderBase;
+    private static String outputFolderBase;
     private static String deviceInfoPath;
 
     private static final ThreadLocal<Jep> jepThreadLocal = new ThreadLocal<>() {
@@ -176,7 +176,7 @@ public class AleappTask extends AbstractTask {
         interceptor.install(jep);
 
         // load all available plugins
-        // (mimics https://github.com/abrignoni/ALEAPP/blob/v3.4.0/aleapp.py#L154)
+        // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L181)
         jep.exec("import scripts.plugin_loader as plugin_loader");
         jep.exec("loader = plugin_loader.PluginLoader()");
         jep.exec("available_plugins = list(loader.plugins)");
@@ -192,10 +192,10 @@ public class AleappTask extends AbstractTask {
 
         if (!outputParametersCreated.getAndSet(true)) {
             // Sets the reportFolder (can be executed once, due to os.makedirs() in OutputParameters constructor
-            // mimics https://github.com/abrignoni/ALEAPP/blob/v3.4.0/aleapp.py#L289
+            // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
             jep.exec("from scripts.ilapfuncs import OutputParameters");
             jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
-            reportFolderBase = jep.getValue("out_params.report_folder_base", String.class);
+            outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
             deviceInfoPath = jep.getValue("OutputParameters.screen_output_file_path_devinfo", String.class);
         } else {
             jep.set("OutputParameters.screen_output_file_path_devinfo", deviceInfoPath);
@@ -347,7 +347,7 @@ public class AleappTask extends AbstractTask {
             }
 
             // look for the files the plugin needs
-            // (mimics https://github.com/abrignoni/ALEAPP/blob/v3.4.0/aleapp.py#L361)
+            // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L386)
             IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
             String rootPath = StringUtils.substringBefore(pluginEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
             FileSeeker seeker = new FileSeeker(rootPath, searcher);
@@ -363,12 +363,12 @@ public class AleappTask extends AbstractTask {
             }
 
             try {
-                // mimics https://github.com/abrignoni/ALEAPP/blob/v3.4.0/aleapp.py#L374
-                Path categoryFolder = Paths.get(reportFolderBase, "_HTML", plugin.getCategory());
+                // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L409
+                Path categoryFolder = Paths.get(outputFolderBase, "_HTML", plugin.getCategory());
                 Files.createDirectories(categoryFolder);
 
                 // call the plugin method
-                // (https://github.com/abrignoni/ALEAPP/blob/v3.4.0/aleapp.py#L383)
+                // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L418
                 plugin.getMethod().call(new ArrayList<>(filesFound), categoryFolder.toString(), seeker, false);
 
             } catch (Exception e) {
@@ -388,7 +388,7 @@ public class AleappTask extends AbstractTask {
     private void processDeviceInfoEvidence(IItem deviceInfoEvidence) throws Exception {
         Jep jep = getJep();
 
-        // https://github.com/abrignoni/ALEAPP/blob/v3.4.0/aleapp.py#L394
+        // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L432
         jep.exec("import scripts.ilapfuncs");
         jep.exec("scripts.ilapfuncs.write_device_info()");
 
