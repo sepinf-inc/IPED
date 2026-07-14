@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IPED AI Assistant Architecture — Corrected</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #2c3e50;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .component-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .component-box {
+      padding: 15px;
+      border-left: 5px solid;
+      background: #fdfdfd;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .view {
+      border-color: #3498db;
+    }
+
+    .state {
+      border-color: #2ecc71;
+    }
+
+    .controller {
+      border-color: #e74c3c;
+    }
+
+    .payload {
+      border-color: #9b59b6;
+    }
+
+    .network {
+      border-color: #e67e22;
+    }
+
+    .diagram-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid #ddd;
+      margin-top: 20px;
+    }
+
+    code {
+      background: #eee;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-family: Consolas, monospace;
+    }
+
+    .flow-nav {
+      background: #eaf2f8;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+
+    .flow-nav a {
+      color: #2c3e50;
+      text-decoration: none;
+      margin-right: 15px;
+      display: inline-block;
+      padding: 5px 0;
+    }
+
+    .flow-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "default",
+      securityLevel: "loose",
+    });
+  </script>
+</head>
+<body>
+  <h1>IPED AI Assistant Architecture</h1>
+  <p>
+    This document reflects the verified architecture of the AI Assistant module,
+    reconciled against the actual source code as of July 2026.
+  </p>
+
+  <div class="flow-nav">
+    <strong>Jump to flow:</strong><br />
+    <a href="#flow-setup">1. App Boot / Load History</a> &bull;
+    <a href="#flow-context-add">2. Add File to Context (Editable)</a> &bull;
+    <a href="#flow-new-context-chat">3. Auto-Fork</a>
+    &bull; <a href="#flow-send">4. Send Question / Streaming</a> &bull;
+    <a href="#flow-send-error">5. Backend Recovery &amp; Partial Draft Salvage</a> &bull;
+    <a href="#flow-title">6. Auto-Generate Title</a> &bull;
+    <a href="#flow-quick">7. Quick Actions</a> &bull;
+    <a href="#flow-switch">8. Switch Conversation</a> &bull;
+    <a href="#flow-citation">9. Click Citation</a> &bull;
+    <a href="#flow-new-chat">10. Start New Chat</a> &bull;
+    <a href="#flow-persist">11. Persistence</a> &bull;
+    <a href="#flow-delete">12. Delete Conversation</a>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ARCHITECTURE OVERVIEW                                        -->
+  <!-- ============================================================ -->
+  <div class="card">
+    <h2>The Architecture</h2>
+    <div class="component-grid">
+      <div class="component-box view">
+        <h3>View Layer</h3>
+        <p>
+          <strong>AIAssistantPanel</strong>: top-level JFrame container (singleton),
+          layout manager, glass-pane processing lock.
+        </p>
+        <p>
+          <strong>HeaderPanel</strong>: title, backend status, sidebar toggle.
+        </p>
+        <p><strong>SidebarPanel</strong>: chat history list and selection UI.</p>
+        <p>
+          <strong>ContextPanel</strong>: file context list, per-item removal,
+          context-edit locking, summarized-mode indicator.
+        </p>
+        <p>
+          <strong>ChatAreaPanel</strong>: chat rendering, input, streaming
+          orchestration, citation click handling.
+        </p>
+        <p>
+          <strong>AIMarkdownRenderer</strong>: markdown-to-StyledDocument parser,
+          thinking blocks, citation tokens.
+        </p>
+        <p>
+          <strong>ChatStreamAnimator</strong>: timer-based teletype animation
+          engine, token queue management.
+        </p>
+      </div>
+
+      <div class="component-box controller">
+        <h3>Controller / Orchestrator Layer</h3>
+        <p>
+          <strong>AIAssistantController</strong>: orchestrates event routing,
+          view updates, chat lifecycle, and persistence.
+        </p>
+        <p>
+          <strong>AIChatCoordinator</strong>: central pipeline &mdash; validates
+          context entries, routes to the correct backend endpoint based on
+          chunk count, manages session hashes, streams responses.
+        </p>
+      </div>
+
+      <div class="component-box payload">
+        <h3>Payload / Extraction Layer</h3>
+        <p>
+          <strong>AIPayloadFactory</strong>: translates
+          <code>ContextFileEntry</code> lists into backend DTOs
+          (<code>AIInitMultiChatRequest</code>,
+          <code>AIInitMultiChatFullRequest</code>).
+        </p>
+        <p>
+          <strong>AIWhatsappChatExtractor</strong>: reads item
+          <code>InputStream</code> into UTF-8 HTML.
+        </p>
+        <p>
+          <strong>SummaryValueExtractor</strong>: extracts AI summaries from item
+          extra attributes or Lucene metadata.
+        </p>
+        <p>
+          <strong>ContextItemValidator</strong>: rejects non-WhatsApp items, empty
+          files, empty communications.
+        </p>
+      </div>
+
+      <div class="component-box network">
+        <h3>Network / Backend Layer</h3>
+        <p>
+          <strong>AIBackendClient</strong>: HTTP/SSE client implementing
+          <code>AIBackendService</code>. Six endpoints: <code>/api/init_chat</code>,
+          <code>/api/chat/stream</code>,
+          <code>/api/init_multichat_with_summaries</code>,
+          <code>/api/multichat/stream</code>,
+          <code>/api/init_multichat_full</code>,
+          <code>/api/multichat_full/stream</code>.
+        </p>
+        <p>
+          <strong>AIBackendConfig</strong>: immutable <code>baseUrl</code> +
+          <code>apiKey</code>.
+        </p>
+        <p>
+          <strong>DTOs</strong>: <code>AIInitChatRequest</code>,
+          <code>AIStreamChatRequest</code>,
+          <code>AIInitMultiChatRequest</code>,
+          <code>AIInitMultiChatFullRequest</code>,
+          <code>AIMultiChatStreamRequest</code>.
+        </p>
+      </div>
+
+      <div class="component-box state">
+        <h3>State Layer</h3>
+        <p>
+          <strong>AIContextManager</strong>: singleton, thread-safe context file
+          list with change-event broadcasting.
+        </p>
+        <p>
+          <strong>ConversationManager</strong>: singleton, active conversation
+          state, auto-title generation, conversation list.
+        </p>
+        <p>
+          <strong>ConversationPersistence</strong>: JSON serialization to/from
+          <code>&lt;case_dir&gt;/iped/data/ai_chats/</code>. Load, save,
+          soft-delete.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 1 — APP BOOT                                           -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-setup">
+    <h2>Flow 1: App Boot / Load History</h2>
+    <p>
+      This flow shows how the AI Assistant restores persisted conversations,
+      initializes controller dependencies, and rebuilds the UI from the current
+      manager state.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+participant IPED as IPED Core
+participant MainPanel as AIAssistantPanel
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant CtxMgr as AIContextManager
+participant Persist as ConversationPersistence
+participant Disk as IPED Case Directory
+participant SidebarPanel as SidebarPanel
+participant ContextPanel as ContextPanel
+participant ChatAreaPanel as ChatAreaPanel
+
+IPED->>MainPanel: getInstance() (lazy singleton)
+MainPanel->>MainPanel: new AIAssistantPanel()
+MainPanel->>Controller: new AIAssistantController(this)
+MainPanel->>MainPanel: createBaseFrame()
+MainPanel->>Controller: initialize()
+Controller->>Controller: ensureChatServiceInitialized()
+Controller->>Controller: new AIChatCoordinator(new AIBackendClient(...))
+Controller->>Controller: initViews()
+Controller->>ConvMgr: getInstance()
+Controller->>CtxMgr: getInstance()
+ConvMgr->>Persist: loadAllConversations()
+Persist->>Disk: read chat_*.json / agent_*.json
+Disk-->>Persist: return JSON files
+Persist-->>ConvMgr: conversations (excluding deleted)
+Controller->>Controller: setupStateObservers()
+Controller->>MainPanel: assembleLayout(header, sidebar, context, chatArea, tasks)
+Controller->>SidebarPanel: updateConversationsList(conversations)
+Controller->>ContextPanel: updateContextData(contextEntries)
+Controller->>ContextPanel: setSummarizedMode(isSummarized)
+Controller->>Controller: refreshChatArea()
+Controller->>ChatAreaPanel: renderHistoricalMessages(active messages or empty)
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 2 — ADD FILE TO EDITABLE CONTEXT                       -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-context-add">
+    <h2>Flow 2: Add File to Editable Conversation's Context</h2>
+    <p>
+      Context additions append files to the current active chat while the
+      conversation is still directly editable (no assistant reply yet). Files are
+      validated by <code>ContextItemValidator</code> and appended to the
+      <code>AIContextManager</code>.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant IPED as IPED Menu
+participant Menu as MenuClass
+participant MainPanel as AIAssistantPanel
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant CtxMgr as AIContextManager
+participant Validator as ContextItemValidator
+participant ContextPanel as ContextPanel
+
+User->>IPED: right-click file, add to AI context
+IPED->>Menu: collect selected IItems
+Menu->>MainPanel: addItemsToContext(items)
+MainPanel->>Controller: addItemsToContext(items)
+
+alt isProcessing() is true
+    Controller->>User: show "wait" dialog
+else active conversation is agent type
+    Controller->>User: show "agent context not supported" dialog
+else no active conversation
+    Controller->>Controller: startNewConversationWithCurrentContext(items)
+else active conversation has no assistant reply
+    Controller->>CtxMgr: addContextFiles(items)
+    loop for each item
+        CtxMgr->>Validator: getRejectionReason(item)
+        alt rejected
+            CtxMgr->>CtxMgr: add to invalidEntries
+        else valid
+            CtxMgr->>CtxMgr: add to contextFiles
+        end
+    end
+    CtxMgr-->>ContextPanel: fireContextChangedEvent()
+    ContextPanel->>ContextPanel: updateContextData(entries)
+    Controller->>MainPanel: showFrame()
+else active conversation has assistant reply
+    Controller->>User: confirm auto-fork dialog
+    alt user selects YES
+        Controller->>Controller: startNewConversationWithCurrentContext(items)
+    else user selects NO
+        Controller->>MainPanel: showFrame()
+    end
+end
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 3 — AUTO-FORK                                          -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-new-context-chat">
+    <h2>Flow 3: Auto-Fork</h2>
+    <p>
+      When the active conversation already has an assistant reply, its context
+      is no longer directly editable. Adding files at this point starts a new
+      conversation that carries forward the existing context and merges the newly
+      selected files.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant IPED as IPED Menu
+participant Menu as MenuClass
+participant MainPanel as AIAssistantPanel
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant CtxMgr as AIContextManager
+participant Coord as AIChatCoordinator
+participant Sidebar as SidebarPanel
+
+User->>IPED: add file while viewing sealed conversation
+IPED->>Menu: collect selected IItems
+Menu->>MainPanel: addItemsToContext(newItems)
+MainPanel->>Controller: addItemsToContext(newItems)
+Controller->>ConvMgr: getActiveConversation()
+
+alt conversation already has assistant reply
+    Controller->>User: confirm start new conversation
+    User-->>Controller: YES
+    Controller->>Controller: startNewConversationWithCurrentContext(newItems)
+    Controller->>ConvMgr: startNewConversation()
+    Note over Controller: Merge existing contextIds + new item IDs
+    Controller->>Controller: std.setContextIds(mergedIds)
+    Controller->>Controller: std.setChatHashes(empty list)
+    Controller->>Controller: newConversation.setMessages(empty list)
+    Controller->>CtxMgr: addContextFiles(newItems)
+    Controller->>Coord: clearHistory()
+    Controller->>Controller: refreshChatArea()
+    Controller->>Sidebar: updateConversationsList(conversations)
+    Controller->>Sidebar: setSelectedValue(newConversation)
+    Controller->>MainPanel: showFrame()
+else user cancels
+    Controller->>MainPanel: showFrame()
+end
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 4 — SEND QUESTION / STREAMING (CORRECTED)              -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-send">
+    <h2>Flow 4: Send Question / Streaming</h2>
+    <p>
+      Message sending delegates UI events to
+      <code>AIAssistantController</code>, which routes through
+      <code>AIChatCoordinator</code>. The coordinator validates context entries,
+      computes the total chunk count, and selects one of three backend paths:
+    </p>
+    <ul>
+      <li><strong>Single Chat</strong> &mdash; 1 context entry: extracts HTML, calls <code>initChat</code> + <code>streamChatResponse</code></li>
+      <li><strong>Multi-Chat Full</strong> &mdash; 2+ entries, totalChunks &le; 10: builds raw-HTML payload via <code>AIPayloadFactory.buildMultiChatFullRequest</code>, calls <code>initMultiChatFull</code> + <code>streamMultiChatFullResponse</code></li>
+      <li><strong>Multi-Chat Summarized</strong> &mdash; 2+ entries, totalChunks &gt; 10: builds summary payload via <code>AIPayloadFactory.buildMultiChatRequest</code>, calls <code>initMultiChat</code> + <code>streamMultiChatResponse</code></li>
+    </ul>
+    <p>
+      Tokens stream through <code>AIBackendClient</code> (SSE) &rarr;
+      <code>ChatStreamAnimator</code> (timer queue) &rarr;
+      <code>AIMarkdownRenderer</code> (StyledDocument). The draft is committed
+      only after the stream drains.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant ChatArea as ChatAreaPanel
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant Coord as AIChatCoordinator
+participant CtxMgr as AIContextManager
+participant Extractor as AIWhatsappChatExtractor
+participant PayloadFactory as AIPayloadFactory
+participant Backend as AIBackendClient
+participant Animator as ChatStreamAnimator
+participant Renderer as AIMarkdownRenderer
+participant Persist as ConversationPersistence
+participant Sidebar as SidebarPanel
+participant MainPanel as AIAssistantPanel
+
+User->>ChatArea: type prompt and press Send
+ChatArea->>Controller: sendButton / keyPressed(ENTER)
+Controller->>Controller: handleSendAction()
+
+alt text is empty
+    Controller-->>User: return (no-op)
+end
+
+Controller->>Controller: ensureChatServiceInitialized()
+
+alt no active conversation
+    Controller->>ConvMgr: startNewConversation()
+    Controller->>Sidebar: updateConversationsList(conversations)
+end
+
+Controller->>ConvMgr: addMessageToActive(userMessage)
+ConvMgr->>ConvMgr: add message, updateLastModified()
+opt first user message and default title
+    ConvMgr->>ConvMgr: autoGenerateTitle(conversation)
+end
+ConvMgr-)Persist: saveConversation() [async thread]
+
+Controller->>ChatArea: setText("") (clear input)
+Controller->>MainPanel: setProcessing(true)
+
+Controller->>ChatArea: startMessageStreaming(assistantDraft)
+ChatArea->>Animator: beginStreaming(assistantDraft)
+ChatArea->>Renderer: renderDraft(assistantDraft)
+
+Controller->>Coord: askQuestion(text, uiCallback, onComplete, onError)
+
+Note over Coord, Backend: Background thread starts here
+
+Coord->>CtxMgr: getContextEntriesForUI()
+Coord->>Coord: filter validEntries (isValidForContext)
+Coord->>Coord: calculateTotalChunks(validEntries)
+
+alt validEntries is empty
+    Coord-->>Controller: onError("Please add at least one valid file")
+end
+
+Coord->>Coord: compute newContextIds
+Coord->>Coord: contextChanged = !newContextIds.equals(currentContextItemIds)
+Coord->>Coord: needsInitialization = contextChanged || currentChatHashes.isEmpty()
+
+opt needsInitialization
+    Coord->>Coord: chatHistory.clear(), currentChatHashes.clear()
+
+    alt validEntries.size() == 1 (SINGLE CHAT)
+        Coord->>Extractor: extractHtml(item)
+        Extractor-->>Coord: html string
+        Coord->>Backend: initChat(html)
+        Backend->>Backend: POST /api/init_chat
+        Backend-->>Coord: chatHash (String)
+        Coord->>Coord: currentChatHashes.add(hash)
+
+    else totalChunks <= 10 (MULTI-CHAT FULL)
+        Coord->>PayloadFactory: buildMultiChatFullRequest(validEntries)
+        loop for each valid entry
+            PayloadFactory->>Extractor: extractHtml(item)
+            Extractor-->>PayloadFactory: rawHtml
+        end
+        PayloadFactory-->>Coord: AIInitMultiChatFullRequest
+        Coord->>Backend: initMultiChatFull(request)
+        Backend->>Backend: POST /api/init_multichat_full
+        Backend-->>Coord: List of chatHashes
+        Coord->>Coord: currentChatHashes.addAll(hashes)
+
+    else totalChunks > 10 (MULTI-CHAT SUMMARIZED)
+        Coord->>PayloadFactory: buildMultiChatRequest(validEntries)
+        loop for each valid entry with summary
+            PayloadFactory->>PayloadFactory: extractList(SUMMARY)
+            PayloadFactory->>PayloadFactory: extractList(CHUNK_IDS)
+        end
+        PayloadFactory-->>Coord: AIInitMultiChatRequest
+        Coord->>Backend: initMultiChat(request)
+        Backend->>Backend: POST /api/init_multichat_with_summaries
+        Backend-->>Coord: List of chatHashes
+        Coord->>Coord: currentChatHashes.addAll(hashes)
+    end
+
+    Coord->>Coord: currentContextItemIds = newContextIds
+    Coord->>ConvMgr: getActiveConversation()
+    Coord->>Coord: std.setContextIds(currentContextItemIds)
+    Coord->>Coord: std.setChatHashes(currentChatHashes)
+    Coord->>Coord: std.updateLastModified()
+    Coord-)Persist: saveConversation(activeConversation) [async]
+end
+
+Note over Coord, Backend: Stream response via correct endpoint
+
+alt currentChatHashes.size() == 1 (SINGLE CHAT)
+    Coord->>Backend: streamChatResponse(hash, question, chatHistory, callback)
+    Backend->>Backend: POST /api/chat/stream (SSE)
+else totalChunks <= 10 (MULTI-CHAT FULL)
+    Coord->>Backend: streamMultiChatFullResponse(hashes, question, chatHistory, callback)
+    Backend->>Backend: POST /api/multichat_full/stream (SSE)
+else totalChunks > 10 (MULTI-CHAT SUMMARIZED)
+    Coord->>Backend: streamMultiChatResponse(hashes, question, chatHistory, callback)
+    Backend->>Backend: POST /api/multichat/stream (SSE)
+end
+
+loop each SSE token
+    Backend->>Backend: processSseStream() parse data: lines
+    Backend-->>Coord: token via eventHandler callback
+    Coord->>Coord: fullResponse.append(token)
+    Coord-->>Controller: uiCallback(token) on EDT
+    Controller->>ChatArea: enqueueStreamingToken(token)
+    ChatArea->>Animator: enqueueToken(token)
+    Animator->>Animator: onTimerTick() dequeue + appendContent()
+    Animator->>Renderer: renderDraft(updated assistantDraft)
+end
+
+Coord->>Coord: chatHistory.add(user turn)
+Coord->>Coord: chatHistory.add(assistant turn)
+
+Coord-->>Controller: onComplete() [via finally block]
+Controller->>ChatArea: pruneStreaming(onDrained)
+ChatArea->>Animator: completeStreaming(onDrained)
+
+alt assistantDraft has content
+    ChatArea->>Renderer: commitDraft()
+    Controller->>ConvMgr: addMessageToActive(assistantDraft)
+    ConvMgr->>ConvMgr: add message, updateLastModified()
+    ConvMgr-)Persist: saveConversation() [async thread]
+    Controller->>Sidebar: updateConversationsList(conversations)
+else draft empty
+    ChatArea->>Renderer: discardDraft()
+end
+
+Controller->>MainPanel: setProcessing(false)
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 5 — BACKEND RECOVERY & PARTIAL DRAFT SALVAGE          -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-send-error">
+    <h2>Flow 5: Backend Recovery &amp; Partial Draft Salvage</h2>
+    <p>
+      The coordinator preserves successful initialization state during
+      streaming failures. If streaming fails mid-response, the UI salvages
+      whatever partial text the LLM managed to generate, commits it to memory,
+      and appends a system error message so the user doesn't lose their data.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+participant Controller as AIAssistantController
+participant Coord as AIChatCoordinator
+participant Backend as AIBackendClient
+participant ChatArea as ChatAreaPanel
+participant Renderer as AIMarkdownRenderer
+participant ConvMgr as ConversationManager
+participant Sidebar as SidebarPanel
+participant MainPanel as AIAssistantPanel
+
+Controller->>Coord: askQuestion(...)
+
+Coord->>Backend: initialize (initChat / initMultiChat / initMultiChatFull)
+
+alt initialization fails
+    Backend--xCoord: AIBackendException
+    Coord->>Coord: currentChatHashes.clear()
+    Coord->>Coord: currentContextItemIds.clear()
+    Coord-->>Controller: onError(errorMessage)
+
+    rect rgb(255, 240, 245)
+        Note over Controller, Renderer: Salvage draft if any UI draft exists
+        Controller->>ChatArea: salvageStreamingDraft()
+        Note right of ChatArea: Internally calls commitDraft() or discardDraft()
+        ChatArea-->>Controller: partialDraft (or null)
+        alt partialDraft != null
+            Controller->>ConvMgr: addMessageToActive(partialDraft)
+            Controller->>Sidebar: updateConversationsList(conversations)
+        end
+    end
+
+    Controller->>ConvMgr: addMessageToActive(systemErrorMessage)
+    Controller->>MainPanel: setProcessing(false)
+
+else initialization succeeded
+    Backend-->>Coord: init ok (hashes stored)
+
+    Coord->>Backend: stream response (SSE)
+
+    alt streaming fails after init
+        Backend--xCoord: connection drop / HTTP 500
+        Note over Coord: Preserve currentChatHashes and currentContextItemIds
+        Coord-->>Controller: onError(errorMessage)
+
+        rect rgb(255, 240, 245)
+            Note over Controller, Renderer: Salvage partial draft
+            Controller->>ChatArea: salvageStreamingDraft()
+            Note right of ChatArea: Internally calls commitDraft() or discardDraft()
+            ChatArea-->>Controller: partialDraft (or null)
+            alt partialDraft != null
+                Controller->>ConvMgr: addMessageToActive(partialDraft)
+                Controller->>Sidebar: updateConversationsList(conversations)
+            end
+        end
+
+        Controller->>ConvMgr: addMessageToActive(systemErrorMessage)
+        Controller->>MainPanel: setProcessing(false)
+
+    else streaming completes successfully
+        Backend-->>Coord: complete response
+        Coord-->>Controller: onComplete()
+    end
+end
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 6 — AUTO-GENERATE TITLE                                -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-title">
+    <h2>Flow 6: Auto-Generate Title</h2>
+    <p>
+      Title generation is centralized inside <code>ConversationManager</code>.
+      When the first user message is added to a conversation whose title is still
+      the default <code>"New Conversation"</code>, a substring of the message is
+      used as the title.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant Conversation as Conversation
+participant Persist as ConversationPersistence
+participant SidebarPanel as SidebarPanel
+
+Controller->>ConvMgr: addMessageToActive(userMessage)
+ConvMgr->>Conversation: add message
+ConvMgr->>Conversation: updateLastModified()
+opt title is "New Conversation" and message type is user
+    ConvMgr->>ConvMgr: autoGenerateTitle(conversation)
+    ConvMgr->>Conversation: setTitle(substring of prompt, max 30 chars)
+end
+ConvMgr-)Persist: saveConversation(conversation) [async thread]
+Controller->>SidebarPanel: updateConversationsList(conversations)
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 7 — QUICK ACTIONS                                       -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-quick">
+    <h2>Flow 7: Quick Actions</h2>
+    <p>
+      Quick Action buttons inject a prebuilt prompt into the chat input and
+      reuse the existing send flow.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant Tasks as Quick Actions Panel
+participant ChatArea as ChatAreaPanel
+participant Controller as AIAssistantController
+
+User->>Tasks: click "Summarize" or "Find Patterns"
+Tasks->>ChatArea: setText(predefined prompt)
+Tasks->>Controller: handleSendAction()
+Note right of Controller: reuses Flow 4 (send question + stream)
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 8 — SWITCH CONVERSATION                                 -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-switch">
+    <h2>Flow 8: Switch Conversation</h2>
+    <p>
+      Conversation switching restores visible chat state immediately, clears any
+      active draft and current context, loads historical coordinator state, then
+      performs a background recovery of persisted context items before replaying
+      coordinator state with refreshed IDs.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant Sidebar as SidebarPanel
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant Coord as AIChatCoordinator
+participant CtxMgr as AIContextManager
+participant ChatArea as ChatAreaPanel
+participant IPED as IPED Searcher
+participant AppCase as IPED Case
+
+User->>Sidebar: select conversation
+Sidebar->>Controller: onConversationSelected(conv)
+Controller->>Controller: isSwitchingChats = true
+Controller->>ConvMgr: setActiveConversation(conv)
+alt coordinator exists and StandardConversation
+    Controller->>ConvMgr: getActiveConversation()
+    Controller->>Coord: loadHistoricalContext(conv.chatHashes, conv.contextIds, conv.messages)
+else coordinator exists and AgentConversation
+    Controller->>Coord: loadHistoricalContext(null, null, conv.messages)
+end
+
+alt isAgentConversation
+    Controller->>Controller: isSwitchingChats = false
+    Controller->>ChatArea: forceDiscardStreaming()
+    Controller->>Controller: refreshChatArea()
+    Controller->>Sidebar: setSelectedValue(conv)
+    Note over Controller: early return
+end
+
+Controller->>CtxMgr: clearContext()
+
+par background restore of context items
+    Controller->>IPED: search by hash list or context id list
+    IPED->>AppCase: resolve IItem objects
+    AppCase-->>Controller: restoredItems
+and immediate UI switch
+    Controller->>ChatArea: forceDiscardStreaming()
+    Controller->>Controller: refreshChatArea()
+    Controller->>Sidebar: setSelectedValue(conv)
+end
+
+Controller->>Controller: SwingUtilities.invokeLater(...)
+alt restoredItems not empty and conversation still active
+    Controller->>Coord: loadHistoricalContext(conv.chatHashes, freshIds, conv.messages)
+    Controller->>CtxMgr: addContextFiles(restoredItems)
+end
+Controller->>Controller: isSwitchingChats = false
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 9 — CLICK CITATION                                     -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-citation">
+    <h2>Flow 9: Click Citation</h2>
+    <p>
+      A citation click is handled in <code>ChatAreaPanel</code> and delegated
+      to the controller for forensic item navigation.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant ChatArea as ChatAreaPanel
+participant Renderer as AIMarkdownRenderer
+participant Controller as AIAssistantController
+participant IPED as IPED Searcher
+participant Viewer as IPED Viewer
+participant App as IPED App
+
+User->>ChatArea: click citation token
+ChatArea->>ChatArea: read TOKEN_ATTRIBUTE from character element
+ChatArea->>ChatArea: extract TOKEN_HASH_ATTRIBUTE + TOKEN_CHUNK_ID_ATTRIBUTE
+ChatArea->>Controller: navigationCallback(hash, chunkId)
+Controller->>IPED: search by hash ("hash:" + hash)
+IPED-->>Controller: itemId / luceneId
+opt chunkId is not empty
+    Controller->>Viewer: setElementIDToScroll(chunkId)
+end
+Controller->>App: new FileProcessor(luceneId, true).execute()
+Controller->>App: selectItemInResultsTable(luceneId)
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 10 — START NEW CHAT                                     -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-new-chat">
+    <h2>Flow 10: Start New Chat</h2>
+    <p>
+      New chat creation is handled by the controller before clearing UI and
+      context state. After the reset, the controller appends a system
+      message announcing that a new conversation session has started.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant Sidebar as SidebarPanel
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant Coord as AIChatCoordinator
+participant CtxMgr as AIContextManager
+participant ChatArea as ChatAreaPanel
+participant MainPanel as AIAssistantPanel
+
+User->>Sidebar: click "+ New Chat"
+Sidebar->>Controller: onNewChatRequested()
+Controller->>ConvMgr: startNewConversation()
+Controller->>MainPanel: setContextPanelVisible(true)
+Controller->>Controller: clearChatScreenAndMemory()
+Controller->>Coord: clearHistory()
+Controller->>ChatArea: clearChatScreen()
+Controller->>CtxMgr: clearContext()
+Controller->>Sidebar: updateConversationsList(conversations)
+Controller->>Controller: refreshChatArea()
+Controller->>ConvMgr: addMessageToActive(systemMessage)
+Controller->>Controller: refreshChatArea()
+Controller->>ChatArea: requestFocusToInput()
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 11 — PERSISTENCE                                        -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-persist">
+    <h2>Flow 11: Persistence</h2>
+    <p>
+      Conversations are saved to disk on every meaningful change. Persistence
+      is asynchronous (background threads). Deleted chats are soft-deleted.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant CtxMgr as AIContextManager
+participant Coord as AIChatCoordinator
+participant Conversation as Conversation
+participant Persist as ConversationPersistence
+participant Disk as Case Directory
+
+alt user / assistant message added
+    Controller->>ConvMgr: addMessageToActive(msg)
+    ConvMgr->>Conversation: add message
+    ConvMgr->>Conversation: updateLastModified()
+    opt first user message and default title
+        ConvMgr->>ConvMgr: autoGenerateTitle(conversation)
+        ConvMgr->>Conversation: setTitle(substring of prompt)
+    end
+    ConvMgr-)Persist: saveConversation(conversation) [async thread]
+
+else context changed
+    CtxMgr-->>Controller: contextChanged(event) [via listener]
+    alt not switching chats (isSwitchingChats == false)
+        Controller->>Conversation: setContextIds(currentIds)
+        Controller->>Conversation: updateLastModified()
+        Controller-)Persist: saveConversation(activeConversation) [async thread]
+    else switching chats
+        Controller->>Controller: skip persistence
+    end
+
+else initialization in coordinator
+    Coord->>Conversation: setContextIds + setChatHashes
+    Coord->>Conversation: updateLastModified()
+    Coord-)Persist: saveConversation(activeConversation) [async thread]
+end
+
+Persist->>Disk: write chat_[uuid].json or agent_[uuid].json
+Note right of Persist: deleted conversations are preserved with status = deleted
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 12 — DELETE CONVERSATION                                -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-delete">
+    <h2>Flow 12: Delete Conversation</h2>
+    <p>
+      Deletion marks the conversation as deleted (soft-delete) and keeps the
+      JSON file for auditability. If the deleted conversation is the active one,
+      the controller loads the next remaining conversation or clears the screen
+      if none remain.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant Sidebar as SidebarPanel
+participant Controller as AIAssistantController
+participant Persist as ConversationPersistence
+participant ConvMgr as ConversationManager
+participant ChatArea as ChatAreaPanel
+participant CtxMgr as AIContextManager
+
+User->>Sidebar: click X on chat row
+Sidebar->>Controller: onDeleteRequested(conv)
+Controller->>Persist: deleteConversation(conv)
+Persist->>Persist: conv.setStatus("deleted")
+Persist->>Persist: saveConversation(conv)
+Controller->>ConvMgr: removeConversation(conv)
+
+alt deleted active chat
+    Controller->>ConvMgr: getConversations()
+    alt remaining conversations exist
+        Controller->>ConvMgr: setActiveConversation(remaining.get(0))
+        Controller->>Controller: loadConversation(remaining.get(0))
+    else no conversations remain
+        Controller->>ConvMgr: setActiveConversation(null)
+        Controller->>ChatArea: clearChatScreen()
+        Controller->>CtxMgr: clearContext()
+        Controller->>Controller: refreshChatArea()
+    end
+end
+
+Controller->>Sidebar: updateConversationsList(conversations)
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
