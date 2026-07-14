@@ -66,8 +66,8 @@ public class IconManager {
     private static final String folderOpenedKey = "folder-opened";
     private static final String folderClosedKey = "folder-closed";
 
-    private static final String reportFolderIcon = "reportfolder";
-    private static final String reportFolderOpenedIcon = "reportfolder";
+    private static final String reportFolderOpenedKey = "report-folder-opened";
+    private static final String reportFolderClosedKey = "report-folder-closed";
 
     private static final String diskKey = "drive";
     private static final String fileKey = "file";
@@ -126,7 +126,7 @@ public class IconManager {
     }
 
     public static Icon getReportFolderIcon(boolean isOpened) {
-        return getTreeIcon(isOpened ? reportFolderOpenedIcon : reportFolderIcon);
+        return getTreeIcon(isOpened ? reportFolderOpenedKey : reportFolderClosedKey);
     }
 
     public static Icon getFolderIconGallery() {
