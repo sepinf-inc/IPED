@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 from pathlib import Path
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
@@ -7,11 +8,31 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _find_java_home() -> str:
+    env_java = os.getenv("JAVA_HOME", os.environ.get("JAVA_HOME", ""))
+    if env_java:
+        return env_java
+    
+    iped_home = Path(__file__).resolve().parents[4]
+    
+    # 1. JRE Embutido no IPED
+    builtin_jre = iped_home / "jre"
+    if builtin_jre.is_dir():
+        return str(builtin_jre)
+    
+    # 2. Variável PATH do Sistema
+    java_exe = shutil.which("java")
+    if java_exe:
+        return str(Path(java_exe).resolve().parents[1])
+    
+    return ""
+
+
 @dataclass
 class Settings:
     iped_home: Path = field(default_factory=lambda: Path(__file__).resolve().parents[4])
     case_path: Path = field(default_factory=lambda: Path(__file__).resolve().parents[5])
-    java_home: str = field(default_factory=lambda: os.getenv("JAVA_HOME", os.environ.get("JAVA_HOME", "")))
+    java_home: str = field(default_factory=_find_java_home)
     jvm_max_heap: str = field(default_factory=lambda: os.getenv("JVM_MAX_HEAP", "4g"))
     mcp_host: str = field(default_factory=lambda: os.getenv("MCP_HOST", "127.0.0.1"))
     mcp_port: int = field(default_factory=lambda: int(os.getenv("MCP_PORT", "8100")))
@@ -33,7 +54,7 @@ class Settings:
         java = self.java_home
         if not java:
             errors.append(
-                "JAVA_HOME is not set. Add 'JAVA_HOME=<path>' to .env or set the JAVA_HOME environment variable."
+                "JAVA_HOME could not be found automatically. Please ensure Java is in your PATH or that the IPED folder contains a 'jre' folder."
             )
         else:
             java_exe = Path(java) / "bin" / "java.exe"
