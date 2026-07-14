@@ -1,5 +1,19 @@
 import logging
 import sys
+import os
+
+# --- NOVO BLOCO DE REDIRECIONAMENTO ---
+# Salva o file descriptor original do stdout para o MCP usar
+original_stdout_fd = os.dup(1)
+
+# Redireciona o stdout nativo (FD 1) para o stderr (FD 2)
+# Qualquer biblioteca C/C++ ou Java escreverá no stderr agora
+os.dup2(2, 1)
+
+# Restaura o sys.stdout do Python para apontar para o FD original salvo,
+# garantindo que o FastMCP consiga enviar o JSON-RPC limpo.
+sys.stdout = os.fdopen(original_stdout_fd, 'w', buffering=1)
+# --------------------------------------
 
 from fastmcp import FastMCP
 
