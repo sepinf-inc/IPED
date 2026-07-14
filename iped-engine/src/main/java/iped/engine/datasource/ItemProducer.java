@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -70,10 +71,14 @@ public class ItemProducer extends Thread implements Closeable {
 
     private void installDataSourceReaders() throws Exception {
 
-        Class<? extends DataSourceReader>[] readerList = new Class[] { SleuthkitReader.class,
-                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class,
-                FolderTreeReader.class // deve ser o último
-        };
+        List<Class<? extends DataSourceReader>> readerList = Arrays.asList(
+                SleuthkitReader.class,
+                IPEDReader.class,
+                UfedXmlReader.class,
+                AD1DataSourceReader.class,
+                ZipFileReader.class,
+                FolderTreeReader.class // must be the last one
+        );
 
         for (Class<? extends DataSourceReader> srcReader : readerList) {
             Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(ICaseData.class, File.class,

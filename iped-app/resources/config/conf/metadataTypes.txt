@@ -4672,3 +4672,7 @@ CarvedOffset = java.lang.Long
 mediaSize = java.lang.Long
 mediaMime = java.lang.String
 mediaName = java.lang.String
+zip:comment = java.lang.String
+zip:compressedRatio = java.lang.Double
+zip:compressedSize = java.lang.Integer
+zip:unixMode = java.lang.String
