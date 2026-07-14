@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot Complete Technical Documentation</title>
+  <style>
+    :root {
+      --color-primary: #2c3e50;
+      --color-accent: #3498db;
+      --color-success: #2ecc71;
+      --color-warning: #f39c12;
+      --color-danger: #e74c3c;
+      --color-purple: #9b59b6;
+      --color-teal: #1abc9c;
+      --color-bg: #f8f9fa;
+      --color-card: #ffffff;
+      --color-border: #dee2e6;
+      --color-text: #333333;
+      --color-muted: #6c757d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.7;
+      color: var(--color-text);
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+      background-color: var(--color-bg);
+    }
+
+    h1 { color: var(--color-primary); font-size: 2em; border-bottom: 3px solid var(--color-accent); padding-bottom: 10px; }
+    h2 { color: var(--color-primary); font-size: 1.5em; margin-top: 48px; }
+    h3 { color: var(--color-primary); font-size: 1.2em; }
+
+    .card {
+      background: var(--color-card);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .callout {
+      border-left: 4px solid;
+      padding: 14px 18px;
+      margin: 16px 0;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+    .callout-info    { border-color: var(--color-accent);   background: #eaf4fd; }
+    .callout-warning { border-color: var(--color-warning);  background: #fef9e7; }
+    .callout-success { border-color: var(--color-success);  background: #eafaf1; }
+    .callout-danger  { border-color: var(--color-danger);   background: #fdedec; }
+
+    code {
+      background: #eef;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.88em;
+      line-height: 1.5;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    th, td {
+      border: 1px solid var(--color-border);
+      padding: 10px 14px;
+      text-align: left;
+    }
+    th {
+      background: #f0f4f8;
+      font-weight: 600;
+    }
+    tr:nth-child(even) { background: #fafbfc; }
+
+    .component-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .component-box {
+      padding: 16px;
+      border-left: 5px solid;
+      background: #fdfdfd;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .component-box.view       { border-color: var(--color-accent); }
+    .component-box.controller { border-color: var(--color-danger); }
+    .component-box.payload    { border-color: var(--color-purple); }
+    .component-box.network    { border-color: var(--color-warning); }
+    .component-box.state      { border-color: var(--color-success); }
+
+    .diagram-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid var(--color-border);
+      margin: 16px 0;
+    }
+
+    nav#toc {
+      background: #eaf2f8;
+      padding: 18px 22px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    nav#toc a {
+      color: var(--color-primary);
+      text-decoration: none;
+      display: inline-block;
+      padding: 3px 0;
+      margin-right: 14px;
+    }
+    nav#toc a:hover { text-decoration: underline; }
+    nav#toc ol { margin: 8px 0 0 0; padding-left: 20px; }
+    nav#toc li { margin-bottom: 2px; }
+
+    .flow-step {
+      display: inline-block;
+      background: var(--color-accent);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 28px;
+      font-weight: bold;
+      font-size: 0.85em;
+      margin-right: 6px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: "default", securityLevel: "loose" });
+  </script>
+</head>
+<body>
+
+<h1>Chatbot Complete Technical Documentation</h1>
+<p style="color: var(--color-muted); font-size: 0.95em;">
+  Internal developer documentation &mdash; IPED AI Assistant Module &mdash; July 2026
+</p>
+
+<!-- ============================================================ -->
+<!-- TABLE OF CONTENTS                                            -->
+<!-- ============================================================ -->
+<nav id="toc">
+  <strong>Table of Contents</strong>
+  <ol>
+    <li><a href="#sec-overview">Overview</a></li>
+    <li><a href="#sec-motivation">Motivation</a></li>
+    <li><a href="#sec-architecture">High-Level Architecture</a></li>
+    <li><a href="#sec-components">Main Components and Responsibilities</a></li>
+    <li><a href="#sec-context">Chat Context Management</a></li>
+    <li><a href="#sec-single">Single Chat Workflow</a></li>
+    <li><a href="#sec-multi">Multi-Chat Workflow</a></li>
+    <li><a href="#sec-endpoint">Endpoint Selection Logic</a></li>
+    <li><a href="#sec-lifecycle">Request Lifecycle</a></li>
+    <li><a href="#sec-response">Response Processing</a></li>
+    <li><a href="#sec-citation">Citation Generation</a></li>
+    <li><a href="#sec-diagram">Sequence Diagram Explanation</a></li>
+    <li><a href="#sec-decisions">Architectural Decisions and Trade-offs</a></li>
+    <li><a href="#sec-extensibility">Extensibility Considerations</a></li>
+    <li><a href="#sec-source">Relevant Source Files</a></li>
+    <li><a href="#sec-conclusion">Conclusion</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<!-- 1. OVERVIEW                                                  -->
+<!-- ============================================================ -->
+<section id="sec-overview">
+<h2>1. Overview</h2>
+<div class="card">
+<p>
+  The IPED AI Assistant Chatbot is a conversational interface integrated into
+  IPED, a digital forensics application. It allows investigators to select
+  WhatsApp chat exports from a forensic case and ask natural-language questions
+  about their content. The LLM processes the chat data and returns answers
+  with clickable citations that navigate directly to the referenced items in
+  IPED's viewer.
+</p>
+<p>
+  The chatbot handles three distinct data-volume scenarios: a single chat,
+  multiple chats below a chunk threshold (where raw HTML is sent), and multiple
+  chats above the threshold (where pre-computed summaries are sent instead).
+  This adaptive strategy balances answer quality against LLM context-window
+  limits and memory consumption.
+</p>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 2. MOTIVATION                                                -->
+<!-- ============================================================ -->
+<section id="sec-motivation">
+<h2>2. Motivation</h2>
+<div class="card">
+<p>
+  Digital forensic investigations frequently involve large volumes of
+  messaging data. Manually reviewing WhatsApp chat exports is time-consuming
+  and error-prone. The chatbot addresses this by enabling investigators to
+  query chat content using natural language, receiving answers backed by
+  citations that link to the original forensic evidence.
+</p>
+<p>
+  The architecture had to solve several practical constraints:
+</p>
+<ul>
+  <li><strong>Variable data volume:</strong> A single WhatsApp export can range
+  from a few messages to tens of thousands. Multiple chats compound this.</li>
+  <li><strong>LLM context-window limits:</strong> Sending raw HTML for many
+  chats simultaneously would exceed the model's token capacity.</li>
+  <li><strong>Memory safety:</strong> The backend must avoid unbounded memory
+  growth when processing large inputs.</li>
+  <li><strong>Response quality:</strong> Summaries must preserve enough detail
+  for the LLM to answer accurately while fitting within the context window.</li>
+  <li><strong>Offline operation:</strong> The system operates entirely
+  locally within IPED's forensic environment, with no external API calls.</li>
+</ul>
+<p>
+  These constraints drove the three-path routing strategy documented below.
+</p>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 3. HIGH-LEVEL ARCHITECTURE                                   -->
+<!-- ============================================================ -->
+<section id="sec-architecture">
+<h2>3. High-Level Architecture</h2>
+<div class="card">
+<p>
+  The chatbot follows a layered architecture with clear separation of
+  concerns. Five logical layers collaborate to process user queries:
+</p>
+
+<div class="component-grid">
+  <div class="component-box view">
+    <h3>View Layer</h3>
+    <p><strong>AIAssistantPanel</strong> &mdash; top-level JFrame container and layout manager.</p>
+    <p><strong>SidebarPanel</strong> &mdash; conversation list, new-chat button, delete.</p>
+    <p><strong>ContextPanel</strong> &mdash; file context list with per-item removal and summarized-mode indicator.</p>
+    <p><strong>ChatAreaPanel</strong> &mdash; chat rendering, text input, streaming orchestration, citation click handling.</p>
+    <p><strong>AIMarkdownRenderer</strong> &mdash; markdown-to-StyledDocument parser, thinking blocks, citation tokens.</p>
+    <p><strong>ChatStreamAnimator</strong> &mdash; timer-based teletype animation engine.</p>
+  </div>
+
+  <div class="component-box controller">
+    <h3>Controller / Orchestrator Layer</h3>
+    <p><strong>AIAssistantController</strong> &mdash; orchestrates event routing, view updates, chat lifecycle, and persistence.</p>
+    <p><strong>AIChatCoordinator</strong> &mdash; central pipeline: validates context, selects backend endpoint, manages session hashes, streams responses.</p>
+  </div>
+
+  <div class="component-box payload">
+    <h3>Payload / Extraction Layer</h3>
+    <p><strong>AIPayloadFactory</strong> &mdash; translates <code>ContextFileEntry</code> lists into backend DTOs.</p>
+    <p><strong>AIWhatsappChatExtractor</strong> &mdash; reads IPED items into UTF-8 HTML strings.</p>
+    <p><strong>SummaryValueExtractor</strong> &mdash; extracts pre-computed AI summaries from item metadata.</p>
+    <p><strong>ContextItemValidator</strong> &mdash; rejects non-WhatsApp items, empty files, empty communications.</p>
+  </div>
+
+  <div class="component-box network">
+    <h3>Network / Backend Layer</h3>
+    <p><strong>AIBackendClient</strong> &mdash; HTTP/SSE client implementing <code>AIBackendService</code>. Six endpoints.</p>
+    <p><strong>AIBackendConfig</strong> &mdash; immutable <code>baseUrl</code> + <code>apiKey</code>.</p>
+    <p><strong>DTOs</strong> &mdash; <code>AIInitChatRequest</code>, <code>AIStreamChatRequest</code>, <code>AIInitMultiChatRequest</code>, <code>AIInitMultiChatFullRequest</code>, <code>AIMultiChatStreamRequest</code>.</p>
+  </div>
+
+  <div class="component-box state">
+    <h3>State Layer</h3>
+    <p><strong>AIContextManager</strong> &mdash; singleton, thread-safe context file list with change-event broadcasting.</p>
+    <p><strong>ConversationManager</strong> &mdash; singleton, active conversation state, auto-title generation.</p>
+    <p><strong>ConversationPersistence</strong> &mdash; JSON serialization to <code>&lt;case_dir&gt;/iped/data/ai_chats/</code>.</p>
+  </div>
+</div>
+
+<div class="diagram-container">
+  <div class="mermaid">
+graph TB
+  subgraph View["View Layer"]
+    AP[AIAssistantPanel]
+    SP[SidebarPanel]
+    CP[ContextPanel]
+    CA[ChatAreaPanel]
+    MR[AIMarkdownRenderer]
+    CSA[ChatStreamAnimator]
+  end
+
+  subgraph Controller["Controller / Orchestrator"]
+    AIC[AIAssistantController]
+    ACC[AIChatCoordinator]
+  end
+
+  subgraph Payload["Payload / Extraction"]
+    APF[AIPayloadFactory]
+    WCE[AIWhatsappChatExtractor]
+    SVE[SummaryValueExtractor]
+    CIV[ContextItemValidator]
+  end
+
+  subgraph Network["Network / Backend"]
+    ABC[AIBackendClient]
+    ABCfg[AIBackendConfig]
+  end
+
+  subgraph State["State Layer"]
+    CtxM[AIContextManager]
+    CM[ConversationManager]
+    CP2[ConversationPersistence]
+  end
+
+  AIC --> ACC
+  ACC --> APF
+  ACC --> ABC
+  APF --> WCE
+  APF --> SVE
+  AIC --> CtxM
+  AIC --> CM
+  CM --> CP2
+  CA --> CSA
+  CA --> MR
+  AIC --> CA
+  AIC --> SP
+  AIC --> CP
+  </div>
+</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 4. MAIN COMPONENTS AND RESPONSIBILITIES                      -->
+<!-- ============================================================ -->
+<section id="sec-components">
+<h2>4. Main Components and Responsibilities</h2>
+<div class="card">
+
+<h3>4.1 AIAssistantController</h3>
+<p>
+  The central controller (<code>AIAssistantController.java</code>) owns all
+  UI event routing. It wires the send button and Enter key to
+  <code>handleSendAction()</code>, manages conversation creation and deletion,
+  handles context-add events (including the auto-fork flow), and coordinates
+  persistence after every meaningful state change. It is the only class that
+  directly manipulates both the view and the coordinator.
+</p>
+
+<h3>4.2 AIChatCoordinator</h3>
+<p>
+  The coordinator (<code>AIChatCoordinator.java</code>) is the pipeline engine.
+  It validates context entries, computes the total chunk count, decides which
+  backend endpoint to call, uploads chat data (or summaries) on a background
+  thread, streams the response back through callbacks, and maintains the
+  session hash cache so that subsequent questions skip re-initialization.
+</p>
+
+<h3>4.3 AIBackendClient</h3>
+<p>
+  The HTTP client (<code>AIBackendClient.java</code>) implements the
+  <code>AIBackendService</code> interface and handles all network communication.
+  Initialization endpoints (<code>/api/init_chat</code>,
+  <code>/api/init_multichat_with_summaries</code>,
+  <code>/api/init_multichat_full</code>) return synchronously. Streaming
+  endpoints use Server-Sent Events (SSE) over HTTP/1.1, parsed by the shared
+  <code>processSseStream()</code> helper.
+</p>
+
+<h3>4.4 AIPayloadFactory</h3>
+<p>
+  The factory (<code>AIPayloadFactory.java</code>) translates IPED's internal
+  <code>ContextFileEntry</code> objects into network-safe DTOs. It enforces a
+  strict contract: <code>buildMultiChatRequest()</code> requires pre-computed
+  summaries and silently skips entries that lack them;
+  <code>buildMultiChatFullRequest()</code> extracts raw HTML. The factory also
+  adapts IPED's flexible metadata types (<code>String</code>,
+  <code>Collection</code>, <code>Object[]</code>) into clean lists.
+</p>
+
+<h3>4.5 AIContextManager</h3>
+<p>
+  A singleton (<code>AIContextManager.java</code>) that maintains the list of
+  files the user has added to the current conversation's context. It uses a
+  <code>CopyOnWriteArrayList</code> for thread-safe read-heavy access, validates
+  items via <code>ContextItemValidator</code>, and fires
+  <code>ContextChangeEvent</code> notifications on the EDT.
+</p>
+
+<h3>4.6 ConversationManager</h3>
+<p>
+  A singleton (<code>ConversationManager.java</code>) that tracks the active
+  conversation, manages the conversation list, and auto-generates titles from
+  the first user message (truncated to 30 characters). Every
+  <code>addMessageToActive()</code> call triggers an asynchronous save to disk.
+</p>
+
+<h3>4.7 ConversationPersistence</h3>
+<p>
+  Handles JSON serialization to <code>&lt;case_dir&gt;/iped/data/ai_chats/</code>.
+  Chatbot conversations use the <code>chat_</code> prefix; agent conversations
+  use <code>agent_</code>. Deletion is soft: the file is rewritten with
+  <code>status = "deleted"</code> but remains on disk for auditability.
+</p>
+
+<h3>4.8 Streaming Subsystem</h3>
+<p>
+  The streaming subsystem comprises three classes working together:
+</p>
+<ul>
+  <li><strong>ChatAreaPanel</strong> &mdash; orchestrates streaming: starts it via
+  <code>startMessageStreaming()</code>, feeds tokens via
+  <code>enqueueStreamingToken()</code>, drains via
+  <code>pruneStreaming()</code>, and salvages partial drafts on error via
+  <code>salvageStreamingDraft()</code>.</li>
+  <li><strong>ChatStreamAnimator</strong> &mdash; a Swing <code>Timer</code>
+  firing every 30ms, dequeuing one whitespace-delimited token per tick and
+  appending it to the draft message.</li>
+  <li><strong>AIMarkdownRenderer</strong> &mdash; renders the draft into a
+  <code>StyledDocument</code> on every tick, parsing markdown, thinking blocks,
+  and citation tokens.</li>
+</ul>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 5. CHAT CONTEXT MANAGEMENT                                   -->
+<!-- ============================================================ -->
+<section id="sec-context">
+<h2>5. Chat Context Management</h2>
+<div class="card">
+<p>
+  Context management governs how WhatsApp chat files enter the system and
+  how they flow through validation, extraction, and backend upload.
+</p>
+
+<h3>5.1 Adding Files to Context</h3>
+<p>
+  Users add files by right-clicking items in IPED's results table and selecting
+  "Add to AI Context." The entry point is
+  <code>AIAssistantController.addItemsToContext()</code>, which enforces
+  several rules:
+</p>
+<ol>
+  <li>If the system is currently streaming a response, the addition is blocked
+  with a "please wait" dialog to prevent race conditions.</li>
+  <li>If the active conversation is an agent conversation, context files are
+  rejected outright.</li>
+  <li>If no active conversation exists, a new one is created via
+  <code>startNewConversationWithCurrentContext()</code>.</li>
+  <li>If the active conversation has no assistant reply yet, files are appended
+  directly to the <code>AIContextManager</code>.</li>
+  <li>If the conversation already contains an assistant reply (it is "sealed"),
+  the user is prompted to auto-fork: a new conversation is created that carries
+  forward the existing context and merges the new files.</li>
+</ol>
+
+<h3>5.2 Validation</h3>
+<p>
+  Each item is validated by <code>ContextItemValidator.getRejectionReason()</code>,
+  which checks:
+</p>
+<ul>
+  <li>The item must be a WhatsApp chat (verified via
+  <code>AIWhatsappChatExtractor.isWhatsAppChatType()</code>).</li>
+  <li>The item must not belong to the "Empty Files" category.</li>
+  <li>The item must not have its communication flagged as empty.</li>
+</ul>
+<p>
+  Valid items are stored as <code>ContextFileEntry</code> objects in the
+  <code>AIContextManager</code>'s thread-safe list. Invalid items are stored
+  separately and shown in the context panel with their rejection reason.
+</p>
+
+<h3>5.3 The Context-Edit Lock</h3>
+<p>
+  Once a conversation has received an assistant reply, its context becomes
+  "locked" in the UI. This is a deliberate design choice: modifying the
+  context after the LLM has already processed it would create an inconsistent
+  state. The lock is enforced both in the UI (the context panel disables
+  editing) and in the controller (additions trigger the auto-fork flow).
+</p>
+
+<h3>5.4 The Auto-Fork Flow</h3>
+<p>
+  When a user adds files to a sealed conversation, the auto-fork flow creates
+  a new <code>StandardConversation</code> that inherits the previous context
+  IDs and merges the new items. The coordinator's history is cleared, and the
+  new conversation becomes the active workspace. The previous conversation
+  remains unchanged and accessible from the sidebar.
+</p>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 6. SINGLE CHAT WORKFLOW                                      -->
+<!-- ============================================================ -->
+<section id="sec-single">
+<h2>6. Single Chat Workflow</h2>
+<div class="card">
+<p>
+  When only one WhatsApp chat file is in context, the chatbot sends the
+  complete HTML representation of that chat to the backend. This is the
+  highest-fidelity path: the LLM sees every message, every timestamp, and
+  every media reference.
+</p>
+
+<h3>6.1 Execution Flow</h3>
+
+<div class="diagram-container">
+  <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant User
+  participant Ctrl as AIAssistantController
+  participant Coord as AIChatCoordinator
+  participant Ext as AIWhatsappChatExtractor
+  participant Back as AIBackendClient
+  participant Anim as ChatStreamAnimator
+  participant Ren as AIMarkdownRenderer
+
+  User->>Ctrl: type question, press Send
+  Ctrl->>Ctrl: handleSendAction()
+  Ctrl->>Ctrl: addMessage("You", text, "user")
+  Ctrl->>Ctrl: startMessageStreaming(assistantDraft)
+  Ctrl->>Coord: askQuestion(text, uiCb, completeCb, errorCb)
+
+  Note over Coord: Background thread starts
+
+  Coord->>Coord: getContextEntriesForUI() → filter valid
+  Coord->>Coord: calculateTotalChunks(validEntries) → 1
+
+  Coord->>Ext: extractHtml(item)
+  Ext-->>Coord: complete HTML string
+
+  Coord->>Back: initChat(html)
+  Back->>Back: POST /api/init_chat
+  Back-->>Coord: chatHash
+
+  Coord->>Back: streamChatResponse(hash, question, history, cb)
+  Back->>Back: POST /api/chat/stream (SSE)
+
+  loop each SSE token
+    Back-->>Coord: token
+    Coord-->>Ctrl: uiCallback(token) via EDT
+    Ctrl->>Anim: enqueueStreamingToken(token)
+    Anim->>Ren: renderDraft(assistantDraft)
+  end
+
+  Coord-->>Ctrl: onComplete()
+  Ctrl->>Ctrl: pruneStreaming → commitDraft → addMessageToActive
+  Ctrl->>Ctrl: setProcessing(false)
+  </div>
+</div>
+
+<h3>6.2 Key Details</h3>
+<ul>
+  <li><strong>HTML extraction:</strong> <code>AIWhatsappChatExtractor.extractHtml()</code>
+  reads the IPED item's <code>InputStream</code> into a UTF-8 string. It
+  verifies the item is a WhatsApp chat type before reading.</li>
+  <li><strong>Initialization:</strong> The HTML is wrapped in an
+  <code>AIInitChatRequest</code> (<code>{"chat_html": "..."}</code>) and sent
+  to <code>/api/init_chat</code>. The backend returns a hash that identifies
+  the cached session.</li>
+  <li><strong>Session caching:</strong> The hash is stored in
+  <code>currentChatHashes</code> and persisted to the conversation object. On
+  subsequent questions with the same context, re-initialization is skipped.</li>
+</ul>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 7. MULTI-CHAT WORKFLOW                                       -->
+<!-- ============================================================ -->
+<section id="sec-multi">
+<h2>7. Multi-Chat Workflow</h2>
+<div class="card">
+<p>
+  When two or more WhatsApp chat files are in context, the system must decide
+  between two sub-paths based on the total chunk count. A "chunk" corresponds
+  to a <code>CHUNK_IDS</code> metadata entry on the IPED item, which the
+  backend's summarization pipeline produced during case processing.
+</p>
+
+<h3>7.1 Below Threshold: Multi-Chat Full</h3>
+<div class="callout callout-success">
+  <strong>Condition:</strong> <code>validEntries.size() &gt; 1</code> AND
+  <code>totalChunks &le; 10</code>
+</div>
+<p>
+  When the combined chunk count is small (10 or fewer), the system sends the
+  raw HTML of every chat to the backend. This preserves full fidelity across
+  all conversations.
+</p>
+<p>
+  <code>AIPayloadFactory.buildMultiChatFullRequest()</code> iterates over
+  valid entries, calls <code>extractHtml()</code> for each, and returns an
+  <code>AIInitMultiChatFullRequest</code> containing
+  <code>{"chat_contents": ["html1", "html2", ...]}</code>.
+</p>
+<p>
+  The backend endpoint is <code>/api/init_multichat_full</code>, which
+  processes each HTML independently and returns an array of hashes. The
+  streaming endpoint is <code>/api/multichat_full/stream</code>.
+</p>
+
+<h3>7.2 Above Threshold: Multi-Chat Summarized</h3>
+<div class="callout callout-warning">
+  <strong>Condition:</strong> <code>validEntries.size() &gt; 1</code> AND
+  <code>totalChunks &gt; 10</code>
+</div>
+<p>
+  When the combined chunk count exceeds 10, sending raw HTML would overwhelm
+  the LLM's context window. Instead, the system sends pre-computed summaries.
+</p>
+<p>
+  <code>AIPayloadFactory.buildMultiChatRequest()</code> extracts summaries
+  from each entry's metadata (<code>ExtraProperties.SUMMARY</code>) and
+  summary IDs (<code>ExtraProperties.CHUNK_IDS</code>). Files without
+  summaries are silently skipped. The resulting
+  <code>AIInitMultiChatRequest</code> contains:
+</p>
+<pre>{
+  "summarized_chats": [
+    {
+      "chat_id": "abc123",
+      "chat_name": "WhatsApp Chat with John.txt",
+      "summaries": ["summary text chunk 1", "summary text chunk 2"],
+      "summary_ids": ["chunk_0", "chunk_1"]
+    }
+  ]
+}</pre>
+<p>
+  The backend endpoint is <code>/api/init_multichat_with_summaries</code>.
+  The streaming endpoint is <code>/api/multichat/stream</code>.
+</p>
+
+<h3>7.3 Summaries are Pre-Computed</h3>
+<div class="callout callout-info">
+  <strong>Important:</strong> Summaries are not generated at request time.
+  They are produced by IPED's summarization pipeline during case processing
+  and stored in each item's <code>ExtraProperties.SUMMARY</code> metadata.
+  The chatbot merely reads and forwards them.
+</div>
+
+<h3>7.4 Fallback Chain for Summaries</h3>
+<p>
+  <code>AIPayloadFactory</code> implements a resilient fallback chain for
+  summary extraction:
+</p>
+<ol>
+  <li>First, try <code>ExtraProperties.SUMMARY</code> from runtime
+  <code>ExtraAttributes</code> (in-memory).</li>
+  <li>If empty, fall back to the same key from Lucene stored metadata
+  (on disk).</li>
+  <li>If still empty, fall back to <code>entry.getSummary()</code>, which
+  is the UI-cached summary from the <code>ContextFileEntry</code>.</li>
+</ol>
+<p>
+  For summary IDs, if the metadata is missing or the count does not match the
+  number of summaries, synthetic IDs (<code>summary_fallback_1</code>,
+  <code>summary_fallback_2</code>, ...) are generated to maintain a 1:1
+  mapping and prevent the citation engine from crashing.
+</p>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 8. ENDPOINT SELECTION LOGIC                                  -->
+<!-- ============================================================ -->
+<section id="sec-endpoint">
+<h2>8. Endpoint Selection Logic</h2>
+<div class="card">
+<p>
+  The endpoint selection is a deterministic three-way branch computed inside
+  <code>AIChatCoordinator.askQuestion()</code>. The decision is based on two
+  variables: the number of valid context entries and the total chunk count.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Condition</th>
+      <th>Init Endpoint</th>
+      <th>Stream Endpoint</th>
+      <th>Payload Factory</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1 valid entry</td>
+      <td><code>POST /api/init_chat</code></td>
+      <td><code>POST /api/chat/stream</code></td>
+      <td>Direct <code>extractHtml()</code></td>
+    </tr>
+    <tr>
+      <td>&ge;2 entries, totalChunks &le; 10</td>
+      <td><code>POST /api/init_multichat_full</code></td>
+      <td><code>POST /api/multichat_full/stream</code></td>
+      <td><code>buildMultiChatFullRequest()</code></td>
+    </tr>
+    <tr>
+      <td>&ge;2 entries, totalChunks &gt; 10</td>
+      <td><code>POST /api/init_multichat_with_summaries</code></td>
+      <td><code>POST /api/multichat/stream</code></td>
+      <td><code>buildMultiChatRequest()</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>8.1 The Threshold: Why 10 Chunks?</h3>
+<p>
+  The threshold of 10 chunks is a pragmatic balance point. Below this limit,
+  the total HTML content from multiple chats typically fits within the LLM's
+  context window without truncation. Above it, the risk of exceeding token
+  limits grows rapidly, and the marginal value of raw content diminishes
+  compared to pre-computed summaries that capture the essential information.
+</p>
+
+<h3>8.2 When Initialization is Skipped</h3>
+<p>
+  The coordinator caches <code>currentChatHashes</code> and
+  <code>currentContextItemIds</code>. On each question, it checks whether the
+  context has changed or the hashes are empty. If neither condition is true,
+  initialization is skipped entirely and the question is streamed directly
+  using the existing hashes. This avoids redundant HTTP calls and backend
+  re-processing for follow-up questions within the same context.
+</p>
+<pre>boolean contextChanged = !newContextIds.equals(currentContextItemIds);
+boolean needsInitialization = contextChanged || currentChatHashes.isEmpty();</pre>
+
+<h3>8.3 Error Recovery: Hash Invalidation</h3>
+<p>
+  If the backend returns a "not found" error (indicating its cache was
+  cleared, e.g., after a restart), the coordinator clears
+  <code>currentChatHashes</code>, forcing re-initialization on the next
+  attempt. This ensures the system is self-healing without user intervention.
+</p>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 9. REQUEST LIFECYCLE                                         -->
+<!-- ============================================================ -->
+<section id="sec-lifecycle">
+<h2>9. Request Lifecycle</h2>
+<div class="card">
+<p>
+  Every user question follows a well-defined lifecycle from keystroke to
+  rendered response. The lifecycle spans multiple threads and involves
+  careful coordination between Swing's EDT and background processing threads.
+</p>
+
+<h3>9.1 Complete Lifecycle Diagram</h3>
+
+<div class="diagram-container">
+  <div class="mermaid">
+graph TD
+  A["User clicks Send / presses Enter"] --> B["handleSendAction()"]
+  B --> C{"text empty?"}
+  C -- yes --> Z["return (no-op)"]
+  C -- no --> D["ensureChatServiceInitialized()"]
+  D --> E{"active conversation?"}
+  E -- no --> F["startNewConversation()"]
+  E -- yes --> G["addMessage('You', text, 'user')"]
+  F --> G
+  G --> H["clear input, setProcessing(true)"]
+  H --> I["startMessageStreaming(assistantDraft)"]
+  I --> J["coordinator.askQuestion()"]
+  J --> K["Background thread starts"]
+  K --> L["getContextEntriesForUI(), filter valid"]
+  L --> M{"validEntries empty?"}
+  M -- yes --> N["onError('add at least one file')"]
+  M -- no --> O["calculateTotalChunks()"]
+  O --> P{"needsInitialization?"}
+  P -- no --> S["Stream response"]
+  P -- yes --> Q{"Route: single / multi-full / multi-summarized"}
+  Q --> R["initChat / initMultiChatFull / initMultiChat"]
+  R --> S
+  S --> T["processSseStream()"]
+  T --> U["token → uiCallback → EDT → enqueueStreamingToken"]
+  U --> V["ChatStreamAnimator timer → renderDraft"]
+  V --> T
+  S --> W["onComplete()"]
+  W --> X["pruneStreaming → commitDraft → addMessageToActive"]
+  X --> Y["setProcessing(false)"]
+  </div>
+</div>
+
+<h3>9.2 Thread Model</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Thread</th>
+      <th>Responsibility</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>EDT (Event Dispatch Thread)</td>
+      <td>All Swing UI operations: reading input, rendering messages,
+      updating panels, dispatching callbacks via
+      <code>SwingUtilities.invokeLater()</code></td>
+    </tr>
+    <tr>
+      <td>Background thread (anonymous)</td>
+      <td>Backend initialization, HTTP requests, SSE stream reading,
+      token callback invocation</td>
+    </tr>
+    <tr>
+      <td>Swing Timer (30ms)</td>
+      <td>ChatStreamAnimator's teletype animation: dequeues tokens and
+      triggers re-renders</td>
+    </tr>
+    <tr>
+      <td>Async save threads</td>
+      <td>ConversationPersistence writes to disk without blocking the UI</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 10. RESPONSE PROCESSING                                      -->
+<!-- ============================================================ -->
+<section id="sec-response">
+<h2>10. Response Processing</h2>
+<div class="card">
+<p>
+  Response processing converts raw SSE events from the backend into rendered
+  markdown in the chat panel. This involves three stages: SSE parsing,
+  token animation, and markdown rendering.
+</p>
+
+<h3>10.1 SSE Event Parsing</h3>
+<p>
+  The <code>AIBackendClient.processSseStream()</code> method reads
+  <code>data:</code> lines from the HTTP input stream. Each JSON payload has
+  a <code>type</code> field that determines how the content is formatted:
+</p>
+<table>
+  <thead>
+    <tr><th>SSE Type</th><th>Behavior</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>thinking</code></td><td>Wrapped in <code>[[AI_THINKING]]...[[/AI_THINKING]]</code> markers for collapsible rendering.</td></tr>
+    <tr><td><code>thinking_done</code></td><td>Closes the thinking block.</td></tr>
+    <tr><td><code>status</code></td><td>Formatted as italic markdown: <code>_[Status]: content_</code></td></tr>
+    <tr><td><code>final</code></td><td>First token gets <code>**[FINAL ANSWER]:**</code> prefix; subsequent tokens pass through.</td></tr>
+    <tr><td><code>error</code></td><td>Throws <code>AIBackendException</code>.</td></tr>
+    <tr><td><code>[DONE]</code> or empty</td><td>Ignored (keep-alive / termination signal).</td></tr>
+  </tbody>
+</table>
+
+<h3>10.2 Token Animation</h3>
+<p>
+  Tokens flow from the background thread to the EDT via
+  <code>SwingUtilities.invokeLater()</code>. On the EDT,
+  <code>ChatAreaPanel.enqueueStreamingToken()</code> forwards the token to
+  <code>ChatStreamAnimator.enqueueToken()</code>, which splits it into
+  whitespace-delimited parts using the regex <code>\S+|\s+</code> and adds
+  them to an internal queue.
+</p>
+<p>
+  A Swing <code>Timer</code> fires every 30ms. Each tick pops one part from
+  the queue, appends it to the draft message via
+  <code>AIChatMessage.appendContent()</code>, and triggers
+  <code>AIMarkdownRenderer.renderDraft()</code>.
+</p>
+
+<h3>10.3 Markdown Rendering</h3>
+<p>
+  <code>AIMarkdownRenderer</code> renders the full draft on every tick. It
+  first removes the previous draft range from the <code>StyledDocument</code>,
+  then re-renders the complete message. The renderer supports:
+</p>
+<ul>
+  <li>Headings (<code>#</code>) &mdash; bold, 14pt, blue</li>
+  <li>Bold (<code>**text**</code>) and italic (<code>*text*</code>)</li>
+  <li>Blockquotes (<code>&gt; text</code>) &mdash; gray foreground</li>
+  <li>Lists (<code>- </code>, <code>* </code>, <code>1. </code>) &mdash; bullet prefix</li>
+  <li>Citations (<code>&lt;&lt;hash-chunkId&gt;&gt;</code>) &mdash; blue underlined links</li>
+  <li>Thinking blocks (<code>[[AI_THINKING]]...[[/AI_THINKING]]</code>) &mdash; collapsible</li>
+</ul>
+
+<h3>10.4 Draft Lifecycle</h3>
+<p>
+  The draft goes through three states:
+</p>
+<ol>
+  <li><strong>Streaming:</strong> The draft is actively being appended to.
+  <code>renderDraft()</code> re-renders it on every tick.</li>
+  <li><strong>Committed:</strong> <code>commitDraft()</code> finalizes the
+  rendered content, making it permanent in the document.</li>
+  <li><strong>Discarded:</strong> <code>discardDraft()</code> removes the
+  draft range from the document (used when the response is empty or on error).</li>
+</ol>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 11. CITATION GENERATION                                      -->
+<!-- ============================================================ -->
+<section id="sec-citation">
+<h2>11. Citation Generation</h2>
+<div class="card">
+<p>
+  Citations allow the LLM to reference specific forensic items in its
+  responses. When a user clicks a citation, IPED navigates to the referenced
+  item and opens it in the viewer.
+</p>
+
+<h3>11.1 Citation Token Format</h3>
+<p>
+  Citations use the format <code>&lt;&lt;hash-chunkId&gt;&gt;</code>, where:
+</p>
+<ul>
+  <li><code>hash</code> is the content hash of the source file (used to
+  search IPED's Lucene index).</li>
+  <li><code>chunkId</code> is the HTML element ID within the chat viewer,
+  used for scroll-to-position.</li>
+</ul>
+
+<h3>11.2 Token Rendering</h3>
+<p>
+  When <code>AIMarkdownRenderer</code> encounters <code>&lt;&lt;</code> in
+  the response text, it scans for the closing <code>&gt;&gt;</code>, splits
+  on the first <code>-</code>, and creates a styled token with metadata
+  attributes:
+</p>
+<ul>
+  <li><code>TOKEN_ATTRIBUTE</code> = <code>Boolean.TRUE</code></li>
+  <li><code>TOKEN_HASH_ATTRIBUTE</code> = the hash string</li>
+  <li><code>TOKEN_CHUNK_ID_ATTRIBUTE</code> = the chunk ID string</li>
+</ul>
+<p>
+  The visible text is resolved via <code>resolveTokenVisibleText()</code>,
+  which looks up the hash in <code>AIContextManager.getContextEntriesForUI()</code>
+  and displays the filename if a match is found. Otherwise, the raw
+  <code>&lt;&lt;hash-chunkId&gt;&gt;</code> string is shown.
+</p>
+
+<h3>11.3 Citation Click Handling</h3>
+<p>
+  When a user clicks a citation token, <code>ChatAreaPanel</code>'s mouse
+  listener reads the token attributes from the styled document element at the
+  click offset and invokes the <code>navigationCallback</code>. This calls
+  <code>AIAssistantController.navigateToItem()</code>, which:
+</p>
+<ol>
+  <li>Searches IPED's Lucene index with <code>hash:</code> + the hash value.</li>
+  <li>Gets the matching <code>IItemId</code>.</li>
+  <li>If <code>chunkId</code> is non-empty, tells the HTML viewer to scroll
+  to that element.</li>
+  <li>Creates a <code>FileProcessor</code> and executes it to open the file
+  in the viewer.</li>
+  <li>Selects the item in the results table.</li>
+</ol>
+
+<div class="callout callout-info">
+  <strong>Design note:</strong> Citations work for both chatbot and agent
+  features. The chatbot's backend produces citations from the HTML chat
+  content during summarization. The agent's MCP tools can produce citations
+  from search and document-read results (though this path is still in early
+  stages).
+</div>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 12. SEQUENCE DIAGRAM EXPLANATION                             -->
+<!-- ============================================================ -->
+<section id="sec-diagram">
+<h2>12. Sequence Diagram Explanation</h2>
+<div class="card">
+<p>
+  A detailed Mermaid sequence diagram covering all 12 flows of the chatbot
+  feature is maintained as a separate document:
+</p>
+<p>
+  <a href="Chatbot%20sequence%20diagrams.html">
+    <code>Chatbot sequence diagrams.html</code>
+  </a>
+</p>
+<p>
+  That document covers: App Boot, Add File to Context, Auto-Fork, Send
+  Question / Streaming, Backend Recovery, Auto-Generate Title, Quick Actions,
+  Switch Conversation, Click Citation, Start New Chat, Persistence, and
+  Delete Conversation. Each flow includes a self-contained Mermaid diagram
+  with numbered steps.
+</p>
+<p>
+  The following simplified diagram shows the core send-and-stream path that
+  ties together all three backend routes:
+</p>
+
+<div class="diagram-container">
+  <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant Ctrl as Controller
+  participant Coord as Coordinator
+  participant Back as BackendClient
+  participant Anim as Animator
+  participant Ren as Renderer
+
+  Ctrl->>Coord: askQuestion(text, callbacks)
+  Coord->>Coord: calculateTotalChunks()
+
+  alt Single Chat (1 file)
+    Coord->>Back: initChat(html) → hash
+    Coord->>Back: streamChatResponse(hash, q, hist)
+  else Multi-Chat Full (&le;10 chunks)
+    Coord->>Back: initMultiChatFull(htmls) → hashes
+    Coord->>Back: streamMultiChatFullResponse(hashes, q, hist)
+  else Multi-Chat Summarized (&gt;10 chunks)
+    Coord->>Back: initMultiChat(summaries) → hashes
+    Coord->>Back: streamMultiChatResponse(hashes, q, hist)
+  end
+
+  loop SSE stream
+    Back-->>Ctrl: token
+    Ctrl->>Anim: enqueueToken()
+    Anim->>Ren: renderDraft()
+  end
+
+  Coord-->>Ctrl: onComplete()
+  Ctrl->>Ctrl: commitDraft → save
+  </div>
+</div>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 13. ARCHITECTURAL DECISIONS AND TRADE-OFFS                   -->
+<!-- ============================================================ -->
+<section id="sec-decisions">
+<h2>13. Architectural Decisions and Trade-offs</h2>
+<div class="card">
+
+<h3>13.1 Why Three Endpoints Instead of One</h3>
+<p>
+  A single endpoint that accepts both HTML and summaries would simplify the
+  client but would complicate the backend: it would need to inspect the
+  payload type, branch on content format, and manage two distinct processing
+  pipelines behind a single URL. Separating the endpoints makes the backend
+  stateless and deterministic. The client pays a small cost in routing
+  logic, but the backend remains simple and testable.
+</p>
+
+<h3>13.2 Why HTML for Small Contexts</h3>
+<p>
+  Pre-computed summaries lose nuance. For a single chat or a small collection,
+  the full HTML preserves every message, every timestamp, and every media
+  reference. This maximizes answer quality when the data fits within the
+  context window. The threshold of 10 chunks is the empirical boundary where
+  raw content typically fits without truncation.
+</p>
+
+<h3>13.3 Why Summaries for Large Contexts</h3>
+<p>
+  Sending raw HTML for 20+ chats would exceed the LLM's token limit and
+  cause the backend to crash or silently truncate. Summaries compress the
+  essential information into a fraction of the tokens while preserving
+  the chat structure and key events. The trade-off is reduced detail, but
+  this is acceptable for multi-chat queries where the user is typically
+  asking broad questions across conversations.
+</p>
+
+<h3>13.4 Why Session Hash Caching</h3>
+<p>
+  Backend initialization (parsing HTML, building vector embeddings, indexing)
+  is expensive. Caching the hash avoids re-processing when the user asks
+  follow-up questions within the same context. The cache is invalidated
+  automatically when the context changes or when the backend reports a
+  "not found" error.
+</p>
+
+<h3>13.5 Why Auto-Fork Instead of In-Place Context Editing</h3>
+<p>
+  Modifying the context after the LLM has processed it would create an
+  inconsistent state: the backend's cached session would reflect the old
+  context, but the UI would show the new one. Auto-fork avoids this by
+  creating a clean break: the new conversation starts fresh with the merged
+  context, and the old conversation remains as a historical record.
+</p>
+
+<h3>13.6 Why Soft Delete</h3>
+<p>
+  Forensic data must be preserved for auditability. Soft-deleting conversations
+  (rewriting the JSON with <code>status = "deleted"</code>) ensures the file
+  remains on disk for chain-of-custody purposes while being hidden from the
+  UI.
+</p>
+
+<h3>13.7 Error Recovery Philosophy</h3>
+<p>
+  The coordinator preserves initialization state during streaming failures. If
+  streaming fails after a successful init, the hashes are kept so the user
+  can retry without re-uploading. Only initialization failures clear the
+  cache. This design prioritizes resilience: partial progress is never lost
+  unless the initialization itself failed.
+</p>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 14. EXTENSIBILITY CONSIDERATIONS                             -->
+<!-- ============================================================ -->
+<section id="sec-extensibility">
+<h2>14. Extensibility Considerations</h2>
+<div class="card">
+
+<h3>14.1 Adding New Chat Types</h3>
+<p>
+  The <code>ContextItemValidator</code> currently rejects non-WhatsApp items.
+  To support Telegram, SMS, or other messaging formats, you would:
+</p>
+<ol>
+  <li>Create a new extractor (e.g., <code>AITelegramChatExtractor</code>)
+  parallel to <code>AIWhatsappChatExtractor</code>.</li>
+  <li>Update <code>ContextItemValidator.getRejectionReason()</code> to accept
+  the new media type.</li>
+  <li>Update <code>AIPayloadFactory</code> to route to the correct extractor.</li>
+</ol>
+<p>
+  The rest of the pipeline (validation, context management, backend
+  communication, streaming) is format-agnostic and would require no changes.
+</p>
+
+<h3>14.2 Adding New Backend Endpoints</h3>
+<p>
+  The <code>AIBackendService</code> interface defines six methods. Adding a
+  new endpoint requires:
+</p>
+<ol>
+  <li>Adding a method to the interface.</li>
+  <li>Implementing it in <code>AIBackendClient</code>.</li>
+  <li>Adding the routing logic in <code>AIChatCoordinator.askQuestion()</code>.</li>
+</ol>
+
+<h3>14.3 Changing the Chunk Threshold</h3>
+<p>
+  The threshold of 10 chunks is hardcoded in
+  <code>AIChatCoordinator.askQuestion()</code> and in the UI's
+  <code>setSummarizedMode()</code> call. Making it configurable would
+  require extracting it to <code>AIBackendConfig</code> or a system property.
+</p>
+
+<h3>14.4 Adding New Citation Formats</h3>
+<p>
+  The <code>&lt;&lt;hash-chunkId&gt;&gt;</code> format is parsed by
+  <code>AIMarkdownRenderer.appendInlineMarkdown()</code>. Changing the format
+  would require updating the regex scan and the token-attribute storage, as
+  well as the click handler in <code>ChatAreaPanel</code>.
+</p>
+
+<h3>14.5 Streaming Protocol Changes</h3>
+<p>
+  If the backend switches from SSE to WebSocket or another streaming protocol,
+  only <code>AIBackendClient.processSseStream()</code> and the corresponding
+  <code>streamChatResponse()</code> / <code>streamMultiChatResponse()</code>
+  methods need updating. The rest of the system consumes tokens through the
+  same <code>Consumer&lt;String&gt;</code> callback interface.
+</p>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 15. RELEVANT SOURCE FILES                                    -->
+<!-- ============================================================ -->
+<section id="sec-source">
+<h2>15. Relevant Source Files</h2>
+<div class="card">
+
+<table>
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Package</th>
+      <th>Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>AIAssistantController.java</code></td><td><code>iped.app.ui.ai.controller</code></td><td>Main controller, event routing, chat lifecycle</td></tr>
+    <tr><td><code>AIChatCoordinator.java</code></td><td><code>iped.app.ui.ai</code></td><td>Pipeline orchestrator, endpoint selection, session caching</td></tr>
+    <tr><td><code>AIBackendClient.java</code></td><td><code>iped.app.ui.ai.backend</code></td><td>HTTP/SSE client, SSE parsing</td></tr>
+    <tr><td><code>AIBackendService.java</code></td><td><code>iped.app.ui.ai.backend</code></td><td>Interface defining 6 backend endpoints</td></tr>
+    <tr><td><code>AIBackendConfig.java</code></td><td><code>iped.app.ui.ai.backend</code></td><td>Immutable baseUrl + apiKey config</td></tr>
+    <tr><td><code>AIBackendException.java</code></td><td><code>iped.app.ui.ai.backend</code></td><td>Checked exception for backend errors</td></tr>
+    <tr><td><code>AIInitChatRequest.java</code></td><td><code>iped.app.ui.ai.backend</code></td><td>Single-chat init DTO</td></tr>
+    <tr><td><code>AIStreamChatRequest.java</code></td><td><code>iped.app.ui.ai.backend</code></td><td>Stream request DTO with AIMessage inner class</td></tr>
+    <tr><td><code>AIInitMultiChatRequest.java</code></td><td><code>iped.app.ui.ai.backend</code></td><td>Summarized multi-chat init DTO</td></tr>
+    <tr><td><code>AIInitMultiChatFullRequest.java</code></td><td><code>iped.app.ui.ai.backend</code></td><td>Full HTML multi-chat init DTO</td></tr>
+    <tr><td><code>AIMultiChatStreamRequest.java</code></td><td><code>iped.app.ui.ai.backend</code></td><td>Multi-chat stream request DTO</td></tr>
+    <tr><td><code>AIPayloadFactory.java</code></td><td><code>iped.app.ui.ai.util</code></td><td>Builds DTOs from ContextFileEntry lists</td></tr>
+    <tr><td><code>AIWhatsappChatExtractor.java</code></td><td><code>iped.app.ui.ai.util</code></td><td>Reads IPED items into UTF-8 HTML</td></tr>
+    <tr><td><code>SummaryValueExtractor.java</code></td><td><code>iped.app.ui.ai.util</code></td><td>Extracts summaries from item metadata</td></tr>
+    <tr><td><code>ContextItemValidator.java</code></td><td><code>iped.app.ui.ai.util</code></td><td>Validates items for context inclusion</td></tr>
+    <tr><td><code>ConversationPersistence.java</code></td><td><code>iped.app.ui.ai.util</code></td><td>JSON serialization to/from disk</td></tr>
+    <tr><td><code>ContextFileEntry.java</code></td><td><code>iped.app.ui.ai.model</code></td><td>Wraps IItem with validation state and summary</td></tr>
+    <tr><td><code>AIChatMessage.java</code></td><td><code>iped.app.ui.ai.model</code></td><td>UI chat message model</td></tr>
+    <tr><td><code>StandardConversation.java</code></td><td><code>iped.app.ui.ai.model</code></td><td>Chatbot conversation with chatHashes and contextIds</td></tr>
+    <tr><td><code>AgentConversation.java</code></td><td><code>iped.app.ui.ai.model</code></td><td>Agent conversation with sessionId</td></tr>
+    <tr><td><code>AIContextManager.java</code></td><td><code>iped.app.ui.ai.context</code></td><td>Thread-safe context file list</td></tr>
+    <tr><td><code>ConversationManager.java</code></td><td><code>iped.app.ui.ai.context</code></td><td>Active conversation, auto-title, conversation list</td></tr>
+    <tr><td><code>ChatAreaPanel.java</code></td><td><code>iped.app.ui.ai.view</code></td><td>Chat rendering, streaming orchestration, citation clicks</td></tr>
+    <tr><td><code>ChatStreamAnimator.java</code></td><td><code>iped.app.ui.ai.view</code></td><td>Timer-based teletype animation</td></tr>
+    <tr><td><code>AIMarkdownRenderer.java</code></td><td><code>iped.app.ui.ai.view</code></td><td>Markdown-to-StyledDocument, citations, thinking blocks</td></tr>
+  </tbody>
+</table>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 16. CONCLUSION                                               -->
+<!-- ============================================================ -->
+<section id="sec-conclusion">
+<h2>16. Conclusion</h2>
+<div class="card">
+<p>
+  The IPED AI Assistant Chatbot is designed around a central trade-off:
+  answer quality versus data volume. For small contexts, raw HTML provides the
+  LLM with complete information. For large contexts, pre-computed summaries
+  prevent token overflow while preserving essential information. The three-path
+  routing strategy, driven by chunk count, makes this adaptation automatic
+  and transparent to the user.
+</p>
+<p>
+  The architecture separates concerns cleanly: the view layer handles
+  rendering, the controller manages lifecycle, the coordinator orchestrates
+  the pipeline, the payload factory translates data formats, and the network
+  client handles HTTP communication. This separation makes each component
+  independently testable and replaceable.
+</p>
+<p>
+  Error recovery is designed to be self-healing: cached hashes are preserved
+  during streaming failures and invalidated automatically on backend cache
+  misses. Partial drafts are salvaged on error so the user never loses the
+  LLM's partial response.
+</p>
+<p>
+  The citation system bridges the gap between the LLM's text output and
+  IPED's forensic navigation, enabling investigators to move seamlessly from
+  a natural-language answer to the underlying evidence.
+</p>
+</div>
+</section>
+
+</body>
+</html>
