@@ -9,8 +9,8 @@ load_dotenv()
 
 @dataclass
 class Settings:
-    iped_home: Path = field(default_factory=lambda: Path(os.getenv("IPED_HOME", "") or "."))
-    case_path: Path = field(default_factory=lambda: Path(os.getenv("CASE_PATH", "") or "."))
+    iped_home: Path = field(default_factory=lambda: Path(__file__).resolve().parents[4])
+    case_path: Path = field(default_factory=lambda: Path(__file__).resolve().parents[5])
     java_home: str = field(default_factory=lambda: os.getenv("JAVA_HOME", os.environ.get("JAVA_HOME", "")))
     jvm_max_heap: str = field(default_factory=lambda: os.getenv("JVM_MAX_HEAP", "4g"))
     mcp_host: str = field(default_factory=lambda: os.getenv("MCP_HOST", "127.0.0.1"))
@@ -19,25 +19,15 @@ class Settings:
     def validate(self) -> list[str]:
         errors = []
 
-        iped_raw = os.getenv("IPED_HOME", "")
-        if not iped_raw:
-            errors.append(
-                "IPED_HOME is not set. Add 'IPED_HOME=<path>' to .env or set the IPED_HOME environment variable."
-            )
-        elif not self.iped_home.is_dir():
+        if not self.iped_home.is_dir():
             errors.append(
                 f"IPED_HOME directory does not exist: {self.iped_home}. "
-                f"Check the path in .env or environment variable."
+                f"Check the relative path."
             )
 
-        case_raw = os.getenv("CASE_PATH", "")
-        if not case_raw:
+        if not self.case_path.exists():
             errors.append(
-                "CASE_PATH is not set. Add 'CASE_PATH=<path>' to .env or set the CASE_PATH environment variable."
-            )
-        elif not Path(case_raw).exists():
-            errors.append(
-                f"CASE_PATH does not exist: {case_raw}. Check the path in .env or environment variable."
+                f"CASE_PATH does not exist: {self.case_path}. Check the relative path."
             )
 
         java = self.java_home
