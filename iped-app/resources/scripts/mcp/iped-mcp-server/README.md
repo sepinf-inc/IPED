@@ -1,14 +1,15 @@
 # IPED MCP Server
 
-Servidor MCP (Model Context Protocol) para o [IPED](https://github.com/sepinf-inc/IPED) — ferramenta forense digital da Polícia Federal Brasileira.
+Servidor MCP (Model Context Protocol)
 
-Acessa os casos processados do IPED diretamente via Java (PyJnius), sem passar pela API REST.
+Acessa os casos processados do IPED diretamente via Java (PyJnius)
 
 ## Requisitos
 
 - **Python 3.10+**
 - **Java JDK 11** com JavaFX (ex: Liberica JDK 11 Full)
 - **IPED** instalado e um caso já processado
+- Dependencias instaladas
 
 ## Instalação
 
@@ -19,7 +20,7 @@ pip install -r requirements.txt
 
 ## Configuração
 
-Edite o arquivo `.env` (somente as variáveis opcionais):
+- se quiser, edite o arquivo `.env`:
 
 ```env
 # Opcional: caminho do JDK (se diferente do JAVA_HOME do sistema)
@@ -30,24 +31,18 @@ JAVA_HOME=C:\Program Files\Java\jdk-11
 JVM_MAX_HEAP=4g
 ```
 
-> **Nota:** `IPED_HOME` e `CASE_PATH` são resolvidos automaticamente a partir da
-> localização do arquivo `config.py` (caminhos relativos). Não é necessário
-> configurá-los no `.env`.
+- copie o arquivo opencode.json.example e renomeie para opencode.json
+- adicione chave `apiKey` para se conectar com IA local
 
 ## Uso
 
 ### Iniciar servidor (modo stdio — padrão para OpenCode)
 
+** deve estar dentro de uma pasta de caso processado do IPED **
+
 ```bash
-cd C:\iped\iped-mcp-server
+cd iped-mcp-server
 python -m src.main
-```
-
-### Iniciar servidor (modo SSE — para testes HTTP)
-
-```bash
-cd C:\iped\iped-mcp-server
-python -m src.main sse
 ```
 
 ## Ferramentas MCP Disponíveis
@@ -66,33 +61,6 @@ python -m src.main sse
 | `read_batch(source_id, doc_ids)` | Metadados + texto de múltiplos documentos |
 | `list_bookmarks()` | Lista nomes dos bookmarks |
 | `get_bookmark(name)` | Documentos em um bookmark |
-
-## Integração com OpenCode
-
-Adicione ao seu `opencode.json`:
-
-```json
-{
-  "mcpServers": {
-    "iped": {
-      "command": "python",
-      "args": ["-m", "src.main"],
-      "cwd": "C:\\iped\\iped-mcp-server"
-    }
-  }
-}
-```
-
-## Exemplos de Busca (sintaxe Lucene)
-
-```text
-name:*.pdf                    → arquivos PDF
-type:jpg                      → arquivos JPG
-category:image                → categoria imagem
-created:[2023-01-01 TO 2023-12-31]  → intervalo de data
-content:"palavra-chave"       → busca em texto completo
-*.*                           → todos os itens
-```
 
 ## Estrutura do Projeto
 

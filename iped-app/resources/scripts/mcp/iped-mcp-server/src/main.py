@@ -81,14 +81,8 @@ def main():
 
     register_tools()
 
-    transport = sys.argv[1] if len(sys.argv) > 1 else "stdio"
-
-    if transport == "sse":
-        logger.info("Starting MCP server on %s:%d (SSE)", settings.mcp_host, settings.mcp_port)
-        mcp.run(transport="sse", host=settings.mcp_host, port=settings.mcp_port)
-    else:
-        logger.info("Starting MCP server (stdio)")
-        mcp.run(transport="stdio")
+    logger.info("Starting MCP server (stdio)")
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

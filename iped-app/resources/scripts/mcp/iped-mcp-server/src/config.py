@@ -34,8 +34,6 @@ class Settings:
     case_path: Path = field(default_factory=lambda: Path(__file__).resolve().parents[5])
     java_home: str = field(default_factory=_find_java_home)
     jvm_max_heap: str = field(default_factory=lambda: os.getenv("JVM_MAX_HEAP", "4g"))
-    mcp_host: str = field(default_factory=lambda: os.getenv("MCP_HOST", "127.0.0.1"))
-    mcp_port: int = field(default_factory=lambda: int(os.getenv("MCP_PORT", "8100")))
 
     def validate(self) -> list[str]:
         errors = []
