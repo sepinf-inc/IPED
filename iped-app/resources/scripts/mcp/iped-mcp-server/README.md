@@ -19,21 +19,20 @@ pip install -r requirements.txt
 
 ## Configuração
 
-Edite o arquivo `.env`:
+Edite o arquivo `.env` (somente as variáveis opcionais):
 
 ```env
-# Caminho da instalação do IPED (pasta que contém lib/, iped-engine.jar, etc.)
-IPED_HOME=C:\IPED\iped-4.3.1
-
-# Caminho do caso processado (pasta do caso ou .txt listando múltiplos casos)
-CASE_PATH=C:\Cases\meu-caso-processado
-
 # Opcional: caminho do JDK (se diferente do JAVA_HOME do sistema)
+# Se não definido, o servidor procura automaticamente: variável de ambiente → pasta "jre" no IPED → PATH do sistema
 JAVA_HOME=C:\Program Files\Java\jdk-11
 
 # Memória máxima para a JVM
 JVM_MAX_HEAP=4g
 ```
+
+> **Nota:** `IPED_HOME` e `CASE_PATH` são resolvidos automaticamente a partir da
+> localização do arquivo `config.py` (caminhos relativos). Não é necessário
+> configurá-los no `.env`.
 
 ## Uso
 
@@ -59,10 +58,12 @@ python -m src.main sse
 | `search(query, source_id?)` | Busca com sintaxe Lucene |
 | `search_by_type(file_type, source_id?)` | Busca por extensão (pdf, jpg, etc.) |
 | `search_by_name(pattern, source_id?)` | Busca por nome com wildcards |
+| `get_searchable_fields()` | Retorna nomes e tipos dos campos indexáveis |
 | `get_document(source_id, doc_id)` | Metadados do documento |
 | `get_document_content(source_id, doc_id)` | Conteúdo binário (base64) |
 | `get_document_text(source_id, doc_id)` | Texto extraído pelo parser |
-| `get_document_thumbnail(source_id, doc_id)` | Thumbnail (base64 JPEG) |
+| `read(source_id, doc_id)` | Metadados + texto completos de um documento |
+| `read_batch(source_id, doc_ids)` | Metadados + texto de múltiplos documentos |
 | `list_bookmarks()` | Lista nomes dos bookmarks |
 | `get_bookmark(name)` | Documentos em um bookmark |
 
