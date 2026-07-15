@@ -80,6 +80,7 @@ public class SidebarPanel extends JPanel {
             JMenuItem newAgentItem = new JMenuItem("New Agent Chat");
             newAgentItem.addActionListener(ev -> listener.onNewAgentChatRequested());
             menu.add(newAgentItem);
+            menu.setPreferredSize(new Dimension(newChatButton.getWidth(), menu.getPreferredSize().height));
             menu.show(newChatButton, 0, newChatButton.getHeight());
         });
         add(newChatButton, BorderLayout.NORTH);

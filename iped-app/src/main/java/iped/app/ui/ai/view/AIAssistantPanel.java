@@ -321,6 +321,12 @@ public class AIAssistantPanel {
         }
     }
 
+    public void setTasksPanelVisible(boolean visible) {
+        if (tasksPanel != null) {
+            tasksPanel.setVisible(visible);
+        }
+    }
+
     /**
      * Exposes the context addition workflow to external UI components (e.g., IPED context menus).
      * Delegates all state evaluation and routing logic to the {@link AIAssistantController}.

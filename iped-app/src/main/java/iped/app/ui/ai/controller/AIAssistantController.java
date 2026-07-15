@@ -231,6 +231,7 @@ public class AIAssistantController {
     private void startNewChat() {
         conversationManager.startNewConversation();
         mainView.setContextPanelVisible(true);
+        mainView.setTasksPanelVisible(true);
         clearChatScreenAndMemory();
         contextManager.clearContext();
         sidebarView.updateConversationsList(conversationManager.getConversations());
@@ -243,6 +244,7 @@ public class AIAssistantController {
     private void startNewAgentChat() {
         conversationManager.startNewConversation(true);
         mainView.setContextPanelVisible(false);
+        mainView.setTasksPanelVisible(false);
         clearChatScreenAndMemory();
         contextManager.clearContext();
         sidebarView.updateConversationsList(conversationManager.getConversations());
@@ -279,6 +281,7 @@ public class AIAssistantController {
         isSwitchingChats = true;
         conversationManager.setActiveConversation(conv);
         mainView.setContextPanelVisible(!conv.isAgentConversation());
+        mainView.setTasksPanelVisible(!conv.isAgentConversation());
  
         if (coordinator != null) {
             if (conv instanceof StandardConversation) {
