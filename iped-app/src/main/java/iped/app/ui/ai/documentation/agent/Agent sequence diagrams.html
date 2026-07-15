@@ -111,10 +111,9 @@
     <a href="#flow-followup">3. Follow-Up Question (With Session)</a> &bull;
     <a href="#flow-mcp-init">4. MCP Server Initialization</a> &bull;
     <a href="#flow-mcp-tool">5. MCP Tool Execution</a> &bull;
-    <a href="#flow-citation">6. Agent Citation Generation</a> &bull;
-    <a href="#flow-error">7. Agent Error Recovery</a> &bull;
-    <a href="#flow-switch">8. Switch Agent Conversation</a> &bull;
-    <a href="#flow-delete">9. Delete Agent Conversation</a>
+    <a href="#flow-error">6. Agent Error Recovery</a> &bull;
+    <a href="#flow-switch">7. Switch Agent Conversation</a> &bull;
+    <a href="#flow-delete">8. Delete Agent Conversation</a>
   </div>
 
   <!-- ============================================================ -->
@@ -127,7 +126,8 @@
         <h3>View Layer</h3>
         <p>
           <strong>AIAssistantPanel</strong>: top-level JFrame container. Controls
-          context-panel visibility (hidden for agent conversations).
+          context-panel and quick-actions panel visibility (both hidden for
+          agent conversations).
         </p>
         <p>
           <strong>SidebarPanel</strong>: provides "New Agent Chat" dropdown
@@ -135,16 +135,11 @@
         </p>
         <p>
           <strong>ChatAreaPanel</strong>: renders agent responses with
-          streaming, handles citation token clicks.
+          streaming.
         </p>
         <p>
           <strong>AIMarkdownRenderer</strong>: parses agent output markdown
-          including <code>&lt;&lt;hash-chunkId&gt;&gt;</code> citation tokens.
-        </p>
-        <p style="color: #e67e22; font-style: italic; font-size: 0.9em;">
-          ⚠ Citation rendering is in early stages. The token format is defined
-          but end-to-end navigation (MCP → renderer → item viewer) has known
-          issues. See <a href="#flow-citation">Flow 6</a>.
+          including <code>&lt;&lt;hash-chunkId&gt;&gt;</code> tokens.
         </p>
       </div>
 
@@ -213,16 +208,8 @@
           <code>get_searchable_fields</code>, <code>get_document</code>,
           <code>get_document_content</code>, <code>get_document_text</code>,
           <code>read</code>, <code>read_batch</code>,
-          <code>list_bookmarks</code>, <code>get_bookmark</code>,
-          <code>list_sources</code>, <code>get_citation_token</code>,
-          <code>get_citation_info</code>, <code>get_citation_tokens_batch</code>.
-        </p>
-        <p style="color: #e67e22; font-style: italic; font-size: 0.9em;">
-          ⚠ Citation tools (<code>get_citation_token</code>,
-          <code>get_citation_info</code>,
-          <code>get_citation_tokens_batch</code>) are implemented but the
-          hash semantics are not yet aligned with the Java-side navigation
-          handler. See <a href="#flow-citation">Flow 6</a>.
+          <code>list_bookmarks</code>,           <code>get_bookmark</code>,
+          <code>list_sources</code>.
         </p>
       </div>
 
@@ -274,6 +261,7 @@ Sidebar->>Controller: onNewAgentChatRequested()
 Controller->>ConvMgr: startNewConversation(true)
 Note over ConvMgr: Creates AgentConversation (isAgentConversation=true)
 Controller->>MainPanel: setContextPanelVisible(false)
+Controller->>MainPanel: setTasksPanelVisible(false)
 Controller->>Controller: clearChatScreenAndMemory()
 Controller->>CtxMgr: clearContext()
 Controller->>Sidebar: updateConversationsList(conversations)
@@ -443,8 +431,11 @@ Controller->>MainPanel: setProcessing(false)
     <p>
       When <code>opencode</code> starts, it reads <code>opencode.json</code>
       and launches the MCP server as a subprocess (<code>python -m src.main</code>).
-      The MCP server validates configuration, initializes the JVM with IPED
-      classpath, opens the forensic case, and registers all tools.
+      The MCP server resolves paths automatically from its own file location
+      (<code>IPED_HOME</code> and <code>CASE_PATH</code> are derived relative to
+      <code>config.py</code>), auto-detects <code>JAVA_HOME</code> via a fallback
+      chain, validates configuration, initializes the JVM with IPED classpath,
+      opens the forensic case, and registers all tools.
     </p>
     <div class="diagram-container">
       <div class="mermaid">
@@ -463,8 +454,13 @@ Config-->>OC: mcp.iped.command = ["python", "-m", "src.main"]
 Config-->>OC: model = "local/Qwen3.5-122B"
 
 OC->>MCP_Main: spawn subprocess (stdio transport)
+Note over MCP_Main: Redirects native stdout to stderr so Java/PyJnius<br/>don't corrupt MCP JSON-RPC over stdio
+
 MCP_Main->>Settings: settings.validate()
-Settings->>Settings: check IPED_HOME, CASE_PATH, JAVA_HOME, JVM_MAX_HEAP
+Settings->>Settings: Resolve IPED_HOME from config.py relative path (parents[4])
+Settings->>Settings: Resolve CASE_PATH from config.py relative path (parents[5])
+Settings->>Settings: Auto-detect JAVA_HOME: env → IPED/jre → system PATH
+Settings->>Settings: Check JVM_MAX_HEAP (env or default "4g")
 Settings-->>MCP_Main: errors (if any) or OK
 
 alt validation failed
@@ -490,11 +486,10 @@ else multi-source
 end
 
 MCP_Main->>Tools: register_tools()
-Note over Tools: 15 tools registered: search, search_by_type, search_by_name,
+Note over Tools: 12 tools registered: search, search_by_type, search_by_name,
 Note over Tools: get_searchable_fields, get_document, get_document_content,
 Note over Tools: get_document_text, read, read_batch, list_bookmarks,
-Note over Tools: get_bookmark, list_sources, get_citation_token,
-Note over Tools: get_citation_info, get_citation_tokens_batch
+Note over Tools: get_bookmark, list_sources
 
 MCP_Main->>MCP_Main: mcp.run(transport="stdio")
 Note over MCP_Main: Ready to receive tool calls from opencode
@@ -557,99 +552,17 @@ IPED-->>CaseMgr: text content
 MCP-->>OC: {hash_info, metadata, content}
 OC->>LLM: tool_result: document metadata + text
 
-LLM->>OC: text response with citation tokens
+LLM->>OC: text response with [[hash-chunkId]] tokens
 OC-->>AgentSvc: JSON-Lines stdout with text content
       </div>
     </div>
   </div>
 
   <!-- ============================================================ -->
-  <!-- FLOW 6 — AGENT CITATION GENERATION                          -->
-  <!-- ============================================================ -->
-  <div class="card" id="flow-citation">
-    <h2>Flow 6: Agent Citation Generation</h2>
-    <div style="background: #fef9e7; border-left: 4px solid #f39c12; padding: 12px 16px; margin-bottom: 15px; border-radius: 4px;">
-      <strong>⚠ Work in Progress</strong><br>
-      Citation features are in their early stages. The MCP tools, renderer
-      token parsing, and click handler are all implemented, but the
-      end-to-end flow is not yet fully working. The hash value used in
-      citation tokens (Lucene internal ID) does not yet match what the
-      Java navigation handler expects (content hash). This diagram
-      documents the intended architecture at this snapshot in time.
-    </div>
-    <p>
-      The agent generates citations using the <code>&lt;&lt;hash-chunkId&gt;&gt;</code>
-      format. This can happen in two ways: (1) the LLM constructs citations
-      directly from tool result hashes, or (2) the LLM calls the dedicated
-      <code>get_citation_token</code> / <code>get_citation_info</code> MCP
-      tools. The resulting tokens are rendered as clickable links by
-      <code>AIMarkdownRenderer</code> in the chat UI.
-    </p>
-    <p style="color: #666; font-style: italic; font-size: 0.9em;">
-      Note: the Mermaid diagram below uses <code>[[...]]</code> to represent
-      <code>&lt;&lt;...&gt;&gt;</code> tokens, which conflict with Mermaid's
-      <code>&lt;&lt;</code> stereotype syntax.
-    </p>
-    <div class="diagram-container">
-      <div class="mermaid">
-sequenceDiagram
-autonumber
-participant LLM as LLM (Qwen3.5-122B)
-participant OC as opencode CLI
-participant MCP as MCP Server
-participant CaseMgr as IPEDCaseManager
-participant AgentSvc as OpenCodeAgentService
-participant ChatArea as ChatAreaPanel
-participant Renderer as AIMarkdownRenderer
-participant Controller as AIAssistantController
-participant IPED as IPED Searcher / Viewer
-actor User
-
-Note over LLM: LLM decides to reference a document
-
-alt LLM constructs citation from tool result hash
-    LLM->>OC: 'text: "Found document [[12345-ch42]] in the case"'
-    OC-->>AgentSvc: 'text: "Found document [[12345-ch42]]..."'
-else LLM calls citation tool
-    LLM->>OC: 'tool_use: get_citation_token(source_id=0, doc_id=42)'
-    OC->>MCP: 'JSON-RPC: tools/call'
-    MCP->>CaseMgr: 'get_item(42, 0)'
-    CaseMgr-->>MCP: '{lucene_id: 12345}'
-    MCP-->>OC: '[[12345-ch42]]'
-    OC->>LLM: 'tool_result: [[12345-ch42]]'
-    LLM->>OC: 'text: "The file [[12345-ch42]] contains..."'
-    OC-->>AgentSvc: 'text: "The file [[12345-ch42]]..."'
-end
-
-AgentSvc->>AgentSvc: extractTextFromJsonLines()
-AgentSvc-->>ChatArea: uiCallback(text with citation tokens)
-ChatArea->>ChatArea: enqueueStreamingToken(token)
-
-Note over Renderer: Timer tick renders markdown
-ChatArea->>Renderer: renderDraft(assistantDraft)
-Renderer->>Renderer: Parse [[hash-chunkId]] tokens
-Renderer->>Renderer: appendToken with attributes
-
-Note over ChatArea: User sees clickable citation link
-
-User->>ChatArea: click citation token [[12345-ch42]]
-ChatArea->>ChatArea: Read TOKEN_HASH_ATTRIBUTE=12345
-ChatArea->>ChatArea: Read TOKEN_CHUNK_ID_ATTRIBUTE=42
-ChatArea->>Controller: navigationCallback("12345", "42")
-Controller->>IPED: search by hash ("hash:12345")
-IPED-->>Controller: luceneId
-Controller->>IPED: setElementIDToScroll("42")
-Controller->>IPED: new FileProcessor(luceneId, true).execute()
-Controller->>IPED: selectItemInResultsTable(luceneId)
-      </div>
-    </div>
-  </div>
-
-  <!-- ============================================================ -->
-  <!-- FLOW 7 — AGENT ERROR RECOVERY                               -->
+  <!-- FLOW 6 — AGENT ERROR RECOVERY                               -->
   <!-- ============================================================ -->
   <div class="card" id="flow-error">
-    <h2>Flow 7: Agent Error Recovery</h2>
+    <h2>Flow 6: Agent Error Recovery</h2>
     <p>
       Agent errors can occur at three points: opencode process fails to start,
       the process exits with a non-zero code, or an exception occurs during
@@ -719,10 +632,10 @@ end
   </div>
 
   <!-- ============================================================ -->
-  <!-- FLOW 8 — SWITCH AGENT CONVERSATION                          -->
+  <!-- FLOW 7 — SWITCH AGENT CONVERSATION                          -->
   <!-- ============================================================ -->
   <div class="card" id="flow-switch">
-    <h2>Flow 8: Switch Agent Conversation</h2>
+    <h2>Flow 7: Switch Agent Conversation</h2>
     <p>
       Switching to a previous agent conversation restores the chat messages and
       the <code>sessionId</code>. No background context restoration occurs
@@ -746,6 +659,7 @@ Sidebar->>Controller: onConversationSelected(conv)
 Controller->>Controller: isSwitchingChats = true
 Controller->>ConvMgr: setActiveConversation(conv)
 Controller->>MainPanel: setContextPanelVisible(false)
+Controller->>MainPanel: setTasksPanelVisible(false)
 
 Controller->>Coord: loadHistoricalContext(null, null, conv.messages)
 Note over Coord: Restores chatHistory (user + assistant turns only)
@@ -763,10 +677,10 @@ Note over Controller: No background context restoration.
   </div>
 
   <!-- ============================================================ -->
-  <!-- FLOW 9 — DELETE AGENT CONVERSATION                          -->
+  <!-- FLOW 8 — DELETE AGENT CONVERSATION                          -->
   <!-- ============================================================ -->
   <div class="card" id="flow-delete">
-    <h2>Flow 9: Delete Agent Conversation</h2>
+    <h2>Flow 8: Delete Agent Conversation</h2>
     <p>
       Deletion follows the same soft-delete pattern as standard conversations.
       The file is saved with <code>status = "deleted"</code> and preserved on

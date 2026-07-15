@@ -482,7 +482,10 @@ graph TB
   <li>The item must be a WhatsApp chat (verified via
   <code>AIWhatsappChatExtractor.isWhatsAppChatType()</code>).</li>
   <li>The item must not belong to the "Empty Files" category.</li>
-  <li>The item must not have its communication flagged as empty.</li>
+  <li>If the item already has a pre-computed AI summary (detected via
+  <code>SummaryValueExtractor.hasSummary()</code>), it is accepted immediately
+  and the remaining checks are skipped.</li>
+  <li>Otherwise, the item must not have its communication flagged as empty.</li>
 </ul>
 <p>
   Valid items are stored as <code>ContextFileEntry</code> objects in the
@@ -578,7 +581,7 @@ sequenceDiagram
   reads the IPED item's <code>InputStream</code> into a UTF-8 string. It
   verifies the item is a WhatsApp chat type before reading.</li>
   <li><strong>Initialization:</strong> The HTML is wrapped in an
-  <code>AIInitChatRequest</code> (<code>{"chat_html": "..."}</code>) and sent
+  <code>AIInitChatRequest</code> (<code>{"chat_content": "..."}</code>) and sent
   to <code>/api/init_chat</code>. The backend returns a hash that identifies
   the cached session.</li>
   <li><strong>Session caching:</strong> The hash is stored in
@@ -869,7 +872,7 @@ graph TD
   <tbody>
     <tr><td><code>thinking</code></td><td>Wrapped in <code>[[AI_THINKING]]...[[/AI_THINKING]]</code> markers for collapsible rendering.</td></tr>
     <tr><td><code>thinking_done</code></td><td>Closes the thinking block.</td></tr>
-    <tr><td><code>status</code></td><td>Formatted as italic markdown: <code>_[Status]: content_</code></td></tr>
+    <tr><td><code>status</code></td><td>Formatted as bold inside italic markdown: <code>_**[Status]:** content_</code></td></tr>
     <tr><td><code>final</code></td><td>First token gets <code>**[FINAL ANSWER]:**</code> prefix; subsequent tokens pass through.</td></tr>
     <tr><td><code>error</code></td><td>Throws <code>AIBackendException</code>.</td></tr>
     <tr><td><code>[DONE]</code> or empty</td><td>Ignored (keep-alive / termination signal).</td></tr>
@@ -985,9 +988,9 @@ graph TD
 <div class="callout callout-info">
   <strong>Design note:</strong> Citations work for both chatbot and agent
   features. The chatbot's backend produces citations from the HTML chat
-  content during summarization. The agent's MCP tools can produce citations
-  from search and document-read results (though this path is still in early
-  stages).
+  content during summarization. The agent's MCP citation tools are planned
+  but not yet implemented; the LLM may produce citation tokens
+  directly in its text output using tool result hashes.
 </div>
 
 </div>
