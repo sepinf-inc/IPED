@@ -90,6 +90,7 @@ public class LogConfiguration {
     public void configureLogParameters(boolean noLog) throws MalformedURLException {
 
         System.setProperty("logFileDate", df.format(new Date())); //$NON-NLS-1$
+        System.setProperty("iped.logUser", getSanitizedUserName()); //$NON-NLS-1$
         File configFile = null;
         if (noLog)
             configFile = new File(rootPath, "conf/Log4j2ConfigurationConsoleOnly.xml"); //$NON-NLS-1$
@@ -116,6 +117,10 @@ public class LogConfiguration {
             }
         }
 
+    }
+
+    private String getSanitizedUserName() {
+        return System.getProperty("user.name", "unknown_user").replaceAll("[\\t\\r\\n]", " "); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     public PrintStream getSystemOut() {
