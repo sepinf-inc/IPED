@@ -424,7 +424,7 @@ public class Manager {
          * 512MB Lucene gains little.
          */
         long heapMB = Runtime.getRuntime().maxMemory() / (1024 * 1024);
-        conf.setRAMBufferSizeMB(Math.min(Math.max(64, heapMB / 16), 512));
+        conf.setRAMBufferSizeMB(Math.min(Math.max(64, heapMB / 32), 512));
         TieredMergePolicy tieredPolicy = new TieredMergePolicy();
         /*
          * Seta tamanho máximo dos subíndices. Padrão é 5GB. Poucos subíndices grandes
