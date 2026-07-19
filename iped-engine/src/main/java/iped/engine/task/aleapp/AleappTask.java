@@ -66,7 +66,7 @@ public class AleappTask extends AbstractTask {
     private static final String UFDR_EXT = "ufdr";
 
     private static final Set<String> dumpStartFolderNames = Set.of("Dump", "backup");
-    private static final Set<String> artifactInfosToIgnore = Set.of("function", "paths", "requirements", "output_types", "notes");
+    private static final Set<String> artifactInfosToIgnore = Set.of("function", "paths", "requirements", "output_types", "notes", "sample_data");
 
     public static final String ALEAPP_METADATA_PREFIX = "aleapp:";
     public static final String ALEAPP_PLUGIN_METADATA_PREFIX = ALEAPP_METADATA_PREFIX + "plugin:";
