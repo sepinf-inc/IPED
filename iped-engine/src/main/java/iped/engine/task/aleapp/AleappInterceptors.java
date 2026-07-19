@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.engine.data.CaseData;
+import iped.engine.task.aleapp.interceptors.IlapFuncsGetSqliteDbPathInterceptor;
 import iped.engine.task.aleapp.interceptors.IlapfuncsGetBinaryFileContentInterceptor;
 import iped.engine.task.aleapp.interceptors.IlapfuncsGetTxtFileContentInterceptor;
 import iped.engine.task.aleapp.interceptors.IlapfuncsLogfuncInterceptor;
@@ -25,6 +26,7 @@ public class AleappInterceptors {
         interceptors.add(new IlapfuncsLogfuncInterceptor());
         interceptors.add(new IlapfuncsGetBinaryFileContentInterceptor(caseData));
         interceptors.add(new IlapfuncsGetTxtFileContentInterceptor(caseData));
+        interceptors.add(new IlapFuncsGetSqliteDbPathInterceptor(caseData));
         interceptors.add(new IlapfuncsTsvInterceptor());
         interceptors.add(new PythonOpenInterceptor(caseData));
         interceptors.add(new PathConstructorInterceptor(caseData));
