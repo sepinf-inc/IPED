@@ -104,6 +104,7 @@ public class AleappTask extends AbstractTask {
         private CaseData caseData;
         private Worker worker;
         private IItem pluginItem;
+        private Map<String, String> translatedPaths = new HashMap<>();
 
         public State(CaseData caseData, Worker worker, IItem pluginItem) {
             this.caseData = caseData;
@@ -122,6 +123,10 @@ public class AleappTask extends AbstractTask {
         public IItem getPluginItem() {
             return pluginItem;
         }
+
+        public Map<String, String> getTranslatedPaths() {
+            return translatedPaths;
+        }
     }
 
     private ExecutorService getExecutor() {
@@ -136,10 +141,6 @@ public class AleappTask extends AbstractTask {
 
     public static State getState() {
         return stateThreadLocal.get();
-    }
-
-    public static Map<String, String> getTranslatedPaths() {
-        return translatedPaths;
     }
 
     @Override

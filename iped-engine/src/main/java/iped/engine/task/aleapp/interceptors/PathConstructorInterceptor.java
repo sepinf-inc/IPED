@@ -30,7 +30,7 @@ public class PathConstructorInterceptor extends CallInterceptor {
                     tempFile.toFile().deleteOnExit();
                     args[i] = tempFile.toString();
 
-                    AleappTask.getTranslatedPaths().put(tempFile.toString(), foundItem.getPath());
+                    AleappTask.getState().getTranslatedPaths().put(tempFile.toString(), foundItem.getPath());
 
                 } else {
                     throw new IllegalStateException("Item not found in case: " + args[i]);

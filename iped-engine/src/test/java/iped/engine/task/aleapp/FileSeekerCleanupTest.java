@@ -27,7 +27,7 @@ public class FileSeekerCleanupTest {
     @After
     public void tearDown() {
         // never leave state behind in the process-wide static map
-        AleappTask.getTranslatedPaths().remove(TEST_TRANSLATED_KEY);
+        AleappTask.getState().getTranslatedPaths().remove(TEST_TRANSLATED_KEY);
     }
 
     /**
