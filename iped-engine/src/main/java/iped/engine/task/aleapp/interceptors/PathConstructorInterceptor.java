@@ -21,9 +21,12 @@ public class PathConstructorInterceptor extends CallInterceptor {
     protected void handleArgs(Object[] args, Map<String, Object> kwargs) throws Exception {
 
         for (int i = 0; i < args.length; i++) {
-            if (args[i] instanceof String && ((String) args[i]).startsWith(FileSeeker.IPED_PATH_PREFIX)) {
+            if (args[i] instanceof String && FileSeeker.isIPEDPath((String) args[i])) {
                 IItemReader foundItem = AleappUtils.findItemByPath(caseData, (String) args[i]);
                 if (foundItem != null) {
+
+                    // we don't use foundItem.getTempFile() here because the filename has 
+                    // to be the same as the original filename, otherwise some plugins will not work
                     Path tempDir = Files.createTempDirectory("path_constructor");
                     Path tempFile = tempDir.resolve(foundItem.getName());
                     Files.copy(foundItem.getBufferedInputStream(), tempFile);

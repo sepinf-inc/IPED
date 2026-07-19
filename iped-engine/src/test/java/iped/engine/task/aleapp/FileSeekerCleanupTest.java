@@ -9,6 +9,7 @@ import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -88,7 +89,7 @@ public class FileSeekerCleanupTest {
 
         try {
             try {
-                seeker.search("*/com.android.vending/databases/*.db");
+                seeker.search(Arrays.asList("*/com.android.vending/databases/*.db"));
             } catch (Exception ignored) {
                 // SQLite export may fail with empty bytes — temp dir was still created
             }
@@ -149,13 +150,13 @@ public class FileSeekerCleanupTest {
         FileSeeker seeker = new FileSeeker("/root", searcher);
 
         // Simulate an exported sqlite: a translatedPaths entry tracked by this seeker
-        AleappTask.getTranslatedPaths().put(TEST_TRANSLATED_KEY, "/root/data/test.db");
+        AleappTask.getState().getTranslatedPaths().put(TEST_TRANSLATED_KEY, "/root/data/test.db");
         getTranslatedKeys(seeker).add(TEST_TRANSLATED_KEY);
 
         seeker.cleanup();
 
         assertFalse("cleanup() must remove translatedPaths entries added by this seeker",
-                AleappTask.getTranslatedPaths().containsKey(TEST_TRANSLATED_KEY));
+                AleappTask.getState().getTranslatedPaths().containsKey(TEST_TRANSLATED_KEY));
         assertTrue("cleanup() must clear the translatedKeys list", getTranslatedKeys(seeker).isEmpty());
     }
 }

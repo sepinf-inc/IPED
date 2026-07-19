@@ -2,11 +2,11 @@ package iped.engine.task.aleapp.interceptors;
 
 import static iped.engine.task.aleapp.AleappTask.ALEAPP_APPLICATION_PREFIX;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Message;
@@ -23,7 +23,6 @@ import iped.engine.task.aleapp.AleappTask.State;
 import iped.engine.task.aleapp.AleappUtils;
 import iped.engine.task.aleapp.CallInterceptor;
 import iped.engine.task.aleapp.FileSeeker;
-import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import jep.PyMethod;
 
@@ -59,14 +58,17 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         state.getPluginItem().setHasChildren(true);
 
         // linkedItems for subItems
-        String linkedItem = null;
+        Set<String> globalIds = new HashSet<>();
         if (sourceFile != null) {
             IItemReader sourceFileItem = AleappUtils.findItemByPath(state.getCaseData(), sourceFile);
-            if (sourceFileItem != null && sourceFileItem.getHash() != null) {
-                linkedItem = BasicProps.HASH + ":\"" + sourceFileItem.getHash() + "\"";
+            if (sourceFileItem != null) {
+                globalIds.add((String) sourceFileItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
             }
         }
-        String finalLinkedItem = linkedItem;
+        for (IItemReader foundFile : state.getFoundFiles()) {
+            globalIds.add((String) foundFile.getExtraAttribute(ExtraProperties.GLOBAL_ID));
+        }
+        String likedItems = ExtraProperties.GLOBAL_ID + ":(" + String.join(" ", globalIds) + ")";
 
         // media type
         String pluginName = state.getPluginItem().getMetadata().get(AleappTask.ALEAPP_PLUGIN_KEYNAME_META);
@@ -79,7 +81,7 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         }
 
         // create subItems
-        IntStream.range(0, dataList.size()).forEach(index -> {
+        for (int index = 0; index < dataList.size(); index++) {
 
             String subItemName = tsvName + "-" + index;
             Item subItem = (Item) state.getPluginItem().createChildItem();
@@ -90,9 +92,7 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
             subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             subItem.setSubItem(true);
             subItem.setSubitemId(index);
-            if (finalLinkedItem != null) {
-                subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, finalLinkedItem);
-            }
+            subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, likedItems);
 
             // data as metadata
             List<Object> data = dataList.get(index);
@@ -102,10 +102,12 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
                 if (value != null) {
                     String header = dataHeaders.get(i);
                     String valueStr = value.toString();
-                    if (AleappTask.getTranslatedPaths().containsKey(valueStr)) {
-                        valueStr = AleappTask.getTranslatedPaths().get(valueStr);
+                    if (state.getTranslatedPaths().containsKey(valueStr)) {
+                        valueStr = state.getTranslatedPaths().get(valueStr);
                     }
-                    valueStr = StringUtils.removeStart(valueStr, FileSeeker.IPED_PATH_PREFIX);
+                    if (FileSeeker.isIPEDPath(valueStr)) {
+                        valueStr = FileSeeker.getItemPath(valueStr);
+                    }
                     subItem.getMetadata().set("aleapp:" + header, valueStr);
                     if (standardFields[i] == StandardField.LATITUDE) {
                         lat = valueStr;
@@ -119,7 +121,7 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
             setLocationIfValid(subItem, lat, lon);
 
             state.getWorker().processNewItem(subItem, ProcessTime.LATER);
-        });
+        }
 
         return null;
     }

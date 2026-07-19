@@ -21,7 +21,7 @@ public class PythonOpenInterceptor extends CallInterceptor {
 
         String filePath = (String) getArgumentValue("file", 0, args, kwargs);
 
-        if (filePath.startsWith(FileSeeker.IPED_PATH_PREFIX)) {
+        if (FileSeeker.isIPEDPath(filePath)) {
             IItemReader foundItem = AleappUtils.findItemByPath(caseData, filePath);
             if (foundItem != null) {
 
