@@ -125,6 +125,10 @@ public class IconManager {
         return getTreeIcon(isOpened ? folderOpenedKey : folderClosedKey);
     }
 
+    public static Icon getReportFolderIcon() {
+        return getReportFolderIcon(false);
+    }
+
     public static Icon getReportFolderIcon(boolean isOpened) {
         return getTreeIcon(isOpened ? reportFolderOpenedKey : reportFolderClosedKey);
     }

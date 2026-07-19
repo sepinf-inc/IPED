@@ -36,6 +36,8 @@ import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.task.index.IndexItem;
 import iped.localization.LocalizedProperties;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
@@ -89,9 +91,15 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
                         icon = IconManager.getFolderIcon();
                     } else {
-                        String type = doc.get(IndexItem.TYPE);
-                        String contentType = doc.get(IndexItem.CONTENTTYPE);
-                        icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
+                        boolean isDecodedReport = Boolean.parseBoolean(doc.get(ExtraProperties.DECODED_DATA))
+                                && Boolean.parseBoolean(doc.get(BasicProps.HASCHILD));
+                        if (isDecodedReport) {
+                            icon = IconManager.getReportFolderIcon(false);
+                        } else {
+                            String type = doc.get(IndexItem.TYPE);
+                            String contentType = doc.get(IndexItem.CONTENTTYPE);
+                            icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
+                        }
                     }
                 } catch (IOException e) {
                 }

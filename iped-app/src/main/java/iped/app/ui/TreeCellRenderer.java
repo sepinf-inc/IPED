@@ -43,8 +43,8 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
         boolean isDir = Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR)) || node.docId == -1;
         super.getTreeCellRendererComponent(tree, value, selected, expanded, !isDir, row, hasFocus);
 
-        boolean isDecodedReport = Boolean.valueOf(node.getDoc().get(ExtraProperties.DECODED_DATA));
-        isDecodedReport = isDecodedReport && Boolean.valueOf(node.getDoc().get(BasicProps.HASCHILD));
+        boolean isDecodedReport = Boolean.parseBoolean(node.getDoc().get(ExtraProperties.DECODED_DATA))
+                && Boolean.parseBoolean(node.getDoc().get(BasicProps.HASCHILD));
 
         if (row == 0) {
             setIcon(rootIcon);
