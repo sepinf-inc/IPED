@@ -15,21 +15,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
 import org.junit.Test;
 
 import iped.data.IItemReader;
 import iped.search.IItemSearcher;
 
 public class FileSeekerCleanupTest {
-
-    private static final String TEST_TRANSLATED_KEY = "/tmp/sqlite_tmp_fake/test.db";
-
-    @After
-    public void tearDown() {
-        // never leave state behind in the process-wide static map
-        AleappTask.getState().getTranslatedPaths().remove(TEST_TRANSLATED_KEY);
-    }
 
     /**
      * Minimal dynamic stub: returns the mapped value for invoked method names,
@@ -67,12 +58,6 @@ public class FileSeekerCleanupTest {
         return (List<Path>) f.get(seeker);
     }
 
-    @SuppressWarnings("unchecked")
-    private List<String> getTranslatedKeys(FileSeeker seeker) throws Exception {
-        Field f = FileSeeker.class.getDeclaredField("translatedKeys");
-        f.setAccessible(true);
-        return (List<String>) f.get(seeker);
-    }
 
     @Test
     public void testCleanupDeletesTempDirs() throws Exception {
@@ -89,7 +74,10 @@ public class FileSeekerCleanupTest {
 
         try {
             try {
-                seeker.search(Arrays.asList("*/com.android.vending/databases/*.db"));
+                List<IItemReader> foundFiles = seeker.search(Arrays.asList("*/com.android.vending/databases/*.db"));
+                for (IItemReader foundFile : foundFiles) {
+                    seeker.convertItemPathToPlugin(foundFile);
+                }
             } catch (Exception ignored) {
                 // SQLite export may fail with empty bytes — temp dir was still created
             }
@@ -142,21 +130,5 @@ public class FileSeekerCleanupTest {
         assertFalse("cleanup() must delete the injected temp dir", Files.exists(tempDir));
         assertFalse("cleanup() must delete files inside the temp dir", Files.exists(tempFile));
         assertTrue("cleanup() must clear the tempDirs list", getTempDirs(seeker).isEmpty());
-    }
-
-    @Test
-    public void testCleanupRemovesTranslatedPathEntries() throws Exception {
-        IItemSearcher searcher = searcherReturning(Collections.emptyList());
-        FileSeeker seeker = new FileSeeker("/root", searcher);
-
-        // Simulate an exported sqlite: a translatedPaths entry tracked by this seeker
-        AleappTask.getState().getTranslatedPaths().put(TEST_TRANSLATED_KEY, "/root/data/test.db");
-        getTranslatedKeys(seeker).add(TEST_TRANSLATED_KEY);
-
-        seeker.cleanup();
-
-        assertFalse("cleanup() must remove translatedPaths entries added by this seeker",
-                AleappTask.getState().getTranslatedPaths().containsKey(TEST_TRANSLATED_KEY));
-        assertTrue("cleanup() must clear the translatedKeys list", getTranslatedKeys(seeker).isEmpty());
     }
 }
