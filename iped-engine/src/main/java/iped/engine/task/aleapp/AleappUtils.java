@@ -89,7 +89,7 @@ public final class AleappUtils {
     }
 
     public static IItemReader findItemByPath(ICaseData caseData, String path) {
-        String itemPath = StringUtils.substringAfter(path, FileSeeker.IPED_PATH_PREFIX);
+        String itemPath = FileSeeker.getItemPath(path);
         String query = BasicProps.PATH + ":\"" + itemPath + "\"";
         return getSearcher(caseData).search(query).stream().filter(item -> itemPath.equals(item.getPath())).findFirst().orElse(null);
     }

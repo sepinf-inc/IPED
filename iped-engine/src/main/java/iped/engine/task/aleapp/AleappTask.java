@@ -1,17 +1,16 @@
 package iped.engine.task.aleapp;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -79,8 +78,6 @@ public class AleappTask extends AbstractTask {
     private static final String EXTRACTION_TYPE_UFDR = "ufdr";
     private static final String EXTRACTION_TYPE_DUMP = "dump";
 
-    private static final Map<String, String> translatedPaths = new ConcurrentHashMap<>();
-
     private volatile boolean initialized = false;
     private Map<String, PluginSpec> selectedPlugins;
     private ALeappConfig config;
@@ -104,8 +101,10 @@ public class AleappTask extends AbstractTask {
         private CaseData caseData;
         private Worker worker;
         private IItem pluginItem;
+        private List<IItemReader> foundFiles;
+        private Map<String, String> translatedPaths = new HashMap<>();
 
-        public State(CaseData caseData, Worker worker, IItem pluginItem) {
+        public State(CaseData caseData, Worker worker, IItem pluginItem, List<IItemReader> foundFiles) {
             this.caseData = caseData;
             this.worker = worker;
             this.pluginItem = pluginItem;
@@ -122,6 +121,14 @@ public class AleappTask extends AbstractTask {
         public IItem getPluginItem() {
             return pluginItem;
         }
+
+        public List<IItemReader> getFoundFiles() {
+            return foundFiles;
+        }
+
+        public Map<String, String> getTranslatedPaths() {
+            return translatedPaths;
+        }
     }
 
     private ExecutorService getExecutor() {
@@ -136,10 +143,6 @@ public class AleappTask extends AbstractTask {
 
     public static State getState() {
         return stateThreadLocal.get();
-    }
-
-    public static Map<String, String> getTranslatedPaths() {
-        return translatedPaths;
     }
 
     @Override
@@ -215,6 +218,8 @@ public class AleappTask extends AbstractTask {
                     .filter(plugin -> config.isPluginIncluded(plugin.getModuleName()))
                     .collect(Collectors.toMap(PluginSpec::getName, Function.identity()));
 
+            jep.exec("from scripts.context import Context");
+
             if (!outputParametersCreated.getAndSet(true)) {
                 // Sets the reportFolder (can be executed once, due to os.makedirs() in OutputParameters constructor
                 // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
@@ -222,6 +227,7 @@ public class AleappTask extends AbstractTask {
                 jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
                 outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
                 deviceInfoPath = jep.getValue("OutputParameters.screen_output_file_path_devinfo", String.class);
+                jep.exec("Context.set_output_params(out_params)");
             } else {
                 jep.set("OutputParameters.screen_output_file_path_devinfo", deviceInfoPath);
             }
@@ -316,7 +322,7 @@ public class AleappTask extends AbstractTask {
         worker.processNewItem(caseEvidence, ProcessTime.LATER);
     }
 
-    private void processCaseEvidence(IItem caseEvidence) {
+    private void processCaseEvidence(IItem caseEvidence) throws Exception {
 
         // check if case is a real dump of Android extraction
         String extractionType = caseEvidence.getMetadata().get(ALEAPP_EXTRACTION_TYPE_META);
@@ -325,31 +331,34 @@ public class AleappTask extends AbstractTask {
             return;
         }
 
-        // creates one subitem for each plugin execution
-        for (PluginSpec plugin : selectedPlugins.values()) {
+        executePythonCode(() -> {
 
-            Item pluginEvidence = (Item) caseEvidence.createChildItem();
-            pluginEvidence.setMediaType(ALEAPP_PLUGIN_RESULTS_MEDIATYPE);
+            // creates one subitem for each plugin execution
+            for (PluginSpec plugin : selectedPlugins.values()) {
 
-            String name = StringUtils.firstNonBlank((String) plugin.getArtifactInfo().get("name"), plugin.getName());
-            pluginEvidence.setName(name);
-            pluginEvidence.setExtension("");
-            pluginEvidence.setPath(caseEvidence.getPath() + "/" + name);
-            pluginEvidence.setIdInDataSource("");
-            pluginEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+                Item pluginEvidence = (Item) caseEvidence.createChildItem();
+                pluginEvidence.setMediaType(ALEAPP_PLUGIN_RESULTS_MEDIATYPE);
 
-            pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_KEYNAME_META, plugin.getName());
-            pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + "moduleName", plugin.getModuleName());
-            pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + "category", plugin.getCategory());
-            for (Entry<String, Object> entry : plugin.getArtifactInfo().entrySet()) {
-                if (artifactInfosToIgnore.contains(entry.getKey())) {
-                    continue;
+                String name = StringUtils.firstNonBlank((String) plugin.getArtifactInfo().get("name"), plugin.getName());
+                pluginEvidence.setName(name);
+                pluginEvidence.setExtension("");
+                pluginEvidence.setPath(caseEvidence.getPath() + "/" + name);
+                pluginEvidence.setIdInDataSource("");
+                pluginEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+
+                pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_KEYNAME_META, plugin.getName());
+                pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + "moduleName", plugin.getModuleName());
+                pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + "category", plugin.getCategory());
+                for (Entry<String, Object> entry : plugin.getArtifactInfo().entrySet()) {
+                    if (artifactInfosToIgnore.contains(entry.getKey())) {
+                        continue;
+                    }
+                    pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + entry.getKey(), entry.getValue().toString());
                 }
-                pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + entry.getKey(), entry.getValue().toString());
-            }
 
-            worker.processNewItem(pluginEvidence, ProcessTime.LATER);
-        }
+                worker.processNewItem(pluginEvidence, ProcessTime.LATER);
+            }
+        });
 
         // creates subitem to hold device info collected
         Item deviceInfoEvidence = (Item) caseEvidence.createChildItem();
@@ -361,33 +370,37 @@ public class AleappTask extends AbstractTask {
 
     }
 
-    @SuppressWarnings("unchecked")
-    private void processPluginEvidence(IItem pluginEvidence) {
+    private void processPluginEvidence(IItem pluginEvidence) throws Exception {
+        executePythonCode(() -> {
+            doProcessPluginEvidence(pluginEvidence);
+        });
+    }
+
+    private void doProcessPluginEvidence(IItem pluginEvidence) {
+
+        String pluginName = pluginEvidence.getMetadata().get(ALEAPP_PLUGIN_KEYNAME_META);
+        PluginSpec plugin = selectedPlugins.get(pluginName);
+        if (plugin == null) {
+            throw new IllegalStateException("Plugin should have been found: " + pluginName);
+        }
+
+        // look for the files the plugin needs
+        // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L386)
+        IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
+        String rootPath = StringUtils.substringBefore(pluginEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
+        FileSeeker seeker = new FileSeeker(rootPath, searcher);
 
         try {
-            stateThreadLocal.set(new State(caseData, worker, pluginEvidence));
 
-            String pluginName = pluginEvidence.getMetadata().get(ALEAPP_PLUGIN_KEYNAME_META);
-            PluginSpec plugin = selectedPlugins.get(pluginName);
-            if (plugin == null) {
-                throw new IllegalStateException("Plugin should have been found: " + pluginName);
-            }
-
-            // look for the files the plugin needs
-            // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L386)
-            IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-            String rootPath = StringUtils.substringBefore(pluginEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
-            FileSeeker seeker = new FileSeeker(rootPath, searcher);
-            HashSet<String> filesFound = new HashSet<>();
-            for (String regex : plugin.getSearchRegexes()) {
-                filesFound.addAll((Collection<String>) seeker.search(regex, false));
-            }
+            List<IItemReader> filesFound = seeker.search(plugin.getSearchRegexes());
 
             if (filesFound.isEmpty()) {
                 logger.warn("Ignoring Aleapp {} plugin: no files found", pluginName);
                 pluginEvidence.setToIgnore(true);
                 return;
             }
+
+            stateThreadLocal.set(new State(caseData, worker, pluginEvidence, filesFound));
 
             try {
                 // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L409
@@ -396,7 +409,10 @@ public class AleappTask extends AbstractTask {
 
                 // call the plugin method
                 // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L418
-                plugin.getMethod().call(new ArrayList<>(filesFound), categoryFolder.toString(), seeker, false);
+                ArrayList<String> filesFoundStringList = filesFound.stream()
+                        .map(item -> seeker.convertItemPathToPlugin(item))
+                        .collect(Collectors.toCollection(ArrayList::new));
+                plugin.getMethod().call(filesFoundStringList, categoryFolder.toString(), seeker, false);
 
             } catch (Exception e) {
                 logger.error("Aleapp {} plugin ended prematurely: {}", pluginName, ExceptionUtils.getMessage(e));
@@ -408,7 +424,16 @@ public class AleappTask extends AbstractTask {
                 pluginEvidence.setToIgnore(true);
             }
         } finally {
-            stateThreadLocal.remove();
+            seeker.cleanup();
+            if (stateThreadLocal.get() != null) {
+                stateThreadLocal.get().getTranslatedPaths().keySet().forEach(tempFile -> {
+                    try {
+                        Files.deleteIfExists(Paths.get(tempFile));
+                    } catch (IOException e) {
+                    }
+                });
+                stateThreadLocal.remove();
+            }
         }
     }
 

@@ -10,23 +10,23 @@ import iped.engine.task.aleapp.AleappUtils;
 import iped.engine.task.aleapp.CallInterceptor;
 import iped.engine.task.aleapp.FileSeeker;
 
-public class PythonOpenInterceptor extends CallInterceptor {
+public class IlapFuncsGetSqliteDbPathInterceptor extends CallInterceptor {
 
-    public PythonOpenInterceptor(ICaseData caseData) {
-        super(caseData, null, "__builtins__['open']");
+    public IlapFuncsGetSqliteDbPathInterceptor(ICaseData caseData) {
+        super(caseData, "scripts.ilapfuncs", "scripts.ilapfuncs.get_sqlite_db_path");
     }
 
     @Override
     protected void handleArgs(Object[] args, Map<String, Object> kwargs) throws Exception {
 
-        String filePath = (String) getArgumentValue("file", 0, args, kwargs);
+        String filePath = (String) getArgumentValue("path", 0, args, kwargs);
 
         if (FileSeeker.isIPEDPath(filePath)) {
             IItemReader foundItem = AleappUtils.findItemByPath(caseData, filePath);
             if (foundItem != null) {
 
                 File tempFile = foundItem.getTempFile();
-                setArgumentValue("file", 0, tempFile.getCanonicalPath(), args, kwargs);
+                setArgumentValue("path", 0, tempFile.getCanonicalPath(), args, kwargs);
 
                 AleappTask.getState().getTranslatedPaths().put(tempFile.getCanonicalPath(), foundItem.getPath());
 

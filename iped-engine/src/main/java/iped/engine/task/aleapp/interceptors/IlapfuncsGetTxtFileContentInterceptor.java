@@ -27,7 +27,7 @@ public class IlapfuncsGetTxtFileContentInterceptor extends CallInterceptor {
 
         String filePath = (String) getArgumentValue("file_path", 0, args, kwargs);
 
-        if (filePath.startsWith(FileSeeker.IPED_PATH_PREFIX)) {
+        if (FileSeeker.isIPEDPath(filePath)) {
             IItemReader foundItem = AleappUtils.findItemByPath(caseData, filePath);
             if (foundItem != null) {
                 return IOUtils.readLines(foundItem.getBufferedInputStream(), StandardCharsets.UTF_8);
