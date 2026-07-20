@@ -54,6 +54,7 @@ public class AleappTask extends AbstractTask {
     public static final String ALEAPP_APPLICATION_PREFIX = "x-aleapp-";
 
     public static final MediaType ALEAPP_CASE_MEDIATYPE = MediaType.application(ALEAPP_APPLICATION_PREFIX + "case");
+    public static final MediaType ALEAPP_CATEGORY_MEDIATYPE = MediaType.application(ALEAPP_APPLICATION_PREFIX + "category");
     public static final MediaType ALEAPP_PLUGIN_RESULTS_MEDIATYPE = MediaType.application(ALEAPP_APPLICATION_PREFIX + "plugin-results");
     public static final MediaType ALEAPP_ACTIVITY_MEDIATYPE = MediaType.application(ALEAPP_APPLICATION_PREFIX + "activity");
     public static final MediaType ALEAPP_DEVICE_INFO_MEDIATYPE = MediaType.application(ALEAPP_APPLICATION_PREFIX + "deviceinfo");
@@ -107,6 +108,7 @@ public class AleappTask extends AbstractTask {
         public State(CaseData caseData, Worker worker, IItem pluginItem, List<IItemReader> foundFiles) {
             this.caseData = caseData;
             this.worker = worker;
+            this.foundFiles = foundFiles;
             this.pluginItem = pluginItem;
         }
 
@@ -333,22 +335,39 @@ public class AleappTask extends AbstractTask {
 
         executePythonCode(() -> {
 
+            Map<String, Item> categoryItems = new HashMap<>();
+
             // creates one subitem for each plugin execution
             for (PluginSpec plugin : selectedPlugins.values()) {
 
-                Item pluginEvidence = (Item) caseEvidence.createChildItem();
+                Item categoryItem = categoryItems.computeIfAbsent(plugin.getCategory(), name -> {
+                    Item categoryEvidence = (Item) caseEvidence.createChildItem();
+                    categoryEvidence.setMediaType(ALEAPP_CATEGORY_MEDIATYPE);
+
+                    categoryEvidence.setName(name);
+                    categoryEvidence.setExtension("");
+                    categoryEvidence.setPath(caseEvidence.getPath() + "/" + name);
+                    categoryEvidence.setIdInDataSource("");
+                    categoryEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+                    categoryEvidence.setHasChildren(true);
+
+                    worker.processNewItem(categoryEvidence, ProcessTime.LATER);
+
+                    return categoryEvidence;
+                });
+
+                Item pluginEvidence = (Item) categoryItem.createChildItem();
                 pluginEvidence.setMediaType(ALEAPP_PLUGIN_RESULTS_MEDIATYPE);
 
                 String name = StringUtils.firstNonBlank((String) plugin.getArtifactInfo().get("name"), plugin.getName());
                 pluginEvidence.setName(name);
                 pluginEvidence.setExtension("");
-                pluginEvidence.setPath(caseEvidence.getPath() + "/" + name);
+                pluginEvidence.setPath(categoryItem.getPath() + "/" + name);
                 pluginEvidence.setIdInDataSource("");
                 pluginEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
 
                 pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_KEYNAME_META, plugin.getName());
                 pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + "moduleName", plugin.getModuleName());
-                pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + "category", plugin.getCategory());
                 for (Entry<String, Object> entry : plugin.getArtifactInfo().entrySet()) {
                     if (artifactInfosToIgnore.contains(entry.getKey())) {
                         continue;
