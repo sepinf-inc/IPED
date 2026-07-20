@@ -19,7 +19,7 @@ public class IlapfuncsLogfuncInterceptor extends CallInterceptor {
     public Object call(Object[] args, Map<String, Object> kwargs) throws Exception {
 
         String message = (String) getArgumentValue("message", 0, args, kwargs);
-        logger.warn(message);
+        logger.info(message);
         return null;
     }
 }
