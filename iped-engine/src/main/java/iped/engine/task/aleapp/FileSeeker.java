@@ -38,23 +38,34 @@ public class FileSeeker {
         this.searcher = searcher;
     }
 
-    // https://github.com/abrignoni/ALEAPP/blob/v3.4.0/scripts/search_files.py#L23
+    // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L57
     public List<IItemReader> search(List<String> filePatternsToSearch) {
 
         String query = "("
-                + filePatternsToSearch.stream().map(regex -> AleappUtils.globToLuceneQuery(rootPath, regex)).collect(Collectors.joining(") OR ("))
+                + filePatternsToSearch.stream()
+                    .map(regex -> AleappUtils.globToLuceneQuery(rootPath, regex))
+                    .collect(Collectors.joining(") OR ("))
                 + ")";
 
         logger.debug("query=[{}], patterns=[{}]", query, filePatternsToSearch);
 
-       return searcher
+        return searcher
                 .search(query) //
                 .stream() //
                 .filter(item -> item.getPath().startsWith(rootPath)) //
+                .filter(item -> {
+                    for (String filePattern : filePatternsToSearch) {
+                        if (AleappUtils.checkLucenePath(item, filePattern)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
                 .collect(Collectors.toList());
     }
 
     public String convertItemPathToPlugin(IItemReader item) {
+        String ipedPath;
         if ("sqlite".equals(item.getType())) {
             try {
                 // export db file
@@ -82,13 +93,16 @@ public class FileSeeker {
 
                 AleappTask.getState().getTranslatedPaths().put(tempDB.toString(), item.getPath());
 
-                return tempDB.toString();
+                ipedPath = tempDB.toString();
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         } else {
-            return toIPEDPath(item);
+            ipedPath = toIPEDPath(item);
         }
+
+        return ipedPath;
     }
 
     // https://github.com/abrignoni/ALEAPP/blob/v3.4.0/scripts/search_files.py#L27
