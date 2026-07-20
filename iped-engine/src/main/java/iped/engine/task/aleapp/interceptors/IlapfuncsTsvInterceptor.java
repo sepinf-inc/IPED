@@ -57,7 +57,7 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         // set hasChildren, so plugin will not be ignored in AleappTask.processPluginEvidence()
         state.getPluginItem().setHasChildren(true);
 
-        // linkedItems for subItems
+        // linkedItems
         Set<String> globalIds = new HashSet<>();
         if (sourceFile != null) {
             IItemReader sourceFileItem = AleappUtils.findItemByPath(state.getCaseData(), sourceFile);
@@ -69,6 +69,8 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
             globalIds.add((String) foundFile.getExtraAttribute(ExtraProperties.GLOBAL_ID));
         }
         String likedItems = ExtraProperties.GLOBAL_ID + ":(" + String.join(" ", globalIds) + ")";
+        state.getPluginItem().getMetadata().add(ExtraProperties.LINKED_ITEMS, likedItems);
+
 
         // media type
         String pluginName = state.getPluginItem().getMetadata().get(AleappTask.ALEAPP_PLUGIN_KEYNAME_META);
@@ -92,7 +94,6 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
             subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             subItem.setSubItem(true);
             subItem.setSubitemId(index);
-            subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, likedItems);
 
             // data as metadata
             List<Object> data = dataList.get(index);
