@@ -118,7 +118,7 @@ public class QueuesProcessingOrder {
         mediaTypes.put(RFC822Parser.RFC822_PARTIAL1_MIME, 2);
 
         mediaTypes.put(AleappTask.ALEAPP_CASE_MEDIATYPE, 5);
-        mediaTypes.put(AleappTask.ALEAPP_PLUGIN_RESULTS_MEDIATYPE, 5);
+        mediaTypes.put(AleappTask.ALEAPP_CATEGORY_MEDIATYPE, 6);
         mediaTypes.put(AleappTask.ALEAPP_DEVICE_INFO_MEDIATYPE, 6);
 
         return mediaTypes;

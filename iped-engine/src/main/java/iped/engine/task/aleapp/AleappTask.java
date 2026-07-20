@@ -59,6 +59,8 @@ public class AleappTask extends AbstractTask {
     public static final MediaType ALEAPP_ACTIVITY_MEDIATYPE = MediaType.application(ALEAPP_APPLICATION_PREFIX + "activity");
     public static final MediaType ALEAPP_DEVICE_INFO_MEDIATYPE = MediaType.application(ALEAPP_APPLICATION_PREFIX + "deviceinfo");
 
+    public static final String ALEAPP_PLUGIN_CATEGORY_KEY = "aleapp_category";
+
     private static final String DEVICE_INFO_HTML = "DeviceInfo.html";
 
     private static final String CASE_EVIDENCE_NAME = "ALEAPP_Results";
@@ -245,6 +247,8 @@ public class AleappTask extends AbstractTask {
             processExtractionRoot(item);
         } else if (isCaseEvidence(item)) {
             processCaseEvidence(item);
+        } else if (isCategoryEvidence(item)) {
+            processCategoryEvidence(item);
         } else if (isPluginEvidence(item)) {
             processPluginEvidence(item);
         } else if (isDeviceInfoEvidence(item)) {
@@ -272,6 +276,10 @@ public class AleappTask extends AbstractTask {
 
     private boolean isCaseEvidence(IItem evidence) {
         return ALEAPP_CASE_MEDIATYPE.equals(evidence.getMediaType());
+    }
+
+    private boolean isCategoryEvidence(IItem evidence) {
+        return ALEAPP_CATEGORY_MEDIATYPE.equals(evidence.getMediaType());
     }
 
     private boolean isPluginEvidence(IItem evidence) {
@@ -349,7 +357,6 @@ public class AleappTask extends AbstractTask {
                     categoryEvidence.setPath(caseEvidence.getPath() + "/" + name);
                     categoryEvidence.setIdInDataSource("");
                     categoryEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
-                    categoryEvidence.setHasChildren(true);
 
                     worker.processNewItem(categoryEvidence, ProcessTime.LATER);
 
@@ -358,6 +365,7 @@ public class AleappTask extends AbstractTask {
 
                 Item pluginEvidence = (Item) categoryItem.createChildItem();
                 pluginEvidence.setMediaType(ALEAPP_PLUGIN_RESULTS_MEDIATYPE);
+                pluginEvidence.setTempAttribute(ALEAPP_PLUGIN_CATEGORY_KEY, categoryItem);
 
                 String name = StringUtils.firstNonBlank((String) plugin.getArtifactInfo().get("name"), plugin.getName());
                 pluginEvidence.setName(name);
@@ -386,7 +394,13 @@ public class AleappTask extends AbstractTask {
         deviceInfoEvidence.setPath(caseEvidence.getPath() + "/" + DEVICE_INFO_HTML);
         deviceInfoEvidence.setIdInDataSource("");
         worker.processNewItem(deviceInfoEvidence, ProcessTime.LATER);
+    }
 
+    private void processCategoryEvidence(IItem categoryEvidence) throws Exception {
+        if (!categoryEvidence.hasChildren()) {
+            logger.info("Ignoring Aleapp category {}: no children", categoryEvidence.getName());
+            categoryEvidence.setToIgnore(true);
+        }
     }
 
     private void processPluginEvidence(IItem pluginEvidence) throws Exception {

@@ -15,6 +15,7 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.Item;
@@ -55,7 +56,10 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         State state = AleappTask.getState();
 
         // set hasChildren, so plugin will not be ignored in AleappTask.processPluginEvidence()
+        // and category will not be ignored in AleappTask.processCategoryEvidence()
         state.getPluginItem().setHasChildren(true);
+        IItem categoryItem = (IItem) state.getPluginItem().getTempAttribute(AleappTask.ALEAPP_PLUGIN_CATEGORY_KEY);
+        categoryItem.setHasChildren(true);
 
         // linkedItems
         Set<String> globalIds = new HashSet<>();
