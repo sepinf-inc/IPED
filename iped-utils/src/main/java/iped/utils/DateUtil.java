@@ -1,5 +1,10 @@
 package iped.utils;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
@@ -12,6 +17,8 @@ import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 import org.apache.tika.utils.DateUtils;
+
+import iped.data.IItemReader;
 
 public class DateUtil {
 
@@ -117,4 +124,21 @@ public class DateUtil {
         return threadLocal.get().parse(date);
     }
 
+    /**
+     * Updates the file times (creation, modified, access) of the specified path.
+     */
+    public static void updatePathTimes(Path path, IItemReader item) throws IOException {
+
+        // Get the view wrapper for modifying attributes
+        @SuppressWarnings("null")
+        BasicFileAttributeView view = Files.getFileAttributeView(path, BasicFileAttributeView.class);
+
+        // Define your new dates using java.time.Instant
+        FileTime creationTime = item.getCreationDate() != null ? FileTime.from(item.getCreationDate().toInstant()) : null;
+        FileTime modifiedTime = item.getModDate() != null ? FileTime.from(item.getModDate().toInstant()) : null;
+        FileTime accessTime = item.getAccessDate() != null ? FileTime.from(item.getAccessDate().toInstant()) : null;
+
+        // Apply changes (Pass null to ignore a specific property)
+        view.setTimes(modifiedTime, accessTime, creationTime);
+    }
 }

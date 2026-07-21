@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.search.IItemSearcher;
+import iped.utils.DateUtil;
 import iped.utils.IOUtil;
 
 public class FileSeeker {
@@ -91,6 +92,7 @@ public class FileSeeker {
                 Path tempDB = tempDir.resolve(item.getName());
                 try (InputStream is = item.getBufferedInputStream()) {
                     Files.copy(is, tempDB);
+                    DateUtil.updatePathTimes(tempDB, item);
                 }
                 tempDB.toFile().deleteOnExit();
 
