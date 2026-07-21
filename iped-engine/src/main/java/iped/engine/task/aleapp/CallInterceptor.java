@@ -37,7 +37,6 @@ public class CallInterceptor {
 
     public CallInterceptor(ICaseData caseData, String pythonModule, String pythonCall) {
         this(caseData, pythonModule, pythonCall, false);
-        this.caseData = caseData;
     }
 
     public CallInterceptor(String pythonModule, String pythonCall) {
@@ -56,6 +55,9 @@ public class CallInterceptor {
             String method = StringUtils.substringAfterLast(pythonCall, ".");
 
             originalCall = jep.getValue("getattr(" + clazz + ", \"" + method + "\")", PyCallable.class);
+            if (originalCall == null) {
+                throw new IllegalStateException("Original call is null for: " + pythonCall);
+            }
 
             jep.set("interceptor", this);
 
@@ -67,6 +69,9 @@ public class CallInterceptor {
         } else {
 
             originalCall = jep.getValue(pythonCall, PyCallable.class);
+            if (originalCall == null) {
+                throw new IllegalStateException("Original call is null for: " + pythonCall);
+            }
 
             jep.set("interceptor", this);
 
