@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,21 @@ public class FileSeeker {
     private final List<Path> tempDirs = new ArrayList<>();
 
     public String data_folder = "";
+
+    // properties used by plugins
+    public HashMap<String, FileInfo> file_infos = new HashMap<>();
+
+    public static class FileInfo {
+        public String source_path;
+        public Date creation_date;
+        public Date modification_date;
+
+        public FileInfo(String source_path, Date creation_date, Date modification_date) {
+            this.source_path = source_path;
+            this.creation_date = creation_date;
+            this.modification_date = modification_date;
+        }
+    }
 
     public FileSeeker(String rootPath, IItemSearcher searcher) {
         this.rootPath = rootPath;
@@ -101,6 +118,9 @@ public class FileSeeker {
         } else {
             ipedPath = toIPEDPath(item);
         }
+
+        // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L130
+        file_infos.put(ipedPath, new FileInfo(item.getPath(), item.getCreationDate(), item.getModDate()));
 
         return ipedPath;
     }
