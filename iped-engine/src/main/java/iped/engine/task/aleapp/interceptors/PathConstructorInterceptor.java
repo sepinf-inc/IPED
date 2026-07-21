@@ -6,10 +6,10 @@ import java.util.Map;
 
 import iped.data.ICaseData;
 import iped.data.IItemReader;
-import iped.engine.task.aleapp.AleappTask;
 import iped.engine.task.aleapp.AleappUtils;
 import iped.engine.task.aleapp.CallInterceptor;
 import iped.engine.task.aleapp.FileSeeker;
+import iped.engine.task.aleapp.LeappContext;
 
 public class PathConstructorInterceptor extends CallInterceptor {
 
@@ -33,7 +33,7 @@ public class PathConstructorInterceptor extends CallInterceptor {
                     tempFile.toFile().deleteOnExit();
                     args[i] = tempFile.toString();
 
-                    AleappTask.getState().getTranslatedPaths().put(tempFile.toString(), foundItem.getPath());
+                    LeappContext.get().getTranslatedPaths().put(tempFile.toString(), foundItem.getPath());
 
                 } else {
                     throw new IllegalStateException("Item not found in case: " + args[i]);

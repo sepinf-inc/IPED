@@ -20,10 +20,10 @@ import iped.data.IItemReader;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.Item;
 import iped.engine.task.aleapp.AleappTask;
-import iped.engine.task.aleapp.AleappTask.State;
 import iped.engine.task.aleapp.AleappUtils;
 import iped.engine.task.aleapp.CallInterceptor;
 import iped.engine.task.aleapp.FileSeeker;
+import iped.engine.task.aleapp.LeappContext;
 import iped.properties.ExtraProperties;
 import jep.PyMethod;
 
@@ -53,31 +53,31 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
             return null;
         }
 
-        State state = AleappTask.getState();
+        LeappContext context = LeappContext.get();
 
         // set hasChildren, so plugin will not be ignored in AleappTask.processPluginEvidence()
         // and category will not be ignored in AleappTask.processCategoryEvidence()
-        state.getPluginItem().setHasChildren(true);
-        IItem categoryItem = (IItem) state.getPluginItem().getTempAttribute(AleappTask.ALEAPP_PLUGIN_CATEGORY_KEY);
+        context.getPluginItem().setHasChildren(true);
+        IItem categoryItem = (IItem) context.getPluginItem().getTempAttribute(AleappTask.ALEAPP_PLUGIN_CATEGORY_KEY);
         categoryItem.setHasChildren(true);
 
         // linkedItems
         Set<String> globalIds = new HashSet<>();
         if (sourceFile != null) {
-            IItemReader sourceFileItem = AleappUtils.findItemByPath(state.getCaseData(), sourceFile);
+            IItemReader sourceFileItem = AleappUtils.findItemByPath(context.getCaseData(), sourceFile);
             if (sourceFileItem != null) {
                 globalIds.add((String) sourceFileItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
             }
         }
-        for (IItemReader foundFile : state.getFoundFiles()) {
+        for (IItemReader foundFile : context.getFoundFiles()) {
             globalIds.add((String) foundFile.getExtraAttribute(ExtraProperties.GLOBAL_ID));
         }
         String likedItems = ExtraProperties.GLOBAL_ID + ":(" + String.join(" ", globalIds) + ")";
-        state.getPluginItem().getMetadata().add(ExtraProperties.LINKED_ITEMS, likedItems);
+        context.getPluginItem().getMetadata().add(ExtraProperties.LINKED_ITEMS, likedItems);
 
 
         // media type
-        String pluginName = state.getPluginItem().getMetadata().get(AleappTask.ALEAPP_PLUGIN_KEYNAME_META);
+        String pluginName = context.getPluginItem().getMetadata().get(AleappTask.ALEAPP_PLUGIN_KEYNAME_META);
         MediaType mediaType = resolveMediaType(tsvName, pluginName);
 
         // headers are constant across rows: classify each column once
@@ -90,11 +90,11 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         for (int index = 0; index < dataList.size(); index++) {
 
             String subItemName = tsvName + "-" + index;
-            Item subItem = (Item) state.getPluginItem().createChildItem();
+            Item subItem = (Item) context.getPluginItem().createChildItem();
             subItem.setMediaType(mediaType);
             subItem.setName(subItemName);
             subItem.setExtension("");
-            subItem.setPath(state.getPluginItem().getPath() + "/" + subItemName);
+            subItem.setPath(context.getPluginItem().getPath() + "/" + subItemName);
             subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             subItem.setSubItem(true);
             subItem.setSubitemId(index);
@@ -107,8 +107,8 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
                 if (value != null) {
                     String header = dataHeaders.get(i);
                     String valueStr = value.toString();
-                    if (state.getTranslatedPaths().containsKey(valueStr)) {
-                        valueStr = state.getTranslatedPaths().get(valueStr);
+                    if (context.getTranslatedPaths().containsKey(valueStr)) {
+                        valueStr = context.getTranslatedPaths().get(valueStr);
                     }
                     if (FileSeeker.isIPEDPath(valueStr)) {
                         valueStr = FileSeeker.getItemPath(valueStr);
@@ -125,7 +125,7 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
             }
             setLocationIfValid(subItem, lat, lon);
 
-            state.getWorker().processNewItem(subItem, ProcessTime.LATER);
+            context.getWorker().processNewItem(subItem, ProcessTime.LATER);
         }
 
         return null;

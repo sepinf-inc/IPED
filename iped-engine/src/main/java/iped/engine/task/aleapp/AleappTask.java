@@ -32,9 +32,7 @@ import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.engine.config.ALeappConfig;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.core.Worker;
 import iped.engine.core.Worker.ProcessTime;
-import iped.engine.data.CaseData;
 import iped.engine.data.Item;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.ExportFileTask;
@@ -44,7 +42,7 @@ import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import jep.Jep;
 import jep.JepException;
-import jep.SharedInterpreter;
+import jep.SubInterpreter;
 import jep.python.PyObject;
 
 public class AleappTask extends AbstractTask {
@@ -96,44 +94,7 @@ public class AleappTask extends AbstractTask {
     private ExecutorService executor;
     private Jep jep;
 
-    private static final ThreadLocal<State> stateThreadLocal = new ThreadLocal<>();
-
     public AleappTask() {
-    }
-
-    public static class State {
-        private CaseData caseData;
-        private Worker worker;
-        private IItem pluginItem;
-        private List<IItemReader> foundFiles;
-        private Map<String, String> translatedPaths = new HashMap<>();
-
-        public State(CaseData caseData, Worker worker, IItem pluginItem, List<IItemReader> foundFiles) {
-            this.caseData = caseData;
-            this.worker = worker;
-            this.foundFiles = foundFiles;
-            this.pluginItem = pluginItem;
-        }
-
-        public CaseData getCaseData() {
-            return caseData;
-        }
-
-        public Worker getWorker() {
-            return worker;
-        }
-
-        public IItem getPluginItem() {
-            return pluginItem;
-        }
-
-        public List<IItemReader> getFoundFiles() {
-            return foundFiles;
-        }
-
-        public Map<String, String> getTranslatedPaths() {
-            return translatedPaths;
-        }
     }
 
     private ExecutorService getExecutor() {
@@ -144,10 +105,6 @@ public class AleappTask extends AbstractTask {
             executor = Executors.newSingleThreadExecutor(factory);
         }
         return executor;
-    }
-
-    public static State getState() {
-        return stateThreadLocal.get();
     }
 
     @Override
@@ -434,7 +391,7 @@ public class AleappTask extends AbstractTask {
                 return;
             }
 
-            stateThreadLocal.set(new State(caseData, worker, pluginEvidence, filesFound));
+            LeappContext.create(caseData, worker, jep, pluginEvidence, filesFound);
 
             try {
                 // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L409
@@ -459,15 +416,7 @@ public class AleappTask extends AbstractTask {
             }
         } finally {
             seeker.cleanup();
-            if (stateThreadLocal.get() != null) {
-                stateThreadLocal.get().getTranslatedPaths().keySet().forEach(tempFile -> {
-                    try {
-                        Files.deleteIfExists(Paths.get(tempFile));
-                    } catch (IOException e) {
-                    }
-                });
-                stateThreadLocal.remove();
-            }
+            LeappContext.clear();
         }
     }
 

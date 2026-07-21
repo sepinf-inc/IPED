@@ -91,7 +91,7 @@ public class FileSeeker {
                     journalFile.deleteOnExit();
                 }
 
-                AleappTask.getState().getTranslatedPaths().put(tempDB.toString(), item.getPath());
+                LeappContext.get().getTranslatedPaths().put(tempDB.toString(), item.getPath());
 
                 ipedPath = tempDB.toString();
 

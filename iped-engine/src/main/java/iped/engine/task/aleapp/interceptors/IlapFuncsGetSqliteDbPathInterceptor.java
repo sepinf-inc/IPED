@@ -5,10 +5,10 @@ import java.util.Map;
 
 import iped.data.ICaseData;
 import iped.data.IItemReader;
-import iped.engine.task.aleapp.AleappTask;
 import iped.engine.task.aleapp.AleappUtils;
 import iped.engine.task.aleapp.CallInterceptor;
 import iped.engine.task.aleapp.FileSeeker;
+import iped.engine.task.aleapp.LeappContext;
 
 public class IlapFuncsGetSqliteDbPathInterceptor extends CallInterceptor {
 
@@ -28,7 +28,7 @@ public class IlapFuncsGetSqliteDbPathInterceptor extends CallInterceptor {
                 File tempFile = foundItem.getTempFile();
                 setArgumentValue("path", 0, tempFile.getCanonicalPath(), args, kwargs);
 
-                AleappTask.getState().getTranslatedPaths().put(tempFile.getCanonicalPath(), foundItem.getPath());
+                LeappContext.get().getTranslatedPaths().put(tempFile.getCanonicalPath(), foundItem.getPath());
 
             } else {
                 throw new IllegalStateException("Item not found in case: " + filePath);
