@@ -18,7 +18,7 @@ public class OsStatInterceptor extends CallInterceptor {
     public OsStatInterceptor(ICaseData caseData) {
         super(caseData, "os", "os.stat");
     }
-    
+
     @Override
     public void install(Jep jep) {
         // This maps 'os.stat' to our Java 'interceptor.call'
@@ -70,10 +70,9 @@ public class OsStatInterceptor extends CallInterceptor {
         }
 
         // Fallback for non-IPED paths
-        return originalCall.call(args, kwargs);
+        return super.call(args, kwargs);
     }
 
-    
     private double dateToUnixTimestamp(Date date) {
         if (date == null) {
             return 0.0;

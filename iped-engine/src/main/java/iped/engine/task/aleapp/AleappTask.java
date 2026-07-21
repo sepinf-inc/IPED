@@ -1,6 +1,5 @@
 package iped.engine.task.aleapp;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,7 +13,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -86,10 +84,8 @@ public class AleappTask extends AbstractTask {
 
     private AleappInterceptors interceptor;
 
-    private static Path outputFolder;
-    private static AtomicBoolean outputParametersCreated = new AtomicBoolean();
-    private static String outputFolderBase;
-    private static String deviceInfoPath;
+    private Path outputFolder;
+    private String outputFolderBase;
 
     private ExecutorService executor;
     private Jep jep;
@@ -123,8 +119,7 @@ public class AleappTask extends AbstractTask {
         config = (ALeappConfig) configurationManager.findObject(ALeappConfig.class);
 
         if (outputFolder == null) {
-            outputFolder = output.toPath().resolve("aleapp");
-            Files.createDirectories(outputFolder);
+            outputFolder = Files.createTempDirectory("aleapp-results");
         }
     }
 
@@ -182,17 +177,11 @@ public class AleappTask extends AbstractTask {
 
             jep.exec("from scripts.context import Context");
 
-            if (!outputParametersCreated.getAndSet(true)) {
-                // Sets the reportFolder (can be executed once, due to os.makedirs() in OutputParameters constructor
-                // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
-                jep.exec("from scripts.ilapfuncs import OutputParameters");
-                jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
-                outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
-                deviceInfoPath = jep.getValue("OutputParameters.screen_output_file_path_devinfo", String.class);
-                jep.exec("Context.set_output_params(out_params)");
-            } else {
-                jep.set("OutputParameters.screen_output_file_path_devinfo", deviceInfoPath);
-            }
+            // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
+            jep.exec("from scripts.ilapfuncs import OutputParameters");
+            jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
+            outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
+            jep.exec("Context.set_output_params(out_params)");
         });
     }
 
@@ -426,14 +415,16 @@ public class AleappTask extends AbstractTask {
             // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L432
             jep.exec("import scripts.ilapfuncs");
             jep.exec("scripts.ilapfuncs.write_device_info()");
-        });
 
-        byte[] deviceInfoBytes = Files.readAllBytes(Paths.get(deviceInfoPath));
-        if (deviceInfoBytes.length > 0) {
-            ExportFileTask.getLastInstance().insertIntoStorage(deviceInfoEvidence, deviceInfoBytes, deviceInfoBytes.length);
-        } else {
-            deviceInfoEvidence.setToIgnore(true);
-        }
+            String deviceInfoPath = jep.getValue("OutputParameters.screen_output_file_path_devinfo", String.class);
+            byte[] deviceInfoBytes = Files.readAllBytes(Paths.get(deviceInfoPath));
+
+            if (deviceInfoBytes.length > 0) {
+                ExportFileTask.getLastInstance().insertIntoStorage(deviceInfoEvidence, deviceInfoBytes, deviceInfoBytes.length);
+            } else {
+                deviceInfoEvidence.setToIgnore(true);
+            }
+        });
     }
 
     /*
