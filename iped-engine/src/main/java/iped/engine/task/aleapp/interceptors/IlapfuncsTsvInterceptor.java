@@ -239,6 +239,7 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
     private MediaType resolveMediaType(String tsvName, String pluginModuleName) {
 
         String mimePluginName = pluginModuleName.toLowerCase().replace(".", "");
+        mimePluginName = StringUtils.removeStart(mimePluginName, "get_");
 
         if (StringUtils.containsIgnoreCase(mimePluginName, "facebook")) {
             mimePluginName = StringUtils.substringBefore(tsvName, "- ").toLowerCase();
