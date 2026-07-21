@@ -200,7 +200,7 @@ public class AleappTask extends AbstractTask {
 
     private void doSetup() throws Exception {
         executePythonCode(() -> {
-            jep = new SharedInterpreter();
+            jep = new SubInterpreter();
 
             jep.exec("import sys");
             jep.exec("sys.path.append('" + config.getAleappFolder().getCanonicalPath() + "')");
