@@ -3,10 +3,12 @@ package iped.engine.task.aleapp.interceptors;
 import java.util.Map;
 
 import iped.engine.task.aleapp.CallInterceptor;
+import iped.engine.task.aleapp.LeappContext;
 import jep.PyMethod;
 
 /**
- * Replace the ilapfuncs.get_txt_file_content function to return the file content directly in Java
+ * Replaces the ilapfuncs.logfunc function so ALEAPP plugin log messages are redirected to the IPED log instead of
+ * ALEAPP's own report log file.
  */
 public class IlapfuncsLogfuncInterceptor extends CallInterceptor {
 
@@ -19,7 +21,11 @@ public class IlapfuncsLogfuncInterceptor extends CallInterceptor {
     public Object call(Object[] args, Map<String, Object> kwargs) throws Exception {
 
         String message = (String) getArgumentValue("message", 0, args, kwargs);
-        logger.info(message);
+        String moduleName = LeappContext.get().getPlugin().getModuleName();
+        String pluginName = LeappContext.get().getPlugin().getName();
+
+        logger.info("{} [{}]: {}", moduleName, pluginName, message);
+
         return null;
     }
 }

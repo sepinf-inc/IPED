@@ -391,7 +391,7 @@ public class AleappTask extends AbstractTask {
                 return;
             }
 
-            LeappContext.create(seeker, worker, jep, pluginEvidence, filesFound);
+            LeappContext.create(seeker, worker, jep, plugin, pluginEvidence, filesFound);
 
             try {
                 // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L409

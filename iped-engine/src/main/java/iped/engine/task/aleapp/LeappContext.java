@@ -11,6 +11,7 @@ public class LeappContext {
 
     private FileSeeker fileSeeker;
     private Worker worker;
+    private PluginSpec plugin;
     private Jep jep;
     private IItem pluginItem;
     
@@ -18,16 +19,17 @@ public class LeappContext {
 
     private static final ThreadLocal<LeappContext> threadLocal = new ThreadLocal<>();
 
-    private LeappContext(FileSeeker seeker, Worker worker, Jep jep, IItem pluginItem, List<IItemReader> foundFiles) {
+    private LeappContext(FileSeeker seeker, Worker worker, Jep jep, PluginSpec plugin,  IItem pluginItem, List<IItemReader> foundFiles) {
         this.fileSeeker = seeker;
         this.worker = worker;
+        this.plugin = plugin;
         this.jep = jep;
         this.foundFiles = foundFiles;
         this.pluginItem = pluginItem;
     }
 
-    public static LeappContext create(FileSeeker seeker, Worker worker, Jep jep, IItem pluginItem, List<IItemReader> foundFiles) {
-        LeappContext context = new LeappContext(seeker, worker, jep, pluginItem, foundFiles);
+    public static LeappContext create(FileSeeker seeker, Worker worker, Jep jep, PluginSpec plugin, IItem pluginItem, List<IItemReader> foundFiles) {
+        LeappContext context = new LeappContext(seeker, worker, jep, plugin, pluginItem, foundFiles);
         threadLocal.set(context);
         return context;
     }
@@ -46,6 +48,10 @@ public class LeappContext {
 
     public Worker getWorker() {
         return worker;
+    }
+
+    public PluginSpec getPlugin() {
+        return plugin;
     }
 
     public Jep getJep() {
