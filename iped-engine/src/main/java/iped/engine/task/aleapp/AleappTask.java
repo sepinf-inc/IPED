@@ -64,8 +64,8 @@ public class AleappTask extends AbstractTask {
     private static final String ZIP_EXT = "zip";
     private static final String UFDR_EXT = "ufdr";
 
-    private static final Set<String> dumpStartFolderNames = Set.of("Dump", "backup");
-    private static final Set<String> artifactInfosToIgnore = Set
+    private static final Set<String> DUMP_ROOT_FOLDER_NAMES = Set.of("Dump", "backup");
+    private static final Set<String> ARTIFACT_INFO_KEYS_TO_IGNORE = Set
             .of("function", "paths", "requirements", "output_types", "notes", "sample_data", "artifact_icon");
 
     public static final String ALEAPP_METADATA_PREFIX = "aleapp:";
@@ -89,6 +89,9 @@ public class AleappTask extends AbstractTask {
 
     private Path exportFilesFolder;
 
+    // Jep interpreters are thread-confined: every interaction with "jep" MUST happen
+    // on the same thread that created it. This dedicated single-thread executor is
+    // that thread; all Python access goes through runOnPythonThread().
     private ExecutorService executor;
     private Jep jep;
 
@@ -123,7 +126,12 @@ public class AleappTask extends AbstractTask {
         exportFilesFolder = Files.createTempDirectory("aleapp-data-");
     }
 
-    private void executePythonCode(FailableRunnable<Exception> task) throws Exception {
+    /**
+     * Runs the given code on this task's dedicated Python thread and rethrows any exception it raised. Required because
+     * Jep is thread-confined (see {@link #executor}); also used for code that only touches Python indirectly, e.g. via
+     * {@link PluginSpec} getters, which call PyObject.getAttr.
+     */
+    private void runOnPythonThread(FailableRunnable<Exception> task) throws Exception {
         Exception ret = getExecutor().submit(() -> {
             try {
                 task.run();
@@ -151,15 +159,18 @@ public class AleappTask extends AbstractTask {
     }
 
     private void doSetup() throws Exception {
-        executePythonCode(() -> {
+        runOnPythonThread(() -> {
             jep = new SharedInterpreter();
 
             jep.exec("import sys");
             jep.exec("sys.path.append('" + config.getAleappFolder().getCanonicalPath() + "')");
 
+            // SharedInterpreter instances all share the same Python module state, so
+            // interceptors (and OutputParameters below) are installed only ONCE globally,
+            // even though each worker thread creates its own Jep instance.
             synchronized (AleappTask.class) {
                 if (!interceptorsInstalled) {
-                    AleappInterceptors interceptors = new AleappInterceptors(caseData);
+                    AleappInterceptors interceptors = new AleappInterceptors();
                     interceptors.install(jep);
                     interceptorsInstalled = true;
                 }
@@ -229,7 +240,7 @@ public class AleappTask extends AbstractTask {
             realExt = FilenameUtils.getExtension(realName);
         }
 
-        return dumpStartFolderNames.contains(realName) || StringUtils.equalsAnyIgnoreCase(realExt, UFDR_EXT);
+        return DUMP_ROOT_FOLDER_NAMES.contains(realName) || StringUtils.equalsAnyIgnoreCase(realExt, UFDR_EXT);
     }
 
     private boolean isCaseEvidence(IItem evidence) {
@@ -269,7 +280,7 @@ public class AleappTask extends AbstractTask {
         String extractionType;
         if (AndroidBackupParser.SUPPORTED_TYPES.contains(rootEvidence.getMediaType())) {
             extractionType = EXTRACTION_TYPE_ANDROID_BACKUP;
-        } else if (dumpStartFolderNames.contains(rootEvidence.getName())) {
+        } else if (DUMP_ROOT_FOLDER_NAMES.contains(rootEvidence.getName())) {
             extractionType = EXTRACTION_TYPE_DUMP;
         } else {
             String realExt = rootEvidence.getExt();
@@ -299,7 +310,8 @@ public class AleappTask extends AbstractTask {
             return;
         }
 
-        executePythonCode(() -> {
+        // must run on the Python thread: PluginSpec getters below call PyObject.getAttr
+        runOnPythonThread(() -> {
 
             Map<String, Item> categoryItems = new HashMap<>();
 
@@ -335,7 +347,7 @@ public class AleappTask extends AbstractTask {
                 pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_KEYNAME_META, plugin.getName());
                 pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + "moduleName", plugin.getModuleName());
                 for (Entry<String, Object> entry : plugin.getArtifactInfo().entrySet()) {
-                    if (artifactInfosToIgnore.contains(entry.getKey())) {
+                    if (ARTIFACT_INFO_KEYS_TO_IGNORE.contains(entry.getKey())) {
                         continue;
                     }
                     pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + entry.getKey(), entry.getValue().toString());
@@ -354,6 +366,22 @@ public class AleappTask extends AbstractTask {
         worker.processNewItem(deviceInfoEvidence, ProcessTime.LATER);
     }
 
+    /**
+     * Checks if the case evidence really corresponds to an Android dump, by looking for a folder every Android device
+     * has ("/data/data/com.android.vending"). Avoids running plugins over unrelated zips/folders that just happen to
+     * match the extraction root naming rules.
+     */
+    private boolean isInsideRealDump(IItem caseEvidence) {
+
+        String checkFolder = "/data/data/com.android.vending";
+        String rootPath = StringUtils.substringBefore(caseEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
+
+        IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
+        List<IItemReader> result = searcher.search("path:\"" + rootPath + checkFolder + "\"");
+
+        return !result.isEmpty();
+    }
+
     private void processCategoryEvidence(IItem categoryEvidence) throws Exception {
         if (!categoryEvidence.hasChildren()) {
             logger.info("Ignoring Aleapp category {}: no children", categoryEvidence.getName());
@@ -362,7 +390,7 @@ public class AleappTask extends AbstractTask {
     }
 
     private void processPluginEvidence(IItem pluginEvidence) throws Exception {
-        executePythonCode(() -> {
+        runOnPythonThread(() -> {
             doProcessPluginEvidence(pluginEvidence);
         });
     }
@@ -383,7 +411,7 @@ public class AleappTask extends AbstractTask {
 
         try {
 
-            List<IItemReader> filesFound = seeker.search(plugin.getSearchRegexes());
+            List<IItemReader> filesFound = seeker.search(plugin.getSearchGlobs());
 
             if (filesFound.isEmpty()) {
                 logger.warn("Ignoring Aleapp {} plugin: no files found", pluginName);
@@ -405,7 +433,7 @@ public class AleappTask extends AbstractTask {
                     exportedFilesFound.add(exportedFile);
                 }
 
-                // export wal and journal files for sqlite items
+                // export journal and wal files for sqlite items
                 for (IItemReader item : filesFound) {
                     if ("sqlite".equals(item.getType())) {
                         List<IItemReader> walAndJournalFiles = seeker.getJournalAndWalFiles(item);
@@ -442,7 +470,7 @@ public class AleappTask extends AbstractTask {
 
     private void processDeviceInfoEvidence(IItem deviceInfoEvidence) throws Exception {
 
-        executePythonCode(() -> {
+        runOnPythonThread(() -> {
             // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L432
             jep.exec("import scripts.ilapfuncs");
             jep.exec("scripts.ilapfuncs.write_device_info()");
@@ -458,24 +486,10 @@ public class AleappTask extends AbstractTask {
         });
     }
 
-    /*
-     * Rules to check if evidence corresponds to an android Dump from where to start executing ALeapp plugins
-     */
-    private boolean isInsideRealDump(IItem caseEvidence) {
-
-        String checkFolder = "/data/data/com.android.vending";
-        String rootPath = StringUtils.substringBefore(caseEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
-
-        IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-        List<IItemReader> result = searcher.search("path:\"" + rootPath + checkFolder + "\"");
-
-        return !result.isEmpty();
-    }
-
     @Override
     public void finish() throws Exception {
         if (jep != null) {
-            executePythonCode(() -> {
+            runOnPythonThread(() -> {
                 try {
                     jep.close();
                 } catch (JepException e) {

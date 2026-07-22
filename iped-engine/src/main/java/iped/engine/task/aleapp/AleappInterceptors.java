@@ -6,7 +6,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.engine.data.CaseData;
 import iped.engine.task.aleapp.interceptors.IlapfuncsLogfuncInterceptor;
 import iped.engine.task.aleapp.interceptors.IlapfuncsTsvInterceptor;
 import jep.Jep;
@@ -17,7 +16,7 @@ public class AleappInterceptors {
 
     private List<CallInterceptor> interceptors = new ArrayList<>();
 
-    public AleappInterceptors(CaseData caseData) {
+    public AleappInterceptors() {
         interceptors.add(new IlapfuncsLogfuncInterceptor());
         interceptors.add(new IlapfuncsTsvInterceptor());
     }

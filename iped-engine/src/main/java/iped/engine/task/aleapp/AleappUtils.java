@@ -24,7 +24,11 @@ public final class AleappUtils {
     private AleappUtils() {
     }
 
-    public static String globToLuceneQuery(String basePath, String globPattern) {
+    /**
+     * Builds the complete Lucene query used by FileSeeker: the glob-derived clauses from
+     * {@link #globToLuceneQuery(String)}, anchored to the evidence root path and excluding carved file fragments.
+     */
+    public static String buildFileSearchQuery(String basePath, String globPattern) {
         StringBuilder query = new StringBuilder();
         query.append(BasicProps.PATH).append(":\"").append(basePath).append("\"");
 
@@ -46,7 +50,8 @@ public final class AleappUtils {
      * files than the original glob.
      *
      * To guarantee 100% precision without missing any results, the hits returned by this Lucene query MUST be checked
-     * again in memory using a strict Java PathMatcher or Regex (e.g., via FileSeeker.checkLucenePath).
+     * again in memory using a strict Java PathMatcher or Regex (e.g., via AleappUtils.matchesGlob, as FileSeeker.search
+     * does).
      *
      * @param globPattern The glob pattern to convert.
      * @return A Lucene query string.
@@ -123,27 +128,20 @@ public final class AleappUtils {
         }
     }
 
-    public static IItemReader findItemByPath(IItemSearcher searcher, String itemPath) {
-        String query = BasicProps.PATH + ":\"" + itemPath + "\"";
-        return searcher.search(query).stream()
-                .filter(item -> itemPath.equals(item.getPath()))
-                .findFirst()
-                .orElse(null);
-    }
-
     /**
      * Replicates the exact behavior of Python's fnmatch logic. Evaluates a file path against a glob pattern to guarantee
-     * 100% precision.
+     * 100% precision. Used as the strict in-memory re-check for hits returned by the high-recall Lucene pre-filter built
+     * by {@link #globToLuceneQuery(String)}.
      *
      * See: https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L111
      */
-    public static boolean checkLucenePath(IItemReader item, String filepattern) {
-        if (filepattern == null || item == null) {
+    public static boolean matchesGlob(IItemReader item, String globPattern) {
+        if (globPattern == null || item == null) {
             return false;
         }
 
         // 1. Fetch or compile the fnmatch-equivalent regex pattern
-        Pattern pat = PATTERN_CACHE.computeIfAbsent(filepattern, AleappUtils::compileFnmatchPattern);
+        Pattern pat = PATTERN_CACHE.computeIfAbsent(globPattern, AleappUtils::compileFnmatchPattern);
 
         // 2. Normalize the path to use forward slashes (cross-platform safety)
         String pathToCheck = item.getPath().replace('\\', '/');
@@ -189,6 +187,14 @@ public final class AleappUtils {
         }
         sb.append("$"); // $ for end of string
         return Pattern.compile(sb.toString());
+    }
+
+    public static IItemReader findItemByPath(IItemSearcher searcher, String itemPath) {
+        String query = BasicProps.PATH + ":\"" + itemPath + "\"";
+        return searcher.search(query).stream()
+                .filter(item -> itemPath.equals(item.getPath()))
+                .findFirst()
+                .orElse(null);
     }
 
 }

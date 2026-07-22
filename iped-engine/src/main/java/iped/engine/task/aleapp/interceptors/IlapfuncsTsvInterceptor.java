@@ -27,11 +27,34 @@ import iped.properties.ExtraProperties;
 import jep.PyMethod;
 
 /**
- * Replace the ilapfuncs.tsv function
+ * Replaces the ilapfuncs.tsv function. This is the main IPED-ALEAPP integration point: instead of letting the plugin
+ * write a TSV report file, each data row is turned into an IPED subitem of the current plugin evidence, with the TSV
+ * columns mapped to metadata (and, when recognized, to IPED standard properties like message date/from/to/body and
+ * geolocation).
  */
 public class IlapfuncsTsvInterceptor extends CallInterceptor {
 
     protected static final Logger logger = LoggerFactory.getLogger(IlapfuncsTsvInterceptor.class);
+
+    // Date columns vary a lot across ALeapp plugins ("Timestamp", "Start Time",
+    // "Created Timestamp", "Last Updated", ...), so dates use exact names plus a
+    // suffix family, calibrated against ALEAPP v2026.1.0 sources. Sender,
+    // recipient and body use exact matches only: mislabeling those is
+    // forensically costly (e.g. "Account" is usually the device owner, who is
+    // the receiver of incoming records, not the sender). "Date of Birth"-style
+    // personal dates must not become the record's event date, so there is no
+    // "date " prefix rule — "date *" event columns are listed explicitly.
+    private static final Set<String> DATE_HEADERS = Set.of( //
+            "datetime", "date/time", "date", "created", "created at", "updated at", //
+            "time created", "last updated", "last login", "last modified", "last access", "last accessed", //
+            "date added", "date created", "date modified", "date sent", "date taken");
+    private static final Set<String> FROM_HEADERS = Set.of("sender", "from", "author");
+    private static final Set<String> TO_HEADERS = Set.of("recipient", "to", "receiver");
+    private static final Set<String> BODY_HEADERS = Set.of("message", "body", "text", "content");
+
+    private enum StandardField {
+        DATE, FROM, TO, BODY, LATITUDE, LONGITUDE, NONE
+    }
 
     public IlapfuncsTsvInterceptor() {
         super("scripts.ilapfuncs", "scripts.ilapfuncs.tsv");
@@ -52,6 +75,8 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
             return null;
         }
 
+        // the interceptor is installed globally in the Python interpreter, so the
+        // thread-local context tells us which plugin run this tsv() call belongs to
         LeappContext context = LeappContext.get();
 
         // set hasChildren, so plugin will not be ignored in AleappTask.processPluginEvidence()
@@ -60,7 +85,30 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         IItem categoryItem = (IItem) context.getPluginItem().getTempAttribute(AleappTask.ALEAPP_PLUGIN_CATEGORY_KEY);
         categoryItem.setHasChildren(true);
 
-        // linkedItems
+        addLinkedItems(context, sourceFiles);
+
+        String pluginName = context.getPluginItem().getMetadata().get(AleappTask.ALEAPP_PLUGIN_KEYNAME_META);
+        MediaType mediaType = resolveMediaType(tsvName, pluginName);
+
+        // headers are constant across rows: classify each column once
+        StandardField[] standardFields = new StandardField[dataHeaders.size()];
+        for (int i = 0; i < standardFields.length; i++) {
+            standardFields[i] = classifyHeader(dataHeaders.get(i));
+        }
+
+        for (int index = 0; index < dataList.size(); index++) {
+            Item subItem = createSubItem(context, mediaType, tsvName, index, dataHeaders, standardFields, dataList.get(index));
+            context.getWorker().processNewItem(subItem, ProcessTime.LATER);
+        }
+
+        return null;
+    }
+
+    /**
+     * Links the plugin evidence to the items the data came from: the files reported by the plugin via source_file plus
+     * all files found by the seeker for this plugin.
+     */
+    private void addLinkedItems(LeappContext context, String sourceFiles) {
         Set<String> globalIds = new HashSet<>();
         if (sourceFiles != null) {
             for (String sourceFile : sourceFiles.split(", ")) {
@@ -73,82 +121,54 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         for (IItemReader foundFile : context.getFoundFiles()) {
             globalIds.add((String) foundFile.getExtraAttribute(ExtraProperties.GLOBAL_ID));
         }
-        String likedItems = ExtraProperties.GLOBAL_ID + ":(" + String.join(" ", globalIds) + ")";
-        context.getPluginItem().getMetadata().add(ExtraProperties.LINKED_ITEMS, likedItems);
-
-
-        // media type
-        String pluginName = context.getPluginItem().getMetadata().get(AleappTask.ALEAPP_PLUGIN_KEYNAME_META);
-        MediaType mediaType = resolveMediaType(tsvName, pluginName);
-
-        // headers are constant across rows: classify each column once
-        StandardField[] standardFields = new StandardField[dataHeaders.size()];
-        for (int i = 0; i < standardFields.length; i++) {
-            standardFields[i] = classifyHeader(dataHeaders.get(i));
-        }
-
-        // create subItems
-        for (int index = 0; index < dataList.size(); index++) {
-
-            String subItemName = tsvName + "-" + index;
-            Item subItem = (Item) context.getPluginItem().createChildItem();
-            subItem.setMediaType(mediaType);
-            subItem.setName(subItemName);
-            subItem.setExtension("");
-            subItem.setPath(context.getPluginItem().getPath() + "/" + subItemName);
-            subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
-            subItem.setSubItem(true);
-            subItem.setSubitemId(index);
-
-            // data as metadata
-            List<Object> data = dataList.get(index);
-            String lat = null, lon = null;
-            for (int i = 0; i < dataHeaders.size(); i++) {
-                Object value = cellValue(data, i);
-                if (value != null) {
-                    String header = dataHeaders.get(i);
-                    String valueStr = value.toString();
-                    if (context.getFileSeeker().getExportedFiles().containsKey(valueStr)) {
-                        IItemReader valueItem = context.getFileSeeker().getExportedFiles().get(valueStr);
-                        valueStr = StringUtils.removeStart(valueItem.getPath(), context.getFileSeeker().getPathRoot());
-                        subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, ExtraProperties.GLOBAL_ID + ":" + valueItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
-                    }
-                    subItem.getMetadata().set("aleapp:" + header, valueStr);
-                    if (standardFields[i] == StandardField.LATITUDE) {
-                        lat = valueStr;
-                    } else if (standardFields[i] == StandardField.LONGITUDE) {
-                        lon = valueStr;
-                    } else if (standardFields[i] != StandardField.NONE) {
-                        applyStandardField(subItem, standardFields[i], valueStr);
-                    }
-                }
-            }
-            setLocationIfValid(subItem, lat, lon);
-
-            context.getWorker().processNewItem(subItem, ProcessTime.LATER);
-        }
-
-        return null;
+        String linkedItems = ExtraProperties.GLOBAL_ID + ":(" + String.join(" ", globalIds) + ")";
+        context.getPluginItem().getMetadata().add(ExtraProperties.LINKED_ITEMS, linkedItems);
     }
 
-    // Date columns vary a lot across ALeapp plugins ("Timestamp", "Start Time",
-    // "Created Timestamp", "Last Updated", ...), so dates use exact names plus a
-    // suffix family, calibrated against ALEAPP v2026.1.0 sources. Sender,
-    // recipient and body use exact matches only: mislabeling those is
-    // forensically costly (e.g. "Account" is usually the device owner, who is
-    // the receiver of incoming records, not the sender). "Date of Birth"-style
-    // personal dates must not become the record's event date, so there is no
-    // "date " prefix rule — "date *" event columns are listed explicitly.
-    private static final Set<String> DATE_HEADERS = Set.of( //
-            "datetime", "date/time", "date", "created", "created at", "updated at", //
-            "time created", "last updated", "last login", "last modified", "last access", "last accessed", //
-            "date added", "date created", "date modified", "date sent", "date taken");
-    private static final Set<String> FROM_HEADERS = Set.of("sender", "from", "author");
-    private static final Set<String> TO_HEADERS = Set.of("recipient", "to", "receiver");
-    private static final Set<String> BODY_HEADERS = Set.of("message", "body", "text", "content");
+    /**
+     * Creates one subitem for a TSV data row, storing each cell as "aleapp:&lt;header&gt;" metadata and mapping
+     * recognized columns to IPED standard properties.
+     */
+    private Item createSubItem(LeappContext context, MediaType mediaType, String tsvName, int index,
+            List<String> dataHeaders, StandardField[] standardFields, List<Object> data) {
 
-    private enum StandardField {
-        DATE, FROM, TO, BODY, LATITUDE, LONGITUDE, NONE
+        String subItemName = tsvName + "-" + index;
+        Item subItem = (Item) context.getPluginItem().createChildItem();
+        subItem.setMediaType(mediaType);
+        subItem.setName(subItemName);
+        subItem.setExtension("");
+        subItem.setPath(context.getPluginItem().getPath() + "/" + subItemName);
+        subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+        subItem.setSubItem(true);
+        subItem.setSubitemId(index);
+
+        // data as metadata
+        String lat = null, lon = null;
+        for (int i = 0; i < dataHeaders.size(); i++) {
+            Object value = cellValue(data, i);
+            if (value != null) {
+                String header = dataHeaders.get(i);
+                String valueStr = value.toString();
+                // cells holding a path exported by the seeker are rewritten back to the
+                // original in-case path and linked to the original item
+                if (context.getFileSeeker().getExportedFiles().containsKey(valueStr)) {
+                    IItemReader valueItem = context.getFileSeeker().getExportedFiles().get(valueStr);
+                    valueStr = StringUtils.removeStart(valueItem.getPath(), context.getFileSeeker().getPathRoot());
+                    subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, ExtraProperties.GLOBAL_ID + ":" + valueItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
+                }
+                subItem.getMetadata().set("aleapp:" + header, valueStr);
+                if (standardFields[i] == StandardField.LATITUDE) {
+                    lat = valueStr;
+                } else if (standardFields[i] == StandardField.LONGITUDE) {
+                    lon = valueStr;
+                } else if (standardFields[i] != StandardField.NONE) {
+                    applyStandardField(subItem, standardFields[i], valueStr);
+                }
+            }
+        }
+        setLocationIfValid(subItem, lat, lon);
+
+        return subItem;
     }
 
     private static Object cellValue(List<Object> data, int i) {
@@ -236,16 +256,25 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         }
     }
 
-    private MediaType resolveMediaType(String tsvName, String pluginModuleName) {
+    /**
+     * Derives the subitem media type. A module can register many plugins, so the plugin name (often prefixed with
+     * "get_", which is stripped) plus hints from the tsv report name ("Call", "Chat", ...) are used to build a specific
+     * x-aleapp-* type.
+     */
+    private MediaType resolveMediaType(String tsvName, String pluginName) {
 
-        String mimePluginName = pluginModuleName.toLowerCase().replace(".", "");
+        String mimePluginName = pluginName.toLowerCase().replace(".", "");
         mimePluginName = StringUtils.removeStart(mimePluginName, "get_");
 
+        // Facebook plugins share generic plugin names: the tsv name prefix (before "- ")
+        // is more specific, so use it instead
         if (StringUtils.containsIgnoreCase(mimePluginName, "facebook")) {
             mimePluginName = StringUtils.substringBefore(tsvName, "- ").toLowerCase();
         }
 
-        if (StringUtils.containsIgnoreCase(pluginModuleName, "chrome")) {
+        // Chrome plugins are named per artifact already, so the tsv name alone is used
+        // (mimePluginName is intentionally ignored in this branch)
+        if (StringUtils.containsIgnoreCase(pluginName, "chrome")) {
             return MediaType.application(ALEAPP_APPLICATION_PREFIX + tsvNameToType(tsvName));
         } else if (StringUtils.containsIgnoreCase(tsvName, "Call")) {
             return MediaType.application(ALEAPP_APPLICATION_PREFIX + mimePluginName + "-call");

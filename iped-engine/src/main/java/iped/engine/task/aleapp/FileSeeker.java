@@ -31,8 +31,10 @@ public class FileSeeker {
     private Path exportFolder;
     
     private Map<String, IItemReader> exportedFiles = new HashMap<>();
-    
-    // properties used by plugins
+
+    // Public snake_case fields: ALEAPP plugins access these directly on the Python
+    // side as attributes of the "seeker" object (e.g. seeker.data_folder), so the
+    // names MUST match ALEAPP's FileSeekerBase attributes. Do not rename.
     public String data_folder;
     public HashMap<String, FileInfo> file_infos = new HashMap<>();
 
@@ -56,25 +58,26 @@ public class FileSeeker {
     }
 
     // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L57
-    public List<IItemReader> search(List<String> filePatternsToSearch) {
+    public List<IItemReader> search(List<String> globPatterns) {
 
         String query = "("
-                + filePatternsToSearch.stream()
-                    .map(regex -> AleappUtils.globToLuceneQuery(pathRoot, regex))
+                + globPatterns.stream()
+                    .map(glob -> AleappUtils.buildFileSearchQuery(pathRoot, glob))
                     .collect(Collectors.joining(") OR ("))
                 + ")";
 
-        logger.debug("query=[{}], patterns=[{}]", query, filePatternsToSearch);
+        logger.debug("query=[{}], patterns=[{}]", query, globPatterns);
 
-        // search for files in the case data using the constructed query
-        // filter results to ensure they start with the rootPath and match at least one of the file patterns
+        // The Lucene query is a high-recall pre-filter and may return extra hits (see
+        // AleappUtils.globToLuceneQuery), so re-check each hit strictly: it must start
+        // with the evidence root path and fnmatch at least one of the glob patterns.
         return searcher
                 .search(query) //
                 .stream() //
                 .filter(item -> item.getPath().startsWith(pathRoot)) //
                 .filter(item -> {
-                    for (String filePattern : filePatternsToSearch) {
-                        if (AleappUtils.checkLucenePath(item, filePattern)) {
+                    for (String glob : globPatterns) {
+                        if (AleappUtils.matchesGlob(item, glob)) {
                             return true;
                         }
                     }
@@ -117,6 +120,10 @@ public class FileSeeker {
 
         exportedFiles.put(filePath.toString(), item);
 
+        // keep file_infos in sync: some plugins read seeker.file_infos[path] to recover
+        // the original source path and timestamps of an exported file
+        file_infos.put(filePath.toString(), new FileInfo(item.getPath(), item.getCreationDate(), item.getModDate()));
+
         return filePath;
     }
 
@@ -135,14 +142,17 @@ public class FileSeeker {
                 .collect(Collectors.toList());
     }
 
-    // https://github.com/abrignoni/ALEAPP/blob/v3.4.0/scripts/search_files.py#L27
+    // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L61
     public void cleanup() {
         try {
-            PathUtils.deleteDirectory(exportFolder);
+            if (Files.exists(exportFolder)) {
+                PathUtils.deleteDirectory(exportFolder);
+            }
         } catch (IOException e) {
             logger.warn("Failed to delete export folder: {}", exportFolder, e);
         }
         exportedFiles.clear();
+        file_infos.clear();
     }
     
     public Map<String, IItemReader> getExportedFiles() {

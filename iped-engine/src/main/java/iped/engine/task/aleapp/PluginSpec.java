@@ -16,7 +16,7 @@ public class PluginSpec {
 
     private final PyObject pluginObject;
 
-    private List<String> searchRegexes;
+    private List<String> searchGlobs;
 
     public PluginSpec(PyObject pluginObject) {
         this.pluginObject = pluginObject;
@@ -36,11 +36,16 @@ public class PluginSpec {
         return this.pluginObject.getAttr("category", String.class);
     }
 
+    /**
+     * Returns the plugin's file search patterns. Despite ALEAPP calling them "regexes" in places, these are shell-style
+     * glob patterns (fnmatch semantics).
+     *
+     * mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L386
+     */
     @SuppressWarnings("unchecked")
-    public List<String> getSearchRegexes() {
+    public List<String> getSearchGlobs() {
 
-        // mimics https://github.com/abrignoni/ALEAPP/blob/v3.4.0/aleapp.py#L353
-        if (searchRegexes == null) {
+        if (searchGlobs == null) {
             List<String> list = new ArrayList<>();
             Object search = this.pluginObject.getAttr("search");
             if (search instanceof String) {
@@ -50,9 +55,9 @@ public class PluginSpec {
             } else if (search != null) {
                 throw new IllegalArgumentException("Invalid plugin search: " + search.getClass() + " > " + search);
             }
-            searchRegexes = list;
+            searchGlobs = list;
         }
-        return searchRegexes;
+        return searchGlobs;
     }
 
     public PyCallable getMethod() {
