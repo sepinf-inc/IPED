@@ -116,6 +116,8 @@ public class ZipFileReader extends DataSourceReader {
                 rootItem.setRoot(true);
             }
             addToQueue(rootItem);
+        } else {
+            caseData.incDiscoveredEvidences(1);
         }
 
         readZipEntries(file);
@@ -216,6 +218,7 @@ public class ZipFileReader extends DataSourceReader {
                 parent.setExtraAttribute(ExtraProperties.DATASOURCE_READER, this.getClass().getSimpleName());
             }
         }
+        caseData.incDiscoveredEvidences(1);
         addToQueue(parent);
         dirItems.put(parentPath, parent);
         return parent;
