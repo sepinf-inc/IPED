@@ -21,19 +21,19 @@ public class CallInterceptor {
     protected static final Logger logger = LoggerFactory.getLogger(CallInterceptor.class);
 
     private String pythonModule;
-    private String pythonCall;
-    private boolean isClass = false;
+    private String pythonFunction;
+    private boolean isClassMethod = false;
 
     private PyCallable originalCall;
 
-    public CallInterceptor(String pythonModule, String pythonCall, boolean isClass) {
+    public CallInterceptor(String pythonModule, String pythonFunction, boolean isClassMethod) {
         this.pythonModule = pythonModule;
-        this.pythonCall = pythonCall;
-        this.isClass = isClass;
+        this.pythonFunction = pythonFunction;
+        this.isClassMethod = isClassMethod;
     }
 
-    public CallInterceptor(String pythonModule, String pythonCall) {
-        this(pythonModule, pythonCall, false);
+    public CallInterceptor(String pythonModule, String pythonFunction) {
+        this(pythonModule, pythonFunction, false);
     }
 
     public void install(Jep jep) {
@@ -42,42 +42,52 @@ public class CallInterceptor {
             jep.exec("import " + pythonModule);
         }
 
-        if (isClass) {
+        // The "interceptor" global is only a temporary handoff variable used during install 
+        jep.set("interceptor", this);
 
-            String clazz = StringUtils.substringBeforeLast(pythonCall, ".");
-            String method = StringUtils.substringAfterLast(pythonCall, ".");
+        if (isClassMethod) {
+
+            String clazz = StringUtils.substringBeforeLast(pythonFunction, ".");
+            String method = StringUtils.substringAfterLast(pythonFunction, ".");
 
             originalCall = jep.getValue("getattr(" + clazz + ", \"" + method + "\")", PyCallable.class);
             if (originalCall == null) {
-                throw new IllegalStateException("Original call is null for: " + pythonCall);
+                throw new IllegalStateException("Original call is null for: " + pythonFunction);
             }
 
-            jep.set("interceptor", this);
-
-            jep.exec("def interceptor_method(self, *args, **kwargs):"
-                    + "    interceptor.call(self, *args, **kwargs)");
+            // The keyword-only default "_interceptor=interceptor" captures the interceptor
+            // at def time. Referencing the global directly in the body would be resolved at
+            // CALL time (late binding), so the wrapper would delegate to whichever
+            // interceptor happened to be installed last.
+            jep.exec("def interceptor_method(self, *args, _interceptor=interceptor, **kwargs):"
+                    + " return _interceptor.call(self, *args, **kwargs)");
 
             jep.exec("setattr(" + clazz + ", \"" + method + "\", interceptor_method)");
 
         } else {
 
-            originalCall = jep.getValue(pythonCall, PyCallable.class);
+            originalCall = jep.getValue(pythonFunction, PyCallable.class);
             if (originalCall == null) {
-                throw new IllegalStateException("Original call is null for: " + pythonCall);
+                throw new IllegalStateException("Original call is null for: " + pythonFunction);
             }
 
-            jep.set("interceptor", this);
-
-            jep.exec(pythonCall + " = interceptor.call");
+            // "interceptor.call" is evaluated NOW, at exec time: the module attribute ends
+            // up holding a bound callable, independent of the global name.
+            jep.exec(pythonFunction + " = interceptor.call");
         }
     }
+
+    // The three call() overloads below exist because Jep dispatches by the Python
+    // call shape (positional-only, kwargs-only, or both), selected via @PyMethod.
+    // Subclasses overriding call(Object[], Map) must repeat the @PyMethod
+    // annotation, otherwise Jep dispatch breaks.
 
     @PyMethod(varargs = true, kwargs = true)
     public Object call(Object[] args, Map<String, Object> kwargs) throws Exception {
 
         if (logger.isDebugEnabled()) {
             logger.debug("JAVA INTERCEPTOR: ---- 001 ----");
-            logger.debug("JAVA INTERCEPTOR: call: " + pythonCall);
+            logger.debug("JAVA INTERCEPTOR: call: " + pythonFunction);
             logger.debug("JAVA INTERCEPTOR: varargs: " + Arrays.toString(args));
             logger.debug("JAVA INTERCEPTOR: kwargs: " + kwargs);
         }
