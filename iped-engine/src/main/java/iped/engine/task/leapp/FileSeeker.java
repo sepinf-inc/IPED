@@ -1,4 +1,4 @@
-package iped.engine.task.aleapp;
+package iped.engine.task.leapp;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,7 +62,7 @@ public class FileSeeker {
 
         String query = "("
                 + globPatterns.stream()
-                    .map(glob -> AleappUtils.buildFileSearchQuery(pathRoot, glob))
+                    .map(glob -> LeappUtils.buildFileSearchQuery(pathRoot, glob))
                     .collect(Collectors.joining(") OR ("))
                 + ")";
 
@@ -77,7 +77,7 @@ public class FileSeeker {
                 .filter(item -> item.getPath().startsWith(pathRoot)) //
                 .filter(item -> {
                     for (String glob : globPatterns) {
-                        if (AleappUtils.matchesGlob(item, glob)) {
+                        if (LeappUtils.matchesGlob(item, glob)) {
                             return true;
                         }
                     }

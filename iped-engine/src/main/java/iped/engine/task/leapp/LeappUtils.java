@@ -1,4 +1,4 @@
-package iped.engine.task.aleapp;
+package iped.engine.task.leapp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,12 +16,12 @@ import iped.search.IItemSearcher;
 /**
  * A utility class containing helper methods for ALEAPP.
  */
-public final class AleappUtils {
+public final class LeappUtils {
 
     // Cache to avoid recompiling the same glob patterns into Regex repeatedly
     private static final ConcurrentHashMap<String, Pattern> PATTERN_CACHE = new ConcurrentHashMap<>();
 
-    private AleappUtils() {
+    private LeappUtils() {
     }
 
     /**
@@ -141,7 +141,7 @@ public final class AleappUtils {
         }
 
         // 1. Fetch or compile the fnmatch-equivalent regex pattern
-        Pattern pat = PATTERN_CACHE.computeIfAbsent(globPattern, AleappUtils::compileFnmatchPattern);
+        Pattern pat = PATTERN_CACHE.computeIfAbsent(globPattern, LeappUtils::compileFnmatchPattern);
 
         // 2. Normalize the path to use forward slashes (cross-platform safety)
         String pathToCheck = item.getPath().replace('\\', '/');

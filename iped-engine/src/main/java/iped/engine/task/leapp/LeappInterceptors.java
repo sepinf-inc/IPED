@@ -1,4 +1,4 @@
-package iped.engine.task.aleapp;
+package iped.engine.task.leapp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,17 +6,17 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.engine.task.aleapp.interceptors.IlapfuncsLogfuncInterceptor;
-import iped.engine.task.aleapp.interceptors.IlapfuncsTsvInterceptor;
+import iped.engine.task.leapp.interceptors.IlapfuncsLogfuncInterceptor;
+import iped.engine.task.leapp.interceptors.IlapfuncsTsvInterceptor;
 import jep.Jep;
 
-public class AleappInterceptors {
+public class LeappInterceptors {
 
-    protected static final Logger logger = LoggerFactory.getLogger(AleappInterceptors.class);
+    protected static final Logger logger = LoggerFactory.getLogger(LeappInterceptors.class);
 
     private List<CallInterceptor> interceptors = new ArrayList<>();
 
-    public AleappInterceptors() {
+    public LeappInterceptors() {
         interceptors.add(new IlapfuncsLogfuncInterceptor());
         interceptors.add(new IlapfuncsTsvInterceptor());
     }

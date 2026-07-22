@@ -1,4 +1,4 @@
-package iped.engine.task.aleapp;
+package iped.engine.task.leapp;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -170,7 +170,7 @@ public class AleappTask extends AbstractTask {
             // even though each worker thread creates its own Jep instance.
             synchronized (AleappTask.class) {
                 if (!interceptorsInstalled) {
-                    AleappInterceptors interceptors = new AleappInterceptors();
+                    LeappInterceptors interceptors = new LeappInterceptors();
                     interceptors.install(jep);
                     interceptorsInstalled = true;
                 }

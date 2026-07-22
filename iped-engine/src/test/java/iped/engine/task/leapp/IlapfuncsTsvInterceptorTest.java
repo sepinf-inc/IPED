@@ -1,4 +1,4 @@
-package iped.engine.task.aleapp;
+package iped.engine.task.leapp;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -12,7 +12,7 @@ import org.apache.tika.metadata.Message;
 import org.junit.Test;
 
 import iped.engine.data.Item;
-import iped.engine.task.aleapp.interceptors.IlapfuncsTsvInterceptor;
+import iped.engine.task.leapp.interceptors.IlapfuncsTsvInterceptor;
 import iped.engine.tika.SyncMetadata;
 import iped.properties.ExtraProperties;
 
@@ -28,7 +28,7 @@ public class IlapfuncsTsvInterceptorTest {
     static {
         try {
             STANDARD_FIELD = Class.forName(
-                    "iped.engine.task.aleapp.interceptors.IlapfuncsTsvInterceptor$StandardField");
+                    "iped.engine.task.leapp.interceptors.IlapfuncsTsvInterceptor$StandardField");
         } catch (ClassNotFoundException e) {
             throw new ExceptionInInitializerError(e);
         }

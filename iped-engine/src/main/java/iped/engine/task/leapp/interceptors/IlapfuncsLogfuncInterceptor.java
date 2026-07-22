@@ -1,9 +1,9 @@
-package iped.engine.task.aleapp.interceptors;
+package iped.engine.task.leapp.interceptors;
 
 import java.util.Map;
 
-import iped.engine.task.aleapp.CallInterceptor;
-import iped.engine.task.aleapp.LeappContext;
+import iped.engine.task.leapp.CallInterceptor;
+import iped.engine.task.leapp.LeappContext;
 import jep.PyMethod;
 
 /**
