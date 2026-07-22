@@ -31,25 +31,22 @@ public class LeappInterceptors {
 
         disableFunctions(jep);
 
-        makeContextThreadLocal(jep);
+        // patches LEAPP's Context so its per-plugin-run state becomes thread-local,
+        // isolating concurrent plugin runs on different IPED workers sharing the same
+        // Python interpreter (full rationale in the resource file)
+        execPythonResource(jep, "context_thread_local_patch.py");
 
         for (CallInterceptor interceptor : interceptors) {
             interceptor.install(jep);
         }
     }
 
-    /**
-     * Patches LEAPP's scripts.context.Context so its per-plugin-run state becomes thread-local, isolating concurrent
-     * plugin runs on different IPED workers that share the same Python interpreter (Jep SharedInterpreter).
-     *
-     * The full rationale and the patch itself live in the context_thread_local_patch.py resource.
-     */
-    private void makeContextThreadLocal(Jep jep) {
+    private void execPythonResource(Jep jep, String resourceName) {
         String script;
-        try (InputStream is = getClass().getResourceAsStream("context_thread_local_patch.py")) {
+        try (InputStream is = getClass().getResourceAsStream(resourceName)) {
             script = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to load context_thread_local_patch.py resource", e);
+            throw new UncheckedIOException("Failed to load resource: " + resourceName, e);
         }
         jep.exec(script);
     }
