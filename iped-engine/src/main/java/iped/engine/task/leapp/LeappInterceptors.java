@@ -1,5 +1,9 @@
 package iped.engine.task.leapp;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,9 +29,27 @@ public class LeappInterceptors {
 
         disableFunctions(jep);
 
+        makeContextThreadLocal(jep);
+
         for (CallInterceptor interceptor : interceptors) {
             interceptor.install(jep);
         }
+    }
+
+    /**
+     * Patches LEAPP's scripts.context.Context so its per-plugin-run state becomes thread-local, isolating concurrent
+     * plugin runs on different IPED workers that share the same Python interpreter (Jep SharedInterpreter).
+     *
+     * The full rationale and the patch itself live in the context_thread_local_patch.py resource.
+     */
+    private void makeContextThreadLocal(Jep jep) {
+        String script;
+        try (InputStream is = getClass().getResourceAsStream("context_thread_local_patch.py")) {
+            script = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to load context_thread_local_patch.py resource", e);
+        }
+        jep.exec(script);
     }
 
     public void disableFunctions(Jep jep) {

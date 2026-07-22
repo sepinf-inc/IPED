@@ -84,8 +84,8 @@ public class AleappTask extends AbstractTask {
     private Map<String, PluginSpec> selectedPlugins;
     private ALeappConfig config;
 
-    private static Path outputFolder;
-    private static String outputFolderBase;
+    private Path outputFolder;
+    private String outputFolderBase;
 
     private Path exportFilesFolder;
 
@@ -123,7 +123,8 @@ public class AleappTask extends AbstractTask {
 
         config = (ALeappConfig) configurationManager.findObject(ALeappConfig.class);
 
-        exportFilesFolder = Files.createTempDirectory("aleapp-data-");
+        outputFolder = Files.createTempDirectory("aleapp-output-");
+        exportFilesFolder = outputFolder.resolve("data");
     }
 
     /**
@@ -166,8 +167,8 @@ public class AleappTask extends AbstractTask {
             jep.exec("sys.path.append('" + config.getAleappFolder().getCanonicalPath() + "')");
 
             // SharedInterpreter instances all share the same Python module state, so
-            // interceptors (and OutputParameters below) are installed only ONCE globally,
-            // even though each worker thread creates its own Jep instance.
+            // interceptors (and the OutputParameters instance below) are installed only
+            // ONCE globally, even though each worker thread creates its own Jep instance.
             synchronized (AleappTask.class) {
                 if (!interceptorsInstalled) {
                     LeappInterceptors interceptors = new LeappInterceptors();
@@ -191,19 +192,14 @@ public class AleappTask extends AbstractTask {
                     .filter(plugin -> config.isPluginIncluded(plugin.getModuleName()))
                     .collect(Collectors.toMap(PluginSpec::getName, Function.identity()));
 
-
             jep.exec("from scripts.ilapfuncs import OutputParameters");
             jep.exec("from scripts.context import Context");
-            synchronized (AleappTask.class) {
-                if (outputFolder == null) {
-                    outputFolder = Files.createTempDirectory("aleapp-output-");
 
-                    // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
-                    jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
-                    outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
-                    jep.exec("Context.set_output_params(out_params)");
-                }
-            }
+            // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
+            jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
+            outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
+
+            jep.exec("Context.set_output_params(out_params)");
         });
     }
 
@@ -406,7 +402,7 @@ public class AleappTask extends AbstractTask {
         // look for the files the plugin needs
         // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L386)
         IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-        String pathRoot = StringUtils.substringBefore(pluginEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
+        String pathRoot = StringUtils.substringBeforeLast(pluginEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
         FileSeeker seeker = new FileSeeker(pathRoot, exportFilesFolder, searcher);
 
         try {
@@ -445,6 +441,14 @@ public class AleappTask extends AbstractTask {
                 pluginEvidence.setToIgnore(true);
             }
         } finally {
+            try {
+                // clears this thread's Python Context state, mirroring aleapp.py's per-artifact
+                // Context.clear() (state is thread-local, see LeappInterceptors.makeContextThreadLocal)
+                jep.exec("import scripts.context");
+                jep.exec("scripts.context.Context.clear()");
+            } catch (Exception e) {
+                logger.warn("Failed to clear Python Context after {} plugin", pluginName, e);
+            }
             seeker.cleanup();
             LeappContext.clear();
         }
@@ -453,12 +457,18 @@ public class AleappTask extends AbstractTask {
     private void processDeviceInfoEvidence(IItem deviceInfoEvidence) throws Exception {
 
         runOnPythonThread(() -> {
+
             // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L432
             jep.exec("import scripts.ilapfuncs");
-            jep.exec("scripts.ilapfuncs.write_device_info()");
 
-            String deviceInfoPath = jep.getValue("OutputParameters.screen_output_file_path_devinfo", String.class);
-            byte[] deviceInfoBytes = Files.readAllBytes(Paths.get(deviceInfoPath));
+            Path deviceInfoPath = Files.createTempFile("screen_output_file_path_devinfo", ".html");
+
+            synchronized (AleappTask.class) {
+                jep.exec("OutputParameters.screen_output_file_path_devinfo = '" + deviceInfoPath.toString() + "'");
+                jep.exec("scripts.ilapfuncs.write_device_info()");
+            }
+
+            byte[] deviceInfoBytes = Files.readAllBytes(deviceInfoPath);
 
             if (deviceInfoBytes.length > 0) {
                 ExportFileTask.getLastInstance().insertIntoStorage(deviceInfoEvidence, deviceInfoBytes, deviceInfoBytes.length);
