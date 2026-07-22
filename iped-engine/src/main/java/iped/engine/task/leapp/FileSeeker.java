@@ -39,18 +39,21 @@ public class FileSeeker {
     // side as attributes of the "seeker" object (e.g. seeker.data_folder), so the
     // names MUST match FileSeekerBase attributes. Do not rename.
     public String data_folder;
-    public String directory;
     public HashMap<String, FileInfo> file_infos = new HashMap<>();
 
     public static class FileInfo {
         public String source_path;
-        public Date creation_date;
-        public Date modification_date;
+        // epoch SECONDS, mirroring Python's FileInfo which stores os.stat()
+        // st_ctime/st_mtime floats (0 when unknown, like FileSeekerTar does).
+        // Plugins compare/convert these as numbers, so java.util.Date must not
+        // be used here.
+        public double creation_date;
+        public double modification_date;
 
-        public FileInfo(String source_path, Date creation_date, Date modification_date) {
+        public FileInfo(String source_path, Date creationDate, Date modificationDate) {
             this.source_path = source_path;
-            this.creation_date = creation_date;
-            this.modification_date = modification_date;
+            this.creation_date = creationDate == null ? 0 : creationDate.getTime() / 1000.0;
+            this.modification_date = modificationDate == null ? 0 : modificationDate.getTime() / 1000.0;
         }
     }
 
@@ -59,7 +62,6 @@ public class FileSeeker {
         this.searcher = searcher;
         this.exportFolder = outputFolder.toAbsolutePath().normalize().resolve(DigestUtils.md5Hex(pathRoot.getBytes()));
         this.data_folder = exportFolder.toString();
-        this.directory = this.data_folder;
     }
 
     /**
