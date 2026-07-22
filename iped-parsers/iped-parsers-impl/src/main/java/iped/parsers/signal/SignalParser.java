@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -177,9 +178,14 @@ public class SignalParser extends SQLite3DBParser {
             msgMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentVirtualId));
             msgMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-            if (m.getDateSent() != null) {
-                msgMeta.set(ExtraProperties.MESSAGE_DATE, m.getDateSent());
-                msgMeta.set(TikaCoreProperties.CREATED, m.getDateSent());
+            // fall back to dateReceived like ReportGenerator does, so a message
+            // with no dateSent (e.g. a locally-originated draft/failed send)
+            // doesn't silently drop out of date-based search/filtering while
+            // still showing a date in the HTML report
+            Date msgDate = m.getDateSent() != null ? m.getDateSent() : m.getDateReceived();
+            if (msgDate != null) {
+                msgMeta.set(ExtraProperties.MESSAGE_DATE, msgDate);
+                msgMeta.set(TikaCoreProperties.CREATED, msgDate);
             }
 
             msgMeta.set(ExtraProperties.MESSAGE_BODY, resolveBody(m));
