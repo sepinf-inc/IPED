@@ -411,7 +411,7 @@ public class AleappTask extends AbstractTask {
 
         try {
 
-            List<IItemReader> filesFound = seeker.search(plugin.getSearchGlobs());
+            List<IItemReader> filesFound = seeker.searchItems(plugin.getSearchGlobs());
 
             if (filesFound.isEmpty()) {
                 logger.warn("Ignoring Aleapp {} plugin: no files found", pluginName);
@@ -426,26 +426,8 @@ public class AleappTask extends AbstractTask {
                 Path categoryFolder = Paths.get(outputFolderBase, "_HTML", plugin.getCategory());
                 Files.createDirectories(categoryFolder);
 
-                // export all files
-                List<Path> exportedFilesFound = new ArrayList<>();
-                for (IItemReader item : filesFound) {
-                    Path exportedFile = seeker.exportItemToFile(item);
-                    exportedFilesFound.add(exportedFile);
-                }
-
-                // export journal and wal files for sqlite items
-                for (IItemReader item : filesFound) {
-                    if ("sqlite".equals(item.getType())) {
-                        List<IItemReader> walAndJournalFiles = seeker.getJournalAndWalFiles(item);
-                        for (IItemReader walOrJournal : walAndJournalFiles) {
-                            seeker.exportItemToFile(walOrJournal);
-                        }
-                    }
-                }
-
-                ArrayList<String> filesFoundStringList = exportedFilesFound.stream()
-                        .map(path -> path.toString())
-                        .collect(Collectors.toCollection(ArrayList::new));
+                // export all files found (and -wal/-journal companions of sqlite items)
+                ArrayList<String> filesFoundStringList = seeker.exportItems(filesFound);
 
                 // call the plugin method
                 // plugin.method(files_found, report_folder, seeker, wrap_text)

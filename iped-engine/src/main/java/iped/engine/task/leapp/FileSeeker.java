@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -32,10 +35,11 @@ public class FileSeeker {
     
     private Map<String, IItemReader> exportedFiles = new HashMap<>();
 
-    // Public snake_case fields: ALEAPP plugins access these directly on the Python
+    // Public snake_case fields: LEAPP plugins access these directly on the Python
     // side as attributes of the "seeker" object (e.g. seeker.data_folder), so the
-    // names MUST match ALEAPP's FileSeekerBase attributes. Do not rename.
+    // names MUST match FileSeekerBase attributes. Do not rename.
     public String data_folder;
+    public String directory;
     public HashMap<String, FileInfo> file_infos = new HashMap<>();
 
     public static class FileInfo {
@@ -55,10 +59,75 @@ public class FileSeeker {
         this.searcher = searcher;
         this.exportFolder = outputFolder.toAbsolutePath().normalize().resolve(DigestUtils.md5Hex(pathRoot.getBytes()));
         this.data_folder = exportFolder.toString();
+        this.directory = this.data_folder;
     }
 
-    // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L57
-    public List<IItemReader> search(List<String> globPatterns) {
+    /**
+     * Python-facing API, mirroring ALEAPP's FileSeekerBase:
+     *
+     * def search(self, filepattern, return_on_first_hit=False): '''Returns a list of paths for files/folders that
+     * matched'''
+     *
+     * Unlike ALEAPP seekers, the matched files live inside the IPED case, so each hit is exported to the local export
+     * folder and the local paths are returned. For sqlite hits, -wal and -journal companion files are exported too, so
+     * the databases can be opened consistently.
+     *
+     * NOTE: Jep cannot map Python keyword arguments onto Java methods, so plugins must call seeker.search(pattern, True)
+     * positionally; the kwarg form return_on_first_hit=True is not supported.
+     *
+     * https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L57
+     */
+    public List<String> search(String filepattern) throws IOException {
+        return search(filepattern, false);
+    }
+
+    public List<String> search(String filepattern, boolean returnOnFirstHit) throws IOException {
+
+        List<IItemReader> items = searchItems(List.of(filepattern));
+
+        if (returnOnFirstHit && !items.isEmpty()) {
+            // mimics ALEAPP semantics: a list containing only the first hit
+            items = items.subList(0, 1);
+        }
+
+        return exportItems(items);
+    }
+
+    /**
+     * Exports the given case items to the local export folder and returns their local paths, in the same order. For
+     * sqlite items, -wal and -journal companion files are exported too, so the databases can be opened consistently.
+     */
+    public ArrayList<String> exportItems(List<IItemReader> items) throws IOException {
+
+        ArrayList<String> paths = new ArrayList<>();
+
+        // ids of the items themselves: avoids exporting a -wal/-journal companion a
+        // second time when the plugin's search pattern also matched it directly
+        Set<Integer> itemIds = new HashSet<>();
+        for (IItemReader item : items) {
+            itemIds.add(item.getId());
+        }
+
+        for (IItemReader item : items) {
+
+            paths.add(exportItemToFile(item).toString());
+
+            if ("sqlite".equals(item.getType())) {
+                for (IItemReader walOrJournal : getJournalAndWalFiles(item)) {
+                    if (!itemIds.contains(walOrJournal.getId())) {
+                        exportItemToFile(walOrJournal);
+                    }
+                }
+            }
+        }
+
+        return paths;
+    }
+
+    /**
+     * Java-facing search used by the task itself: returns the matched case items without exporting them.
+     */
+    public List<IItemReader> searchItems(List<String> globPatterns) {
 
         String query = "("
                 + globPatterns.stream()
@@ -69,7 +138,7 @@ public class FileSeeker {
         logger.debug("query=[{}], patterns=[{}]", query, globPatterns);
 
         // The Lucene query is a high-recall pre-filter and may return extra hits (see
-        // AleappUtils.globToLuceneQuery), so re-check each hit strictly: it must start
+        // LeappUtils.globToLuceneQuery), so re-check each hit strictly: it must start
         // with the evidence root path and fnmatch at least one of the glob patterns.
         return searcher
                 .search(query) //
