@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -146,6 +147,7 @@ public class FileSeeker {
                 .search(query) //
                 .stream() //
                 .filter(item -> item.getPath().startsWith(pathRoot)) //
+                .filter(item -> !item.getPath().substring(pathRoot.length()).contains(">>")) //
                 .filter(item -> {
                     for (String glob : globPatterns) {
                         if (LeappUtils.matchesGlob(item, glob)) {
@@ -167,6 +169,8 @@ public class FileSeeker {
 
         } else {
 
+            // we are sure that the item path starts with the evidence root path 
+            // because searchItems() already filtered it, so this substring is safe
             String fileRelativePathStr = item.getPath().substring(pathRoot.length() + 1);
             filePath = exportFolder.resolve(fileRelativePathStr);
 
@@ -177,9 +181,10 @@ public class FileSeeker {
                 Files.createDirectories(filePath);
             } else {
                 if (!Files.exists(filePath) || item.getLength() == null || Files.size(filePath) != item.getLength()) {
+
                     // copy the item to the folder
                     try (InputStream is = item.getBufferedInputStream()) {
-                        Files.copy(is, filePath);
+                        Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
                     }
                 }
             }
