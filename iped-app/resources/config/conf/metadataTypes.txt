@@ -1691,6 +1691,7 @@ Regex:BR_CAR_PLATE = java.lang.String
 Regex:BR_CNPJ = java.lang.String
 Regex:BR_CPF = java.lang.String
 Regex:BR_PISPASEP = java.lang.String
+Regex:BR_RENAVAM = java.lang.String
 Regex:BR_TITULO_ELEITOR = java.lang.String
 Regex:CREDIT_CARD = java.lang.String
 Regex:CRYPTOCOIN_BITCOIN_ADDRESS = java.lang.String
