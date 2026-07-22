@@ -10,6 +10,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.engine.task.leapp.interceptors.IlapfuncsDeviceInfoInterceptor;
 import iped.engine.task.leapp.interceptors.IlapfuncsLogfuncInterceptor;
 import iped.engine.task.leapp.interceptors.LavaInsertSqliteDataInterceptor;
 import jep.Jep;
@@ -25,6 +26,8 @@ public class LeappInterceptors {
         // results are captured from lava_insert_sqlite_data (NOT tsv/timeline/html):
         // it is the only output call receiving raw typed headers and raw values
         interceptors.add(new LavaInsertSqliteDataInterceptor());
+        // serializes concurrent writes to the shared ilapfuncs.identifiers dict
+        interceptors.add(new IlapfuncsDeviceInfoInterceptor());
     }
 
     public void install(Jep jep) {

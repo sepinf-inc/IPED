@@ -73,6 +73,12 @@ public class AleappTask extends AbstractTask {
     private static final String EXTRACTION_TYPE_UFDR = "ufdr";
     private static final String EXTRACTION_TYPE_DUMP = "dump";
 
+    /**
+     * Guards all access to the shared ilapfuncs.identifiers dict: device_info() writes (serialized by
+     * IlapfuncsDeviceInfoInterceptor) and the write_device_info() iteration in processDeviceInfoEvidence().
+     */
+    public static final Object DEVICE_INFO_LOCK = new Object();
+
     private volatile boolean initialized = false;
     private static volatile boolean interceptorsInstalled = false;
 
@@ -444,9 +450,10 @@ public class AleappTask extends AbstractTask {
 
         Path deviceInfoPath = Files.createTempFile("screen_output_file_path_devinfo", ".html");
         try {
-            // OutputParameters attributes are class-level, shared across all workers:
-            // serialize the path switch + write
-            synchronized (AleappTask.class) {
+            // OutputParameters attributes are class-level and identifiers is a module
+            // global, both shared across all workers: serialize the path switch + write
+            // against concurrent device_info() calls (see IlapfuncsDeviceInfoInterceptor)
+            synchronized (DEVICE_INFO_LOCK) {
                 jep.exec("scripts.ilapfuncs.OutputParameters.screen_output_file_path_devinfo = '" + deviceInfoPath.toString() + "'");
                 jep.exec("scripts.ilapfuncs.write_device_info()");
             }
