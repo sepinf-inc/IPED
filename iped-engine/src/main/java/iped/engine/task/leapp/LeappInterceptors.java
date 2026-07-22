@@ -89,11 +89,14 @@ public class LeappInterceptors {
      */
     private void patchMediaFunctions(Jep jep) {
         jep.exec("import scripts.ilapfuncs");
-        jep.exec("from scripts.context import Context as _iped_leapp_context");
+        jep.exec("import scripts.context");
 
-        jep.exec("def _iped_check_in_media(file_path, name='', *args, **kwargs):"
-                + " return _iped_leapp_context.get_source_file_path(file_path)");
-        jep.exec("scripts.ilapfuncs.check_in_media = _iped_check_in_media");
+        // the keyword-only default "_context=..." captures the Context class at def
+        // time, so no extra global is left behind after the temp names are deleted
+        jep.exec("def _iped_leapp_check_in_media(file_path, name='', *args, _context=scripts.context.Context, **kwargs):"
+                + " return _context.get_source_file_path(file_path)");
+        jep.exec("scripts.ilapfuncs.check_in_media = _iped_leapp_check_in_media");
+        jep.exec("del _iped_leapp_check_in_media");
 
         // embedded media has no corresponding case item to link: keep it disabled
         disablePythonFunction(jep, "scripts.ilapfuncs", "scripts.ilapfuncs.check_in_embedded_media");

@@ -42,8 +42,11 @@ public class CallInterceptor {
             jep.exec("import " + pythonModule);
         }
 
-        // The "interceptor" global is only a temporary handoff variable used during install 
-        jep.set("interceptor", this);
+        // "_iped_leapp_interceptor" is only a temporary handoff variable used during
+        // install: both branches below capture this interceptor immediately, so the
+        // global is deleted at the end. The name is prefixed because the interpreter
+        // namespace is shared with PythonParser/PythonTask scripts.
+        jep.set("_iped_leapp_interceptor", this);
 
         if (isClassMethod) {
 
@@ -55,14 +58,15 @@ public class CallInterceptor {
                 throw new IllegalStateException("Original call is null for: " + pythonFunction);
             }
 
-            // The keyword-only default "_interceptor=interceptor" captures the interceptor
-            // at def time. Referencing the global directly in the body would be resolved at
-            // CALL time (late binding), so the wrapper would delegate to whichever
-            // interceptor happened to be installed last.
-            jep.exec("def interceptor_method(self, *args, _interceptor=interceptor, **kwargs):"
+            // The keyword-only default "_interceptor=..." captures the interceptor at def
+            // time. Referencing the global directly in the body would be resolved at CALL
+            // time (late binding), breaking once the temp global is deleted below.
+            jep.exec("def _iped_leapp_interceptor_method(self, *args, _interceptor=_iped_leapp_interceptor, **kwargs):"
                     + " return _interceptor.call(self, *args, **kwargs)");
 
-            jep.exec("setattr(" + clazz + ", \"" + method + "\", interceptor_method)");
+            // the class attribute keeps the function reference: the temp global can go
+            jep.exec("setattr(" + clazz + ", \"" + method + "\", _iped_leapp_interceptor_method)");
+            jep.exec("del _iped_leapp_interceptor_method");
 
         } else {
 
@@ -71,10 +75,12 @@ public class CallInterceptor {
                 throw new IllegalStateException("Original call is null for: " + pythonFunction);
             }
 
-            // "interceptor.call" is evaluated NOW, at exec time: the module attribute ends
-            // up holding a bound callable, independent of the global name.
-            jep.exec(pythonFunction + " = interceptor.call");
+            // "_iped_leapp_interceptor.call" is evaluated NOW, at exec time: the module
+            // attribute ends up holding a bound callable, independent of the global name.
+            jep.exec(pythonFunction + " = _iped_leapp_interceptor.call");
         }
+
+        jep.exec("del _iped_leapp_interceptor");
     }
 
     // The three call() overloads below exist because Jep dispatches by the Python

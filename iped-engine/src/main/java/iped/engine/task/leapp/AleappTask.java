@@ -10,17 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.function.FailableRunnable;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +31,11 @@ import iped.engine.data.Item;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.ExportFileTask;
 import iped.parsers.android.backup.AndroidBackupParser;
+import iped.parsers.python.PythonParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import jep.Jep;
-import jep.JepException;
-import jep.SharedInterpreter;
 import jep.python.PyObject;
 
 public class AleappTask extends AbstractTask {
@@ -89,23 +84,14 @@ public class AleappTask extends AbstractTask {
 
     private Path exportFilesFolder;
 
-    // Jep interpreters are thread-confined: every interaction with "jep" MUST happen
-    // on the same thread that created it. This dedicated single-thread executor is
-    // that thread; all Python access goes through runOnPythonThread().
-    private ExecutorService executor;
+    // The per-worker-thread Jep interpreter shared with PythonParser/PythonTask
+    // (see PythonParser.getJep()). Jep is thread-confined, but every AleappTask
+    // instance belongs to a single worker and process()/finish() always run on
+    // that worker's thread, so no dedicated Python thread is needed. The
+    // interpreter's lifecycle is owned by PythonParser: never close it here.
     private Jep jep;
 
     public AleappTask() {
-    }
-
-    private ExecutorService getExecutor() {
-        if (executor == null) {
-            BasicThreadFactory factory = new BasicThreadFactory.Builder()
-                .namingPattern("AleappTask-%d-" + Thread.currentThread().getName())
-                .build();
-            executor = Executors.newSingleThreadExecutor(factory);
-        }
-        return executor;
     }
 
     @Override
@@ -127,27 +113,6 @@ public class AleappTask extends AbstractTask {
         exportFilesFolder = outputFolder.resolve("data");
     }
 
-    /**
-     * Runs the given code on this task's dedicated Python thread and rethrows any exception it raised. Required because
-     * Jep is thread-confined (see {@link #executor}); also used for code that only touches Python indirectly, e.g. via
-     * {@link PluginSpec} getters, which call PyObject.getAttr.
-     */
-    private void runOnPythonThread(FailableRunnable<Exception> task) throws Exception {
-        Exception ret = getExecutor().submit(() -> {
-            try {
-                task.run();
-            } catch (Exception e) {
-                return e;
-            }
-            return null;
-
-        }).get();
-
-        if (ret != null) {
-            throw ret;
-        }
-    }
-
     public void initialize() throws Exception {
         if (!initialized) {
             synchronized (this) {
@@ -160,53 +125,69 @@ public class AleappTask extends AbstractTask {
     }
 
     private void doSetup() throws Exception {
-        runOnPythonThread(() -> {
-            jep = new SharedInterpreter();
 
-            jep.exec("import sys");
-            jep.exec("sys.path.append('" + config.getAleappFolder().getCanonicalPath() + "')");
+        // reuses the worker thread's interpreter, shared with PythonParser/PythonTask.
+        // NOTE: the interpreter namespace is shared with the python parsers/tasks
+        // running on this thread, so every global this integration creates is either
+        // prefixed with _iped_leapp_ or deleted right after use.
+        jep = PythonParser.getJep();
+        if (jep == null) {
+            logger.error("Python environment not available, ALeapp task disabled.");
+            return;
+        }
 
-            // SharedInterpreter instances all share the same Python module state, so
-            // interceptors (and the OutputParameters instance below) are installed only
-            // ONCE globally, even though each worker thread creates its own Jep instance.
-            synchronized (AleappTask.class) {
-                if (!interceptorsInstalled) {
-                    LeappInterceptors interceptors = new LeappInterceptors();
-                    interceptors.install(jep);
-                    interceptorsInstalled = true;
-                }
+        jep.exec("import sys");
+        jep.exec("sys.path.append('" + config.getAleappFolder().getCanonicalPath() + "')");
+
+        // SharedInterpreter instances all share the same Python module state, so interceptors are 
+        // installed only ONCE globally, even though each worker
+        // thread has its own Jep instance
+        synchronized (AleappTask.class) {
+            if (!interceptorsInstalled) {
+                LeappInterceptors interceptors = new LeappInterceptors();
+                interceptors.install(jep);
+                interceptorsInstalled = true;
             }
+        }
 
-            // load all available plugins
-            // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L181)
-            jep.exec("import scripts.plugin_loader as plugin_loader");
-            jep.exec("loader = plugin_loader.PluginLoader()");
-            jep.exec("available_plugins = list(loader.plugins)");
+        // load all available plugins
+        // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L181)
+        jep.exec("import scripts.plugin_loader");
+        jep.exec("_iped_leapp_plugins = list(scripts.plugin_loader.PluginLoader().plugins)");
 
-            @SuppressWarnings("unchecked")
-            List<PyObject> availablePlugins = (List<PyObject>) jep.getValue("available_plugins");
+        @SuppressWarnings("unchecked")
+        List<PyObject> availablePlugins = (List<PyObject>) jep.getValue("_iped_leapp_plugins");
 
-            selectedPlugins = availablePlugins
-                    .stream()
-                    .map(PluginSpec::new)
-                    .filter(plugin -> config.isPluginIncluded(plugin.getModuleName()))
-                    .collect(Collectors.toMap(PluginSpec::getName, Function.identity()));
+        selectedPlugins = availablePlugins
+                .stream()
+                .map(PluginSpec::new)
+                .filter(plugin -> config.isPluginIncluded(plugin.getModuleName()))
+                .collect(Collectors.toMap(PluginSpec::getName, Function.identity()));
 
-            jep.exec("from scripts.ilapfuncs import OutputParameters");
-            jep.exec("from scripts.context import Context");
+        // the PyObjects held by PluginSpec keep their own references: the temp global can be removed
+        jep.exec("del _iped_leapp_plugins");
 
-            // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
-            jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
-            outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
+        jep.exec("import scripts.ilapfuncs");
+        jep.exec("import scripts.context");
 
-            jep.exec("Context.set_output_params(out_params)");
-        });
+        // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
+        jep.exec("_iped_leapp_out_params = scripts.ilapfuncs.OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
+        outputFolderBase = jep.getValue("_iped_leapp_out_params.output_folder_base", String.class);
+
+        // the Context keeps the reference: the temp global can be removed
+        jep.exec("scripts.context.Context.set_output_params(_iped_leapp_out_params)");
+        jep.exec("del _iped_leapp_out_params");
     }
 
     @Override
     public void process(IItem item) throws Exception {
 
         initialize();
+
+        if (jep == null) {
+            // python environment not available (see doSetup)
+            return;
+        }
 
         if (isExtractionRoot(item)) {
             processExtractionRoot(item);
@@ -306,52 +287,49 @@ public class AleappTask extends AbstractTask {
             return;
         }
 
-        // must run on the Python thread: PluginSpec getters below call PyObject.getAttr
-        runOnPythonThread(() -> {
+        Map<String, Item> categoryItems = new HashMap<>();
 
-            Map<String, Item> categoryItems = new HashMap<>();
+        // creates one subitem for each plugin execution
+        // (PluginSpec getters call PyObject.getAttr on this worker's interpreter)
+        for (PluginSpec plugin : selectedPlugins.values()) {
 
-            // creates one subitem for each plugin execution
-            for (PluginSpec plugin : selectedPlugins.values()) {
+            Item categoryItem = categoryItems.computeIfAbsent(plugin.getCategory(), name -> {
+                Item categoryEvidence = (Item) caseEvidence.createChildItem();
+                categoryEvidence.setMediaType(ALEAPP_CATEGORY_MEDIATYPE);
 
-                Item categoryItem = categoryItems.computeIfAbsent(plugin.getCategory(), name -> {
-                    Item categoryEvidence = (Item) caseEvidence.createChildItem();
-                    categoryEvidence.setMediaType(ALEAPP_CATEGORY_MEDIATYPE);
+                categoryEvidence.setName(name);
+                categoryEvidence.setExtension("");
+                categoryEvidence.setPath(caseEvidence.getPath() + "/" + name);
+                categoryEvidence.setIdInDataSource("");
+                categoryEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
 
-                    categoryEvidence.setName(name);
-                    categoryEvidence.setExtension("");
-                    categoryEvidence.setPath(caseEvidence.getPath() + "/" + name);
-                    categoryEvidence.setIdInDataSource("");
-                    categoryEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+                worker.processNewItem(categoryEvidence, ProcessTime.LATER);
 
-                    worker.processNewItem(categoryEvidence, ProcessTime.LATER);
+                return categoryEvidence;
+            });
 
-                    return categoryEvidence;
-                });
+            Item pluginEvidence = (Item) categoryItem.createChildItem();
+            pluginEvidence.setMediaType(ALEAPP_PLUGIN_RESULTS_MEDIATYPE);
+            pluginEvidence.setTempAttribute(ALEAPP_PLUGIN_CATEGORY_KEY, categoryItem);
 
-                Item pluginEvidence = (Item) categoryItem.createChildItem();
-                pluginEvidence.setMediaType(ALEAPP_PLUGIN_RESULTS_MEDIATYPE);
-                pluginEvidence.setTempAttribute(ALEAPP_PLUGIN_CATEGORY_KEY, categoryItem);
+            String name = StringUtils.firstNonBlank((String) plugin.getArtifactInfo().get("name"), plugin.getName());
+            pluginEvidence.setName(name);
+            pluginEvidence.setExtension("");
+            pluginEvidence.setPath(categoryItem.getPath() + "/" + name);
+            pluginEvidence.setIdInDataSource("");
+            pluginEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
 
-                String name = StringUtils.firstNonBlank((String) plugin.getArtifactInfo().get("name"), plugin.getName());
-                pluginEvidence.setName(name);
-                pluginEvidence.setExtension("");
-                pluginEvidence.setPath(categoryItem.getPath() + "/" + name);
-                pluginEvidence.setIdInDataSource("");
-                pluginEvidence.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
-
-                pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_KEYNAME_META, plugin.getName());
-                pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + "moduleName", plugin.getModuleName());
-                for (Entry<String, Object> entry : plugin.getArtifactInfo().entrySet()) {
-                    if (ARTIFACT_INFO_KEYS_TO_IGNORE.contains(entry.getKey())) {
-                        continue;
-                    }
-                    pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + entry.getKey(), entry.getValue().toString());
+            pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_KEYNAME_META, plugin.getName());
+            pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + "moduleName", plugin.getModuleName());
+            for (Entry<String, Object> entry : plugin.getArtifactInfo().entrySet()) {
+                if (ARTIFACT_INFO_KEYS_TO_IGNORE.contains(entry.getKey())) {
+                    continue;
                 }
-
-                worker.processNewItem(pluginEvidence, ProcessTime.LATER);
+                pluginEvidence.getMetadata().set(ALEAPP_PLUGIN_METADATA_PREFIX + entry.getKey(), entry.getValue().toString());
             }
-        });
+
+            worker.processNewItem(pluginEvidence, ProcessTime.LATER);
+        }
 
         // creates subitem to hold device info collected
         Item deviceInfoEvidence = (Item) caseEvidence.createChildItem();
@@ -386,12 +364,6 @@ public class AleappTask extends AbstractTask {
     }
 
     private void processPluginEvidence(IItem pluginEvidence) throws Exception {
-        runOnPythonThread(() -> {
-            doProcessPluginEvidence(pluginEvidence);
-        });
-    }
-
-    private void doProcessPluginEvidence(IItem pluginEvidence) {
 
         String pluginName = pluginEvidence.getMetadata().get(ALEAPP_PLUGIN_KEYNAME_META);
         PluginSpec plugin = selectedPlugins.get(pluginName);
@@ -443,7 +415,7 @@ public class AleappTask extends AbstractTask {
         } finally {
             try {
                 // clears this thread's Python Context state, mirroring aleapp.py's per-artifact
-                // Context.clear() (state is thread-local, see LeappInterceptors.makeContextThreadLocal)
+                // Context.clear() (state is thread-local, see context_thread_local_patch.py)
                 jep.exec("import scripts.context");
                 jep.exec("scripts.context.Context.clear()");
             } catch (Exception e) {
@@ -451,20 +423,31 @@ public class AleappTask extends AbstractTask {
             }
             seeker.cleanup();
             LeappContext.clear();
+            deleteQuietly(exportFilesFolder);
+        }
+    }
+
+    private void deleteQuietly(Path folder) {
+        try {
+            if (Files.exists(folder)) {
+                PathUtils.deleteDirectory(folder);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to delete temp folder: {}", folder, e);
         }
     }
 
     private void processDeviceInfoEvidence(IItem deviceInfoEvidence) throws Exception {
 
-        runOnPythonThread(() -> {
+        // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L432
+        jep.exec("import scripts.ilapfuncs");
 
-            // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L432
-            jep.exec("import scripts.ilapfuncs");
-
-            Path deviceInfoPath = Files.createTempFile("screen_output_file_path_devinfo", ".html");
-
+        Path deviceInfoPath = Files.createTempFile("screen_output_file_path_devinfo", ".html");
+        try {
+            // OutputParameters attributes are class-level, shared across all workers:
+            // serialize the path switch + write
             synchronized (AleappTask.class) {
-                jep.exec("OutputParameters.screen_output_file_path_devinfo = '" + deviceInfoPath.toString() + "'");
+                jep.exec("scripts.ilapfuncs.OutputParameters.screen_output_file_path_devinfo = '" + deviceInfoPath.toString() + "'");
                 jep.exec("scripts.ilapfuncs.write_device_info()");
             }
 
@@ -475,24 +458,19 @@ public class AleappTask extends AbstractTask {
             } else {
                 deviceInfoEvidence.setToIgnore(true);
             }
-        });
+        } finally {
+            Files.deleteIfExists(deviceInfoPath);
+        }
     }
 
     @Override
     public void finish() throws Exception {
-        if (jep != null) {
-            runOnPythonThread(() -> {
-                try {
-                    jep.close();
-                } catch (JepException e) {
-                }
-                jep = null;
-            });
-        }
-        if (executor != null) {
-            executor.shutdown();
-            executor.awaitTermination(10, TimeUnit.SECONDS);
-            executor = null;
+        // the Jep interpreter is shared with PythonParser/PythonTask and owned by them: do NOT close it here
+        jep = null;
+
+        if (outputFolder != null) {
+            deleteQuietly(outputFolder);
+            outputFolder = null;
         }
     }
 }
