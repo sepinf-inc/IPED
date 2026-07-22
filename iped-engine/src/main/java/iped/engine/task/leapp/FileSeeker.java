@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -143,7 +144,7 @@ public class FileSeeker {
         // The Lucene query is a high-recall pre-filter and may return extra hits (see
         // LeappUtils.globToLuceneQuery), so re-check each hit strictly: it must start
         // with the evidence root path and fnmatch at least one of the glob patterns.
-        return searcher
+        List<IItemReader> hits = searcher
                 .search(query) //
                 .stream() //
                 .filter(item -> item.getPath().startsWith(pathRoot)) //
@@ -157,6 +158,31 @@ public class FileSeeker {
                     return false;
                 })
                 .collect(Collectors.toList());
+
+        // Two or more items can share the same path (e.g. an active file plus a carved
+        // copy or one recovered from deletion), which would collide in the export
+        // folder. Keep only the most significant item per path: active > deleted >
+        // carved; ties keep the first hit.
+        Map<String, IItemReader> bestItemPerPath = new LinkedHashMap<>();
+        for (IItemReader item : hits) {
+            bestItemPerPath.merge(item.getPath(), item,
+                    (current, candidate) -> significanceRank(candidate) < significanceRank(current) ? candidate : current);
+        }
+
+        return new ArrayList<>(bestItemPerPath.values());
+    }
+
+    /**
+     * Lower is better: an active file is preferred over one recovered from deletion, which is preferred over a carved one
+     */
+    private static int significanceRank(IItemReader item) {
+        if (item.isCarved()) {
+            return 2;
+        }
+        if (item.isDeleted()) {
+            return 1;
+        }
+        return 0;
     }
 
     public Path exportItemToFile(IItemReader item) throws IOException {
