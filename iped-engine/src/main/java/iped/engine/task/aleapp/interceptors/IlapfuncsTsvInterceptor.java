@@ -22,7 +22,6 @@ import iped.engine.data.Item;
 import iped.engine.task.aleapp.AleappTask;
 import iped.engine.task.aleapp.AleappUtils;
 import iped.engine.task.aleapp.CallInterceptor;
-import iped.engine.task.aleapp.FileSeeker;
 import iped.engine.task.aleapp.LeappContext;
 import iped.properties.ExtraProperties;
 import jep.PyMethod;
@@ -47,7 +46,7 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
         List<String> dataHeaders = (List<String>) getArgumentValue("data_headers", 1, args, kwargs);
         List<List<Object>> dataList = (List<List<Object>>) getArgumentValue("data_list", 2, args, kwargs);
         String tsvName = (String) getArgumentValue("tsvname", 3, args, kwargs);
-        String sourceFile = (String) getArgumentValue("source_file", 4, args, kwargs);
+        String sourceFiles = (String) getArgumentValue("source_file", 4, args, kwargs);
 
         if (dataList.isEmpty()) {
             return null;
@@ -63,10 +62,12 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
 
         // linkedItems
         Set<String> globalIds = new HashSet<>();
-        if (sourceFile != null) {
-            IItemReader sourceFileItem = AleappUtils.findItemByPath(context.getCaseData(), sourceFile);
-            if (sourceFileItem != null) {
-                globalIds.add((String) sourceFileItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
+        if (sourceFiles != null) {
+            for (String sourceFile : sourceFiles.split(", ")) {
+                IItemReader sourceFileItem = AleappUtils.findItemByPath(context.getFileSeeker().getSearcher(), sourceFile);
+                if (sourceFileItem != null) {
+                    globalIds.add((String) sourceFileItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
+                }
             }
         }
         for (IItemReader foundFile : context.getFoundFiles()) {
@@ -107,11 +108,10 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
                 if (value != null) {
                     String header = dataHeaders.get(i);
                     String valueStr = value.toString();
-                    if (context.getTranslatedPaths().containsKey(valueStr)) {
-                        valueStr = context.getTranslatedPaths().get(valueStr);
-                    }
-                    if (FileSeeker.isIPEDPath(valueStr)) {
-                        valueStr = FileSeeker.getItemPath(valueStr);
+                    if (context.getFileSeeker().getExportedFiles().containsKey(valueStr)) {
+                        IItemReader valueItem = context.getFileSeeker().getExportedFiles().get(valueStr);
+                        valueStr = StringUtils.removeStart(valueItem.getPath(), context.getFileSeeker().getPathRoot());
+                        subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, ExtraProperties.GLOBAL_ID + ":" + valueItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
                     }
                     subItem.getMetadata().set("aleapp:" + header, valueStr);
                     if (standardFields[i] == StandardField.LATITUDE) {

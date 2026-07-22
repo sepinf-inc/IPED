@@ -7,14 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.engine.data.CaseData;
-import iped.engine.task.aleapp.interceptors.IlapFuncsGetSqliteDbPathInterceptor;
-import iped.engine.task.aleapp.interceptors.IlapfuncsGetBinaryFileContentInterceptor;
-import iped.engine.task.aleapp.interceptors.IlapfuncsGetTxtFileContentInterceptor;
 import iped.engine.task.aleapp.interceptors.IlapfuncsLogfuncInterceptor;
 import iped.engine.task.aleapp.interceptors.IlapfuncsTsvInterceptor;
-import iped.engine.task.aleapp.interceptors.OsStatInterceptor;
-import iped.engine.task.aleapp.interceptors.PathConstructorInterceptor;
-import iped.engine.task.aleapp.interceptors.BuiltinsOpenInterceptor;
 import jep.Jep;
 
 public class AleappInterceptors {
@@ -25,13 +19,7 @@ public class AleappInterceptors {
 
     public AleappInterceptors(CaseData caseData) {
         interceptors.add(new IlapfuncsLogfuncInterceptor());
-        interceptors.add(new IlapfuncsGetBinaryFileContentInterceptor(caseData));
-        interceptors.add(new IlapfuncsGetTxtFileContentInterceptor(caseData));
-        interceptors.add(new IlapFuncsGetSqliteDbPathInterceptor(caseData));
         interceptors.add(new IlapfuncsTsvInterceptor());
-        interceptors.add(new BuiltinsOpenInterceptor(caseData));
-        interceptors.add(new OsStatInterceptor(caseData));
-        interceptors.add(new PathConstructorInterceptor(caseData));
     }
 
     public void install(Jep jep) {

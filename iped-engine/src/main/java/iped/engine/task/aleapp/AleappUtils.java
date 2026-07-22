@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
-import iped.data.ICaseData;
 import iped.data.IItemReader;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
@@ -124,14 +123,12 @@ public final class AleappUtils {
         }
     }
 
-    public static IItemSearcher getSearcher(ICaseData caseData) {
-        return (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-    }
-
-    public static IItemReader findItemByPath(ICaseData caseData, String path) {
-        String itemPath = FileSeeker.getItemPath(path);
+    public static IItemReader findItemByPath(IItemSearcher searcher, String itemPath) {
         String query = BasicProps.PATH + ":\"" + itemPath + "\"";
-        return getSearcher(caseData).search(query).stream().filter(item -> itemPath.equals(item.getPath())).findFirst().orElse(null);
+        return searcher.search(query).stream()
+                .filter(item -> itemPath.equals(item.getPath()))
+                .findFirst()
+                .orElse(null);
     }
 
     /**

@@ -1,25 +1,23 @@
 package iped.engine.task.aleapp;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.tika.io.TemporaryResources;
-import org.apache.tika.parser.ParseContext;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.file.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
-import iped.parsers.sqlite.SQLite3DBParser;
+import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
 import iped.utils.IOUtil;
@@ -28,15 +26,14 @@ public class FileSeeker {
 
     protected static final Logger logger = LoggerFactory.getLogger(FileSeeker.class);
 
-    private static final String IPED_PATH_PREFIX = "iped-" + RandomStringUtils.randomAlphanumeric(15) + ":";
-
-    private String rootPath;
+    private String pathRoot;
     private IItemSearcher searcher;
-    private final List<Path> tempDirs = new ArrayList<>();
-
-    public String data_folder = "";
-
+    private Path exportFolder;
+    
+    private Map<String, IItemReader> exportedFiles = new HashMap<>();
+    
     // properties used by plugins
+    public String data_folder;
     public HashMap<String, FileInfo> file_infos = new HashMap<>();
 
     public static class FileInfo {
@@ -51,9 +48,11 @@ public class FileSeeker {
         }
     }
 
-    public FileSeeker(String rootPath, IItemSearcher searcher) {
-        this.rootPath = rootPath;
+    public FileSeeker(String pathRoot, Path outputFolder, IItemSearcher searcher) {
+        this.pathRoot = pathRoot;
         this.searcher = searcher;
+        this.exportFolder = outputFolder.toAbsolutePath().normalize().resolve(DigestUtils.md5Hex(pathRoot.getBytes()));
+        this.data_folder = exportFolder.toString();
     }
 
     // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L57
@@ -61,16 +60,18 @@ public class FileSeeker {
 
         String query = "("
                 + filePatternsToSearch.stream()
-                    .map(regex -> AleappUtils.globToLuceneQuery(rootPath, regex))
+                    .map(regex -> AleappUtils.globToLuceneQuery(pathRoot, regex))
                     .collect(Collectors.joining(") OR ("))
                 + ")";
 
         logger.debug("query=[{}], patterns=[{}]", query, filePatternsToSearch);
 
+        // search for files in the case data using the constructed query
+        // filter results to ensure they start with the rootPath and match at least one of the file patterns
         return searcher
                 .search(query) //
                 .stream() //
-                .filter(item -> item.getPath().startsWith(rootPath)) //
+                .filter(item -> item.getPath().startsWith(pathRoot)) //
                 .filter(item -> {
                     for (String filePattern : filePatternsToSearch) {
                         if (AleappUtils.checkLucenePath(item, filePattern)) {
@@ -82,73 +83,77 @@ public class FileSeeker {
                 .collect(Collectors.toList());
     }
 
-    public String convertItemPathToPlugin(IItemReader item) {
-        String ipedPath;
-        if ("sqlite".equals(item.getType())) {
-            try {
-                // export db file
-                Path tempDir = Files.createTempDirectory("sqlite_tmp");
-                tempDirs.add(tempDir);
-                Path tempDB = tempDir.resolve(item.getName());
-                try (InputStream is = item.getBufferedInputStream()) {
-                    Files.copy(is, tempDB);
-                    DateUtil.updatePathTimes(tempDB, item);
-                }
-                tempDB.toFile().deleteOnExit();
+    public Path exportItemToFile(IItemReader item) throws IOException {
 
-                // export .db-wal and .db-journal files
-                TemporaryResources tmp = new TemporaryResources();
-                ParseContext context = new ParseContext();
-                context.set(IItemSearcher.class, searcher);
-                context.set(IItemReader.class, item);
-                File walLogFile = SQLite3DBParser.exportWalLog(tempDB.toFile(), context, tmp);
-                if (walLogFile != null) {
-                    walLogFile.deleteOnExit();
-                }
-                File journalFile = SQLite3DBParser.exportRollbackJournal(tempDB.toFile(), context, tmp);
-                if (journalFile != null) {
-                    journalFile.deleteOnExit();
-                }
+        Path filePath;
 
-                LeappContext.get().getTranslatedPaths().put(tempDB.toString(), item.getPath());
+        if (IOUtil.hasFile(item)) {
 
-                ipedPath = tempDB.toString();
+            filePath = IOUtil.getFile(item).toPath();
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         } else {
-            ipedPath = toIPEDPath(item);
+
+            String fileRelativePathStr = item.getPath().substring(pathRoot.length() + 1);
+            filePath = exportFolder.resolve(fileRelativePathStr);
+
+            // create the folder for the item
+            Files.createDirectories(filePath.getParent());
+
+            if (item.isDir()) {
+                Files.createDirectories(filePath);
+            } else {
+                if (!Files.exists(filePath) || item.getLength() == null || Files.size(filePath) != item.getLength()) {
+                    // copy the item to the folder
+                    try (InputStream is = item.getBufferedInputStream()) {
+                        Files.copy(is, filePath);
+                    }
+                }
+            }
+
+            DateUtil.updatePathTimes(filePath, item);
         }
 
-        // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L130
-        file_infos.put(ipedPath, new FileInfo(item.getPath(), item.getCreationDate(), item.getModDate()));
+        filePath = filePath.toAbsolutePath().normalize();
 
-        return ipedPath;
+        exportedFiles.put(filePath.toString(), item);
+
+        return filePath;
+    }
+
+    public List<IItemReader> getJournalAndWalFiles(IItemReader item) {
+        if (!"sqlite".equals(item.getType())) {
+            return Collections.emptyList();
+        }
+
+        String basePath = item.getPath();
+        String walPath = basePath + "-wal";
+        String journalPath = basePath + "-journal";
+
+        return searcher.search(BasicProps.PATH + ":(\"" + walPath + "\" \"" + journalPath + "\")")
+                .stream()
+                .filter(i -> i.getPath().equals(walPath) || i.getPath().equals(journalPath))
+                .collect(Collectors.toList());
     }
 
     // https://github.com/abrignoni/ALEAPP/blob/v3.4.0/scripts/search_files.py#L27
     public void cleanup() {
-        for (Path dir : tempDirs) {
-            try {
-                IOUtil.deleteDirectory(dir.toFile(), false);
-            } catch (IOException e) {
-                logger.warn("Failed to clean up temp dir: {}", dir, e);
-            }
+        try {
+            PathUtils.deleteDirectory(exportFolder);
+        } catch (IOException e) {
+            logger.warn("Failed to delete export folder: {}", exportFolder, e);
         }
-        tempDirs.clear();
+        exportedFiles.clear();
     }
-
-    public static boolean isIPEDPath(String path) {
-        return path.startsWith(IPED_PATH_PREFIX);
+    
+    public Map<String, IItemReader> getExportedFiles() {
+        return exportedFiles;
     }
-
-    public static String toIPEDPath(IItemReader item) {
-        return IPED_PATH_PREFIX + item.getPath();
+    
+    public String getPathRoot() {
+        return pathRoot;
     }
-
-    public static String getItemPath(String ipedPath) {
-        return StringUtils.removeStart(ipedPath, IPED_PATH_PREFIX);
+    
+    public IItemSearcher getSearcher() {
+        return searcher;
     }
-
 }

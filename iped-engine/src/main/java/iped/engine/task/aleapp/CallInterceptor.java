@@ -7,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.data.ICaseData;
 import jep.Jep;
 import jep.PyMethod;
 import jep.python.PyCallable;
@@ -21,26 +20,20 @@ public class CallInterceptor {
 
     protected static final Logger logger = LoggerFactory.getLogger(CallInterceptor.class);
 
-    protected ICaseData caseData;
     private String pythonModule;
     private String pythonCall;
     private boolean isClass = false;
 
     private PyCallable originalCall;
 
-    public CallInterceptor(ICaseData caseData, String pythonModule, String pythonCall, boolean isClass) {
-        this.caseData = caseData;
+    public CallInterceptor(String pythonModule, String pythonCall, boolean isClass) {
         this.pythonModule = pythonModule;
         this.pythonCall = pythonCall;
         this.isClass = isClass;
     }
 
-    public CallInterceptor(ICaseData caseData, String pythonModule, String pythonCall) {
-        this(caseData, pythonModule, pythonCall, false);
-    }
-
     public CallInterceptor(String pythonModule, String pythonCall) {
-        this(null, pythonModule, pythonCall);
+        this(pythonModule, pythonCall, false);
     }
 
     public void install(Jep jep) {

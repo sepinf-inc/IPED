@@ -40,7 +40,7 @@ import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import jep.Jep;
 import jep.JepException;
-import jep.SubInterpreter;
+import jep.SharedInterpreter;
 import jep.python.PyObject;
 
 public class AleappTask extends AbstractTask {
@@ -79,13 +79,15 @@ public class AleappTask extends AbstractTask {
     private static final String EXTRACTION_TYPE_DUMP = "dump";
 
     private volatile boolean initialized = false;
+    private static volatile boolean interceptorsInstalled = false;
+
     private Map<String, PluginSpec> selectedPlugins;
     private ALeappConfig config;
 
-    private AleappInterceptors interceptor;
+    private static Path outputFolder;
+    private static String outputFolderBase;
 
-    private Path outputFolder;
-    private String outputFolderBase;
+    private Path exportFilesFolder;
 
     private ExecutorService executor;
     private Jep jep;
@@ -118,9 +120,7 @@ public class AleappTask extends AbstractTask {
 
         config = (ALeappConfig) configurationManager.findObject(ALeappConfig.class);
 
-        if (outputFolder == null) {
-            outputFolder = Files.createTempDirectory("aleapp-results");
-        }
+        exportFilesFolder = Files.createTempDirectory("aleapp-data-");
     }
 
     private void executePythonCode(FailableRunnable<Exception> task) throws Exception {
@@ -152,13 +152,18 @@ public class AleappTask extends AbstractTask {
 
     private void doSetup() throws Exception {
         executePythonCode(() -> {
-            jep = new SubInterpreter();
+            jep = new SharedInterpreter();
 
             jep.exec("import sys");
             jep.exec("sys.path.append('" + config.getAleappFolder().getCanonicalPath() + "')");
 
-            interceptor = new AleappInterceptors(caseData);
-            interceptor.install(jep);
+            synchronized (AleappTask.class) {
+                if (!interceptorsInstalled) {
+                    AleappInterceptors interceptors = new AleappInterceptors(caseData);
+                    interceptors.install(jep);
+                    interceptorsInstalled = true;
+                }
+            }
 
             // load all available plugins
             // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L181)
@@ -175,13 +180,19 @@ public class AleappTask extends AbstractTask {
                     .filter(plugin -> config.isPluginIncluded(plugin.getModuleName()))
                     .collect(Collectors.toMap(PluginSpec::getName, Function.identity()));
 
-            jep.exec("from scripts.context import Context");
 
-            // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
             jep.exec("from scripts.ilapfuncs import OutputParameters");
-            jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
-            outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
-            jep.exec("Context.set_output_params(out_params)");
+            jep.exec("from scripts.context import Context");
+            synchronized (AleappTask.class) {
+                if (outputFolder == null) {
+                    outputFolder = Files.createTempDirectory("aleapp-output-");
+
+                    // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L307
+                    jep.exec("out_params = OutputParameters('" + outputFolder.toString() + "', 'ALEAPP_Reports')");
+                    outputFolderBase = jep.getValue("out_params.output_folder_base", String.class);
+                    jep.exec("Context.set_output_params(out_params)");
+                }
+            }
         });
     }
 
@@ -367,8 +378,8 @@ public class AleappTask extends AbstractTask {
         // look for the files the plugin needs
         // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L386)
         IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-        String rootPath = StringUtils.substringBefore(pluginEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
-        FileSeeker seeker = new FileSeeker(rootPath, searcher);
+        String pathRoot = StringUtils.substringBefore(pluginEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
+        FileSeeker seeker = new FileSeeker(pathRoot, exportFilesFolder, searcher);
 
         try {
 
@@ -380,18 +391,38 @@ public class AleappTask extends AbstractTask {
                 return;
             }
 
-            LeappContext.create(caseData, worker, jep, pluginEvidence, filesFound);
+            LeappContext.create(seeker, worker, jep, pluginEvidence, filesFound);
 
             try {
                 // mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L409
                 Path categoryFolder = Paths.get(outputFolderBase, "_HTML", plugin.getCategory());
                 Files.createDirectories(categoryFolder);
 
-                // call the plugin method
-                // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L418
-                ArrayList<String> filesFoundStringList = filesFound.stream()
-                        .map(item -> seeker.convertItemPathToPlugin(item))
+                // export all files
+                List<Path> exportedFilesFound = new ArrayList<>();
+                for (IItemReader item : filesFound) {
+                    Path exportedFile = seeker.exportItemToFile(item);
+                    exportedFilesFound.add(exportedFile);
+                }
+
+                // export wal and journal files for sqlite items
+                for (IItemReader item : filesFound) {
+                    if ("sqlite".equals(item.getType())) {
+                        List<IItemReader> walAndJournalFiles = seeker.getJournalAndWalFiles(item);
+                        for (IItemReader walOrJournal : walAndJournalFiles) {
+                            seeker.exportItemToFile(walOrJournal);
+                        }
+                    }
+                }
+
+                ArrayList<String> filesFoundStringList = exportedFilesFound.stream()
+                        .map(path -> path.toString())
                         .collect(Collectors.toCollection(ArrayList::new));
+
+                // call the plugin method
+                // plugin.method(files_found, report_folder, seeker, wrap_text)
+                //
+                // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L418
                 plugin.getMethod().call(filesFoundStringList, categoryFolder.toString(), seeker, false);
 
             } catch (Exception e) {

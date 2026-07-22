@@ -18,8 +18,6 @@ import iped.properties.ExtraProperties;
 
 public class IlapfuncsTsvInterceptorTest {
 
-    private IlapfuncsTsvInterceptor interceptor = new IlapfuncsTsvInterceptor();
-
     private Item newItem() {
         Item item = new Item();
         item.setMetadata(new SyncMetadata());

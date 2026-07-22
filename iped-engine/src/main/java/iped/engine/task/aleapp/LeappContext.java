@@ -1,61 +1,47 @@
 package iped.engine.task.aleapp;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.engine.core.Worker;
-import iped.engine.data.CaseData;
 import jep.Jep;
 
 public class LeappContext {
 
-    private CaseData caseData;
+    private FileSeeker fileSeeker;
     private Worker worker;
     private Jep jep;
     private IItem pluginItem;
+    
     private List<IItemReader> foundFiles;
-    private Map<String, String> translatedPaths = new HashMap<>();
 
     private static final ThreadLocal<LeappContext> threadLocal = new ThreadLocal<>();
 
-    private LeappContext(CaseData caseData, Worker worker, Jep jep, IItem pluginItem, List<IItemReader> foundFiles) {
-        this.caseData = caseData;
+    private LeappContext(FileSeeker seeker, Worker worker, Jep jep, IItem pluginItem, List<IItemReader> foundFiles) {
+        this.fileSeeker = seeker;
         this.worker = worker;
         this.jep = jep;
         this.foundFiles = foundFiles;
         this.pluginItem = pluginItem;
     }
 
-    public static LeappContext create(CaseData caseData, Worker worker, Jep jep, IItem pluginItem, List<IItemReader> foundFiles) {
-        LeappContext context = new LeappContext(caseData, worker, jep, pluginItem, foundFiles);
+    public static LeappContext create(FileSeeker seeker, Worker worker, Jep jep, IItem pluginItem, List<IItemReader> foundFiles) {
+        LeappContext context = new LeappContext(seeker, worker, jep, pluginItem, foundFiles);
         threadLocal.set(context);
         return context;
     }
 
     public static void clear() {
-        if (threadLocal.get() != null) {
-            threadLocal.get().getTranslatedPaths().keySet().forEach(tempFile -> {
-                try {
-                    Files.deleteIfExists(Paths.get(tempFile));
-                } catch (IOException e) {
-                }
-            });
-            threadLocal.remove();
-        }
+        threadLocal.remove();
     }
 
     public static LeappContext get() {
         return threadLocal.get();
     }
 
-    public CaseData getCaseData() {
-        return caseData;
+    public FileSeeker getFileSeeker() {
+        return fileSeeker;
     }
 
     public Worker getWorker() {
@@ -74,7 +60,4 @@ public class LeappContext {
         return foundFiles;
     }
 
-    public Map<String, String> getTranslatedPaths() {
-        return translatedPaths;
-    }
 }
