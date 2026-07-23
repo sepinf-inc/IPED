@@ -30,6 +30,7 @@ import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.Item;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.ExportFileTask;
+import iped.engine.task.leapp.conversation.ConversationViewSpec;
 import iped.parsers.android.backup.AndroidBackupParser;
 import iped.parsers.python.PythonParser;
 import iped.properties.BasicProps;
@@ -60,8 +61,11 @@ public class AleappTask extends AbstractTask {
     private static final String UFDR_EXT = "ufdr";
 
     private static final Set<String> DUMP_ROOT_FOLDER_NAMES = Set.of("Dump", "backup");
+    // data_views is not copied to metadata: it is consumed by ConversationViewSpec
+    // to build chat-preview items (see LavaInsertSqliteDataInterceptor)
     private static final Set<String> ARTIFACT_INFO_KEYS_TO_IGNORE = Set
-            .of("function", "paths", "requirements", "output_types", "notes", "sample_data", "artifact_icon");
+            .of("function", "paths", "requirements", "output_types", "notes", "sample_data", "artifact_icon",
+                    ConversationViewSpec.DATA_VIEWS_KEY);
 
     public static final String ALEAPP_METADATA_PREFIX = "aleapp:";
     public static final String ALEAPP_PLUGIN_METADATA_PREFIX = ALEAPP_METADATA_PREFIX + "plugin:";

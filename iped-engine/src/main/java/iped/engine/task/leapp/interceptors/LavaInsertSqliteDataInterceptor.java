@@ -2,11 +2,14 @@ package iped.engine.task.leapp.interceptors;
 
 import static iped.engine.task.leapp.AleappTask.ALEAPP_APPLICATION_PREFIX;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Message;
@@ -22,6 +25,10 @@ import iped.engine.data.Item;
 import iped.engine.task.leapp.AleappTask;
 import iped.engine.task.leapp.CallInterceptor;
 import iped.engine.task.leapp.LeappContext;
+import iped.engine.task.leapp.conversation.Conversation;
+import iped.engine.task.leapp.conversation.ConversationCreator;
+import iped.engine.task.leapp.conversation.ConversationMessage;
+import iped.engine.task.leapp.conversation.ConversationViewSpec;
 import iped.properties.ExtraProperties;
 import jep.PyMethod;
 
@@ -121,12 +128,131 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
             standardFields[i] = classifyHeader(headers[i]);
         }
 
-        for (int index = 0; index < dataList.size(); index++) {
-            Item subItem = createSubItem(context, mediaType, artifactName, index, headers, standardFields, dataList.get(index));
-            context.getWorker().processNewItem(subItem, ProcessTime.LATER);
+        // a "conversation" data view groups the rows into chats: each conversation
+        // becomes a chat-preview child item of the plugin evidence (with a UFED-like
+        // HTML rendering) and the row subitems become children of their conversation
+        ConversationViewSpec view = ConversationViewSpec.from(context.getPlugin().getArtifactInfo());
+        int discriminatorIdx = view == null ? -1 : indexOfColumn(headers, view.getDiscriminatorColumn());
+
+        AtomicInteger subitemIdSeq = new AtomicInteger();
+
+        if (discriminatorIdx >= 0) {
+            createConversations(context, mediaType, artifactName, headers, standardFields, dataList, view, discriminatorIdx, subitemIdSeq);
+        } else {
+            for (int index = 0; index < dataList.size(); index++) {
+                Item subItem = createSubItem(context, context.getPluginItem(), mediaType, artifactName, index,
+                        subitemIdSeq.getAndIncrement(), headers, standardFields, dataList.get(index));
+                context.getWorker().processNewItem(subItem, ProcessTime.LATER);
+            }
         }
 
         return null;
+    }
+
+    /**
+     * Groups the data rows by the discriminator column into {@link Conversation}s and delegates item/HTML creation to
+     * {@link ConversationCreator}. The row subitems are still created by {@link #createSubItem} (via the factory), so
+     * their metadata is identical to the non-conversation case: only their parent changes.
+     */
+    private void createConversations(LeappContext context, MediaType mediaType, String artifactName, Header[] headers,
+            StandardField[] standardFields, List<List<Object>> dataList, ConversationViewSpec view,
+            int discriminatorIdx, AtomicInteger subitemIdSeq) throws Exception {
+
+        int labelIdx = indexOfColumn(headers, view.getLabelColumn());
+        int textIdx = indexOfColumn(headers, view.getTextColumn());
+        int directionIdx = indexOfColumn(headers, view.getDirectionColumn());
+        int timeIdx = indexOfColumn(headers, view.getTimeColumn());
+        int senderIdx = indexOfColumn(headers, view.getSenderColumn());
+
+        Map<String, Conversation> conversations = new LinkedHashMap<>();
+
+        for (int index = 0; index < dataList.size(); index++) {
+            List<Object> data = dataList.get(index);
+
+            String conversationId = StringUtils.defaultString(cellString(data, discriminatorIdx));
+            String label = cellString(data, labelIdx);
+            Conversation conversation = conversations.computeIfAbsent(conversationId,
+                    id -> new Conversation(id, label, artifactName));
+
+            boolean outgoing = view.getDirectionSentValue() != null
+                    && view.getDirectionSentValue().equalsIgnoreCase(StringUtils.trim(cellString(data, directionIdx)));
+
+            ConversationMessage message = new ConversationMessage(index, cellString(data, senderIdx),
+                    cellString(data, textIdx), outgoing, cellString(data, timeIdx));
+
+            String lat = null, lon = null;
+            for (int i = 0; i < headers.length; i++) {
+                Object value = cellValue(data, i);
+                if (value == null) {
+                    continue;
+                }
+                if (standardFields[i] == StandardField.MEDIA) {
+                    message.getMediaItems().addAll(getMediaCaseItems(context, value));
+                } else if (standardFields[i] == StandardField.LATITUDE) {
+                    lat = value.toString();
+                } else if (standardFields[i] == StandardField.LONGITUDE) {
+                    lon = value.toString();
+                }
+            }
+            message.setLocation(lat, lon);
+
+            conversation.getMessages().add(message);
+        }
+
+        ConversationCreator creator = new ConversationCreator(context,
+                (parent, rowIndex, subitemId) -> createSubItem(context, parent, mediaType, artifactName, rowIndex,
+                        subitemId, headers, standardFields, dataList.get(rowIndex)));
+
+        creator.createConversations(new ArrayList<>(conversations.values()), subitemIdSeq);
+    }
+
+    /**
+     * Index of the given data view column in data_headers; -1 when absent. Exact match first, then a trimmed
+     * case-insensitive fallback, since view declarations are hand-written in the plugins.
+     */
+    private static int indexOfColumn(Header[] headers, String column) {
+        if (column == null) {
+            return -1;
+        }
+        for (int i = 0; i < headers.length; i++) {
+            if (column.equals(headers[i].name)) {
+                return i;
+            }
+        }
+        for (int i = 0; i < headers.length; i++) {
+            if (column.trim().equalsIgnoreCase(StringUtils.trim(headers[i].name))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static String cellString(List<Object> data, int idx) {
+        if (idx < 0) {
+            return null;
+        }
+        Object value = cellValue(data, idx);
+        return value == null ? null : value.toString();
+    }
+
+    /**
+     * Resolves the case items referenced by a 'media' typed cell (one exported path or a list of them). Paths not
+     * exported by the seeker have no case item counterpart and are skipped.
+     */
+    @SuppressWarnings("unchecked")
+    private static List<IItemReader> getMediaCaseItems(LeappContext context, Object value) {
+        List<Object> mediaPaths = (value instanceof List) ? (List<Object>) value : List.of(value);
+        List<IItemReader> items = new ArrayList<>();
+        for (Object mediaPath : mediaPaths) {
+            if (mediaPath == null) {
+                continue;
+            }
+            IItemReader item = context.getFileSeeker().getExportedFiles().get(mediaPath.toString());
+            if (item != null) {
+                items.add(item);
+            }
+        }
+        return items;
     }
 
     /**
@@ -142,21 +268,22 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
     }
 
     /**
-     * Creates one subitem for a data row, storing each cell as "aleapp:&lt;header&gt;" metadata and mapping typed or
+     * Creates one subitem for a data row under the given parent (the plugin evidence or, when a conversation view
+     * exists, the conversation part item), storing each cell as "aleapp:&lt;header&gt;" metadata and mapping typed or
      * recognized columns to IPED standard properties.
      */
-    private Item createSubItem(LeappContext context, MediaType mediaType, String artifactName, int index,
-            Header[] headers, StandardField[] standardFields, List<Object> data) {
+    private Item createSubItem(LeappContext context, IItem parent, MediaType mediaType, String artifactName, int index,
+            int subitemId, Header[] headers, StandardField[] standardFields, List<Object> data) {
 
         String subItemName = artifactName + "-" + index;
-        Item subItem = (Item) context.getPluginItem().createChildItem();
+        Item subItem = (Item) parent.createChildItem();
         subItem.setMediaType(mediaType);
         subItem.setName(subItemName);
         subItem.setExtension("");
-        subItem.setPath(context.getPluginItem().getPath() + "/" + subItemName);
+        subItem.setPath(parent.getPath() + "/" + subItemName);
         subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
         subItem.setSubItem(true);
-        subItem.setSubitemId(index);
+        subItem.setSubitemId(subitemId);
 
         // data as metadata
         String lat = null, lon = null;

@@ -1717,4 +1717,8 @@
     	<sub-class-of type="text/html"/>
     </mime-type>
 
+    <mime-type type="application/x-aleapp-chat-preview">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+
 </mime-info>
