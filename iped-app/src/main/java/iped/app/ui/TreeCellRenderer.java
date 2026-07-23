@@ -50,14 +50,21 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
             setIcon(rootIcon);
         } else if (isDir) {
             setIcon(IconManager.getFolderIcon(expanded));
-        } else if (isDecodedReport) {
-            setIcon(IconManager.getReportFolderIcon(expanded));
         } else {
             Document doc = node.getDoc();
             String type = doc.get(BasicProps.TYPE);
             String contentType = doc.get(BasicProps.CONTENTTYPE);
-            Icon icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
-            setIcon(icon);
+            // a specific mime icon (e.g. an app chat preview) takes precedence over the
+            // generic decoded report folder icon, which is used only as a fallback
+            Icon mimeIcon = IconManager.getMimeIcon(contentType);
+            if (mimeIcon != null) {
+                setIcon(mimeIcon);
+            } else if (isDecodedReport) {
+                setIcon(IconManager.getReportFolderIcon(expanded));
+            } else {
+                Icon icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
+                setIcon(icon);
+            }
         }
 
         return this;

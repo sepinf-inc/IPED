@@ -1,6 +1,8 @@
 package iped.engine.task.leapp.conversation;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.mime.MediaType;
@@ -24,6 +26,29 @@ public class ConversationCreator {
 
     public static final MediaType ALEAPP_CONVERSATION_MEDIATYPE = MediaType
             .application(AleappTask.ALEAPP_APPLICATION_PREFIX + "chat-preview");
+
+    /**
+     * App-specific chat-preview media types, mirroring UfedChatParser: they carry the source app in the mime so
+     * IconManager and CategoriesConfig can give conversations the proper app icon/category. All of them MUST be
+     * registered in CustomSignatures.xml as sub-class-of x-aleapp-chat-preview, whose parent x-preview-with-links
+     * routes them to HtmlLinkViewer (enabling the app.open/app.check javascript bridge).
+     */
+    private static final Map<String, MediaType> APP_PREVIEW_MEDIATYPES = Map.ofEntries( //
+            Map.entry("whatsapp", previewType("whatsapp")), //
+            Map.entry("telegram", previewType("telegram")), //
+            Map.entry("skype", previewType("skype")), //
+            Map.entry("facebook", previewType("facebook")), //
+            Map.entry("instagram", previewType("instagram")), //
+            Map.entry("signal", previewType("signal")), //
+            Map.entry("snapchat", previewType("snapchat")), //
+            Map.entry("threema", previewType("threema")), //
+            Map.entry("tiktok", previewType("tiktok")), //
+            Map.entry("viber", previewType("viber")), //
+            Map.entry("discord", previewType("discord")));
+
+    private static MediaType previewType(String app) {
+        return MediaType.application(AleappTask.ALEAPP_APPLICATION_PREFIX + "chat-preview-" + app);
+    }
 
     /** Same default used by UfedChatParser/WhatsAppParser: bigger chats are split into multiple HTML parts. */
     private static final int MIN_CHAT_SPLIT_SIZE = 6000000;
@@ -73,7 +98,7 @@ public class ConversationCreator {
             List<ConversationMessage> partMessages = conversation.getMessages().subList(firstMsg, nextMsg);
 
             Item convItem = (Item) context.getPluginItem().createChildItem();
-            convItem.setMediaType(ALEAPP_CONVERSATION_MEDIATYPE);
+            convItem.setMediaType(resolvePreviewMediaType());
             convItem.setName(name);
             convItem.setExtension("");
             convItem.setPath(context.getPluginItem().getPath() + "/" + name);
@@ -98,5 +123,20 @@ public class ConversationCreator {
             firstMsg = nextMsg;
             bytes = nextBytes;
         }
+    }
+
+    /**
+     * Resolves the app-specific chat-preview media type by looking for a known app keyword in the plugin module name
+     * (e.g. "discordChats") or artifact name (e.g. "Discord Chats"); falls back to the generic type.
+     */
+    private MediaType resolvePreviewMediaType() {
+        String hint = (context.getPlugin().getModuleName() + " " + context.getPlugin().getName())
+                .toLowerCase(Locale.ROOT);
+        for (Map.Entry<String, MediaType> entry : APP_PREVIEW_MEDIATYPES.entrySet()) {
+            if (hint.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return ALEAPP_CONVERSATION_MEDIATYPE;
     }
 }

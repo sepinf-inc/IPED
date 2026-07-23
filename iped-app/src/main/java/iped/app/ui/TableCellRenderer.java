@@ -93,11 +93,16 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     } else {
                         boolean isDecodedReport = Boolean.parseBoolean(doc.get(ExtraProperties.DECODED_DATA))
                                 && Boolean.parseBoolean(doc.get(BasicProps.HASCHILD));
-                        if (isDecodedReport) {
+                        String type = doc.get(IndexItem.TYPE);
+                        String contentType = doc.get(IndexItem.CONTENTTYPE);
+                        // a specific mime icon (e.g. an app chat preview) takes precedence over the
+                        // generic decoded report folder icon, which is used only as a fallback
+                        Icon mimeIcon = IconManager.getMimeIcon(contentType);
+                        if (mimeIcon != null) {
+                            icon = mimeIcon;
+                        } else if (isDecodedReport) {
                             icon = IconManager.getReportFolderIcon(false);
                         } else {
-                            String type = doc.get(IndexItem.TYPE);
-                            String contentType = doc.get(IndexItem.CONTENTTYPE);
                             icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
                         }
                     }

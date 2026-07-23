@@ -155,7 +155,11 @@ public class IconManager {
 
     private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap, Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
         if (mimeType != null && !mimeType.isBlank()) {
-            Icon icon = mimeIconMap.get(mimeType.strip());
+            String mime = mimeType.strip();
+            Icon icon = mimeIconMap.get(mime);
+            if (icon == null && mime.startsWith(ALEAPP_MIME_PREFIX)) {
+                icon = getAleappIcon(mime, mimeIconMap);
+            }
             if (icon != null) {
                 return icon;
             }
@@ -167,6 +171,49 @@ public class IconManager {
             }
         }
         return defaultIcon;
+    }
+
+    /**
+     * Returns the icon registered for the given mime type (including the dynamic x-aleapp resolution), or null when
+     * there is none. Lets cell renderers give specific mime icons precedence over generic ones like the decoded
+     * report folder icon.
+     */
+    public static Icon getMimeIcon(String mimeType) {
+        if (mimeType == null || mimeType.isBlank()) {
+            return null;
+        }
+        String mime = mimeType.strip();
+        Icon icon = mimeIconMap.get(mime);
+        if (icon == null && mime.startsWith(ALEAPP_MIME_PREFIX)) {
+            icon = getAleappIcon(mime, mimeIconMap);
+        }
+        return icon;
+    }
+
+    private static final String ALEAPP_MIME_PREFIX = "application/x-aleapp-";
+
+    private static final String[] ALEAPP_CHAT_APPS = { "whatsapp", "telegram", "skype", "facebook", "instagram",
+            "signal", "snapchat", "threema", "tiktok", "viber", "discord" };
+
+    /**
+     * ALEAPP subitem mime types are derived dynamically from plugin/artifact names (e.g.
+     * application/x-aleapp-discordchats-chat), so they cannot all be enumerated in the static mime map: resolve them
+     * by looking for a known app keyword in the mime and reusing the icon registered for that app's chat-preview
+     * type; other chat-like ALEAPP types get the generic message icon.
+     */
+    private static Icon getAleappIcon(String mimeType, Map<String, QualityIcon> mimeIconMap) {
+        for (String app : ALEAPP_CHAT_APPS) {
+            if (mimeType.contains(app)) {
+                Icon icon = mimeIconMap.get(ALEAPP_MIME_PREFIX + "chat-preview-" + app);
+                if (icon != null) {
+                    return icon;
+                }
+            }
+        }
+        if (mimeType.endsWith("-chat") || mimeType.endsWith("-message") || mimeType.endsWith("-conversation")) {
+            return mimeIconMap.get(ALEAPP_MIME_PREFIX + "chat-preview");
+        }
+        return null;
     }
 
     public static Icon getCategoryIcon(String category) {
@@ -291,6 +338,12 @@ public class IconManager {
             mimeIconMap.put("application/x-windows-registry-report", icon);
         }
 
+        icon = availableIconsMap.get("chat");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview", icon);
+        }
+
         icon = availableIconsMap.get("whatsapp");
         if (icon != null) {
             mimeIconMap.put("application/x-whatsapp-db", icon);
@@ -298,6 +351,7 @@ public class IconManager {
             mimeIconMap.put("application/x-whatsapp-chatstorage", icon);
             mimeIconMap.put("application/x-whatsapp-chat", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-whatsapp", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-whatsapp", icon);
         }
 
         icon = availableIconsMap.get("threema");
@@ -306,36 +360,43 @@ public class IconManager {
             mimeIconMap.put("application/x-threema-user-plist", icon);
             mimeIconMap.put("application/x-threema-chatstorage", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-threema", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-threema", icon);
         }
 
         icon = availableIconsMap.get("facebook");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-facebook", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-facebook", icon);
         }
 
         icon = availableIconsMap.get("signal");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-signal", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-signal", icon);
         }
 
         icon = availableIconsMap.get("snapchat");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-snapchat", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-snapchat", icon);
         }
 
         icon = availableIconsMap.get("tiktok");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-tiktok", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-tiktok", icon);
         }
 
         icon = availableIconsMap.get("viber");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-viber", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-viber", icon);
         }
 
         icon = availableIconsMap.get("instagram");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-instagram", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-instagram", icon);
         }
 
         icon = availableIconsMap.get("skype");
@@ -344,6 +405,7 @@ public class IconManager {
             mimeIconMap.put("application/skype", icon);
             mimeIconMap.put("application/x-skype-conversation", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-skype", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-skype", icon);
         }
 
         icon = availableIconsMap.get("telegram");
@@ -351,6 +413,7 @@ public class IconManager {
             mimeIconMap.put("application/x-telegram-chat", icon);
             mimeIconMap.put("application/x-telegram-db", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-telegram", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-telegram", icon);
         }
 
         icon = availableIconsMap.get("apple-config");
@@ -497,7 +560,6 @@ public class IconManager {
         icon = availableIconsMap.get("message");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-instantmessage", icon);
-            mimeIconMap.put("application/x-ufed-chat-preview", icon);
             mimeIconMap.put("message/x-chat-message", icon);
             mimeIconMap.put("message/x-discord-message", icon);
         }
@@ -678,6 +740,7 @@ public class IconManager {
             mimeIconMap.put("application/x-discord-index", icon);
             mimeIconMap.put("application/x-discord-chat", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-discord", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-discord", icon);
         }
 
         icon = availableIconsMap.get("discord-attachment");
