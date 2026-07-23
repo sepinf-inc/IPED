@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.tika.metadata.Message;
 import org.junit.Test;
 
 import iped.engine.data.Item;
@@ -130,19 +129,19 @@ public class LavaInsertSqliteDataInterceptorTest {
     }
 
     @Test
-    public void testSenderMapsToMessageFrom() throws Exception {
+    public void testSenderMapsToCommunicationFrom() throws Exception {
         Item item = newItem();
         invokeMapStandard(item, "Sender", null, "Alice");
-        assertEquals("Alice", item.getMetadata().get(Message.MESSAGE_FROM));
+        assertEquals("Alice", item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM));
     }
 
     @Test
-    public void testAmbiguousAccountDoesNotMapToMessageFrom() throws Exception {
+    public void testAmbiguousAccountDoesNotMapToCommunicationFrom() throws Exception {
         // "Account" usually denotes the device owner, who is the RECEIVER of
-        // incoming records — mapping it to MESSAGE_FROM would mislabel senders.
+        // incoming records — mapping it to COMMUNICATION_FROM would mislabel senders.
         Item item = newItem();
         invokeMapStandard(item, "Account", null, "user@example.com");
-        assertNull(item.getMetadata().get(Message.MESSAGE_FROM));
+        assertNull(item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM));
     }
 
     @Test
@@ -168,10 +167,10 @@ public class LavaInsertSqliteDataInterceptorTest {
     }
 
     @Test
-    public void testRecipientMapsToMessageTo() throws Exception {
+    public void testRecipientMapsToCommunicationTo() throws Exception {
         Item item = newItem();
         invokeMapStandard(item, "Recipient", null, "Carol");
-        assertEquals("Carol", item.getMetadata().get(Message.MESSAGE_TO));
+        assertEquals("Carol", item.getMetadata().get(ExtraProperties.COMMUNICATION_TO));
     }
 
     @Test
@@ -209,8 +208,8 @@ public class LavaInsertSqliteDataInterceptorTest {
         Item item = newItem();
         invokeMapStandard(item, "CustomField", null, "value");
         assertNull(item.getMetadata().get(ExtraProperties.MESSAGE_DATE));
-        assertNull(item.getMetadata().get(Message.MESSAGE_FROM));
-        assertNull(item.getMetadata().get(Message.MESSAGE_TO));
+        assertNull(item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM));
+        assertNull(item.getMetadata().get(ExtraProperties.COMMUNICATION_TO));
         assertNull(item.getMetadata().get(ExtraProperties.MESSAGE_BODY));
     }
 
