@@ -35,6 +35,8 @@ public class BaseModelHandler<T extends BaseModel> {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseModelHandler.class);
 
+    protected static final int maxTitleLen = 4096;
+
     protected final T model;
     protected final IItemReader item;
 

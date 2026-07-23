@@ -95,7 +95,7 @@ public class ContactHandler extends AccountableHandler<Contact> {
                 .append(model.getModelType())
                 .append(typeStr)
                 .append("-[")
-                .append(StringUtils.firstNonBlank(data, model.getId()))
+                .append(StringUtils.truncate(StringUtils.firstNonBlank(data, model.getId()), maxTitleLen))
                 .append("]")
                 .toString();
     }
