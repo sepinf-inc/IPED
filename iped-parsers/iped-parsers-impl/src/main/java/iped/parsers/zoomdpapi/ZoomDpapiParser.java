@@ -126,6 +126,14 @@ public class ZoomDpapiParser extends AbstractParser {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
 
+        // The Zoom data and subitems (and any DPAPI cracking) were already produced when
+        // the case was processed. Avoid reprocessing (and re-cracking the master key) when
+        // the item is later opened in the analysis app
+        if (currentItem != null && currentItem.getMetadata() != null
+                && currentItem.getMetadata().get(TikaCoreProperties.TIKA_PARSED_BY) != null) {
+            return;
+        }
+
         try {
             TikaInputStream tis = TikaInputStream.get(stream);
 
