@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,11 +58,11 @@ public class FileSeeker {
         }
     }
 
-    public FileSeeker(String pathRoot, Path outputFolder, IItemSearcher searcher) {
+    public FileSeeker(String pathRoot, Path exportFolder, IItemSearcher searcher) {
         this.pathRoot = pathRoot;
         this.searcher = searcher;
-        this.exportFolder = outputFolder.toAbsolutePath().normalize().resolve(DigestUtils.md5Hex(pathRoot.getBytes()));
-        this.data_folder = exportFolder.toString();
+        this.exportFolder = exportFolder.toAbsolutePath().normalize();
+        this.data_folder = this.exportFolder.toString();
     }
 
     /**

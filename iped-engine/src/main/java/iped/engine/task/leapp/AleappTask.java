@@ -429,17 +429,6 @@ public class AleappTask extends AbstractTask {
             }
             seeker.cleanup();
             LeappContext.clear();
-            deleteQuietly(exportFilesFolder);
-        }
-    }
-
-    private void deleteQuietly(Path folder) {
-        try {
-            if (Files.exists(folder)) {
-                PathUtils.deleteDirectory(folder);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to delete temp folder: {}", folder, e);
         }
     }
 
@@ -475,9 +464,14 @@ public class AleappTask extends AbstractTask {
         // the Jep interpreter is shared with PythonParser/PythonTask and owned by them: do NOT close it here
         jep = null;
 
-        if (outputFolder != null) {
-            deleteQuietly(outputFolder);
-            outputFolder = null;
+        try {
+            if (outputFolder != null && Files.exists(outputFolder)) {
+                PathUtils.deleteDirectory(outputFolder);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to delete outputFolder: {}", outputFolder, e);
         }
+        outputFolder = null;
+        exportFilesFolder = null;
     }
 }
