@@ -1,7 +1,9 @@
 package iped.engine.task.leapp;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -211,6 +213,64 @@ public class LavaInsertSqliteDataInterceptorTest {
         assertNull(item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM));
         assertNull(item.getMetadata().get(ExtraProperties.COMMUNICATION_TO));
         assertNull(item.getMetadata().get(ExtraProperties.MESSAGE_BODY));
+    }
+
+    // ── Untyped file-path columns ──────────────────────────────────────────────
+
+    @Test
+    public void testFilePathColumnsClassifyAsFilePath() throws Exception {
+        // representative "* Path" / *filepath / file_path columns across ALEAPP plugins
+        for (String header : Arrays.asList("File Path", "Local Path To Media", "Download Path", "Full Path",
+                "Original Path", "Source File Path", "Screenshot Path", "Code Path", "Save Path", "Item Path",
+                "Target File Path", "Path", "file_path", "Original Filepath", "vault_filepath")) {
+            assertEquals("header must classify as FILE_PATH: " + header, "FILE_PATH",
+                    invokeClassify(header, null).toString());
+        }
+    }
+
+    private boolean invokeIsNonFilePathColumn(String moduleName, String headerName) throws Exception {
+        Method m = LavaInsertSqliteDataInterceptor.class
+                .getDeclaredMethod("isNonFilePathColumn", String.class, String.class);
+        m.setAccessible(true);
+        return (boolean) m.invoke(null, moduleName, headerName);
+    }
+
+    @Test
+    public void testNonFilePathColumnsAreExcludedPerPlugin() throws Exception {
+        // known per-plugin exceptions: the name looks like a file path but is not one in that plugin
+        assertTrue(invokeIsNonFilePathColumn("chromeCookies", "Path"));
+        assertTrue(invokeIsNonFilePathColumn("firefoxCookies", "Path"));
+        assertTrue(invokeIsNonFilePathColumn("FairEmail", "Return Path"));
+        assertTrue(invokeIsNonFilePathColumn("DuckDuckGo", "Folder Path"));
+    }
+
+    @Test
+    public void testSameColumnIsFilePathInOtherPlugins() throws Exception {
+        // "Path" is a real file path in these plugins, so it must NOT be excluded there
+        assertFalse(invokeIsNonFilePathColumn("emulatedSmeta", "Path"));
+        assertFalse(invokeIsNonFilePathColumn("Zapya", "path"));
+        // and on its own the name still classifies as FILE_PATH — the plugin decides the exception
+        assertEquals("FILE_PATH", invokeClassify("Path", null).toString());
+    }
+
+    @Test
+    public void testTypedColumnIsNotClassifiedAsFilePath() throws Exception {
+        // a column carrying an explicit type must not fall back to the file-path name heuristic
+        assertEquals("NONE", invokeClassify("File Path", "str").toString());
+    }
+
+    @Test
+    public void testMediaTypedPathColumnStaysMedia() throws Exception {
+        // ('Attachment File', 'media') and similar must remain MEDIA, not FILE_PATH
+        assertEquals("MEDIA", invokeClassify("Attachment File Path", "media").toString());
+    }
+
+    @Test
+    public void testNonPathColumnsAreNotFilePath() throws Exception {
+        for (String header : Arrays.asList("Title", "URL", "Account", "File Size", "File Name")) {
+            assertEquals("header must NOT classify as FILE_PATH: " + header, "NONE",
+                    invokeClassify(header, null).toString());
+        }
     }
 
     // ── Geolocation mapping ────────────────────────────────────────────────────

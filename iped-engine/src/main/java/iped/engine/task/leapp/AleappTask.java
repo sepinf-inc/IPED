@@ -53,6 +53,12 @@ public class AleappTask extends AbstractTask {
 
     public static final String ALEAPP_PLUGIN_CATEGORY_KEY = "aleapp_category";
 
+    // Temp attribute (survives the ProcessTime.LATER queue) carrying the "aleapp:<header>" metadata keys of a row
+    // subitem whose values are device file paths. Resolving each path needs an index search, too costly to run per
+    // row inside the plugin call, so it is deferred: the subitem comes back through process() and each recorded path
+    // is resolved to its case item and added to LINKED_ITEMS (see processDeferredFilePathLinks).
+    public static final String ALEAPP_METADATA_PATHS = "aleapp_metadata_paths";
+
     private static final String DEVICE_INFO_HTML = "DeviceInfo.html";
 
     private static final String CASE_EVIDENCE_NAME = "ALEAPP_Results";
@@ -209,6 +215,8 @@ public class AleappTask extends AbstractTask {
             processPluginEvidence(item);
         } else if (isDeviceInfoEvidence(item)) {
             processDeviceInfoEvidence(item);
+        } else if (isDeferredFilePathLinks(item)) {
+            processDeferredFilePathLinks(item);
         }
     }
 
@@ -244,6 +252,10 @@ public class AleappTask extends AbstractTask {
 
     private boolean isDeviceInfoEvidence(IItem evidence) {
         return ALEAPP_DEVICE_INFO_MEDIATYPE.equals(evidence.getMediaType());
+    }
+
+    private boolean isDeferredFilePathLinks(IItem evidence) {
+        return evidence.getTempAttribute(ALEAPP_METADATA_PATHS) != null;
     }
 
     private void processExtractionRoot(IItem rootEvidence) {
@@ -460,6 +472,30 @@ public class AleappTask extends AbstractTask {
             }
         } finally {
             Files.deleteIfExists(deviceInfoPath);
+        }
+    }
+
+    /**
+     * Resolves the deferred file-path links of a plugin row subitem. The interceptor recorded the "aleapp:&lt;header&gt;"
+     * metadata keys whose values are device file paths in the {@link #ALEAPP_METADATA_PATHS} temp attribute; here each
+     * value is resolved to its case item (via {@link LeappUtils#findItemByPath}) and added to LINKED_ITEMS. Doing it here
+     * (instead of inside the plugin call) spreads the one-search-per-path cost across the worker pool.
+     */
+    private void processDeferredFilePathLinks(IItem item) {
+
+        @SuppressWarnings("unchecked")
+        List<String> metadataKeys = (List<String>) item.getTempAttribute(ALEAPP_METADATA_PATHS);
+
+        IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
+        String pathRoot = StringUtils.substringBeforeLast(item.getPath(), "/" + CASE_EVIDENCE_NAME);
+
+        for (String metadataKey : metadataKeys) {
+            String pathValue = item.getMetadata().get(metadataKey);
+            IItemReader found = LeappUtils.findItemByPath(searcher, pathRoot, pathValue);
+            if (found != null) {
+                item.getMetadata().add(ExtraProperties.LINKED_ITEMS,
+                        ExtraProperties.GLOBAL_ID + ":" + found.getExtraAttribute(ExtraProperties.GLOBAL_ID));
+            }
         }
     }
 

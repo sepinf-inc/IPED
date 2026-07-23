@@ -2,7 +2,9 @@ package iped.engine.task.leapp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -189,9 +191,61 @@ public final class LeappUtils {
         return Pattern.compile(sb.toString());
     }
 
-    public static IItemReader findItemByPath(IItemSearcher searcher, String itemPath) {
-        String query = BasicProps.PATH + ":\"" + itemPath + "\"";
-        return searcher.search(query).stream()
+    // Android exposes the same storage under several symbolic links / bind mounts, so the file path an app
+    // records often differs from where the file physically lives in the extraction tree. Each entry maps an
+    // app-visible prefix (key) to the underlying extraction location (value). More specific keys come first.
+    private static final Map<String, String> SYMLINK_PREFIXES = new LinkedHashMap<>();
+    static {
+        SYMLINK_PREFIXES.put("/storage/emulated", "/data/media");
+        SYMLINK_PREFIXES.put("/storage/self/primary", "/data/media/0");
+        SYMLINK_PREFIXES.put("/mnt/sdcard", "/data/media/0");
+        SYMLINK_PREFIXES.put("/mnt/user/0/primary", "/data/media/0");
+        SYMLINK_PREFIXES.put("/sdcard", "/data/media/0");
+        SYMLINK_PREFIXES.put("/data/user/0", "/data/data");
+    }
+
+    /**
+     * Locates the case item that corresponds to a device file path stored in plugin data (e.g. the "File Path" column of
+     * chromeOfflinePages). The item path is expected to be {@code pathRoot + pathValue}; since Android exposes the same
+     * storage under several symbolic links, the known {@link #SYMLINK_PREFIXES} variants of the value are tried too. The
+     * item whose in-case path exactly equals one of the candidate paths is returned, or {@code null} when none matches.
+     *
+     * @param searcher the case searcher
+     * @param pathRoot the evidence root path (the in-case prefix of every item under this extraction)
+     * @param pathValue the device file path stored in the plugin data cell
+     * @return the corresponding case item, or {@code null} when nothing matches
+     */
+    public static IItemReader findItemByPath(IItemSearcher searcher, String pathRoot, String pathValue) {
+        if (searcher == null || StringUtils.isBlank(pathValue)) {
+            return null;
+        }
+
+        String path = pathValue.trim();
+
+        // first try the path exactly as stored by the app
+        IItemReader item = searchItemByPath(searcher, pathRoot + path);
+        if (item != null) {
+            return item;
+        }
+
+        // then try the known Android storage symlink resolutions, one at a time
+        for (Map.Entry<String, String> symlink : SYMLINK_PREFIXES.entrySet()) {
+            String prefix = symlink.getKey();
+            if (path.equals(prefix) || path.startsWith(prefix + "/")) {
+                String resolved = symlink.getValue() + path.substring(prefix.length());
+                item = searchItemByPath(searcher, pathRoot + resolved);
+                if (item != null) {
+                    return item;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Returns the case item whose path exactly equals {@code itemPath}, or {@code null} when there is none. */
+    private static IItemReader searchItemByPath(IItemSearcher searcher, String itemPath) {
+        return searcher.search(BasicProps.PATH + ":\"" + itemPath + "\"").stream()
                 .filter(item -> itemPath.equals(item.getPath()))
                 .findFirst()
                 .orElse(null);

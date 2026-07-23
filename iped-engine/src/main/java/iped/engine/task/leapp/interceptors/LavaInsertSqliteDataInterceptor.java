@@ -62,6 +62,28 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
     private static final Set<String> TO_HEADERS = Set.of("recipient", "to", "receiver");
     private static final Set<String> BODY_HEADERS = Set.of("message", "body", "text", "content");
 
+    // UNTYPED columns whose value is a device file path but which ALEAPP did NOT declare as ('name', 'media').
+    // These cells are not rewritten by the media interception (check_in_media), so their value stays as the raw
+    // device path (e.g. chromeOfflinePages "File Path", WhatsApp "Local Path To Media"). When the seeker did not
+    // export the file, the fallback below still links it to its original case item via IItemSearcher.
+    // The suffix rules in isFilePathHeader cover the many "* Path" columns across plugins (Download Path, Source
+    // File Path, Save Path, Full Path, Original Path, Screenshot Path, Code Path, file_path, *_filepath, ...); this
+    // set only holds the few file-path column names those rules do not catch.
+    private static final Set<String> FILE_PATH_HEADERS = Set.of("local path to media");
+
+    // Per-plugin exceptions: columns whose name matches the file-path rules but do NOT hold a filesystem path in
+    // that specific plugin, so the file lookup must be skipped. Kept plugin-scoped (keyed by the plugin module name)
+    // because the same column name can be a real file path elsewhere: "Path" is a cookie/URL path in the cookie
+    // plugins but a MediaStore file path in emulatedSmeta and a transfer path in Zapya. Module names and column
+    // names are written exactly as declared in the plugins.
+    private static final Map<String, Set<String>> NON_FILE_PATH_COLUMNS = Map.of( //
+            "chromeCookies", Set.of("Path"), //
+            "firefoxCookies", Set.of("Path"), //
+            "OrnetBrowser", Set.of("Path"), //
+            "FairEmail", Set.of("Return Path"), //
+            "DuckDuckGo", Set.of("Folder Path"), //
+            "libretorrentFR", Set.of("Length - Path"));
+
     // types used in LEAPP data_headers tuples (see lavafuncs.get_sql_type and
     // ilapfuncs.get_media_header_info)
     private static final String TYPE_DATETIME = "datetime";
@@ -69,7 +91,7 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
     private static final String TYPE_MEDIA = "media";
 
     private enum StandardField {
-        DATE, FROM, TO, BODY, LATITUDE, LONGITUDE, MEDIA, NONE
+        DATE, FROM, TO, BODY, LATITUDE, LONGITUDE, MEDIA, FILE_PATH, NONE
     }
 
     /** A data_headers entry: plain string or (name, type[, style]) tuple. */
@@ -120,11 +142,17 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
         MediaType mediaType = resolveMediaType(artifactName, pluginName);
 
         // headers are constant across rows: parse and classify each column once
+        String pluginModule = context.getPlugin().getModuleName();
         Header[] headers = new Header[rawHeaders.size()];
         StandardField[] standardFields = new StandardField[rawHeaders.size()];
         for (int i = 0; i < rawHeaders.size(); i++) {
             headers[i] = parseHeader(rawHeaders.get(i));
             standardFields[i] = classifyHeader(headers[i]);
+            // a column named like a file path may still be a non-file path in a specific plugin
+            // (e.g. the cookie "Path"): drop it back to NONE so no file lookup is attempted
+            if (standardFields[i] == StandardField.FILE_PATH && isNonFilePathColumn(pluginModule, headers[i].name)) {
+                standardFields[i] = StandardField.NONE;
+            }
         }
 
         // a "conversation" data view groups the rows into chats: each conversation
@@ -288,6 +316,7 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
 
         // data as metadata
         String lat = null, lon = null;
+        List<String> filePathMetaKeys = null;
         for (int i = 0; i < headers.length; i++) {
             Object value = cellValue(data, i);
             if (value == null) {
@@ -303,10 +332,23 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
 
             // cells holding a path exported by the seeker are rewritten back to the
             // original in-case path and linked to the original item
+            boolean linkedToCaseItem = false;
             if (context.getFileSeeker().getExportedFiles().containsKey(valueStr)) {
                 IItemReader valueItem = context.getFileSeeker().getExportedFiles().get(valueStr);
                 valueStr = StringUtils.removeStart(valueItem.getPath(), context.getFileSeeker().getPathRoot());
                 subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, ExtraProperties.GLOBAL_ID + ":" + valueItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
+                linkedToCaseItem = true;
+            }
+
+            // fallback for UNTYPED file-path columns (e.g. "File Path"): the value is a device file
+            // path the seeker did not export, so it is not in getExportedFiles(). Resolving it needs an
+            // index search per value, too costly to run here for every row: just record the metadata key
+            // and let AleappTask.process() resolve and link it when this subitem is reprocessed by a worker.
+            if (!linkedToCaseItem && standardFields[i] == StandardField.FILE_PATH) {
+                if (filePathMetaKeys == null) {
+                    filePathMetaKeys = new ArrayList<>();
+                }
+                filePathMetaKeys.add("aleapp:" + headers[i].name);
             }
 
             // cells promoted to a standard property (Communication:*, Message-Body) are
@@ -324,6 +366,11 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
             }
         }
         setLocationIfValid(subItem, lat, lon);
+
+        // the recorded file-path columns are resolved and linked later, in AleappTask.process()
+        if (filePathMetaKeys != null) {
+            subItem.setTempAttribute(AleappTask.ALEAPP_METADATA_PATHS, filePathMetaKeys);
+        }
 
         return subItem;
     }
@@ -375,6 +422,20 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
                 || h.endsWith(" time") || h.endsWith(" date") || h.endsWith("_date");
     }
 
+    private static boolean isFilePathHeader(String h) {
+        return FILE_PATH_HEADERS.contains(h) || h.equals("path") //
+                || h.endsWith(" path") || h.endsWith("_path") || h.endsWith("filepath");
+    }
+
+    /**
+     * Whether the given column is a per-plugin exception that looks like a file path by name but is not one in this
+     * plugin (see {@link #NON_FILE_PATH_COLUMNS}), so the file lookup must be skipped.
+     */
+    private static boolean isNonFilePathColumn(String moduleName, String headerName) {
+        Set<String> columns = NON_FILE_PATH_COLUMNS.get(moduleName);
+        return columns != null && columns.contains(headerName);
+    }
+
     /**
      * Classification is type-driven when the header carries a type; the name-based heuristics are only a fallback for
      * untyped headers.
@@ -401,6 +462,8 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
             return StandardField.LATITUDE;
         } else if (h.equals("longitude")) {
             return StandardField.LONGITUDE;
+        } else if (header.type == null && isFilePathHeader(h)) {
+            return StandardField.FILE_PATH;
         }
         return StandardField.NONE;
     }
