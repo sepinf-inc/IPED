@@ -10,9 +10,14 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * Dictionary-based password cracker for DPAPI master key hashes.
- * Accepts a list of passwords (instead of a file path) for
- * compatibility with IPED's evidence tree model.
+ * Verifies a single candidate password against a DPAPI master key hash.
+ *
+ * Iterating over a dictionary, parallelizing the attempts and enforcing a time
+ * limit are the caller's responsibility (see
+ * {@code iped.engine.dictionary.ParallelPasswordCracker} and
+ * {@link iped.dictionary.PasswordDictionaryFactory}). This class only performs
+ * the cryptographic check for one password, and is stateless so it can be shared
+ * across threads.
  *
  * Supports local (context=1), domain pre-1607 (context=2),
  * and domain post-1607 (context=3) DPAPI contexts.
@@ -21,19 +26,11 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class PasswordCracker {
 
-    public String crack(String hashLine, Iterable<String> passwords) {
-        DPAPIHash hash = DPAPIHash.parse(hashLine);
-        if (hash == null)
-            return null;
-
-        for (String password : passwords) {
-            if (tryPassword(hash, password))
-                return password;
-        }
-        return null;
-    }
-
-    boolean tryPassword(DPAPIHash hash, String password) {
+    /**
+     * @return {@code true} if {@code password} unlocks the given DPAPI master key
+     *         hash.
+     */
+    public boolean tryPassword(DPAPIHash hash, String password) {
         try {
             byte[] pwdHash = derivePwdHash(hash, password);
             byte[] decryptionKey = deriveDecryptionKey(pwdHash, hash.sid);

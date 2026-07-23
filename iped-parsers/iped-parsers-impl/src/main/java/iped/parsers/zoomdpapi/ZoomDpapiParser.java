@@ -86,6 +86,15 @@ public class ZoomDpapiParser extends AbstractParser {
     private static final String KEY_NAME = "win_osencrypt_key";
     private static final String KEY_PREFIX = "ZWOSKEY";
 
+    /**
+     * Metadata key holding the hashcat-compatible $DPAPImk$ hash of a master key
+     * that could not be cracked, so it can be cracked offline (hashcat mode 15900).
+     */
+    public static final String DPAPI_HASHCAT_HASH = "zoom:dpapiHashcatHash";
+
+    /** Metadata key holding the DPAPI master key password recovered by cracking. */
+    public static final String DPAPI_PASSWORD = "zoom:dpapiPassword";
+
     private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(ZOOM_INI);
 
     private boolean extractMessages = true;
@@ -138,7 +147,7 @@ public class ZoomDpapiParser extends AbstractParser {
                 logger.info("Using pre-configured decryptedOskey");
             } else {
                 logger.info("No pre-configured OSKEY, attempting DPAPI decryption...");
-                oskey = tryDecryptOskey(context, encryptedBlob, itemInfo, searcher);
+                oskey = tryDecryptOskey(context, encryptedBlob, itemInfo, searcher, metadata);
             }
             if (oskey == null) {
                 logger.warn("Could not decrypt Zoom OSKEY. Set decryptedOskey parameter or provide DPAPI master keys.");
@@ -376,7 +385,8 @@ public class ZoomDpapiParser extends AbstractParser {
         return null;
     }
 
-    private String tryDecryptOskey(ParseContext context,String encryptedBlob, ItemInfo itemInfo, IItemSearcher searcher) {
+    private String tryDecryptOskey(ParseContext context, String encryptedBlob, ItemInfo itemInfo,
+            IItemSearcher searcher, Metadata metadata) {
         if (searcher == null) {
             logger.warn("IItemSearcher is null, cannot search for DPAPI master keys");
             return null;
@@ -408,10 +418,9 @@ public class ZoomDpapiParser extends AbstractParser {
 
         PasswordDictionaryFactory passwordDictFactory = context.get(PasswordDictionaryFactory.class);
         if (passwordDictFactory == null) {
-            logger.warn("PasswordDictionaryFactory is not available, cannot attempt password cracking");
+            logger.error("PasswordDictionaryFactory is not available, cannot attempt password cracking");
             return null;
         }
-        Iterable<String> wordlist = passwordDictFactory.createPasswordDictionary();
 
         for (IItemReader mkItem : items) {
             try (InputStream is = mkItem.getBufferedInputStream()) {
@@ -424,14 +433,29 @@ public class ZoomDpapiParser extends AbstractParser {
                     continue;
                 }
 
-                PasswordCracker cracker = new PasswordCracker();
-                String password = cracker.crack(hash, wordlist);
+                final DPAPIHash parsedHash = DPAPIHash.parse(hash);
+                final PasswordCracker cracker = new PasswordCracker();
+                // Delegate to the factory, which runs the tries in parallel and enforces the crack timeout
+                Iterable<String> wordlist = passwordDictFactory.createPasswordDictionary(searcher);
+                String password = parsedHash == null ? null
+                        : passwordDictFactory.crack(wordlist,
+                                candidate -> cracker.tryPassword(parsedHash, candidate) ? candidate : null);
                 if (password == null) {
-                    logger.info("Password not found in wordlist");
+                    logger.error(
+                            "Could not crack DPAPI master key password (no match in dictionary or time limit reached). "
+                                    + "Provide candidate/known passwords in a wordlist via the -dictionary (or -dict) "
+                                    + "command-line option, or crack it offline with hashcat (mode 15900) using this hash:\n{}",
+                            hash);
+                    if (metadata != null) {
+                        metadata.add(DPAPI_HASHCAT_HASH, hash);
+                    }
                     continue;
                 }
 
                 logger.info("DPAPI password cracked successfully: {}", password);
+                if (metadata != null) {
+                    metadata.add(DPAPI_PASSWORD, password);
+                }
 
                 DPAPIMasterKeyDecryptor mkDecryptor = new DPAPIMasterKeyDecryptor();
                 String masterKeyHex = mkDecryptor.decryptMasterKey(mkData, sid, password);

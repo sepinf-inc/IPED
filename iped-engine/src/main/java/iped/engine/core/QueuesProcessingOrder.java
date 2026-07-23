@@ -113,8 +113,10 @@ public class QueuesProcessingOrder {
         // parsing is on
         mediaTypes.put(UsnJrnlParser.USNJRNL_$J, 2);
 
-        // must be after all files are indexed to find master keys and .enc.db databases
-        mediaTypes.put(ZoomDpapiParser.ZOOM_INI, 3);
+        // must be processed last (highest priority number) so that all files are already
+        // indexed: master keys and .enc.db databases to be found, and known passwords
+        // (e.g. UFED password items) collected before attempting to crack the master key
+        mediaTypes.put(ZoomDpapiParser.ZOOM_INI, 5);
 
         mediaTypes.put(Win10MailParser.WIN10_MAIL_DB, 2);
         mediaTypes.put(RFC822Parser.RFC822_PARTIAL0_MIME, 2);

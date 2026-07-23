@@ -2,7 +2,6 @@ package iped.engine.dictionary;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -10,19 +9,69 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Password dictionary used to crack passwords (e.g. DPAPI master keys).
+ *
+ * The dictionary is composed of two phases:
+ * <ol>
+ * <li>Phase 1 - in-memory passwords already known from the case
+ * (prependedPasswords), tried first;</li>
+ * <li>Phase 2 - a single wordlist file provided by the examiner through the
+ * command line, read incrementally (one candidate password per line).</li>
+ * </ol>
+ */
 public class PasswordDictionary implements Iterable<String> {
 
-    private final Path folderPath;
+    private static final Logger logger = LoggerFactory.getLogger(PasswordDictionary.class);
+
+    private final Path wordlistFile;
     private final List<String> prependedPasswords;
 
-    public PasswordDictionary(Path folderPath, List<String> prependedPasswords) {
-        this.folderPath = folderPath;
+    public PasswordDictionary(Path wordlistFile, List<String> prependedPasswords) {
+        this(wordlistFile, prependedPasswords, 0);
+    }
+
+    /**
+     * @param wordlistFile
+     *            the wordlist file (one candidate password per line). May be
+     *            {@code null} if only the prepended passwords should be used.
+     * @param prependedPasswords
+     *            known passwords tried before the wordlist. May be {@code null}.
+     * @param warnSizeBytes
+     *            if greater than zero and the wordlist file is at least this
+     *            size, a warning is logged as cracking may take a long time.
+     */
+    public PasswordDictionary(Path wordlistFile, List<String> prependedPasswords, long warnSizeBytes) {
+        this.wordlistFile = wordlistFile;
         this.prependedPasswords = prependedPasswords;
+        warnIfHuge(warnSizeBytes);
+    }
+
+    private void warnIfHuge(long warnSizeBytes) {
+        if (wordlistFile == null || warnSizeBytes <= 0) {
+            return;
+        }
+        try {
+            if (Files.isRegularFile(wordlistFile)) {
+                long size = Files.size(wordlistFile);
+                if (size >= warnSizeBytes) {
+                    logger.error(
+                            "Password dictionary '{}' is large ({} MB). Cracking may take a long time; "
+                                    + "consider adjusting the crack time limit in PasswordCrackingConfig.txt.",
+                            wordlistFile, size / (1024 * 1024));
+                }
+            }
+        } catch (IOException e) {
+            // ignore, this is only a best-effort warning
+        }
     }
 
     @Override
     public Iterator<String> iterator() {
-        return new PasswordDictionaryIterator(folderPath, prependedPasswords);
+        return new PasswordDictionaryIterator(wordlistFile, prependedPasswords);
     }
 
     private static class PasswordDictionaryIterator implements Iterator<String> {
@@ -30,22 +79,20 @@ public class PasswordDictionary implements Iterable<String> {
         // Phase 1: In-memory targeted passwords
         private final Iterator<String> prependedIterator;
 
-        // Phase 2: Disk-based passwords
-        private DirectoryStream<Path> directoryStream;
-        private Iterator<Path> fileIterator;
+        // Phase 2: Disk-based passwords, read incrementally from a single wordlist file
         private BufferedReader currentReader;
         private String nextLine;
 
-        public PasswordDictionaryIterator(Path folderPath, List<String> prependedPasswords) {
-            this.prependedIterator = prependedPasswords != null ? prependedPasswords.iterator() : Collections.emptyIterator();
+        public PasswordDictionaryIterator(Path wordlistFile, List<String> prependedPasswords) {
+            this.prependedIterator = prependedPasswords != null ? prependedPasswords.iterator()
+                    : Collections.emptyIterator();
 
-            // Only initialize the directory stream if a folder was actually provided
-            if (folderPath != null && Files.isDirectory(folderPath)) {
+            // Only open the wordlist if an existing file was actually provided
+            if (wordlistFile != null && Files.isRegularFile(wordlistFile)) {
                 try {
-                    this.directoryStream = Files.newDirectoryStream(folderPath, "*.txt");
-                    this.fileIterator = directoryStream.iterator();
+                    this.currentReader = Files.newBufferedReader(wordlistFile);
                 } catch (IOException e) {
-                    throw new RuntimeException("Failed to read dictionary directory: " + folderPath, e);
+                    throw new RuntimeException("Failed to open dictionary file: " + wordlistFile, e);
                 }
             }
         }
@@ -54,36 +101,17 @@ public class PasswordDictionary implements Iterable<String> {
             if (nextLine != null) {
                 return;
             }
-
-            while (true) {
-                if (currentReader != null) {
-                    try {
-                        nextLine = currentReader.readLine();
-                        if (nextLine != null) {
-                            return;
-                        }
-                        currentReader.close();
-                        currentReader = null;
-                    } catch (IOException e) {
-                        throw new RuntimeException("Error reading from password file", e);
-                    }
-                } else if (fileIterator != null && fileIterator.hasNext()) {
-                    try {
-                        currentReader = Files.newBufferedReader(fileIterator.next());
-                    } catch (IOException e) {
-                        throw new RuntimeException("Error opening password file", e);
-                    }
-                } else {
-                    if (directoryStream != null) {
-                        try {
-                            directoryStream.close();
-                        } catch (IOException e) {
-                            // Ignore
-                        }
-                        directoryStream = null;
-                    }
-                    return; // No more lines
+            if (currentReader == null) {
+                return; // No wordlist or already exhausted
+            }
+            try {
+                nextLine = currentReader.readLine();
+                if (nextLine == null) {
+                    currentReader.close();
+                    currentReader = null;
                 }
+            } catch (IOException e) {
+                throw new RuntimeException("Error reading from dictionary file", e);
             }
         }
 
@@ -94,7 +122,7 @@ public class PasswordDictionary implements Iterable<String> {
                 return true;
             }
 
-            // Phase 2: Move on to the file dictionaries
+            // Phase 2: Move on to the wordlist file
             advanceToNextLine();
             return nextLine != null;
         }

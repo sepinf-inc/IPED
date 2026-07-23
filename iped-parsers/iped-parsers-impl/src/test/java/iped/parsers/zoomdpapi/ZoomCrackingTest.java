@@ -140,20 +140,6 @@ public class ZoomCrackingTest {
         }
     }
 
-    // --- PasswordCracker with invalid hash ---
-
-    @Test
-    public void testCrackInvalidHash() {
-        PasswordCracker cracker = new PasswordCracker();
-        assertNull(cracker.crack("invalid_hash", Arrays.asList("password")));
-    }
-
-    @Test
-    public void testCrackNullHash() {
-        PasswordCracker cracker = new PasswordCracker();
-        assertNull(cracker.crack(null, Arrays.asList("password")));
-    }
-
     // Helper: build a minimal master key file for testing
     private byte[] buildMinimalMasterKeyFile() {
         // Header: version(4) + padding(8) + guid_utf16(72) + padding(8) + policy(4) = 96

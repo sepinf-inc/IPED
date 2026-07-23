@@ -67,6 +67,7 @@ import iped.engine.config.LocalConfig;
 import iped.engine.config.OCRConfig;
 import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
+import iped.engine.config.PasswordCrackingConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.config.SplitLargeBinaryConfig;
 import iped.engine.core.Manager;
@@ -767,7 +768,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
     public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new ParsingTaskConfig(), new CategoryToExpandConfig(), new OCRConfig(),
-                new ParsersConfig(), new ExternalParsersConfig());
+                new ParsersConfig(), new ExternalParsersConfig(), new PasswordCrackingConfig());
     }
 
     @Override
