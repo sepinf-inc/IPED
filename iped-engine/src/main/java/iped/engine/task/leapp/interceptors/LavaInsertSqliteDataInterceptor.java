@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -174,8 +173,10 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
             Conversation conversation = conversations.computeIfAbsent(conversationId,
                     id -> new Conversation(id, label, artifactName));
 
-            boolean outgoing = view.getDirectionSentValue() != null
-                    && view.getDirectionSentValue().equalsIgnoreCase(StringUtils.trim(cellString(data, directionIdx)));
+            // null (unknown) when the view declares no direction column/value: the
+            // Communication:Direction metadata is only set when the direction is known
+            Boolean outgoing = (directionIdx < 0 || view.getDirectionSentValue() == null) ? null
+                    : view.getDirectionSentValue().equalsIgnoreCase(StringUtils.trim(cellString(data, directionIdx)));
 
             ConversationMessage message = new ConversationMessage(index, cellString(data, senderIdx),
                     cellString(data, textIdx), outgoing, cellString(data, timeIdx));
@@ -199,7 +200,7 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
             conversation.getMessages().add(message);
         }
 
-        ConversationCreator creator = new ConversationCreator(context,
+        ConversationCreator creator = new ConversationCreator(context, view,
                 (parent, rowIndex, subitemId) -> createSubItem(context, parent, mediaType, artifactName, rowIndex,
                         subitemId, headers, standardFields, dataList.get(rowIndex)));
 
@@ -308,14 +309,18 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
                 subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, ExtraProperties.GLOBAL_ID + ":" + valueItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
             }
 
-            subItem.getMetadata().set("aleapp:" + headers[i].name, valueStr);
-
+            // cells promoted to a standard property (Communication:*, Message-Body) are
+            // not duplicated as "aleapp:" metadata
+            boolean promoted = false;
             if (standardFields[i] == StandardField.LATITUDE) {
                 lat = valueStr;
             } else if (standardFields[i] == StandardField.LONGITUDE) {
                 lon = valueStr;
             } else if (standardFields[i] != StandardField.NONE) {
-                applyStandardField(subItem, standardFields[i], valueStr);
+                promoted = applyStandardField(subItem, standardFields[i], valueStr);
+            }
+            if (!promoted) {
+                subItem.getMetadata().set("aleapp:" + headers[i].name, valueStr);
             }
         }
         setLocationIfValid(subItem, lat, lon);
@@ -400,25 +405,25 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
         return StandardField.NONE;
     }
 
-    private static void applyStandardField(Item item, StandardField field, String value) {
+    /** Returns true when the value was stored in the standard property. */
+    private static boolean applyStandardField(Item item, StandardField field, String value) {
         if (StringUtils.isBlank(value)) {
-            return;
+            return false;
         }
         switch (field) {
             case DATE:
-                setIfAbsent(item, ExtraProperties.MESSAGE_DATE, value);
-                break;
+                return setIfAbsent(item, ExtraProperties.MESSAGE_DATE, value);
             case FROM:
-                setIfAbsent(item, Message.MESSAGE_FROM, value);
-                break;
+                // Communication:From/To directly (the standard cross-parser properties):
+                // the Message:From/To -> Communication:From/To rename of
+                // MetadataUtil.normalizeMetadata only runs inside StandardParser
+                return setIfAbsent(item, ExtraProperties.COMMUNICATION_FROM, value);
             case TO:
-                setIfAbsent(item, Message.MESSAGE_TO, value);
-                break;
+                return setIfAbsent(item, ExtraProperties.COMMUNICATION_TO, value);
             case BODY:
-                setIfAbsent(item, ExtraProperties.MESSAGE_BODY, value);
-                break;
+                return setIfAbsent(item, ExtraProperties.MESSAGE_BODY, value);
             default:
-                break;
+                return false;
         }
     }
 
@@ -446,16 +451,20 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
         }
     }
 
-    private static void setIfAbsent(Item item, Property key, String value) {
+    private static boolean setIfAbsent(Item item, Property key, String value) {
         if (item.getMetadata().get(key) == null) {
             item.getMetadata().set(key, value);
+            return true;
         }
+        return false;
     }
 
-    private static void setIfAbsent(Item item, String key, String value) {
+    private static boolean setIfAbsent(Item item, String key, String value) {
         if (item.getMetadata().get(key) == null) {
             item.getMetadata().set(key, value);
+            return true;
         }
+        return false;
     }
 
     /**

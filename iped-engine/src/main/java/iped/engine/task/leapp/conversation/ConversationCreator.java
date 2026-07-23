@@ -3,8 +3,11 @@ package iped.engine.task.leapp.conversation;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import iped.data.IItem;
@@ -13,7 +16,9 @@ import iped.engine.data.Item;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.leapp.AleappTask;
 import iped.engine.task.leapp.LeappContext;
+import iped.parsers.util.ConversationConstants;
 import iped.properties.ExtraProperties;
+import iped.utils.DateUtil;
 
 /**
  * Turns the {@link Conversation}s of one plugin run into case items: for each conversation (or part of it, when the
@@ -62,10 +67,12 @@ public class ConversationCreator {
     }
 
     private final LeappContext context;
+    private final ConversationViewSpec view;
     private final MessageItemFactory messageItemFactory;
 
-    public ConversationCreator(LeappContext context, MessageItemFactory messageItemFactory) {
+    public ConversationCreator(LeappContext context, ConversationViewSpec view, MessageItemFactory messageItemFactory) {
         this.context = context;
+        this.view = view;
         this.messageItemFactory = messageItemFactory;
     }
 
@@ -108,20 +115,82 @@ public class ConversationCreator {
             convItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             convItem.setHasChildren(!partMessages.isEmpty());
 
+            // standard cross-parser "Conversation:" metadata, as set by other chat
+            // parsers (e.g. iped.parsers.ufed.handler.ChatHandler)
             convItem.getMetadata().set(ExtraProperties.CONVERSATION_ID, conversation.getId());
             convItem.getMetadata().set(ExtraProperties.CONVERSATION_NAME, conversation.getTitle());
             convItem.getMetadata().set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, partMessages.size());
+            Set<String> participants = conversation.getParticipants();
+            for (String participant : participants) {
+                convItem.getMetadata().add(ExtraProperties.CONVERSATION_PARTICIPANTS, participant);
+            }
+            if (!participants.isEmpty()) {
+                convItem.getMetadata().add(ExtraProperties.CONVERSATION_PARTICIPANTS + ":count",
+                        Integer.toString(participants.size()));
+            }
 
             ExportFileTask.getLastInstance().insertIntoStorage(convItem, bytes, bytes.length);
             context.getWorker().processNewItem(convItem, ProcessTime.LATER);
 
             for (ConversationMessage message : partMessages) {
                 Item msgItem = messageItemFactory.create(convItem, message.getRowIndex(), subitemIdSeq.getAndIncrement());
+                setCommunicationMetadata(msgItem, message, conversation);
                 context.getWorker().processNewItem(msgItem, ProcessTime.LATER);
             }
 
             firstMsg = nextMsg;
             bytes = nextBytes;
+        }
+    }
+
+    /**
+     * Standard cross-parser "Communication:" metadata on a message subitem, as set by other chat parsers (e.g.
+     * iped.parsers.ufed.handler.InstantMessageHandler). The row cells mapped by column classification
+     * (Communication:From/To/Date) may already be present: the data view mapping only fills the gaps, so nothing is
+     * overwritten.
+     */
+    private void setCommunicationMetadata(Item msgItem, ConversationMessage message, Conversation conversation) {
+
+        Metadata metadata = msgItem.getMetadata();
+
+        if (message.getOutgoing() != null) {
+            metadata.set(ExtraProperties.COMMUNICATION_DIRECTION, message.isOutgoing()
+                    ? ConversationConstants.DIRECTION_OUTGOING
+                    : ConversationConstants.DIRECTION_INCOMING);
+            removeAleappMetadata(metadata, view.getDirectionColumn());
+        }
+
+        if (metadata.get(ExtraProperties.COMMUNICATION_FROM) == null && StringUtils.isNotBlank(message.getSender())) {
+            metadata.set(ExtraProperties.COMMUNICATION_FROM, message.getSender());
+            removeAleappMetadata(metadata, view.getSenderColumn());
+        }
+
+        // no per-row recipient in LEAPP data: the conversation itself is the
+        // destination, mirroring what InstantMessageHandler does for group chats
+        if (metadata.get(ExtraProperties.COMMUNICATION_TO) == null) {
+            metadata.set(ExtraProperties.COMMUNICATION_TO, conversation.getTitle());
+            metadata.add(ExtraProperties.COMMUNICATION_TO + ExtraProperties.CONVERSATION_SUFFIX_ID, conversation.getId());
+            // the discriminator/label cells became the chat's Conversation:id/Name
+            // and this message's Communication:To
+            removeAleappMetadata(metadata, view.getDiscriminatorColumn());
+            removeAleappMetadata(metadata, view.getLabelColumn());
+        }
+
+        if (metadata.get(ExtraProperties.MESSAGE_DATE) == null && message.getTimestamp() != null) {
+            metadata.set(ExtraProperties.MESSAGE_DATE, DateUtil.dateToString(message.getTimestamp()));
+            removeAleappMetadata(metadata, view.getTimeColumn());
+        }
+
+        if (metadata.get(ExtraProperties.MESSAGE_BODY) == null && StringUtils.isNotBlank(message.getBody())) {
+            metadata.set(ExtraProperties.MESSAGE_BODY, message.getBody());
+            removeAleappMetadata(metadata, view.getTextColumn());
+        }
+    }
+
+    /** Values promoted to a standard property are not kept duplicated under the "aleapp:" prefix. */
+    private static void removeAleappMetadata(Metadata metadata, String column) {
+        if (column != null) {
+            metadata.remove(AleappTask.ALEAPP_METADATA_PREFIX + column);
         }
     }
 

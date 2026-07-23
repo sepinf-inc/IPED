@@ -18,7 +18,10 @@ public class ConversationMessage {
 
     private final String sender;
     private final String body;
-    private final boolean outgoing;
+
+    /** True/false when the view declares a directionColumn; null when the direction is unknown. */
+    private final Boolean outgoing;
+
     private final String rawTime;
     private final Date timestamp;
 
@@ -27,7 +30,7 @@ public class ConversationMessage {
     private String latitude;
     private String longitude;
 
-    public ConversationMessage(int rowIndex, String sender, String body, boolean outgoing, String rawTime) {
+    public ConversationMessage(int rowIndex, String sender, String body, Boolean outgoing, String rawTime) {
         this.rowIndex = rowIndex;
         this.sender = sender;
         this.body = body;
@@ -65,6 +68,10 @@ public class ConversationMessage {
     }
 
     public boolean isOutgoing() {
+        return Boolean.TRUE.equals(outgoing);
+    }
+
+    public Boolean getOutgoing() {
         return outgoing;
     }
 

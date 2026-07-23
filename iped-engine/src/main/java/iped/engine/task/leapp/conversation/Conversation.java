@@ -2,7 +2,9 @@ package iped.engine.task.leapp.conversation;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -46,6 +48,17 @@ public class Conversation {
 
     public List<ConversationMessage> getMessages() {
         return messages;
+    }
+
+    /** Distinct message senders, in first-seen order: the best participant information LEAPP rows can provide. */
+    public Set<String> getParticipants() {
+        Set<String> participants = new LinkedHashSet<>();
+        for (ConversationMessage message : messages) {
+            if (StringUtils.isNotBlank(message.getSender())) {
+                participants.add(message.getSender());
+            }
+        }
+        return participants;
     }
 
     /**
