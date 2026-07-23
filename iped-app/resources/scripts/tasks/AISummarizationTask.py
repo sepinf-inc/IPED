@@ -1,19 +1,14 @@
-import requests, time
-import urllib3
+import time
 #need to install requests lib: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py requests
 #also numpy for some reason: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py "numpy<2.0" 
 # git add iped-app/resources/scripts/tasks/AISummarizationTask.py
 # git commit -m "#2641: "
 # git push origin add-aisummarizationtask --force-with-lease
 import json
-from bs4 import BeautifulSoup, NavigableString, Tag
 import re
 import threading
 from datetime import datetime
 from typing import List, Any, Dict, Tuple, Optional
-from iped.exception import IPEDException
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # configuration properties
 enableProp = 'enableAISummarization'
@@ -64,6 +59,27 @@ statsProgressLogInterval = 100
 statsLock = threading.Lock()
 
 
+def _validate_optional_dependencies():
+    """
+    Validate dependencies used only when this task is enabled.
+
+    These imports must not be at module scope: exported cases can load the task
+    script on machines whose Python environment does not include these packages.
+    """
+    try:
+        import requests
+        import urllib3
+        from bs4 import BeautifulSoup
+    except ImportError as exc:
+        package = exc.name or "unknown"
+        raise RuntimeError(
+            f"[AISummarizationTask]: Missing Python dependency '{package}'. "
+            "Install requests, urllib3 and beautifulsoup4 to enable this task."
+        ) from exc
+
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
 
 def _parse_list_prop(raw: Optional[str]) -> List[str]:
     """
@@ -94,7 +110,7 @@ def _parse_list_prop(raw: Optional[str]) -> List[str]:
 # Helper functions for the remote service error handling
 #-------------------------------------------------------
 
-def _normalize(resp: requests.Response) -> Dict[str, Any]:
+def _normalize(resp: Any) -> Dict[str, Any]:
     """Standardize into {ok, code, http_status, data?, message?, request_id?}."""
     status = resp.status_code
     try:
@@ -181,6 +197,8 @@ def create_summaries_request(
 
     NOTE: Logging is improved; logic is unchanged.
     """
+    import requests
+
     #Trocar para https
     url = f"https://{base_url}/api/create_summaries_from_msgs"
     attempts_other = 0
@@ -294,18 +312,21 @@ def _clean_timestamp(raw: str) -> str:
         return txt
 
 
-def _extract_text_nodes(tag: Tag) -> str:
+def _extract_text_nodes(tag: Any) -> str:
     """
     Concatena somente os nós-texto “soltos” dentro de *tag*.
     Ignora <br>, <span>, etc.
     """
 
 
+    from bs4 import NavigableString
+
     parts = [t.strip() for t in tag.contents
              if isinstance(t, NavigableString) and t.strip()]
     return " ".join(parts)
 
 def getMessagesFromChatHTML(html_text: str) -> Tuple[List[Dict], int]:
+    from bs4 import BeautifulSoup
 
     html_text = html_text.replace('<br/>', '')
     soup = BeautifulSoup(html_text, "html.parser")
@@ -476,6 +497,17 @@ class AISummarizationTask:
         self.enabled = taskConfig.isEnabled()
         if not self.enabled:
             return
+
+        from iped.exception import IPEDException
+
+        try:
+            _validate_optional_dependencies()
+        except RuntimeError as e:
+            logger.error(str(e))
+            self.enabled = False
+            self.worker.exception = IPEDException(str(e))
+            raise
+
         extraProps = taskConfig.getConfiguration()
         self.remoteServiceAddress = extraProps.getProperty(remoteServiceAddressProp)
         if not self.remoteServiceAddress:
@@ -558,6 +590,7 @@ class AISummarizationTask:
 
 
     def processChat(self, item):
+        from iped.exception import IPEDException
         from iped.properties import ExtraProperties
         if item.getExtraAttribute(ExtraProperties.SUMMARY) is not None:
             return
