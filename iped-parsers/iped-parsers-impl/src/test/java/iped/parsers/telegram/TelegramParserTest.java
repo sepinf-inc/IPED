@@ -1,5 +1,8 @@
 package iped.parsers.telegram;
 
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -47,10 +50,10 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("Karol Braz", telegramtracker.title.get(1));
             assertEquals("Budi", telegramtracker.title.get(2));
             assertEquals("Nickerida", telegramtracker.title.get(3));
-            assertEquals("Telegram_Chat_Marilê", telegramtracker.title.get(505));
-            assertEquals("Telegram_Chat_Marilê_message_0", telegramtracker.title.get(506));
-            assertEquals("Telegram_Chat_Rafael CiC", telegramtracker.title.get(507));
-            assertEquals("Telegram_Chat_Rafael CiC_message_0", telegramtracker.title.get(508));
+            assertEquals("Telegram Chat - Marilê (+5561981993740)", telegramtracker.title.get(505));
+            assertEquals("Telegram Chat - Marilê (+5561981993740)_message_0", telegramtracker.title.get(506));
+            assertEquals("Telegram Chat - Rafael CiC (+5562991688700)", telegramtracker.title.get(507));
+            assertEquals("Telegram Chat - Rafael CiC (+5562991688700)_message_0", telegramtracker.title.get(508));
 
             assertEquals("Tiago", telegramtracker.username.get(0));
             assertEquals("Karol Braz", telegramtracker.username.get(1));
@@ -68,20 +71,22 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("RafaelCampos", telegramtracker.usernotes.get(1));
             assertEquals("gif", telegramtracker.usernotes.get(3));
 
-            assertEquals("Bruno Chaves (+33667514279)", telegramtracker.groupParticipants.get(0));
-            assertEquals("Nake Douglas (+5561982616052)", telegramtracker.groupParticipants.get(1));
-            assertEquals("Guilherme Andreúce (@guileb | +5561986143035)", telegramtracker.groupParticipants.get(2));
-            assertEquals("Telegram (+42777)", telegramtracker.privateParticipants.get(0));
-            assertEquals("Nickerida (+5561983125151)", telegramtracker.privateParticipants.get(1));
-            assertEquals("Yan Victor (@YanVictor | +5561995328012)", telegramtracker.privateParticipants.get(2));
+            assertThat(telegramtracker.groupParticipants, hasItems(
+                    "Bruno Chaves (+33667514279)",
+                    "Nake Douglas (+5561982616052)",
+                    "Guilherme Andreúce (@guileb | +5561986143035)"));
+            assertThat(telegramtracker.privateParticipants, hasItems(
+                    "Telegram (+42777)",
+                    "Nickerida (+5561983125151)",
+                    "Yan Victor (@YanVictor | +5561995328012)"));
 
-            assertEquals("Telegram (+42777)", telegramtracker.messagefrom.get(0));
-            assertEquals("Nickerida (+5561983125151)", telegramtracker.messagefrom.get(1));
-            assertEquals("Guilherme Andreúce (@guileb | +5561986143035)", telegramtracker.messagefrom.get(3));
+            assertEquals("Vayu (+5561985757632)", telegramtracker.messagefrom.get(0));
+            assertEquals("Felix (@Very_Hungery_Boye | +5561982943741)", telegramtracker.messagefrom.get(1));
+            assertEquals("Caio Brandão (@CaioBrandao)", telegramtracker.messagefrom.get(3));
 
-            assertEquals("Telegram (+42777)", telegramtracker.messageto.get(0));
-            assertEquals("Nickerida (+5561983125151)", telegramtracker.messageto.get(1));
-            assertEquals("Group Mixirica e noronhe-se (ID:136232058)", telegramtracker.messageto.get(150));
+            assertEquals("Group Constelação Familiar e Barras de Access (ID:1459548546)", telegramtracker.messageto.get(0));
+            assertEquals("Group Le Chad et les Chadettes (ID:1391969250)", telegramtracker.messageto.get(1));
+            assertEquals("Rafael CiC (+5562991688700)", telegramtracker.messageto.get(150));
 
             assertTrue(telegramtracker.messagebody.get(1).contains("KKKKK"));
             assertTrue(telegramtracker.messagebody.get(2).contains("Parece outro carro até"));

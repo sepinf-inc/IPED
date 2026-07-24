@@ -152,7 +152,8 @@ public abstract class ExtractorAndroid extends Extractor {
                     hasChatView = databaseHasChatView(conn);
                     hasThumbTable = SQLite3DBParser.containsTable("message_thumbnails", conn); //$NON-NLS-1$
                     hasGroupParticipantsTable = SQLite3DBParser.containsTable("group_participants", conn); //$NON-NLS-1$
-                    hasGroupParticipantUserTable = SQLite3DBParser.containsTable("group_participant_user", conn); //$NON-NLS-1$                    hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version"); //$NON-NLS-1$ //$NON-NLS-2$
+                    hasGroupParticipantUserTable = SQLite3DBParser.containsTable("group_participant_user", conn); //$NON-NLS-1$
+                    hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaCaptionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaDurationCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_duration"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasForwardedCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "forwarded"); //$NON-NLS-1$ //$NON-NLS-2$

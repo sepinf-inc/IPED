@@ -118,7 +118,7 @@ public class Extractor {
 
     private void addParticipants(Connection conn, ChatGroup cg) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(MEMBERS_CHATS_SQL)) {
-            stmt.setLong(1, -cg.getId());
+            stmt.setLong(1, cg.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 cg.addMember(rs.getLong("uid"));
@@ -129,7 +129,7 @@ public class Extractor {
     private void addAdmins(Connection conn, ChatGroup cg) throws SQLException {
         if (SQLite3DBParser.containsTable("channel_admins_v3", conn)) {
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_CHANNEL_ADMINS)) {
-                stmt.setLong(1, cg.getId());
+                stmt.setLong(1, -cg.getId());
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
                     cg.addAdmin(rs.getLong("uid"));
@@ -144,7 +144,7 @@ public class Extractor {
         String column = "participants_count";
         if (SQLite3DBParser.containsTable(table, conn) && SQLite3DBParser.checkIfColumnExists(conn, table, column)) {
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_CHATS_SETTINGS)) {
-                stmt.setLong(1, cg.getId());
+                stmt.setLong(1, -cg.getId());
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
                     count = rs.getInt("participants_count");
@@ -344,7 +344,6 @@ public class Extractor {
                 logger.debug("Message with mid {} has media data", mid);
             }
 
-                    if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
 
             androidDecoder.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
             androidDecoder.getMessageData(message);
@@ -354,7 +353,7 @@ public class Extractor {
             }
             setFrom(message, chat);
 
-            if (cg != null && message.getFrom().getId() != 0) {
+            if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
                 cg.addMember(message.getFrom().getId());
             }
 
@@ -447,7 +446,7 @@ public class Extractor {
         if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
                 ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-                buffer.putLong(chat.getId() * (chat.isGroupOrChannel() ? -1 : 1));
+                buffer.putLong(chat.getId());
                 stmt.setBytes(1, buffer.array());
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
@@ -745,7 +744,7 @@ public class Extractor {
 
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
 
-    private static final String CHATS_SQL_V2 = "SELECT c.uid as chatId,null as chatName,null as chatData, c.name as groupName, c.data as groupData ,d.date"
+    private static final String CHATS_SQL_V2 = "SELECT -c.uid as chatId,null as chatName,null as chatData, c.name as groupName, c.data as groupData ,d.date"
             + "            from chats c  LEFT join dialogs d on c.uid=-d.did "
             + "            UNION "
             + " SELECT d.did as chatId,u.name as chatName,u.data as chatData, null as groupName, null as groupData, d.date"

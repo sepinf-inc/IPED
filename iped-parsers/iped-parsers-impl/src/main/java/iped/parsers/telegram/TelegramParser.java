@@ -55,6 +55,7 @@ import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ConversationConstants;
+import iped.parsers.util.HashUtils;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.properties.BasicProps;
@@ -120,7 +121,7 @@ public class TelegramParser extends SQLite3DBParser {
     private void storeLinkedHashes(List<MessageMultiMedia> messages, Metadata metadata) {
         for (MessageMultiMedia mmm : messages) {
             for (Message m : mmm.getMessages()) {
-                if (Util.isValidHash(m.getMediaHash())) {
+                if (HashUtils.isValidHash(m.getMediaHash())) {
                     metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                     if (m.isFromMe())
                         metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
@@ -240,7 +241,7 @@ public class TelegramParser extends SQLite3DBParser {
             addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_ACCOUNT, e.getUserAccount().getId());
 
             // Communication:{ID, Name, , MessagesCount} 
-            chatMetadata.set(ExtraProperties.CONVERSATION_ID, Long.toString(c.getId()));
+            chatMetadata.set(ExtraProperties.CONVERSATION_ID, Long.toString(c.isGroupOrChannel() ? -c.getId() :c.getId()));
             chatMetadata.set(ExtraProperties.CONVERSATION_NAME, c.getC().getFullname());
             chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
 
@@ -316,7 +317,7 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.getChat().isGroupOrChannel()) {
                 ChatGroup groupChat = (ChatGroup) m.getChat();
                 String to = groupChat.isGroup() ? "Group " : "Channel ";
-                to += groupChat.getName() + " (ID:" + groupChat.getId() + ")";
+                to += groupChat.getName() + " (ID:" + (-groupChat.getId()) + ")";
                 meta.add(ExtraProperties.COMMUNICATION_TO, to);
                 meta.set(ExtraProperties.IS_GROUP_MESSAGE, Boolean.toString(true));
             } else {
@@ -346,7 +347,7 @@ public class TelegramParser extends SQLite3DBParser {
                 if (media.getMediaSize() != 0) {
                     meta.set("mediaSize", Long.toString(media.getMediaSize()));
                 }
-                if (Util.isValidHash(media.getMediaHash())) {
+                if (HashUtils.isValidHash(media.getMediaHash())) {
                     meta.add(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
                     meta.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + media.getMediaHash()); //$NON-NLS-1$
                     if (!media.getChildPornSets().isEmpty()) {
