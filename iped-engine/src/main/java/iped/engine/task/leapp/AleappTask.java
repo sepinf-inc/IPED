@@ -1,5 +1,6 @@
 package iped.engine.task.leapp;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,10 +25,12 @@ import org.slf4j.LoggerFactory;
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.data.IItemReader;
+import iped.datasource.IDataSource;
 import iped.engine.config.ALeappConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.Item;
+import iped.engine.datasource.UfedXmlReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.leapp.conversation.ConversationViewSpec;
@@ -226,16 +229,53 @@ public class AleappTask extends AbstractTask {
             return true;
         }
 
+        // in a ufdr the device tree does not hang from the ufdr item itself, but from its file system
+        // item, so the latter is the extraction root (see isUfdrFileSystem)
+        if (isUfdrFileSystem(evidence)) {
+            return true;
+        }
+
         String realName = evidence.getName();
-        String realExt = evidence.getExt();
         if (evidence.isRoot()) {
             // if evidence is root, its realname can be changed via -dname parameter, so we
             // need to get it from other source.
             realName = evidence.getDataSource().getSourceFile().getName();
-            realExt = FilenameUtils.getExtension(realName);
         }
 
-        return DUMP_ROOT_FOLDER_NAMES.contains(realName) || StringUtils.equalsAnyIgnoreCase(realExt, UFDR_EXT);
+        return DUMP_ROOT_FOLDER_NAMES.contains(realName);
+    }
+
+    /**
+     * Checks if the item is a file system item of a ufdr: the virtual folder UfedXmlReader creates for the "fs"
+     * attribute of report.xml entries (e.g. "extraction-001.ufdr/EXTRACTION_FFS.zip"). The device paths
+     * hang from it, so it is the extraction root, and not the ufdr item.
+     */
+    private boolean isUfdrFileSystem(IItem evidence) {
+
+        // file system items are always virtual folders, direct children of the ufdr item
+        if (evidence.isRoot() || !evidence.isDir()
+                || UfedXmlReader.DECODED_DATA_FOLDER_NAME.equals(evidence.getName())) {
+            return false;
+        }
+
+        String path = evidence.getPath();
+        String parentPath = StringUtils.substringBeforeLast(path, "/");
+        if (StringUtils.isEmpty(parentPath) || parentPath.equals(path)) {
+            return false;
+        }
+
+        // a ufdr processed as a subitem of another evidence keeps its file name in the path
+        if (UFDR_EXT.equalsIgnoreCase(FilenameUtils.getExtension(parentPath))) {
+            return true;
+        }
+
+        // a ufdr processed as a case root may have been renamed via -dname, so check the data source
+        // file instead, requiring a direct child of the root (whose path has no separator)
+        IDataSource dataSource = evidence.getDataSource();
+        File sourceFile = dataSource != null ? dataSource.getSourceFile() : null;
+
+        return sourceFile != null && !StringUtils.contains(parentPath, '/')
+                && UFDR_EXT.equalsIgnoreCase(FilenameUtils.getExtension(sourceFile.getName()));
     }
 
     private boolean isCaseEvidence(IItem evidence) {
@@ -279,21 +319,17 @@ public class AleappTask extends AbstractTask {
         String extractionType;
         if (AndroidBackupParser.SUPPORTED_TYPES.contains(rootEvidence.getMediaType())) {
             extractionType = EXTRACTION_TYPE_ANDROID_BACKUP;
-        } else if (DUMP_ROOT_FOLDER_NAMES.contains(rootEvidence.getName())) {
-            extractionType = EXTRACTION_TYPE_DUMP;
+        } else if (isUfdrFileSystem(rootEvidence)) {
+            // the ufdr container already tells this is an android extraction, so this type skips the
+            // real dump check done for loose folders/zips (see processCaseEvidence)
+            extractionType = EXTRACTION_TYPE_UFDR;
         } else {
             String realExt = rootEvidence.getExt();
             if (rootEvidence.isRoot()) {
                 String realName = rootEvidence.getDataSource().getSourceFile().getName();
                 realExt = FilenameUtils.getExtension(realName);
             }
-            if (UFDR_EXT.equalsIgnoreCase(realExt)) {
-                extractionType = EXTRACTION_TYPE_UFDR;
-            } else if (ZIP_EXT.equalsIgnoreCase(realExt)) {
-                extractionType = EXTRACTION_TYPE_ZIP;
-            } else {
-                throw new IllegalStateException("Unexpected extension: " + realExt);
-            }
+            extractionType = ZIP_EXT.equalsIgnoreCase(realExt) ? EXTRACTION_TYPE_ZIP : EXTRACTION_TYPE_DUMP;
         }
         caseEvidence.getMetadata().set(ALEAPP_EXTRACTION_TYPE_META, extractionType);
 
