@@ -1,7 +1,5 @@
 package iped.engine.task.leapp.interceptors;
 
-import static iped.engine.task.leapp.AleappTask.ALEAPP_APPLICATION_PREFIX;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -21,6 +19,7 @@ import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.Item;
+import iped.engine.task.leapp.AleappMediaTypeResolver;
 import iped.engine.task.leapp.AleappTask;
 import iped.engine.task.leapp.CallInterceptor;
 import iped.engine.task.leapp.LeappContext;
@@ -139,10 +138,10 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
         String artifactName = StringUtils.firstNonBlank(
                 (String) context.getPlugin().getArtifactInfo().get("name"), context.getPlugin().getName());
         String pluginName = context.getPluginItem().getMetadata().get(AleappTask.ALEAPP_PLUGIN_KEYNAME_META);
-        MediaType mediaType = resolveMediaType(artifactName, pluginName);
+        String pluginModule = context.getPlugin().getModuleName();
+        MediaType mediaType = AleappMediaTypeResolver.resolveMediaType(pluginModule, pluginName, artifactName);
 
         // headers are constant across rows: parse and classify each column once
-        String pluginModule = context.getPlugin().getModuleName();
         Header[] headers = new Header[rawHeaders.size()];
         StandardField[] standardFields = new StandardField[rawHeaders.size()];
         for (int i = 0; i < rawHeaders.size(); i++) {
@@ -530,48 +529,4 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
         return false;
     }
 
-    /**
-     * Derives the subitem media type. A module can register many plugins, so the plugin name (often prefixed with
-     * "get_", which is stripped) plus hints from the artifact name ("Call", "Chat", ...) are used to build a specific
-     * x-aleapp-* type.
-     */
-    private MediaType resolveMediaType(String artifactName, String pluginName) {
-
-        String mimePluginName = pluginName.toLowerCase().replace(".", "");
-        mimePluginName = StringUtils.removeStart(mimePluginName, "get_");
-
-        // Facebook plugins share generic plugin names: the artifact name prefix (before "- ")
-        // is more specific, so use it instead
-        if (StringUtils.containsIgnoreCase(mimePluginName, "facebook")) {
-            mimePluginName = StringUtils.substringBefore(artifactName, "- ").toLowerCase();
-        }
-
-        // Chrome plugins are named per artifact already, so the artifact name alone is used
-        // (mimePluginName is intentionally ignored in this branch)
-        if (StringUtils.containsIgnoreCase(pluginName, "chrome")) {
-            return MediaType.application(ALEAPP_APPLICATION_PREFIX + artifactNameToType(artifactName));
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Call")) {
-            return MediaType.application(ALEAPP_APPLICATION_PREFIX + mimePluginName + "-call");
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Chat")) {
-            return MediaType.application(ALEAPP_APPLICATION_PREFIX + mimePluginName + "-chat");
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Message")) {
-            return MediaType.application(ALEAPP_APPLICATION_PREFIX + mimePluginName + "-message");
-        } else if (StringUtils.containsAnyIgnoreCase(artifactName, "Activity", "Activities")) {
-            return MediaType.application(ALEAPP_APPLICATION_PREFIX + mimePluginName + "-activity");
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Contact")) {
-            return MediaType.application(ALEAPP_APPLICATION_PREFIX + mimePluginName + "-contact");
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Conversation")) {
-            return MediaType.application(ALEAPP_APPLICATION_PREFIX + mimePluginName + "-conversation");
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Autofill")) {
-            return MediaType.application(ALEAPP_APPLICATION_PREFIX + mimePluginName + "-autofill");
-        } else {
-            return MediaType.application(ALEAPP_APPLICATION_PREFIX + artifactNameToType(artifactName));
-        }
-    }
-
-    private String artifactNameToType(String artifactName) {
-        String type = StringUtils.substringBefore(artifactName, " (");
-        type = type.replace(" - ", "-").replace(" ", "-").replace("--", "-");
-        return type;
-    }
 }
