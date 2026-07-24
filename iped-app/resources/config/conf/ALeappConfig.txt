@@ -26,6 +26,5 @@ includePlugins=
 #
 # The default exclusions are listed below with justifications:
 # - walStrings: Excluded because IPED natively parses strings from unparsed files.
-# - appicons: Excluded because it does not generate artifacts in the TSV format required by IPED.
 # - WhatsApp: Excluded because IPED uses its own robust, internal parser for WhatsApp artifacts.
-excludePlugins=walStrings,appicons,WhatsApp
+excludePlugins=walStrings,WhatsApp
