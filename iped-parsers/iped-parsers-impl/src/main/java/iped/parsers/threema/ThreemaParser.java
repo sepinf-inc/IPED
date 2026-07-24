@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -55,6 +56,7 @@ import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.threema.Message.MessageType;
+import iped.parsers.util.ConversationConstants;
 import iped.parsers.util.ItemInfo;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -277,20 +279,30 @@ public class ThreemaParser extends SQLite3DBParser {
                 if (extractMessages && !msgSubset.isEmpty()) {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }
-                if (account != null) {
-                    String local = account.getFullId();
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
+
+                // Conversation:Account
+                if (account != null && !account.isUnknown()) {
+                    addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_ACCOUNT, account);
+                    addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, account);
                 }
+
+                // Conversation:{Participants, Type}
                 if (c.isGroupChat()) {
                     for (ThreemaContact member : c.getParticipants()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, member.getFullId());
+                        addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, member);
                     }
-                    chatMetadata.add(ExtraProperties.GROUP_ID, "Conversation_" + c.getId());
+                    chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationConstants.TYPE_GROUP);
                 } else {
                     if (c.getContact() != null) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, c.getContact().getFullId());
+                        addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, c.getContact());
                     }
+                    chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationConstants.TYPE_ONEONONE);
                 }
+
+                // Conversation:{ID, Name, MessagesCount}
+                chatMetadata.set(ExtraProperties.CONVERSATION_ID, Long.toString(c.getId()));
+                chatMetadata.set(ExtraProperties.CONVERSATION_NAME, c.getTitle());
+                chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, c.getMessages().size());
 
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                 extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
@@ -335,8 +347,24 @@ public class ThreemaParser extends SQLite3DBParser {
             to += " " + c.getSubject().strip();
         }
         to += " (id:" + c.getId() + ")";
-        meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, to);
+        meta.add(ExtraProperties.COMMUNICATION_TO, to);
         meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
+    }
+
+    private void addPartyFields(Metadata meta, String field, ThreemaContact contact) {
+        if (contact == null) {
+            return;
+        }
+        String fullId = contact.getFullId();
+        if (StringUtils.isNotBlank(fullId)) {
+            meta.add(field, fullId);
+        }
+        if (contact instanceof ThreemaAccount && ((ThreemaAccount) contact).isUnknown()) {
+            return;
+        }
+        if (StringUtils.isNotBlank(contact.getId())) {
+            meta.add(field + ExtraProperties.CONVERSATION_SUFFIX_ID, contact.getId());
+        }
     }
 
     private void extractMessages(String chatName, Chat c, List<Message> messages, ThreemaAccount account, int parentVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
@@ -353,22 +381,23 @@ public class ThreemaParser extends SQLite3DBParser {
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
             meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-            String local = account.getFullId();
-            String remote = m.getRemoteResource();
-
             if (m.isFromMe()) {
-                meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, local);
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_OUTGOING);
+                addPartyFields(meta, ExtraProperties.COMMUNICATION_FROM, account);
                 if (c.isGroupChat()) {
                     fillGroupRecipients(meta, c);
                 } else {
-                    meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, remote);
+                    addPartyFields(meta, ExtraProperties.COMMUNICATION_TO, c.getContact());
                 }
             } else {
-                meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, remote);
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_INCOMING);
                 if (c.isGroupChat()) {
+                    // for group messages the sender is stored as a display string in the message
+                    meta.set(ExtraProperties.COMMUNICATION_FROM, m.getRemoteResource());
                     fillGroupRecipients(meta, c);
                 } else {
-                    meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, local);
+                    addPartyFields(meta, ExtraProperties.COMMUNICATION_FROM, c.getContact());
+                    addPartyFields(meta, ExtraProperties.COMMUNICATION_TO, account);
                 }
             }
 
