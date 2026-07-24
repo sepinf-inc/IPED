@@ -117,13 +117,15 @@ public class TelegramParser extends SQLite3DBParser {
         this.minChatSplitSize = minChatSplitSize;
     }
 
-    private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
-        for (Message m : messages) {
-            if (m.getMediaHash() != null) {
-                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
-                if (m.isFromMe())
-                    metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
+    private void storeLinkedHashes(List<MessageMultiMedia> messages, Metadata metadata) {
+        for (MessageMultiMedia mmm : messages) {
+            for (Message m : mmm.getMessages()) {
+                if (Util.isValidHash(m.getMediaHash())) {
+                    metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
+                    if (m.isFromMe())
+                        metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
 
+                }
             }
         }
     }
@@ -165,13 +167,19 @@ public class TelegramParser extends SQLite3DBParser {
             Contact account = searchAndroidAccount(searcher, dbPath);
 
             e.extractChatList();
-
-            for (Chat c : e.getChatList()) {
-                c.getMessages().addAll(e.extractMessages(c));
+            Chat c;
+            while ((c = e.extractMessages()) != null) {
                 if (e.getUserAccount() != null) {
                     account = e.getUserAccount();
                 }
                 generateChat(c, account, e, searcher, handler, extractor);
+            }
+            // gerar os chats sem mensagens
+            for (Chat ch : e.getChatList()) {
+                if (ch.getMessages().isEmpty()) {
+                    generateChat(ch, account, e, searcher, handler, extractor);
+                }
+
             }
 
         } catch (Exception e1) {
@@ -236,7 +244,7 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(ExtraProperties.CONVERSATION_NAME, c.getC().getFullname());
             chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
 
-            List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
+            List<MessageMultiMedia> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
 
             if (extractMessages && !msgSubset.isEmpty()) {
                 chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
@@ -283,10 +291,11 @@ public class TelegramParser extends SQLite3DBParser {
         return title;
     }
 
-    private void extractMessages(String chatName, List<Message> messages, Contact account, Extractor e, long parentId,
-            ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+    private void extractMessages(String chatName, List<MessageMultiMedia> messages, Contact account, Extractor e,
+            long parentId, ContentHandler handler, EmbeddedDocumentExtractor extractor)
+            throws SAXException, IOException {
         int msgCount = 0;
-        for (Message m : messages) {
+        for (MessageMultiMedia m : messages) {
             Metadata meta = new Metadata();
             meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++); //$NON-NLS-1$
             meta.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_MESSAGE.toString());
@@ -296,10 +305,12 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
             meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-            if (m.getLatitude() != null && m.getLongitude() != null) {
-                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
+            if (m.isDeleted()) {
+                meta.set(ExtraProperties.DELETED, Boolean.toString(true));
             }
-
+            for (String location : m.getLocations()) {
+                meta.add(ExtraProperties.LOCATIONS, location);
+            }
             addPartyFields(meta, ExtraProperties.COMMUNICATION_FROM, m.getFrom());
 
             if (m.getChat().isGroupOrChannel()) {
@@ -326,25 +337,29 @@ public class TelegramParser extends SQLite3DBParser {
 
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
 
-            meta.set("mediaName", m.getMediaName());
+            for (Message media : m.getMessages()) {
+                meta.add("mediaName", media.getMediaName());
 
-            if (m.getMediaMime() != null) {
-                meta.add(ExtraProperties.MESSAGE_BODY, ATTACHMENT_MESSAGE + m.getMediaMime());
-            }
-            if (m.getMediaSize() != 0) {
-                meta.set("mediaSize", Long.toString(m.getMediaSize()));
-            }
-            if (m.getMediaHash() != null) {
-                meta.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
-                meta.set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
-                if (!m.getChildPornSets().isEmpty()) {
-                    meta.set("hash:status", "pedo");
-                    for (String set : m.getChildPornSets()) {
-                        meta.add("hash:set", set);
-                    }
+                if (media.getMediaMime() != null) {
+                    meta.add(ExtraProperties.MESSAGE_BODY, ATTACHMENT_MESSAGE + media.getMediaMime());
                 }
-                // TODO store thumb in metadata?
+                if (media.getMediaSize() != 0) {
+                    meta.set("mediaSize", Long.toString(media.getMediaSize()));
+                }
+                if (Util.isValidHash(media.getMediaHash())) {
+                    meta.add(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
+                    meta.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + media.getMediaHash()); //$NON-NLS-1$
+                    if (!media.getChildPornSets().isEmpty()) {
+                        meta.add(ExtraProperties.HASHDB_STATUS, "pedo");
+                        for (String set : media.getChildPornSets()) {
+                            meta.add(ExtraProperties.HASHDB_SET, set);
+                        }
+                    }
+                    // TODO store thumb in metadata?
+                }
+
             }
+
             if (m.isPhoneCall()) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_CALL.toString());
             }

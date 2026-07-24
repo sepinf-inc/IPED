@@ -40,7 +40,6 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.video.VideoThumbTask;
 import iped.exception.IPEDException;
@@ -95,7 +94,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (evidence.getLength() == null || evidence.getLength() == 0 || !evidence.isToAddToCase() || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
             return false;
         }
-        if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
+        if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(ExtraProperties.HASHDB_STATUS) != null) {
             return false;
         }
 

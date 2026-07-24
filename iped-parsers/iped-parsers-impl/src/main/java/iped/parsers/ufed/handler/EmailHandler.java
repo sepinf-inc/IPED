@@ -106,7 +106,7 @@ public class EmailHandler extends BaseModelHandler<Email> {
         return new StringBuilder()
                 .append("Email") //
                 .append("-[") //
-                .append(StringUtils.firstNonBlank(model.getSubject(), model.getId())) //
+                .append(StringUtils.truncate(StringUtils.firstNonBlank(model.getSubject(), model.getId()), maxTitleLen)) //
                 .append("]") //
                 .toString();
     }

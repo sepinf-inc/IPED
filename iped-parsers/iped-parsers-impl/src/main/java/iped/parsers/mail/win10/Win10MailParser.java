@@ -507,9 +507,10 @@ public class Win10MailParser extends AbstractParser {
                     String imgSrc = item.getTempFile().toURI().toString();
                     preview.append("<img src=\"" + imgSrc + "\"><br>");
                 } else {
-                    InputStream is = item.getBufferedInputStream();
-                    String contactInfo = Util.decodeMixedCharset(is.readAllBytes());
-                    preview.append("<br>" + contactInfo.replace("\n", "<br>") + "<br>");
+                    try (InputStream is = item.getBufferedInputStream()) {
+                        String contactInfo = Util.decodeMixedCharset(is.readAllBytes());
+                        preview.append("<br>" + contactInfo.replace("\n", "<br>") + "<br>");
+                    }
                 }
             }
         }
@@ -553,9 +554,9 @@ public class Win10MailParser extends AbstractParser {
         }
 
         if (item != null) {
-            InputStream is = item.getBufferedInputStream();
-            apptBody = Util.decodeMixedCharset(is.readAllBytes());
-            is.close();
+            try (InputStream is = item.getBufferedInputStream()) {
+                apptBody = Util.decodeMixedCharset(is.readAllBytes());
+            }
         }
         return apptBody;
     }

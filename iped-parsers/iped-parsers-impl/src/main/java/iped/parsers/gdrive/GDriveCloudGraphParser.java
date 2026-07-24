@@ -163,9 +163,9 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         metadataCloudGraphItem.add("doc_id", entry.getDoc_id());
         metadataCloudGraphItem.add("parent_doc_id", entry.getParent_doc_id());
         if (!hashSets.isEmpty()) {
-            metadataCloudGraphItem.set("hashDb:status", "pedo");
+            metadataCloudGraphItem.set(ExtraProperties.STATUS_PROPERTY, "pedo");
             for (String set : hashSets) {
-                metadataCloudGraphItem.add("hashDb:set", set);
+                metadataCloudGraphItem.add(ExtraProperties.SET_PROPERTY, set);
             }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {

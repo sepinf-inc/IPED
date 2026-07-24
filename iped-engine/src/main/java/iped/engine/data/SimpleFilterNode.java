@@ -3,6 +3,12 @@ package iped.engine.data;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import java.text.Collator;
+import iped.localization.LocaleResolver;
+import iped.localization.Messages;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,6 +33,9 @@ public class SimpleFilterNode implements Serializable, Cloneable {
 
     @JsonAlias("addChildren")
     private boolean addChildren;
+
+    @JsonAlias("sortChildren")
+    private String sortChildren;
 
     @JsonAlias("children")
     private final List<SimpleFilterNode> children = new ArrayList<>();
@@ -81,6 +90,11 @@ public class SimpleFilterNode implements Serializable, Cloneable {
         return addChildren;
     }
 
+    public String getSortChildren() {
+        String s = sortChildren;
+        return "true".equalsIgnoreCase(s) ? s : "false";
+    }
+
     public List<SimpleFilterNode> getChildren() {
         return children;
     }
@@ -117,6 +131,10 @@ public class SimpleFilterNode implements Serializable, Cloneable {
         this.addChildren = addChildren;
     }
 
+    public void setSortChildren(String sortChildren) {
+        this.sortChildren = sortChildren;
+    }
+
     public void setDynamicChild(boolean dynamicChild) {
         this.dynamicChild = dynamicChild;
     }
@@ -149,6 +167,7 @@ public class SimpleFilterNode implements Serializable, Cloneable {
         clonedNode.value = value;
         clonedNode.dynamic = dynamic;
         clonedNode.addChildren = addChildren;
+        clonedNode.sortChildren = sortChildren;
         clonedNode.dynamicChild = dynamicChild;
         for (int i = 0; i < children.size(); i++) {
             SimpleFilterNode child = children.get(i);
@@ -157,5 +176,54 @@ public class SimpleFilterNode implements Serializable, Cloneable {
             clonedNode.children.add(clonedChild);
         }
         return clonedNode;
+    }
+
+    public static class LocalizedNameComparator implements Comparator<SimpleFilterNode> {
+        private static final String bundleName = "iped-ai-filters";
+        private static ResourceBundle resourceBundle;
+        private static Collator collator;
+
+        public LocalizedNameComparator() {
+            if (resourceBundle == null) {
+                synchronized (LocalizedNameComparator.class) {
+                    if (resourceBundle == null) {
+                        resourceBundle = iped.localization.Messages.getExternalBundle(bundleName,
+                                LocaleResolver.getLocale());
+                    }
+                }
+            }
+            if (collator == null) {
+                collator = Collator.getInstance(LocaleResolver.getLocale());
+            }
+        }
+
+        @Override
+        public int compare(SimpleFilterNode node1, SimpleFilterNode node2) {
+            // Null check for safety (treats null nodes as smaller)
+            if (node1 == null && node2 == null) return 0;
+            if (node1 == null) return -1;
+            if (node2 == null) return 1;
+
+            // Get localized names for comparison
+            String name1, name2;
+            try {
+                name1 = resourceBundle.getString(node1.getFullName());
+            } catch (MissingResourceException e) {
+                name1 = node1.getName();
+            }
+            try {
+                name2 = resourceBundle.getString(node2.getFullName());
+            } catch (MissingResourceException e) {
+                name2 = node2.getName();
+            }
+
+            // Handle cases where names might be null
+            if (name1 == null && name2 == null) return 0;
+            if (name1 == null) return -1;
+            if (name2 == null) return 1;
+            
+            // Return the localized alphabetical comparison
+            return collator.compare(name1, name2);
+        }
     }
 }

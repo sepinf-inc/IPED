@@ -1,6 +1,7 @@
 package iped.engine.preview;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -46,7 +47,7 @@ public class PreviewRepositoryManager {
      * @param baseFolder The folder where the "previews.mv.db" file is or will be located.
      * @throws IllegalStateException if a configuration for this folder already exists.
      */
-    public static synchronized void configureWritable(File baseFolder){
+    public static synchronized void configureWritable(File baseFolder) throws IOException{
         configure(baseFolder, false);
     }
 
@@ -58,7 +59,7 @@ public class PreviewRepositoryManager {
      * @param baseFolder The folder where the "previews.mv.db" file is or will be located.
      * @throws IllegalStateException if a configuration for this folder already exists.
      */
-    public static synchronized void configureReadOnly(File baseFolder)  {
+    public static synchronized void configureReadOnly(File baseFolder) throws IOException  {
         configure(baseFolder, true);
     }
 
@@ -69,9 +70,10 @@ public class PreviewRepositoryManager {
      * @param readOnly A flag indicating whether the database should be opened in read-only mode.
      * @throws IllegalStateException if a configuration for this folder already exists.
      */
-    private static synchronized void configure(File baseFolder, boolean readOnly) {
+    private static synchronized void configure(File baseFolder, boolean readOnly) throws IOException {
 
-        if (repositoryConfigMap.containsKey(baseFolder)) {
+        File key = baseFolder.getCanonicalFile();
+        if (repositoryConfigMap.containsKey(key)) {
             throw new IllegalStateException("Repository already configured: " + baseFolder);
         }
 
@@ -100,7 +102,7 @@ public class PreviewRepositoryManager {
         config.setJdbcUrl(dbUrl);
         config.setMaximumPoolSize(maxPoolSize);
 
-        repositoryConfigMap.put(baseFolder, config);
+        repositoryConfigMap.put(key, config);
     }
 
     /**
@@ -113,21 +115,22 @@ public class PreviewRepositoryManager {
      * @throws SQLException if there is an error creating the database connection pool or initializing the table.
      * @throws IllegalStateException if the repository has not been configured with configureWritable() or configureReadOnly() first.
      */
-    public static PreviewRepository get(File baseFolder) throws SQLException {
+    public static PreviewRepository get(File baseFolder) throws SQLException, IOException {
 
-        PreviewRepository repository = repositoryMap.get(baseFolder);
+        File key = baseFolder.getCanonicalFile();
+        PreviewRepository repository = repositoryMap.get(key);
         if (repository != null) {
             return repository;
         }
 
         synchronized (PreviewRepositoryManager.class) {
 
-            repository = repositoryMap.get(baseFolder);
+            repository = repositoryMap.get(key);
             if (repository != null) {
                 return repository;
             }
 
-            HikariConfig config = repositoryConfigMap.get(baseFolder);
+            HikariConfig config = repositoryConfigMap.get(key);
             if (config == null) {
                 throw new IllegalStateException(
                         "Repository not configured. Call configureWritable/ReadOnly() first for: " + baseFolder);
@@ -142,8 +145,8 @@ public class PreviewRepositoryManager {
 
             // Create and cache the repository instance
             repository = new PreviewRepository(dataSource, config.getJdbcUrl().contains("ACCESS_MODE_DATA=r"));
-            repositoryMap.put(baseFolder, repository);
-            repositoryConfigMap.put(baseFolder, null);
+            repositoryMap.put(key, repository);
+            repositoryConfigMap.put(key, null);
             logger.info("Created and initialized PreviewRepository for: {}", baseFolder);
 
             return repository;
@@ -155,9 +158,10 @@ public class PreviewRepositoryManager {
      *
      * @param baseFolder The folder whose repository should be closed.
      */
-    public static synchronized void close(File baseFolder) {
-        repositoryConfigMap.remove(baseFolder);
-        PreviewRepository repository = repositoryMap.remove(baseFolder);
+    public static synchronized void close(File baseFolder) throws IOException {
+        File key = baseFolder.getCanonicalFile();
+        repositoryConfigMap.remove(key);
+        PreviewRepository repository = repositoryMap.remove(key);
         if (repository != null) {
             repository.close();
             logger.info("Closed PreviewRepository for: {}", baseFolder);

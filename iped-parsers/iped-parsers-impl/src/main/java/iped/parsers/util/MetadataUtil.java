@@ -398,11 +398,12 @@ public class MetadataUtil {
         if (!prefixVideoMetadata(metadata)) {
             if (!prefixAudioMetadata(metadata)) {
                 if (!prefixImageMetadata(metadata)) {
-                    prefixPDFMetadata(metadata);
+                    if (!prefixPDFMetadata(metadata)) {
+                        prefixDocMetadata(metadata);
+                    }
                 }
             }
         }
-        prefixDocMetadata(metadata);
         prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
         renameKeys(metadata);

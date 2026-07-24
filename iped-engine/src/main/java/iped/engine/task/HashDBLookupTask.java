@@ -27,12 +27,10 @@ import iped.engine.hashdb.HashDB;
 import iped.engine.hashdb.HashDBDataSource;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.ChildPornHashLookup.LookupProvider;
+import iped.properties.ExtraProperties;
 
 public class HashDBLookupTask extends AbstractTask {
 
-    public static final String ATTRIBUTES_PREFIX = "hashDb:";
-    private static final String STATUS_PROPERTY = "status";
-    public static final String STATUS_ATTRIBUTE = ATTRIBUTES_PREFIX + STATUS_PROPERTY;
     public static final String KNOWN_VALUE = "known";
     private static final String NSRL_PRODUCT_NAME_PROPERTY = "nsrlProductName";
 
@@ -226,8 +224,8 @@ public class HashDBLookupTask extends AbstractTask {
                         }
                     }
                     if (!list.isEmpty()) {
-                        evidence.setExtraAttribute(ATTRIBUTES_PREFIX + key, list);
-                        if (key.equalsIgnoreCase(STATUS_PROPERTY)) {
+                        evidence.setExtraAttribute(ExtraProperties.HASHDB_PREFIX + key, list);
+                        if (key.equalsIgnoreCase(ExtraProperties.STATUS_PROPERTY)) {
                             status = list;
                         } else if (key.equalsIgnoreCase(NSRL_PRODUCT_NAME_PROPERTY)) {
                             nsrlProductName = value;
@@ -268,7 +266,7 @@ public class HashDBLookupTask extends AbstractTask {
                     }
                     if (modified) {
                         Collections.sort(status);
-                        evidence.setExtraAttribute(STATUS_ATTRIBUTE, status);
+                        evidence.setExtraAttribute(ExtraProperties.HASHDB_STATUS, status);
                     }
                 }
                 //Ignore only if there is a single status = "known"

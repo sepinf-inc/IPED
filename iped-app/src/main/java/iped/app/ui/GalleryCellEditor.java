@@ -101,7 +101,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
         IMultiBookmarks bookmarks = App.get().appCase.getMultiBookmarks();
         check.setSelected(bookmarks.isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
-        String itemBookmarksStr = Util.concatStrings(bookmarks.getBookmarkList(cellValue.id));
+        String itemBookmarksStr = Util.concatStrings(bookmarks.getBookmarkList(cellValue.id), true);
         cLabel.setToolTipText(itemBookmarksStr.isEmpty() ? null : itemBookmarksStr);
         cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 

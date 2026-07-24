@@ -382,15 +382,15 @@ public class ThreemaParser extends SQLite3DBParser {
             }
             if (m.getMediaQuery() != null && m.getMediaSize() > 2) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, THREEMA_ATTACHMENT.toString());
-                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery())); // $NON-NLS-1$
+                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery()));
             }
             if (m.getMediaItem() != null && m.getMediaItem().getThumb() != null) {
                 meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(m.getMediaItem().getThumb()));
             }
             if (!m.getChildPornSets().isEmpty()) {
-                meta.set("hash:status", "pedo"); //$NON-NLS-1$ //$NON-NLS-2$
+                meta.set(ExtraProperties.HASHDB_STATUS, "pedo");
                 for (String set : m.getChildPornSets()) {
-                    meta.add("hash:set", set); //$NON-NLS-1$
+                    meta.add(ExtraProperties.HASHDB_SET, set);
                 }
             }
 

@@ -2,7 +2,7 @@
 "name": "AI Root",
 "children":[
 
-    {"name": "Classified by AI", "prefix": "Classifier", "property": "ai\\:label", "value": "*", "children":[
+    {"name": "Remote Image Classifier", "prefix": "Classifier", "property": "ai\\:label", "value": "*", "children":[
         {"name": "Child Sexual Abuse", "value": "ChildSexualAbuse"},
         {"name": "Likely Child Sexual Abuse", "value": "LikelyChildSexualAbuse"},
         {"name": "Pornography"},
@@ -12,6 +12,12 @@
         ]},
         {"name": "People"}
     ]}, 
+
+    {"name": "CSAM Detector", "prefix": "CSAMDetector", "property": "ai\\:csamDetector\\:label", "value": "*", "children":[
+        {"name": "Child Sexual Abuse", "value": "csam"},
+        {"name": "Pornography", "value": "porn"},
+        {"name": "Other"}
+    ]},
 
     {"name": "Detected Faces", "prefix": "Face", "property": "face\\_count", "value": "[1 TO *]", "children":[
         {"name": "1"},

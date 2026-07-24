@@ -35,6 +35,8 @@ public class BaseModelHandler<T extends BaseModel> {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseModelHandler.class);
 
+    protected static final int maxTitleLen = 4096;
+
     protected final T model;
     protected final IItemReader item;
 
@@ -149,7 +151,7 @@ public class BaseModelHandler<T extends BaseModel> {
         if (!newSharedHashes.isEmpty()) {
             Property sharedHashesProperty = Property.internalTextBag(ExtraProperties.SHARED_HASHES);
             HashSet<String> sharedHashes = new HashSet<>(Arrays.asList(metadata.getValues(sharedHashesProperty)));
-            if (sharedHashes.addAll(newLinkedItems)) {
+            if (sharedHashes.addAll(newSharedHashes)) {
                 metadata.set(sharedHashesProperty, sharedHashes.toArray(new String[] {}));
             }
         }

@@ -1,5 +1,6 @@
 package iped.parsers.whatsapp;
 
+import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_THIRD_PARTY;
 import static iped.parsers.whatsapp.Message.MessageType.ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -44,6 +45,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
+import static iped.parsers.whatsapp.Message.MessageType.IGNORE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
@@ -128,6 +130,12 @@ public abstract class ExtractorAndroidNew extends Extractor {
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
+        try {
+            updateContactsDirectoryMapping();
+        } catch (SQLException ex) {
+            throw new WAExtractorException(ex);
+        }
+
         List<Chat> list = new ArrayList<>();
         Map<Long, Chat> idToChat = new HashMap<Long, Chat>();
 
@@ -167,6 +175,25 @@ public abstract class ExtractorAndroidNew extends Extractor {
         }
 
         return list;
+    }
+
+    private void updateContactsDirectoryMapping() throws SQLException {
+        // Read LID -> JID mapping
+        try (Connection conn = getConnection()) {
+            if (SQLite3DBParser.containsTable("jid_map", conn)) {
+                try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_JID_MAP)) {
+                    while (rs.next()) {
+                        String lid = rs.getString("lid");
+                        if (lid != null && !lid.isBlank()) {
+                            String jid = rs.getString("jid");
+                            if (jid != null && !jid.isBlank()) {
+                                contacts.addContactMapping(lid, jid);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private boolean isUnblocked(Connection conn, long id) throws SQLException {
@@ -418,6 +445,13 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 if (remoteResource == null || remoteResource.isEmpty() || (!c.isGroupOrChannelChat() && !c.isBroadcast())) {
                     remoteResource = c.getRemote().getFullId();
                 }
+                if (remoteResource != null && remoteResource.endsWith(WAContact.lidSuffix)) {
+                    WAContact contact = contacts.getContact(remoteResource);
+                    String id = contact.getFullId();
+                    if (!remoteResource.equals(id)) {
+                        remoteResource = id;
+                    }
+                }
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
@@ -440,8 +474,8 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 m.setMessageType(decodeMessageType(type, status, edit_version, caption, actionType,
                         rs.getInt("bizStateId"), rs.getInt("privacyType"),  m.getMediaMime()));
                 
-                if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED) {
-                    // Ignore this type of message, as it does nothing and it is not visible in the application itself.
+                if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED || m.getMessageType() == IGNORE_MESSAGE) {
+                    // Ignore these type of message, as they do nothing and are not visible in the application itself.
                     continue;
                 }
                 
@@ -1065,6 +1099,13 @@ public abstract class ExtractorAndroidNew extends Extractor {
             case 99:
                 result = MESSAGE_ASSOCIATION;
                 break;
+            case 112:
+                result = ADVANCED_PRIVACY_ON;
+                break;
+            case 116:
+                // Nothing is shown in the app itself
+                result = IGNORE_MESSAGE;
+                break;
             default:
                 break;
         }
@@ -1238,4 +1279,5 @@ public abstract class ExtractorAndroidNew extends Extractor {
             + " left join chat chat1 on chat1.jid_row_id = log.jid_row_id"
             + " left join chat chat2 on chat2.jid_row_id = log.group_jid_row_id";
 
+    private static final String SELECT_JID_MAP = "SELECT a.raw_string AS lid, b.raw_string AS jid FROM jid_map map, jid a, jid b WHERE map.lid_row_id = a._id AND map.jid_row_id = b._id";
 }
