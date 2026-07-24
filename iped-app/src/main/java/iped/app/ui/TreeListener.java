@@ -81,7 +81,13 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
 
         rootSelected = false;
         for (TreePath path : selection) {
-            if (((Node) path.getLastPathComponent()).docId == -1) {
+            Object last = path.getLastPathComponent();
+            if (last instanceof Node) {
+                if (((Node) last).docId == -1) {
+                    rootSelected = true;
+                    break;
+                }
+            } else {
                 rootSelected = true;
                 break;
             }
@@ -96,7 +102,11 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
             BooleanQuery.Builder recursiveQueryBuilder = new BooleanQuery.Builder();
 
             for (TreePath path : selection) {
-                Document doc = ((Node) path.getLastPathComponent()).getDoc();
+                Object last = path.getLastPathComponent();
+                if (!(last instanceof Node)) {
+                    continue;
+                }
+                Document doc = ((Node) last).getDoc();
 
                 String parentId = doc.get(IndexItem.ID);
 

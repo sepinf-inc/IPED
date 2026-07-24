@@ -321,6 +321,14 @@ public class Statistics {
 
         int indexed = (numDocs - getSplits() - previousIndexedFiles) / 2;
         LOGGER.info("Total Indexed: {}", indexed); //$NON-NLS-1$
+        if (iped.engine.task.index.IndexTask.totalEmbeddedDocs.get() > 0) {
+            iped.engine.rag.RAGService ragService = iped.engine.rag.RAGService.getInstance();
+            String ragModel = (ragService != null && ragService.getConfig() != null) ? ragService.getConfig().getEmbeddingModel() : "unknown";
+            LOGGER.info("RAG Embeddings: {} vectors generated in {} documents (Model: {}).",
+                    iped.engine.task.index.IndexTask.totalEmbeddedVectors.get(),
+                    iped.engine.task.index.IndexTask.totalEmbeddedDocs.get(),
+                    ragModel);
+        }
 
         LOGGER.info("Discovered volume: {} bytes", caseData.getDiscoveredVolume());
         LOGGER.info("Processed  volume: {} bytes", getVolume());
