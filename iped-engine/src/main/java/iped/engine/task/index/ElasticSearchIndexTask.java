@@ -517,6 +517,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 if (!textsToEmbed.isEmpty()) {
                     try {
                         embeddings = ragService.getEmbeddings(textsToEmbed);
+                        if (embeddings != null && !embeddings.isEmpty()) {
+                            IndexTask.totalEmbeddedDocs.incrementAndGet();
+                            IndexTask.totalEmbeddedVectors.addAndGet(embeddings.size());
+                        }
                     } catch (Exception e) {
                         LOGGER.error("Failed to generate batch embeddings for item " + item.getId(), e);
                     }
