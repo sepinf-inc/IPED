@@ -475,7 +475,7 @@ public class RAGService {
     public float[] getEmbedding(String text) throws IOException, InterruptedException {
         String modelName = config.getEmbeddingModel();
         float[] vector = getCachedEmbedding(text, modelName);
-        if (vector == null) {
+        if (vector == null && isAvailable()) {
             vector = embeddingProvider.generateEmbedding(text);
             if (vector != null) {
                 cacheEmbedding(text, modelName, vector);
@@ -503,7 +503,7 @@ public class RAGService {
             }
         }
 
-        if (!missingTexts.isEmpty()) {
+        if (!missingTexts.isEmpty() && isAvailable()) {
             List<float[]> newVecs = embeddingProvider.generateEmbeddings(missingTexts);
             if (newVecs != null && newVecs.size() == missingTexts.size()) {
                 for (int k = 0; k < missingTexts.size(); k++) {

@@ -129,7 +129,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
-        taskInstances.add(this);
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
         retries = elasticConfig.getRetries();
@@ -240,6 +239,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             throw new IPEDException("ElasticSearch index does not exist: " + indexName);
         }
 
+        taskInstances.add(this);
     }
 
     private void parseCmdLineFields(String cmdFields) {
@@ -477,6 +477,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             RAGService ragService = RAGService.getInstance();
             boolean doRAG = ragService != null
                     && ragService.getConfig().isEnabled()
+                    && ragService.isAvailable()
                     && "opensearch".equalsIgnoreCase(ragService.getConfig().getVectorStoreMode());
             boolean shouldEmbedItem = false;
             if (doRAG) {
