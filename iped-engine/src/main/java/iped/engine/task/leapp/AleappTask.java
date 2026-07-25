@@ -70,6 +70,10 @@ public class AleappTask extends AbstractTask {
     private static final String UFDR_EXT = "ufdr";
 
     private static final Set<String> DUMP_ROOT_FOLDER_NAMES = Set.of("Dump", "backup");
+
+    // top level folders of an android file system, used to tell if ALEAPP should run over a extraction (see isAndroidFileSystem)
+    private static final Set<String> ANDROID_ROOT_FOLDER_NAMES = Set.of("data", "system");
+
     // data_views is not copied to metadata: it is consumed by ConversationViewSpec
     // to build chat-preview items (see LavaInsertSqliteDataInterceptor)
     private static final Set<String> ARTIFACT_INFO_KEYS_TO_IGNORE = Set
@@ -320,8 +324,6 @@ public class AleappTask extends AbstractTask {
         if (AndroidBackupParser.SUPPORTED_TYPES.contains(rootEvidence.getMediaType())) {
             extractionType = EXTRACTION_TYPE_ANDROID_BACKUP;
         } else if (isUfdrFileSystem(rootEvidence)) {
-            // the ufdr container already tells this is an android extraction, so this type skips the
-            // real dump check done for loose folders/zips (see processCaseEvidence)
             extractionType = EXTRACTION_TYPE_UFDR;
         } else {
             String realExt = rootEvidence.getExt();
@@ -338,9 +340,7 @@ public class AleappTask extends AbstractTask {
 
     private void processCaseEvidence(IItem caseEvidence) throws Exception {
 
-        // check if case is a real dump of Android extraction
-        String extractionType = caseEvidence.getMetadata().get(ALEAPP_EXTRACTION_TYPE_META);
-        if (StringUtils.equalsAny(extractionType, EXTRACTION_TYPE_DUMP, EXTRACTION_TYPE_ZIP) && !isInsideRealDump(caseEvidence)) {
+        if (!isSupportedAndroidExtraction(caseEvidence)) {
             caseEvidence.setToIgnore(true);
             return;
         }
@@ -399,6 +399,32 @@ public class AleappTask extends AbstractTask {
     }
 
     /**
+     * Checks if the extraction root really holds an Android extraction the plugins can decode, applying the checks each
+     * extraction type needs.
+     */
+    private boolean isSupportedAndroidExtraction(IItem caseEvidence) {
+
+        String extractionType = caseEvidence.getMetadata().get(ALEAPP_EXTRACTION_TYPE_META);
+
+        switch (extractionType) {
+
+        case EXTRACTION_TYPE_ANDROID_BACKUP:
+            // expanded as a tar, holding a file system of its own ("apps/<package>", "shared/0"...)
+            return true;
+
+        case EXTRACTION_TYPE_UFDR:
+            return isAndroidFileSystem(caseEvidence);
+
+        case EXTRACTION_TYPE_DUMP:
+        case EXTRACTION_TYPE_ZIP:
+            return isAndroidFileSystem(caseEvidence) && isInsideRealDump(caseEvidence);
+
+        default:
+            throw new IllegalStateException("Unexpected extraction type: " + extractionType);
+        }
+    }
+
+    /**
      * Checks if the case evidence really corresponds to an Android dump, by looking for a folder every Android device
      * has ("/data/data/com.android.vending"). Avoids running plugins over unrelated zips/folders that just happen to
      * match the extraction root naming rules.
@@ -406,12 +432,32 @@ public class AleappTask extends AbstractTask {
     private boolean isInsideRealDump(IItem caseEvidence) {
 
         String checkFolder = "/data/data/com.android.vending";
-        String rootPath = StringUtils.substringBefore(caseEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
 
         IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-        List<IItemReader> result = searcher.search("path:\"" + rootPath + checkFolder + "\"");
 
-        return !result.isEmpty();
+        return LeappUtils.findItemByPath(searcher, getExtractionRootPath(caseEvidence), checkFolder) != null;
+    }
+
+    /**
+     * Checks if the extraction root holds an Android file system, by looking for at least one of its top level folders
+     * ({@link #ANDROID_ROOT_FOLDER_NAMES}). 
+     * A ufdr can hold an iOS, KeyChain or KeyStore extractions, whose file system have no plugin can decode.
+     */
+    @SuppressWarnings("resource")
+    private boolean isAndroidFileSystem(IItem caseEvidence) {
+
+        String rootPath = getExtractionRootPath(caseEvidence);
+
+        IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
+
+        // anyMatch short-circuits: the next folder is only searched if the previous one was not found
+        return ANDROID_ROOT_FOLDER_NAMES.stream()
+                .anyMatch(folder -> LeappUtils.findItemByPath(searcher, rootPath, "/" + folder) != null);
+    }
+
+    /** The in-case path of the extraction root, i.e. the path prefix shared by every item of this extraction. */
+    private String getExtractionRootPath(IItem aleappEvidence) {
+        return StringUtils.substringBeforeLast(aleappEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
     }
 
     private void processCategoryEvidence(IItem categoryEvidence) throws Exception {
@@ -432,8 +478,7 @@ public class AleappTask extends AbstractTask {
         // look for the files the plugin needs
         // (mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L386)
         IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-        String pathRoot = StringUtils.substringBeforeLast(pluginEvidence.getPath(), "/" + CASE_EVIDENCE_NAME);
-        FileSeeker seeker = new FileSeeker(pathRoot, exportFilesFolder, searcher);
+        FileSeeker seeker = new FileSeeker(getExtractionRootPath(pluginEvidence), exportFilesFolder, searcher);
 
         try {
 
@@ -523,7 +568,7 @@ public class AleappTask extends AbstractTask {
         List<String> metadataKeys = (List<String>) item.getTempAttribute(ALEAPP_METADATA_PATHS);
 
         IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-        String pathRoot = StringUtils.substringBeforeLast(item.getPath(), "/" + CASE_EVIDENCE_NAME);
+        String pathRoot = getExtractionRootPath(item);
 
         for (String metadataKey : metadataKeys) {
             String pathValue = item.getMetadata().get(metadataKey);

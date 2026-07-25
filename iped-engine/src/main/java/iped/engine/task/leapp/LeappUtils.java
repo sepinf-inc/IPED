@@ -245,10 +245,14 @@ public final class LeappUtils {
 
     /** Returns the case item whose path exactly equals {@code itemPath}, or {@code null} when there is none. */
     private static IItemReader searchItemByPath(IItemSearcher searcher, String itemPath) {
-        return searcher.search(BasicProps.PATH + ":\"" + itemPath + "\"").stream()
-                .filter(item -> itemPath.equals(item.getPath()))
-                .findFirst()
-                .orElse(null);
+        // the path query matches whole terms in any position, so it can hit the whole subtree of itemPath:
+        // iterating lazily loads only the items up to the exact one, instead of all the hits at once
+        for (IItemReader item : searcher.searchIterable(BasicProps.PATH + ":\"" + itemPath + "\"")) {
+            if (itemPath.equals(item.getPath())) {
+                return item;
+            }
+        }
+        return null;
     }
 
 }
