@@ -12,6 +12,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 
+import iped.app.ui.Messages;
 import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.ItemId;
@@ -32,7 +33,7 @@ import iped.viewers.api.IResultSetFilter;
 public class ProducedFilter implements IResultSetFilter, IMutableFilter {
 
     static HashSet<String> internalCreatedFieldName = new HashSet<String>();
-    public static String FILTER_NAME = "Produced";
+    public static String FILTER_NAME = Messages.getString("ProducedFilter.Produced");
     
     public static int PRODUCTION_TIMERANGE = 60 * 1000;// 1 minute is the acceptable date difference between FS date and content date
 
