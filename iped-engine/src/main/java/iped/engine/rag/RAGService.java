@@ -28,10 +28,8 @@ import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import iped.engine.util.SSLFix;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
@@ -48,7 +46,7 @@ import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
-import org.opensearch.client.RestClientBuilder.HttpClientConfigCallback;
+
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
@@ -931,7 +929,7 @@ public class RAGService {
         }
         Query filter = new TermQuery(new Term("fragParentNumericId", parentNumericId));
         TopDocs topDocs = searcher.search(filter, 200);
-        List<float[]> embeddings = new java.util.ArrayList<>();
+
         for (ScoreDoc sd : topDocs.scoreDocs) {
             Document doc = searcher.doc(sd.doc);
             // KnnVectorField values are not stored as retrievable bytes in Lucene 9;
