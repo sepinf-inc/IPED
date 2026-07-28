@@ -8,24 +8,31 @@ package iped.engine.rag;
  */
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
-import iped.engine.util.SSLFix;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import iped.engine.util.SSLFix;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
@@ -39,6 +46,7 @@ import org.apache.lucene.search.TopDocs;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.RequestOptions;
+import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
 import org.opensearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.opensearch.client.RestHighLevelClient;
@@ -48,10 +56,12 @@ import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
 
+import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ElasticSearchTaskConfig;
 import iped.engine.config.RAGConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class RAGService {
 
