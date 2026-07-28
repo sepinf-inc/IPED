@@ -571,9 +571,9 @@ public class AleappTask extends AbstractTask {
         String pathRoot = getExtractionRootPath(item);
 
         for (String metadataKey : metadataKeys) {
-            String pathValue = item.getMetadata().get(metadataKey);
-            if (pathValue == null || pathValue.length() == 0 || pathValue == "/") {
-                continue;// skip
+            String pathValue = StringUtils.trimToEmpty(item.getMetadata().get(metadataKey));
+            if (pathValue.isEmpty() || pathValue.equals("/")) {
+                continue;
             }
             IItemReader found = LeappUtils.findItemByPath(searcher, pathRoot, pathValue);
             if (found != null) {
