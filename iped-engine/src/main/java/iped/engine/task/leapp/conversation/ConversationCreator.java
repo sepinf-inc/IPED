@@ -59,7 +59,7 @@ public class ConversationCreator {
     private static final int MIN_CHAT_SPLIT_SIZE = 6000000;
 
     /**
-     * Creates the subitem of one data_list row. Implemented by LavaInsertSqliteDataInterceptor, which owns the
+     * Creates the subitem of one data_list row. Implemented by PluginResultsProcessor, which owns the
      * row-to-metadata mapping: this class only decides WHERE in the item tree the subitem goes.
      */
     public interface MessageItemFactory {

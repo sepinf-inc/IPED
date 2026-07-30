@@ -14,11 +14,10 @@ import java.util.List;
 import org.junit.Test;
 
 import iped.engine.data.Item;
-import iped.engine.task.leapp.interceptors.LavaInsertSqliteDataInterceptor;
 import iped.engine.tika.SyncMetadata;
 import iped.properties.ExtraProperties;
 
-public class LavaInsertSqliteDataInterceptorTest {
+public class PluginResultsProcessorTest {
 
     private Item newItem() {
         Item item = new Item();
@@ -30,10 +29,8 @@ public class LavaInsertSqliteDataInterceptorTest {
     private static final Class<?> STANDARD_FIELD;
     static {
         try {
-            HEADER = Class.forName(
-                    "iped.engine.task.leapp.interceptors.LavaInsertSqliteDataInterceptor$Header");
-            STANDARD_FIELD = Class.forName(
-                    "iped.engine.task.leapp.interceptors.LavaInsertSqliteDataInterceptor$StandardField");
+            HEADER = Class.forName("iped.engine.task.leapp.PluginResultsProcessor$Header");
+            STANDARD_FIELD = Class.forName("iped.engine.task.leapp.PluginResultsProcessor$StandardField");
         } catch (ClassNotFoundException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -46,21 +43,21 @@ public class LavaInsertSqliteDataInterceptorTest {
     }
 
     private Object invokeClassify(String name, String type) throws Exception {
-        Method classify = LavaInsertSqliteDataInterceptor.class.getDeclaredMethod("classifyHeader", HEADER);
+        Method classify = PluginResultsProcessor.class.getDeclaredMethod("classifyHeader", HEADER);
         classify.setAccessible(true);
         return classify.invoke(null, newHeader(name, type));
     }
 
     private void invokeMapStandard(Item item, String name, String type, String value) throws Exception {
         Object field = invokeClassify(name, type);
-        Method apply = LavaInsertSqliteDataInterceptor.class
+        Method apply = PluginResultsProcessor.class
                 .getDeclaredMethod("applyStandardField", Item.class, STANDARD_FIELD, String.class);
         apply.setAccessible(true);
         apply.invoke(null, item, field, value);
     }
 
     private Object invokeCellValue(List<Object> data, int i) throws Exception {
-        Method m = LavaInsertSqliteDataInterceptor.class.getDeclaredMethod("cellValue", List.class, int.class);
+        Method m = PluginResultsProcessor.class.getDeclaredMethod("cellValue", List.class, int.class);
         m.setAccessible(true);
         return m.invoke(null, data, i);
     }
@@ -229,7 +226,7 @@ public class LavaInsertSqliteDataInterceptorTest {
     }
 
     private boolean invokeIsNonFilePathColumn(String moduleName, String headerName) throws Exception {
-        Method m = LavaInsertSqliteDataInterceptor.class
+        Method m = PluginResultsProcessor.class
                 .getDeclaredMethod("isNonFilePathColumn", String.class, String.class);
         m.setAccessible(true);
         return (boolean) m.invoke(null, moduleName, headerName);
@@ -276,7 +273,7 @@ public class LavaInsertSqliteDataInterceptorTest {
     // ── Geolocation mapping ────────────────────────────────────────────────────
 
     private void invokeSetLocation(Item item, String lat, String lon) throws Exception {
-        Method m = LavaInsertSqliteDataInterceptor.class
+        Method m = PluginResultsProcessor.class
                 .getDeclaredMethod("setLocationIfValid", Item.class, String.class, String.class);
         m.setAccessible(true);
         m.invoke(null, item, lat, lon);

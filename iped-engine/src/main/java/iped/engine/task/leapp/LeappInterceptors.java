@@ -80,7 +80,7 @@ public class LeappInterceptors {
      *
      * The original implementation copies files and registers them in the LAVA media database (disabled here). It is
      * replaced by a version that simply returns the extraction path of the media file (resolved against the
-     * thread-local Context), which LavaInsertSqliteDataInterceptor then maps back to the original case item and adds
+     * thread-local Context), which PluginResultsProcessor then maps back to the original case item and adds
      * to the subitem's linkedItems.
      *
      * get_data_list_with_media is also patched: artifact_processor calls it whenever a 'media' column exists (BEFORE

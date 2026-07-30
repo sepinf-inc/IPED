@@ -22,7 +22,7 @@ import org.apache.commons.lang3.StringUtils;
  *
  * In ALEAPP this declaration is only copied into the LAVA JSON by lava_process_artifact (the rendering happens in the
  * LAVA viewer app), so there is no need to enable that function: the raw dict is read here straight from the plugin's
- * artifact_info, and the column names match the raw data_headers names received by LavaInsertSqliteDataInterceptor.
+ * artifact_info, and the column names match the raw data_headers names received by PluginResultsProcessor.
  *
  * The backward compatibility rules of lava_process_artifact are mirrored: a "chat" view is upgraded to "conversation"
  * and thread*Column keys are remapped to conversation*Column.
