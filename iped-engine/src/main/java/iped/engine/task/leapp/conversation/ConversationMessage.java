@@ -40,9 +40,9 @@ public class ConversationMessage {
     }
 
     /**
-     * Time cells arrive stringified from Python (str(datetime) produces "2023-05-12 14:33:12+00:00"-like values, other
-     * plugins emit ISO strings); DateUtil handles both the 'T' and space separated ISO-8601 variants. Parsing failures
-     * are not fatal: the raw string is still shown in the HTML.
+     * Time cells arrive stringified from Python (str(datetime) produces "2023-05-12 14:33:12.123456+00:00"-like values,
+     * other plugins emit ISO strings); DateUtil handles both the 'T' and space separated ISO-8601 variants, with or
+     * without fraction of second. Parsing failures are not fatal: the raw string is still shown in the HTML.
      */
     private static Date parseTime(String value) {
         if (value == null || value.isBlank()) {

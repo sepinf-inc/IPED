@@ -9,6 +9,14 @@ import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -29,6 +37,22 @@ public class DateUtil {
     private static final Pattern datePattern = Pattern.compile("\\d{4}([-:]\\d{2}){2}[T ](\\d{2}:){2}\\d{2}");
 
     private static final DateUtil INSTANCE = new DateUtil();
+
+    /**
+     * ISO-8601 dates with either separator ('T' or space), an optional fraction of second of any precision and an
+     * optional offset (+HH:MM, +HHMM or Z).
+     *
+     * SimpleDateFormat cannot express this: it needs one pattern per fraction/offset/separator combination and, worse,
+     * its 'SSS' is a plain number field, so a value with microseconds ("...12.123456") is read as 123456 MILLIseconds
+     * and the instant is silently shifted by about two minutes. Values whose fraction is not exactly 3 digits used to
+     * fall back to a pattern without the offset, which dropped the timezone and read the date as local time.
+     */
+    private static final DateTimeFormatter ISO_WITH_OPTIONAL_FRACTION_AND_OFFSET = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd[['T'][' ']]HH:mm:ss")
+            .appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
+            .optionalStart().appendOffset("+HH:MM", "Z").optionalEnd()
+            .optionalStart().appendOffset("+HHMM", "Z").optionalEnd()
+            .toFormatter(Locale.US);
 
     private static DateFormat createDateFormat(String format, TimeZone timezone) {
         final SimpleDateFormat sdf = new SimpleDateFormat(format, new DateFormatSymbols(Locale.US));
@@ -98,12 +122,36 @@ public class DateUtil {
      * @return
      */
     public static Date tryToParseDate(String val) {
-        if (datePattern.matcher(val).find()) {
-            synchronized (INSTANCE) {
-                return INSTANCE.tryToParse(val);
-            }
-        } else
+        if (!datePattern.matcher(val).find()) {
             return null;
+        }
+        // DateTimeFormatter is immutable and thread safe, so this runs unsynchronized
+        Date date = parseIsoDate(val);
+        if (date != null) {
+            return date;
+        }
+        // formats the builder above does not cover (e.g. "yyyy:MM:dd HH:mm:ss", named zones like " UTC")
+        synchronized (INSTANCE) {
+            return INSTANCE.tryToParse(val);
+        }
+    }
+
+    /**
+     * Parses the ISO-8601 variants of {@link #ISO_WITH_OPTIONAL_FRACTION_AND_OFFSET}, or returns null when the value is
+     * not one of them. Values carrying an offset are resolved to that offset; values without one keep the previous
+     * behavior of being interpreted in the default timezone.
+     */
+    private static Date parseIsoDate(String value) {
+        try {
+            TemporalAccessor parsed = ISO_WITH_OPTIONAL_FRACTION_AND_OFFSET.parse(value);
+            try {
+                return Date.from(Instant.from(parsed));
+            } catch (DateTimeException e) {
+                return Date.from(LocalDateTime.from(parsed).atZone(ZoneId.systemDefault()).toInstant());
+            }
+        } catch (DateTimeException e) {
+            return null;
+        }
     }
 
     // Thread local variable
