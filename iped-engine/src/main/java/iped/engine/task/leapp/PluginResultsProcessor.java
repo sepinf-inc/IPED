@@ -29,8 +29,12 @@ import iped.properties.ExtraProperties;
  * <p>
  * This is where the plugin output is actually interpreted. It receives the two raw values a plugin produces —
  * {@code data_headers} (the column list) and {@code data_list} (the rows) — and for each row creates a subitem of the
- * plugin evidence, storing every cell as "aleapp:&lt;header&gt;" metadata and promoting recognized columns to IPED
- * standard properties (date, from/to, body, location, media, file paths).
+ * plugin evidence, storing every cell as "aleapp:&lt;header&gt;" metadata.
+ *
+ * <p>
+ * Some columns are additionally mapped to IPED standard properties. Location, media and file-path columns are mapped
+ * for every plugin, but the communication properties (Message:Date, Communication:From/To, Message:Body) are only
+ * filled for plugins that produce conversations, where they carry their intended meaning.
  *
  * <p>
  * The values are captured from the Python side by
@@ -98,6 +102,12 @@ public class PluginResultsProcessor {
 
     private final LeappContext context;
 
+    /**
+     * Whether this plugin run produces conversations. Only then are recognized columns promoted to the communication
+     * properties (Message:Date, Communication:From/To, Message:Body) — see {@link #createSubItem}.
+     */
+    private boolean conversationPlugin;
+
     public PluginResultsProcessor(LeappContext context) {
         this.context = context;
     }
@@ -142,6 +152,7 @@ public class PluginResultsProcessor {
         // HTML rendering) and the row subitems become children of their conversation
         ConversationViewSpec view = ConversationViewSpec.from(context.getPlugin().getArtifactInfo());
         int discriminatorIdx = view == null ? -1 : indexOfColumn(headers, view.getDiscriminatorColumn());
+        conversationPlugin = discriminatorIdx >= 0;
 
         AtomicInteger subitemIdSeq = new AtomicInteger();
 
@@ -332,13 +343,15 @@ public class PluginResultsProcessor {
             }
 
             // cells promoted to a standard property (Communication:*, Message-Body) are
-            // not duplicated as "aleapp:" metadata
+            // not duplicated as "aleapp:" metadata. Only conversation plugins promote: for the
+            // others the communication properties have no meaning, and the promoted column would
+            // be picked by position (the first date/sender/body column wins), which is arbitrary.
             boolean promoted = false;
             if (standardFields[i] == StandardField.LATITUDE) {
                 lat = valueStr;
             } else if (standardFields[i] == StandardField.LONGITUDE) {
                 lon = valueStr;
-            } else if (standardFields[i] != StandardField.NONE) {
+            } else if (conversationPlugin && standardFields[i] != StandardField.NONE) {
                 promoted = applyStandardField(subItem, standardFields[i], valueStr);
             }
             if (!promoted) {
