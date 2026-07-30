@@ -1,6 +1,7 @@
 package iped.engine.task.leapp;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import iped.engine.task.leapp.conversation.Conversation;
 import iped.engine.task.leapp.conversation.ConversationCreator;
 import iped.engine.task.leapp.conversation.ConversationMessage;
 import iped.engine.task.leapp.conversation.ConversationViewSpec;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
 
 /**
@@ -144,6 +146,11 @@ public class PluginResultsProcessor {
             // (e.g. the cookie "Path"): drop it back to NONE so no file lookup is attempted
             if (standardFields[i] == StandardField.FILE_PATH && isNonFilePathColumn(pluginModule, headers[i].name)) {
                 standardFields[i] = StandardField.NONE;
+            }
+            if (standardFields[i] == StandardField.DATE) {
+                // declares the column as a date metadata, so it is indexed as a real date instead of
+                // being stored as text plus a duplicated "...:date" field created by IndexItem.
+                MetadataUtil.setMetadataType(AleappTask.ALEAPP_METADATA_PREFIX + headers[i].name, Date.class);
             }
         }
 
