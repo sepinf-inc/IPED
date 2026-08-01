@@ -192,26 +192,22 @@ public class IconManager {
 
     private static final String ALEAPP_MIME_PREFIX = "application/x-aleapp-";
 
-    private static final String[] ALEAPP_CHAT_APPS = { "whatsapp", "telegram", "skype", "facebook", "instagram",
-            "signal", "snapchat", "threema", "tiktok", "viber", "discord" };
-
     /**
-     * ALEAPP subitem mime types are derived dynamically from plugin/artifact names (e.g.
-     * application/x-aleapp-discordchats-chat), so they cannot all be enumerated in the static mime map: resolve them
-     * by looking for a known app keyword in the mime and reusing the icon registered for that app's chat-preview
-     * type; other chat-like ALEAPP types get the generic message icon.
+     * Generic icon for the ALEAPP subitem mime types that are derived dynamically from plugin/artifact names (e.g.
+     * application/x-aleapp-sms_mms-message), so they cannot be enumerated in the static mime map.
+     *
+     * Only the suffix is used. The conversation items do carry their app in the mime
+     * (application/x-aleapp-chat-preview-whatsapp), but those types are a closed set already registered in the mime
+     * map, so they are resolved by a plain lookup and never reach this method. Matching an app name inside the
+     * remaining (row) types would only mislabel them, since most are contacts, calls or account profiles rather than
+     * conversations.
      */
     private static Icon getAleappIcon(String mimeType, Map<String, QualityIcon> mimeIconMap) {
-        for (String app : ALEAPP_CHAT_APPS) {
-            if (mimeType.contains(app)) {
-                Icon icon = mimeIconMap.get(ALEAPP_MIME_PREFIX + "chat-preview-" + app);
-                if (icon != null) {
-                    return icon;
-                }
-            }
+        if (mimeType.endsWith("-message")) {
+            return mimeIconMap.get("application/x-aleapp-message");
         }
-        if (mimeType.endsWith("-chat") || mimeType.endsWith("-message") || mimeType.endsWith("-conversation")) {
-            return mimeIconMap.get(ALEAPP_MIME_PREFIX + "chat-preview");
+        if (mimeType.endsWith("-chat") || mimeType.endsWith("-conversation")) {
+            return mimeIconMap.get("application/x-aleapp-chat-preview");
         }
         return null;
     }
@@ -560,6 +556,7 @@ public class IconManager {
         icon = availableIconsMap.get("message");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-instantmessage", icon);
+            mimeIconMap.put("application/x-aleapp-message", icon);
             mimeIconMap.put("message/x-chat-message", icon);
             mimeIconMap.put("message/x-discord-message", icon);
         }
