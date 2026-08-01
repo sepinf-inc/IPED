@@ -190,7 +190,7 @@ public class ConversationCreator {
     /** Values promoted to a standard property are not kept duplicated under the "aleapp:" prefix. */
     private static void removeAleappMetadata(Metadata metadata, String column) {
         if (column != null) {
-            metadata.remove(AleappTask.ALEAPP_METADATA_PREFIX + column);
+            metadata.remove(AleappTask.ALEAPP_META_PREFIX + column);
         }
     }
 

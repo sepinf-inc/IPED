@@ -80,9 +80,10 @@ public class AleappTask extends AbstractTask {
             .of("function", "paths", "requirements", "output_types", "notes", "sample_data", "artifact_icon",
                     ConversationViewSpec.DATA_VIEWS_KEY);
 
-    public static final String ALEAPP_METADATA_PREFIX = "aleapp:";
-    public static final String ALEAPP_PLUGIN_METADATA_PREFIX = ALEAPP_METADATA_PREFIX + "plugin:";
-    public static final String ALEAPP_EXTRACTION_TYPE_META = ALEAPP_METADATA_PREFIX + "extractionType";
+    public static final String ALEAPP_META_PREFIX = "aleapp:";
+
+    public static final String ALEAPP_PLUGIN_METADATA_PREFIX = ALEAPP_META_PREFIX + "plugin:";
+    public static final String ALEAPP_EXTRACTION_TYPE_META = ALEAPP_META_PREFIX + "extractionType";
     public static final String ALEAPP_PLUGIN_KEYNAME_META = ALEAPP_PLUGIN_METADATA_PREFIX + "key";
 
     private static final String EXTRACTION_TYPE_ANDROID_BACKUP = "android-backup";

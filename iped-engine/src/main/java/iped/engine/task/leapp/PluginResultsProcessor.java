@@ -50,11 +50,14 @@ public class PluginResultsProcessor {
     // only: mislabeling those is forensically costly (e.g. "Account" is usually the
     // device owner, who is the receiver of incoming records, not the sender).
     // "Date of Birth"-style personal dates must not become the record's event date,
-    // so there is no "date " prefix rule — "date *" event columns are listed explicitly.
+    // so there is no "date " prefix rule — "date *" event columns are listed explicitly
+    // ("date of sleep", "birthday" and "birthdate (mm-dd)" are deliberately left out).
+    // "creationtime" has no separator, so the " time" suffix rule does not catch it.
     private static final Set<String> DATE_HEADERS = Set.of( //
             "datetime", "date/time", "date", "created", "created at", "updated at", //
-            "time created", "last updated", "last login", "last modified", "last access", "last accessed", //
-            "date added", "date created", "date modified", "date sent", "date taken");
+            "time created", "creationtime", "last updated", "last login", "last modified", //
+            "last access", "last accessed", //
+            "date added", "date created", "date modified", "date sent", "date stored", "date taken");
     private static final Set<String> FROM_HEADERS = Set.of("sender", "from", "author");
     private static final Set<String> TO_HEADERS = Set.of("recipient", "to", "receiver");
     private static final Set<String> BODY_HEADERS = Set.of("message", "body", "text", "content");
@@ -81,11 +84,10 @@ public class PluginResultsProcessor {
             "DuckDuckGo", Set.of("Folder Path"), //
             "libretorrentFR", Set.of("Length - Path"));
 
-    // types used in LEAPP data_headers tuples (see lavafuncs.get_sql_type and
-    // ilapfuncs.get_media_header_info)
-    private static final String TYPE_DATETIME = "datetime";
-    private static final String TYPE_DATE = "date";
-    private static final String TYPE_MEDIA = "media";
+    // types used in LEAPP data_headers tuples (see lavafuncs.get_sql_type and ilapfuncs.get_media_header_info)
+    private static final String LEAPP_TYPE_DATETIME = "datetime";
+    private static final String LEAPP_TYPE_DATE = "date";
+    private static final String LEAPP_TYPE_MEDIA = "media";
 
     private enum StandardField {
         DATE, FROM, TO, BODY, LATITUDE, LONGITUDE, MEDIA, FILE_PATH, NONE
@@ -150,7 +152,7 @@ public class PluginResultsProcessor {
             if (standardFields[i] == StandardField.DATE) {
                 // declares the column as a date metadata, so it is indexed as a real date instead of
                 // being stored as text plus a duplicated "...:date" field created by IndexItem.
-                MetadataUtil.setMetadataType(AleappTask.ALEAPP_METADATA_PREFIX + headers[i].name, Date.class);
+                MetadataUtil.setMetadataType(AleappTask.ALEAPP_META_PREFIX + headers[i].name, Date.class);
             }
         }
 
@@ -163,7 +165,7 @@ public class PluginResultsProcessor {
 
         AtomicInteger subitemIdSeq = new AtomicInteger();
 
-        if (discriminatorIdx >= 0) {
+        if (conversationPlugin) {
             createConversations(mediaType, artifactName, headers, standardFields, dataList, view, discriminatorIdx, subitemIdSeq);
         } else {
             for (int index = 0; index < dataList.size(); index++) {
@@ -346,7 +348,7 @@ public class PluginResultsProcessor {
                 if (filePathMetaKeys == null) {
                     filePathMetaKeys = new ArrayList<>();
                 }
-                filePathMetaKeys.add("aleapp:" + headers[i].name);
+                filePathMetaKeys.add(AleappTask.ALEAPP_META_PREFIX + headers[i].name);
             }
 
             // cells promoted to a standard property (Communication:*, Message-Body) are
@@ -362,7 +364,7 @@ public class PluginResultsProcessor {
                 promoted = applyStandardField(subItem, standardFields[i], valueStr);
             }
             if (!promoted) {
-                subItem.getMetadata().set("aleapp:" + headers[i].name, valueStr);
+                subItem.getMetadata().set(AleappTask.ALEAPP_META_PREFIX + headers[i].name, valueStr);
             }
         }
         setLocationIfValid(subItem, lat, lon);
@@ -396,7 +398,7 @@ public class PluginResultsProcessor {
                 subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS,
                         ExtraProperties.GLOBAL_ID + ":" + mediaItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
             }
-            subItem.getMetadata().add("aleapp:" + headerName, pathStr);
+            subItem.getMetadata().add(AleappTask.ALEAPP_META_PREFIX + headerName, pathStr);
         }
     }
 
@@ -442,10 +444,10 @@ public class PluginResultsProcessor {
      */
     private static StandardField classifyHeader(Header header) {
 
-        if (TYPE_MEDIA.equals(header.type)) {
+        if (LEAPP_TYPE_MEDIA.equals(header.type)) {
             return StandardField.MEDIA;
         }
-        if (TYPE_DATETIME.equals(header.type) || TYPE_DATE.equals(header.type)) {
+        if (LEAPP_TYPE_DATETIME.equals(header.type) || LEAPP_TYPE_DATE.equals(header.type)) {
             return StandardField.DATE;
         }
 

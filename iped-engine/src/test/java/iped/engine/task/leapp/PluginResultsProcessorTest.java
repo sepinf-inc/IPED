@@ -147,7 +147,11 @@ public class PluginResultsProcessorTest {
     public void testDateHeaderVariantsMap() throws Exception {
         for (String header : Arrays.asList("Start Time", "Message Timestamp",
                 "Created Timestamp", "Last Updated Timestamp", "Visit Date",
-                "Date Added", "End Time")) {
+                "Date Added", "End Time",
+                // sibling of the untyped "Date Received"/"Date Sent" columns of FairEmail
+                "Date Stored",
+                // no separator, so the " time" suffix rule does not apply (wifiConfigstore2)
+                "CreationTime")) {
             Item item = newItem();
             invokeMapStandard(item, header, null, "2024-01-15 10:00:00");
             assertEquals("header must map to MESSAGE_DATE: " + header,
@@ -157,7 +161,8 @@ public class PluginResultsProcessorTest {
 
     @Test
     public void testNonEventDateHeadersDoNotMap() throws Exception {
-        for (String header : Arrays.asList("Timezone", "Birthdate", "Duration")) {
+        for (String header :  Arrays.asList("Timezone", "Birthdate", "Duration",
+                "Birthday", "Birthdate (MM-DD)", "Date of Sleep", "Date of Birth")) {
             Item item = newItem();
             invokeMapStandard(item, header, null, "some value");
             assertNull("header must NOT map to MESSAGE_DATE: " + header,
