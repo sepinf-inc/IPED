@@ -313,6 +313,7 @@ public class PluginResultsProcessor {
         subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
         subItem.setSubItem(true);
         subItem.setSubitemId(subitemId);
+        subItem.setSumVolume(false);
 
         // data as metadata
         String lat = null, lon = null;

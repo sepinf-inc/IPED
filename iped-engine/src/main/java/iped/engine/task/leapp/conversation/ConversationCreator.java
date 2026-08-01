@@ -112,6 +112,7 @@ public class ConversationCreator {
             convItem.setIdInDataSource("");
             convItem.setSubItem(true);
             convItem.setSubitemId(subitemIdSeq.getAndIncrement());
+            convItem.setSumVolume(false);
             convItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             convItem.setHasChildren(!partMessages.isEmpty());
 

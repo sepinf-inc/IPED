@@ -312,6 +312,7 @@ public class AleappTask extends AbstractTask {
         // creates a subitem to represent the ALeapp report
         Item caseEvidence = (Item) rootEvidence.createChildItem();
         caseEvidence.setMediaType(ALEAPP_CASE_MEDIATYPE);
+        caseEvidence.setSumVolume(false);
 
         String name = CASE_EVIDENCE_NAME;
         caseEvidence.setName(name);
@@ -355,6 +356,7 @@ public class AleappTask extends AbstractTask {
             Item categoryItem = categoryItems.computeIfAbsent(plugin.getCategory(), name -> {
                 Item categoryEvidence = (Item) caseEvidence.createChildItem();
                 categoryEvidence.setMediaType(ALEAPP_CATEGORY_MEDIATYPE);
+                categoryEvidence.setSumVolume(false);
 
                 categoryEvidence.setName(name);
                 categoryEvidence.setExtension("");
@@ -369,6 +371,7 @@ public class AleappTask extends AbstractTask {
 
             Item pluginEvidence = (Item) categoryItem.createChildItem();
             pluginEvidence.setMediaType(ALEAPP_PLUGIN_RESULTS_MEDIATYPE);
+            pluginEvidence.setSumVolume(false);
             pluginEvidence.setTempAttribute(ALEAPP_PLUGIN_CATEGORY_KEY, categoryItem);
 
             String name = StringUtils.firstNonBlank((String) plugin.getArtifactInfo().get("name"), plugin.getName());
@@ -394,6 +397,7 @@ public class AleappTask extends AbstractTask {
         Item deviceInfoEvidence = (Item) caseEvidence.createChildItem();
         deviceInfoEvidence.setName(DEVICE_INFO_HTML);
         deviceInfoEvidence.setMediaType(ALEAPP_DEVICE_INFO_MEDIATYPE);
+        deviceInfoEvidence.setSumVolume(false);
         deviceInfoEvidence.setPath(caseEvidence.getPath() + "/" + DEVICE_INFO_HTML);
         deviceInfoEvidence.setIdInDataSource("");
         worker.processNewItem(deviceInfoEvidence, ProcessTime.LATER);
