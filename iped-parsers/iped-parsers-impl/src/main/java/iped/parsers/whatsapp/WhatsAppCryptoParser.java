@@ -102,7 +102,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
     /** Possible values of the {@link #WHATSAPP_METADATA_DECRYPTION_STATUS} metadata. */
     private enum DecryptionStatus {
-        decrypted, toolNotAvailable, keyNotFound, failed;
+        decrypted, keyNotFound, failed;
     }
 
     private static final String PY_MODULE = "wa_decrypt";
@@ -116,19 +116,55 @@ public class WhatsAppCryptoParser extends AbstractParser {
      */
     private static final long MAX_KEY_LENGTH = 1024;
 
-    private static final Object initLock = new Object();
-
-    // both are only read and written inside the initLock monitor, so they need
+    // only read and written inside the synchronized extractPyModule(), so it needs
     // neither to be volatile nor atomic
-    private static boolean pyModuleExtracted = false;
     private static File pyModuleFolder;
 
     /** Tells if the helper module was already loaded in the interpreter of this thread. */
     private static final ThreadLocal<Boolean> moduleLoaded = ThreadLocal.withInitial(() -> false);
 
+    /** Set if wa-crypt-tools could not be loaded, disabling this parser. */
+    private static volatile boolean initFailed = false;
+
+    // this parser may be instantiated more than once, possibly by concurrent threads,
+    // but it is checked just once. Both are guarded by this class monitor.
+    private static boolean initChecked = false;
+    private static String initErrorMessage;
+
+    public WhatsAppCryptoParser() {
+        synchronized (WhatsAppCryptoParser.class) {
+            if (!initChecked) {
+                try {
+                    // fail fast: the tool path system property is already set when the
+                    // parsers are instantiated, so a failure here means the tool will
+                    // never work
+                    getInitializedJep();
+
+                } catch (TikaException e) {
+                    // the reason is in the message, so the stack trace adds nothing here,
+                    // unexpected errors are thrown as RuntimeException by getInitializedJep
+                    logger.error("WhatsApp encrypted backups will not be decrypted. {}", e.getMessage());
+                    initFailed = true;
+
+                } catch (RuntimeException e) {
+                    // remembered so concurrent and later instantiations fail as well
+                    initErrorMessage = e.getMessage();
+                    initFailed = true;
+                    throw e;
+
+                } finally {
+                    initChecked = true;
+                }
+            }
+            if (initErrorMessage != null) {
+                throw new RuntimeException(initErrorMessage);
+            }
+        }
+    }
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        return SUPPORTED_TYPES;
+        return initFailed ? Collections.emptySet() : SUPPORTED_TYPES;
     }
 
     @Override
@@ -156,7 +192,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
         try (TemporaryResources tmp = new TemporaryResources()) {
 
-            Jep jep = getInitializedJep(metadata);
+            Jep jep = getInitializedJep();
 
             File encryptedFile = TikaInputStream.get(stream, tmp).getFile();
 
@@ -325,64 +361,63 @@ public class WhatsAppCryptoParser extends AbstractParser {
      * @throws TikaException
      *             if python, JEP or wa-crypt-tools are not available
      */
-    private static Jep getInitializedJep(Metadata metadata) throws TikaException {
+    private static Jep getInitializedJep() throws TikaException {
 
         String toolPath = System.getProperty(TOOL_PATH_PROP);
         if (StringUtils.isBlank(toolPath) || !new File(toolPath).isDirectory()) {
-            throw decryptionFailed(metadata, DecryptionStatus.toolNotAvailable,
-                    "wa-crypt-tools was not found in " + toolPath, null);
+            // it is shipped with IPED, so a missing folder means a broken installation
+            throw new RuntimeException("wa-crypt-tools was not found in " + toolPath);
         }
 
         Jep jep;
         try {
             jep = PythonParser.getJep();
         } catch (JepException e) {
-            throw decryptionFailed(metadata, DecryptionStatus.toolNotAvailable,
-                    PythonParser.JEP_NOT_FOUND + PythonParser.SEE_MANUAL, e);
+            throw new TikaException(PythonParser.JEP_NOT_FOUND + PythonParser.SEE_MANUAL, e);
         }
         if (jep == null) {
-            throw decryptionFailed(metadata, DecryptionStatus.toolNotAvailable,
-                    PythonParser.JEP_NOT_FOUND + PythonParser.SEE_MANUAL, null);
+            throw new TikaException(PythonParser.JEP_NOT_FOUND + PythonParser.SEE_MANUAL);
         }
 
         if (moduleLoaded.get()) {
             return jep;
         }
 
-        synchronized (initLock) {
-            try {
-                extractPyModule();
-                jep.eval("import sys");
-                jep.eval("sys.path.append(r'" + pyModuleFolder.getAbsolutePath() + "')");
-                jep.eval("import " + PY_MODULE);
-                jep.invoke(PY_MODULE + ".init", toolPath);
+        try {
+            File moduleFolder = extractPyModule();
+            jep.eval("import sys");
+            jep.eval("sys.path.append(r'" + moduleFolder.getAbsolutePath() + "')");
+            jep.eval("import " + PY_MODULE);
+            jep.invoke(PY_MODULE + ".init", toolPath);
 
-            } catch (JepException | IOException e) {
-                throw decryptionFailed(metadata, DecryptionStatus.toolNotAvailable,
-                        "Could not load wa-crypt-tools. Please install the python dependencies listed in "
-                                + new File(toolPath, "requirements.txt") + ". " + PythonParser.SEE_MANUAL,
-                        e);
+        } catch (JepException | IOException e) {
+            if (e.toString().contains("ModuleNotFoundError")) {
+                // a dependency of wa-crypt-tools is not installed
+                throw new TikaException(e.getMessage() //
+                        + ". Please install the python dependencies listed in '" + new File(toolPath, "requirements.txt") + "'. " //
+                        + PythonParser.SEE_MANUAL, e);
             }
+            throw new RuntimeException(e);
         }
         moduleLoaded.set(true);
         return jep;
     }
 
-    private static void extractPyModule() throws IOException {
-        if (pyModuleExtracted) {
-            return;
-        }
-        File folder = Files.createTempDirectory("iped-wa-crypt").toFile();
-        folder.deleteOnExit();
-        File script = new File(folder, PY_RESOURCE);
-        script.deleteOnExit();
-        try (InputStream is = WhatsAppCryptoParser.class.getResourceAsStream(PY_RESOURCE)) {
-            if (is == null) {
-                throw new IOException(PY_RESOURCE + " not found in classpath");
+    /** Extracts the helper module from the classpath once, returning its folder. */
+    private static synchronized File extractPyModule() throws IOException {
+        if (pyModuleFolder == null) {
+            File folder = Files.createTempDirectory("iped-wa-crypt").toFile();
+            folder.deleteOnExit();
+            File script = new File(folder, PY_RESOURCE);
+            script.deleteOnExit();
+            try (InputStream is = WhatsAppCryptoParser.class.getResourceAsStream(PY_RESOURCE)) {
+                if (is == null) {
+                    throw new IOException(PY_RESOURCE + " not found in classpath");
+                }
+                Files.copy(is, script.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
-            Files.copy(is, script.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            pyModuleFolder = folder;
         }
-        pyModuleFolder = folder;
-        pyModuleExtracted = true;
+        return pyModuleFolder;
     }
 }
