@@ -16,9 +16,9 @@ import os
 import sys
 import zlib
 
-# magic numbers used to check if the decrypted output makes sense
-_SQLITE_MAGIC = b'SQLite format 3\x00'
-_ZIP_MAGIC = b'PK\x03\x04'
+# wa-crypt-tools logs this (it does not raise) when the AES-GCM authentication tag
+# does not verify, which is the reliable way of telling that the key does not match
+_KEY_MISMATCH = 'Authentication tag mismatch'
 
 _initialized = False
 
@@ -79,23 +79,27 @@ class _LogCollector(logging.Handler):
     def last(self):
         return self.messages[-1] if self.messages else None
 
+    def find(self, text):
+        '''Returns the first collected message containing the given text, or None.'''
+        for message in self.messages:
+            if text in message:
+                return message
+        return None
+
 
 def _decompress(data):
-    '''Decompresses the decrypted data, if it is compressed. Returns None if it is unreadable.'''
+    '''Decompresses the decrypted data, if it is compressed.'''
     try:
         z_obj = zlib.decompressobj()
         decompressed = z_obj.decompress(data)
         if not z_obj.eof:
             # truncated/damaged backup, but the recovered prefix may still be useful
-            logging.getLogger('wa_crypt_tools').error('The encrypted database file is truncated (damaged).')
+            logging.getLogger('wa_crypt_tools').error('The encrypted backup file is truncated (damaged).')
         return decompressed
     except zlib.error:
-        # not compressed: crypt12/14/15 multi file backups store a plain zip or db
+        # not compressed: multi file backups and non database files (stickers,
+        # backup_settings.json...) are stored as is
         return data
-
-
-def _is_valid(data):
-    return data is not None and (data.startswith(_SQLITE_MAGIC) or data.startswith(_ZIP_MAGIC))
 
 
 def get_info(encrypted_path):
@@ -159,9 +163,16 @@ def decrypt(key_path, encrypted_path, output_path):
         except Exception as e:
             return 'Decryption failed: {}'.format(e)
 
+        # The AES-GCM authentication tag is what tells a wrong key from a good one.
+        # The content itself is not checked, so any backed up file is accepted, not
+        # only databases.
+        mismatch = log.find(_KEY_MISMATCH)
+        if mismatch:
+            return mismatch
+
         decrypted = _decompress(decrypted)
-        if not _is_valid(decrypted):
-            return log.last() or 'Decrypted data was not recognized, the key probably does not match'
+        if not decrypted:
+            return 'Decrypted data is empty'
 
         with open(output_path, 'wb') as out:
             out.write(decrypted)

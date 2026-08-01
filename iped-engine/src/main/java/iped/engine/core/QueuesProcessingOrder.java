@@ -91,9 +91,9 @@ public class QueuesProcessingOrder {
         mediaTypes.put(MediaType.parse(BitTorrentResumeDatEntryParser.RESUME_DAT_ENTRY_MIME_TYPE), 3);
         mediaTypes.put(MediaType.parse(TransmissionResumeParser.TRANSMISSION_RESUME_MIME_TYPE), 3);
 
-        // encrypted DBs must be decrypted after the key files are indexed (queue 0) and
-        // before the decrypted DBs are decoded by WhatsAppParser (queue 3)
-        mediaTypes.put(WhatsAppCryptoParser.MSG_STORE_CRYPT, 2);
+        // encrypted backups must be decrypted after the key files are indexed (queue 0)
+        // and before the decrypted DBs are decoded by WhatsAppParser (queue 3)
+        mediaTypes.put(WhatsAppCryptoParser.WA_CRYPT, 2);
 
         mediaTypes.put(WhatsAppParser.WA_DB, 2);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 3);

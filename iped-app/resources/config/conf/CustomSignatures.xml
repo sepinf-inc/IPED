@@ -273,8 +273,10 @@
         <sub-class-of type="application/x-whatsapp-db"/>
     </mime-type>
 
-    <mime-type type="application/x-whatsapp-db-crypt">
-        <_comment>WhatsApp encrypted database backup (crypt12, crypt14 or crypt15)</_comment>
+    <mime-type type="application/x-whatsapp-crypt">
+        <_comment>WhatsApp encrypted backup (crypt12, crypt14 or crypt15). Besides the
+        databases, WhatsApp encrypts other backed up files with the same scheme, like
+        stickers and backup_settings.json, and all of them are decrypted</_comment>
         <glob pattern="*.crypt12"/>
         <glob pattern="*.crypt14"/>
         <glob pattern="*.crypt15"/>

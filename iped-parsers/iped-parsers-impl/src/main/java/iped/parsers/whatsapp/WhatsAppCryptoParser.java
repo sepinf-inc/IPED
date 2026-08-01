@@ -56,13 +56,16 @@ import jep.Jep;
 import jep.JepException;
 
 /**
- * Decrypts WhatsApp encrypted database backups (crypt12, crypt14 and crypt15)
- * when the corresponding key file is available in the case.
+ * Decrypts WhatsApp encrypted backups (crypt12, crypt14 and crypt15) when the
+ * corresponding key file is available in the case. Besides the databases,
+ * WhatsApp encrypts other backed up files with the same scheme, like stickers
+ * and backup_settings.json, and all of them are decrypted.
  *
  * The decryption itself is delegated to wa-crypt-tools
  * (https://github.com/ElDavoo/wa-crypt-tools), whose python API is called
- * through JEP. The decrypted database is created as a subitem of the encrypted
- * one, so it is later decoded by {@link WhatsAppParser}.
+ * through JEP. The decrypted file is created as a subitem of the encrypted one,
+ * keeping its name without the .cryptNN extension, so the signature detection
+ * types it and, in the case of databases, {@link WhatsAppParser} decodes it.
  *
  */
 public class WhatsAppCryptoParser extends AbstractParser {
@@ -71,11 +74,11 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
     private static Logger logger = LoggerFactory.getLogger(WhatsAppCryptoParser.class);
 
-    public static final MediaType MSG_STORE_CRYPT = MediaType.application("x-whatsapp-db-crypt");
+    public static final MediaType WA_CRYPT = MediaType.application("x-whatsapp-crypt");
 
     public static final MediaType WA_KEY = MediaType.application("x-whatsapp-key");
 
-    private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE_CRYPT);
+    private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(WA_CRYPT);
 
     /** System property pointing to the folder where wa-crypt-tools was unpacked. */
     public static final String TOOL_PATH_PROP = "waCryptToolsPath";
@@ -83,8 +86,8 @@ public class WhatsAppCryptoParser extends AbstractParser {
     public static final String WHATSAPP_METADATA_PREFIX = "whatsapp:";
 
     /**
-     * Metadata set on the decrypted subitem, holding the path of the encrypted
-     * database it came from.
+     * Metadata set on the decrypted subitem, holding the path of the encrypted file
+     * it came from.
      */
     private static final String WHATSAPP_METADATA_DECRYPTED_FROM = WHATSAPP_METADATA_PREFIX + "decryptedFrom";
     private static final String WHATSAPP_METADATA_CRYPT_FORMAT = WHATSAPP_METADATA_PREFIX + "cryptFormat";
@@ -133,7 +136,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
             throws IOException, SAXException, TikaException {
 
         if (metadata.get(WHATSAPP_METADATA_DECRYPTION_STATUS) != null) {
-            // The DB was already handled when the case was processed: the status is
+            // The file was already handled when the case was processed: the status is
             // restored from the index into the item metadata when the case is opened.
             // This is a later parsing done by the analysis app, e.g. to build the text
             // view, so decrypting again would just waste time (and would fail if
@@ -218,10 +221,10 @@ public class WhatsAppCryptoParser extends AbstractParser {
     }
 
     /**
-     * Creates the decrypted database as a child of the encrypted one. Its name is
-     * the name of the encrypted DB without the .cryptNN extension, so the signature
-     * detection assigns it the proper WhatsApp mediaType and QueuesProcessingOrder
-     * moves it to the queue where WhatsAppParser expects to decode it.
+     * Creates the decrypted file as a child of the encrypted one. Its name is the
+     * name of the encrypted file without the .cryptNN extension, so the signature
+     * detection assigns it the proper mediaType and, for the databases,
+     * QueuesProcessingOrder moves it to the queue where WhatsAppParser decodes it.
      */
     private void createDecryptedSubItem(IItemReader item, File decryptedFile, ContentHandler handler, Metadata metadata,
             ParseContext context) throws SAXException, IOException {
@@ -249,13 +252,14 @@ public class WhatsAppCryptoParser extends AbstractParser {
     }
 
     /**
-     * "msgstore.db.crypt14" -> "msgstore.db", 
-     * "msgstore-2024-01-01.1.db.crypt15" -> "msgstore-2024-01-01.1.db"
+     * "msgstore.db.crypt14" -> "msgstore.db",
+     * "msgstore-2024-01-01.1.db.crypt15" -> "msgstore-2024-01-01.1.db",
+     * "backup_settings.json.crypt14" -> "backup_settings.json"
      */
     private static String getDecryptedName(IItemReader item) {
         String name = item.getName();
         if (StringUtils.isBlank(name)) {
-            return "msgstore.db";
+            return "decrypted";
         }
         if (StringUtils.startsWithIgnoreCase(StringUtils.substringAfterLast(name, "."), CRYPT_EXT_PREFIX)) {
             name = StringUtils.substringBeforeLast(name, ".");
@@ -295,7 +299,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
     /**
      * Searches the case for WhatsApp key files, the most likely key for the given
-     * encrypted DB first, i.e. the one sharing the longest path prefix with it.
+     * encrypted file first, i.e. the one sharing the longest path prefix with it.
      */
     private List<IItemReader> getKeyCandidates(IItemReader item, IItemSearcher searcher) {
         if (searcher == null) {
