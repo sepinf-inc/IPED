@@ -85,11 +85,8 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
     public static final String WHATSAPP_METADATA_PREFIX = "whatsapp:";
 
-    /**
-     * Metadata set on the decrypted subitem, holding the path of the encrypted file
-     * it came from.
-     */
-    private static final String WHATSAPP_METADATA_DECRYPTED_FROM = WHATSAPP_METADATA_PREFIX + "decryptedFrom";
+    /** Flags the subitem as the decrypted content of its encrypted parent. */
+    private static final String WHATSAPP_METADATA_IS_DECRYPTED = WHATSAPP_METADATA_PREFIX + "isDecrypted";
     private static final String WHATSAPP_METADATA_CRYPT_FORMAT = WHATSAPP_METADATA_PREFIX + "cryptFormat";
     private static final String WHATSAPP_METADATA_APP_VERSION = WHATSAPP_METADATA_PREFIX + "appVersion";
     private static final String WHATSAPP_METADATA_KEY_PATH = WHATSAPP_METADATA_PREFIX + "decryptionKeyPath";
@@ -273,8 +270,8 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
         Metadata dbMetadata = new Metadata();
         dbMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, getDecryptedName(item));
-        dbMetadata.set(WHATSAPP_METADATA_DECRYPTED_FROM, item.getPath());
-        dbMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        dbMetadata.set(WHATSAPP_METADATA_IS_DECRYPTED, Boolean.toString(true));
+        dbMetadata.set(ExtraProperties.DECODED_DATA, Boolean.toString(true));
         if (item.getCreationDate() != null) {
             dbMetadata.set(TikaCoreProperties.CREATED, item.getCreationDate());
         }
