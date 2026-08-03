@@ -50,7 +50,7 @@ public class StringUtil {
         }
         if (idx > -1 && idx < value.length() - 1) {
             int c = value.codePointAt(idx + 1);
-            if ((c >= 0x0080 && c <= 0x00BC) || c == 0xFFFD) {
+            if (c >= 0x0080 && c <= 0xFFFF) {
                 return true;
             }
         }
