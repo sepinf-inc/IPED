@@ -175,16 +175,17 @@ public class IndexTask extends AbstractTask {
 
         int splitSize = indexConfig.getTextSplitSize();
         int overlapSize = indexConfig.getTextOverlapSize();
+        boolean shouldEmbed = false;
         if (ragConfig != null && ragConfig.isEnabled()) {
-            String mimeType = evidence.getMediaType() != null ? evidence.getMediaType().toString() : "";
-            if (ragConfig.shouldEmbed(evidence.getCategorySet(), mimeType)) {
+            shouldEmbed = ragConfig.shouldEmbed(evidence);
+            if (shouldEmbed) {
                 splitSize = ragConfig.getChunkSize();
                 overlapSize = ragConfig.getChunkOverlap();
             }
         }
         FragmentingReader fragReader = new FragmentingReader(textReader, splitSize, overlapSize);
         try {
-            worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader, luceneVectorMode, ragConfig));
+            worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader, luceneVectorMode, ragConfig, shouldEmbed));
 
         } catch (IOException e) {
             if (IOUtil.isDiskFull(e))
@@ -212,40 +213,43 @@ public class IndexTask extends AbstractTask {
         private FragmentingReader lazyReader; // for non-vector mode
 
         private DocumentsIterable(IItem item, FragmentingReader fragReader,
-                boolean luceneVectorMode, RAGConfig ragConfig) {
+                boolean luceneVectorMode, RAGConfig ragConfig, boolean shouldEmbed) {
             this.item = item;
             this.luceneVectorMode = luceneVectorMode;
+            this.shouldEmbed = shouldEmbed;
 
-            // Pre-compute embedding eligibility for this item
-            boolean embed = false;
+            // Resolve embedding dimensions and global ID if in vector mode
             int dim = 0;
             String gid = null;
-            if (luceneVectorMode && ragConfig != null) {
-                String mimeType = item.getMediaType() != null ? item.getMediaType().toString() : "";
-                embed = ragConfig.shouldEmbed(item.getCategorySet(), mimeType);
+            if (luceneVectorMode && ragConfig != null && shouldEmbed) {
                 dim = ragConfig.getEmbeddingDimensions();
                 gid = (String) item.getExtraAttribute(ExtraProperties.GLOBAL_ID);
             }
-            this.shouldEmbed = embed;
             this.embDimension = dim;
             this.globalId = gid;
 
-            if (luceneVectorMode) {
-                // Read all fragments eagerly
+            if (luceneVectorMode && shouldEmbed) {
+                // Read all fragments eagerly ONLY for RAG-whitelisted items
                 java.util.List<String> frags = new java.util.ArrayList<>();
                 try {
-                    frags.add(captureText(fragReader));
+                    String t = captureText(fragReader);
+                    if (t != null && !t.trim().isEmpty()) {
+                        frags.add(t);
+                    }
                     while (fragReader.nextFragment()) {
-                        frags.add(captureText(fragReader));
+                        t = captureText(fragReader);
+                        if (t != null && !t.trim().isEmpty()) {
+                            frags.add(t);
+                        }
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
                 this.fragmentTexts = frags;
 
-                // Batch generate embeddings synchronously
+                // Batch generate embeddings synchronously ONLY if there are non-empty text fragments
                 RAGService ragService = RAGService.getInstance();
-                if (shouldEmbed && !frags.isEmpty() && ragService != null && ragService.isAvailable()) {
+                if (!frags.isEmpty() && ragService != null && ragService.isAvailable()) {
                     try {
                         this.vectors = ragService.getEmbeddings(frags);
                         if (this.vectors != null && !this.vectors.isEmpty()) {
@@ -280,7 +284,7 @@ public class IndexTask extends AbstractTask {
                         if (Thread.interrupted()) {
                             throw new InterruptedException();
                         }
-                        if (luceneVectorMode) {
+                        if (luceneVectorMode && shouldEmbed) {
                             return index < fragmentTexts.size() || !parentIndexed;
                         } else {
                             hasMoreContentFrags = (numFrags == 0 || lazyReader.nextFragment());
@@ -292,7 +296,7 @@ public class IndexTask extends AbstractTask {
                 }
 
                 public Document next() {
-                    if (luceneVectorMode) {
+                    if (luceneVectorMode && shouldEmbed) {
                         if (index < fragmentTexts.size()) {
                             String fragText = fragmentTexts.get(index);
                             numFrags = index + 1;

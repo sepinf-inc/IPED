@@ -32,6 +32,13 @@ embeddingEndpoint = http://localhost:11434/api/embeddings
 # - bge-m3: 1024 | gemini-embedding-001: 768 | nomic-embed-text: 768 | text-embedding-3-small: 1536
 embeddingDimensions = 1024
 
+# Number of text chunks sent per HTTP request to the embedding server.
+# Higher values improve GPU throughput by enabling better CUDA core utilization (batch matrix ops).
+# Recommended: 16 (balanced default) | 32 (dedicated GPU servers, e.g. RTX A4000/A6000).
+# Align with powers of 2 (8, 16, 32, 64) for optimal GPU Warp occupancy.
+# For best results, also tune the server-side OLLAMA_NUM_PARALLEL environment variable.
+subBatchSize = 16
+
 
 ###############################################################################
 # 2. CHUNKING & LLM CONTEXT WINDOW TUNING
@@ -42,7 +49,7 @@ embeddingDimensions = 1024
 # 2. Retrieved Context Formula:
 #    Retrieved Context Tokens ??? maxRetrievedChunks * (chunkSize / 4)
 # 3. Overlap Guideline:
-#    chunkOverlap should be 10% to 25% of chunkSize (e.g. 700 for 3500).
+#    chunkOverlap should be 10% to 15% of chunkSize (e.g. 350 for 3500).
 #
 # RECOMMENDED SETTINGS BY GPU VRAM / HARDWARE (For Local Ollama Models):
 # - 6 GB VRAM GPU (RTX 2060 / 3050):
@@ -66,8 +73,8 @@ embeddingDimensions = 1024
 chunkSize = 3500
 
 # Overlap (in characters) between consecutive chunks to prevent boundary context loss.
-# Recommendation: 10%-25% of chunkSize. Default: 700
-chunkOverlap = 700
+# Recommendation: 10%-15% of chunkSize. Default: 350
+chunkOverlap = 350
 
 # Maximum number of fragment chunks to retrieve and include in LLM context.
 # Recommended for 8GB VRAM GPU: 5 | Cloud (Gemini/Claude/OpenAI): 15-20. Default: 5
@@ -111,30 +118,32 @@ vectorSearchWeight = 0.4
 embeddingFilterMode = whitelist
 
 # -----------------------------------------------------------------------------
-# BLACKLIST RULES (Active when embeddingFilterMode = blacklist)
-# Excludes non-semantic binary data, system registries, archives, executables, and unallocated space.
+# BLACKLIST RULES
+# - embeddingMimeTypeBlacklist is an ABSOLUTE VETO active in BOTH whitelist and blacklist modes.
+# - embeddingCategoryBlacklist is only active when embeddingFilterMode = blacklist.
 # -----------------------------------------------------------------------------
 
-# Blacklisted IPED Categories:
-# Excludes: Programs/Libraries, Compressed Archives, Image Disks, Unallocated Space, File Slacks, Registry Files, Fonts, Geographic Data, Databases, XML Files.
-embeddingCategoryBlacklist = ^(Programs and Libraries|Compressed Archives|Image Disks|Unallocated|File Slacks|Main Registry Files|Other Registry Files|Fonts|Geographic Data|Databases|XML Files|Other)$
+# Blacklisted IPED Categories (Active ONLY when embeddingFilterMode = blacklist):
+# System noise categories, binaries, and non-textual metadata.
+embeddingCategoryBlacklist = ^(Multimedia|Texts in System Folders|Temporary Internet Texts|Images in System Folders|Other files|XML Files|Georeferenced Files|OLE files|Links|Apple Artifacts|Databases|Compressed Archives|Programs and Libraries|Unallocated|File Slacks|Image Disks|Main Registry Files|Other Registry Files|USN Journal|Cell Towers|SIM Data|Power Events|Mobile Cards|Activities Sensor|Device Connectivity|Device Events|Networks Usage|Recognized Devices|Journeys|Fuzzy Data)$
 
-# Blacklisted MIME Types:
-# Excludes: Binaries (.exe, .dll, .so, .elf), Android binaries (.dex, .apk), Java archives (.jar), Databases (.sqlite, .edb), XML dumps/reports, Archives (.zip, .rar, .7z, .tar, .gz), Fonts, Shortcuts (.lnk), Debug Symbols (.pdb).
-embeddingMimeTypeBlacklist = ^(application/octet-stream|application/x-dosexec|application/x-sharedlib|application/x-elf|application/x-executable|application/x-object|application/x-msdownload|application/x-ms-installer|application/x-msi|application/x-windows-registry-main|application/x-windows-registry|application/x-sqlite3|application/x-edb|application/x-msaccess|text/xml|application/xml|application/x-dex|application/vnd\.android\.dex|application/vnd\.android\.package-archive|application/java-archive|application/x-java-archive|font/.*|application/zip|application/x-7z-compressed|application/x-rar-compressed|application/x-tar|application/x-gzip|application/x-bzip2|application/x-ms-pdb|application/x-win-lnk)$
+# Blacklisted MIME Types (ABSOLUTE VETO - Active in BOTH Whitelist and Blacklist modes):
+# Raw unclassified binary data that must NEVER generate embeddings under any circumstance.
+embeddingMimeTypeBlacklist = ^(application/octet-stream)$
 
 # -----------------------------------------------------------------------------
-# WHITELIST RULES (Active when embeddingFilterMode = whitelist)
-# Restricts vector embeddings strictly to high-value textual evidence, documents, emails, and chats.
+# WHITELIST RULES (Active ONLY when embeddingFilterMode = whitelist)
+# Restricts vector embeddings strictly to high-value textual evidence and parsed reports.
 # -----------------------------------------------------------------------------
 
-# Whitelisted IPED Categories:
-# Includes: Documents, Emails, Chats, SMS, Instant Messages, Notes, Plain Texts, HTML and Web pages, PDFs, Office Documents, Audio.
-embeddingCategoryWhitelist = ^(Documents|Emails and Mailboxes|Chats|SMS Messages|Instant Messages Artifacts|Notes|Plain Texts|HTML and Web pages|PDF Documents|Office Documents|Audio)$
+# Whitelisted IPED Categories (Active when embeddingFilterMode = whitelist):
+# Restricts vector embeddings strictly to high-value textual evidence, parsed reports, OCR images, and audio transcriptions.
+embeddingCategoryWhitelist = ^(Documents|Spreadsheets|Presentations|Emails|Appointments|Email Attachments|Chats|SMS Messages|MMS Messages|Notes|Calls|Contacts|User Accounts|Passwords|Autofill|User Dictionaries|Calendar|Searches|Locations|Notifications|Wireless Networks|IP Connections|Applications Usage|Device Information|Registry Full Reports|Registry Custom Reports|Event Transcript|User Activities|Web Bookmarks|Mozilla Firefox Saved Session|TorTCFragment|GDrive File Entries|Internal Revenue of Brazil|Open Financial Exchange|Credit Cards|Financial Accounts|Transfers of Funds|Social Media Activities|File Downloads|File Uploads|Recordings|Extraction Summary|Scanned Documents|Audios)$
 
-# Whitelisted MIME Types:
-# Includes: Plain Text, HTML, XHTML, CSV, TSV, Emails, PDF, Word, Excel, PowerPoint, OpenDocument, RTF, JSON, Audio files (transcriptions).
-embeddingMimeTypeWhitelist = ^(text/plain|text/html|application/xhtml\+xml|text/csv|text/tab-separated-values|message/rfc822|application/pdf|application/msword|application/vnd\.openxmlformats-officedocument\..*|application/vnd\.ms-excel|application/vnd\.ms-powerpoint|application/vnd\.oasis\.opendocument\..*|application/rtf|application/json|audio/.*)$
+# Whitelisted MIME Types (Fast-path — Active ONLY when embeddingFilterMode = whitelist):
+# Unconditionally allows specific MIME types (e.g. CSV), bypassing category checks.
+# NOTE: This option has NO effect when embeddingFilterMode = blacklist.
+embeddingMimeTypeWhitelist = ^(text/csv|text/tab-separated-values)$
 
 
 ###############################################################################

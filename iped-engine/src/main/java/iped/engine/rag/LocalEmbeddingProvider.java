@@ -11,6 +11,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -18,13 +22,17 @@ import com.google.gson.JsonObject;
 
 public class LocalEmbeddingProvider implements EmbeddingProvider {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalEmbeddingProvider.class);
+
     private final String endpoint;
     private final String model;
+    private final int subBatchSize;
     private final HttpClient client;
 
-    public LocalEmbeddingProvider(String endpoint, String model) {
+    public LocalEmbeddingProvider(String endpoint, String model, int subBatchSize) {
         this.endpoint = endpoint;
         this.model = model;
+        this.subBatchSize = subBatchSize;
         this.client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
@@ -32,9 +40,26 @@ public class LocalEmbeddingProvider implements EmbeddingProvider {
 
     @Override
     public float[] generateEmbedding(String text) throws IOException, InterruptedException {
-        if (text != null && text.length() > 1500) {
-            text = text.substring(0, 1500);
+        if (text != null && text.length() > 4000) {
+            text = text.substring(0, 4000);
         }
+        try {
+            return doGenerateEmbedding(text);
+        } catch (IOException e) {
+            // Auto-fallback for dense text (e.g. minified JSON, base64 hashes) that exceeds
+            // the model's tokenizer context window despite the 4000-char cap.
+            // Detected via Ollama's error message substring "exceeds the context length".
+            // NOTE: If a future Ollama version changes this error message, the fallback
+            // will not trigger and the IOException will be re-thrown normally (safe behavior).
+            if (e.getMessage() != null && e.getMessage().contains("exceeds the context length") && text != null && text.length() > 1500) {
+                LOGGER.warn("Embedding text exceeded model context window, retrying with 1500 chars truncation");
+                return doGenerateEmbedding(text.substring(0, 1500));
+            }
+            throw e;
+        }
+    }
+
+    private float[] doGenerateEmbedding(String text) throws IOException, InterruptedException {
         boolean isOllamaNative = endpoint.contains("/api/embeddings");
         String requestBody;
 
@@ -69,20 +94,30 @@ public class LocalEmbeddingProvider implements EmbeddingProvider {
         }
 
         java.util.List<float[]> allResults = new java.util.ArrayList<>(texts.size());
-        int subBatchSize = 8; // Process in batches of 8 items
+        int batchSize = this.subBatchSize; // Configurable via RAGConfig.txt (default: 16)
 
-        for (int start = 0; start < texts.size(); start += subBatchSize) {
-            int end = Math.min(start + subBatchSize, texts.size());
+        for (int start = 0; start < texts.size(); start += batchSize) {
+            int end = Math.min(start + batchSize, texts.size());
             java.util.List<String> subBatch = texts.subList(start, end);
-            java.util.List<float[]> batchResult = processSubBatch(subBatch, 30);
-
-            if (batchResult != null && batchResult.size() == subBatch.size()) {
-                allResults.addAll(batchResult);
-            } else {
-                // Fallback for items individually without retries or sleeps
-                for (String txt : subBatch) {
-                    allResults.add(generateEmbedding(txt));
+            try {
+                java.util.List<float[]> batchResult = processSubBatch(subBatch, 30);
+                if (batchResult != null && batchResult.size() == subBatch.size()) {
+                    allResults.addAll(batchResult);
+                    continue;
                 }
+            } catch (Exception e) {
+                LOGGER.warn("Local embedding sub-batch failed ({}), falling back to individual item processing", e.getMessage());
+                // Socket exhaustion / TCP port buffer relief pause
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            // Fallback for items individually if batch fails or returns invalid size
+            for (String txt : subBatch) {
+                allResults.add(generateEmbedding(txt));
             }
         }
 
@@ -101,8 +136,9 @@ public class LocalEmbeddingProvider implements EmbeddingProvider {
         StringBuilder inputsJson = new StringBuilder("[");
         for (int i = 0; i < subBatch.size(); i++) {
             String t = subBatch.get(i);
-            if (t != null && t.length() > 1500) {
-                t = t.substring(0, 1500);
+            // Cap at 4000 chars to cover full 3500 chunkSize without truncating evidence
+            if (t != null && t.length() > 4000) {
+                t = t.substring(0, 4000);
             }
             inputsJson.append(toJsonString(t));
             if (i < subBatch.size() - 1) {

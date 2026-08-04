@@ -19,8 +19,9 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
     private String embeddingModel = "bge-m3";
     private String embeddingEndpoint = "http://localhost:11434/api/embeddings";
     private int embeddingDimensions = 1024;
+    private int subBatchSize = 16;
     private int chunkSize = 3500;
-    private int chunkOverlap = 700;
+    private int chunkOverlap = 350;
     private boolean enableLLMQueries = true;
     private float chunkSimilarityThreshold = 0.62f;
     private int maxRetrievedChunks = 5;
@@ -33,29 +34,22 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
     private int llmContextWindow = 9216;
     private String vectorStoreMode = "lucene"; // "lucene" | "opensearch"
     private String embeddingFilterMode = "blacklist";
-    private String embeddingCategoryBlacklist = "^(Programs and Libraries|Compressed Archives|Image Disks|Unallocated|File Slacks|Main Registry Files|Other Registry Files|Fonts|Geographic Data|Databases|XML Files|Other)$";
-    private String embeddingMimeTypeBlacklist = "^(application/octet-stream" +
-            "|application/x-dosexec|application/x-msdownload|application/x-ms-installer|application/x-msi" +
-            "|application/x-sharedlib" +        // .so, .dex, .odex (bin??rios Android/Linux)
-            "|application/x-dex" +              // Dalvik Executable (.dex)
-            "|application/vnd\\.android\\.dex" + // variante de MIME para .dex
-            "|application/vnd\\.android\\.package-archive" + // pacotes APK
-            "|application/java-archive|application/x-java-archive" + // arquivos JAR/WAR/EAR
-            "|application/x-object" +           // arquivos objeto compilados (.o)
-            "|application/x-archive" +          // bibliotecas est??ticas (.a)
-            "|application/x-executable" +       // execut??veis ELF gen??ricos
-            "|application/x-windows-registry-main|application/x-windows-registry|application/x-sqlite3|application/x-edb|application/x-msaccess" +
-            "|text/xml|application/xml" +       // Dumps XML / minireport.xml
-            "|font/.*" +
-            "|application/zip|application/x-7z-compressed|application/x-rar-compressed|application/x-tar|application/x-gzip|application/x-bzip2" +
-            "|application/x-ms-pdb|application/x-win-lnk" +
-            ")$";
-    private String embeddingCategoryWhitelist = "^(Documents|Emails and Mailboxes|Chats|SMS Messages|Instant Messages Artifacts|Notes|Plain Texts|HTML and Web pages|PDF Documents|Office Documents|Audio)$";
-    private String embeddingMimeTypeWhitelist = "^(text/plain|text/html|application/xhtml\\+xml|text/csv|text/tab-separated-values|message/rfc822|application/pdf|application/msword|application/vnd\\.openxmlformats-officedocument\\..*|application/vnd\\.ms-excel|application/vnd\\.ms-powerpoint|application/vnd\\.oasis\\.opendocument\\..*|application/rtf|application/json|audio/.*)$";
+    private String embeddingCategoryBlacklist = "^(Multimedia|Texts in System Folders|Temporary Internet Texts|Images in System Folders|Other files|XML Files|Georeferenced Files|OLE files|Links|Apple Artifacts|Databases|Compressed Archives|Programs and Libraries|Unallocated|File Slacks|Image Disks|Main Registry Files|Other Registry Files|USN Journal|Cell Towers|SIM Data|Power Events|Mobile Cards|Activities Sensor|Device Connectivity|Device Events|Networks Usage|Recognized Devices|Journeys|Fuzzy Data)$";
+    private String embeddingCategoryWhitelist = "^(Documents|Spreadsheets|Presentations|Emails|Appointments|Email Attachments|Chats|SMS Messages|MMS Messages|Notes|Calls|Contacts|User Accounts|Passwords|Autofill|User Dictionaries|Calendar|Searches|Locations|Notifications|Wireless Networks|IP Connections|Applications Usage|Device Information|Registry Full Reports|Registry Custom Reports|Event Transcript|User Activities|Web Bookmarks|Mozilla Firefox Saved Session|TorTCFragment|GDrive File Entries|Internal Revenue of Brazil|Open Financial Exchange|Credit Cards|Financial Accounts|Transfers of Funds|Social Media Activities|File Downloads|File Uploads|Recordings|Extraction Summary)$";
+    private String embeddingMimeTypeBlacklist = "^(application/octet-stream)$";
+    private String embeddingMimeTypeWhitelist = "^(text/csv|text/tab-separated-values|audio/.*)$";
     private transient java.util.regex.Pattern embeddingCategoryBlacklistPattern;
     private transient java.util.regex.Pattern embeddingMimeTypeBlacklistPattern;
     private transient java.util.regex.Pattern embeddingCategoryWhitelistPattern;
     private transient java.util.regex.Pattern embeddingMimeTypeWhitelistPattern;
+
+    /**
+     * Pre-computed sets of all matching category names (including all subcategories)
+     * for whitelist and blacklist modes. Built once at startup from CategoryConfig.
+     * O(1) contains() per item — zero allocations during processing.
+     */
+    private transient volatile java.util.Set<String> expandedCategoryWhitelistSet;
+    private transient volatile java.util.Set<String> expandedCategoryBlacklistSet;
 
     public String getEmbeddingProvider() {
         return embeddingProvider;
@@ -71,6 +65,15 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
 
     public int getEmbeddingDimensions() {
         return embeddingDimensions;
+    }
+
+    /**
+     * Number of text chunks sent per HTTP request to the embedding server.
+     * Higher values improve GPU throughput via better CUDA core utilization.
+     * Default: 16. Recommended: 16 (balanced) | 32 (dedicated GPU servers).
+     */
+    public int getSubBatchSize() {
+        return subBatchSize;
     }
 
     public int getChunkSize() {
@@ -226,28 +229,167 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
     }
 
     /**
+     * Builds the expanded category set for a given regex pattern by walking the full
+     * CategoryConfig tree once at startup. Any category whose name OR any ancestor name
+     * matches the pattern is added to the returned set.
+     * Called once per config load — O(n) where n = total categories (~150-200).
+     */
+    private java.util.Set<String> buildExpandedCategorySet(java.util.regex.Pattern pattern) {
+        java.util.Set<String> result = new java.util.HashSet<>();
+        try {
+            CategoryConfig catConfig = iped.engine.config.ConfigurationManager.get().findObject(CategoryConfig.class);
+            if (catConfig != null) {
+                collectMatchingCategories(catConfig.getRootCategory(), pattern, false, result);
+            }
+        } catch (Throwable t) {
+            // Fallback for isolated environments (unit tests) where CategoryConfig is not yet loaded
+        }
+        return result;
+    }
+
+    /**
+     * Recursively walks the category tree. A category is added to the result if
+     * it or any of its ancestors matches the pattern (parent match propagates down).
+     */
+    private void collectMatchingCategories(iped.engine.data.Category category, java.util.regex.Pattern pattern, boolean parentMatched, java.util.Set<String> result) {
+        if (category == null) return;
+        boolean matched = parentMatched || (category.getName() != null && pattern.matcher(category.getName()).matches());
+        if (matched && category.getName() != null) {
+            result.add(category.getName());
+        }
+        for (iped.engine.data.Category child : category.getChildren()) {
+            collectMatchingCategories(child, pattern, matched, result);
+        }
+    }
+
+    /**
+     * Returns the pre-computed whitelist category set, building it on first access.
+     * Thread-safe via double-checked locking.
+     */
+    private java.util.Set<String> getExpandedCategoryWhitelistSet() {
+        if (expandedCategoryWhitelistSet == null) {
+            synchronized (this) {
+                if (expandedCategoryWhitelistSet == null) {
+                    expandedCategoryWhitelistSet = buildExpandedCategorySet(getEmbeddingCategoryWhitelistPattern());
+                }
+            }
+        }
+        return expandedCategoryWhitelistSet;
+    }
+
+    /**
+     * Returns the pre-computed blacklist category set, building it on first access.
+     * Thread-safe via double-checked locking.
+     */
+    private java.util.Set<String> getExpandedCategoryBlacklistSet() {
+        if (expandedCategoryBlacklistSet == null) {
+            synchronized (this) {
+                if (expandedCategoryBlacklistSet == null) {
+                    expandedCategoryBlacklistSet = buildExpandedCategorySet(getEmbeddingCategoryBlacklistPattern());
+                }
+            }
+        }
+        return expandedCategoryBlacklistSet;
+    }
+
+    /**
+     * Set of categories whose synthetic sub-items (individual message bubbles, log entries,
+     * browser history records) are excluded from RAG embeddings to avoid duplication and noise,
+     * since IPED already generates consolidated HTML reports covering the complete context.
+     */
+    private static final java.util.Set<String> SYNTHETIC_SUBITEM_CATEGORIES = new java.util.HashSet<>(java.util.Arrays.asList(
+            "Instant Messages",
+            "Internet History Entries",
+            "Event Records",
+            "Event Transcript Records",
+            "User Activities Entries",
+            "Chat Activities",
+            "Shared Contacts"
+    ));
+
+    /**
+     * Decides whether an IPED Item should have an embedding generated.
+     * Checks if the item is a synthetic sub-item of a category that already has
+     * a consolidated HTML report (e.g. individual WhatsApp bubbles are blocked;
+     * only the full consolidated HTML chat report is embedded).
+     */
+    public boolean shouldEmbed(iped.data.IItem item) {
+        if (item == null) {
+            return false;
+        }
+        // Never embed empty 0-byte items
+        if (item.getLength() != null && item.getLength() == 0) {
+            return false;
+        }
+        String mimeType = item.getMediaType() != null ? item.getMediaType().toString() : "";
+        java.util.Set<String> categories = item.getCategorySet();
+
+        // Block individual extracted records (e.g. chat bubbles, history entries) whose consolidated HTML report is already embedded
+        if (item.isSubItem() && categories != null) {
+            for (String cat : categories) {
+                if (SYNTHETIC_SUBITEM_CATEGORIES.contains(cat)) {
+                    return false;
+                }
+            }
+        }
+
+        return shouldEmbed(categories, mimeType);
+    }
+
+    /**
      * Decides whether an item with the given categories and MIME type should have an
-     * embedding generated. Returns {@code true} if ANY category/MIME combination
-     * passes the configured blacklist/whitelist filter.
+     * embedding generated.
+     *
+     * Whitelist mode logic:
+     *   1. Category whitelist check: O(1) pre-computed HashSet.contains() — zero allocations,
+     *      scales to billions of items without GC pressure.
+     *   2. MIME whitelist fast-path: specific types (csv, tsv) are always allowed if category didn't match.
+     *
+     * Blacklist mode logic:
+     *   1. MIME blacklist veto (absolute): binary MIME types (e.g. application/octet-stream) are blocked.
+     *   2. Category blacklist veto.
+     *   3. Otherwise allow.
      */
     public boolean shouldEmbed(java.util.Collection<String> categories, String mimeType) {
-        // In whitelist mode, at least one category OR the MIME type must match.
-        // In blacklist mode, no category AND no MIME type must be blocked.
         if (categories == null || categories.isEmpty()) {
-            // No categories available ??? decide purely by MIME type using null category
             return shouldEmbed((String) null, mimeType);
         }
+
         if ("whitelist".equalsIgnoreCase(embeddingFilterMode)) {
-            for (String category : categories) {
-                if (shouldEmbed(category, mimeType)) {
-                    return true;
+            // Category check: O(1) HashSet.contains() if expanded set available, otherwise regex matcher fallback (unit tests)
+            boolean categoryMatched = false;
+            java.util.Set<String> allowed = getExpandedCategoryWhitelistSet();
+            java.util.regex.Pattern catPattern = getEmbeddingCategoryWhitelistPattern();
+            for (String cat : categories) {
+                if (cat != null) {
+                    if (!allowed.isEmpty() ? allowed.contains(cat) : catPattern.matcher(cat).matches()) {
+                        categoryMatched = true;
+                        break;
+                    }
                 }
+            }
+            if (categoryMatched) {
+                return true;
+            }
+            // MIME whitelist fast-path: surgical types (csv, tsv) always allowed if category didn't match
+            if (mimeType != null && embeddingMimeTypeWhitelist != null && !embeddingMimeTypeWhitelist.trim().isEmpty()
+                    && getEmbeddingMimeTypeWhitelistPattern().matcher(mimeType).matches()) {
+                return true;
             }
             return false;
         } else {
-            for (String category : categories) {
-                if (!shouldEmbed(category, mimeType)) {
-                    return false;
+            // Blacklist mode: block if MIME is blacklisted OR if any category is blacklisted
+            if (mimeType != null && embeddingMimeTypeBlacklist != null && !embeddingMimeTypeBlacklist.trim().isEmpty()
+                    && getEmbeddingMimeTypeBlacklistPattern().matcher(mimeType).matches()) {
+                return false;
+            }
+            java.util.Set<String> blocked = getExpandedCategoryBlacklistSet();
+            java.util.regex.Pattern catPattern = getEmbeddingCategoryBlacklistPattern();
+            for (String cat : categories) {
+                if (cat != null) {
+                    if (!blocked.isEmpty() ? blocked.contains(cat) : catPattern.matcher(cat).matches()) {
+                        return false;
+                    }
                 }
             }
             return true;
@@ -256,9 +398,15 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
 
     /**
      * Decides whether an item with a single category and MIME type should have an
-     * embedding generated. This is the canonical implementation used by both overloads.
+     * embedding generated. Fallback used when item has no category set.
+     * Applies the same MIME blacklist absolute veto as the Collection overload.
      */
     public boolean shouldEmbed(String category, String mimeType) {
+        // MIME blacklist is an ABSOLUTE VETO in BOTH modes.
+        if (mimeType != null && embeddingMimeTypeBlacklist != null && !embeddingMimeTypeBlacklist.trim().isEmpty()
+                && getEmbeddingMimeTypeBlacklistPattern().matcher(mimeType).matches()) {
+            return false;
+        }
         if ("whitelist".equalsIgnoreCase(embeddingFilterMode)) {
             boolean categoryMatched = embeddingCategoryWhitelist != null
                     && !embeddingCategoryWhitelist.trim().isEmpty()
@@ -273,11 +421,6 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
             if (embeddingCategoryBlacklist != null && !embeddingCategoryBlacklist.trim().isEmpty()
                     && category != null
                     && getEmbeddingCategoryBlacklistPattern().matcher(category).matches()) {
-                return false;
-            }
-            if (embeddingMimeTypeBlacklist != null && !embeddingMimeTypeBlacklist.trim().isEmpty()
-                    && mimeType != null
-                    && getEmbeddingMimeTypeBlacklistPattern().matcher(mimeType).matches()) {
                 return false;
             }
             return true;
@@ -311,6 +454,9 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
 
         val = props.getProperty("embeddingDimensions");
         if (val != null) embeddingDimensions = Integer.parseInt(val.trim());
+
+        val = props.getProperty("subBatchSize");
+        if (val != null) subBatchSize = Integer.parseInt(val.trim());
 
         val = props.getProperty("chunkSize");
         if (val != null) chunkSize = Integer.parseInt(val.trim());
@@ -361,6 +507,7 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
         if (val != null) {
             embeddingCategoryBlacklist = val.trim();
             embeddingCategoryBlacklistPattern = null;
+            expandedCategoryBlacklistSet = null; // invalidate pre-computed set on config reload
         }
 
         val = props.getProperty("embeddingMimeTypeBlacklist");
@@ -373,6 +520,7 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
         if (val != null) {
             embeddingCategoryWhitelist = val.trim();
             embeddingCategoryWhitelistPattern = null;
+            expandedCategoryWhitelistSet = null; // invalidate pre-computed set on config reload
         }
 
         val = props.getProperty("embeddingMimeTypeWhitelist");

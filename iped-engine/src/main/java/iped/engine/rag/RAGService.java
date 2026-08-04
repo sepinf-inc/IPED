@@ -72,7 +72,7 @@ public class RAGService {
     private final RAGConfig config;
     private final EmbeddingProvider embeddingProvider;
     private final LLMProvider llmProvider;
-    private final boolean available;
+    private volatile boolean available;
     private Connection dbConnection;
     private RestHighLevelClient openSearchClient;
     private String indexName;
@@ -100,7 +100,7 @@ public class RAGService {
         // Initialize Embedding Provider
         String embProv = config.getEmbeddingProvider();
         if ("local".equalsIgnoreCase(embProv)) {
-            this.embeddingProvider = new LocalEmbeddingProvider(config.getEmbeddingEndpoint(), config.getEmbeddingModel());
+            this.embeddingProvider = new LocalEmbeddingProvider(config.getEmbeddingEndpoint(), config.getEmbeddingModel(), config.getSubBatchSize());
         } else if ("gemini".equalsIgnoreCase(embProv)) {
             this.embeddingProvider = new GeminiEmbeddingProvider(config.getEmbeddingEndpoint(), config.getEmbeddingModel(), config.getLlmApiKey(), config.getEmbeddingDimensions());
         } else {
@@ -177,7 +177,25 @@ public class RAGService {
         return false;
     }
 
+    private volatile long lastHealthCheckTime = 0;
+    private static final long HEALTH_CHECK_COOLDOWN_MS = 30_000; // 30 seconds
+
     public boolean isAvailable() {
+        if (!available && config != null && config.isEnabled()) {
+            long now = System.currentTimeMillis();
+            if (now - lastHealthCheckTime >= HEALTH_CHECK_COOLDOWN_MS) {
+                synchronized (this) {
+                    if (!available && (now - lastHealthCheckTime >= HEALTH_CHECK_COOLDOWN_MS)) {
+                        this.lastHealthCheckTime = now;
+                        try {
+                            this.available = checkEmbeddingHealth(config);
+                        } catch (Exception e) {
+                            this.available = false;
+                        }
+                    }
+                }
+            }
+        }
         return available;
     }
 
@@ -188,7 +206,7 @@ public class RAGService {
         }
         try {
             java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
-                    .connectTimeout(java.time.Duration.ofSeconds(2))
+                    .connectTimeout(java.time.Duration.ofSeconds(5))
                     .build();
 
             String pingUrl = endpoint;
@@ -204,7 +222,7 @@ public class RAGService {
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                     .uri(java.net.URI.create(pingUrl))
                     .GET()
-                    .timeout(java.time.Duration.ofSeconds(2))
+                    .timeout(java.time.Duration.ofSeconds(5))
                     .build();
 
             java.net.http.HttpResponse<String> response = sendPrivilegedPing(client, request);
@@ -737,7 +755,7 @@ public class RAGService {
             while (cleanedQuestion.endsWith("?") || cleanedQuestion.endsWith(".") || cleanedQuestion.endsWith("!")) {
                 cleanedQuestion = cleanedQuestion.substring(0, cleanedQuestion.length() - 1).trim();
             }
-            cleanedQuestion = cleanedQuestion.replaceAll("[\\+\\-\\&\\|\\!\\(\\)\\{\\}\\[\\]\\^\\\"\\~\\*\\?\\:\\\\\\/]", " ");
+            cleanedQuestion = cleanedQuestion.replaceAll("[\\+\\-\\&\\|\\!\\(\\)\\{\\}\\[\\]\\^\\\"\\~\\*\\?\\:\\\\\\/@]", " ");
             cleanedQuestion = cleanedQuestion.trim().replaceAll("\\s+", " ");
         }
 
@@ -765,7 +783,30 @@ public class RAGService {
                 wordsQuery = bqBuilder.build();
             }
         } catch (org.apache.lucene.queryparser.flexible.core.QueryNodeException e) {
-            throw new IOException("Failed to parse lexical query: " + question, e);
+            // Graceful fallback: build a simple term-by-term query instead of failing.
+            // This handles questions containing emails (user@domain.com), URLs, SQL, or
+            // any other text with characters that the Lucene query parser cannot handle.
+            LOGGER.warn("Lucene query parser failed for '{}', falling back to simple term query: {}", question, e.getMessage());
+            String[] tokens = cleanedQuestion.toLowerCase().split("\\s+");
+            BooleanQuery.Builder fallbackBuilder = new BooleanQuery.Builder();
+            int validTokens = 0;
+            for (String token : tokens) {
+                token = token.trim();
+                if (!token.isEmpty() && token.length() >= 2) {
+                    fallbackBuilder.add(
+                            new TermQuery(new Term(iped.properties.BasicProps.CONTENT, token)),
+                            BooleanClause.Occur.SHOULD);
+                    validTokens++;
+                }
+            }
+            if (validTokens > 0) {
+                int minMatch = Math.max(1, (int) (validTokens * 0.4));
+                fallbackBuilder.setMinimumNumberShouldMatch(minMatch);
+                wordsQuery = fallbackBuilder.build();
+            } else {
+                // Query had no usable tokens (e.g. single-char input): return nothing rather than everything.
+                wordsQuery = new org.apache.lucene.search.MatchNoDocsQuery();
+            }
         }
 
         BooleanQuery.Builder boolBuilder = new BooleanQuery.Builder();
