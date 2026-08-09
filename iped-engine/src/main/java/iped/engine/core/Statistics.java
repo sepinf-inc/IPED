@@ -324,10 +324,17 @@ public class Statistics {
         if (iped.engine.task.index.IndexTask.totalEmbeddedDocs.get() > 0) {
             iped.engine.rag.RAGService ragService = iped.engine.rag.RAGService.getInstance();
             String ragModel = (ragService != null && ragService.getConfig() != null) ? ragService.getConfig().getEmbeddingModel() : "unknown";
+            int totalBatches = iped.engine.rag.LocalEmbeddingProvider.totalHttpBatches.get();
+            long totalChars = iped.engine.rag.LocalEmbeddingProvider.totalBatchChars.get();
+            long avgBatchChars = totalBatches > 0 ? (totalChars / totalBatches) : 0;
             LOGGER.info("RAG Embeddings: {} vectors generated in {} documents (Model: {}).",
                     iped.engine.task.index.IndexTask.totalEmbeddedVectors.get(),
                     iped.engine.task.index.IndexTask.totalEmbeddedDocs.get(),
                     ragModel);
+            if (totalBatches > 0) {
+                LOGGER.info("RAG HTTP Batching: {} requests sent, avg batch payload size: {} chars (~{} tokens/req).",
+                        totalBatches, avgBatchChars, avgBatchChars / 4);
+            }
         }
 
         LOGGER.info("Discovered volume: {} bytes", caseData.getDiscoveredVolume());

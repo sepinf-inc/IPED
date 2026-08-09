@@ -72,7 +72,7 @@ public class RAGService {
     private final RAGConfig config;
     private final EmbeddingProvider embeddingProvider;
     private final LLMProvider llmProvider;
-    private volatile boolean available;
+    private final boolean available;
     private Connection dbConnection;
     private RestHighLevelClient openSearchClient;
     private String indexName;
@@ -97,14 +97,31 @@ public class RAGService {
         this.caseDir = caseDir;
         this.config = config;
 
-        // Initialize Embedding Provider
+        // Initialize Embedding Provider & Auto-Resolve Vector Dimensions
         String embProv = config.getEmbeddingProvider();
         if ("local".equalsIgnoreCase(embProv)) {
-            this.embeddingProvider = new LocalEmbeddingProvider(config.getEmbeddingEndpoint(), config.getEmbeddingModel(), config.getSubBatchSize());
-        } else if ("gemini".equalsIgnoreCase(embProv)) {
-            this.embeddingProvider = new GeminiEmbeddingProvider(config.getEmbeddingEndpoint(), config.getEmbeddingModel(), config.getLlmApiKey(), config.getEmbeddingDimensions());
+            this.embeddingProvider = new LocalEmbeddingProvider(config.getEmbeddingEndpoint(), config.getEmbeddingModel(), config.getMaxBatchChars());
         } else {
-            this.embeddingProvider = new RemoteEmbeddingProvider(config.getEmbeddingEndpoint(), config.getEmbeddingModel(), config.getLlmApiKey());
+            this.embeddingProvider = new RemoteEmbeddingProvider(config.getEmbeddingEndpoint(), config.getEmbeddingModel(), config.getLlmApiKey(), config.getMaxBatchChars());
+        }
+
+        int userDims = config.getEmbeddingDimensions();
+        if (userDims > 0) {
+            LOGGER.info("RAG: Using user-configured embeddingDimensions override: {} dims", userDims);
+        } else {
+            int resolvedDims = -1;
+            if ("local".equalsIgnoreCase(embProv)) {
+                resolvedDims = LocalEmbeddingProvider.fetchVectorDimensionsFromOllama(config.getEmbeddingEndpoint(), config.getEmbeddingModel());
+            } else {
+                resolvedDims = RemoteEmbeddingProvider.resolveRemoteVectorDimensions(config.getEmbeddingModel());
+            }
+
+            if (resolvedDims > 0) {
+                LOGGER.info("RAG: Auto-resolved vector dimensions for model '{}': {} dims", config.getEmbeddingModel(), resolvedDims);
+                config.setEmbeddingDimensions(resolvedDims);
+            } else {
+                config.setEmbeddingDimensions(1024); // Safe fallback default
+            }
         }
 
         // Initialize LLM Provider
@@ -177,25 +194,7 @@ public class RAGService {
         return false;
     }
 
-    private volatile long lastHealthCheckTime = 0;
-    private static final long HEALTH_CHECK_COOLDOWN_MS = 30_000; // 30 seconds
-
     public boolean isAvailable() {
-        if (!available && config != null && config.isEnabled()) {
-            long now = System.currentTimeMillis();
-            if (now - lastHealthCheckTime >= HEALTH_CHECK_COOLDOWN_MS) {
-                synchronized (this) {
-                    if (!available && (now - lastHealthCheckTime >= HEALTH_CHECK_COOLDOWN_MS)) {
-                        this.lastHealthCheckTime = now;
-                        try {
-                            this.available = checkEmbeddingHealth(config);
-                        } catch (Exception e) {
-                            this.available = false;
-                        }
-                    }
-                }
-            }
-        }
         return available;
     }
 
@@ -206,7 +205,7 @@ public class RAGService {
         }
         try {
             java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
-                    .connectTimeout(java.time.Duration.ofSeconds(5))
+                    .connectTimeout(java.time.Duration.ofSeconds(3))
                     .build();
 
             String pingUrl = endpoint;
@@ -222,7 +221,7 @@ public class RAGService {
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                     .uri(java.net.URI.create(pingUrl))
                     .GET()
-                    .timeout(java.time.Duration.ofSeconds(5))
+                    .timeout(java.time.Duration.ofSeconds(3))
                     .build();
 
             java.net.http.HttpResponse<String> response = sendPrivilegedPing(client, request);
@@ -512,6 +511,14 @@ public class RAGService {
 
         for (int i = 0; i < texts.size(); i++) {
             String txt = texts.get(i);
+            if (!RAGTextSanitizer.hasUsefulContent(txt)) {
+                // Skip GPU embedding generation for empty/useless fragments.
+                // Returning null leaves KnnVectorField omitted in IndexTask,
+                // saving GPU inference, HTTP payload & disk while keeping Lucene
+                // document counts 100% accurate for IPED Statistics.
+                result.add(null);
+                continue;
+            }
             float[] vec = getCachedEmbedding(txt, modelName);
             result.add(vec);
             if (vec == null) {

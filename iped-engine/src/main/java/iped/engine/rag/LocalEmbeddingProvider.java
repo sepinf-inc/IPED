@@ -24,33 +24,163 @@ public class LocalEmbeddingProvider implements EmbeddingProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalEmbeddingProvider.class);
 
+    /** Global metrics to track HTTP sub-batching stats across all worker threads. */
+    public static final java.util.concurrent.atomic.AtomicInteger totalHttpBatches =
+            new java.util.concurrent.atomic.AtomicInteger(0);
+    public static final java.util.concurrent.atomic.AtomicLong totalBatchChars =
+            new java.util.concurrent.atomic.AtomicLong(0);
+
     private final String endpoint;
     private final String model;
-    private final int subBatchSize;
+    private final int maxBatchChars;
+    private final int maxModelChars;
     private final HttpClient client;
 
-    public LocalEmbeddingProvider(String endpoint, String model, int subBatchSize) {
+    public LocalEmbeddingProvider(String endpoint, String model) {
+        this(endpoint, model, 42000);
+    }
+
+    public LocalEmbeddingProvider(String endpoint, String model, int maxBatchChars) {
         this.endpoint = endpoint;
         this.model = model;
-        this.subBatchSize = subBatchSize;
+        this.maxBatchChars = maxBatchChars > 0 ? maxBatchChars : 42000;
         this.client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
+        this.maxModelChars = resolveMaxModelChars(endpoint, model, client);
+    }
+
+    /**
+     * Resolves the maximum character capacity of the embedding model by querying Ollama's
+     * POST /api/show endpoint directly, with a fallback model-name heuristic.
+     */
+    private static int resolveMaxModelChars(String endpoint, String model, HttpClient client) {
+        int charsFromOllama = fetchContextLengthFromOllama(endpoint, model, client);
+        if (charsFromOllama > 0) {
+            LOGGER.info("RAG: Resolved official context length for model '{}' from Ollama /api/show: {} chars", model, charsFromOllama);
+            return charsFromOllama;
+        }
+
+        // Heuristic fallback if Ollama /api/show is unreachable or does not declare context length
+        if (model == null) return 4000;
+        String lower = model.toLowerCase();
+        if (lower.contains("bge-m3") || lower.contains("text-embedding-3") || lower.contains("cohere")) {
+            return 30000;
+        }
+        if (lower.contains("gte-large") || lower.contains("e5-large")) {
+            return 8000;
+        }
+        if (lower.contains("nomic") || lower.contains("mxbai") || lower.contains("minilm") || lower.contains("all-")) {
+            return 2000;
+        }
+        return 4000;
+    }
+
+    public static int fetchVectorDimensionsFromOllama(String endpoint, String model) {
+        if (endpoint == null || endpoint.trim().isEmpty()) {
+            return -1;
+        }
+        try {
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(3))
+                    .build();
+            String baseUrl = endpoint;
+            if (endpoint.contains("/api/")) {
+                baseUrl = endpoint.substring(0, endpoint.indexOf("/api/"));
+            } else if (endpoint.contains("/v1/")) {
+                baseUrl = endpoint.substring(0, endpoint.indexOf("/v1/"));
+            }
+            while (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            String showUrl = baseUrl + "/api/show";
+            String jsonBody = "{\"name\":\"" + model + "\"}";
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(showUrl))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .timeout(Duration.ofSeconds(3))
+                    .build();
+
+            HttpResponse<String> resp = sendPrivileged(client, req);
+            if (resp.statusCode() == 200 && resp.body() != null) {
+                JsonObject json = new Gson().fromJson(resp.body(), JsonObject.class);
+                if (json.has("model_info")) {
+                    JsonObject info = json.getAsJsonObject("model_info");
+                    for (String key : info.keySet()) {
+                        if (key.endsWith(".embedding_length")) {
+                            int dims = info.get(key).getAsInt();
+                            if (dims > 0) {
+                                LOGGER.info("RAG: Auto-detected official vector dimensions for model '{}': {} dims", model, dims);
+                                return dims;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not query Ollama /api/show for model vector dimensions: {}", e.getMessage());
+        }
+        return -1;
+    }
+
+    private static int fetchContextLengthFromOllama(String endpoint, String model, HttpClient client) {
+        if (endpoint == null || endpoint.trim().isEmpty()) {
+            return -1;
+        }
+        try {
+            String baseUrl = endpoint;
+            if (endpoint.contains("/api/")) {
+                baseUrl = endpoint.substring(0, endpoint.indexOf("/api/"));
+            } else if (endpoint.contains("/v1/")) {
+                baseUrl = endpoint.substring(0, endpoint.indexOf("/v1/"));
+            }
+            // Remove trailing slashes
+            while (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            String showUrl = baseUrl + "/api/show";
+            String jsonBody = "{\"name\":\"" + model + "\"}";
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(showUrl))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .timeout(Duration.ofSeconds(3))
+                    .build();
+
+            HttpResponse<String> resp = sendPrivileged(client, req);
+            if (resp.statusCode() == 200 && resp.body() != null) {
+                JsonObject json = new Gson().fromJson(resp.body(), JsonObject.class);
+                if (json.has("model_info")) {
+                    JsonObject info = json.getAsJsonObject("model_info");
+                    for (String key : info.keySet()) {
+                        if (key.endsWith(".context_length")) {
+                            int tokens = info.get(key).getAsInt();
+                            if (tokens > 0) {
+                                // 1 token ~ 3.8 chars in PT/multilingual
+                                return (int) (tokens * 3.8);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not query Ollama /api/show for model context length: {}", e.getMessage());
+        }
+        return -1;
     }
 
     @Override
     public float[] generateEmbedding(String text) throws IOException, InterruptedException {
-        if (text != null && text.length() > 4000) {
-            text = text.substring(0, 4000);
+        if (text != null && text.length() > maxModelChars) {
+            text = text.substring(0, maxModelChars);
         }
         try {
             return doGenerateEmbedding(text);
         } catch (IOException e) {
-            // Auto-fallback for dense text (e.g. minified JSON, base64 hashes) that exceeds
-            // the model's tokenizer context window despite the 4000-char cap.
-            // Detected via Ollama's error message substring "exceeds the context length".
-            // NOTE: If a future Ollama version changes this error message, the fallback
-            // will not trigger and the IOException will be re-thrown normally (safe behavior).
             if (e.getMessage() != null && e.getMessage().contains("exceeds the context length") && text != null && text.length() > 1500) {
                 LOGGER.warn("Embedding text exceeded model context window, retrying with 1500 chars truncation");
                 return doGenerateEmbedding(text.substring(0, 1500));
@@ -94,13 +224,31 @@ public class LocalEmbeddingProvider implements EmbeddingProvider {
         }
 
         java.util.List<float[]> allResults = new java.util.ArrayList<>(texts.size());
-        int batchSize = this.subBatchSize; // Configurable via RAGConfig.txt (default: 16)
+        // Pure character-budget driven batching. Default maxBatchChars = 24000 (~6000 tokens).
+        int maxChars = this.maxBatchChars > 0 ? this.maxBatchChars : 24000;
 
-        for (int start = 0; start < texts.size(); start += batchSize) {
-            int end = Math.min(start + batchSize, texts.size());
-            java.util.List<String> subBatch = texts.subList(start, end);
+        int index = 0;
+        while (index < texts.size()) {
+            // Build sub-batch constrained by cumulative character budget (preserving full intact fragments)
+            int count = 0;
+            int totalChars = 0;
+            while (index + count < texts.size()) {
+                String nextText = texts.get(index + count);
+                int len = nextText != null ? nextText.length() : 0;
+                if (count > 0 && totalChars + len > maxChars) {
+                    break;
+                }
+                totalChars += len;
+                count++;
+            }
+
+            java.util.List<String> subBatch = texts.subList(index, index + count);
+            index += count;
+
             try {
-                java.util.List<float[]> batchResult = processSubBatch(subBatch, 30);
+                totalHttpBatches.incrementAndGet();
+                totalBatchChars.addAndGet(totalChars);
+                java.util.List<float[]> batchResult = processSubBatch(subBatch, 90);
                 if (batchResult != null && batchResult.size() == subBatch.size()) {
                     allResults.addAll(batchResult);
                     continue;
@@ -117,7 +265,12 @@ public class LocalEmbeddingProvider implements EmbeddingProvider {
 
             // Fallback for items individually if batch fails or returns invalid size
             for (String txt : subBatch) {
-                allResults.add(generateEmbedding(txt));
+                try {
+                    allResults.add(generateEmbedding(txt));
+                } catch (Exception e) {
+                    LOGGER.warn("Individual embedding fallback failed for fragment: {}", e.getMessage());
+                    allResults.add(null);
+                }
             }
         }
 
@@ -136,10 +289,6 @@ public class LocalEmbeddingProvider implements EmbeddingProvider {
         StringBuilder inputsJson = new StringBuilder("[");
         for (int i = 0; i < subBatch.size(); i++) {
             String t = subBatch.get(i);
-            // Cap at 4000 chars to cover full 3500 chunkSize without truncating evidence
-            if (t != null && t.length() > 4000) {
-                t = t.substring(0, 4000);
-            }
             inputsJson.append(toJsonString(t));
             if (i < subBatch.size() - 1) {
                 inputsJson.append(",");

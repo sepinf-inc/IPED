@@ -19,7 +19,7 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
     private String embeddingModel = "bge-m3";
     private String embeddingEndpoint = "http://localhost:11434/api/embeddings";
     private int embeddingDimensions = 1024;
-    private int subBatchSize = 16;
+    private int maxBatchChars = 42000;
     private int chunkSize = 3500;
     private int chunkOverlap = 350;
     private boolean enableLLMQueries = true;
@@ -67,13 +67,18 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
         return embeddingDimensions;
     }
 
+    public void setEmbeddingDimensions(int embeddingDimensions) {
+        this.embeddingDimensions = embeddingDimensions;
+    }
+
     /**
-     * Number of text chunks sent per HTTP request to the embedding server.
-     * Higher values improve GPU throughput via better CUDA core utilization.
-     * Default: 16. Recommended: 16 (balanced) | 32 (dedicated GPU servers).
+     * Maximum cumulative characters allowed per HTTP sub-batch request.
+     * Prevents HTTP payloads from exceeding GPU/VRAM memory limits or triggering
+     * server timeouts when embedding many large chunks.
+     * Default: 24000 (~6000 tokens).
      */
-    public int getSubBatchSize() {
-        return subBatchSize;
+    public int getMaxBatchChars() {
+        return maxBatchChars;
     }
 
     public int getChunkSize() {
@@ -455,8 +460,8 @@ public class RAGConfig extends AbstractTaskPropertiesConfig {
         val = props.getProperty("embeddingDimensions");
         if (val != null) embeddingDimensions = Integer.parseInt(val.trim());
 
-        val = props.getProperty("subBatchSize");
-        if (val != null) subBatchSize = Integer.parseInt(val.trim());
+        val = props.getProperty("maxBatchChars");
+        if (val != null) maxBatchChars = Integer.parseInt(val.trim());
 
         val = props.getProperty("chunkSize");
         if (val != null) chunkSize = Integer.parseInt(val.trim());

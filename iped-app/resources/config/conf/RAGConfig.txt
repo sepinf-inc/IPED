@@ -6,50 +6,56 @@
 ###############################################################################
 
 ###############################################################################
-# 1. EMBEDDING GENERATION & MODEL PROVIDER
+# 1. PROCESSING & INDEXING (INDEX TIME)
+# Controls text fragmenting (chunking), GPU batching, and embedding generation
+# performed during case processing.
 ###############################################################################
 
-# Provider for text embeddings. Options: local, remote, gemini
+# Provider for text embeddings. Options: local, remote
 # - local  : Ollama server (use 'local' for Ollama EVEN IF running on a remote GPU server over IP/network).
 # - remote : OpenAI-compatible API endpoint (e.g. OpenAI text-embedding-3-small, Azure, Cohere).
-# - gemini : Google Generative Language Embeddings API.
 embeddingProvider = local
 
 # Model name for text embeddings:
 # - Ollama (local) : bge-m3 (1024 dims), nomic-embed-text (768 dims), mxbai-embed-large (1024 dims)
-# - Gemini (remote): gemini-embedding-001 (768 dims)
 # - OpenAI (remote): text-embedding-3-small (1536 dims), text-embedding-3-large (3072 dims)
 embeddingModel = bge-m3
+
+# (OPTIONAL OVERRIDE) Vector dimension size of the embedding model.
+# Automatically detected for local Ollama models and standard cloud models.
+# Only uncomment and set this if using a custom remote embedding endpoint/model with non-standard dimensions.
+# embeddingDimensions = 1024
 
 # HTTP Endpoint for generating embeddings:
 # - Ollama (local) : http://localhost:11434/api/embeddings or http://<remote-gpu-ip>:11434/api/embeddings
 #   * Concurrency Tip: For dedicated GPU setups, environment variables like OLLAMA_NUM_PARALLEL (e.g. 2-4) and OLLAMA_MAX_QUEUE (e.g. 512) can improve throughput depending on available VRAM/GPU hardware (requires further testing for optimal lab setup).
 # - OpenAI (remote): https://api.openai.com/v1/embeddings
-# - Gemini         : leave empty to use official Google API endpoint automatically
 embeddingEndpoint = http://localhost:11434/api/embeddings
 
-# Vector dimension size of the embedding model (must match embeddingModel):
-# - bge-m3: 1024 | gemini-embedding-001: 768 | nomic-embed-text: 768 | text-embedding-3-small: 1536
-embeddingDimensions = 1024
+# Size (in characters) of each text chunk/fragment created during indexing.
+# Recommendation: 3000-5000 chars. Default: 3500
+chunkSize = 3500
 
-# Number of text chunks sent per HTTP request to the embedding server.
-# Higher values improve GPU throughput by enabling better CUDA core utilization (batch matrix ops).
-# Recommended: 16 (balanced default) | 32 (dedicated GPU servers, e.g. RTX A4000/A6000).
-# Align with powers of 2 (8, 16, 32, 64) for optimal GPU Warp occupancy.
-# For best results, also tune the server-side OLLAMA_NUM_PARALLEL environment variable.
-subBatchSize = 16
+# Overlap (in characters) between consecutive chunks to prevent boundary context loss.
+# Recommendation: 10%-15% of chunkSize. Default: 350
+chunkOverlap = 350
+
+# Maximum cumulative characters sent per HTTP sub-batch request.
+# Controls HTTP payload sizing based on character volume to maximize GPU throughput
+# and prevent VRAM memory overflow / server timeouts.
+# Rule of Thumb: Must be >= chunkSize (recommended: multiples of chunkSize, e.g. 42000).
+# Default: 42000 (~10500 tokens).
+maxBatchChars = 42000
 
 
 ###############################################################################
-# 2. CHUNKING & LLM CONTEXT WINDOW TUNING
-# Controls text fragmenting during indexing and context size allocation for LLMs.
+# 2. QUERY & AI ASSISTANT (QUERY TIME / CHAT)
+# Controls hybrid search fusion, LLM model integration, and context window.
 #
 # MATHEMATICAL RELATIONSHIP & FORMULAS:
-# 1. Character-to-Token Ratio: 1 token ??? 4 characters in Portuguese (3500 chars ??? 875 tokens).
+# 1. Character-to-Token Ratio: 1 token ~ 4 characters in Portuguese (3500 chars ~ 875 tokens).
 # 2. Retrieved Context Formula:
-#    Retrieved Context Tokens ??? maxRetrievedChunks * (chunkSize / 4)
-# 3. Overlap Guideline:
-#    chunkOverlap should be 10% to 15% of chunkSize (e.g. 350 for 3500).
+#    Retrieved Context Tokens ~ maxRetrievedChunks * (chunkSize / 4)
 #
 # RECOMMENDED SETTINGS BY GPU VRAM / HARDWARE (For Local Ollama Models):
 # - 6 GB VRAM GPU (RTX 2060 / 3050):
@@ -67,14 +73,6 @@ subBatchSize = 16
 # - Therefore, llmContextWindow is IGNORED for commercial providers (llmProvider != local).
 # - For Cloud Models, simply increase maxRetrievedChunks = 15-20 and chunkSize = 4000.
 ###############################################################################
-
-# Size (in characters) of each text chunk/fragment created during indexing.
-# Recommendation: 3000-5000 chars. Default: 3500
-chunkSize = 3500
-
-# Overlap (in characters) between consecutive chunks to prevent boundary context loss.
-# Recommendation: 10%-15% of chunkSize. Default: 350
-chunkOverlap = 350
 
 # Maximum number of fragment chunks to retrieve and include in LLM context.
 # Recommended for 8GB VRAM GPU: 5 | Cloud (Gemini/Claude/OpenAI): 15-20. Default: 5

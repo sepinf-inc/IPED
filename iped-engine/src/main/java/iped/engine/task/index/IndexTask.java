@@ -37,6 +37,7 @@ import iped.engine.io.CloseFilterReader;
 import iped.engine.io.FragmentingReader;
 import iped.engine.io.ParsingReader;
 import iped.engine.rag.RAGService;
+import iped.engine.rag.RAGTextSanitizer;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.SkipCommitedTask;
@@ -106,6 +107,15 @@ public class IndexTask extends AbstractTask {
     private StandardParser autoParser;
 
     private IndexTaskConfig indexConfig;
+    private RAGConfig ragConfig;
+
+    @Override
+    public String getName() {
+        if (ragConfig != null && ragConfig.isEnabled() && RAGService.getInstance() != null && RAGService.getInstance().isAvailable()) {
+            return "IndexTask [RAG]";
+        }
+        return super.getName();
+    }
 
     public static boolean isTreeNodeOnly(IItem item) {
         return (!item.isToAddToCase() && (item.isDir() || item.isRoot() || item.hasChildren()))
@@ -202,6 +212,7 @@ public class IndexTask extends AbstractTask {
     private class DocumentsIterable implements Iterable<Document> {
 
         private IItem item;
+        private java.util.List<String> rawFragmentTexts;
         private java.util.List<String> fragmentTexts;
         private java.util.List<float[]> vectors;
         private boolean parentIndexed = false;
@@ -229,32 +240,42 @@ public class IndexTask extends AbstractTask {
             this.globalId = gid;
 
             if (luceneVectorMode && shouldEmbed) {
-                // Read all fragments eagerly ONLY for RAG-whitelisted items
-                java.util.List<String> frags = new java.util.ArrayList<>();
+                // Read all fragments eagerly ONLY for RAG-whitelisted items.
+                // Raw text is preserved for BM25 lexical search (IndexItem.CONTENT)
+                // so no forensic terms are lost. Sanitized text is generated separately
+                // for RAG (CONTENT_STORED and embedding pipeline).
+                java.util.List<String> rawFrags = new java.util.ArrayList<>();
+                java.util.List<String> sanitizedFrags = new java.util.ArrayList<>();
                 try {
-                    String t = captureText(fragReader);
-                    if (t != null && !t.trim().isEmpty()) {
-                        frags.add(t);
+                    String raw = captureText(fragReader);
+                    if (!raw.isEmpty()) {
+                        rawFrags.add(raw);
+                        sanitizedFrags.add(RAGTextSanitizer.sanitize(raw));
                     }
                     while (fragReader.nextFragment()) {
-                        t = captureText(fragReader);
-                        if (t != null && !t.trim().isEmpty()) {
-                            frags.add(t);
+                        raw = captureText(fragReader);
+                        if (!raw.isEmpty()) {
+                            rawFrags.add(raw);
+                            sanitizedFrags.add(RAGTextSanitizer.sanitize(raw));
                         }
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                this.fragmentTexts = frags;
+                this.rawFragmentTexts = rawFrags;
+                this.fragmentTexts = sanitizedFrags;
 
                 // Batch generate embeddings synchronously ONLY if there are non-empty text fragments
                 RAGService ragService = RAGService.getInstance();
-                if (!frags.isEmpty() && ragService != null && ragService.isAvailable()) {
+                if (!sanitizedFrags.isEmpty() && ragService != null && ragService.isAvailable()) {
                     try {
-                        this.vectors = ragService.getEmbeddings(frags);
+                        this.vectors = ragService.getEmbeddings(sanitizedFrags);
                         if (this.vectors != null && !this.vectors.isEmpty()) {
-                            totalEmbeddedDocs.incrementAndGet();
-                            totalEmbeddedVectors.addAndGet(this.vectors.size());
+                            long validCount = this.vectors.stream().filter(v -> v != null && v.length > 0).count();
+                            if (validCount > 0) {
+                                totalEmbeddedDocs.incrementAndGet();
+                                totalEmbeddedVectors.addAndGet((int) validCount);
+                            }
                         }
                         LOGGER.debug("RAG: generated {} embeddings for {}", this.vectors != null ? this.vectors.size() : 0, item.getPath());
                     } catch (Exception e) {
@@ -317,7 +338,9 @@ public class IndexTask extends AbstractTask {
                             if (shouldEmbed && globalId != null) {
                                 String fragTrackId = globalId + "#" + numFrags;
 
-                                // StoredField so the text can be retrieved at search time
+                                // Store the sanitized fragment text so the LLM context
+                                // contains only meaningful content (no RGB palette dumps).
+                                // fragText was already sanitized when added to fragmentTexts.
                                 doc.add(new StoredField(CONTENT_STORED, fragText));
 
                                 // StringField (stored) so it can be uniquely identified
@@ -338,8 +361,11 @@ public class IndexTask extends AbstractTask {
                                 }
                             }
 
-                            // Index the text for BM25 lexical search
-                            doc.add(new Field(IndexItem.CONTENT, new StringReader(fragText),
+                            // Index the raw text for BM25 lexical search (100% preserved, zero forensic data loss)
+                            String rawText = (rawFragmentTexts != null && index < rawFragmentTexts.size())
+                                    ? rawFragmentTexts.get(index)
+                                    : fragText;
+                            doc.add(new Field(IndexItem.CONTENT, new StringReader(rawText),
                                     getContentFieldType()));
 
                             index++;
@@ -456,7 +482,7 @@ public class IndexTask extends AbstractTask {
 
         this.autoParser = new StandardParser();
 
-        RAGConfig ragConfig = configurationManager.findObject(RAGConfig.class);
+        this.ragConfig = configurationManager.findObject(RAGConfig.class);
         if (ragConfig != null && ragConfig.isEnabled()) {
             try {
                 RAGService.initialize(output, ragConfig);
