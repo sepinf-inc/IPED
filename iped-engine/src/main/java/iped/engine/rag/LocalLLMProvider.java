@@ -33,6 +33,12 @@ public class LocalLLMProvider implements LLMProvider {
 
     @Override
     public String generateAnswer(String question, String context, java.util.List<RAGService.HistoryTurn> history) throws IOException, InterruptedException {
+        return generateAnswerStream(question, context, history, null);
+    }
+
+    @Override
+    public String generateAnswerStream(String question, String context, java.util.List<RAGService.HistoryTurn> history,
+            java.util.function.Consumer<String> tokenConsumer) throws IOException, InterruptedException {
         String systemPrompt = getSystemPrompt(question);
         
         int contextWindow = 4096;
@@ -66,7 +72,7 @@ public class LocalLLMProvider implements LLMProvider {
                 + "\"model\":\"" + model + "\","
                 + "\"messages\":" + messagesJson.toString() + ","
                 + "\"options\":{\"num_ctx\":" + contextWindow + ",\"temperature\":0.0},"
-                + "\"stream\":false"
+                + "\"stream\":true"
                 + "}";
 
         String resolvedUri = endpoint;
@@ -80,16 +86,86 @@ public class LocalLLMProvider implements LLMProvider {
                 .uri(URI.create(resolvedUri))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .timeout(Duration.ofSeconds(300))
+                .timeout(Duration.ofSeconds(600))
                 .build();
 
-        HttpResponse<String> response = sendPrivileged(client, request);
+        StringBuilder fullResponse = new StringBuilder();
+        HttpResponse<java.io.InputStream> response = sendPrivilegedStream(client, request);
 
         if (response.statusCode() != 200) {
-            throw new IOException("Local LLM service returned status code " + response.statusCode() + ": " + response.body());
+            String errBody = new String(response.body().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            throw new IOException("Local LLM service returned status code " + response.statusCode() + ": " + errBody);
         }
 
-        return parseChatCompletionResponse(response.body());
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(response.body(), java.nio.charset.StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+                String token = parseChatCompletionResponseChunk(line);
+                if (token != null && !token.isEmpty()) {
+                    fullResponse.append(token);
+                    if (tokenConsumer != null) {
+                        tokenConsumer.accept(token);
+                    }
+                }
+            }
+        }
+
+        return fullResponse.toString();
+    }
+
+    public static String parseChatCompletionResponseChunk(String jsonLine) {
+        try {
+            int index = jsonLine.indexOf("\"content\"");
+            if (index == -1) return null;
+            index = jsonLine.indexOf(":", index);
+            if (index == -1) return null;
+            index = jsonLine.indexOf("\"", index);
+            if (index == -1) return null;
+
+            StringBuilder sb = new StringBuilder();
+            boolean escaped = false;
+            for (int i = index + 1; i < jsonLine.length(); i++) {
+                char c = jsonLine.charAt(i);
+                if (escaped) {
+                    switch (c) {
+                        case 'n': sb.append('\n'); break;
+                        case 'r': sb.append('\r'); break;
+                        case 't': sb.append('\t'); break;
+                        case 'b': sb.append('\b'); break;
+                        case 'f': sb.append('\f'); break;
+                        case '"': sb.append('"'); break;
+                        case '\\': sb.append('\\'); break;
+                        default: sb.append(c);
+                    }
+                    escaped = false;
+                } else if (c == '\\') {
+                    escaped = true;
+                } else if (c == '"') {
+                    return sb.toString();
+                } else {
+                    sb.append(c);
+                }
+            }
+        } catch (Exception e) {
+            // Ignore partial/malformed JSON chunk lines gracefully
+        }
+        return null;
+    }
+
+    private static HttpResponse<java.io.InputStream> sendPrivilegedStream(HttpClient client, HttpRequest request) throws IOException, InterruptedException {
+        try {
+            return java.security.AccessController.doPrivileged(
+                    (java.security.PrivilegedExceptionAction<HttpResponse<java.io.InputStream>>) () -> client.send(request, HttpResponse.BodyHandlers.ofInputStream())
+            );
+        } catch (java.security.PrivilegedActionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException) throw (IOException) cause;
+            if (cause instanceof InterruptedException) throw (InterruptedException) cause;
+            if (cause instanceof RuntimeException) throw (RuntimeException) cause;
+            throw new IOException(cause);
+        }
     }
 
     public static String parseChatCompletionResponse(String json) throws IOException {

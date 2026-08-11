@@ -30,6 +30,12 @@ public class GeminiLLMProvider implements LLMProvider {
 
     @Override
     public String generateAnswer(String question, String context, java.util.List<RAGService.HistoryTurn> history) throws IOException, InterruptedException {
+        return generateAnswerStream(question, context, history, null);
+    }
+
+    @Override
+    public String generateAnswerStream(String question, String context, java.util.List<RAGService.HistoryTurn> history,
+            java.util.function.Consumer<String> tokenConsumer) throws IOException, InterruptedException {
         String systemPrompt = getSystemPrompt(question);
         String userPrompt = "Context:\n" + context + "\n\nQuestion: " + question + "\n\nAnswer:";
 
@@ -60,19 +66,26 @@ public class GeminiLLMProvider implements LLMProvider {
                 + "}"
                 + "}";
 
-
+        boolean isStreaming = (tokenConsumer != null);
         String targetUrl;
         if (customEndpoint != null && !customEndpoint.trim().isEmpty()) {
             targetUrl = customEndpoint;
+            if (isStreaming && targetUrl.contains(":generateContent")) {
+                targetUrl = targetUrl.replace(":generateContent", ":streamGenerateContent?alt=sse");
+            }
         } else {
-            targetUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+            if (isStreaming) {
+                targetUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":streamGenerateContent?alt=sse&key=" + apiKey;
+            } else {
+                targetUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+            }
         }
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(targetUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .timeout(Duration.ofSeconds(60))
+                .timeout(Duration.ofSeconds(120))
                 .build();
 
         int maxRetries = 3;
@@ -82,18 +95,49 @@ public class GeminiLLMProvider implements LLMProvider {
 
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
-                HttpResponse<String> response = sendPrivileged(client, request);
-                lastStatusCode = response.statusCode();
-                lastResponseBody = response.body();
+                if (isStreaming) {
+                    HttpResponse<java.io.InputStream> response = sendPrivilegedStream(client, request);
+                    lastStatusCode = response.statusCode();
 
-                if (response.statusCode() == 200) {
-                    return parseGeminiResponse(response.body());
-                } else if (response.statusCode() == 429) {
-                    Thread.sleep(backoffMs);
-                } else if (response.statusCode() >= 500) {
-                    Thread.sleep(backoffMs);
+                    if (response.statusCode() == 200) {
+                        StringBuilder fullResponse = new StringBuilder();
+                        try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                                new java.io.InputStreamReader(response.body(), java.nio.charset.StandardCharsets.UTF_8))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                line = line.trim();
+                                if (line.startsWith("data:")) {
+                                    line = line.substring(5).trim();
+                                }
+                                if (line.isEmpty() || line.equals("[DONE]")) continue;
+                                String chunk = parseGeminiResponseChunk(line);
+                                if (chunk != null && !chunk.isEmpty()) {
+                                    fullResponse.append(chunk);
+                                    if (tokenConsumer != null) {
+                                        tokenConsumer.accept(chunk);
+                                    }
+                                }
+                            }
+                        }
+                        return fullResponse.toString();
+                    } else if (response.statusCode() == 429 || response.statusCode() >= 500) {
+                        Thread.sleep(backoffMs);
+                    } else {
+                        String errBody = new String(response.body().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                        throw new IOException("Gemini LLM service returned status code " + response.statusCode() + ": " + errBody);
+                    }
                 } else {
-                    throw new IOException("Gemini LLM service returned status code " + response.statusCode() + ": " + response.body());
+                    HttpResponse<String> response = sendPrivileged(client, request);
+                    lastStatusCode = response.statusCode();
+                    lastResponseBody = response.body();
+
+                    if (response.statusCode() == 200) {
+                        return parseGeminiResponse(response.body());
+                    } else if (response.statusCode() == 429 || response.statusCode() >= 500) {
+                        Thread.sleep(backoffMs);
+                    } else {
+                        throw new IOException("Gemini LLM service returned status code " + response.statusCode() + ": " + response.body());
+                    }
                 }
             } catch (IOException e) {
                 if (attempt == maxRetries - 1) {
@@ -104,6 +148,18 @@ public class GeminiLLMProvider implements LLMProvider {
             backoffMs *= 2;
         }
         throw new IOException("Failed to generate answer from Gemini LLM after " + maxRetries + " attempts. Last status: " + lastStatusCode + ", Response: " + lastResponseBody);
+    }
+
+    public static String parseGeminiResponseChunk(String jsonChunk) {
+        return parseGeminiResponseQuiet(jsonChunk);
+    }
+
+    public static String parseGeminiResponseQuiet(String json) {
+        try {
+            return parseGeminiResponse(json);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static String parseGeminiResponse(String json) throws IOException {
@@ -151,6 +207,20 @@ public class GeminiLLMProvider implements LLMProvider {
         try {
             return java.security.AccessController.doPrivileged(
                     (java.security.PrivilegedExceptionAction<HttpResponse<String>>) () -> client.send(request, HttpResponse.BodyHandlers.ofString())
+            );
+        } catch (java.security.PrivilegedActionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException) throw (IOException) cause;
+            if (cause instanceof InterruptedException) throw (InterruptedException) cause;
+            if (cause instanceof RuntimeException) throw (RuntimeException) cause;
+            throw new IOException(cause);
+        }
+    }
+
+    private static HttpResponse<java.io.InputStream> sendPrivilegedStream(HttpClient client, HttpRequest request) throws IOException, InterruptedException {
+        try {
+            return java.security.AccessController.doPrivileged(
+                    (java.security.PrivilegedExceptionAction<HttpResponse<java.io.InputStream>>) () -> client.send(request, HttpResponse.BodyHandlers.ofInputStream())
             );
         } catch (java.security.PrivilegedActionException e) {
             Throwable cause = e.getCause();

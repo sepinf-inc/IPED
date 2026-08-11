@@ -92,7 +92,7 @@ public class RAGAssistantPanel extends JPanel {
     private final JTable sourcesTable = new JTable(sourcesModel);
 
     // ------------------------------------------------------------------ state
-    private SwingWorker<String, Void> currentWorker;
+    private SwingWorker<String, String> currentWorker;
     private final List<ChatSession> sessions = new ArrayList<>();
     private ChatSession activeSession;
 
@@ -434,12 +434,13 @@ public class RAGAssistantPanel extends JPanel {
         // Thread.
         final Set<String> scopeAllowedIds = collectAllowedParentIds();
 
-        currentWorker = new SwingWorker<String, Void>() {
+        currentWorker = new SwingWorker<String, String>() {
             private List<RAGSourceDoc> foundDocs = new ArrayList<>();
             private int omittedChunksCount = 0;
             private boolean contextLimitReached = false;
             private int contextWindowValue = 4096;
             private int totalRetrievedChunksCount = 0;
+            private final StringBuilder streamingRawAnswer = new StringBuilder();
 
             @Override
             protected String doInBackground() throws Exception {
@@ -471,15 +472,11 @@ public class RAGAssistantPanel extends JPanel {
                 int maxChars;
                 if ("local".equalsIgnoreCase(rag.getConfig().getLlmProvider())) {
                     int reservedTokens = Math.min(1024, contextWindow / 2);
-                    // 1 token ??? 3.8 characters in Portuguese/English. Multiplier of 3.8 accurately
-                    // reflects the character budget without premature truncation.
                     maxChars = (int) ((contextWindow - reservedTokens) * 3.8);
                 } else {
                     maxChars = Integer.MAX_VALUE;
                 }
 
-                // Base length of prompt (system prompt + user prompt boilerplate + question) is
-                // roughly 2500 chars
                 int baseLength = 2500 + (q != null ? q.length() : 0);
                 totalRetrievedChunksCount = docs.size();
 
@@ -491,7 +488,7 @@ public class RAGAssistantPanel extends JPanel {
                         if (docName != null) {
                             tempChunk.append("Nome do Arquivo: ").append(docName).append("\n");
                         }
-                        tempChunk.append("Score H??brido: ")
+                        tempChunk.append("Score Híbrido: ")
                                 .append(String.format(java.util.Locale.US, "%.3f", doc.score)).append("\n");
                         tempChunk.append("---\n");
                         tempChunk.append(doc.content).append("\n\n========================================\n\n");
@@ -510,15 +507,53 @@ public class RAGAssistantPanel extends JPanel {
                 omittedChunksCount = omittedCount;
                 contextLimitReached = limitReached;
 
-                // 4. Ask the LLM
-                return rag.getLlmProvider().generateAnswer(q, ctx.toString(), historyTurns);
+                // 4. Ask the LLM with Token Streaming
+                return rag.getLlmProvider().generateAnswerStream(q, ctx.toString(), historyTurns, token -> {
+                    publish(token);
+                });
+            }
+
+            @Override
+            protected void process(List<String> chunks) {
+                for (String chunk : chunks) {
+                    streamingRawAnswer.append(chunk);
+                }
+
+                StringBuilder liveHtml = new StringBuilder();
+                liveHtml.append("<html><body style='font-family:sans-serif;font-size:13px;padding:8px;'>");
+                if (entryCount > 0) {
+                    liveHtml.append(extractBodyContent(renderConversation(activeSession)));
+                    liveHtml.append("<hr style='border:0; border-top:1px solid #E0E0E0; margin-bottom:15px;'/>");
+                }
+                // User Question
+                liveHtml.append("<div style='background-color:#E8F0FE; padding:8px; border-radius:4px; margin-bottom:6px;'>");
+                liveHtml.append("<b>").append(Messages.getString("RAGAssistant.YouLabel")).append(":</b> ")
+                        .append(markdownToHtml(q));
+                liveHtml.append("</div>");
+                // Streaming Assistant Answer
+                liveHtml.append("<div style='padding:8px; margin-bottom:15px;'>");
+                liveHtml.append("<b>").append(Messages.getString("RAGAssistant.AssistantLabel")).append(":</b> ")
+                        .append(markdownToHtml(streamingRawAnswer.toString()));
+                liveHtml.append("</div>");
+                liveHtml.append("</body></html>");
+
+                responsePane.setText(liveHtml.toString());
+                responsePane.setCaretPosition(responsePane.getDocument().getLength());
             }
 
             @Override
             protected void done() {
                 setUIBusy(false);
                 try {
+                    // Use get() to propagate any exception; the actual content comes
+                    // from streamingRawAnswer (accumulated via publish/process) if streaming
+                    // was active, otherwise fall back to the returned value directly.
                     String answer = get();
+                    // If streaming was used, streamingRawAnswer may already be full;
+                    // use it if non-empty to avoid re-processing the same content.
+                    if (streamingRawAnswer.length() > 0) {
+                        answer = streamingRawAnswer.toString();
+                    }
                     String htmlAnswer = markdownToHtml(answer);
                     if (contextLimitReached) {
                         String formattedWarning = String.format(

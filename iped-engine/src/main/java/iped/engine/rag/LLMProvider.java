@@ -36,6 +36,27 @@ public interface LLMProvider {
     String generateAnswer(String question, String context, java.util.List<RAGService.HistoryTurn> history)
             throws IOException, InterruptedException;
 
+    /**
+     * Generates a textual answer with real-time token streaming.
+     * 
+     * @param question      natural language query
+     * @param context       relevant text fragments retrieved from the search index
+     * @param history       recent conversation history turns
+     * @param tokenConsumer callback consumer for streaming response chunks
+     * @return complete textual response from the model
+     * @throws IOException          if network or IO errors occur
+     * @throws InterruptedException if thread is interrupted during call
+     */
+    default String generateAnswerStream(String question, String context, java.util.List<RAGService.HistoryTurn> history,
+            java.util.function.Consumer<String> tokenConsumer) throws IOException, InterruptedException {
+        // Fallback default implementation for non-streaming providers
+        String answer = generateAnswer(question, context, history);
+        if (tokenConsumer != null && answer != null) {
+            tokenConsumer.accept(answer);
+        }
+        return answer;
+    }
+
     default String getSystemPrompt(String question) {
         boolean isPt = "pt".equalsIgnoreCase(
                 iped.localization.LocaleResolver.getLocale().getLanguage());
