@@ -62,4 +62,18 @@ public interface CmdLineArgs {
 
     boolean isDownloadInternetData();
 
+    /**
+     * Quando {@code true}, o IPED roda apenas o pipeline YARA-X sobre um caso
+     * já processado (sem ingerir nova evidência), atualizando os campos
+     * {@code yara:tag} e {@code yara:match:<namespace>/<name>} no índice
+     * Lucene existente.
+     *
+     * <p>Default {@code false} (modo padrão de processamento). O método é
+     * {@code default} para preservar compatibilidade com implementações
+     * existentes de {@code CmdLineArgs}.</p>
+     */
+    default boolean isYaraOnly() {
+        return false;
+    }
+
 }

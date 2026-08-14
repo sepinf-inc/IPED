@@ -15,6 +15,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.Term;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -102,7 +103,10 @@ public class IndexTask extends AbstractTask {
             return;
         }
 
-        if (SkipCommitedTask.isAlreadyCommited(evidence)) {
+        boolean isCommitted = SkipCommitedTask.isAlreadyCommited(evidence);
+        CmdLineArgs cmdArgs = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        boolean yaraOnly = cmdArgs != null && cmdArgs.isYaraOnly();
+        if (isCommitted && !yaraOnly) {
             evidence.setToIgnore(true);
             return;
         }
@@ -146,7 +150,23 @@ public class IndexTask extends AbstractTask {
         FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
                 indexConfig.getTextOverlapSize());
         try {
-            worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader));
+            if (isCommitted && yaraOnly) {
+                // --yara-only re-index (EXPERIMENTAL): refresh an already-committed item's
+                // yara:* fields. updateDocuments(Term, Iterable) deletes the docs matching
+                // the trackId and atomically adds the new block.
+                //
+                // KNOWN LIMITATION: only the parent (metadata) doc carries trackId; the
+                // content-fragment docs carry fragParentId but NOT trackId, so they are
+                // NOT removed here -- re-running --yara-only can leave stale content
+                // fragments behind. Leaf items are also re-assigned a new id on reprocess
+                // (SkipCommitedTask only restores ids for containers/dirs/roots/split-text
+                // items), which can change the parent id. Treat --yara-only as experimental
+                // until the re-index path is hardened.
+                Term trackIdTerm = new Term(IndexItem.TRACK_ID, Util.getTrackID(evidence));
+                worker.writer.updateDocuments(trackIdTerm, new DocumentsIterable(evidence, fragReader));
+            } else {
+                worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader));
+            }
 
         } catch (IOException e) {
             if (IOUtil.isDiskFull(e))

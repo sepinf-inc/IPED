@@ -50,7 +50,11 @@
     <task class="iped.engine.task.carver.LedCarveTask"></task>
     <task class="iped.engine.task.carver.CarverTask"></task>
     <task class="iped.engine.task.carver.KnownMetCarveTask"></task>
-    
+
+    <!--YARA-X scan runs after carving (so carved subitems are scanned too) and before IndexTask
+        so the yara:tag and per-rule yara:match:<namespace>/<name> properties enter the Lucene document.-->
+    <task class="iped.engine.task.yara.YaraScanTask"></task>
+
     <task class="iped.engine.task.FragmentLargeBinaryTask"></task>
     <task class="iped.engine.task.EntropyTask"></task>
     <task class="iped.engine.task.MinIOTask"></task>
