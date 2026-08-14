@@ -47,6 +47,14 @@
         {"name": "Low", "value": "[1 TO 99]"}
     ]},
 
+    {"name": "Analyzed Chats", "prefix": "Analysis", "property": "ai\\:analysis\\:*", "value": "[300 TO *]", "children":[
+        {"name": "Very High", "value": "[800 TO *]"},
+        {"name": "High", "value": "[600 TO 799]"},
+        {"name": "Medium", "value": "[300 TO 599]"}
+    ]},
+
+    {"name": "Summarized Chats", "prefix": "Summary", "property": "ai\\:summary", "value": "*"},
+
     {"name": "Transcribed Audio", "prefix": "Transcript", "property": "audio\\:transcription", "value": "*"},
 
     {"name": "UFED Media Classification", "prefix": "UfedClassifier", "property": "ufed\\:mediaClasses", "value": "*", "dynamic": "true"},
