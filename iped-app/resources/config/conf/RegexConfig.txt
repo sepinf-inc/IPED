@@ -97,6 +97,8 @@ BR_BANK_ACCOUNT = (ag|agen|ag[eê]ncia)(\s|\.|:){0,10}[0-9]{4}(\-?[0-9xX])?.{0,1
 
 BR_CAR_PLATE = \b((([A-Z]{3})(()|-)([0-9]{4}))|(Placas?( |:|: )([A-Za-z]{3})( )([0-9]{4})))\b
 
+BR_RENAVAM = \b[0-9]{9,11}\b
+
 #You can get the oficial document at https://www.nfe.fazenda.gov.br/portal/principal.aspx
 #The first 2 chacartes is the State
 #11-Rondônia 12-Acre 13-Amazonas 14-Roraima 15-Pará 16-Amapá 17-Tocantins 21-Maranhão 22-Piauí 23-Ceará 24-Rio Grande do Norte 25-Paraíba 26-Pernambuco 27-Alagoas 28-Sergipe
