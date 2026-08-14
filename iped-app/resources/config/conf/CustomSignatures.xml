@@ -360,6 +360,19 @@
         <sub-class-of type="text/html"/>
     </mime-type>
 
+    <mime-type type="application/x-signal-db">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="signal.db"/>
+    </mime-type>
+
+    <mime-type type="application/x-signal-chat">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="message/x-signal-message">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+
     <mime-type type="application/sqlite-skype">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="main*.db"/>
