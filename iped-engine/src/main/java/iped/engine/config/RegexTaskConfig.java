@@ -153,7 +153,22 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<iped.
                 entry.suffix = params.length > 3 ? Integer.valueOf(params[3].trim()) : 0;
                 entry.regex = replace(values[1].trim());
                 replaceWordBoundaries(entry);
-                regexList.add(entry);
+
+                // To handle profiles, it is necessary to replace an existing entry with the
+                // same name (see #2942).
+                boolean found = false;
+                for (int i = 0; i < regexList.size(); i++) {
+                    RegexEntry prev = regexList.get(i);
+                    if (prev.getRegexName().equals(entry.regexName)) {
+                        // Replace existing entry
+                        regexList.set(i, entry);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    regexList.add(entry);
+                }
             }
         }
 
