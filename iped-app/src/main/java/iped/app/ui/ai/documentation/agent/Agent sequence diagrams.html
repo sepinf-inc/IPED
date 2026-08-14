@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Sequence Diagrams</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #2c3e50;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .component-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .component-box {
+      padding: 15px;
+      border-left: 5px solid;
+      background: #fdfdfd;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .view       { border-color: #3498db; }
+    .state      { border-color: #2ecc71; }
+    .controller { border-color: #e74c3c; }
+    .agent      { border-color: #e67e22; }
+    .mcp        { border-color: #9b59b6; }
+    .external   { border-color: #1abc9c; }
+
+    .diagram-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid #ddd;
+      margin-top: 20px;
+    }
+
+    code {
+      background: #eee;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-family: Consolas, monospace;
+    }
+
+    .flow-nav {
+      background: #eaf2f8;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+
+    .flow-nav a {
+      color: #2c3e50;
+      text-decoration: none;
+      margin-right: 15px;
+      display: inline-block;
+      padding: 5px 0;
+    }
+
+    .flow-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "default",
+      securityLevel: "loose",
+    });
+  </script>
+</head>
+<body>
+  <h1>Agent Sequence Diagrams</h1>
+  <p>
+    This document describes the agent feature in IPED, where an LLM-powered
+    agent (via <code>opencode</code> CLI) interacts with the IPED case through
+    an MCP (Model Context Protocol) server. The agent can search, read, and
+    reference forensic items using natural language.
+  </p>
+
+  <div class="flow-nav">
+    <strong>Jump to flow:</strong><br />
+    <a href="#flow-arch">Architecture Overview</a> &bull;
+    <a href="#flow-start">1. Start Agent Chat</a> &bull;
+    <a href="#flow-first">2. First Question (No Session)</a> &bull;
+    <a href="#flow-followup">3. Follow-Up Question (With Session)</a> &bull;
+    <a href="#flow-mcp-init">4. MCP Server Initialization</a> &bull;
+    <a href="#flow-mcp-tool">5. MCP Tool Execution</a> &bull;
+    <a href="#flow-error">6. Agent Error Recovery</a> &bull;
+    <a href="#flow-switch">7. Switch Agent Conversation</a> &bull;
+    <a href="#flow-delete">8. Delete Agent Conversation</a>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ARCHITECTURE OVERVIEW                                        -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-arch">
+    <h2>Architecture Overview</h2>
+    <div class="component-grid">
+      <div class="component-box view">
+        <h3>View Layer</h3>
+        <p>
+          <strong>AIAssistantPanel</strong>: top-level JFrame container. Controls
+          context-panel and quick-actions panel visibility (both hidden for
+          agent conversations).
+        </p>
+        <p>
+          <strong>SidebarPanel</strong>: provides "New Agent Chat" dropdown
+          option alongside "New Chat".
+        </p>
+        <p>
+          <strong>ChatAreaPanel</strong>: renders agent responses with
+          streaming.
+        </p>
+        <p>
+          <strong>AIMarkdownRenderer</strong>: parses agent output markdown
+          including <code>&lt;&lt;hash-chunkId&gt;&gt;</code> tokens.
+        </p>
+      </div>
+
+      <div class="component-box controller">
+        <h3>Controller / Orchestrator Layer</h3>
+        <p>
+          <strong>AIAssistantController</strong>: routes send actions to
+          <code>AIChatCoordinator.askAgentQuestion()</code> when the active
+          conversation is an <code>AgentConversation</code>.
+        </p>
+        <p>
+          <strong>AIChatCoordinator</strong>: extracts the session ID from the
+          active <code>AgentConversation</code>, creates the
+          <code>onSessionIdFound</code> callback, and delegates to
+          <code>OpenCodeAgentService</code>.
+        </p>
+      </div>
+
+      <div class="component-box agent">
+        <h3>Agent Layer (JVM Process)</h3>
+        <p>
+          <strong>OpenCodeAgentService</strong>: spawns <code>opencode</code>
+          as a subprocess. Manages command construction, session ID extraction
+          from JSON output, real-time JSON-Lines parsing, and local chat
+          history.
+        </p>
+        <p>
+          <strong>AgentConversation</strong>: extends <code>Conversation</code>,
+          adds <code>sessionId</code> field for multi-turn opencode session
+          persistence.
+        </p>
+      </div>
+
+      <div class="component-box external">
+        <h3>External Process: opencode CLI</h3>
+        <p>
+          <strong>opencode</strong>: standalone CLI agent. Reads
+          <code>opencode.json</code> config. Connects to a local LLM provider
+          (e.g. Qwen3.5-122B). Manages its own tool-calling loop. Outputs
+          JSON-Lines to stdout.
+        </p>
+        <p>
+          <strong>opencode.json</strong>: defines MCP server command
+          (<code>python -m src.main</code>), model provider, context limits.
+        </p>
+      </div>
+
+      <div class="component-box mcp">
+        <h3>MCP Server (Python, stdio transport)</h3>
+        <p>
+          <strong>FastMCP Server</strong>: registered as <code>iped</code> tool
+          provider in opencode. Runs inside the opencode process via stdio.
+        </p>
+        <p>
+          <strong>IPEDCaseManager</strong>: wraps Java IPED classes via PyJnius.
+          Opens the case, performs Lucene searches, reads item metadata/text.
+        </p>
+        <p>
+          <strong>JVM Bridge</strong>: initializes JVM with IPED classpath via
+          <code>jnius_config</code>. Provides <code>get_class()</code> and
+          <code>cast_to()</code> helpers.
+        </p>
+        <p>
+          <strong>MCP Tools</strong>: <code>search</code>,
+          <code>search_by_type</code>, <code>search_by_name</code>,
+          <code>get_searchable_fields</code>, <code>get_document</code>,
+          <code>get_document_content</code>, <code>get_document_text</code>,
+          <code>read</code>, <code>read_batch</code>,
+          <code>list_bookmarks</code>,           <code>get_bookmark</code>,
+          <code>list_sources</code>.
+        </p>
+      </div>
+
+      <div class="component-box state">
+        <h3>State Layer</h3>
+        <p>
+          <strong>ConversationManager</strong>: manages active conversation.
+          Agent conversations use <code>startNewConversation(true)</code>.
+        </p>
+        <p>
+          <strong>ConversationPersistence</strong>: saves agent conversations
+          with <code>agent_</code> prefix. Persists <code>sessionId</code> for
+          session resumption.
+        </p>
+        <p>
+          <strong>AgentConversation.sessionId</strong>: opencode session ID
+          extracted from JSON output via regex. Enables multi-turn context.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 1 — START AGENT CHAT                                   -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-start">
+    <h2>Flow 1: Start Agent Chat</h2>
+    <p>
+      The user selects "New Agent Chat" from the sidebar dropdown. The
+      controller creates an <code>AgentConversation</code>, hides the context
+      panel (agent mode doesn't use file context), clears previous state, and
+      appends a system message.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant Sidebar as SidebarPanel
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant Coord as AIChatCoordinator
+participant CtxMgr as AIContextManager
+participant ChatArea as ChatAreaPanel
+participant MainPanel as AIAssistantPanel
+
+User->>Sidebar: click dropdown, select "New Agent Chat"
+Sidebar->>Controller: onNewAgentChatRequested()
+Controller->>ConvMgr: startNewConversation(true)
+Note over ConvMgr: Creates AgentConversation (isAgentConversation=true)
+Controller->>MainPanel: setContextPanelVisible(false)
+Controller->>MainPanel: setTasksPanelVisible(false)
+Controller->>Controller: clearChatScreenAndMemory()
+Controller->>CtxMgr: clearContext()
+Controller->>Sidebar: updateConversationsList(conversations)
+Controller->>Controller: refreshChatArea()
+Controller->>ConvMgr: addMessageToActive(systemMessage)
+Note over ConvMgr: "Started a new agent conversation session."
+Controller->>Controller: refreshChatArea()
+Controller->>ChatArea: requestFocusToInput()
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 2 — FIRST QUESTION (NO SESSION)                        -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-first">
+    <h2>Flow 2: First Agent Question (No Session)</h2>
+    <p>
+      On the first question in a new agent conversation, no session ID exists.
+      <code>OpenCodeAgentService</code> spawns <code>opencode run</code> as a
+      subprocess. The opencode process starts the MCP server, connects to the
+      LLM, and begins a tool-calling loop. The session ID is extracted from the
+      JSON-Lines output and persisted for future turns.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant ChatArea as ChatAreaPanel
+participant Controller as AIAssistantController
+participant Coord as AIChatCoordinator
+participant AgentSvc as OpenCodeAgentService
+participant ConvMgr as ConversationManager
+participant Persist as ConversationPersistence
+participant MainPanel as AIAssistantPanel
+
+User->>ChatArea: type question and press Send
+ChatArea->>Controller: handleSendAction()
+Controller->>ConvMgr: getActiveConversation()
+Note over Controller: activeConv.isAgentConversation() == true
+Controller->>ConvMgr: addMessageToActive(userMessage)
+Controller->>ChatArea: setText("") (clear input)
+Controller->>MainPanel: setProcessing(true)
+Controller->>ChatArea: startMessageStreaming(assistantDraft)
+
+Controller->>Coord: askAgentQuestion(text, uiCallback, onComplete, onError)
+Coord->>ConvMgr: getActiveConversation()
+Coord->>Coord: sessionId = null (first turn)
+Coord->>AgentSvc: askAgentQuestion(text, uiCallback, onSessionIdFound, null, onComplete, onError)
+
+Note over AgentSvc: Background thread starts
+
+AgentSvc-->>Controller: uiCallback("**[Agent]:** Executando opencode...")
+
+AgentSvc->>AgentSvc: findMcpServerDir()
+Note over AgentSvc: Resolves: appRoot/scripts/mcp/iped-mcp-server
+AgentSvc->>AgentSvc: resolveOpencodeCommand()
+Note over AgentSvc: Resolves: APPDATA/npm/opencode.cmd or "opencode"
+
+AgentSvc->>AgentSvc: Build command
+Note over AgentSvc: opencode run &lt;question&gt; --auto --format json
+
+AgentSvc->>AgentSvc: ProcessBuilder.directory(mcpServerDir)
+AgentSvc->>AgentSvc: environment.put(OPENCODE_CONFIG, opencode.json)
+AgentSvc->>AgentSvc: process.start()
+AgentSvc->>AgentSvc: process.getOutputStream().close()
+
+loop read stdout (char[] chunks)
+    AgentSvc->>AgentSvc: buffer.append(chunk)
+
+    opt !sessionIdExtracted
+        AgentSvc->>AgentSvc: regex match "sessionID":"ses_xxx"
+        AgentSvc-->>Coord: onSessionIdFound(sessionId)
+        Coord->>ConvMgr: getActiveConversation()
+        Coord->>ConvMgr: agentConv.setSessionId(sessionId)
+        Coord-)Persist: saveConversation(agentConv) [async]
+    end
+
+    AgentSvc->>AgentSvc: extractTextFromJsonLines(completeLines)
+    Note over AgentSvc: Filters: text -> display, tool_use -> hide, step_start -> hide
+    AgentSvc-->>Controller: uiCallback(textContent)
+    Controller->>ChatArea: enqueueStreamingToken(token)
+end
+
+AgentSvc->>AgentSvc: process.waitFor()
+alt exitCode == 0 (success)
+    AgentSvc->>AgentSvc: chatHistory.add(user turn)
+    AgentSvc->>AgentSvc: chatHistory.add(assistant turn)
+else exitCode != 0 (failure)
+    AgentSvc-->>Controller: onError("process terminated with error code")
+end
+
+AgentSvc-->>Controller: onComplete()
+Controller->>ChatArea: pruneStreaming(onDrained)
+ChatArea->>ChatArea: commitDraft() or discardDraft()
+Controller->>ConvMgr: addMessageToActive(assistantDraft)
+Controller->>MainPanel: setProcessing(false)
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 3 — FOLLOW-UP QUESTION (WITH SESSION)                  -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-followup">
+    <h2>Flow 3: Follow-Up Agent Question (With Session)</h2>
+    <p>
+      On subsequent questions, the <code>sessionId</code> is passed to
+      <code>opencode --session &lt;id&gt;</code>. This allows opencode to
+      resume the previous conversation context, including prior tool calls and
+      LLM responses. The MCP server does not re-initialize since it runs inside
+      the same opencode process.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant ChatArea as ChatAreaPanel
+participant Controller as AIAssistantController
+participant Coord as AIChatCoordinator
+participant AgentSvc as OpenCodeAgentService
+participant ConvMgr as ConversationManager
+participant Persist as ConversationPersistence
+participant MainPanel as AIAssistantPanel
+
+User->>ChatArea: type follow-up question and press Send
+ChatArea->>Controller: handleSendAction()
+Controller->>ConvMgr: addMessageToActive(userMessage)
+Controller->>ChatArea: setText("") (clear input)
+Controller->>MainPanel: setProcessing(true)
+Controller->>ChatArea: startMessageStreaming(assistantDraft)
+
+Controller->>Coord: askAgentQuestion(text, uiCallback, onComplete, onError)
+Coord->>ConvMgr: getActiveConversation()
+Coord->>Coord: sessionId = agentConv.getSessionId()
+Note over Coord: sessionId is non-null (e.g. "ses_abc123")
+Coord->>AgentSvc: askAgentQuestion(text, uiCallback, onSessionIdFound, sessionId, onComplete, onError)
+
+AgentSvc->>AgentSvc: Build command
+Note over AgentSvc: opencode run &lt;question&gt; --auto --format json --session ses_abc123
+
+AgentSvc->>AgentSvc: process.start()
+
+loop read stdout
+    AgentSvc->>AgentSvc: extractTextFromJsonLines()
+    AgentSvc-->>Controller: uiCallback(textContent)
+    Controller->>ChatArea: enqueueStreamingToken(token)
+end
+
+AgentSvc->>AgentSvc: process.waitFor() (exitCode == 0)
+AgentSvc->>AgentSvc: chatHistory.add(user + assistant turns)
+AgentSvc-->>Controller: onComplete()
+Controller->>ChatArea: pruneStreaming(onDrained)
+Controller->>ConvMgr: addMessageToActive(assistantDraft)
+Controller->>MainPanel: setProcessing(false)
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 4 — MCP SERVER INITIALIZATION                           -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-mcp-init">
+    <h2>Flow 4: MCP Server Initialization</h2>
+    <p>
+      When <code>opencode</code> starts, it reads <code>opencode.json</code>
+      and launches the MCP server as a subprocess (<code>python -m src.main</code>).
+      The MCP server resolves paths automatically from its own file location
+      (<code>IPED_HOME</code> and <code>CASE_PATH</code> are derived relative to
+      <code>config.py</code>), auto-detects <code>JAVA_HOME</code> via a fallback
+      chain, validates configuration, initializes the JVM with IPED classpath,
+      opens the forensic case, and registers all tools.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+participant OC as opencode CLI
+participant Config as opencode.json
+participant MCP_Main as MCP Server (main.py)
+participant Settings as Settings (config.py)
+participant JVM as JVM Bridge (jvm_bridge.py)
+participant CaseMgr as IPEDCaseManager
+participant Tools as MCP Tools
+
+OC->>Config: read opencode.json
+Config-->>OC: mcp.iped.command = ["python", "-m", "src.main"]
+Config-->>OC: model = "local/Qwen3.5-122B"
+
+OC->>MCP_Main: spawn subprocess (stdio transport)
+Note over MCP_Main: Redirects native stdout to stderr so Java/PyJnius<br/>don't corrupt MCP JSON-RPC over stdio
+
+MCP_Main->>Settings: settings.validate()
+Settings->>Settings: Resolve IPED_HOME from config.py relative path (parents[4])
+Settings->>Settings: Resolve CASE_PATH from config.py relative path (parents[5])
+Settings->>Settings: Auto-detect JAVA_HOME: env → IPED/jre → system PATH
+Settings->>Settings: Check JVM_MAX_HEAP (env or default "4g")
+Settings-->>MCP_Main: errors (if any) or OK
+
+alt validation failed
+    MCP_Main->>MCP_Main: logger.error() + sys.exit(1)
+end
+
+MCP_Main->>JVM: ensure_jvm()
+JVM->>Settings: settings.classpath_jars
+Settings-->>JVM: iped-api.jar, iped-engine.jar, iped-utils.jar + lib/*.jar
+JVM->>JVM: jnius_config.add_options("-Xmx4g", "-Djava.awt.headless=true")
+JVM->>JVM: jnius_config.add_classpath(jars...)
+JVM-->>MCP_Main: JVM ready
+
+MCP_Main->>CaseMgr: open_case()
+CaseMgr->>CaseMgr: get_class("iped.engine.data.IPEDSource")
+CaseMgr->>CaseMgr: IPEDSource.checkIfIsCaseFolder(caseFile)
+alt single case
+    CaseMgr->>CaseMgr: IPEDSource(caseFile)
+    CaseMgr-->>MCP_Main: {type: "single", total_items: N}
+else multi-source
+    CaseMgr->>CaseMgr: IPEDMultiSource(caseFile)
+    CaseMgr-->>MCP_Main: {type: "multi", source_count: N, total_items: M}
+end
+
+MCP_Main->>Tools: register_tools()
+Note over Tools: 12 tools registered: search, search_by_type, search_by_name,
+Note over Tools: get_searchable_fields, get_document, get_document_content,
+Note over Tools: get_document_text, read, read_batch, list_bookmarks,
+Note over Tools: get_bookmark, list_sources
+
+MCP_Main->>MCP_Main: mcp.run(transport="stdio")
+Note over MCP_Main: Ready to receive tool calls from opencode
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 5 — MCP TOOL EXECUTION                                  -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-mcp-tool">
+    <h2>Flow 5: MCP Tool Execution</h2>
+    <p>
+      When the LLM decides to call a tool, opencode sends the tool invocation
+      to the MCP server over stdio. The MCP server executes the tool (which
+      may involve JVM calls via PyJnius), and returns the result. The LLM
+      receives the result and continues generating.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+participant LLM as LLM (Qwen3.5-122B)
+participant OC as opencode CLI
+participant AgentSvc as OpenCodeAgentService
+participant MCP as MCP Server
+participant CaseMgr as IPEDCaseManager
+participant JVM as JVM Bridge (PyJnius)
+participant IPED as IPED Java Classes
+
+LLM->>OC: tool_use: search(query="name:*.jpg")
+OC->>MCP: JSON-RPC: tools/call {"name":"search","arguments":{"query":"name:*.jpg"}}
+MCP->>CaseMgr: case_manager.search("name:*.jpg")
+CaseMgr->>JVM: get_class("iped.engine.search.IPEDSearcher")
+JVM-->>CaseMgr: IPEDSearcher class
+CaseMgr->>CaseMgr: IPEDSearcher(source, "name:*.jpg")
+CaseMgr->>CaseMgr: searcher.setNoScoring(true)
+CaseMgr->>IPED: searcher.search()
+IPED-->>CaseMgr: java_result
+CaseMgr->>CaseMgr: extract IDs from result
+CaseMgr-->>MCP: {total: N, ids: [...]}
+
+MCP->>CaseMgr: case_manager.get_item(doc_id) [enrichment loop]
+CaseMgr->>IPED: source.getItemByID(id)
+IPED-->>CaseMgr: item properties
+CaseMgr-->>MCP: enriched results with hashes
+
+MCP-->>OC: JSON-RPC result: {total, enriched_ids: [{id, hash, name}]}
+OC->>LLM: tool_result: search results with hashes
+
+Note over LLM: LLM processes results, may call more tools
+LLM->>OC: tool_use: read(source_id=0, doc_id=42)
+OC->>MCP: JSON-RPC: tools/call {"name":"read","arguments":{...}}
+MCP->>CaseMgr: case_manager.get_item(42, 0)
+CaseMgr->>IPED: source.getItemByID(42)
+IPED-->>CaseMgr: metadata
+MCP->>CaseMgr: case_manager.get_item_text(42, 0)
+CaseMgr->>IPED: item.getTextReader()
+IPED-->>CaseMgr: text content
+MCP-->>OC: {hash_info, metadata, content}
+OC->>LLM: tool_result: document metadata + text
+
+LLM->>OC: text response with [[hash-chunkId]] tokens
+OC-->>AgentSvc: JSON-Lines stdout with text content
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 6 — AGENT ERROR RECOVERY                               -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-error">
+    <h2>Flow 6: Agent Error Recovery</h2>
+    <p>
+      Agent errors can occur at three points: opencode process fails to start,
+      the process exits with a non-zero code, or an exception occurs during
+      execution. The error handler salvages any partial draft and appends a
+      system error message. Unlike the chatbot flow, there is no
+      initialization cache to invalidate.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+participant Controller as AIAssistantController
+participant Coord as AIChatCoordinator
+participant AgentSvc as OpenCodeAgentService
+participant ChatArea as ChatAreaPanel
+participant ConvMgr as ConversationManager
+participant Sidebar as SidebarPanel
+participant MainPanel as AIAssistantPanel
+
+Controller->>Coord: askAgentQuestion(...)
+
+Coord->>AgentSvc: askAgentQuestion(...)
+
+alt opencode process fails to start (exception)
+    AgentSvc--xController: uiCallback("Agent Error: &lt;exception&gt;")
+    AgentSvc--xController: onError("Agent Error: &lt;exception&gt;")
+    rect rgb(255, 240, 245)
+        Note over Controller: Salvage partial draft
+        Controller->>ChatArea: salvageStreamingDraft()
+        Note right of ChatArea: Internally calls commitDraft() or discardDraft()
+        ChatArea-->>Controller: partialDraft (or null)
+        alt partialDraft != null
+            Controller->>ConvMgr: addMessageToActive(partialDraft)
+            Controller->>Sidebar: updateConversationsList(conversations)
+        end
+    end
+    Controller->>ConvMgr: addMessageToActive(systemErrorMessage)
+    Controller->>MainPanel: setProcessing(false)
+
+else process exits with non-zero exit code
+    AgentSvc->>AgentSvc: process.waitFor() returns exitCode != 0
+    AgentSvc-->>Controller: uiCallback("[Agent Error]: process terminated with error code: N")
+    AgentSvc-->>Controller: onError("The opencode process terminated with error code: N")
+    rect rgb(255, 240, 245)
+        Controller->>ChatArea: salvageStreamingDraft()
+        ChatArea-->>Controller: partialDraft (or null)
+        alt partialDraft != null
+            Controller->>ConvMgr: addMessageToActive(partialDraft)
+            Controller->>Sidebar: updateConversationsList(conversations)
+        end
+    end
+    Controller->>ConvMgr: addMessageToActive(systemErrorMessage)
+    Controller->>MainPanel: setProcessing(false)
+
+else process exits normally but with partial output
+    AgentSvc->>AgentSvc: exitCode == 0
+    AgentSvc->>AgentSvc: chatHistory.add(user + assistant turns)
+    AgentSvc-->>Controller: onComplete()
+    Controller->>ChatArea: pruneStreaming(onDrained)
+    alt assistantDraft has content
+        Controller->>ConvMgr: addMessageToActive(assistantDraft)
+    end
+    Controller->>MainPanel: setProcessing(false)
+end
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 7 — SWITCH AGENT CONVERSATION                          -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-switch">
+    <h2>Flow 7: Switch Agent Conversation</h2>
+    <p>
+      Switching to a previous agent conversation restores the chat messages and
+      the <code>sessionId</code>. No background context restoration occurs
+      (agent conversations don't use the file context list). The coordinator
+      restores chat history for multi-turn awareness.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant Sidebar as SidebarPanel
+participant Controller as AIAssistantController
+participant ConvMgr as ConversationManager
+participant Coord as AIChatCoordinator
+participant ChatArea as ChatAreaPanel
+participant MainPanel as AIAssistantPanel
+
+User->>Sidebar: select agent conversation
+Sidebar->>Controller: onConversationSelected(conv)
+Controller->>Controller: isSwitchingChats = true
+Controller->>ConvMgr: setActiveConversation(conv)
+Controller->>MainPanel: setContextPanelVisible(false)
+Controller->>MainPanel: setTasksPanelVisible(false)
+
+Controller->>Coord: loadHistoricalContext(null, null, conv.messages)
+Note over Coord: Restores chatHistory (user + assistant turns only)
+Note over Coord: Restores agentService chatHistory
+
+Controller->>Controller: isSwitchingChats = false
+Controller->>ChatArea: forceDiscardStreaming()
+Controller->>Controller: refreshChatArea()
+Controller->>Sidebar: setSelectedValue(conv)
+
+Note over Controller: Agent path returns early.
+Note over Controller: No background context restoration.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 8 — DELETE AGENT CONVERSATION                          -->
+  <!-- ============================================================ -->
+  <div class="card" id="flow-delete">
+    <h2>Flow 8: Delete Agent Conversation</h2>
+    <p>
+      Deletion follows the same soft-delete pattern as standard conversations.
+      The file is saved with <code>status = "deleted"</code> and preserved on
+      disk. Agent files use the <code>agent_</code> prefix.
+    </p>
+    <div class="diagram-container">
+      <div class="mermaid">
+sequenceDiagram
+autonumber
+actor User
+participant Sidebar as SidebarPanel
+participant Controller as AIAssistantController
+participant Persist as ConversationPersistence
+participant ConvMgr as ConversationManager
+participant ChatArea as ChatAreaPanel
+participant CtxMgr as AIContextManager
+
+User->>Sidebar: click X on agent chat row
+Sidebar->>Controller: onDeleteRequested(conv)
+Controller->>Persist: deleteConversation(conv)
+Persist->>Persist: conv.setStatus("deleted")
+Persist->>Persist: saveConversation(conv)
+Note over Persist: File: agent_[uuid].json (preserved on disk)
+
+Controller->>ConvMgr: removeConversation(conv)
+
+alt deleted active chat
+    Controller->>ConvMgr: getConversations()
+    alt remaining conversations exist
+        Controller->>ConvMgr: setActiveConversation(remaining.get(0))
+        Controller->>Controller: loadConversation(remaining.get(0))
+    else no conversations remain
+        Controller->>ConvMgr: setActiveConversation(null)
+        Controller->>Controller: clearChatScreenAndMemory()
+        Controller->>CtxMgr: clearContext()
+        Controller->>Controller: refreshChatArea()
+    end
+end
+
+Controller->>Sidebar: updateConversationsList(conversations)
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
