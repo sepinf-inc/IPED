@@ -9,11 +9,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -26,19 +29,24 @@ import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
+import iped.engine.config.RAGConfig;
 import iped.engine.core.Worker.STATE;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.io.CloseFilterReader;
 import iped.engine.io.FragmentingReader;
 import iped.engine.io.ParsingReader;
+import iped.engine.rag.RAGService;
+import iped.engine.rag.RAGTextSanitizer;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.SkipCommitedTask;
 import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.Util;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.exception.IPEDException;
 import iped.parsers.standard.StandardParser;
+import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 
 /**
@@ -60,12 +68,30 @@ public class IndexTask extends AbstractTask {
     public static final String FRAG_PARENT_ID = "fragParentId";
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
+    /** Stored field: unique track-ID of a fragment document (used to locate it). */
+    public static final String FRAG_TRACK_ID = "fragTrackId";
+
+    /** KNN vector field: stores the text embedding of a fragment. */
+    public static final String CONTENT_EMBEDDING = "content_embedding";
+
+    /** Stored field: stores the original fragment text so RAGService can retrieve it during search. */
+    public static final String CONTENT_STORED = "content_stored";
+
+    /** Marker field: set to "1" on fragment child documents that have an embedding vector. */
+    public static final String HAS_EMBEDDING_FRAG = "hasEmbeddingFrag";
+
     private static final AtomicBoolean finished = new AtomicBoolean();
     private static final AtomicBoolean lastIDLoaded = new AtomicBoolean();
 
+    /** Global RAG statistics counters for final Statistics summary report. */
+    public static final java.util.concurrent.atomic.AtomicInteger totalEmbeddedDocs =
+            new java.util.concurrent.atomic.AtomicInteger(0);
+    public static final java.util.concurrent.atomic.AtomicInteger totalEmbeddedVectors =
+            new java.util.concurrent.atomic.AtomicInteger(0);
+
     private static FieldType contentField;
 
-    private static final FieldType getContentFieldType() {
+    public static final FieldType getContentFieldType() {
         if (contentField == null) {
             FieldType field = new FieldType();
             field.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
@@ -81,6 +107,15 @@ public class IndexTask extends AbstractTask {
     private StandardParser autoParser;
 
     private IndexTaskConfig indexConfig;
+    private RAGConfig ragConfig;
+
+    @Override
+    public String getName() {
+        if (ragConfig != null && ragConfig.isEnabled() && RAGService.getInstance() != null && RAGService.getInstance().isAvailable()) {
+            return "IndexTask [RAG]";
+        }
+        return super.getName();
+    }
 
     public static boolean isTreeNodeOnly(IItem item) {
         return (!item.isToAddToCase() && (item.isDir() || item.isRoot() || item.hasChildren()))
@@ -119,6 +154,11 @@ public class IndexTask extends AbstractTask {
 
         stats.updateLastId(evidence.getId());
 
+        RAGConfig ragConfig = ConfigurationManager.get().findObject(RAGConfig.class);
+        boolean luceneVectorMode = ragConfig != null
+                && ragConfig.isEnabled()
+                && "lucene".equalsIgnoreCase(ragConfig.getVectorStoreMode());
+
         if (textReader == null) {
             if (indexConfig.isIndexFileContents() && (indexConfig.isIndexUnallocated()
                     || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
@@ -143,10 +183,19 @@ public class IndexTask extends AbstractTask {
         if (textReader == null)
             textReader = new StringReader(""); //$NON-NLS-1$
 
-        FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
-                indexConfig.getTextOverlapSize());
+        int splitSize = indexConfig.getTextSplitSize();
+        int overlapSize = indexConfig.getTextOverlapSize();
+        boolean shouldEmbed = false;
+        if (ragConfig != null && ragConfig.isEnabled()) {
+            shouldEmbed = ragConfig.shouldEmbed(evidence);
+            if (shouldEmbed) {
+                splitSize = ragConfig.getChunkSize();
+                overlapSize = ragConfig.getChunkOverlap();
+            }
+        }
+        FragmentingReader fragReader = new FragmentingReader(textReader, splitSize, overlapSize);
         try {
-            worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader));
+            worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader, luceneVectorMode, ragConfig, shouldEmbed));
 
         } catch (IOException e) {
             if (IOUtil.isDiskFull(e))
@@ -163,59 +212,232 @@ public class IndexTask extends AbstractTask {
     private class DocumentsIterable implements Iterable<Document> {
 
         private IItem item;
-        private FragmentingReader fragReader;
-        private boolean hasMoreContentFrags, parentIndexed = false;
+        private java.util.List<String> rawFragmentTexts;
+        private java.util.List<String> fragmentTexts;
+        private java.util.List<float[]> vectors;
+        private boolean parentIndexed = false;
         private int numFrags = 0;
+        private final boolean luceneVectorMode;
+        private final boolean shouldEmbed;
+        private final int embDimension;
+        private final String globalId;
+        private FragmentingReader lazyReader; // for non-vector mode
 
-        private DocumentsIterable(IItem item, FragmentingReader fragReader) {
+        private DocumentsIterable(IItem item, FragmentingReader fragReader,
+                boolean luceneVectorMode, RAGConfig ragConfig, boolean shouldEmbed) {
             this.item = item;
-            this.fragReader = fragReader;
+            this.luceneVectorMode = luceneVectorMode;
+            this.shouldEmbed = shouldEmbed;
+
+            // Resolve embedding dimensions and global ID if in vector mode
+            int dim = 0;
+            String gid = null;
+            if (luceneVectorMode && ragConfig != null && shouldEmbed) {
+                dim = ragConfig.getEmbeddingDimensions();
+                gid = (String) item.getExtraAttribute(ExtraProperties.GLOBAL_ID);
+            }
+            this.embDimension = dim;
+            this.globalId = gid;
+
+            if (luceneVectorMode && shouldEmbed) {
+                // Read all fragments eagerly ONLY for RAG-whitelisted items.
+                // Raw text is preserved for BM25 lexical search (IndexItem.CONTENT)
+                // so no forensic terms are lost. Sanitized text is generated separately
+                // for RAG (CONTENT_STORED and embedding pipeline).
+                java.util.List<String> rawFrags = new java.util.ArrayList<>();
+                java.util.List<String> sanitizedFrags = new java.util.ArrayList<>();
+                try {
+                    String raw = captureText(fragReader);
+                    if (!raw.isEmpty()) {
+                        rawFrags.add(raw);
+                        sanitizedFrags.add(RAGTextSanitizer.sanitize(raw));
+                    }
+                    while (fragReader.nextFragment()) {
+                        raw = captureText(fragReader);
+                        if (!raw.isEmpty()) {
+                            rawFrags.add(raw);
+                            sanitizedFrags.add(RAGTextSanitizer.sanitize(raw));
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                this.rawFragmentTexts = rawFrags;
+                this.fragmentTexts = sanitizedFrags;
+
+                // Batch generate embeddings synchronously ONLY if there are non-empty text fragments
+                RAGService ragService = RAGService.getInstance();
+                if (!sanitizedFrags.isEmpty() && ragService != null && ragService.isAvailable()) {
+                    try {
+                        this.vectors = ragService.getEmbeddings(sanitizedFrags);
+                        if (this.vectors != null && !this.vectors.isEmpty()) {
+                            long validCount = this.vectors.stream().filter(v -> v != null && v.length > 0).count();
+                            if (validCount > 0) {
+                                totalEmbeddedDocs.incrementAndGet();
+                                totalEmbeddedVectors.addAndGet((int) validCount);
+                            }
+                        }
+                        LOGGER.debug("RAG: generated {} embeddings for {}", this.vectors != null ? this.vectors.size() : 0, item.getPath());
+                    } catch (Exception e) {
+                        LOGGER.error("RAG: Error generating embeddings for {}", item.getPath(), e);
+                    }
+                }
+            } else {
+                this.lazyReader = fragReader;
+            }
         }
 
-        public Iterator<Document> iterator() {
-            return new Iterator<Document>() {
+        public java.util.Iterator<Document> iterator() {
+            return new java.util.Iterator<Document>() {
+                private int index = 0;
+                private boolean hasMoreContentFrags = false;
 
                 public boolean hasNext() {
                     try {
                         while (worker.state != STATE.RUNNING) {
+                            synchronized (worker) {
+                                if (worker.state == STATE.PAUSING) {
+                                    worker.state = STATE.PAUSED;
+                                }
+                            }
                             Thread.sleep(1000);
                         }
                         if (Thread.interrupted()) {
                             throw new InterruptedException();
                         }
-                        hasMoreContentFrags = (numFrags == 0 || fragReader.nextFragment());
-                        return hasMoreContentFrags || !parentIndexed;
-
+                        if (luceneVectorMode && shouldEmbed) {
+                            return index < fragmentTexts.size() || !parentIndexed;
+                        } else {
+                            hasMoreContentFrags = (numFrags == 0 || lazyReader.nextFragment());
+                            return hasMoreContentFrags || !parentIndexed;
+                        }
                     } catch (InterruptedException | IOException e) {
                         throw new RuntimeException(e);
                     }
                 }
 
                 public Document next() {
-                    if (hasMoreContentFrags) {
-                        if (++numFrags > 1) {
-                            stats.incSplits();
-                            LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), item.getPath()); //$NON-NLS-1$
+                    if (luceneVectorMode && shouldEmbed) {
+                        if (index < fragmentTexts.size()) {
+                            String fragText = fragmentTexts.get(index);
+                            numFrags = index + 1;
+                            if (numFrags > 1) {
+                                stats.incSplits();
+                                if (shouldEmbed) {
+                                    LOGGER.debug("{} Splitting RAG text of {}", Thread.currentThread().getName(), item.getPath()); //$NON-NLS-1$
+                                } else {
+                                    LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), item.getPath()); //$NON-NLS-1$
+                                }
+                            }
+
+                            // child (content) document
+                            Document doc = new Document();
+                            doc.add(new IntPoint(FRAG_NUM, numFrags));
+                            doc.add(new IntPoint(FRAG_PARENT_ID, item.getId()));
+
+                            if (shouldEmbed && globalId != null) {
+                                String fragTrackId = globalId + "#" + numFrags;
+
+                                // Store the sanitized fragment text so the LLM context
+                                // contains only meaningful content (no RGB palette dumps).
+                                // fragText was already sanitized when added to fragmentTexts.
+                                doc.add(new StoredField(CONTENT_STORED, fragText));
+
+                                // StringField (stored) so it can be uniquely identified
+                                doc.add(new StringField(FRAG_TRACK_ID, fragTrackId, Field.Store.YES));
+
+                                // StringField (stored) containing the numeric parent ID
+                                doc.add(new StringField("fragParentNumericId", String.valueOf(item.getId()), Field.Store.YES));
+
+                                // Add pre-generated vector if available
+                                if (vectors != null && index < vectors.size()) {
+                                    float[] vector = vectors.get(index);
+                                    if (vector != null && vector.length > 0) {
+                                        doc.add(new org.apache.lucene.document.KnnVectorField(
+                                                CONTENT_EMBEDDING, vector,
+                                                org.apache.lucene.index.VectorSimilarityFunction.COSINE));
+                                        doc.add(new StringField(HAS_EMBEDDING_FRAG, "1", Field.Store.YES));
+                                    }
+                                }
+                            }
+
+                            // Index the raw text for BM25 lexical search (100% preserved, zero forensic data loss)
+                            String rawText = (rawFragmentTexts != null && index < rawFragmentTexts.size())
+                                    ? rawFragmentTexts.get(index)
+                                    : fragText;
+                            doc.add(new Field(IndexItem.CONTENT, new StringReader(rawText),
+                                    getContentFieldType()));
+
+                            index++;
+                            return doc;
+                        } else {
+                            if (numFrags > 1) {
+                                item.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
+                            }
+                            // Mark the parent item as having embeddings so it can be
+                            // filtered in the IPED UI (follows the textSplitted pattern).
+                            // Only set if at least one non-null vector was actually generated
+                            // (mirrors the same guard used when adding KnnVectorField to children).
+                            if (shouldEmbed && vectors != null
+                                    && vectors.stream().anyMatch(v -> v != null && v.length > 0)) {
+                                item.setExtraAttribute(ExtraProperties.HAS_EMBEDDING, Boolean.TRUE.toString());
+                            }
+                            long totalSize = 0;
+                            for (String s : fragmentTexts) {
+                                totalSize += s.length();
+                            }
+                            item.setExtraAttribute(TEXT_SIZE, totalSize);
+                            // parent (metadata) document
+                            Document doc = IndexItem.Document(item, output);
+                            parentIndexed = true;
+                            return doc;
                         }
-                        // child (content) document
-                        Document doc = new Document();
-                        doc.add(new IntPoint(FRAG_NUM, numFrags));
-                        doc.add(new IntPoint(FRAG_PARENT_ID, item.getId()));
-                        doc.add(new Field(IndexItem.CONTENT, new CloseFilterReader(fragReader), getContentFieldType()));
-                        return doc;
                     } else {
-                        if (numFrags > 1) {
-                            item.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
+                        // Standard lazy mode
+                        if (hasMoreContentFrags) {
+                            if (++numFrags > 1) {
+                                stats.incSplits();
+                                LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), item.getPath()); //$NON-NLS-1$
+                            }
+                            Document doc = new Document();
+                            doc.add(new IntPoint(FRAG_NUM, numFrags));
+                            doc.add(new IntPoint(FRAG_PARENT_ID, item.getId()));
+                            doc.add(new Field(IndexItem.CONTENT, new CloseFilterReader(lazyReader),
+                                    getContentFieldType()));
+                            return doc;
+                        } else {
+                            if (numFrags > 1) {
+                                item.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
+                            }
+                            item.setExtraAttribute(TEXT_SIZE, lazyReader.getTotalTextSize());
+                            // parent (metadata) document
+                            Document doc = IndexItem.Document(item, output);
+                            parentIndexed = true;
+                            return doc;
                         }
-                        item.setExtraAttribute(TEXT_SIZE, fragReader.getTotalTextSize());
-                        // parent (metadata) document
-                        Document doc = IndexItem.Document(item, output);
-                        parentIndexed = true;
-                        return doc;
                     }
                 }
-                
+
             };
+        }
+
+        /**
+         * Reads the current fragment from the FragmentingReader into a String.
+         * The String is then used both as a StoredField and as the text for the
+         * BM25 Field (via a StringReader), avoiding any double-read of the stream.
+         */
+        private String captureText(FragmentingReader reader) {
+            StringBuilder sb = new StringBuilder(4096);
+            char[] buf = new char[4096];
+            int n;
+            try {
+                while ((n = reader.read(buf, 0, buf.length)) != -1) {
+                    sb.append(buf, 0, n);
+                }
+            } catch (IOException e) {
+                LOGGER.warn("Error reading fragment text for embedding.", e);
+            }
+            return sb.toString();
         }
 
     }
@@ -259,6 +481,15 @@ public class IndexTask extends AbstractTask {
         loadExtraAttributes();
 
         this.autoParser = new StandardParser();
+
+        this.ragConfig = configurationManager.findObject(RAGConfig.class);
+        if (ragConfig != null && ragConfig.isEnabled()) {
+            try {
+                RAGService.initialize(output, ragConfig);
+            } catch (Exception e) {
+                LOGGER.error("RAG: Failed to initialise RAGService", e);
+            }
+        }
 
     }
 
