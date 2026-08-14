@@ -30,7 +30,7 @@ enableYahooNSFWDetection = false
 #
 # Prerequisites: Python and the TensorFlow, PyTorch or ONNX library, generated thumbnails for images and videos, file hashes
 #
-# This feature assigns the following properties to the image and video files: 
+# This feature assigns the following properties to the image and video files:
 #     ai:csamDetector:label - classification, possible values are csam, porn or other
 #     ai:csamDetector:csam, ai:csamDetector:porn, ai:csamDetector:other - confidence from 0 to 100 to each category
 # To video files the following properties are added, as well:
@@ -45,7 +45,7 @@ enableCSAMDetector = false
 # Enables QRcode detection and decoding
 enableQRCode = false
 
-# Ignore and exclude duplicated files with same hash from the processing and from the case. 
+# Ignore and exclude duplicated files with same hash from the processing and from the case.
 # WARNING: This feature is inherently DANGEROUS, as it could exclude from the case duplicated files with
 # different metadata (name, path, dates) like email attachments or files in relevant folders. See #574 and #931.
 ignoreDuplicates = false
@@ -68,8 +68,8 @@ expandContainers = true
 # Splitted images and snapshots are not supported for now.
 processEmbeddedDisks = true
 
-# Searches texts extracted from items by regular expressions 
-# like social numbers, emails, URLs, credit cards, money values, etc. 
+# Searches texts extracted from items by regular expressions
+# like social numbers, emails, URLs, credit cards, money values, etc.
 # New expressions can be configured in file "conf/RegexConfig.txt"
 enableRegexSearch = true
 
@@ -122,7 +122,7 @@ enableOCR = false
 enableAudioTranscription = false
 
 # Enables carving. "addUnallocated" must be enabled to scan unallocated space.
-# By default, our carving module scans many places in the evidence for deleted or embedded files. 
+# By default, our carving module scans many places in the evidence for deleted or embedded files.
 # Places to scan and file types to recover can be configured in "conf/CarverConfig.xml"
 enableCarving = false
 
@@ -171,3 +171,8 @@ enableHTMLReport = true
 # It performs classification of image and video files.
 # Advanced settings can be modified in file "conf/RemoteImageClassifierConfig.txt"
 enableRemoteImageClassifier = false
+
+# Enables BFAC Client
+# It connects to BFAC Server for submitting hashes and files for the BFAC known files database.
+# Advanced settings can be modified in file "conf/BFACConfig.txt"
+enableBFACClient = false
