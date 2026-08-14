@@ -49,7 +49,10 @@ public class HashTask extends AbstractTask {
 
     private static final int HASH_BUFFER_LEN = 1024 * 1024;
 
-    private static final ExecutorService executorService = Executors.newCachedThreadPool();
+    // Bounded pool: with W workers hashing large files in parallel, digest
+    // threads beyond the CPU count just oversubscribe the machine.
+    private static final ExecutorService executorService = Executors
+            .newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     public enum HASH {
         MD5("md5"), //$NON-NLS-1$
@@ -73,6 +76,8 @@ public class HashTask extends AbstractTask {
     private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
 
     private HashTaskConfig hashConfig;
+
+    private byte[] seqBuf;
 
     @Override
     public boolean isEnabled() {
@@ -130,52 +135,10 @@ public class HashTask extends AbstractTask {
 
         try (InputStream in = evidence.getBufferedInputStream()) {
 
-            byte[] readBuf = new byte[HASH_BUFFER_LEN];
-            byte[] hashBuf = new byte[HASH_BUFFER_LEN];
-            byte[] tempBuf = null;
-            int len;
-
-            AtomicReference<CountDownLatch> countDown = new AtomicReference<>(null);
-            AtomicReference<Exception> ex = new AtomicReference<Exception>(null);
-
-            while ((len = in.read(readBuf)) >= 0 && !Thread.currentThread().isInterrupted()) {
-
-                if (countDown.get() != null) {
-                    countDown.get().await();
-                }
-
-                countDown.set(new CountDownLatch(digestMap.size()));
-
-                // swap hashBuf <-> readBuf
-                tempBuf = hashBuf;
-                hashBuf = readBuf;
-                readBuf = tempBuf;
-
-                final int currLen = len;
-                final byte[] currHashBuf = hashBuf;
-                for (String algo : digestMap.keySet()) {
-                    executorService.execute(() -> {
-                        try {
-                            if (!algo.equals(HASH.EDONKEY.toString())) {
-                                digestMap.get(algo).update(currHashBuf, 0, currLen);
-                            } else {
-                                updateEd2k(currHashBuf, currLen);
-                            }
-                        } catch (Exception e) {
-                            ex.set(e);
-                        } finally {
-                            countDown.get().countDown();
-                        }
-                    });
-                }
-
-                if (ex.get() != null) {
-                    throw ex.get();
-                }
-            }
-
-            if (countDown.get() != null) {
-                countDown.get().await();
+            if (evidence.getLength() <= HASH_BUFFER_LEN) {
+                hashSequential(in);
+            } else {
+                hashPipelined(in);
             }
 
             boolean defaultHash = true;
@@ -207,6 +170,82 @@ public class HashTask extends AbstractTask {
 
         }
 
+    }
+
+    /**
+     * Single-chunk items (the vast majority): updating the digests inline is
+     * cheaper than one executor round-trip + latch per algorithm, and there is
+     * no next chunk to overlap with anyway.
+     */
+    private void hashSequential(InputStream in) throws Exception {
+        if (seqBuf == null) {
+            seqBuf = new byte[HASH_BUFFER_LEN];
+        }
+        int len;
+        while ((len = in.read(seqBuf)) >= 0 && !Thread.currentThread().isInterrupted()) {
+            for (String algo : digestMap.keySet()) {
+                if (!algo.equals(HASH.EDONKEY.toString())) {
+                    digestMap.get(algo).update(seqBuf, 0, len);
+                } else {
+                    updateEd2k(seqBuf, len);
+                }
+            }
+        }
+    }
+
+    /**
+     * Multi-chunk items: double buffering overlaps reading the next chunk with
+     * digesting the current one, and the digests of a chunk run in parallel.
+     */
+    private void hashPipelined(InputStream in) throws Exception {
+
+        byte[] readBuf = new byte[HASH_BUFFER_LEN];
+        byte[] hashBuf = new byte[HASH_BUFFER_LEN];
+        byte[] tempBuf = null;
+        int len;
+
+        AtomicReference<CountDownLatch> countDown = new AtomicReference<>(null);
+        AtomicReference<Exception> ex = new AtomicReference<Exception>(null);
+
+        while ((len = in.read(readBuf)) >= 0 && !Thread.currentThread().isInterrupted()) {
+
+            if (countDown.get() != null) {
+                countDown.get().await();
+            }
+
+            countDown.set(new CountDownLatch(digestMap.size()));
+
+            // swap hashBuf <-> readBuf
+            tempBuf = hashBuf;
+            hashBuf = readBuf;
+            readBuf = tempBuf;
+
+            final int currLen = len;
+            final byte[] currHashBuf = hashBuf;
+            for (String algo : digestMap.keySet()) {
+                executorService.execute(() -> {
+                    try {
+                        if (!algo.equals(HASH.EDONKEY.toString())) {
+                            digestMap.get(algo).update(currHashBuf, 0, currLen);
+                        } else {
+                            updateEd2k(currHashBuf, currLen);
+                        }
+                    } catch (Exception e) {
+                        ex.set(e);
+                    } finally {
+                        countDown.get().countDown();
+                    }
+                });
+            }
+
+            if (ex.get() != null) {
+                throw ex.get();
+            }
+        }
+
+        if (countDown.get() != null) {
+            countDown.get().await();
+        }
     }
 
     private static int CHUNK_SIZE = 9500 * 1024;
