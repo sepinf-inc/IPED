@@ -29,6 +29,7 @@ import org.apache.lucene.document.Document;
 import iped.app.ui.TreeViewModel.Node;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 
 public class TreeCellRenderer extends DefaultTreeCellRenderer {
 
@@ -42,6 +43,9 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
         boolean isDir = Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR)) || node.docId == -1;
         super.getTreeCellRendererComponent(tree, value, selected, expanded, !isDir, row, hasFocus);
 
+        boolean isDecodedReport = Boolean.parseBoolean(node.getDoc().get(ExtraProperties.DECODED_DATA))
+                && Boolean.parseBoolean(node.getDoc().get(BasicProps.HASCHILD));
+
         if (row == 0) {
             setIcon(rootIcon);
         } else if (isDir) {
@@ -50,8 +54,17 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
             Document doc = node.getDoc();
             String type = doc.get(BasicProps.TYPE);
             String contentType = doc.get(BasicProps.CONTENTTYPE);
-            Icon icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
-            setIcon(icon);
+            // a specific mime icon (e.g. an app chat preview) takes precedence over the
+            // generic decoded report folder icon, which is used only as a fallback
+            Icon mimeIcon = IconManager.getMimeIcon(contentType);
+            if (mimeIcon != null) {
+                setIcon(mimeIcon);
+            } else if (isDecodedReport) {
+                setIcon(IconManager.getReportFolderIcon(expanded));
+            } else {
+                Icon icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
+                setIcon(icon);
+            }
         }
 
         return this;

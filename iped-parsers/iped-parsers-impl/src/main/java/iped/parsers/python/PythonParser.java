@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -48,7 +49,7 @@ public class PythonParser extends AbstractParser {
     public static final String SEE_MANUAL = Messages.getString("PythonModule.SeeManual");
 
     private static final Map<Long, Jep> jepPerThread = new HashMap<>();
-    private static final Set<String> instancetPerThread = new HashSet<>();
+    private static final Set<String> instancePerThread = new HashSet<>();
     private static final Map<MediaType, PythonParser> mediaToParserMap = new ConcurrentHashMap<>();
     private static final Map<MediaType, Integer> mediaTypesToQueueOrder = new ConcurrentHashMap<>();
     private static final AtomicBoolean jepNotFoundPrinted = new AtomicBoolean();
@@ -65,14 +66,14 @@ public class PythonParser extends AbstractParser {
             config.redirectStdout(System.out);
             SharedInterpreter.setConfig(config);
 
-            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            if (SystemUtils.IS_OS_WINDOWS) {
                 String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
                 if (ipedRoot != null && new File(ipedRoot).exists()) {
-                    PyConfig pyConfig = new PyConfig();
+                    PyConfig pyConfig = PyConfig.python();
                     String pythonHome = ipedRoot + "/python";
-                    pyConfig.setPythonHome(pythonHome);
-                    pyConfig.setIgnoreEnvironmentFlag(1);
-                    pyConfig.setNoUserSiteDirectory(1);
+                    pyConfig.setHome(pythonHome);
+                    pyConfig.setUseEnvironment(false);
+                    pyConfig.setUserSiteDirectory(false);
                     MainInterpreter.setInitParams(pyConfig);
                     System.load(pythonHome + "/vcruntime140.dll");
                     System.load(pythonHome + "/python39.dll");
@@ -86,7 +87,7 @@ public class PythonParser extends AbstractParser {
     }
 
     @SuppressWarnings("unchecked")
-    public PythonParser(){
+    public PythonParser() {
 
         synchronized (this.getClass()) {
             if (inited) {
@@ -223,10 +224,10 @@ public class PythonParser extends AbstractParser {
 
     private String getInstanceMethod(String function) throws JepException {
         String instanceName = getInstanceName();
-        synchronized (instancetPerThread) {
-            if (!instancetPerThread.contains(instanceName)) {
+        synchronized (instancePerThread) {
+            if (!instancePerThread.contains(instanceName)) {
                 loadScript(getJep());
-                instancetPerThread.add(instanceName);
+                instancePerThread.add(instanceName);
             }
         }
         String ret = instanceName + "." + function;

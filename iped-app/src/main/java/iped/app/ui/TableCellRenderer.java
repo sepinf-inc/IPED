@@ -36,6 +36,8 @@ import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.task.index.IndexItem;
 import iped.localization.LocalizedProperties;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
@@ -89,9 +91,20 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
                         icon = IconManager.getFolderIcon();
                     } else {
+                        boolean isDecodedReport = Boolean.parseBoolean(doc.get(ExtraProperties.DECODED_DATA))
+                                && Boolean.parseBoolean(doc.get(BasicProps.HASCHILD));
                         String type = doc.get(IndexItem.TYPE);
                         String contentType = doc.get(IndexItem.CONTENTTYPE);
-                        icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
+                        // a specific mime icon (e.g. an app chat preview) takes precedence over the
+                        // generic decoded report folder icon, which is used only as a fallback
+                        Icon mimeIcon = IconManager.getMimeIcon(contentType);
+                        if (mimeIcon != null) {
+                            icon = mimeIcon;
+                        } else if (isDecodedReport) {
+                            icon = IconManager.getReportFolderIcon(false);
+                        } else {
+                            icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
+                        }
                     }
                 } catch (IOException e) {
                 }

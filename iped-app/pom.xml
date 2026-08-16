@@ -13,6 +13,7 @@
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
+        <aleapp.version>v2026.1.0</aleapp.version>
     </properties>
     
     <dependencies>
@@ -61,30 +62,56 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.0</version>
             </plugin>
-			<plugin>
-				<groupId>com.googlecode.maven-download-plugin</groupId>
-				<artifactId>download-maven-plugin</artifactId>
-				<version>1.6.8</version>
-				<executions>
-					<execution>
-						<id>download-regripper</id>
-						<goals>
-							<goal>wget</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<url>https://github.com/sepinf-inc/RegRipper3.0/archive/refs/tags/3.0-p3.zip</url>
-					<unpack>true</unpack>
-					<fileMappers>
-                      <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
-                        <pattern>RegRipper[^/]+/</pattern>
-                        <replacement>./</replacement>
-                      </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
-                    </fileMappers>
-					<outputDirectory>${tools.dir}/regripper</outputDirectory>
-				</configuration>
-			</plugin>
+            <plugin>
+                <groupId>io.github.download-maven-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>2.1.0</version>
+                <executions>
+                    <execution>
+                        <id>download-regripper</id>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/sepinf-inc/RegRipper3.0/archive/refs/tags/3.0-p3.zip</url>
+                            <unpack>true</unpack>
+                            <fileMappers>
+                                <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    <pattern>^RegRipper[^/]+/(.*)$</pattern>
+                                    <replacement>$1</replacement>
+                                </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                            </fileMappers>
+                            <outputDirectory>${tools.dir}/regripper</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>download-aleapp</id>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/abrignoni/ALEAPP/archive/refs/tags/${aleapp.version}.zip</url>
+                            <unpack>true</unpack>
+                            <fileMappers>
+                                <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    <pattern>^ALEAPP[^/]+/(.*)$</pattern>
+                                    <replacement>$1</replacement>
+                                </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                            </fileMappers>
+                            <excludes>
+                                <exclude>*/admin/</exclude>
+                                <exclude>*/assets/</exclude>
+                                <exclude>*/tests/</exclude>
+                                <exclude>**/*.md</exclude>
+                                <exclude>**/*.lcasedata</exclude>
+                                <exclude>**/*.alprofile</exclude>
+                                <exclude>*/aleappGUI.py</exclude>
+                            </excludes>
+                            <outputDirectory>${tools.dir}/aleapp</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -854,8 +881,6 @@
                 <version>2.18.1</version>
                 <configuration>
                     <testFailureIgnore>true</testFailureIgnore>
-                    <aggregate>true</aggregate>
-                    <linkXRef>true</linkXRef>
                 </configuration>
             </plugin>
         </plugins>

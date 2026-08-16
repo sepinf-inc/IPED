@@ -1,4 +1,4 @@
-﻿﻿########################################################################
+﻿########################################################################
 # Processing Settings
 ########################################################################
 
@@ -171,3 +171,8 @@ enableHTMLReport = true
 # It performs classification of image and video files.
 # Advanced settings can be modified in file "conf/RemoteImageClassifierConfig.txt"
 enableRemoteImageClassifier = false
+
+# Enables ALEAPP integration.
+# You can configure a custom path to the ALEAPP installation folder in conf/ALeappConfig.txt.
+enableAleapp = true
+

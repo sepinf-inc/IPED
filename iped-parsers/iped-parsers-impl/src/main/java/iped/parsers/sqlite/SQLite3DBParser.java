@@ -43,6 +43,7 @@ import iped.parsers.jdbc.JDBCTableReader;
 import iped.parsers.util.DelegatingConnection;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
+import iped.utils.DateUtil;
 import iped.utils.IOUtil;
 
 /**
@@ -123,11 +124,11 @@ public class SQLite3DBParser extends AbstractDBParser {
         return connection;
     }
 
-    private static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
+    public static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
         return exportRelatedFile(dbFile, "-wal", context, tmp);
     }
     
-    private static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
+    public static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
         return exportRelatedFile(dbFile, "-journal", context, tmp);
     }
     
@@ -156,6 +157,7 @@ public class SQLite3DBParser extends AbstractDBParser {
                         File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
                         try (InputStream in = relatedItem.getBufferedInputStream()) {
                             Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                            DateUtil.updatePathTimes(relatedFileTemp.toPath(), relatedItem);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

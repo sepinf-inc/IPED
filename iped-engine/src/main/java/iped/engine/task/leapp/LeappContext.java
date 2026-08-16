@@ -1,0 +1,69 @@
+package iped.engine.task.leapp;
+
+import java.util.List;
+
+import iped.data.IItem;
+import iped.data.IItemReader;
+import iped.engine.core.Worker;
+import jep.Jep;
+
+public class LeappContext {
+
+    private FileSeeker fileSeeker;
+    private Worker worker;
+    private PluginSpec plugin;
+    private Jep jep;
+    private IItem pluginItem;
+    
+    private List<IItemReader> foundFiles;
+
+    private static final ThreadLocal<LeappContext> threadLocal = new ThreadLocal<>();
+
+    private LeappContext(FileSeeker seeker, Worker worker, Jep jep, PluginSpec plugin,  IItem pluginItem, List<IItemReader> foundFiles) {
+        this.fileSeeker = seeker;
+        this.worker = worker;
+        this.plugin = plugin;
+        this.jep = jep;
+        this.foundFiles = foundFiles;
+        this.pluginItem = pluginItem;
+    }
+
+    public static LeappContext create(FileSeeker seeker, Worker worker, Jep jep, PluginSpec plugin, IItem pluginItem, List<IItemReader> foundFiles) {
+        LeappContext context = new LeappContext(seeker, worker, jep, plugin, pluginItem, foundFiles);
+        threadLocal.set(context);
+        return context;
+    }
+
+    public static void clear() {
+        threadLocal.remove();
+    }
+
+    public static LeappContext get() {
+        return threadLocal.get();
+    }
+
+    public FileSeeker getFileSeeker() {
+        return fileSeeker;
+    }
+
+    public Worker getWorker() {
+        return worker;
+    }
+
+    public PluginSpec getPlugin() {
+        return plugin;
+    }
+
+    public Jep getJep() {
+        return jep;
+    }
+
+    public IItem getPluginItem() {
+        return pluginItem;
+    }
+
+    public List<IItemReader> getFoundFiles() {
+        return foundFiles;
+    }
+
+}
