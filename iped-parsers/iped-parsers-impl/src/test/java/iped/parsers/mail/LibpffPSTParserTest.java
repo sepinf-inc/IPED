@@ -19,6 +19,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import iped.content.TikaManager;
+import iped.content.TikaManager.TikaConfigAlreadyInitializedException;
 import iped.parsers.mail.OutlookPSTParserTest.EmbeddedPSTParser;
 import iped.parsers.util.AbstractPkgTest;
 import iped.parsers.util.RepoToolDownloader;
@@ -43,6 +45,12 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
             RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
             System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/pffexport/");
         }
+
+        try {
+            TikaManager.initializeTikaConfig(false, false);
+        } catch (TikaConfigAlreadyInitializedException ignore) {
+        }
+
         psttracker = new EmbeddedPSTParser();
         pstContext = new ParseContext();
         pstContext.set(Parser.class, psttracker);

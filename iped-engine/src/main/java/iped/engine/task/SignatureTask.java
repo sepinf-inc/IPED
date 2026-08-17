@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -18,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.configuration.Configurable;
+import iped.content.TikaManager;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;
@@ -35,6 +35,8 @@ public class SignatureTask extends AbstractTask {
 
     private static final String[] HFS_ATTR_SUFFIX = { ":DATA", ":DECOMP", ":RSRC" };
 
+    private static volatile boolean initialized;
+
     private boolean processFileSignatures = true;
     private Detector detector;
 
@@ -44,7 +46,7 @@ public class SignatureTask extends AbstractTask {
             if (MediaTypes.getParentType(MediaType.parse("message/x-chat-message")).equals(MediaType.OCTET_STREAM)) {
                 throw new RuntimeException("Custom signature file not loaded!");
             }
-            detector = TikaConfig.getDefaultConfig().getDetector();
+            detector = TikaManager.getTikaConfig().getDetector();
         }
         return detector;
     }
@@ -124,7 +126,7 @@ public class SignatureTask extends AbstractTask {
                         evidence.getPath(), evidence.getLength(), e.toString());
             }
         }
-        evidence.setMediaType(MediaTypes.getMediaTypeRegistry().normalize(type));
+        evidence.setMediaType(MediaTypes.normalize(type));
     }
 
     private void setInputStreamFactory(TikaInputStream tis, IItem item) {
@@ -166,9 +168,13 @@ public class SignatureTask extends AbstractTask {
         processFileSignatures = config.isEnabled();
     }
 
-    public static void installCustomSignatures() {
-        SignatureConfig config = ConfigurationManager.get().findObject(SignatureConfig.class);
-        System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
+    public static synchronized void installCustomSignatures() {
+        if (!initialized) {
+            SignatureConfig config = ConfigurationManager.get().findObject(SignatureConfig.class);
+            System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
+
+            initialized = true;
+        }
     }
 
     @Override
