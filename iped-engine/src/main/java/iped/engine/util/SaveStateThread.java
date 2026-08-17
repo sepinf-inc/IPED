@@ -11,7 +11,7 @@ public class SaveStateThread extends Thread {
 
     private static SaveStateThread instance = getInstance();
 
-    private static final String BKP_DIR = "bkp"; //$NON-NLS-1$
+    public static final String BKP_DIR = "bkp"; //$NON-NLS-1$
 
     public static int MAX_BACKUPS = 10;
     public static long BKP_INTERVAL = 60; // seconds
