@@ -58,15 +58,16 @@ public class WAAccount extends WAContact {
             } else {
                 expr = xpath.compile("/map/string[@name=\"registration_jid\"]");
                 value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (StringUtils.isBlank(value)) {
-                    expr = xpath.compile("/map/string[@name=\"ph\"]");
-                    value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                }
                 if (StringUtils.isNotBlank(value)) {
-                    if (!value.endsWith(waSuffix)) {
-                        value += waSuffix;
-                    }
                     id = value;
+                } else {
+                    expr = xpath.compile("/map/string[@name=\"cc\"]");
+                    String cc = (String) expr.evaluate(doc, XPathConstants.STRING);
+                    expr = xpath.compile("/map/string[@name=\"ph\"]");
+                    String ph = (String) expr.evaluate(doc, XPathConstants.STRING);
+                    if (StringUtils.isNoneBlank(cc, ph)) {
+                        id = cc + ph + waSuffix;
+                    }
                 }
             }
 

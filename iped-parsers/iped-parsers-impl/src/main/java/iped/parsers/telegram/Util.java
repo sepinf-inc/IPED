@@ -20,24 +20,10 @@ package iped.parsers.telegram;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.Set;
 
 import iped.utils.IOUtil;
 
 public class Util {
-
-    private static final Set<String> zeroLengthHashes = new HashSet<String>();
-    static {
-        // Hashes of empty input (byte[0]), see issue #2157.
-        zeroLengthHashes.add("d41d8cd98f00b204e9800998ecf8427e"); // MD5
-        zeroLengthHashes.add("da39a3ee5e6b4b0d3255bfef95601890afd80709"); // SHA-1
-        zeroLengthHashes.add("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"); // SHA-256
-    }
-
-    public static boolean isValidHash(String hash) {
-        return hash != null && !hash.isBlank() && !zeroLengthHashes.contains(hash.toLowerCase());
-    }
 
     public static void invertByteArray(byte[] array, int start, int len) {
         for (int i = 0; i < len / 2; i++) {
