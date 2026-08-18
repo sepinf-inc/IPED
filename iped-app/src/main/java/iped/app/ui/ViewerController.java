@@ -104,6 +104,7 @@ public class ViewerController {
         // These are content-specific viewers (inside a single ViewersRepository)
         viewersRepository.addViewer(new ImageViewer());
         viewersRepository.addViewer(new CADViewer());
+        viewersRepository.addViewer(new AudioViewer());
         viewersRepository.addViewer(new HtmlViewer());
         viewersRepository.addViewer(new EmailViewer(new AttachmentSearcherImpl()));
         viewersRepository.addViewer(new MsgViewer());
