@@ -171,3 +171,8 @@ enableHTMLReport = true
 # It performs classification of image and video files.
 # Advanced settings can be modified in file "conf/RemoteImageClassifierConfig.txt"
 enableRemoteImageClassifier = false
+
+# Enables remote external image classifier.
+# It performs classification of image and video files using review priority and embeddings output.
+# Advanced settings can be modified in file "conf/RemoteImageExternalClassifierConfig.txt"
+enableRemoteImageExternalClassifier = true
