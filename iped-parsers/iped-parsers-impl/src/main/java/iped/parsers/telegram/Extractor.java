@@ -27,6 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -443,9 +444,12 @@ public class Extractor {
         ArrayList<MessageMultiMedia> msgs = new ArrayList<MessageMultiMedia>();
         if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
-                ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-                buffer.putLong(chat.getId());
-                stmt.setBytes(1, buffer.array());
+                byte[] bytesChatId = ByteBuffer.allocate(Long.BYTES).putLong(chat.getId()).array();
+                byte[] bytesMin = Arrays.copyOf(bytesChatId, 20);
+                byte[] bytesMax = Arrays.copyOf(bytesChatId, 20);
+                Arrays.fill(bytesMax, 8, 20, (byte) 0xFF);
+                stmt.setBytes(1, bytesMin);
+                stmt.setBytes(2, bytesMax);
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
                     ChatGroup cg = null;
@@ -758,7 +762,7 @@ public class Extractor {
 
     private static final String EXTRACT_MEDIAS_SQL_IOS = "SELECT key,value from t6 ";
 
-    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and "
+    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key, t7.value FROM t7 where t7.key between ? and ? and "
             + "substr(t7.value,1,1)=x'00'";
 
     private static final String EXTRACT_CONTACTS_SQL = "SELECT * FROM users";
