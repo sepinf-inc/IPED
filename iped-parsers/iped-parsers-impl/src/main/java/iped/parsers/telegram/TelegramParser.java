@@ -118,12 +118,11 @@ public class TelegramParser extends SQLite3DBParser {
 
     private void storeLinkedHashes(List<MessageMultiMedia> messages, Metadata metadata) {
         for (MessageMultiMedia mmm : messages) {
-            for (Message m : mmm.getMessages()) {
-                if (Util.isValidHash(m.getMediaHash())) {
-                    metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
-                    if (m.isFromMe())
-                        metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
-
+            Message m = mmm.getMessage();
+            if (m != null && Util.isValidHash(m.getMediaHash())) {
+                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
+                if (m.isFromMe()) {
+                    metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
                 }
             }
         }
@@ -272,7 +271,8 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.isDeleted()) {
                 meta.set(ExtraProperties.DELETED, Boolean.toString(true));
             }
-            for (String location : m.getLocations()) {
+            String location = m.getLocation();
+            if (location != null) {
                 meta.add(ExtraProperties.LOCATIONS, location);
             }
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
@@ -295,7 +295,8 @@ public class TelegramParser extends SQLite3DBParser {
 
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
 
-            for (Message media : m.getMessages()) {
+            Message media = m.getMessage();
+            if (media != null) {
                 meta.add("mediaName", media.getMediaName());
 
                 if (media.getMediaMime() != null) {

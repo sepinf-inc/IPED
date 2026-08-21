@@ -382,14 +382,14 @@ public class Extractor {
             if (msgs.size() > 0 && msgs.get(msgs.size() - 1).getId() == message.getId()) {
                 logger.debug("Message with mid {} is part of a media group, adding to the last MessageMultiMedia", mid);
                 MessageMultiMedia last = msgs.get(msgs.size() - 1);
-                last.addMessage(message);
+                last.setMessage(message);
 
             } else {
                 MessageMultiMedia mmm = new MessageMultiMedia(message.getId(), chat);
                 mmm.setFrom(message.getFrom());
                 mmm.setFromMe(message.isFromMe());
                 mmm.setDeleted(message.isDeleted());
-                mmm.addMessage(message);
+                mmm.setMessage(message);
                 msgs.add(mmm);
             }
 
@@ -493,7 +493,7 @@ public class Extractor {
                         mmm.setFrom(message.getFrom());
                         mmm.setFromMe(message.isFromMe());
                         mmm.setDeleted(message.isDeleted());
-                        mmm.addMessage(message);
+                        mmm.setMessage(message);
                         msgs.add(mmm);
                     }
                 }

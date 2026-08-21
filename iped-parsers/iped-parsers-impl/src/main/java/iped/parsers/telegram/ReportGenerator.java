@@ -138,7 +138,8 @@ public class ReportGenerator {
         while (currentMsg < c.getMessages().size()) {
             MessageMultiMedia mmm = c.getMessages().get(currentMsg++);
 
-            for (Message m : mmm.getMessages()) {
+            Message m = mmm.getMessage();
+            if (m != null) {
                 String thisDate = null;
                 if (m.getTimeStamp() != null) {
                     thisDate = dateFormat.format(m.getTimeStamp());
@@ -148,9 +149,7 @@ public class ReportGenerator {
                             + thisDate + "</div></div>"); //$NON-NLS-1$
                     lastDate = thisDate;
                 }
-
                 printMessage(out, m);
-
 
             }
             if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
