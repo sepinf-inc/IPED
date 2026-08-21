@@ -491,10 +491,7 @@ public class ReportGenerator {
                             + "\" width=\"40\" height=\"40\"/>"); //$NON-NLS-1$
 
         }
-        out.println(title + "</span>\n" //$NON-NLS-1$
-                + "</div>\n" //$NON-NLS-1$
-                + "<div id=\"conversation\">\n" //$NON-NLS-1$
-                + "<br/><br/><br/>"); //$NON-NLS-1$
+        out.println(title + "</span>\n</div>\n<div id=\"conversation\">\n");
 
         if (isDeleted && (isGroup || isChannel)) {
             out.print("<div class=\"linha\"><div class=\"recoveredChat\">");
