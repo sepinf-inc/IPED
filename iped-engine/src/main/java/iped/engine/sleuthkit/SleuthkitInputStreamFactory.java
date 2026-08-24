@@ -200,4 +200,10 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
         }
     }
 
+    @Override
+    public void close() {
+        if (content instanceof AbstractFile) {
+            ((AbstractFile) content).close();
+        }
+    }
 }
