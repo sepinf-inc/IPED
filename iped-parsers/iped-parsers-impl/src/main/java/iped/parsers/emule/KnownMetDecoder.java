@@ -18,20 +18,7 @@ public class KnownMetDecoder {
 
     public static List<KnownMetEntry> parseToList(InputStream is, int maxSize, boolean checkConstraints) throws IOException {
         List<KnownMetEntry> l = new ArrayList<KnownMetEntry>();
-        byte[] block = new byte[1 << 20];
-        byte[] b = new byte[0];
-        while (true) {
-            int read = is.read(block);
-            if (read <= 0)
-                break;
-            byte[] aux = new byte[b.length + read];
-            System.arraycopy(b, 0, aux, 0, b.length);
-            System.arraycopy(block, 0, aux, b.length, read);
-            b = aux;
-            if (b.length >= maxSize)
-                break;
-        }
-
+        byte[] b = is.readNBytes(maxSize);
         if (b.length < 5)
             return null;
         int numFiles = toInt(b, 1);
