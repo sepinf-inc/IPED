@@ -689,10 +689,15 @@ public class Item implements IItem {
             while (offset < data.length && (i = is.read(data, offset, data.length - offset)) != -1) {
                 offset += i;
             }
-            return true;
+            if (offset == data.length) {
+                return true;
+            }
+            LOGGER.warn("Not enough data read ({} / {}) from item {}", offset, data.length, getPath());
         } catch (IOException e) {
-            // ignore
+            LOGGER.warn("Error reading item " + getPath(), e);
         }
+        // Array "data" was not filled -> must be discarded.
+        data = null;
         return false;
     }
 
