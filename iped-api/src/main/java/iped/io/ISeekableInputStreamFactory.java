@@ -13,6 +13,6 @@ public interface ISeekableInputStreamFactory {
         return false;
     }
 
-    public default void close() {
+    public default void close() throws IOException {
     }
 }
