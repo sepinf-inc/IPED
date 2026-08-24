@@ -11,6 +11,7 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -194,6 +195,7 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
                 throw e2;
             }
         } else {
+            logger.warn("Error reading SleuthKit content from " + dataSource, e);
             throw new IOException(e);
         }
     }
