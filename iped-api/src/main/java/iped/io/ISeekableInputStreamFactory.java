@@ -13,4 +13,6 @@ public interface ISeekableInputStreamFactory {
         return false;
     }
 
+    public default void close() {
+    }
 }
