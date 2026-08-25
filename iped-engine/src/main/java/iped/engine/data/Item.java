@@ -766,29 +766,29 @@ public class Item implements IItem {
      * @throws IOException
      */
     public TikaInputStream getTikaStream() throws IOException {
-
-        File file = null;
-        if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
-            tis = TikaInputStream.get(file.toPath());
+        if (data != null) {
+            tis = TikaInputStream.get(data);
         } else {
-            if (tmpFile == null && tis != null && tis.hasFile()) {
-                tmpFile = tis.getFile();
-            }
-            // reset tis, it may have been set (and consumed) by a previous call of this
-            // method
-            tis = null;
-            if (tmpFile != null) {
-                try {
-                    tis = TikaInputStream.get(tmpFile.toPath());
-                } catch (IOException fnfe) {
-                    tmpFile = null;
+            File file = null;
+            if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
+                tis = TikaInputStream.get(file.toPath());
+            } else {
+                if (tmpFile == null && tis != null && tis.hasFile()) {
+                    tmpFile = tis.getFile();
                 }
-            }
-            if (tis == null && data != null) {
-                tis = TikaInputStream.get(data);
-            }
-            if (tis == null) {
-                tis = TikaInputStream.get(getBufferedInputStream());
+                // reset tis, it may have been set (and consumed) by a previous call of this
+                // method
+                tis = null;
+                if (tmpFile != null) {
+                    try {
+                        tis = TikaInputStream.get(tmpFile.toPath());
+                    } catch (IOException fnfe) {
+                        tmpFile = null;
+                    }
+                }
+                if (tis == null) {
+                    tis = TikaInputStream.get(getBufferedInputStream());
+                }
             }
         }
         addTmpResource(tis);
