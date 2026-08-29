@@ -50,6 +50,7 @@ import iped.viewers.LibreOfficeViewer;
 import iped.viewers.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import iped.viewers.MetadataViewer;
 import iped.viewers.MsgViewer;
+import iped.viewers.NfeViewer;
 import iped.viewers.MultiViewer;
 import iped.viewers.ReferencedFileViewer;
 import iped.viewers.TiffViewer;
@@ -107,6 +108,7 @@ public class ViewerController {
         viewersRepository.addViewer(new HtmlViewer());
         viewersRepository.addViewer(new EmailViewer(new AttachmentSearcherImpl()));
         viewersRepository.addViewer(new MsgViewer());
+        viewersRepository.addViewer(new NfeViewer());
         linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
         viewersRepository.addViewer(linkViewer);
         viewersRepository.addViewer(new IcePDFViewer());
@@ -205,7 +207,8 @@ public class ViewerController {
     public boolean validateViewer(AbstractViewer viewer) {
         if (viewer.equals(viewersRepository)) {
             if (viewersRepository.getPanel().isShowing()) {
-                if (officeViewer != null && viewersRepository.getCurrentViewer() != null && viewersRepository.getCurrentViewer().equals(officeViewer)) {
+                if (officeViewer != null && viewersRepository.getCurrentViewer() != null
+                        && viewersRepository.getCurrentViewer().equals(officeViewer)) {
                     new Thread() {
                         public void run() {
                             officeViewer.constructLOFrame();
@@ -305,7 +308,8 @@ public class ViewerController {
                 loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);
             if (dock != null) {
-                boolean hitsEnabled = viewFile != null && ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
+                boolean hitsEnabled = viewFile != null
+                        && ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
 
                 ((CButton) dock.getAction("prevHit")).setEnabled(hitsEnabled);
                 ((CButton) dock.getAction("nextHit")).setEnabled(hitsEnabled);
@@ -396,7 +400,8 @@ public class ViewerController {
                 .map(cm -> cm.getEnableTaskConfigurable(FaceRecognitionConfig.enableParam))
                 .map(e -> e.isEnabled())
                 .orElse(false);
-        boolean hasFaceRecognitionInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_COUNT) != null;
+        boolean hasFaceRecognitionInIndex = App.get().appCase.getLeafReader().getFieldInfos()
+                .fieldInfo(ExtraProperties.FACE_COUNT) != null;
         boolean enableHighlightFacesButton = faceRecognitionEnabled || hasFaceRecognitionInIndex;
 
         boolean ageEstimationEnabled = Optional
@@ -404,7 +409,8 @@ public class ViewerController {
                 .map(cm -> cm.getEnableTaskConfigurable(AgeEstimationConfig.enableParam))
                 .map(e -> e.isEnabled())
                 .orElse(false);
-        boolean hasAgeEstimationInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_AGE_LABELS) != null;
+        boolean hasAgeEstimationInIndex = App.get().appCase.getLeafReader().getFieldInfos()
+                .fieldInfo(ExtraProperties.FACE_AGE_LABELS) != null;
         boolean enableAgeEstimationCombo = ageEstimationEnabled || hasAgeEstimationInIndex;
 
         viewersRepository
