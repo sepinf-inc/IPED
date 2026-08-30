@@ -23,7 +23,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import iped.data.IItemReader;
 import iped.parsers.util.Messages;
@@ -41,6 +42,14 @@ public class ReportGenerator {
     private IItemSearcher searcher;
     private boolean firstFragment = true;
     private int currentMsg = 0;
+    private LinkedHashMap<String, byte[]> thumbCache = new LinkedHashMap<String, byte[]>(256) {
+        private static final long serialVersionUID = -2054580178285140707L;
+
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, byte[]> eldest) {
+            return size() > 256;
+        }
+    };
     
     private static final String emptyMD5 = "d41d8cd98f00b204e9800998ecf8427e";
 
@@ -166,16 +175,21 @@ public class ReportGenerator {
     }
 
     private TagHtml getThumbTag(Message m, String classnotfound) {
-        byte thumb[] = m.getThumb();
-
-        if (searcher != null && thumb == null && m.getMediaHash() != null && !m.getMediaHash().isBlank()) {
-            if (!m.getMediaHash().equalsIgnoreCase(emptyMD5)) {
-                IItemReader result = iped.parsers.util.Util.getFirstItem("md5:" + m.getMediaHash(), searcher);
-                if (result != null) {
-                    thumb = result.getThumb();
+        byte[] thumb = m.getThumb();
+        if (searcher != null && thumb == null) {
+            String md5 = m.getMediaHash();
+            if (md5 != null && !md5.isBlank() && !md5.equalsIgnoreCase(emptyMD5)) {
+                if (thumbCache.containsKey(md5)) {
+                    thumb = thumbCache.get(md5);
+                } else {
+                    IItemReader item = iped.parsers.util.Util.getFirstItem("md5:" + m.getMediaHash(), searcher);
+                    if (item != null) {
+                        thumb = item.getThumb();
+                    }
+                    thumbCache.put(md5, thumb);
                 }
             }
-        }
+        } 
 
         TagHtml img;
         if (thumb != null) {
