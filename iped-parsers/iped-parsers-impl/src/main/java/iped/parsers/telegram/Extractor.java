@@ -557,7 +557,9 @@ public class Extractor {
             name = searcher.escapeQuery(name);
         }
         String query = BasicProps.NAME + ":\"" + name + "\"";
-        query += size > 0 ? " && " + BasicProps.LENGTH + ":" + size : "";
+        if (size > 0) {
+            query += " && " + BasicProps.LENGTH + ":" + size;
+        }
         return query;
     }
 
