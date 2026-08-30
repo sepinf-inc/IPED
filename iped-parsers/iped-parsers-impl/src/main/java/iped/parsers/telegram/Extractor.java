@@ -562,11 +562,7 @@ public class Extractor {
     }
 
     private IItemReader getFileFromQuery(String query) {
-        List<IItemReader> result = iped.parsers.util.Util.getItems(query, searcher);
-        if (result != null && !result.isEmpty()) {
-            return result.get(0);
-        }
-        return null;
+        return iped.parsers.util.Util.getFirstItem(query, searcher);
     }
 
     protected void extractContacts() throws Exception {
@@ -655,7 +651,7 @@ public class Extractor {
     protected void searchAvatarFileName(Contact contact, List<PhotoData> photos) throws IOException {
         if (photos == null || searcher == null)
             return;
-        List<IItemReader> result = null;
+        IItemReader item = null;
         String name = null;
         for (PhotoData photo : photos) {
             if (photo.getName() != null) {
@@ -664,15 +660,15 @@ public class Extractor {
                 if (searcher != null) {
                     String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"  -" + BasicProps.LENGTH
                             + ":0";
-                    result = iped.parsers.util.Util.getItems(query, searcher);
-                }
-                if (result != null && !result.isEmpty()) {
-                    break;
+                    item = iped.parsers.util.Util.getFirstItem(query, searcher);
+                    if (item != null) {
+                        break;
+                    }
                 }
             }
         }
-        if (result != null && !result.isEmpty()) {
-            File f = result.get(0).getTempFile().getAbsoluteFile();
+        if (item != null) {
+            File f = item.getTempFile().getAbsoluteFile();
             contact.setAvatar(FileUtils.readFileToByteArray(f));
         }
     }

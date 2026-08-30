@@ -170,9 +170,9 @@ public class ReportGenerator {
 
         if (searcher != null && thumb == null && m.getMediaHash() != null && !m.getMediaHash().isBlank()) {
             if (!m.getMediaHash().equalsIgnoreCase(emptyMD5)) {
-                List<IItemReader> result = iped.parsers.util.Util.getItems("md5:" + m.getMediaHash(), searcher);
-                if (result != null && !result.isEmpty()) {
-                    thumb = result.get(0).getThumb();
+                IItemReader result = iped.parsers.util.Util.getFirstItem("md5:" + m.getMediaHash(), searcher);
+                if (result != null) {
+                    thumb = result.getThumb();
                 }
             }
         }

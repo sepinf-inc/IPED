@@ -263,6 +263,10 @@ public class Util {
         return items;
     }
 
+    public static IItemReader getFirstItem(String query, IItemSearcher searcher) {
+        return searcher == null ? null : searcher.searchFirst(query);
+    }
+
     public static String getExportPath(IItemReader item) {
         String hash = item.getHash();
         String ext = item.getType(); // $NON-NLS-1$
