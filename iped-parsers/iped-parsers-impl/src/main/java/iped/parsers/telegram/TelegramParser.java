@@ -376,6 +376,7 @@ public class TelegramParser extends SQLite3DBParser {
             for (Chat c : e.getChatList()) {
                 c.getMessages().addAll(e.extractMessagesIOS(c));
                 generateChat(c, useraccount, e, searcher, handler, extractor);
+                c.getMessages().clear();
             }
 
         } catch (SQLException e) {
