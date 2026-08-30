@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import iped.data.IItemReader;
+import iped.parsers.util.LRUCache;
 import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -42,15 +43,8 @@ public class ReportGenerator {
     private IItemSearcher searcher;
     private boolean firstFragment = true;
     private int currentMsg = 0;
-    private LinkedHashMap<String, byte[]> thumbCache = new LinkedHashMap<String, byte[]>(256) {
-        private static final long serialVersionUID = -2054580178285140707L;
+    private LRUCache<String, byte[]> thumbTagCache = new LRUCache<String, byte[]>(1024);
 
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, byte[]> eldest) {
-            return size() > 256;
-        }
-    };
-    
     private static final String emptyMD5 = "d41d8cd98f00b204e9800998ecf8427e";
 
     private String creatSpanTag(String text) {
@@ -179,17 +173,17 @@ public class ReportGenerator {
         if (searcher != null && thumb == null) {
             String md5 = m.getMediaHash();
             if (md5 != null && !md5.isBlank() && !md5.equalsIgnoreCase(emptyMD5)) {
-                if (thumbCache.containsKey(md5)) {
-                    thumb = thumbCache.get(md5);
+                if (thumbTagCache.containsKey(md5)) {
+                    thumb = thumbTagCache.get(md5);
                 } else {
                     IItemReader item = iped.parsers.util.Util.getFirstItem("md5:" + m.getMediaHash(), searcher);
                     if (item != null) {
                         thumb = item.getThumb();
                     }
-                    thumbCache.put(md5, thumb);
+                    thumbTagCache.put(md5, thumb);
                 }
             }
-        } 
+        }
 
         TagHtml img;
         if (thumb != null) {
