@@ -221,7 +221,10 @@ public class PostBoxCoding {
                 long id = photo.getLong("i");
                 long volume = photo.getLong("v");
                 int local = photo.getInteger("l");
-                int size = photo.getInteger("n");
+                long size = photo.getInteger("n");
+                if (size == 0) {
+                    size = photo.getLong("n64");
+                }
 
                 Photo f = null;
                 if (id != 0) {
@@ -728,13 +731,13 @@ public class PostBoxCoding {
 
 class Photo implements PhotoData {
     private String name;
-    private int size;
+    private long size;
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setSize(int size) {
+    public void setSize(long size) {
         this.size = size;
     }
 
