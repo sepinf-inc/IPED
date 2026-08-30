@@ -477,11 +477,21 @@ public class Extractor {
                             cg.addMember(message.getFrom().getId());
                         }
     
-                        if (message.getNames() != null && !message.getNames().isEmpty()) {
-                            for (PhotoData f : message.getNames()) {
-                                ArrayList<String> name = new ArrayList<>();
+                        List<PhotoData> l = message.getNames();
+                        if (l != null && !l.isEmpty()) {
+                            if (l.size() > 1) {
+                                Collections.sort(l, new Comparator<PhotoData>() {
+                                    public int compare(PhotoData a, PhotoData b) {
+                                        return Long.compare(b.getSize(), a.getSize());
+                                    }
+                                });
+                            }
+                            for (PhotoData f : l) {
+                                List<String> name = new ArrayList<>(1);
                                 name.add(f.getName());
-                                loadDocument(message, name, f.getSize());
+                                if (loadDocument(message, name, f.getSize())) {
+                                    break;
+                                }
                             }
                             if (message.getMediaMime() == null && message.getType() == null) {
                                 message.setMediaMime("attach");
@@ -503,7 +513,8 @@ public class Extractor {
         return msgs;
     }
 
-    private void loadDocument(Message message, List<String> names, long size) {
+    private boolean loadDocument(Message message, List<String> names, long size) {
+        boolean found = false;
         for (String name : names) {
             String query = getQuery(name, size);
             IItemReader item = getFileFromQuery(query);
@@ -517,9 +528,11 @@ public class Extractor {
                 message.setMediaExtension(item.getType());
                 message.setMediaItem(item);
                 message.setMediaComment(query);
+                found = true;
                 break;
             }
         }
+        return found;
     }
 
     private void loadLink(Message message, List<PhotoData> list) {
