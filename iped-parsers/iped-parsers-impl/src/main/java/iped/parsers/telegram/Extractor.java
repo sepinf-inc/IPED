@@ -580,6 +580,8 @@ public class Extractor {
         String query = BasicProps.NAME + ":\"" + name + "\"";
         if (size > 0) {
             query += " && " + BasicProps.LENGTH + ":" + size;
+        } else {
+            query += " && " + BasicProps.LENGTH + ":[1 TO *]";
         }
         return query;
     }
