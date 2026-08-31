@@ -23,8 +23,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import iped.data.IItemReader;
 import iped.parsers.util.LRUCache;
