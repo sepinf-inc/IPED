@@ -43,6 +43,7 @@ import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
+import iped.parsers.util.LRUCache;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
@@ -67,6 +68,7 @@ public class Extractor {
     private DecoderTelegramInterface androidDecoder = null;
 
     private Contact userAccount = null;
+    private LRUCache<String, IItemReader> loadDocumentCache = new LRUCache<String, IItemReader>(1024);
 
     public Extractor() {
     }
@@ -517,7 +519,13 @@ public class Extractor {
         boolean found = false;
         for (String name : names) {
             String query = getQuery(name, size);
-            IItemReader item = getFileFromQuery(query);
+            IItemReader item = null;
+            if (loadDocumentCache.containsKey(query)) {
+                item = loadDocumentCache.get(query);
+            } else {
+                item = getItemFromQuery(query);
+                loadDocumentCache.put(query, item);
+            }
             if (item != null) {
                 if (message.getMediaMime() == null) {
                     message.setMediaMime(item.getMediaType().toString());
@@ -538,7 +546,7 @@ public class Extractor {
     private void loadLink(Message message, List<PhotoData> list) {
         for (PhotoData p : list) {
             String query = getQuery(p.getName(), p.getSize());
-            IItemReader r = getFileFromQuery(query);
+            IItemReader r = getItemFromQuery(query);
             if (r != null) {
                 message.setLinkImage(r.getThumb());
                 message.setMediaHash(r.getHash());
@@ -553,7 +561,7 @@ public class Extractor {
     private void loadImage(Message message, List<PhotoData> list) {
         for (PhotoData p : list) {
             String query = getQuery(p.getName(), p.getSize());
-            IItemReader r = getFileFromQuery(query);
+            IItemReader r = getItemFromQuery(query);
             if (r != null) {
                 message.setThumb(r.getThumb());
                 message.setMediaHash(r.getHash());
@@ -567,7 +575,7 @@ public class Extractor {
 
     private String getQuery(String name, long size) {
         if (searcher != null) {
-            name = searcher.escapeQuery(name);
+            name = searcher.escapeQuery(name.toLowerCase());
         }
         String query = BasicProps.NAME + ":\"" + name + "\"";
         if (size > 0) {
@@ -576,7 +584,7 @@ public class Extractor {
         return query;
     }
 
-    private IItemReader getFileFromQuery(String query) {
+    private IItemReader getItemFromQuery(String query) {
         return iped.parsers.util.Util.getFirstItem(query, searcher);
     }
 
