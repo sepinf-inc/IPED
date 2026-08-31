@@ -28,7 +28,6 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.search.LoadIndexFields;
-import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.LanguageDetectTask;
 import iped.engine.task.NamedEntityTask;
 import iped.engine.task.PhotoDNALookup;
