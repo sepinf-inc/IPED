@@ -367,7 +367,8 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         for (int i = 0; i < customGroups.length; i++)
             fieldGroups[i] = customGroups[i];
         fieldGroups[fieldGroups.length - 2] = otherFields.toArray(new String[0]);
-        fieldGroups[fieldGroups.length - 1] = indexFields.clone();
+        String[] all = fieldGroups[fieldGroups.length - 1] = Arrays.copyOf(indexFields, indexFields.length + 1);
+        all[all.length - 1] = ResultTableModel.BOOKMARK_COL;
 
         for (String[] fields : fieldGroups)
             Arrays.sort(fields, Collator.getInstance());
