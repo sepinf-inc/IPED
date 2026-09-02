@@ -341,7 +341,7 @@ public class PostBoxCoding {
             String url = media.getString("u");
             String linkTitle = media.getString("ti");
             PostBoxObject im = media.getPostBoxObject("im");
-            int size = 0;
+            long size = 0;
             int action = 0;
             if (im != null && url != null) {
                 // link with image
@@ -372,6 +372,9 @@ public class PostBoxCoding {
                         long volume = data.getLong("v");
                         int local = data.getInteger("l");
                         size = data.getInteger("n");
+                        if (size == 0) {
+                            size = data.getLong("n64");
+                        }
                         String fname = data.getString("fn");
 
                         action = media.getInteger("_rawValue");
