@@ -492,9 +492,8 @@ public class ReportGenerator {
                 + " &nbsp; "); //$NON-NLS-1$
 
         if (avatar != null) {
-            out.println(
-                    "<img src=\"data:image/jpg;base64," + iped.parsers.whatsapp.Util.encodeBase64(avatar) //$NON-NLS-1$
-                            + "\" width=\"40\" height=\"40\"/>"); //$NON-NLS-1$
+            out.println("<img src=\"data:image/jpg;base64," + iped.parsers.whatsapp.Util.encodeBase64(avatar)
+                    + "\" width=\"60\" height=\"60\"/>");
 
         }
         out.println(title + "</span>\n</div>\n<div id=\"conversation\">\n");
