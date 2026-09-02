@@ -393,6 +393,14 @@ public class PostBoxCoding {
                             p.setName(String.valueOf(id));
                             p.setSize(size);
                             photos.add(p);
+
+                            if (size > 0) {
+                                // Add a fallback in ID searches to find thumbs of videos
+                                Photo p2 = new Photo();
+                                p2.setName(String.valueOf(id));
+                                p2.setSize(-1);
+                                photos.add(p2);
+                            }
                         }
 
                         if (volume != 0 && local != 0) {

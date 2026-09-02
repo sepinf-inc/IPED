@@ -523,19 +523,31 @@ public class Extractor {
             if (loadDocumentCache.containsKey(query)) {
                 item = loadDocumentCache.get(query);
             } else {
-                item = getItemFromQuery(query);
+                if (size <= 0) {
+                    List<IItemReader> items = getItemsFromQuery(query);
+                    for (IItemReader a : items) {
+                        if (a.getThumb() != null) {
+                            if (item == null || a.getLength() > item.getLength()) {
+                                item = a;
+                            }
+                        }
+                    }
+                } else {
+                    item = getItemFromQuery(query);
+                }
                 loadDocumentCache.put(query, item);
             }
             if (item != null) {
-                if (message.getMediaMime() == null) {
-                    message.setMediaMime(item.getMediaType().toString());
+                if (size != -1) {
+                    if (message.getMediaMime() == null) {
+                        message.setMediaMime(item.getMediaType().toString());
+                    }
+                    message.setMediaHash(item.getHash());
+                    message.setMediaExtension(item.getType());
+                    message.setMediaItem(item);
+                    message.setMediaComment(query);
                 }
-                logger.debug("Document mediaType: {}", message.getMediaMime());
-                message.setMediaHash(item.getHash());
                 message.setThumb(item.getThumb());
-                message.setMediaExtension(item.getType());
-                message.setMediaItem(item);
-                message.setMediaComment(query);
                 found = true;
                 break;
             }
@@ -577,11 +589,11 @@ public class Extractor {
         if (searcher != null) {
             name = searcher.escapeQuery(name.toLowerCase());
         }
-        String query = BasicProps.NAME + ":\"" + name + "\"";
+        String query = BasicProps.NAME + ":\"" + name + "\" && " + BasicProps.LENGTH + ":";
         if (size > 0) {
-            query += " && " + BasicProps.LENGTH + ":" + size;
+            query += size;
         } else {
-            query += " && " + BasicProps.LENGTH + ":[1 TO *]";
+            query += "[100 TO *]";
         }
         return query;
     }
@@ -590,6 +602,10 @@ public class Extractor {
         return iped.parsers.util.Util.getFirstItem(query, searcher);
     }
 
+    private List<IItemReader> getItemsFromQuery(String query) {
+        return iped.parsers.util.Util.getItems(query, searcher);
+    }
+    
     protected void extractContacts() throws Exception {
 
         if (conn != null) {
@@ -673,14 +689,16 @@ public class Extractor {
                         + BasicProps.NAME + ":jpg && " + BasicProps.LENGTH + ":[100 TO 10000000]";
                 List<IItemReader> items = iped.parsers.util.Util.getItems(query, searcher);
                 if (items != null) {
+                    IItemReader best = null;
                     for (IItemReader item : items) {
-                        byte[] t = item.getThumb();
-                        if (t != null) {
-                            byte[] thumb = contact.getAvatar();
-                            if (thumb == null || thumb.length < t.length) {
-                                contact.setAvatar(t);
+                        if (item.getThumb() != null) {
+                            if (best == null || item.getLength() > best.getLength()) {
+                                best = item;
                             }
                         }
+                    }
+                    if (best != null) {
+                        contact.setAvatar(best.getThumb());
                     }
                 }
             }
