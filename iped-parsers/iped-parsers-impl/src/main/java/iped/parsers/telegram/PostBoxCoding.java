@@ -25,8 +25,11 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
@@ -213,7 +216,7 @@ public class PostBoxCoding {
     }
 
     private List<PhotoData> getPhotos(PostBoxObject[] arr) {
-        List<PhotoData> photos = new ArrayList<>();
+        Set<PhotoData> photos = new HashSet<>();
 
         for (PostBoxObject a : arr) {
             PostBoxObject photo = a.getPostBoxObject("r");
@@ -226,34 +229,23 @@ public class PostBoxCoding {
                     size = photo.getLong("n64");
                 }
 
-                Photo f = null;
                 if (id != 0) {
-                    f = new Photo();
-                    f.setName(String.valueOf(id));
-                    f.setSize(size);
+                    Photo p = new Photo();
+                    p.setName(String.valueOf(id));
+                    p.setSize(size);
+                    photos.add(p);
                 }
 
                 if (volume != 0 && local != 0) {
-                    f = new Photo();
-                    f.setName(volume + "_" + local);
-                    f.setSize(size);
-                }
-                if (f != null) {
-                    boolean seen = false;
-                    for (PhotoData p : photos) {
-                        if (p.getSize() == f.getSize() && p.getName().equals(f.getName())) {
-                            seen = true;
-                            break;
-                        }
-                    }
-                    if (!seen) {
-                        photos.add(f);
-                    }
+                    Photo p = new Photo();
+                    p.setName(volume + "_" + local);
+                    p.setSize(size);
+                    photos.add(p);
                 }
             }
         }
 
-        return photos;
+        return new ArrayList<PhotoData>(photos);
     }
 
     private void readPeersIds(Message m, byte[] d) {
@@ -336,7 +328,7 @@ public class PostBoxCoding {
                 }
             }
 
-            List<PhotoData> files = new ArrayList<>();
+            Set<PhotoData> photos = new HashSet<>();
             String mimeType = null;
             String url = media.getString("u");
             String linkTitle = media.getString("ti");
@@ -350,14 +342,14 @@ public class PostBoxCoding {
                 if (sizes != null && sizes.length > 0) {
                     mimeType = "link/image";
                     logger.debug("url: {}", url);
-                    files = getPhotos(sizes);
+                    photos.addAll(getPhotos(sizes));
                 }
             } else {
                 PostBoxObject[] sizes = media.getPostBoxObjectArray("r");
                 if (sizes != null && sizes.length > 0) {
                     // image
                     mimeType = "image";
-                    files = getPhotos(sizes);
+                    photos.addAll(getPhotos(sizes));
 
                 } else {
                     // other documents
@@ -388,27 +380,27 @@ public class PostBoxCoding {
                         logger.debug("action: {}", action);
 
                         if (fname != null) {
-                            Photo f = new Photo();
+                            Photo p = new Photo();
                             logger.debug("name: {}", fname);
-                            f.setName(fname);
-                            f.setSize(size);
-                            files.add(f);
+                            p.setName(fname);
+                            p.setSize(size);
+                            photos.add(p);
                         }
 
                         if (id != 0) {
-                            Photo f = new Photo();
+                            Photo p = new Photo();
                             logger.debug("name: {}", id);
-                            f.setName(String.valueOf(id));
-                            f.setSize(size);
-                            files.add(f);
+                            p.setName(String.valueOf(id));
+                            p.setSize(size);
+                            photos.add(p);
                         }
 
                         if (volume != 0 && local != 0) {
-                            Photo f = new Photo();
-                            f.setName(volume + "_" + local);
-                            logger.debug("name: {}", f.getName());
-                            f.setSize(size);
-                            files.add(f);
+                            Photo p = new Photo();
+                            p.setName(volume + "_" + local);
+                            logger.debug("name: {}", p.getName());
+                            p.setSize(size);
+                            photos.add(p);
                         }
 
                         if (action == 2 || action == 3) {
@@ -441,10 +433,11 @@ public class PostBoxCoding {
             // m.setThumb(thumb);
             logger.debug("mimeType: {}", mimeType);
             m.setMediaMime(mimeType);
-            if (files.size() == 1) {
-                m.setMediaSize(files.get(0).getSize());
+            List<PhotoData> l = new ArrayList<>(photos);
+            if (l.size() >= 1) {
+                m.setMediaSize(l.get(0).getSize());
             }
-            m.setNames(files);
+            m.setNames(l);
             if (url != null) {
                 m.setLink(true);
                 if (mimeType == null) {
@@ -585,18 +578,27 @@ public class PostBoxCoding {
             }
             PostBoxObject[] objs = user.getPostBoxObjectArray("ph");
             if (objs != null && objs.length > 0) {
-                List<PhotoData> photos = new ArrayList<>();
+                Set<PhotoData> photos = new HashSet<>();
                 for (PostBoxObject o : objs) {
-                    long n1 = o.getLong("v");
-                    int n2 = o.getInteger("l");
-                    if (n1 != 0 && n2 != 0) {
-                        Photo p = new Photo();
-                        p.setName(n1 + "_" + n2);
-                        photos.add(p);
+                    PostBoxObject r = o.getPostBoxObject("r");
+                    if (r != null) {
+                        long n1 = r.getLong("v");
+                        int n2 = r.getInteger("l");
+                        if (n1 != 0 && n2 != 0) {
+                            Photo photo = new Photo();
+                            photo.setName(n1 + "_" + n2);
+                            photos.add(photo);
+                        }
+                        long p = r.getLong("p");
+                        if (p != 0) {
+                            Photo photo = new Photo();
+                            photo.setName(String.valueOf(p));
+                            photos.add(photo);
+                        }
                     }
                 }
                 if (!photos.isEmpty()) {
-                    c.setPhotos(photos);
+                    c.setPhotos(new ArrayList<PhotoData>(photos));
                 }
             }
         }
@@ -752,5 +754,22 @@ class Photo implements PhotoData {
     @Override
     public long getSize() {
         return size;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, size);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Photo other = (Photo) obj;
+        return Objects.equals(name, other.name) && size == other.size;
     }
 }

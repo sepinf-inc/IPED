@@ -173,7 +173,7 @@ public class Extractor {
                         androidDecoder.setDecoderData(dados, DecoderTelegramInterface.USER);
                         androidDecoder.getUserData(cont);
                         if (cont.getAvatar() == null && !androidDecoder.getPhotoData().isEmpty()) {
-                            searchAvatarFileName(cont, androidDecoder.getPhotoData());
+                            searchAvatar(cont, androidDecoder.getPhotoData());
                         }
                     }
                     cg = new Chat(chatId, cont, cont.getFullname());
@@ -185,7 +185,7 @@ public class Extractor {
                     Contact cont = getContact(chatId);
                     androidDecoder.getChatData(cont);
 
-                    searchAvatarFileName(cont, androidDecoder.getPhotoData());
+                    searchAvatar(cont, androidDecoder.getPhotoData());
 
                     ChatGroup group = new ChatGroup(chatId, cont, chatName);
 
@@ -621,7 +621,7 @@ public class Extractor {
                         if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
                             try {
                                 if (cont.getPhone() != null)
-                                    searchAvatarFileName(cont, cont.getPhotos());
+                                    searchAvatar(cont, cont.getPhotos());
                             } catch (IOException e) {
                                 // TODO: handle exception
                                 e.printStackTrace();
@@ -640,29 +640,19 @@ public class Extractor {
                 ResultSet rs = stmt.executeQuery();
                 if (rs == null)
                     return;
-                //int nphones = 0;
-                while (rs.next()) {
 
+                while (rs.next()) {
                     long id = rs.getLong("key");
-                    
                     if (id != 0) {
-                        Contact cont = getContact(id);
-                        if (cont.getName() == null) {
+                        Contact c = getContact(id);
+                        if (c.getName() == null) {
                             PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
-                            p.readContact(cont);
-    
+                            p.readContact(c);
                         }
-    
-                        //if (cont.getPhone() != null) {
-                        //   nphones++;
-                        //}
-                        // List<PhotoData> photo = d.getPhotoData();
-                        if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
+                        if (c.getAvatar() == null && c.getPhotos() != null && !c.getPhotos().isEmpty()) {
                             try {
-                                if (cont.getPhone() != null)
-                                    searchAvatarFileName(cont, cont.getPhotos());
+                                searchAvatar(c, c.getPhotos());
                             } catch (IOException e) {
-                                // TODO: handle exception
                                 e.printStackTrace();
                             }
                         }
@@ -670,31 +660,30 @@ public class Extractor {
                 }
             }
         }
-
     }
 
-    protected void searchAvatarFileName(Contact contact, List<PhotoData> photos) throws IOException {
-        if (photos == null || searcher == null)
+    protected void searchAvatar(Contact contact, List<PhotoData> photos) throws IOException {
+        if (photos == null || photos.isEmpty() || searcher == null) {
             return;
-        IItemReader item = null;
-        String name = null;
+        }
         for (PhotoData photo : photos) {
-            if (photo.getName() != null) {
-                name = photo.getName() + ".jpg";
-
-                if (searcher != null) {
-                    String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"  -" + BasicProps.LENGTH
-                            + ":0";
-                    item = iped.parsers.util.Util.getFirstItem(query, searcher);
-                    if (item != null) {
-                        break;
+            String name = photo.getName();
+            if (name != null && !name.isBlank()) {
+                String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name.toLowerCase()) + "\" && "
+                        + BasicProps.NAME + ":jpg && " + BasicProps.LENGTH + ":[100 TO 10000000]";
+                List<IItemReader> items = iped.parsers.util.Util.getItems(query, searcher);
+                if (items != null) {
+                    for (IItemReader item : items) {
+                        byte[] t = item.getThumb();
+                        if (t != null) {
+                            byte[] thumb = contact.getAvatar();
+                            if (thumb == null || thumb.length < t.length) {
+                                contact.setAvatar(t);
+                            }
+                        }
                     }
                 }
             }
-        }
-        if (item != null) {
-            File f = item.getTempFile().getAbsoluteFile();
-            contact.setAvatar(FileUtils.readFileToByteArray(f));
         }
     }
 

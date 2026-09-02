@@ -471,7 +471,7 @@ public class TelegramParser extends SQLite3DBParser {
         Extractor ex = new Extractor();
         IItemSearcher searcher = context.get(IItemSearcher.class);
         ex.setSearcher(searcher);
-        ex.searchAvatarFileName(user, user.getPhotos());
+        ex.searchAvatar(user, user.getPhotos());
         if (user.getAvatar() != null) {
             meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(user.getAvatar()));
         }
