@@ -229,7 +229,7 @@ public class ReportGenerator {
 
 
             out.println(div.toString());
-            out.println("<br/>");
+            out.println("<br>");
 
         } else {
             out.println(getThumbTag(message, "videoImg").toString()); //$NON-NLS-1$
@@ -296,7 +296,7 @@ public class ReportGenerator {
             out.println(img.toString());
         }
 
-        out.println("<br/>");
+        out.println("<br>");
 
     }
 
@@ -306,13 +306,13 @@ public class ReportGenerator {
 
     private void printImage(PrintWriter out, Message message, boolean isLink) {
         if (isLink) {
-            out.print("<b>" + Messages.getString("TelegramReport.Link") + "</b><br/>");
+            out.print("<b>" + Messages.getString("TelegramReport.Link") + "</b><br>");
             if (message.getUrl() != null) {
-                out.print(Messages.getString("TelegramReport.LinkURL") + ": " + format(message.getUrl()) + "<br/>");
+                out.print(Messages.getString("TelegramReport.LinkURL") + ": " + format(message.getUrl()) + "<br>");
             }
             if (message.getLinkTitle() != null) {
                 out.print(Messages.getString("TelegramReport.LinkTitle") + ": " + format(message.getLinkTitle())
-                        + "<br/>");
+                        + "<br>");
             }
         }
         if (message.getMediaHash() != null) {
@@ -342,7 +342,7 @@ public class ReportGenerator {
         } else if (!isLink) {
             out.println(getThumbTag(message, "imageImg").toString()); //$NON-NLS-1$
         }
-        out.println("<br/>");
+        out.println("<br>");
 
     }
 
@@ -373,13 +373,13 @@ public class ReportGenerator {
         } else {
             out.println(getThumbTag(message, "attachImg").toString()); //$NON-NLS-1$
         }
-        out.println("<br/>");
+        out.println("<br>");
 
     }
 
     private void printGeoLocation(PrintWriter out, Message message) {
         // toDo better handling Geo locations
-        out.println("Latitude: " + message.getLatitude() + "<br/>");
+        out.println("Latitude: " + message.getLatitude() + "<br>");
         out.println("Longitude: " + message.getLongitude());
     }
 
@@ -394,12 +394,12 @@ public class ReportGenerator {
 
     private void printMessage(PrintWriter out, Message message) {
 
-        out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
+        out.println("<div class=\"linha\" id=\"" + message.getId() + "\">");
+
         if (message.isFromMe()) {
-            out.println("<div class=\"bbr\"><div class=\"outgoing to\">"); //$NON-NLS-1$
+            out.println("<div class=\"bbr\"><div class=\"outgoing to\">");
         } else {
-            out.println(
-                    "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">"); //$NON-NLS-1$
+            out.println("<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">");
         }
         if (message.isDeleted()) {
             out.println("<span class=\"recovered\">"); //$NON-NLS-1$
@@ -410,7 +410,7 @@ public class ReportGenerator {
         Contact contact = message.getFrom();
         if (contact != null) {
             out.println("<span style=\"font-family: Arial; color: #b4c74b;\">" //$NON-NLS-1$
-                    + format(contact.toString()) + "</span><br/>"); //$NON-NLS-1$
+                    + format(contact.toString()) + "</span><br>"); //$NON-NLS-1$
         }
         if (message.getType() != null && !message.getType().isEmpty()) {
             out.print(format(message.getType()) + "<br>");
@@ -435,7 +435,7 @@ public class ReportGenerator {
 
         PoolData poolData = message.getPoolData();
         if (poolData != null) {
-            out.println("<b>" + Messages.getString("TelegramReport.Pool") + "</b><br/>" + format(poolData.getTitle()));
+            out.println("<b>" + Messages.getString("TelegramReport.Pool") + "</b><br>" + format(poolData.getTitle()));
             out.println("<ul>");
             for (String opt : poolData.getOptions()) {
                 out.println("<li>" + format(opt) + "</li>");
@@ -443,11 +443,24 @@ public class ReportGenerator {
             out.println("</ul>");
         }
 
+        int expired = message.getExpiredMedia();
+        if (expired >= 0) {
+            out.print("<span class=\"expired\">[ ");
+            if (expired == 0) {
+                out.print(Messages.getString("TelegramReport.ExpiredPhoto"));
+            } else if (expired == 1) {
+                out.print(Messages.getString("TelegramReport.ExpiredVideo"));
+            } else {
+                out.print(Messages.getString("TelegramReport.ExpiredMedia"));
+            }
+            out.println(" ]</span><br>");
+        }
         if (message.getData() != null) {
             out.print(format(message.getData()));
+            out.println("<br>");
+        } else if (expired < 0) {
+            out.println("<br>");
         }
-
-        out.println("<br/>");
 
         if (!message.getChildPornSets().isEmpty()) {
             out.print("<p><i>" + Messages.getString("TelegramReport.FoundInPedoHashDB") + " "

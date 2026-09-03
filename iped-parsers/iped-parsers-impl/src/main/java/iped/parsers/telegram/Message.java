@@ -58,6 +58,7 @@ public class Message implements MessageInterface {
     private PoolData poolData;
     private boolean isDeleted = false;
     private String recoveryString = null;
+    private int expiredMedia = -1;
 
     public long getId() {
         return id;
@@ -299,6 +300,14 @@ public class Message implements MessageInterface {
 
     public void setRecoveryString(String recoveryString) {
         this.recoveryString = recoveryString;
+    }
+
+    public int getExpiredMedia() {
+        return expiredMedia;
+    }
+
+    public void setExpiredMedia(int expiredMedia) {
+        this.expiredMedia = expiredMedia;
     }
 }
 

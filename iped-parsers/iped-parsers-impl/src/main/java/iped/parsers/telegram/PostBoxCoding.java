@@ -295,8 +295,9 @@ public class PostBoxCoding {
     }
 
     private static void loadThumb(PostBoxObject obj, Message m) {
-        if (obj.getBytes("itd") != null && obj.getBytes("itd").length > 0) {
-            byte thumb[] = decodeThumb(obj.getBytes("itd"));
+        byte[] itd = obj.getBytes("itd");
+        if (itd != null && itd.length > 0) {
+            byte[] thumb = decodeThumb(itd);
             if (m.getThumb() == null || thumb.length > m.getThumb().length) {
                 m.setThumb(thumb);
             }
@@ -308,6 +309,12 @@ public class PostBoxCoding {
         PostBoxObject media = obj.getPostBoxObject("_");
 
         if (media != null) {
+            int expiredMedia = media.getInteger("d", -1);
+            if (expiredMedia >= 0) {
+                // An "expired media" means the sender set a self-destruct timer.
+                m.setExpiredMedia(expiredMedia);
+                return;
+            }
             loadThumb(media, m);
             String phone = media.getString("pn");
             if (phone != null) {

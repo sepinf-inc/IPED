@@ -296,6 +296,12 @@ span.duration {
     text-decoration: none;
 }
 
+span.expired {
+    font-size: 80%;
+    color: #777777;
+    background-color: #00000022;
+}
+
 /*Quotes*/
 html {
     scroll-padding-top: var(--scroll-padding-top);
