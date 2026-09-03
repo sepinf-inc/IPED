@@ -27,6 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
+import iped.parsers.util.LRUCache;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
@@ -66,6 +68,7 @@ public class Extractor {
     private DecoderTelegramInterface androidDecoder = null;
 
     private Contact userAccount = null;
+    private LRUCache<String, IItemReader> loadDocumentCache = new LRUCache<String, IItemReader>(1024);
 
     public Extractor() {
     }
@@ -170,7 +173,7 @@ public class Extractor {
                         androidDecoder.setDecoderData(dados, DecoderTelegramInterface.USER);
                         androidDecoder.getUserData(cont);
                         if (cont.getAvatar() == null && !androidDecoder.getPhotoData().isEmpty()) {
-                            searchAvatarFileName(cont, androidDecoder.getPhotoData());
+                            searchAvatar(cont, androidDecoder.getPhotoData());
                         }
                     }
                     cg = new Chat(chatId, cont, cont.getFullname());
@@ -182,7 +185,7 @@ public class Extractor {
                     Contact cont = getContact(chatId);
                     androidDecoder.getChatData(cont);
 
-                    searchAvatarFileName(cont, androidDecoder.getPhotoData());
+                    searchAvatar(cont, androidDecoder.getPhotoData());
 
                     ChatGroup group = new ChatGroup(chatId, cont, chatName);
 
@@ -381,14 +384,14 @@ public class Extractor {
             if (msgs.size() > 0 && msgs.get(msgs.size() - 1).getId() == message.getId()) {
                 logger.debug("Message with mid {} is part of a media group, adding to the last MessageMultiMedia", mid);
                 MessageMultiMedia last = msgs.get(msgs.size() - 1);
-                last.addMessage(message);
+                last.setMessage(message);
 
             } else {
                 MessageMultiMedia mmm = new MessageMultiMedia(message.getId(), chat);
                 mmm.setFrom(message.getFrom());
                 mmm.setFromMe(message.isFromMe());
                 mmm.setDeleted(message.isDeleted());
-                mmm.addMessage(message);
+                mmm.setMessage(message);
                 msgs.add(mmm);
             }
 
@@ -443,9 +446,12 @@ public class Extractor {
         ArrayList<MessageMultiMedia> msgs = new ArrayList<MessageMultiMedia>();
         if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
-                ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-                buffer.putLong(chat.getId());
-                stmt.setBytes(1, buffer.array());
+                byte[] bytesChatId = ByteBuffer.allocate(Long.BYTES).putLong(chat.getId()).array();
+                byte[] bytesMin = Arrays.copyOf(bytesChatId, 20);
+                byte[] bytesMax = Arrays.copyOf(bytesChatId, 20);
+                Arrays.fill(bytesMax, 8, 20, (byte) 0xFF);
+                stmt.setBytes(1, bytesMin);
+                stmt.setBytes(2, bytesMax);
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
                     ChatGroup cg = null;
@@ -473,11 +479,21 @@ public class Extractor {
                             cg.addMember(message.getFrom().getId());
                         }
     
-                        if (message.getNames() != null && !message.getNames().isEmpty()) {
-                            for (PhotoData f : message.getNames()) {
-                                ArrayList<String> name = new ArrayList<>();
+                        List<PhotoData> l = message.getNames();
+                        if (l != null && !l.isEmpty()) {
+                            if (l.size() > 1) {
+                                Collections.sort(l, new Comparator<PhotoData>() {
+                                    public int compare(PhotoData a, PhotoData b) {
+                                        return Long.compare(b.getSize(), a.getSize());
+                                    }
+                                });
+                            }
+                            for (PhotoData f : l) {
+                                List<String> name = new ArrayList<>(1);
                                 name.add(f.getName());
-                                loadDocument(message, name, f.getSize());
+                                if (loadDocument(message, name, f.getSize())) {
+                                    break;
+                                }
                             }
                             if (message.getMediaMime() == null && message.getType() == null) {
                                 message.setMediaMime("attach");
@@ -489,7 +505,7 @@ public class Extractor {
                         mmm.setFrom(message.getFrom());
                         mmm.setFromMe(message.isFromMe());
                         mmm.setDeleted(message.isDeleted());
-                        mmm.addMessage(message);
+                        mmm.setMessage(message);
                         msgs.add(mmm);
                     }
                 }
@@ -499,29 +515,50 @@ public class Extractor {
         return msgs;
     }
 
-    private void loadDocument(Message message, List<String> names, long size) {
+    private boolean loadDocument(Message message, List<String> names, long size) {
+        boolean found = false;
         for (String name : names) {
             String query = getQuery(name, size);
-            IItemReader item = getFileFromQuery(query);
-            if (item != null) {
-                if (message.getMediaMime() == null) {
-                    message.setMediaMime(item.getMediaType().toString());
+            IItemReader item = null;
+            if (loadDocumentCache.containsKey(query)) {
+                item = loadDocumentCache.get(query);
+            } else {
+                if (size <= 0) {
+                    List<IItemReader> items = getItemsFromQuery(query);
+                    for (IItemReader a : items) {
+                        if (a.getThumb() != null) {
+                            if (item == null || a.getLength() > item.getLength()) {
+                                item = a;
+                            }
+                        }
+                    }
+                } else {
+                    item = getItemFromQuery(query);
                 }
-                logger.debug("Document mediaType: {}", message.getMediaMime());
-                message.setMediaHash(item.getHash());
+                loadDocumentCache.put(query, item);
+            }
+            if (item != null) {
+                if (size != -1) {
+                    if (message.getMediaMime() == null) {
+                        message.setMediaMime(item.getMediaType().toString());
+                    }
+                    message.setMediaHash(item.getHash());
+                    message.setMediaExtension(item.getType());
+                    message.setMediaItem(item);
+                    message.setMediaComment(query);
+                }
                 message.setThumb(item.getThumb());
-                message.setMediaExtension(item.getType());
-                message.setMediaItem(item);
-                message.setMediaComment(query);
+                found = true;
                 break;
             }
         }
+        return found;
     }
 
     private void loadLink(Message message, List<PhotoData> list) {
         for (PhotoData p : list) {
             String query = getQuery(p.getName(), p.getSize());
-            IItemReader r = getFileFromQuery(query);
+            IItemReader r = getItemFromQuery(query);
             if (r != null) {
                 message.setLinkImage(r.getThumb());
                 message.setMediaHash(r.getHash());
@@ -536,7 +573,7 @@ public class Extractor {
     private void loadImage(Message message, List<PhotoData> list) {
         for (PhotoData p : list) {
             String query = getQuery(p.getName(), p.getSize());
-            IItemReader r = getFileFromQuery(query);
+            IItemReader r = getItemFromQuery(query);
             if (r != null) {
                 message.setThumb(r.getThumb());
                 message.setMediaHash(r.getHash());
@@ -550,21 +587,25 @@ public class Extractor {
 
     private String getQuery(String name, long size) {
         if (searcher != null) {
-            name = searcher.escapeQuery(name);
+            name = searcher.escapeQuery(name.toLowerCase());
         }
-        String query = BasicProps.NAME + ":\"" + name + "\"";
-        query += size > 0 ? " && " + BasicProps.LENGTH + ":" + size : "";
+        String query = BasicProps.NAME + ":\"" + name + "\" && " + BasicProps.LENGTH + ":";
+        if (size > 0) {
+            query += size;
+        } else {
+            query += "[100 TO *]";
+        }
         return query;
     }
 
-    private IItemReader getFileFromQuery(String query) {
-        List<IItemReader> result = iped.parsers.util.Util.getItems(query, searcher);
-        if (result != null && !result.isEmpty()) {
-            return result.get(0);
-        }
-        return null;
+    private IItemReader getItemFromQuery(String query) {
+        return iped.parsers.util.Util.getFirstItem(query, searcher);
     }
 
+    private List<IItemReader> getItemsFromQuery(String query) {
+        return iped.parsers.util.Util.getItems(query, searcher);
+    }
+    
     protected void extractContacts() throws Exception {
 
         if (conn != null) {
@@ -596,7 +637,7 @@ public class Extractor {
                         if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
                             try {
                                 if (cont.getPhone() != null)
-                                    searchAvatarFileName(cont, cont.getPhotos());
+                                    searchAvatar(cont, cont.getPhotos());
                             } catch (IOException e) {
                                 // TODO: handle exception
                                 e.printStackTrace();
@@ -615,29 +656,19 @@ public class Extractor {
                 ResultSet rs = stmt.executeQuery();
                 if (rs == null)
                     return;
-                //int nphones = 0;
-                while (rs.next()) {
 
+                while (rs.next()) {
                     long id = rs.getLong("key");
-                    
                     if (id != 0) {
-                        Contact cont = getContact(id);
-                        if (cont.getName() == null) {
+                        Contact c = getContact(id);
+                        if (c.getName() == null) {
                             PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
-                            p.readContact(cont);
-    
+                            p.readContact(c);
                         }
-    
-                        //if (cont.getPhone() != null) {
-                        //   nphones++;
-                        //}
-                        // List<PhotoData> photo = d.getPhotoData();
-                        if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
+                        if (c.getAvatar() == null && c.getPhotos() != null && !c.getPhotos().isEmpty()) {
                             try {
-                                if (cont.getPhone() != null)
-                                    searchAvatarFileName(cont, cont.getPhotos());
+                                searchAvatar(c, c.getPhotos());
                             } catch (IOException e) {
-                                // TODO: handle exception
                                 e.printStackTrace();
                             }
                         }
@@ -645,31 +676,32 @@ public class Extractor {
                 }
             }
         }
-
     }
 
-    protected void searchAvatarFileName(Contact contact, List<PhotoData> photos) throws IOException {
-        if (photos == null || searcher == null)
+    protected void searchAvatar(Contact contact, List<PhotoData> photos) throws IOException {
+        if (photos == null || photos.isEmpty() || searcher == null) {
             return;
-        List<IItemReader> result = null;
-        String name = null;
+        }
         for (PhotoData photo : photos) {
-            if (photo.getName() != null) {
-                name = photo.getName() + ".jpg";
-
-                if (searcher != null) {
-                    String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"  -" + BasicProps.LENGTH
-                            + ":0";
-                    result = iped.parsers.util.Util.getItems(query, searcher);
-                }
-                if (result != null && !result.isEmpty()) {
-                    break;
+            String name = photo.getName();
+            if (name != null && !name.isBlank()) {
+                String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name.toLowerCase()) + "\" && "
+                        + BasicProps.NAME + ":jpg && " + BasicProps.LENGTH + ":[100 TO 10000000]";
+                List<IItemReader> items = iped.parsers.util.Util.getItems(query, searcher);
+                if (items != null) {
+                    IItemReader best = null;
+                    for (IItemReader item : items) {
+                        if (item.getThumb() != null) {
+                            if (best == null || item.getLength() > best.getLength()) {
+                                best = item;
+                            }
+                        }
+                    }
+                    if (best != null) {
+                        contact.setAvatar(best.getThumb());
+                    }
                 }
             }
-        }
-        if (result != null && !result.isEmpty()) {
-            File f = result.get(0).getTempFile().getAbsoluteFile();
-            contact.setAvatar(FileUtils.readFileToByteArray(f));
         }
     }
 
@@ -758,7 +790,7 @@ public class Extractor {
 
     private static final String EXTRACT_MEDIAS_SQL_IOS = "SELECT key,value from t6 ";
 
-    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and "
+    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key, t7.value FROM t7 where t7.key between ? and ? and "
             + "substr(t7.value,1,1)=x'00'";
 
     private static final String EXTRACT_CONTACTS_SQL = "SELECT * FROM users";

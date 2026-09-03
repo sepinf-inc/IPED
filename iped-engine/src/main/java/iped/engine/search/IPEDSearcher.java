@@ -122,6 +122,13 @@ public class IPEDSearcher implements IIPEDSearcher {
             collector.cancel();
     }
 
+    public SearchResult searchFirst() throws IOException {
+        if (ipedCase instanceof IPEDMultiSource)
+            throw new UnsupportedOperationException("Use multiSearch() method for IPEDMultiSource!"); //$NON-NLS-1$
+
+        return luceneSearch().getFirstSearchResult(ipedCase);
+    }
+
     public SearchResult search() throws IOException {
         if (ipedCase instanceof IPEDMultiSource)
             throw new UnsupportedOperationException("Use multiSearch() method for IPEDMultiSource!"); //$NON-NLS-1$
