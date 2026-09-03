@@ -443,9 +443,11 @@ public class ReportGenerator {
             out.println("</ul>");
         }
 
+        boolean info = false;
+
         int expired = message.getExpiredMedia();
         if (expired >= 0) {
-            out.print("<span class=\"expired\">[ ");
+            out.print("<span class=\"info\">[ ");
             if (expired == 0) {
                 out.print(Messages.getString("TelegramReport.ExpiredPhoto"));
             } else if (expired == 1) {
@@ -454,11 +456,21 @@ public class ReportGenerator {
                 out.print(Messages.getString("TelegramReport.ExpiredMedia"));
             }
             out.println(" ]</span><br>");
+            info = true;
         }
+
+        int selfDestructTimer = message.getSelfDestructTimer();
+        if (selfDestructTimer > 0) {
+            out.print("<span class=\"info\">[ ");
+            out.print(Messages.getString("TelegramReport.SelfDestructTimer", selfDestructTimer));
+            out.println(" ]</span><br>");
+            info = true;
+        }
+        
         if (message.getData() != null) {
             out.print(format(message.getData()));
             out.println("<br>");
-        } else if (expired < 0) {
+        } else if (!info) {
             out.println("<br>");
         }
 

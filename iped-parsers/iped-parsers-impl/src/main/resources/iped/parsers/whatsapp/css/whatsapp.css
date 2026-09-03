@@ -296,7 +296,7 @@ span.duration {
     text-decoration: none;
 }
 
-span.expired {
+span.info {
     font-size: 80%;
     color: #777777;
     background-color: #00000022;

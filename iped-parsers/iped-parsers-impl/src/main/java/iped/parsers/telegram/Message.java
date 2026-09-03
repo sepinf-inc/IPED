@@ -59,6 +59,7 @@ public class Message implements MessageInterface {
     private boolean isDeleted = false;
     private String recoveryString = null;
     private int expiredMedia = -1;
+    private int  selfDestructTimer;
 
     public long getId() {
         return id;
@@ -308,6 +309,14 @@ public class Message implements MessageInterface {
 
     public void setExpiredMedia(int expiredMedia) {
         this.expiredMedia = expiredMedia;
+    }
+
+    public int getSelfDestructTimer() {
+        return selfDestructTimer;
+    }
+
+    public void setSelfDestructTimer(int selfDestructTimer) {
+        this.selfDestructTimer = selfDestructTimer;
     }
 }
 

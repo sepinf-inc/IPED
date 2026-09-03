@@ -315,6 +315,16 @@ public class PostBoxCoding {
                 m.setExpiredMedia(expiredMedia);
                 return;
             }
+
+            if (media.getInteger("_rawValue") == 12) {
+                int selfDestructTimer = media.getInteger("t");
+                if (selfDestructTimer >= 0) {
+                    // A self-destruct timer was set.
+                    m.setSelfDestructTimer(selfDestructTimer);
+                    return;
+                }
+            }
+
             loadThumb(media, m);
             String phone = media.getString("pn");
             if (phone != null) {
