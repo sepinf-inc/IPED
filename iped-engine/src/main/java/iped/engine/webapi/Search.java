@@ -24,6 +24,7 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.QueryBuilder;
 import iped.engine.webapi.json.DocIDJSON;
 import iped.engine.webapi.json.SourceToIDsJSON;
+import iped.engine.webapi.json.SourceToIDsPageJSON;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.search.SearchResult;
@@ -55,6 +56,12 @@ public class Search {
     @ApiParam(value = "Only items modified on or before this date (inclusive), format YYYY-MM-DD. 400 if invalid or before dateFrom.")
     @QueryParam("dateTo")
     String dateTo;
+    @ApiParam(value = "Maximum number of ids to return, 1 to 10000. Recommended page size: 100, max 10000. Omit or empty to return all ids (legacy response, no total). 400 if invalid.")
+    @QueryParam("limit")
+    String limit;
+    @ApiParam(value = "Number of ids to skip, 0 or greater. Omit or empty means 0. Sending limit and/or offset also adds a 'total' field to the response. 400 if invalid.")
+    @QueryParam("offset")
+    String offset;
 
     /**
      * Field used by the dateFrom/dateTo filters. Verified against a real index
@@ -64,9 +71,16 @@ public class Search {
      */
     static final String DATE_FIELD = "modified";
 
+    /**
+     * Upper bound accepted for the limit parameter (design 07a): greater
+     * values are rejected with 400, never silently clamped.
+     */
+    static final int MAX_LIMIT = 10000;
+
     @ApiOperation(value = "Search documents")
     @ApiResponses({
-        @ApiResponse(code = 400, message = "invalid structured filter value (dateFrom/dateTo)"),
+        @ApiResponse(code = 400,
+                message = "invalid structured filter value (dateFrom/dateTo) or pagination parameter (limit/offset)"),
         @ApiResponse(code = 404, message = "sourceID does not exist")
     })
     @GET
@@ -80,6 +94,32 @@ public class Search {
         String effectiveQ;
         try {
             effectiveQ = buildStructuredQuery(q, category, contentType, ext, dateFrom, dateTo);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .type(MediaType.TEXT_PLAIN)
+                    .entity(e.getMessage()).build();
+        }
+        // Pagination (design 07a): parsed after the sourceID 404 check and
+        // after the F-2 filter 400, before the search runs. Malformed or
+        // out-of-range values answer 400 naming the offending parameter
+        // (manual parse, same discipline as dateFrom/dateTo: an empty value
+        // is treated as absent).
+        Integer pageSize;
+        int itemsOffset;
+        boolean paginated;
+        try {
+            pageSize = parsePaginationParam("limit", limit);
+            if (pageSize != null && (pageSize <= 0 || pageSize > MAX_LIMIT)) {
+                throw new IllegalArgumentException("invalid limit value '" + limit.trim()
+                        + "' (expected 1.." + MAX_LIMIT + ")");
+            }
+            Integer offsetValue = parsePaginationParam("offset", offset);
+            itemsOffset = offsetValue == null ? 0 : offsetValue.intValue();
+            if (itemsOffset < 0) {
+                throw new IllegalArgumentException(
+                        "invalid offset value '" + offset.trim() + "' (expected 0 or greater)");
+            }
+            paginated = pageSize != null || offsetValue != null;
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .type(MediaType.TEXT_PLAIN)
@@ -101,7 +141,45 @@ public class Search {
             }
         }
 
-        return Response.ok(new SourceToIDsJSON(docs)).build();
+        if (!paginated) {
+            // Legacy contract (design 07a): without an explicit limit/offset
+            // the response stays byte-identical (same DTO, no total field).
+            return Response.ok(new SourceToIDsJSON(docs)).build();
+        }
+        int total = docs.size();
+        return Response.ok(new SourceToIDsPageJSON(paginate(docs, itemsOffset, pageSize), total)).build();
+    }
+
+    /**
+     * Parses an optional pagination query parameter (design 07a). Null or
+     * blank means absent; a non-integer value throws with a client friendly
+     * message naming the parameter (mapped to HTTP 400).
+     *
+     * @throws IllegalArgumentException when the value is not an integer.
+     */
+    static Integer parsePaginationParam(String param, String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "invalid " + param + " value '" + value.trim() + "' (expected integer)");
+        }
+    }
+
+    /**
+     * Applies the pagination window to the already materialized result
+     * sequence WITHOUT reordering it (design 07a): an offset beyond the end
+     * yields an empty window; offset+limit beyond the end yields a partial
+     * page; a null limit runs to the end.
+     */
+    static List<DocIDJSON> paginate(List<DocIDJSON> docs, int offset, Integer limit) {
+        int total = docs.size();
+        int from = Math.min(offset, total);
+        int to = limit == null ? total : Math.min(from + limit.intValue(), total);
+        return docs.subList(from, to);
     }
 
     /**
