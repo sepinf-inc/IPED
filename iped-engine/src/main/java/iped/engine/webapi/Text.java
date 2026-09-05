@@ -2,6 +2,7 @@ package iped.engine.webapi;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -39,6 +40,19 @@ public class Text {
 
         IIPEDSource source = Sources.getSource(sourceID);
         final IItem item = source.getItemByID(id);
+
+        // P0-1: usa cache de texto parseado em vez de re-parsear com Tika
+        final String cachedText = item.getParsedTextCache();
+        if (cachedText != null && !cachedText.isEmpty()) {
+            return new StreamingOutput() {
+                @Override
+                public void write(OutputStream os) throws IOException, WebApplicationException {
+                    os.write(cachedText.getBytes(StandardCharsets.UTF_8));
+                }
+            };
+        }
+
+        // Fallback: re-parseia com Tika se o cache estiver vazio
         final StandardParser parser = new StandardParser();
         final ParseContext context = getTikaContext(item, parser, (IPEDSource) source);
         final Metadata metadata = new Metadata();
