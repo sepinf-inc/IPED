@@ -303,6 +303,10 @@ public class ExternalParser extends AbstractParser {
         }
 
         try {
+            if (process == null) {
+                return;
+            }
+
             if (inputToStdIn) {
                 sendInput(process, stream);
             } else {
