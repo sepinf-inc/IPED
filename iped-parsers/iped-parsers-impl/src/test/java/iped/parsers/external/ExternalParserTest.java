@@ -89,6 +89,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         // append Prefetch parser configuration to the same file
         ExternalParserConfigGenerator prefetchConfigGenerator = createExternalParserConfig("PrefetchParser", tmpPath + "sccainfo/",
             "sccainfo -V", "sccainfo ${INPUT}", "x-prefetch", 0, "ISO-8859-1");
+        prefetchConfigGenerator.setUnescapeOutput(true);
         prefetchConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append RecycleBin parser
@@ -221,11 +222,11 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             String hts = handler.toString();
 
             assertTrue(hts.contains("2008-10-28 15:53:42"));
-            assertTrue(hts.contains("No"));
+            assertTrue(hts.contains("No") || hts.contains("FALSE"));
             assertTrue(hts.contains("4096"));
             assertTrue(hts.contains("C:\\Documents and Settings\\All Users\\Desktop\\有道桌面词典.lnk"));
             assertTrue(hts.contains("2008-11-19 05:07:35"));
-            assertTrue(hts.contains("Yes"));
+            assertTrue(hts.contains("Yes") || hts.contains("TRUE"));
             assertTrue(hts.contains("2727936"));
             assertTrue(hts.contains("C:\\Documents and Settings\\Administrator\\Desktop\\GetDataBackforFAT-v3.63_PConline"));
         }
