@@ -89,6 +89,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         // append Prefetch parser configuration to the same file
         ExternalParserConfigGenerator prefetchConfigGenerator = createExternalParserConfig("PrefetchParser", tmpPath + "sccainfo/",
             "sccainfo -V", "sccainfo ${INPUT}", "x-prefetch", 0, "ISO-8859-1");
+        prefetchConfigGenerator.setUnescapeOutput(true);
         prefetchConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append RecycleBin parser

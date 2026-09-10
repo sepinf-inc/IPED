@@ -149,6 +149,13 @@ public class ExternalParser extends AbstractParser {
 
     private int linesToIgnore = 0;
 
+    /**
+     * Whether the tool escapes a literal '\' as '\\' in its output. Enable only for
+     * tools that do it (as of 2026 sccainfo), otherwise a real '\\', 
+     * as in \\SERVER\SHARE, would be collapsed.
+     */
+    private boolean unescapeOutput = false;
+
     private HtmlParser htmlParser = new HtmlParser();
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -397,6 +404,7 @@ public class ExternalParser extends AbstractParser {
             xhtml.startElement("p");
             char[] buffer = new char[1024];
             int line = 1;
+            StringBuilder carry = unescapeOutput ? new StringBuilder(2) : null;
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
                 String str = new String(buffer, 0, n);
                 if (tmpFile != null) {
@@ -414,6 +422,9 @@ public class ExternalParser extends AbstractParser {
                         }
                     }
                     String l = i1 != -1 ? str.substring(i0, i1) : str.substring(i0);
+                    if (carry != null) {
+                        l = unescapeBackslashes(l, carry, i1 != -1);
+                    }
                     if (line > linesToIgnore) {
                         xhtml.characters(l);
                         if (i1 != -1) {
@@ -428,9 +439,57 @@ public class ExternalParser extends AbstractParser {
                     }
                 }
             }
+            if (carry != null && carry.length() > 0) {
+                xhtml.characters(carry.toString());
+            }
             xhtml.endElement("p");
             xhtml.endDocument();
         }
+    }
+
+    /**
+     * Undoes the "\\" printed by recent sccainfo versions
+     * (path_string_copy_from_file_entry_path() in libscca/sccatools/path_string.c).
+     * \x## and \U######## are kept: decoding them could yield chars illegal in XML.
+     *
+     * @param carry
+     *            in/out, holds a trailing '\' until the next chunk
+     * @param isLineEnd
+     *            true if str ends the line, so nothing is carried over
+     */
+    private static String unescapeBackslashes(String str, StringBuilder carry, boolean isLineEnd) {
+        if (carry.length() > 0) {
+            str = carry.toString().concat(str);
+            carry.setLength(0);
+        }
+        int len = str.length();
+        if (len == 0 || str.indexOf('\\') == -1) {
+            return str;
+        }
+        if (!isLineEnd) {
+            // odd count: the last '\' may pair with the next chunk
+            int trailing = 0;
+            while (trailing < len && str.charAt(len - trailing - 1) == '\\') {
+                trailing++;
+            }
+            if ((trailing & 1) != 0) {
+                carry.append('\\');
+                str = str.substring(0, --len);
+                if (len == 0) {
+                    return str;
+                }
+            }
+        }
+        StringBuilder sb = new StringBuilder(len);
+        int i = 0;
+        while (i < len) {
+            char c = str.charAt(i++);
+            sb.append(c);
+            if (c == '\\' && i < len && str.charAt(i) == '\\') {
+                i++;
+            }
+        }
+        return sb.toString();
     }
 
     /**
@@ -505,8 +564,12 @@ public class ExternalParser extends AbstractParser {
 
     private void extractMetadata(final InputStream stream, final Metadata metadata) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset))) {
+            StringBuilder carry = unescapeOutput ? new StringBuilder(2) : null;
             String line;
             while ((line = reader.readLine()) != null) {
+                if (carry != null) {
+                    line = unescapeBackslashes(line, carry, true);
+                }
                 boolean consumed = false;
                 for (Pattern p : metadataPatterns.keySet()) {
                     Matcher m = p.matcher(line);
@@ -629,5 +692,13 @@ public class ExternalParser extends AbstractParser {
 
     public void setLinesToIgnore(int linesToIgnore) {
         this.linesToIgnore = linesToIgnore;
+    }
+
+    public boolean isUnescapeOutput() {
+        return unescapeOutput;
+    }
+
+    public void setUnescapeOutput(boolean unescapeOutput) {
+        this.unescapeOutput = unescapeOutput;
     }
 }
