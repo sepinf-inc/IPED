@@ -583,7 +583,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     if (!success || !imageFile.exists())
                         continue;
                     File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
-                    parse(xhtml, imageFile, imageText, itemPath);
+                    parsePage(xhtml, imageFile, imageText, itemPath, page);
                     if (imageText.exists()) {
                         if (outputBase != null)
                             IOUtil.copyFile(imageText, output, true);
@@ -596,6 +596,25 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             }
         } finally {
             pdfConverter.close();
+        }
+    }
+
+    /**
+     * OCR one rendered PDF page. A tesseract error on a single page (e.g. "Image
+     * too large" for pages rendered above 32767px) is logged and skipped, so the
+     * other pages are still OCRed. Other exceptions, like interruption, are
+     * propagated.
+     */
+    private void parsePage(XHTMLContentHandler xhtml, File input, File output, String itemPath, int page)
+            throws IOException, SAXException, TikaException {
+        try {
+            parse(xhtml, input, output, itemPath);
+        } catch (TikaException e) {
+            if (e.toString().contains(TESSERACT_ERROR_MSG)) {
+                LOGGER.warn("Skipping OCR of page " + (page + 1) + " of " + itemPath + ": " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+            } else {
+                throw e;
+            }
         }
     }
 
