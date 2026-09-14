@@ -688,11 +688,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         if (result != 0) {
             throw new IOException("Returned error code " + result); //$NON-NLS-1$
         }
-        try {
-            return extractVersion(process.getInputStream());
-        } catch (Exception e) {
-            return extractVersion(process.getErrorStream());
-        }
+        return extractVersion(process.getInputStream());
     }
 
     private static List<String> extractVersion(InputStream is) throws IOException {
