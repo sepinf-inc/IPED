@@ -45,14 +45,14 @@ public class Chat extends BaseModel {
     }
 
     // Specific field getters
-    public String getSource() { return (String) getField("Source"); }
-    public String getServiceIdentifier() { return (String) getField("ServiceIdentifier"); }
-    public String getName() { return (String) getField("Name"); }
-    public String getFieldId() { return (String) getField("Id"); }
+    public String getSource() { return getFieldAsString("Source"); }
+    public String getServiceIdentifier() { return getFieldAsString("ServiceIdentifier"); }
+    public String getName() { return getFieldAsString("Name"); }
+    public String getFieldId() { return getFieldAsString("Id"); }
     public Date getStartTime() { return (Date) getField("StartTime"); }
     public Date getLastActivity() { return (Date) getField("LastActivity"); }
-    public String getAccount() { return (String) getField("Account"); }
-    public String getChatType() { return (String) getField("ChatType"); }
+    public String getAccount() { return getFieldAsString("Account"); }
+    public String getChatType() { return getFieldAsString("ChatType"); }
 
     // Child model getters
     public List<Party> getParticipants() {

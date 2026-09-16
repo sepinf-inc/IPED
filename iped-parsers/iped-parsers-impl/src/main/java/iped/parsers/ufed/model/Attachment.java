@@ -24,12 +24,12 @@ public class Attachment extends BaseModel {
     }
 
     // Specific field getters
-    public String getFilename() { return (String) getField("Filename"); }
-    public String getContentType() { return (String) getField("ContentType"); }
-    public String getURL() { return (String) getField("URL"); }
-    public String getTitle() { return (String) getField("Title"); }
-    public String getTranscript() { return (String) getField("Transcript"); }
-    public String getAttachmentExtractedPath() { return StringUtils.replaceChars((String) getField("attachment_extracted_path"), '\\', '/'); }
+    public String getFilename() { return getFieldAsString("Filename"); }
+    public String getContentType() { return getFieldAsString("ContentType"); }
+    public String getURL() { return getFieldAsString("URL"); }
+    public String getTitle() { return getFieldAsString("Title"); }
+    public String getTranscript() { return getFieldAsString("Transcript"); }
+    public String getAttachmentExtractedPath() { return StringUtils.replaceChars(getFieldAsString("attachment_extracted_path"), '\\', '/'); }
 
     public ReferencedFile getReferencedFile() {
         return referencedFile;

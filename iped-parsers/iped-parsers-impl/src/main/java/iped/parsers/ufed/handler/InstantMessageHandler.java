@@ -127,6 +127,10 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         model.getExtraData().getMessageLabels().forEach(l -> {
             metadata.add(UFED_META_PREFIX + "Label", l.getLabel());
         });
+        // PA 10.10+: labels moved from MessageLabel models to <multiField name="Labels">
+        model.getLabels().forEach(l -> {
+            metadata.add(UFED_META_PREFIX + "Label", l);
+        });
 
         model.getExtraData().getForwardedMessage().ifPresent(fw -> {
             if (fw.getOriginalSender() != null) {
@@ -136,7 +140,7 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             metadata.add(UFED_META_PREFIX + "Label", fw.getLabel());
 
             fw.getFields().forEach((key, value) -> {
-                fillFieldMetadata("Forwarded:" + key, prefix, metadata, Set.of("Label"));
+                fillFieldMetadata("Forwarded:" + key, value, metadata, Set.of("Label"));
             });
         });
 
@@ -144,7 +148,7 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             metadata.add(UFED_META_PREFIX + "Label", replied.getLabel());
 
             replied.getFields().forEach((key, value) -> {
-                fillFieldMetadata("Reply:" + key, prefix, metadata, Set.of("Label"));
+                fillFieldMetadata("Reply:" + key, value, metadata, Set.of("Label"));
             });
 
             if (replied.getInstantMessage() != null) {
@@ -153,10 +157,15 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         });
 
         model.getExtraData().getQuotedMessage().ifPresent(quoted -> {
-            String type = StringUtils.firstNonBlank(quoted.getLabel(), "Quoted");
+            // PA 10.10+ does not put "Label" inside QuotedMessageData anymore
+            String type = quoted.getLabel();
+            if (StringUtils.isBlank(type)) {
+                type = model.hasLabel("Reply") ? "Reply" : model.hasLabel("Forwarded") ? "Forwarded" : "Quoted";
+            }
+            final String quotedType = type;
 
             quoted.getFields().forEach((key, value) -> {
-                fillFieldMetadata(type + ":" + key, prefix, metadata, Set.of("Label"));
+                fillFieldMetadata(quotedType + ":" + key, value, metadata, Set.of("Label"));
             });
         });
 

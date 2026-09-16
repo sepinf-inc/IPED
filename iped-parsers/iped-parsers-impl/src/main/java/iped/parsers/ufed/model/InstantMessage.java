@@ -57,19 +57,19 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     }
 
     // Specific field getters
-    public String getBody() { return (String) getField("Body"); }
-    public String getType() { return (String) getField("Type"); }
-    public String getPlatform() { return (String) getField("Platform"); }
-    public String getIdentifier() { return (String) getField("Identifier"); }
+    public String getBody() { return getFieldAsString("Body"); }
+    public String getType() { return getFieldAsString("Type"); }
+    public String getPlatform() { return getFieldAsString("Platform"); }
+    public String getIdentifier() { return getFieldAsString("Identifier"); }
     public Date getTimeStamp() { return (Date) getField("TimeStamp"); }
-    public String getSource() { return (String) getField("Source"); }
-    public String getLabel() { return (String) getField("Label"); }
-    public String getSourceApplication() { return (String) getField("SourceApplication"); }
+    public String getSource() { return getFieldAsString("Source"); }
+    public String getLabel() { return getFieldAsString("Label"); }
+    public String getSourceApplication() { return getFieldAsString("SourceApplication"); }
     public boolean isLocationSharing() { return BooleanUtils.toBoolean((Boolean) getField("IsLocationSharing")); }
-    public String getSubject() { return (String) getField("Subject"); }
+    public String getSubject() { return getFieldAsString("Subject"); }
 
     public MessageStatus getStatus() {
-        return MessageStatus.parse((String) getField("Status"));
+        return MessageStatus.parse(getFieldAsString("Status"));
     }
 
     public Chat getChat() {
@@ -134,8 +134,29 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
         return getFrom().map(Party::isPhoneOwner).orElse(false);
     }
 
+    /**
+     * Labels from <multiField name="Labels"> (PA 10.10+). Older versions use
+     * MessageLabel models inside MessageExtraData instead.
+     */
+    public List<String> getLabels() {
+        return getFieldAsList("Labels");
+    }
+
     public boolean hasLabel(String label) {
-        return messageExtraData.getMessageLabels().stream().anyMatch(l -> label.equalsIgnoreCase(l.getLabel()));
+        Object labels = getField("Labels");
+        if (labels instanceof List) {
+            for (Object l : (List<?>) labels) {
+                if (label.equalsIgnoreCase(String.valueOf(l))) {
+                    return true;
+                }
+            }
+        }
+        for (MessageLabel l : messageExtraData.getMessageLabels()) {
+            if (label.equalsIgnoreCase(l.getLabel())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isEdited() {

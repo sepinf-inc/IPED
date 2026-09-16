@@ -7,6 +7,7 @@ import static iped.properties.ExtraProperties.UFED_JUMP_TARGETS;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -239,7 +240,14 @@ public class BaseModelHandler<T extends BaseModel> {
             key = model.getModelType() + key;
         }
 
-        if (value instanceof Date) {
+        if (value instanceof Collection) {
+            // multi-valued field (<multiField>)
+            for (Object v : (Collection<?>) value) {
+                if (v != null) {
+                    fillFieldMetadata(key, v, metadata, fieldsToIgnore);
+                }
+            }
+        } else if (value instanceof Date) {
             metadata.add(UFED_META_PREFIX + key, DateUtils.formatDate((Date) value));
         } else {
             metadata.add(UFED_META_PREFIX + key, value.toString());
