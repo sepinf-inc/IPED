@@ -1,6 +1,7 @@
 package iped.parsers.ufed.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 public class InstantMessage extends BaseModel implements Comparable<InstantMessage> {
 
     private static final long serialVersionUID = -6119178123925362471L;
+
+    private static final String EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
 
     public static enum MessageStatus {
         Unknown, Default, Unsent, Sent, Delivered, Read, Unread;
@@ -91,6 +94,83 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
     public List<Attachment> getAttachments() {
         return attachments;
+    }
+
+    /**
+     * @return the embedded message, if it is the forwarded content of this message
+     */
+    public Optional<InstantMessage> getForwardedEmbeddedMessage() {
+        if (embeddedMessage != null && isForwardedMessage() && findForwardedMessage(chat) == embeddedMessage) {
+            return Optional.of(embeddedMessage);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Attachments of the forwarded embedded message. When an attachment is also present
+     * in this message, the one with available content is preferred (own attachment on a tie).
+     */
+    public List<Attachment> getForwardedEmbeddedAttachments() {
+        List<Attachment> fwdAttachments = getForwardedEmbeddedMessage().map(InstantMessage::getAttachments).orElse(null);
+        if (fwdAttachments == null || fwdAttachments.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (attachments.isEmpty()) {
+            return fwdAttachments;
+        }
+        List<Attachment> result = new ArrayList<>(fwdAttachments.size());
+        for (Attachment fwd : fwdAttachments) {
+            Attachment own = findSameAttachment(attachments, fwd);
+            result.add(own != null && (own.hasContent() || !fwd.hasContent()) ? own : fwd);
+        }
+        return result;
+    }
+
+    /**
+     * Own attachments that are not present in the forwarded embedded message.
+     */
+    public List<Attachment> getOwnAttachmentsNotForwarded() {
+        if (attachments.isEmpty()) {
+            return attachments;
+        }
+        List<Attachment> fwdAttachments = getForwardedEmbeddedMessage().map(InstantMessage::getAttachments).orElse(null);
+        if (fwdAttachments == null || fwdAttachments.isEmpty()) {
+            return attachments;
+        }
+        List<Attachment> result = new ArrayList<>(attachments.size());
+        for (Attachment own : attachments) {
+            if (findSameAttachment(fwdAttachments, own) == null) {
+                result.add(own);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Own attachments plus attachments of the forwarded embedded message, without duplicates.
+     */
+    public List<Attachment> getAllAttachments() {
+        List<Attachment> fwd = getForwardedEmbeddedAttachments();
+        if (fwd.isEmpty()) {
+            return attachments;
+        }
+        List<Attachment> own = getOwnAttachmentsNotForwarded();
+        if (own.isEmpty()) {
+            return fwd;
+        }
+        List<Attachment> result = new ArrayList<>(own.size() + fwd.size());
+        result.addAll(own);
+        result.addAll(fwd);
+        return result;
+    }
+
+    private static Attachment findSameAttachment(List<Attachment> list, Attachment attachment) {
+        for (Attachment a : list) {
+            if (a.isSameAs(attachment)) {
+                return a;
+            }
+        }
+        return null;
     }
 
     public List<Contact> getSharedContacts() {
@@ -255,8 +335,13 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
     private InstantMessage findMessageUsingReferenceId(String referenceId, Chat chat) {
 
-        // first compare with embeddedMessage
-        if (embeddedMessage != null && StringUtils.equals(embeddedMessage.getId(), referenceId)) {
+        if (StringUtils.isBlank(referenceId) || EMPTY_GUID.equals(referenceId)) {
+            return null;
+        }
+
+        // first compare with embeddedMessage (ReferenceId matches "pa_id" in newer PA versions, "id" in older ones)
+        if (embeddedMessage != null
+                && (referenceId.equals(embeddedMessage.getPaId()) || referenceId.equals(embeddedMessage.getId()))) {
             return embeddedMessage;
         }
 

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream;
@@ -68,6 +69,23 @@ public class UfedModelHandlerLabelsTest {
         assertNotNull(embedded);
         assertTrue(embedded.getLabels().isEmpty());
         assertFalse(embedded.isForwardedMessage());
+    }
+
+    @Test
+    public void testForwardedMessageFoundByPaId() {
+        InstantMessage fwd = chat.findMessageByIdentifier("FWD-1");
+        InstantMessage embedded = fwd.getEmbeddedMessage().orElse(null);
+        assertNotNull(embedded);
+        // QuotedMessageData.ReferenceId points to the embedded message "pa_id", not to its "id"
+        assertEquals("pa-embedded", embedded.getPaId());
+        assertSame(embedded, fwd.findForwardedMessage(chat));
+    }
+
+    @Test
+    public void testChatMessageFoundByIdAndPaId() {
+        InstantMessage fwd = chat.findMessageByIdentifier("FWD-1");
+        assertSame(fwd, chat.findMessageByUfedId("msg-fwd"));
+        assertSame(fwd, chat.findMessageByUfedId("pa-msg-fwd"));
     }
 
     @Test

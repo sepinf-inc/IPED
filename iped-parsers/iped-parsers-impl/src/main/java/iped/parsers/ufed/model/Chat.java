@@ -91,6 +91,12 @@ public class Chat extends BaseModel {
             if (StringUtils.isNotBlank(ufedId)) {
                 messagesByUfedId.put(ufedId, message);
             }
+
+            // ReferenceId may point to "pa_id" (ids are GUIDs, so both share the same map without collisions)
+            String paId = message.getPaId();
+            if (StringUtils.isNotBlank(paId) && !paId.equals(ufedId)) {
+                messagesByUfedId.put(paId, message);
+            }
         });
     }
 
@@ -110,6 +116,9 @@ public class Chat extends BaseModel {
         return messagesByIdentifier.get(identifier);
     }
 
+    /**
+     * Finds a chat message by its "id" or "pa_id" attribute.
+     */
     public InstantMessage findMessageByUfedId(String ufedId) {
         return messagesByUfedId.get(ufedId);
     }

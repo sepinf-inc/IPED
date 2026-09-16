@@ -63,8 +63,10 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             metadata.set(PARENT_VIEW_POSITION, model.getAnchorId());
         }
 
-        if (!model.getAttachments().isEmpty()) {
-            metadata.set(MESSAGE_ATTACHMENT_COUNT, Integer.toString(model.getAttachments().size()));
+        // own + forwarded embedded attachments, without duplicates
+        List<Attachment> allAttachments = model.getAllAttachments();
+        if (!allAttachments.isEmpty()) {
+            metadata.set(MESSAGE_ATTACHMENT_COUNT, Integer.toString(allAttachments.size()));
         }
 
         // Message -> Direction
@@ -216,7 +218,7 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             addLinkedItem(linkedItems, ref.getItem(), searcher);
         });
 
-        model.getAttachments().stream().map(Attachment::getReferencedFile).filter(Objects::nonNull).forEach(ref -> {
+        model.getAllAttachments().stream().map(Attachment::getReferencedFile).filter(Objects::nonNull).forEach(ref -> {
             addLinkedItem(linkedItems, ref.getItem(), searcher);
             if (model.isFromPhoneOwner()) {
                 addSharedHash(sharedHashes, ref.getItem());

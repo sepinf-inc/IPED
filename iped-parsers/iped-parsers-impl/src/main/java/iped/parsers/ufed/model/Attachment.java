@@ -60,6 +60,44 @@ public class Attachment extends BaseModel {
         }
     }
 
+    /**
+     * @return true if the attachment content is available (referenced file or unreferenced content)
+     */
+    public boolean hasContent() {
+        return referencedFile != null || unreferencedContent != null;
+    }
+
+    /**
+     * Checks if both attachments represent the same file, e.g. an attachment present
+     * both in a forwarded message and in its embedded message.
+     */
+    public boolean isSameAs(Attachment other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null) {
+            return false;
+        }
+        if (StringUtils.isNoneBlank(fileId, other.fileId)) {
+            return fileId.equals(other.fileId);
+        }
+        if (referencedFile != null && other.referencedFile != null) {
+            if (referencedFile.getItem() == other.referencedFile.getItem()) {
+                return true;
+            }
+            String hash = referencedFile.getHash();
+            if (hash != null && hash.equalsIgnoreCase(other.referencedFile.getHash())) {
+                return true;
+            }
+        }
+        String path = getAttachmentExtractedPath();
+        String otherPath = other.getAttachmentExtractedPath();
+        if (StringUtils.isNoneBlank(path, otherPath)) {
+            return path.equals(otherPath);
+        }
+        return StringUtils.isNoneBlank(getId(), other.getId()) && getId().equals(other.getId());
+    }
+
     public boolean isFileRelated() {
         return getFilename() != null || getAttachmentExtractedPath() != null;
     }

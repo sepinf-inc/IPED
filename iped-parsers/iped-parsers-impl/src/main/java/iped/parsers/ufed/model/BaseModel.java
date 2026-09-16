@@ -213,6 +213,14 @@ public abstract class BaseModel implements Serializable {
         return id;
     }
 
+    /**
+     * The "pa_id" attribute. Since PA 10.x, references like QuotedMessageData.ReferenceId
+     * and file sourcemodels/ownerid point to this value instead of the "id" attribute.
+     */
+    public String getPaId() {
+        return getAttribute("pa_id");
+    }
+
     public void setId(String id) {
         this.id = id;
     }
