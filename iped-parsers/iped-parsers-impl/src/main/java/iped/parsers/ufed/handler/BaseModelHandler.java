@@ -44,15 +44,15 @@ public class BaseModelHandler<T extends BaseModel> {
     // if set to true, the item will be linked on addLinkedItems even if the item id is already set in jumpTargets
     private boolean skipJumpTargetsCheckOnAddLinkedItems = false;
 
-    private static final HashSet<String> ignoreAttrs = new HashSet<>(Arrays.asList( //
+    public static final Set<String> ignoreAttrs = Set.of( //
             "type", //
             "path", //
             "size", //
             "deleted", //
-            "deleted_state" //
-    ));
+            "dedup_hash" //
+    );
 
-    public static final HashSet<String> ignoreFields = new HashSet<>(Arrays.asList( //
+    public static final Set<String> ignoreFields = Set.of( //
             "Tags", //
             "CreationTime", //
             "ModifyTime", //
@@ -62,7 +62,7 @@ public class BaseModelHandler<T extends BaseModel> {
             "CoreFileSystemFileSystemNodeLastAccessTime", //
             "CoreFileSystemFileSystemNodeDeletedTime", //
             "UserMapping" //
-    ));
+    );
 
     public BaseModelHandler(T model, IItemReader item) {
         this.model = model;
