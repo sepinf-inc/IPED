@@ -1,5 +1,7 @@
 package iped.engine.datasource.ufed;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -13,12 +15,14 @@ import java.util.Arrays;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.tika.metadata.Metadata;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.Attributes;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
+import iped.parsers.ufed.handler.InstantMessageHandler;
 import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.InstantMessage;
@@ -86,6 +90,24 @@ public class UfedModelHandlerLabelsTest {
         InstantMessage fwd = chat.findMessageByIdentifier("FWD-1");
         assertSame(fwd, chat.findMessageByUfedId("msg-fwd"));
         assertSame(fwd, chat.findMessageByUfedId("pa-msg-fwd"));
+    }
+
+    @Test
+    public void testForwardedMessageLabelsMetadata() {
+        Metadata metadata = new InstantMessageHandler(chat.findMessageByIdentifier("FWD-1"), null).createMetadata();
+        assertThat(Arrays.asList(metadata.getValues("ufed:Label")), contains("Default", "Forwarded", "Edited"));
+        assertEquals(0, metadata.getValues("ufed:Labels").length);
+        assertEquals(0, metadata.getValues("ufed:Reply:quotedMessageLabel").length);
+    }
+
+    @Test
+    public void testReplyToForwardedMessageLabelsMetadata() {
+        Metadata metadata = new InstantMessageHandler(chat.findMessageByIdentifier("REPLY-1"), null).createMetadata();
+        // the reply itself is not forwarded...
+        assertThat(Arrays.asList(metadata.getValues("ufed:Label")), contains("Reply"));
+        assertEquals(0, metadata.getValues("ufed:Labels").length);
+        // ... but the quoted message is
+        assertThat(Arrays.asList(metadata.getValues("ufed:Reply:quotedMessageLabel")), contains("Forwarded", "Edited"));
     }
 
     @Test

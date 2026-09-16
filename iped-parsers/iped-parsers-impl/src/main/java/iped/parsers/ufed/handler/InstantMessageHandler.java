@@ -10,6 +10,7 @@ import static iped.properties.ExtraProperties.UFED_ID;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 import static iped.properties.ExtraProperties.UFED_SOURCE_MODELS;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,31 +127,30 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             }
         }
 
-        model.getExtraData().getMessageLabels().forEach(l -> {
-            metadata.add(UFED_META_PREFIX + "Label", l.getLabel());
-        });
-        // PA 10.10+: labels moved from MessageLabel models to <multiField name="Labels">
-        model.getLabels().forEach(l -> {
-            metadata.add(UFED_META_PREFIX + "Label", l);
-        });
+        // labels of the message itself only in "ufed:Label", without duplicates
+        for (String label : model.getOwnLabels()) {
+            metadata.add(UFED_META_PREFIX + "Label", label);
+        }
 
         model.getExtraData().getForwardedMessage().ifPresent(fw -> {
             if (fw.getOriginalSender() != null) {
                 new PartyHandler(fw.getOriginalSender(), model.getSource())
                     .fillMetadata(UFED_META_PREFIX + "Forwarded:originalSender", metadata);
             }
-            metadata.add(UFED_META_PREFIX + "Label", fw.getLabel());
 
             fw.getFields().forEach((key, value) -> {
-                fillFieldMetadata("Forwarded:" + key, value, metadata, Set.of("Label"));
+                if (!"Label".equals(key)) { // not written (see InstantMessage.getOwnLabels())
+                    fillFieldMetadata("Forwarded:" + key, value, metadata, Collections.emptySet());
+                }
             });
         });
 
         model.getExtraData().getReplyMessage().ifPresent(replied -> {
-            metadata.add(UFED_META_PREFIX + "Label", replied.getLabel());
 
             replied.getFields().forEach((key, value) -> {
-                fillFieldMetadata("Reply:" + key, value, metadata, Set.of("Label"));
+                if (!"Label".equals(key)) { // not written (see InstantMessage.getOwnLabels())
+                    fillFieldMetadata("Reply:" + key, value, metadata, Collections.emptySet());
+                }
             });
 
             if (replied.getInstantMessage() != null) {
@@ -167,9 +167,24 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             final String quotedType = type;
 
             quoted.getFields().forEach((key, value) -> {
-                fillFieldMetadata(quotedType + ":" + key, value, metadata, Set.of("Label"));
+                if (!"Label".equals(key)) { // not written (see InstantMessage.getOwnLabels())
+                    fillFieldMetadata(quotedType + ":" + key, value, metadata, Collections.emptySet());
+                }
             });
         });
+
+        // labels of the quoted message (e.g. replying a forwarded message), in an explicit key,
+        // since this message itself is not forwarded
+        if (model.isReplyMessage()) {
+            InstantMessage quotedMessage = model.findReplyMessage(model.getChat());
+            if (quotedMessage != null) {
+                for (String label : quotedMessage.getOwnLabels()) {
+                    if (!"Default".equalsIgnoreCase(label)) {
+                        metadata.add(UFED_META_PREFIX + "Reply:quotedMessageLabel", label);
+                    }
+                }
+            }
+        }
 
         if (model.isSystemMessage()) {
             metadata.set(UFED_META_PREFIX + "isSystemMessage", Boolean.toString(true));
@@ -179,6 +194,14 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             metadata.set(Geographic.LATITUDE, model.getPosition().getLatitude());
             metadata.set(Geographic.LONGITUDE, model.getPosition().getLongitude());
         }
+    }
+
+    private static final Set<String> IGNORED_FIELDS = Set.of("Label", "Labels");
+
+    @Override
+    protected Set<String> getIgnoredFields() {
+        // written by fillMetadata() in "ufed:Label" without duplicates
+        return IGNORED_FIELDS;
     }
 
     @Override

@@ -180,6 +180,13 @@ public class BaseModelHandler<T extends BaseModel> {
         }
     }
 
+    /**
+     * Model fields not written by fillCommonMetadata(), because they are handled by the specific handler.
+     */
+    protected Set<String> getIgnoredFields() {
+        return Collections.emptySet();
+    }
+
     protected final void fillCommonMetadata(Metadata metadata) {
 
         // title
@@ -204,7 +211,7 @@ public class BaseModelHandler<T extends BaseModel> {
 
         // add fields
         model.getFields().forEach((key, value) -> {
-            fillFieldMetadata(key, value, metadata, Collections.emptySet());
+            fillFieldMetadata(key, value, metadata, getIgnoredFields());
         });
 
         // add additional info

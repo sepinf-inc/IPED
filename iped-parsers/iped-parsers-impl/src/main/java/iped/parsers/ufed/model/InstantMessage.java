@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import org.apache.commons.lang3.BooleanUtils;
@@ -220,6 +222,39 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
      */
     public List<String> getLabels() {
         return getFieldAsList("Labels");
+    }
+
+    /**
+     * Labels of this message itself, without duplicates: the "Label" field, the "Labels"
+     * multiField (PA 10.10+) and MessageLabel models. Labels inside Forwarded/Reply/Quoted
+     * data are not used, since they may refer to the referenced message; only the presence
+     * of ForwardedMessageData/ReplyMessageData (older PA versions) adds "Forwarded"/"Reply".
+     */
+    public Set<String> getOwnLabels() {
+        Set<String> labels = new LinkedHashSet<>();
+        addLabel(labels, getLabel());
+        Object multiLabels = getField("Labels");
+        if (multiLabels instanceof List) {
+            for (Object l : (List<?>) multiLabels) {
+                addLabel(labels, String.valueOf(l));
+            }
+        }
+        for (MessageLabel l : messageExtraData.getMessageLabels()) {
+            addLabel(labels, l.getLabel());
+        }
+        if (messageExtraData.getForwardedMessage().isPresent()) {
+            addLabel(labels, "Forwarded");
+        }
+        if (messageExtraData.getReplyMessage().isPresent()) {
+            addLabel(labels, "Reply");
+        }
+        return labels;
+    }
+
+    private static void addLabel(Set<String> labels, String label) {
+        if (StringUtils.isNotBlank(label)) {
+            labels.add(label);
+        }
     }
 
     public boolean hasLabel(String label) {
