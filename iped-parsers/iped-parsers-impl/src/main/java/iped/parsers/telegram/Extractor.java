@@ -686,7 +686,7 @@ public class Extractor {
             String name = photo.getName();
             if (name != null && !name.isBlank()) {
                 String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name.toLowerCase()) + "\" && "
-                        + BasicProps.NAME + ":jpg && " + BasicProps.LENGTH + ":[100 TO 10000000]";
+                        + BasicProps.LENGTH + ":[100 TO 10000000]";
                 List<IItemReader> items = iped.parsers.util.Util.getItems(query, searcher);
                 if (items != null) {
                     IItemReader best = null;
