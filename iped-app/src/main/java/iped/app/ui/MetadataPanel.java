@@ -62,6 +62,7 @@ import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.localization.LocalizedProperties;
+import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
 import iped.utils.IconUtil;
 import iped.utils.StringUtil;
@@ -418,8 +419,22 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     public Set<String> getHighlightTerms() throws ParseException, QueryNodeException {
 
         String field = (String) props.getSelectedItem();
-        if (field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX)) || list.isSelectionEmpty())
+        if (field == null || list.isSelectionEmpty()) {
             return Collections.emptySet();
+        }
+
+        // Per-rule YARA fields (yara:match:<namespace>/<name>) store one value
+        // per distinct matched string — same shape as Regex:<category> and
+        // NamedEntityTask.NER_PREFIX. Selected values become highlight terms
+        // directly; no JSON lookup or hex decoding is needed at panel time
+        // because YaraScanTask.persistMatches() already did that work.
+        boolean isLiteralValueFacet = field.startsWith(RegexTask.REGEX_PREFIX)
+                || field.startsWith(NamedEntityTask.NER_PREFIX)
+                || field.startsWith(ExtraProperties.YARA_MATCH_PREFIX);
+
+        if (!isLiteralValueFacet) {
+            return Collections.emptySet();
+        }
 
         Set<String> highlightTerms = new HashSet<String>();
         for (ValueCount item : list.getSelectedValuesList()) {
@@ -428,9 +443,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                 break;
             }
         }
-
         return highlightTerms;
-
     }
 
     public Query getHighlightQuery() throws ParseException, QueryNodeException {

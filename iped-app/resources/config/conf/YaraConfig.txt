@@ -1,0 +1,55 @@
+########################################################################
+# YARA Rules Engine — IPED (engine: YARA-X 1.x via libyara-x-capi)
+#
+# Configuration consumed by iped.engine.task.yara.YaraScanTask (via
+# iped.engine.config.YaraConfig).
+#
+# To enable the feature, set "enableYara = true" in IPEDConfig.txt
+# (or in the profile's IPEDConfig.txt).
+#
+# Each option below is documented inline.
+########################################################################
+
+# Directories containing YARA rules in source format (.yar, .yara) — YARA-X
+# compiles the catalog at runtime during case startup. Pre-compiled formats
+# (.yarc from classic YARA or YARA-X's own serialization) are NOT accepted
+# in v1.
+#
+# Multiple paths can be separated by ";" (Windows) or ":" (Linux).
+# When empty, the feature is effectively disabled for the case.
+#
+# Supported forms:
+#   - Absolute path:    C:\rules\yara          or  /opt/iped/rules
+#   - ${IPED_HOME} token: ${IPED_HOME}/yara-rules (recommended — expands
+#                         to the IPED installation root at runtime)
+#   - Relative path:    yara-rules            (resolved from the JVM working
+#                         directory; WORKS when IPED is started from its
+#                         install folder, fragile otherwise
+#                         — prefer ${IPED_HOME}/...)
+ruleDirectories =
+
+# Maximum item size to scan.
+# Accepts K, M, G suffixes (case-insensitive, base 1024). Items above the
+# limit are skipped and the reason is logged.
+maxFileSizeBytes = 250M
+
+# Maximum time per item, in milliseconds. Scans that exceed the limit are
+# interrupted without propagating an exception; the item is counted as
+# "skipped" in the metrics.
+perItemTimeoutMs = 30000
+
+# When false (default), only items with accessible binary content streams
+# (files, container sub-items, carved items) are scanned. When true, forces
+# an attempt on all items — useful for auditing; has a higher performance cost.
+scanAllItems = false
+
+# Maximum size (in bytes) of the raw bytes slices stored in the match detail
+# facet. Excess is truncated and flagged with "truncated": true.
+# Valid range: 1 to 65536.
+matchHexMaxBytes = 256
+
+# Optional path hint for the libyara-x-capi library. In production leave
+# empty — Bootstrap resolves it automatically from tools/yara-x/<os>/.
+# Useful in development environments to point to a manually installed
+# libyara-x-capi in /usr/local/lib.
+# engineLibraryHint =

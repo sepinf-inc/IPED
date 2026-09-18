@@ -124,6 +124,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = "--downloadInternetData", description = "download Internet data to enrich evidence data processing. E.g. media files still available in WhatsApp servers and not found in the evidence")
     private boolean downloadInternetData;
+
+    @Parameter(names = "--yara-only", description = "[EXPERIMENTAL] rerun the pipeline over an already processed case to refresh YARA-X matches in the existing Lucene index. Requires -d (the original datasource(s) so item content can be re-read) and -o (the case output dir). Implies --continue: committed items keep flowing through the pipeline so their full doc is rebuilt, and IndexTask updates them in place. Incompatible with --append/--restart/-remove/explicit --continue. Known limitation: re-indexing may leave stale text fragments and can reassign leaf-item ids; prefer a full reprocess for production cases.")
+    private boolean yaraOnly;
     
     @Parameter(names = { "-splash" }, description = "custom message to be shown in the splash screen")
     private String splashMessage;    
@@ -141,6 +144,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Override
     public boolean isDownloadInternetData() {
         return downloadInternetData;
+    }
+
+    @Override
+    public boolean isYaraOnly() {
+        return yaraOnly;
     }
 
     @Override
@@ -215,7 +223,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Override
     public boolean isContinue() {
-        return isContinue;
+        // --yara-only mode reuses the --continue infrastructure (SkipCommitedTask must
+        // load the committed trackIDs so IndexTask can decide between add and update).
+        return isContinue || yaraOnly;
     }
 
     @Override
@@ -402,6 +412,44 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     private void handleSpecificArgs() {
 
         Main.getInstance().dataSource = new ArrayList<File>();
+
+        if (yaraOnly) {
+            // --yara-only refreshes YARA matches over an already processed case by
+            // re-feeding the original datasource(s) through the normal pipeline; the
+            // IndexTask then updates the existing documents in place. The flag implies
+            // --continue (SkipCommitedTask must load committed trackIDs so IndexTask
+            // knows which docs to update vs add) and rejects flags that conflict with
+            // that semantics.
+            if (datasources == null || datasources.isEmpty()) {
+                throw new ParameterException(
+                        "--yara-only requires -d/-data pointing at the original datasource(s) so item content can be re-read.");
+            }
+            if (appendIndex) {
+                throw new ParameterException("--yara-only is incompatible with --append.");
+            }
+            if (restart) {
+                throw new ParameterException("--yara-only is incompatible with --restart.");
+            }
+            if (evidenceToRemove != null) {
+                throw new ParameterException("--yara-only is incompatible with -remove.");
+            }
+            if (isContinue) {
+                throw new ParameterException(
+                        "--yara-only already implies --continue; do not pass --continue explicitly.");
+            }
+            if (outputDir == null) {
+                throw new ParameterException(
+                        "--yara-only requires -o/--output pointing at the existing case directory.");
+            }
+            if (!new File(outputDir, "iped").exists()) {
+                throw new IPEDException(
+                        "--yara-only: the output folder does not contain a processed case (missing 'iped/' subfolder): "
+                                + outputDir.getAbsolutePath());
+            }
+            // Fall through to the standard -d handling — yara-only is processed as a
+            // normal continue run with the same -d, and IndexTask switches to update
+            // mode for items whose trackID is already committed.
+        }
 
         if ((datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
