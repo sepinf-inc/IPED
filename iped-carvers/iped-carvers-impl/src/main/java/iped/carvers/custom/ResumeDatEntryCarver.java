@@ -78,7 +78,7 @@ public class ResumeDatEntryCarver extends AbstractCarver {
             // Try to move the footer forward, to include the end of the last tag
             bytes = null;
             start = footer.getOffset() + footer.getSignature().getLength();
-            read = (int) Math.min(start + maxSeedtimeBlockLen, parentEvidence.getLength() - start);
+            read = (int) Math.min(maxSeedtimeBlockLen, parentEvidence.getLength() - start);
             try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
                 is.seek(start);
                 bytes = is.readNBytes(read);
