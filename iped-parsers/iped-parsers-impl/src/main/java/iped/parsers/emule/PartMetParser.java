@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
@@ -75,8 +74,10 @@ public class PartMetParser extends AbstractParser {
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         // PART.MET files are very small, so 1 MB should be more than enough.
-        byte[] bytes = new byte[1 << 20];
-        IOUtils.read(stream, bytes);
+        byte[] bytes = stream.readNBytes(1 << 20);
+        if (bytes.length < 1) {
+            throw new TikaException("Empty part.met file");
+        }
         int version = bytes[0] & 0xFF;
         if (version != 224 && version != 225 && version != 226) {
             throw new TikaException("Detected part.met file format version not supported: " + version);
