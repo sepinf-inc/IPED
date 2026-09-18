@@ -183,3 +183,12 @@ JUnRAR
 Lottie-player
 - Site: https://github.com/LottieFiles/lottie-player/blob/master/LICENSE
 - License: licenses/LOTTIE-PLAYER.txt
+
+------------------------------------------
+
+ALeapp
+- Site: https://github.com/abrignoni/ALEAPP
+- Project: ALEAPP (Android Logs Events And Protobuf Parser)
+- Project contributors: https://github.com/abrignoni/ALEAPP/graphs/contributors?from=18%2F04%2F2026
+- License: MIT
+

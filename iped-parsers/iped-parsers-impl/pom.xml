@@ -199,10 +199,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-    		<groupId>black.ninia</groupId>
-  			<artifactId>jep</artifactId>
-  			<version>4.0.3</version>
-  		</dependency>
+            <groupId>org.ninia</groupId>
+            <artifactId>jep</artifactId>
+            <version>4.3.1</version>
+        </dependency>
         <dependency>
             <groupId>net.sf</groupId>
             <artifactId>java-dbx</artifactId>
