@@ -58,6 +58,7 @@ import iped.configuration.Configurable;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.data.IItemReader;
+import iped.dictionary.PasswordDictionaryFactory;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -66,6 +67,7 @@ import iped.engine.config.LocalConfig;
 import iped.engine.config.OCRConfig;
 import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
+import iped.engine.config.PasswordCrackingConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.config.SplitLargeBinaryConfig;
 import iped.engine.core.Manager;
@@ -74,6 +76,7 @@ import iped.engine.core.Worker;
 import iped.engine.data.CaseData;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
+import iped.engine.dictionary.PasswordDictionaryFactoryImpl;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.ParsingReader;
 import iped.engine.search.ItemSearcher;
@@ -233,6 +236,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
         context.set(ItemInfo.class, itemInfo);
         context.set(OCROutputFolder.class, new OCROutputFolder(output));
+        context.set(PasswordDictionaryFactory.class, new PasswordDictionaryFactoryImpl());
 
         if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
             context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
@@ -764,7 +768,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
     public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new ParsingTaskConfig(), new CategoryToExpandConfig(), new OCRConfig(),
-                new ParsersConfig(), new ExternalParsersConfig());
+                new ParsersConfig(), new ExternalParsersConfig(), new PasswordCrackingConfig());
     }
 
     @Override

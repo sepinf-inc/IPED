@@ -31,6 +31,7 @@ import iped.parsers.threema.ThreemaParser;
 import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.usnjrnl.UsnJrnlParser;
 import iped.parsers.whatsapp.WhatsAppParser;
+import iped.parsers.zoomdpapi.ZoomDpapiParser;
 import iped.properties.MediaTypes;
 
 /**
@@ -111,6 +112,11 @@ public class QueuesProcessingOrder {
         // avoid NPE when the parser gets the item from parseContext when external
         // parsing is on
         mediaTypes.put(UsnJrnlParser.USNJRNL_$J, 2);
+
+        // must be processed last (highest priority number) so that all files are already
+        // indexed: master keys and .enc.db databases to be found, and known passwords
+        // (e.g. UFED password items) collected before attempting to crack the master key
+        mediaTypes.put(ZoomDpapiParser.ZOOM_INI, 5);
 
         mediaTypes.put(Win10MailParser.WIN10_MAIL_DB, 2);
         mediaTypes.put(RFC822Parser.RFC822_PARTIAL0_MIME, 2);

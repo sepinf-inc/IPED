@@ -779,6 +779,22 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <!-- COPY DICTIONARIES FOLDER -->
+                    <execution>
+                        <id>copy-dictionaries</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${release.dir}/dictionaries</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${resources.dir}/dictionaries</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                     <!-- COPY THIRD LICENSES FOLDER -->
                     <execution>
                         <id>copy-licenses</id>
