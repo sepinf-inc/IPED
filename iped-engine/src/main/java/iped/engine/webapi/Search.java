@@ -3,6 +3,7 @@ package iped.engine.webapi;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.ws.rs.DefaultValue;
@@ -47,13 +48,17 @@ public class Search {
     @ApiParam(value = "Filter by MIME content type (exact value). Repeatable; multiple values match with OR.", allowMultiple = true)
     @QueryParam("contentType")
     List<String> contentType;
-    @ApiParam(value = "Filter by file extension; leading dot optional (pdf and .pdf are equivalent). Repeatable; multiple values match with OR.", allowMultiple = true)
-    @QueryParam("ext")
-    List<String> ext;
-    @ApiParam(value = "Only items modified on or after this date (inclusive), format YYYY-MM-DD. 400 if invalid.")
+    @ApiParam(value = "Filter by item type as stored in the search index (exact value, e.g. jpg, file, hot). Leading dot optional. Repeatable; multiple values match with OR.", allowMultiple = true)
+    @QueryParam("type")
+    List<String> type;
+    @DefaultValue("modified")
+    @ApiParam(value = "Date field searched by the dateFrom/dateTo filters. One of: modified, accessed, created. 400 if invalid.", allowableValues = "modified,accessed,created")
+    @QueryParam("dateField")
+    String dateField;
+    @ApiParam(value = "Only items with dateField on or after this date (inclusive), format YYYY-MM-DD. 400 if invalid.")
     @QueryParam("dateFrom")
     String dateFrom;
-    @ApiParam(value = "Only items modified on or before this date (inclusive), format YYYY-MM-DD. 400 if invalid or before dateFrom.")
+    @ApiParam(value = "Only items with dateField on or before this date (inclusive), format YYYY-MM-DD. 400 if invalid or before dateFrom.")
     @QueryParam("dateTo")
     String dateTo;
     @ApiParam(value = "Maximum number of ids to return, 1 to 10000. Recommended page size: 100, max 10000. Omit or empty to return all ids (legacy response, no total). 400 if invalid.")
@@ -64,12 +69,21 @@ public class Search {
     String offset;
 
     /**
-     * Field used by the dateFrom/dateTo filters. Verified against a real index
-     * (design 06c TO_VERIFY): stored as a non-tokenized term in the canonical
-     * format yyyy-MM-dd'T'HH:mm:ss'Z' (UTC) by iped.engine.task.index.IndexItem
-     * via iped.utils.DateUtil.dateToString.
+     * Default field used by the dateFrom/dateTo filters. Verified against a
+     * real index (design 06c TO_VERIFY): stored as a non-tokenized term in the
+     * canonical format yyyy-MM-dd'T'HH:mm:ss'Z' (UTC) by
+     * iped.engine.task.index.IndexItem via iped.utils.DateUtil.dateToString.
      */
     static final String DATE_FIELD = "modified";
+    /**
+     * Allowlist accepted by the dateField query parameter (PR #2961 feedback:
+     * "making it possible to specify the date field to search into"). All
+     * three fields were verified searchable on a real index through range
+     * probes with non-zero totals (modified=191423, accessed=7207 and
+     * created=53437 documents after 2020-01-01, R5-2 live probes); any other
+     * value is rejected with 400.
+     */
+    static final List<String> DATE_FIELDS = Arrays.asList(DATE_FIELD, "accessed", "created");
 
     /**
      * Upper bound accepted for the limit parameter (design 07a): greater
@@ -80,7 +94,7 @@ public class Search {
     @ApiOperation(value = "Search documents")
     @ApiResponses({
         @ApiResponse(code = 400,
-                message = "invalid structured filter value (dateFrom/dateTo) or pagination parameter (limit/offset)"),
+                message = "invalid structured filter value (dateField/dateFrom/dateTo) or pagination parameter (limit/offset)"),
         @ApiResponse(code = 404, message = "sourceID does not exist")
     })
     @GET
@@ -93,7 +107,7 @@ public class Search {
         }
         String effectiveQ;
         try {
-            effectiveQ = buildStructuredQuery(q, category, contentType, ext, dateFrom, dateTo);
+            effectiveQ = buildStructuredQuery(q, category, contentType, type, dateField, dateFrom, dateTo);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .type(MediaType.TEXT_PLAIN)
@@ -185,7 +199,8 @@ public class Search {
     /**
      * Builds the effective Lucene query from q plus the structured filters
      * (design 06c). Filter values never reach the query raw: text fields are
-     * escaped and quoted via QueryBuilder.escape; dates are validated with
+     * escaped and quoted via QueryBuilder.escape; dateField is validated
+     * against the {@link #DATE_FIELDS} allowlist; dates are validated with
      * LocalDate.parse and the range clause is assembled exclusively from the
      * parsed values. With no filter clause present the returned string is
      * byte-identical to the legacy behaviour (q with the slash replacement
@@ -195,15 +210,15 @@ public class Search {
      *                                  filter value is malformed (mapped to HTTP 400).
      */
     static String buildStructuredQuery(String q, List<String> category, List<String> contentType,
-            List<String> ext, String dateFrom, String dateTo) {
+            List<String> type, String dateField, String dateFrom, String dateTo) {
         if (q == null) {
             q = "";
         }
         List<String> clauses = new ArrayList<String>();
         addTermClause(clauses, "category", category, false);
         addTermClause(clauses, "contentType", contentType, false);
-        addTermClause(clauses, "ext", ext, true);
-        String dateClause = buildDateClause(dateFrom, dateTo);
+        addTermClause(clauses, "type", type, true);
+        String dateClause = buildDateClause(resolveDateField(dateField), dateFrom, dateTo);
         if (dateClause != null) {
             clauses.add(dateClause);
         }
@@ -242,7 +257,7 @@ public class Search {
         clauses.add(terms.size() == 1 ? terms.get(0) : "(" + String.join(" OR ", terms) + ")");
     }
 
-    private static String buildDateClause(String dateFrom, String dateTo) {
+    private static String buildDateClause(String dateField, String dateFrom, String dateTo) {
         boolean hasFrom = dateFrom != null && !dateFrom.trim().isEmpty();
         boolean hasTo = dateTo != null && !dateTo.trim().isEmpty();
         if (!hasFrom && !hasTo) {
@@ -262,9 +277,27 @@ public class Search {
         }
         String lower = from == null ? "*" : from + "T00:00:00Z";
         String upper = to == null ? "*" : to + "T23:59:59Z";
-        return DATE_FIELD + ":[" + lower + " TO " + upper + "]";
+        return dateField + ":[" + lower + " TO " + upper + "]";
     }
 
+    /**
+     * Validates the optional dateField query parameter against
+     * {@link #DATE_FIELDS}. Null or blank means the default ({@link
+     * #DATE_FIELD}); any other value throws with a client friendly message
+     * naming the parameter (mapped to HTTP 400). Validated even when no date
+     * range is requested, so a wrong value is never silently ignored.
+     */
+    static String resolveDateField(String dateField) {
+        if (dateField == null || dateField.trim().isEmpty()) {
+            return DATE_FIELD;
+        }
+        String value = dateField.trim();
+        if (!DATE_FIELDS.contains(value)) {
+            throw new IllegalArgumentException("invalid dateField value '" + value
+                    + "' (expected one of: " + String.join(", ", DATE_FIELDS) + ")");
+        }
+        return value;
+    }
     private static LocalDate parseISODate(String param, String value) {
         try {
             return LocalDate.parse(value);
