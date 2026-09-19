@@ -2,6 +2,9 @@ package iped.engine.webapi;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -39,6 +42,63 @@ public class Text {
 
         IIPEDSource source = Sources.getSource(sourceID);
         final IItem item = source.getItemByID(id);
+
+        // P0-1: usa o cache de texto extraido em vez de re-parsear com Tika.
+        // R4-2 (feedback PR #2961): streama via getTextReader() em vez do
+        // @Deprecated getParsedTextCache(), que truncava o texto a
+        // 10.000.000 chars. Reader null ou vazio (item sem texto em cache)
+        // mantem integralmente o fallback Tika abaixo (comportamento de erro
+        // atual para itens sem texto preservado).
+        Reader reader = null;
+        char[] firstChunk = null;
+        int firstChunkLength = 0;
+        try {
+            reader = item.getTextReader();
+            if (reader != null) {
+                char[] buffer = new char[8192];
+                firstChunkLength = reader.read(buffer);
+                if (firstChunkLength <= 0) {
+                    // cache presente porem vazio: trata como item sem texto em cache
+                    reader.close();
+                    reader = null;
+                } else {
+                    firstChunk = buffer;
+                }
+            }
+        } catch (IOException e) {
+            // cache ilegivel: mantem o comportamento anterior (fallback Tika)
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {
+                }
+                reader = null;
+            }
+        }
+        if (reader != null) {
+            final Reader textReader = reader;
+            final char[] prefix = firstChunk;
+            final int prefixLength = firstChunkLength;
+            return new StreamingOutput() {
+                @Override
+                public void write(OutputStream os) throws IOException, WebApplicationException {
+                    // copia em buffer de 8KB, sem materializar a String inteira;
+                    // falha do reader aqui interrompe o stream (200 ja iniciado)
+                    try (Reader r = textReader) {
+                        OutputStreamWriter writer = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+                        writer.write(prefix, 0, prefixLength);
+                        char[] cbuf = new char[8192];
+                        int len;
+                        while ((len = r.read(cbuf)) != -1) {
+                            writer.write(cbuf, 0, len);
+                        }
+                        writer.flush();
+                    }
+                }
+            };
+        }
+
+        // Fallback: re-parseia com Tika se o cache estiver vazio
         final StandardParser parser = new StandardParser();
         final ParseContext context = getTikaContext(item, parser, (IPEDSource) source);
         final Metadata metadata = new Metadata();
