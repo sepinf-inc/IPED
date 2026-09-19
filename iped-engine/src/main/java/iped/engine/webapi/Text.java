@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
 import javax.ws.rs.GET;
@@ -14,6 +15,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
+import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -117,6 +119,118 @@ public class Text {
                 }
             }
         };
+    }
+
+    /**
+     * Reads the item plain text through the SAME acquisition path used by
+     * {@link #content(String, int)} (P0-1/R4-2): getTextReader() when
+     * available, falling back to the on-demand Tika parse otherwise. Reading
+     * stops as soon as capChars characters are produced (design 07c
+     * SCAN_CAP budget), so snippet requests never materialize huge documents
+     * in memory. Returns the raw (not whitespace-normalized) text, possibly
+     * empty. A fallback parse that produced no characters at all throws to
+     * the caller, which must treat the item as "no snippet" (design 07c edge
+     * case 5: /search never answers 500); a parse that produced characters
+     * and then threw (e.g. StandardParser's metadata post-processing in a
+     * broken-OCR environment) delivers what it produced, exactly as /text
+     * does with bytes already streamed to the response.
+     */
+    static String readPlainText(IItem item, IIPEDSource source, int capChars) throws Exception {
+        StringBuilder text = new StringBuilder(Math.min(capChars, 16384));
+        Reader reader = null;
+        try {
+            reader = item.getTextReader();
+        } catch (IOException e) {
+            // cache ilegivel: mesmo fallback Tika do /text
+            reader = null;
+        }
+        if (reader != null) {
+            try (Reader r = reader) {
+                char[] buffer = new char[8192];
+                int len;
+                while (text.length() < capChars && (len = r.read(buffer)) != -1) {
+                    text.append(buffer, 0, Math.min(len, capChars - text.length()));
+                }
+            } catch (IOException e) {
+                if (text.length() != 0) {
+                    // texto parcial nao e' snippet confiavel: propaga (omissao)
+                    throw e;
+                }
+                // falha antes de qualquer caractere: cai no fallback Tika
+            }
+            if (text.length() > 0) {
+                return text.toString();
+            }
+        }
+        // Fallback: mesmo parse Tika on-demand do /text, abortado assim que o
+        // cap e' atingido (WriteLimitReachedException e' o stop signal da
+        // propria Tika, tratado graciosamente pela cadeia de parsers).
+        StandardParser parser = new StandardParser();
+        ParseContext context = getTikaContext(item, parser, (IPEDSource) source);
+        Metadata metadata = new Metadata();
+        ParsingTask.fillMetadata(item, metadata);
+        parser.setPrintMetadata(false);
+        CapWriter writer = new CapWriter(text, capChars);
+        try (TikaInputStream is = item.getTikaStream()) {
+            ContentHandler handler = new ToTextContentHandler(writer);
+            parser.parse(is, handler, metadata, context);
+        } catch (Exception e) {
+            // Symmetry with /text: content already streamed to the client is
+            // delivered even when StandardParser's finally-block post-processing
+            // (MetadataUtil.normalizeMetadata) throws after the content handler
+            // finished. Only a parse that produced NO characters at all is a
+            // real extraction failure (design 07c edge case 5: omitted key);
+            // reaching the cap is a normal expected abort (writer.isCapped()).
+            if (text.length() == 0 && !writer.isCapped()) {
+                throw new IOException("snippet text extraction failed for item", e);
+            }
+        }
+        return text.toString();
+    }
+
+    /**
+     * Writer that appends to a StringBuilder and aborts the surrounding Tika
+     * extraction (WriteLimitReachedException) as soon as cap characters were
+     * produced, never exceeding the cap.
+     */
+    private static class CapWriter extends Writer {
+
+        private final StringBuilder out;
+        private final int cap;
+        private boolean capped = false;
+
+        CapWriter(StringBuilder out, int cap) {
+            this.out = out;
+            this.cap = cap;
+        }
+
+        boolean isCapped() {
+            return capped;
+        }
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            int room = cap - out.length();
+            if (len >= room) {
+                if (room > 0) {
+                    out.append(cbuf, off, room);
+                }
+                capped = true;
+                // Writer.write so pode lancar IOException; a causa WLR mantém
+                // o sinal graca de stop da Tika (isWriteLimitReached varre a
+                // cadeia de causas nos parsers que a tratam).
+                throw new IOException(new WriteLimitReachedException(cap));
+            }
+            out.append(cbuf, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+        }
+
+        @Override
+        public void close() throws IOException {
+        }
     }
 
     public static ParseContext getTikaContext(IItem item, Parser parser, IPEDSource source) throws Exception {
