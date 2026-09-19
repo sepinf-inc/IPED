@@ -3,7 +3,7 @@
  */
 
 function getName() {
-    return "AddGeoMetadata";
+    return "AddGeoMetadataTask";
 }
 
 function getConfigurables() {
