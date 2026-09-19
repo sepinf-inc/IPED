@@ -9,14 +9,13 @@ import iped.utils.UTF8Properties;
 
 /**
  * Configuration for BFAC Client integration.
- * Reads the enableBFACClient property from IPEDConfig.txt
- * and the baseUrl property from conf/BFACConfig.txt.
+ * Reads the enableBFACClient, baseUrl and maxConcurrentUploads
+ * properties from conf/BFACConfig.txt.
  */
 public class BFACClientConfig extends AbstractPropertiesConfigurable {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String IPED_CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     private static final String BFAC_CONFIG_FILE = "conf/BFACConfig.txt"; //$NON-NLS-1$
     private static final String DEFAULT_BASE_URL = "http://localhost:8000/"; //$NON-NLS-1$
     private static final int DEFAULT_MAX_CONCURRENT_UPLOADS = 5;
@@ -28,7 +27,7 @@ public class BFACClientConfig extends AbstractPropertiesConfigurable {
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
         public boolean accept(Path entry) throws IOException {
-            return entry.endsWith(IPED_CONFIG_FILE) || entry.endsWith(BFAC_CONFIG_FILE);
+            return entry.endsWith(BFAC_CONFIG_FILE);
         }
     };
 
