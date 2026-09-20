@@ -149,7 +149,7 @@ public class CaseSummary {
         BytesRef min = null;
         BytesRef max = null;
         for (IPEDSource src : scope) {
-            totalItems += src.getReader().maxDoc();
+            totalItems += countItems(src);
             countCategories(src, candidates, counts);
             BytesRef[] bounds = modifiedBounds(src.getReader());
             if (bounds != null) {
@@ -196,6 +196,23 @@ public class CaseSummary {
     }
 
     /**
+     * Number of real items in one source (design 07e D7, R5-4c fix A): the
+     * same canonical base /search uses for an empty query —
+     * QueryBuilder.getMatchAllItemsQuery() plus the non-tree exclusion of
+     * IPEDSearcher.searchAll (IPEDSearcher.java:148-155) — counted with
+     * IndexSearcher.count(Query), the same count-only mechanism already used
+     * for every category bucket. NOT maxDoc: index documents include tree
+     * nodes and other structural documents, which are not items (R5-4c
+     * probe: maxDoc=1.183.262 vs 591.251 real items in the reference case).
+     */
+    static long countItems(IPEDSource src) throws Exception {
+        BooleanQuery.Builder scoped = new BooleanQuery.Builder();
+        scoped.add(QueryBuilder.getMatchAllItemsQuery(), Occur.MUST);
+        scoped.add(new TermQuery(new Term(BasicProps.TREENODE, "true")), Occur.MUST_NOT);
+        return src.getSearcher().count(scoped.build());
+    }
+
+    /**
      * Counts every candidate category in one source without materializing
      * ids. The query for category X is the same string the /search
      * structured filter builds (Search.addTermClause:
@@ -228,7 +245,8 @@ public class CaseSummary {
 
     /**
      * Cheap min/max of the modified field (design 07e D6/V4): per-segment
-     * SortedDocValues boundaries (lookupOrd(0)/lookupOrd(valueCount-1));
+     * SortedDocValues boundaries (first/last non-empty ordinal — the empty
+     * term of documents without a date is skipped, R5-4c fix B);
      * ordinals of a SortedDocValues field are assigned in lexicographic
      * order and the canonical yyyy-MM-dd'T'HH:mm:ss'Z' format is
      * lexicographically sortable, so this is chronological min/max with no
@@ -247,7 +265,27 @@ public class CaseSummary {
                     continue;
                 }
                 BytesRef low = values.lookupOrd(0);
+                if (low != null && low.length == 0) {
+                    // Ord 0 can be the empty term: documents without a
+                    // modified date store "" (R5-4c probe: ord0 = ""). It
+                    // sorts first lexicographically and must never surface
+                    // as period.from (design 07e D6: valid date or null).
+                    // Ords are lexicographic, so ord 1 is the segment's
+                    // real minimum; count == 1 means the segment has only
+                    // the empty term and contributes nothing.
+                    low = count > 1 ? values.lookupOrd(1) : null;
+                }
+                if (low != null) {
+                    // lookupOrd may hand back a reused scratch BytesRef:
+                    // in Lucene 9.2 a second lookupOrd overwrites the
+                    // result of the first (proved by direct probe), so
+                    // low must be detached BEFORE the high lookup below.
+                    low = BytesRef.deepCopyOf(low);
+                }
                 BytesRef high = values.lookupOrd(count - 1);
+                if (high != null && high.length == 0) {
+                    high = null; // the segment only holds the empty term
+                }
                 if (low != null && (min == null || low.compareTo(min) < 0)) {
                     min = BytesRef.deepCopyOf(low);
                 }

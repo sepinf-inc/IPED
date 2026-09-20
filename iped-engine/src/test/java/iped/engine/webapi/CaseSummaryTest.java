@@ -10,19 +10,31 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.SortedDocValuesField;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.ByteBuffersDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.junit.Test;
 
 import iped.engine.webapi.json.CaseSummaryJSON;
+import iped.properties.BasicProps;
 
 /**
  * Unit tests for the /case-summary contract (design 07e, feature F-5)
- * without a server or an index. Scope note: the aggregation itself
- * (countCategories/modifiedBounds) depends on a live Lucene IndexReader, so
- * it is covered by the HTTP smoke/harness against the reference case
- * (parity with webapi-tests/fixtures/categoria-censo.txt); this class covers
- * the pure logic: the top parameter validation and the whole body assembly
+ * without a permanent server or case index. Scope note: the category
+ * aggregation (countCategories) depends on a live Lucene IndexReader, so it
+ * is covered by the HTTP smoke/harness against the reference case (parity
+ * with webapi-tests/fixtures/categoria-censo.txt); this class covers the
+ * pure logic: the top parameter validation and the whole body assembly
  * (ranking, tie-break, residual flag, synthetic uncategorized,
- * omittedCategories/itemsOutsideTop accounting and period nulling).
+ * omittedCategories/itemsOutsideTop accounting and period nulling), plus
+ * modifiedBounds against a transient in-memory index (R5-4c fix B: the
+ * empty modified term must never surface as period.from).
  */
 public class CaseSummaryTest {
 
@@ -218,5 +230,69 @@ public class CaseSummaryTest {
         }
         assertEquals(a.getItemsOutsideTop(), b.getItemsOutsideTop());
         assertEquals(a.getOmittedCategories(), b.getOmittedCategories());
+    }
+
+    // ---- R5-4c fix A: totalItems on the real item base (D7 accounting) ----
+
+    @Test
+    public void noUncategorizedWhenRealItemBaseIsBelowCategorySum() {
+        // Reference case (R5-4c probe): totalItems is now
+        // count(matchAllItems AND NOT treeNode) = 591.251, the same base
+        // /search reports, while the counted taxonomy categories sum to
+        // 596.800 (some documents carry a counted category but are outside
+        // the item base). With totalItems <= sum the synthetic uncategorized
+        // row is not emitted (buildBody guard): the portrait shows real
+        // categories only, distinctCategories keeps counting them.
+        Map<String, Long> fake = counts("a", 300000L, "b", 296800L);
+        CaseSummaryJSON body = CaseSummary.buildBody(Arrays.asList("S"), 591251L, 64,
+                fake, null, null);
+        assertEquals(2, body.getCategories().size());
+        assertEquals(2, body.getDistinctCategories());
+        for (CaseSummaryJSON.CategoryCountJSON c : body.getCategories()) {
+            assertFalse(CaseSummary.UNCATEGORIZED.equals(c.getCategory()));
+        }
+        assertEquals(591251, body.getTotalItems());
+    }
+
+    // ---- R5-4c fix B: period null-safe against the empty modified term --
+
+    /** Sorted "modified" docvalues over the given terms in one throwaway
+     *  segment, then the production bounds computation. */
+    private static BytesRef[] boundsOf(String... values) throws Exception {
+        try (ByteBuffersDirectory dir = new ByteBuffersDirectory();
+                Analyzer analyzer = new StandardAnalyzer();
+                IndexWriter w = new IndexWriter(dir, new IndexWriterConfig(analyzer))) {
+            for (String v : values) {
+                Document d = new Document();
+                d.add(new SortedDocValuesField(BasicProps.MODIFIED, new BytesRef(v)));
+                w.addDocument(d);
+            }
+            w.commit();
+            try (DirectoryReader reader = DirectoryReader.open(w)) {
+                return CaseSummary.modifiedBounds(reader);
+            }
+        }
+    }
+
+    @Test
+    public void periodIsNullWhenOnlyTheEmptyModifiedTermExists() throws Exception {
+        // Documents without a date store "" (R5-4c probe: ord0 = ""). When
+        // that is all the field holds, period degrades to null (design 07e
+        // D6/E9) — never an empty string, never a 500.
+        assertNull(boundsOf(""));
+        assertNull(boundsOf("", ""));
+        assertNull(CaseSummary.buildBody(Arrays.asList("S"), 2, 10, counts("a", 2L), null, null)
+                .getPeriod());
+    }
+
+    @Test
+    public void modifiedBoundsSkipTheEmptyTermAndKeepRealDates() throws Exception {
+        BytesRef[] emptyPlusReal = boundsOf("", "2024-03-01T10:00:00Z");
+        assertEquals("2024-03-01T10:00:00Z", emptyPlusReal[0].utf8ToString());
+        assertEquals("2024-03-01T10:00:00Z", emptyPlusReal[1].utf8ToString());
+        // regression guard: the normal (no empty term) path is untouched
+        BytesRef[] realOnly = boundsOf("2024-01-05T00:00:00Z", "2024-02-03T00:00:00Z");
+        assertEquals("2024-01-05T00:00:00Z", realOnly[0].utf8ToString());
+        assertEquals("2024-02-03T00:00:00Z", realOnly[1].utf8ToString());
     }
 }
