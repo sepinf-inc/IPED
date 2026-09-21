@@ -97,7 +97,8 @@ BR_BANK_ACCOUNT = (ag|agen|ag[eê]ncia)(\s|\.|:){0,10}[0-9]{4}(\-?[0-9xX])?.{0,1
 
 BR_CAR_PLATE = \b((([A-Z]{3})(()|-)([0-9]{4}))|(Placas?( |:|: )([A-Za-z]{3})( )([0-9]{4})))\b
 
-BR_RENAVAM = \b[0-9]{9,11}\b
+#Only the 11-digit format (standard since 2013); legacy 9-digit numbers are not detected to reduce false positives
+BR_RENAVAM = \b[0-9]{11}\b
 
 #You can get the oficial document at https://www.nfe.fazenda.gov.br/portal/principal.aspx
 #The first 2 chacartes is the State

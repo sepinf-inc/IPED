@@ -12,7 +12,7 @@ public class RENAVAMRegexValidatorService extends BasicAbstractRegexValidatorSer
     private static final String REGEX_NAME = "BR_RENAVAM";
     private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
     private static final int[] WEIGHTS = { 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
-    private static final int NORMALIZED_LENGTH = 11;
+    private static final int RENAVAM_LENGTH = 11;
 
     @Override
     public void init(File confDir) {
@@ -25,12 +25,8 @@ public class RENAVAMRegexValidatorService extends BasicAbstractRegexValidatorSer
         }
         renavam = NON_DIGIT.matcher(renavam).replaceAll("");
 
-        if (renavam.length() < 9 || renavam.length() > NORMALIZED_LENGTH) {
+        if (renavam.length() != RENAVAM_LENGTH) {
             return false;
-        }
-
-        while (renavam.length() < NORMALIZED_LENGTH) {
-            renavam = "0" + renavam;
         }
 
         String base = renavam.substring(0, 10);
@@ -53,11 +49,7 @@ public class RENAVAMRegexValidatorService extends BasicAbstractRegexValidatorSer
 
     @Override
     public String format(String hit) {
-        String digits = NON_DIGIT.matcher(hit).replaceAll("");
-        while (digits.length() < NORMALIZED_LENGTH) {
-            digits = "0" + digits;
-        }
-        return digits;
+        return NON_DIGIT.matcher(hit).replaceAll("");
     }
 
     @Override

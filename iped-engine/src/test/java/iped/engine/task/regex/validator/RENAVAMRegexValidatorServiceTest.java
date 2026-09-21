@@ -19,18 +19,6 @@ public class RENAVAMRegexValidatorServiceTest {
     }
 
     @Test
-    public void testValid9DigitsNormalized() {
-        // normalizes to 00123456789
-        assertTrue(service.validate("123456789"));
-    }
-
-    @Test
-    public void testValid10DigitsNormalized() {
-        // normalizes to 00123456789
-        assertTrue(service.validate("0123456789"));
-    }
-
-    @Test
     public void testValidSecondExample() {
         // base=0098765432, sum=284, rem=9, check=2
         assertTrue(service.validate("00987654322"));
@@ -78,6 +66,18 @@ public class RENAVAMRegexValidatorServiceTest {
     }
 
     @Test
+    public void test9DigitsIsInvalid() {
+        // legacy pre-2013 format, would be valid if zero-padded to 00123456789
+        assertFalse(service.validate("123456789"));
+    }
+
+    @Test
+    public void test10DigitsIsInvalid() {
+        // would be valid if zero-padded to 00123456789
+        assertFalse(service.validate("0123456789"));
+    }
+
+    @Test
     public void testTooLongIsInvalid() {
         assertFalse(service.validate("001234567890"));
     }
@@ -97,18 +97,13 @@ public class RENAVAMRegexValidatorServiceTest {
     // --- format ---
 
     @Test
-    public void testFormat9DigitsPadsTo11() {
-        assertEquals("00123456789", service.format("123456789"));
-    }
-
-    @Test
     public void testFormat11DigitsUnchanged() {
         assertEquals("00123456789", service.format("00123456789"));
     }
 
     @Test
     public void testFormatStripsNonDigits() {
-        assertEquals("00123456789", service.format(".123.456.789"));
+        assertEquals("00123456789", service.format("0012345678-9"));
     }
 
     @Test
