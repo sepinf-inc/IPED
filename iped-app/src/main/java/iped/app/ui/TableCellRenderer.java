@@ -21,6 +21,7 @@ package iped.app.ui;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 import javax.swing.Icon;
@@ -42,16 +43,21 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
     private static final long serialVersionUID = 1L;
     private boolean customPaint;
     private BookmarkCellRenderer bookmarkCellRenderer;
+    private String colName;
+    private int colNumber;
+    private JTable parentTable;
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
+        parentTable = table;
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
+        colNumber = col;
         TableModel model = table.getModel();
-        String colName = model.getColumnName(col);
+        colName = model.getColumnName(col);
 
         Icon icon = null;
         String toopTip = null;
@@ -102,6 +108,40 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
         setToolTipText(toopTip);
 
         return this;
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        if (colName.equalsIgnoreCase(ResultTableModel.BOOKMARK_COL) && bookmarkCellRenderer != null) {
+            int actualWidth = 0;
+            if (parentTable != null) {
+                actualWidth = parentTable.getColumnModel().getColumn(colNumber).getWidth();
+            }
+
+            // Find which specific bookmark the mouse is over
+            String hoveredBookmark = bookmarkCellRenderer.getBookmarkAt(event.getX(), actualWidth);            
+            if (hoveredBookmark != null) {
+                return "<html>" + BookmarkTree.displayPath(hoveredBookmark) + "</html>";
+            }
+
+            // If mouse is not over any specific bookmark, show all
+            String[] bookmarksNames = bookmarkCellRenderer.getBookmarkNames();
+            if (bookmarksNames == null || bookmarksNames.length == 0) {
+                return null;
+            }
+            
+            // Bookmarks tooltip
+            StringBuilder toolTip = new StringBuilder("<html>");
+            for (String bookmarkName : bookmarksNames) {
+                toolTip.append(BookmarkTree.displayPath(bookmarkName));
+                toolTip.append("<br>");
+            }
+            toolTip.append("</html>");
+
+            return toolTip.toString();
+        }
+
+        return null;
     }
 
     @Override

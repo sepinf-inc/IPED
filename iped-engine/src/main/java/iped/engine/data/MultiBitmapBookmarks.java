@@ -188,6 +188,14 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         invalidadeCaches();
     }
 
+    @Override
+    public void newBookmarkHierarchy(List<String> path) {
+        for (IBookmarks m : map.values()) {
+            m.newBookmarkHierarchy(path);
+        }
+        invalidadeCaches();
+    }
+
     public void delBookmark(String bookmarkName) {
         for (IBookmarks m : map.values()) {
             int bookmarkId = m.getBookmarkId(bookmarkName);
