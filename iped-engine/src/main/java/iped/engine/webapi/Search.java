@@ -11,6 +11,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -39,10 +41,14 @@ import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.search.SearchResult;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.RegexpQuery;
+
 @Api(value = "Search")
 @Path("search")
 public class Search {
 
+    @ApiParam(value = "Search query. Same syntax as the GUI search: terms, AND/OR/NOT, phrases, wildcards (* and ?), field:value and /regex/ spans (regular expression delimited by two slashes, matched over the lowercase indexed text; malformed regexes or patterns longer than 128 characters are rejected with 400 naming q).")
     @DefaultValue("")
     @QueryParam("q")
     String q;
@@ -484,17 +490,77 @@ public class Search {
     }
 
     /**
+     * P2-11: maximum length, in characters, of a restored {@code /regex/}
+     * pattern in q (risk mitigation from diag-p211 Q4). Lucene compiles
+     * regular expressions into deterministic automata (dk.brics), so matching
+     * per token is linear and the classic ReDoS/backtracking class does not
+     * apply; this cap bounds instead the cost of COMPILING adversarial
+     * patterns and the breadth of a single query. Patterns that expand beyond
+     * BooleanQuery.MaxClauseCount keep failing with 500 (TooManyClauses),
+     * exactly like the leading wildcards the parser already allows.
+     */
+    static final int MAX_REGEX_LENGTH = 128;
+
+    /**
+     * Matches a {@code \/pattern\/} span as produced by {@link #prepareQ}:
+     * the body carries no '/', no '\' and no whitespace, so only balanced,
+     * space-free spans are restored. Paths, phrases and slash pairs around
+     * spaces keep the legacy escaped behaviour byte-for-byte.
+     */
+    private static final Pattern REGEX_SPAN = Pattern.compile("\\\\/([^\\\\/\\s]+)\\\\/");
+
+    /**
+     * Escapes every '/' in q (legacy behaviour) and then restores balanced
+     * {@code /pattern/} spans so the flexible query parser builds a
+     * RegexpQuery for them - the same raw text and the same parser the GUI
+     * feeds QueryBuilder.getQuery (Help.htm item 15; QueryBuilder already
+     * rewrites RegexpQuery). Without a balanced span the result is byte
+     * identical to the legacy {@code q.replaceAll("/", "\\\\/")}. Each
+     * restored pattern is compiled here once with the very RegexpQuery
+     * construction the search performs, so malformed patterns fail fast with
+     * a 400 naming q instead of reaching the parser as a 500.
+     */
+    static String prepareQ(String q) {
+        String escaped = q.replaceAll("/", "\\\\/");
+        Matcher matcher = REGEX_SPAN.matcher(escaped);
+        if (!matcher.find()) {
+            return escaped;
+        }
+        StringBuilder out = new StringBuilder(escaped.length());
+        int last = 0;
+        do {
+            String pattern = matcher.group(1);
+            if (pattern.length() > MAX_REGEX_LENGTH) {
+                throw new IllegalArgumentException("invalid regex in parameter 'q': /" + pattern
+                        + "/ exceeds the maximum length of " + MAX_REGEX_LENGTH + " characters");
+            }
+            try {
+                new RegexpQuery(new Term("content", pattern));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("invalid regex in parameter 'q': /" + pattern
+                        + "/ (" + e.getMessage() + ")");
+            }
+            out.append(escaped, last, matcher.start()).append('/').append(pattern).append('/');
+            last = matcher.end();
+        } while (matcher.find());
+        out.append(escaped, last, escaped.length());
+        return out.toString();
+    }
+
+    /**
      * Builds the effective Lucene query from q plus the structured filters
      * (design 06c). Filter values never reach the query raw: text fields are
      * escaped and quoted via QueryBuilder.escape; dateField is validated
      * against the {@link #DATE_FIELDS} allowlist; dates are validated with
      * LocalDate.parse and the range clause is assembled exclusively from the
-     * parsed values. With no filter clause present the returned string is
-     * byte-identical to the legacy behaviour (q with the slash replacement
-     * applied and nothing else).
+     * parsed values. q itself goes through {@link #prepareQ}: legacy slash
+     * escaping with balanced /regex/ spans restored (P2-11); with no filter
+     * clause and no such span the returned string is byte-identical to the
+     * legacy behaviour.
      *
      * @throws IllegalArgumentException with a client friendly message when a
-     *                                  filter value is malformed (mapped to HTTP 400).
+     *                                  filter value is malformed or when q carries a malformed or
+     *                                  over-long /regex/ span (mapped to HTTP 400).
      */
     static String buildStructuredQuery(String q, List<String> category, List<String> contentType,
             List<String> type, String dateField, String dateFrom, String dateTo) {
@@ -509,7 +575,7 @@ public class Search {
         if (dateClause != null) {
             clauses.add(dateClause);
         }
-        String escapedQ = q.replaceAll("/", "\\\\/");
+        String escapedQ = prepareQ(q);
         if (clauses.isEmpty()) {
             return escapedQ;
         }
