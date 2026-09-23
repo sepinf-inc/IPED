@@ -95,6 +95,11 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
             commitIntervalSeconds = Integer.parseInt(value.trim());
         }
 
+        value = properties.getProperty("textOverlapSize"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            textOverlapSize = Integer.valueOf(value.trim());
+        }
+
     }
 
     private int[] convertExtraCharsToIndex(String chars) {

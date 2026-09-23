@@ -54,6 +54,8 @@ import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ElasticSearchTaskConfig;
 import iped.engine.config.IndexTaskConfig;
+import iped.engine.config.RAGConfig;
+import iped.engine.rag.RAGService;
 import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
@@ -121,18 +123,32 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new ElasticSearchTaskConfig());
+        return Arrays.asList(new ElasticSearchTaskConfig(), new RAGConfig());
     }
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
-        taskInstances.add(this);
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
         retries = elasticConfig.getRetries();
 
         if (!(isEnabled = elasticConfig.isEnabled())) {
+            return;
+        }
+
+        RAGConfig ragConfig = configurationManager.findObject(RAGConfig.class);
+        if (ragConfig != null && ragConfig.isEnabled()) {
+            RAGService.initialize(output, ragConfig);
+        }
+
+        // In lucene vector mode the OpenSearch client is not needed for indexing.
+        // Skip the connection entirely to avoid a ConnectException at startup.
+        if (ragConfig != null && ragConfig.isEnabled()
+                && "lucene".equalsIgnoreCase(ragConfig.getVectorStoreMode())) {
+            isEnabled = false;
+            LOGGER.info("ElasticSearchIndexTask disabled: vectorStoreMode=lucene, " +
+                    "OpenSearch client not required.");
             return;
         }
 
@@ -146,12 +162,29 @@ public class ElasticSearchIndexTask extends AbstractTask {
         parseCmdLineFields(System.getProperty(CMD_FIELDS_KEY));
         parseCmdLineFields(args.getExtraParams().get(CMD_FIELDS_KEY));
 
+        if (user == null) {
+            user = elasticConfig.getUsername();
+        }
+        if (password == null) {
+            password = elasticConfig.getPassword();
+        }
+
         if (indexName == null) {
             indexName = output.getParentFile().getName();
         }
 
+        String protocol = elasticConfig.getProtocol();
+        String hostProp = elasticConfig.getHost();
+        int port = elasticConfig.getPort();
+
+        String[] hosts = hostProp.split("[,;\\s]+");
+        HttpHost[] httpHosts = new HttpHost[hosts.length];
+        for (int i = 0; i < hosts.length; i++) {
+            httpHosts[i] = new HttpHost(hosts[i].trim(), port, protocol);
+        }
+
         RestClientBuilder clientBuilder = RestClient
-                .builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort(), elasticConfig.getProtocol()))
+                .builder(httpHosts)
                 .setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
                     @Override
                     public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
@@ -160,28 +193,36 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     }
                 });
 
-        if (user != null && password != null) {
-            CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(user, password));
-            clientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
-                @Override
-                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-                    var custombuilder=httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                    // disable validation if configured
-                    if (!elasticConfig.getValidateSSL()) {
-                        custombuilder.setSSLContext(SSLFix.getUnsecureSSLContext()).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-                    }
-                    return custombuilder;
+        final String finalUser = user;
+        final String finalPassword = password;
+        clientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
+            @Override
+            public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+                if (finalUser != null && finalPassword != null) {
+                    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                    credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(finalUser, finalPassword));
+                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
                 }
-            });
-        }
+                if (!elasticConfig.getValidateSSL()) {
+                    httpClientBuilder.setSSLContext(SSLFix.getUnsecureSSLContext()).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+                }
+                return httpClientBuilder;
+            }
+        });
 
         client = new RestHighLevelClient(clientBuilder);
 
-        boolean ping = client.ping(RequestOptions.DEFAULT);
+        boolean ping = false;
+        try {
+            ping = client.ping(RequestOptions.DEFAULT);
+        } catch (Exception e) {
+            ping = false;
+        }
         if (!ping) {
-            throw new IOException("ElasticSearch cluster at " + elasticConfig.getHost() + ":" + elasticConfig.getPort()
-                    + " not responding to ping.");
+            LOGGER.warn("ElasticSearch/OpenSearch cluster at " + elasticConfig.getHost() + ":" + elasticConfig.getPort()
+                    + " unreachable. Disabling cluster indexing task.");
+            isEnabled = false;
+            return;
         }
 
         if (args.isRestart()) {
@@ -198,6 +239,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             throw new IPEDException("ElasticSearch index does not exist: " + indexName);
         }
 
+        taskInstances.add(this);
     }
 
     private void parseCmdLineFields(String cmdFields) {
@@ -282,12 +324,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
         properties.put("extraAttributes." + ImageSimilarityTask.IMAGE_FEATURES,
                 Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures, "method",
-                        Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+                        Map.of("name", "hnsw", "space_type", "l2", "engine", "lucene")));
 
         // mapping faces as nested field
         var faces_mapping = new HashMap<String, Object>();
         faces_mapping.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method",
-                Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+                Map.of("name", "hnsw", "space_type", "l2", "engine", "lucene")));
         faces_mapping.put("face_location", Collections.singletonMap("type", "short"));
         properties.put("faces", Map.of("type", "nested", "properties", faces_mapping));
 
@@ -298,6 +340,15 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
 
         properties.put(BasicProps.CONTENT, contentMapping);
+
+        RAGConfig ragConfig = ConfigurationManager.get().findObject(RAGConfig.class);
+        if (ragConfig != null && ragConfig.isEnabled()) {
+            properties.put("content_embedding", Map.of("type", "knn_vector", "dimension", ragConfig.getEmbeddingDimensions(), "method",
+                    Map.of("name", "hnsw", "space_type", "cosinesimil", "engine", "lucene")));
+            properties.put("embedding_model", Collections.singletonMap("type", "keyword"));
+            properties.put("embedding_timestamp", Collections.singletonMap("type", "date"));
+            properties.put(IndexTask.HAS_EMBEDDING_FRAG, Collections.singletonMap("type", "keyword"));
+        }
 
         // mapping the parent-child relation
         /*
@@ -403,52 +454,104 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
 
         IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
-        FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
-                indexConfig.getTextOverlapSize());
+        int splitSize = indexConfig.getTextSplitSize();
+        int overlapSize = indexConfig.getTextOverlapSize();
+        RAGConfig ragConfig = ConfigurationManager.get().findObject(RAGConfig.class);
+        if (ragConfig != null && ragConfig.isEnabled()) {
+            String mimeType = item.getMediaType() != null ? item.getMediaType().toString() : "";
+            if (ragConfig.shouldEmbed(item.getCategorySet(), mimeType)) {
+                splitSize = 4000;
+                overlapSize = 1000;
+            }
+        }
+        FragmentingReader fragReader = new FragmentingReader(textReader, splitSize, overlapSize);
         int fragNum = fragReader.estimateNumberOfFrags();
         if (fragNum == -1) {
             fragNum = 1;
         }
 
         // used for parent items in elastic to store just metadata info
-        // globalID works like an 'UUID' and should be unique across cases
         String parentId = (String) item.getExtraAttribute(ExtraProperties.GLOBAL_ID);
 
         try {
+            RAGService ragService = RAGService.getInstance();
+            boolean doRAG = ragService != null
+                    && ragService.getConfig().isEnabled()
+                    && ragService.isAvailable()
+                    && "opensearch".equalsIgnoreCase(ragService.getConfig().getVectorStoreMode());
+            boolean shouldEmbedItem = false;
+            if (doRAG) {
+                String mimeType = item.getMediaType() != null ? item.getMediaType().toString() : "";
+                shouldEmbedItem = ragService.getConfig().shouldEmbed(item.getCategorySet(), mimeType);
+                if (shouldEmbedItem) {
+                    item.setExtraAttribute(ExtraProperties.HAS_EMBEDDING, Boolean.TRUE.toString());
+                }
+            }
+
             // creates the father;
             XContentBuilder jsonMetadata = getJsonMetadataBuilder(item);
             IndexRequest parentIndexRequest = createIndexRequest(parentId, parentId, jsonMetadata);
             bulkRequest.add(parentIndexRequest);
             idToPath.put(parentId, item.getPath());
 
+            List<FragHolder> frags = new ArrayList<>();
+
             do {
-                // used for children items in elastic to store text content
                 String contenttrackID = Util.generatetrackIDForTextFrag(parentId, fragNum);
+                String content = getStringFromReader(fragReader);
+                FragHolder fh = new FragHolder();
+                fh.contenttrackID = contenttrackID;
+                fh.fragNum = fragNum--;
+                fh.content = content;
+                frags.add(fh);
+            } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
-                // creates the json _source of the fragment
-                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contenttrackID,
-                        fragNum--);
+            List<float[]> embeddings = null;
+            if (doRAG && shouldEmbedItem && !frags.isEmpty()) {
+                List<String> textsToEmbed = new ArrayList<>();
+                for (FragHolder fh : frags) {
+                    if (fh.content != null && !fh.content.trim().isEmpty()) {
+                        textsToEmbed.add(fh.content);
+                    }
+                }
+                if (!textsToEmbed.isEmpty()) {
+                    try {
+                        embeddings = ragService.getEmbeddings(textsToEmbed);
+                        if (embeddings != null && !embeddings.isEmpty()) {
+                            IndexTask.totalEmbeddedDocs.incrementAndGet();
+                            IndexTask.totalEmbeddedVectors.addAndGet(embeddings.size());
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to generate batch embeddings for item " + item.getId(), e);
+                    }
+                }
+            }
 
-                // creates the request
-                IndexRequest contentRequest = createIndexRequest(contenttrackID, parentId, jsonContent);
+            int embedIdx = 0;
+            for (FragHolder fh : frags) {
+                float[] emb = null;
+                if (embeddings != null && fh.content != null && !fh.content.trim().isEmpty()) {
+                    if (embedIdx < embeddings.size()) {
+                        emb = embeddings.get(embedIdx++);
+                    }
+                }
+
+                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fh.content, parentId, fh.contenttrackID, fh.fragNum, emb);
+                IndexRequest contentRequest = createIndexRequest(fh.contenttrackID, parentId, jsonContent);
 
                 bulkRequest.add(contentRequest);
-
-                idToPath.put(contenttrackID, item.getPath());
+                idToPath.put(fh.contenttrackID, item.getPath());
 
                 LOGGER.debug("Added to bulk request {}", item.getPath());
 
                 if (bulkRequest.estimatedSizeInBytes() >= elasticConfig.getMin_bulk_size()
                         || bulkRequest.numberOfActions() >= elasticConfig.getMin_bulk_items()) {
-
-                    // do not send more requests while commit is going on
                     while (this.onCommit.get()) {
                         this.wait();
                     }
                     sendBulkRequest();
                 }
-
-            } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
+            }
 
         } finally {
             fragReader.close();
@@ -671,12 +774,67 @@ public class ElasticSearchIndexTask extends AbstractTask {
         document_content.put("name", "content");
         document_content.put("parent", parentID);
 
+        String content = getStringFromReader(textReader);
+
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field("document_content", document_content)
                 .field("contenttrackID", contenttrackID).field(IndexTask.FRAG_NUM, fragNum)
-                .field(BasicProps.CONTENT, getStringFromReader(textReader));
+                .field(BasicProps.CONTENT, content);
+
+        RAGService ragService = RAGService.getInstance();
+        if (ragService != null && ragService.getConfig().isEnabled()) {
+            try {
+                if (content != null && !content.trim().isEmpty()) {
+                    java.util.HashSet<String> categories = item.getCategorySet();
+                    String mimeType = item.getMediaType().toString();
+                    if (ragService.getConfig().shouldEmbed(categories, mimeType)) {
+                        float[] embedding = ragService.getEmbedding(content);
+                        if (embedding != null) {
+                            builder.array("content_embedding", embedding);
+                            builder.field("embedding_model", ragService.getConfig().getEmbeddingModel());
+                            builder.field("embedding_timestamp", System.currentTimeMillis());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to generate embedding for fragment " + contenttrackID + " of item " + item.getId(), e);
+            }
+        }
 
         return builder.endObject();
+    }
+
+    private XContentBuilder getJsonFragmentBuilder(IItem item, String content, String parentID,
+            String contenttrackID, int fragNum, float[] embedding) throws IOException {
+
+        XContentBuilder builder = XContentFactory.jsonBuilder();
+
+        HashMap<String, String> document_content = new HashMap<>();
+        document_content.put("name", "content");
+        document_content.put("parent", parentID);
+
+        builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
+                .field(BasicProps.ID, item.getId()).field("document_content", document_content)
+                .field("contenttrackID", contenttrackID).field(IndexTask.FRAG_NUM, fragNum)
+                .field(BasicProps.CONTENT, content);
+
+        if (embedding != null) {
+            RAGService ragService = RAGService.getInstance();
+            builder.array("content_embedding", embedding);
+            builder.field(IndexTask.HAS_EMBEDDING_FRAG, "1");
+            if (ragService != null && ragService.getConfig() != null) {
+                builder.field("embedding_model", ragService.getConfig().getEmbeddingModel());
+            }
+            builder.field("embedding_timestamp", System.currentTimeMillis());
+        }
+
+        return builder.endObject();
+    }
+
+    private static class FragHolder {
+        String contenttrackID;
+        int fragNum;
+        String content;
     }
 
     private String getStringFromReader(Reader reader) throws IOException {

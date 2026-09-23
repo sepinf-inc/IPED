@@ -206,6 +206,7 @@ public class Configuration {
         configManager.addObject(new AnalysisConfig());
         configManager.addObject(new AIFiltersConfig());
         configManager.addObject(new ProcessingPriorityConfig());
+        configManager.addObject(new RAGConfig());
 
         configManager.addObject(new EnableTaskProperty(FaceRecognitionConfig.enableParam));
         configManager.addObject(new EnableTaskProperty(AgeEstimationConfig.enableParam));

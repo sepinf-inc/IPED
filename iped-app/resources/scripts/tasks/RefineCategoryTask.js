@@ -1,4 +1,4 @@
-﻿﻿/*
+/*
  * Script of Category Specialization based on item properties.
  * Uses javascript language to allow flexibility in definitions.
  */
@@ -49,7 +49,7 @@ function process(e){
 	if(e.getMetadata().get("chromeCache:isChromeCacheEntry")){
 		e.addCategory("Chrome Cache");
 	}
-    cacheUrl = e.getMetadata().get("chromeCache:chromeCacheUrl");
+    var cacheUrl = e.getMetadata().get("chromeCache:chromeCacheUrl");
     if(cacheUrl != null && cacheUrl.contains("discord")){
         if(e.getName().startsWith("messages")){
             e.setMediaTypeStr("application/x-discord-chat+json")
@@ -144,7 +144,19 @@ function process(e){
 		else
 			e.setCategory("Other Texts");
 	}
-	
+
+	// HTML files from program/system folders (e.g. .pak archives from Chrome/Electron)
+	// or browser cache are UI assets, not user documents — reclassify so they are
+	// excluded from RAG embeddings without affecting legitimate user HTML files.
+	else if(categorias.indexOf("HTML Documents") > -1){
+
+		if(isFromInternet(e))
+			e.setCategory("Temporary Internet Texts");
+
+		else if(inSystemFolder(e))
+			e.setCategory("Texts in System Folders");
+	}
+
 	else if(isFromInternet(e)){
 		if(e.getMediaType().toString().equals("application/x-sqlite3"))
 			e.setCategory("Internet History");

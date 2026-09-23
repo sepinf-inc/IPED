@@ -32,7 +32,15 @@ public class CategoryTreeModel implements TreeModel {
     }
 
     private CategoryTreeModel() {
-        this.root = App.get().appCase.getCategoryTree();
+        App appInstance = App.get();
+        if (appInstance == null) {
+            System.err.println("DIAGNOSTIC: App.get() is NULL!");
+        } else if (appInstance.appCase == null) {
+            System.err.println("DIAGNOSTIC: App.get().appCase is NULL!");
+        } else {
+            System.err.println("DIAGNOSTIC: App.get().appCase is NOT null, categoryTree = " + appInstance.appCase.getCategoryTree());
+        }
+        this.root = appInstance.appCase.getCategoryTree();
         this.root.setName(rootName);
     }
 
