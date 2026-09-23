@@ -1,5 +1,6 @@
 package iped.utils;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Comparator;
 
 public class StringUtil {
@@ -24,4 +25,35 @@ public class StringUtil {
         return input.replaceAll("([a-z])([A-Z])", "$1 $2");
     }
 
+    public static String decodeIfUtf8(String value) {
+        if (isUtf8(value)) {
+            try {
+                byte[] buf16 = value.getBytes("UTF-16LE");
+                byte[] buf8 = new byte[buf16.length / 2];
+                for (int i = 0; i < buf8.length; i++) {
+                    buf8[i] = buf16[i * 2];
+                }
+                value = new String(buf8, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        return value;
+    }
+
+    public static boolean isUtf8(String value) {
+        int idx = -1;
+        for (char c : new char[] { 'Ã', 'Ä', 'Å', 'Ð', 'Ñ' }) {
+            if ((idx = value.indexOf(c)) != -1) {
+                break;
+            }
+        }
+        if (idx > -1 && idx < value.length() - 1) {
+            int c = value.codePointAt(idx + 1);
+            if (c >= 0x0080 && c <= 0xFFFF) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
