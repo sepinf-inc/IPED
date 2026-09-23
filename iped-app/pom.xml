@@ -14,7 +14,6 @@
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
     </properties>
-    
     <dependencies>
         <dependency>
             <groupId>iped</groupId>
@@ -85,6 +84,41 @@
 					<outputDirectory>${tools.dir}/regripper</outputDirectory>
 				</configuration>
 			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                    <configuration>
+                        <target>
+                        <!-- Cria diretório de destino 
+                        <mkdir dir="${project.build.directory}/vlc" />-->
+                         <property name="outputVlcDir" value="../target/release/iped-${project.version}/tools/vlc" />
+                          <property name="outputLibDir" value="../target/release/iped-${project.version}/lib/" />
+                         <mkdir dir="${outputVlcDir}"/>
+                        <!-- Baixa o arquivo zip -->
+                        <get src="https://github.com/portapps/vlc-portable/releases/download/3.0.21-12/vlc-3.0.21-win64.zip"
+                            dest="${outputVlcDir}/vlc.zip"
+                            usetimestamp="true"
+                            skipexisting="true"
+                            verbose="false" />
+                        <!-- Descompacta o zip (requer ant-contrib ou 7-Zip externo para .7z) -->
+                        <unzip src="${outputVlcDir}/vlc.zip"
+                                dest="${outputLibDir}"/>
+                        <move todir="${outputLibDir}/vlc/win32-x86-64">
+                            <fileset dir="${outputLibDir}/vlc-3.0.21" />
+                        </move>   
+                        </target>
+                    </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -400,6 +434,7 @@
                             </artifactItems>
                         </configuration>
                     </execution>
+
                      <execution>
                         <id>copy-caffviewer</id>
                         <phase>package</phase>
