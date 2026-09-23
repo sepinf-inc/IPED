@@ -183,3 +183,21 @@ JUnRAR
 Lottie-player
 - Site: https://github.com/LottieFiles/lottie-player/blob/master/LICENSE
 - License: licenses/LOTTIE-PLAYER.txt
+
+YARA-X 1.x
+- Site: https://github.com/VirusTotal/yara-x
+- License: licenses/YARA-X.txt
+- Usage: pattern matching engine (Rust rewrite of YARA by Victor M. Alvarez,
+  the original YARA author) embedded as native library libyara-x-capi under
+  tools/yara-x/<os>/, consumed by iped.engine.task.yara.YaraScanTask via JNA.
+  Modules pe, elf, math, hash, magic, dotnet and time are enabled out of the
+  box; the cuckoo module is banned at runtime via yrx_compiler_ban_module.
+  Compatibility with classic YARA rules is ~99% — flag YRX_RELAXED_RE_SYNTAX
+  is set on the compiler to accept regex constructs from legacy catalogs.
+
+JNA — Java Native Access
+- Site: https://github.com/java-native-access/jna
+- License: Apache License, Version 2.0 (also available under LGPL 2.1).
+  Apache 2.0 text in licenses/Apache 2.0.txt; LGPL 2.1 text in licenses/LGPL 2.1.txt.
+- Usage: JVM-to-native bridge used by iped.engine.task.yara.YaraEngine to call
+  into libyara-x-capi without forking the official yara-x CLI per item.
