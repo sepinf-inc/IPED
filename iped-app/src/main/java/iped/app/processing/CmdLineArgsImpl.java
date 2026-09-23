@@ -124,12 +124,15 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = "--downloadInternetData", description = "download Internet data to enrich evidence data processing. E.g. media files still available in WhatsApp servers and not found in the evidence")
     private boolean downloadInternetData;
-    
+
     @Parameter(names = { "-splash" }, description = "custom message to be shown in the splash screen")
-    private String splashMessage;    
+    private String splashMessage;
 
     @Parameter(names = { "--help", "-h", "/?" }, help = true, description = "display this help")
     private boolean help;
+
+    @Parameter(names = { "-version", "--version" }, help = true, description = "display version information")
+    private boolean version;
 
     @DynamicParameter(names = "-X", description = "used to specify extra module options")
     private Map<String, String> extraParams = new HashMap<>();
@@ -252,10 +255,14 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     public String getSplashMessage() {
         return splashMessage;
     }
-    
+
     @Override
     public boolean isHelp() {
         return help;
+    }
+
+    public boolean isVersion() {
+        return version;
     }
 
     @Override
@@ -342,6 +349,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             jc.parse(args);
             if (help)
                 printUsageAndExit(jc);
+            if (version)
+                printVersionAndExit();
 
             allArgs = Arrays.asList(args);
             handleSpecificArgs();
@@ -389,6 +398,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     private void printUsageAndExit(JCommander jc) {
         System.out.println(Version.APP_NAME);
         jc.usage();
+        System.exit(0);
+    }
+
+    private void printVersionAndExit() {
+        System.out.println(Version.APP_NAME + " " + Version.APP_VERSION);
         System.exit(0);
     }
 
