@@ -157,6 +157,10 @@
         {"name": "Social Connectivity Program Executables"},
         {"name": "Social Connectivity Program Files"},
         {"name": "GRRF Files"}
+      ]},
+      {"name": "State Fiscal Documents", "categories":[
+        {"name": "Tax Invoices", "mimes": ["application/x-nfe+xml", "application/x-nfe+pdf"]},
+        {"name": "Eletronic Transport Documents", "mimes": ["application/x-cte+xml", "application/x-cte+pdf"]}
       ]}
     ]},
     {"name": "Extraction Summary", "mimes": ["application/x-ufed-html-summary"]},

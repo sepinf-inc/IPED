@@ -48,7 +48,9 @@ public class IcePDFViewer extends AbstractViewer {
 
     @Override
     public boolean isSupportedType(String contentType) {
-        return contentType.equals("application/pdf"); //$NON-NLS-1$
+        return contentType.equals("application/pdf") //$NON-NLS-1$
+                || contentType.equals("application/x-nfe+pdf") //$NON-NLS-1$
+                || contentType.equals("application/x-cte+pdf"); //$NON-NLS-1$
     }
 
     @Override
@@ -69,11 +71,11 @@ public class IcePDFViewer extends AbstractViewer {
         System.setProperty("org.icepdf.core.views.page.text.highlightColor", "0xFFFF00"); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Set rendering hints to improve rendering quality
-        System.setProperty("org.icepdf.core.screen.alphaInterpolation","VALUE_ALPHA_INTERPOLATION_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
-        System.setProperty("org.icepdf.core.screen.colorRender","VALUE_COLOR_RENDER_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
-        System.setProperty("org.icepdf.core.screen.interpolation","VALUE_INTERPOLATION_BILINEAR"); //$NON-NLS-1$ //$NON-NLS-2$
-        System.setProperty("org.icepdf.core.screen.render","VALUE_RENDER_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
-        
+        System.setProperty("org.icepdf.core.screen.alphaInterpolation", "VALUE_ALPHA_INTERPOLATION_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("org.icepdf.core.screen.colorRender", "VALUE_COLOR_RENDER_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("org.icepdf.core.screen.interpolation", "VALUE_INTERPOLATION_BILINEAR"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("org.icepdf.core.screen.render", "VALUE_RENDER_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
+
         // pode provocar crash da jvm
         // System.setProperty("org.icepdf.core.awtFontLoading", "true");
 
@@ -131,7 +133,6 @@ public class IcePDFViewer extends AbstractViewer {
         propManager.set(ViewerPropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
         propManager.set(ViewerPropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
         propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_TOOLBAR_SEARCH, "false"); //$NON-NLS-1$
-        
 
         SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
         viewerPanel = factory.buildViewerPanel();
@@ -156,7 +157,7 @@ public class IcePDFViewer extends AbstractViewer {
             // Copy the current displayed page, with the current rotation applied.
             int currPage = pdfController.getDocumentViewController().getCurrentPageIndex();
             float currRot = pdfController.getDocumentViewController().getRotation();
-            float zoom = 2; // Use 2 for a better quality 
+            float zoom = 2; // Use 2 for a better quality
 
             Image image = pdfController.getDocument().getPageImage(currPage, GraphicsRenderingHints.PRINT,
                     Page.BOUNDARY_CROPBOX, currRot, zoom);
