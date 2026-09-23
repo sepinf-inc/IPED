@@ -3,31 +3,32 @@ package iped.engine.graph;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import org.neo4j.cli.AdminTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.io.URLUtil;
-
+/**
+ * Runs the Neo4j bulk CSV import in a child JVM with the isolated {@code lib/neo4j/} classpath
+ * (embedded engine + antlr 4.13.x), via {@link Neo4jChildLauncher}. The import does not use the
+ * Cypher parser, but it shares the same isolated stack as the Bolt {@code GraphServer}.
+ */
 public class GraphImportRunner {
 
     private static Logger LOGGER = LoggerFactory.getLogger(GraphImportRunner.class);
 
     public static final String ARGS_FILE_NAME = "import-tool-args";
+
+    // neo4j-admin entry point, referenced by name so iped-engine needs no compile dependency on it.
+    private static final String ADMIN_TOOL_CLASS = "org.neo4j.cli.AdminTool";
 
     private File[] inputs;
     private ImportListener listener;
@@ -73,19 +74,12 @@ public class GraphImportRunner {
 
     public void run(File neo4jHome, String dbName, boolean highIO) throws IOException {
 
-        List<String> args = new ArrayList<>();
-
-        args.add(getJreExecutable().getAbsolutePath());
-        args.add("-cp");
-        try {
-            URL url = URLUtil.getURL(AdminTool.class);
-            args.add(new File(url.toURI()).getParentFile().getAbsolutePath() + "/*");
-        } catch (URISyntaxException e1) {
-            throw new IOException(e1);
-        }
-
-        args.add(AdminTool.class.getName());
+        List<String> args = Neo4jChildLauncher.baseCommand();
+        args.add(ADMIN_TOOL_CLASS);
+        // Neo4j 5 moved the former top-level "import" command under "database import full".
+        args.add("database");
         args.add("import");
+        args.add("full");
 
         writeArgs(args, dbName, highIO);
 
@@ -98,6 +92,9 @@ public class GraphImportRunner {
         neo4jHome.mkdirs();
 
         File emptyConf = new File(System.getProperty("java.io.tmpdir"), "neo4j.conf");
+        if (!emptyConf.exists()) {
+            emptyConf.createNewFile();
+        }
         emptyConf.deleteOnExit();
 
         processBuilder.environment().put("NEO4J_HOME", neo4jHome.getAbsolutePath());
@@ -123,21 +120,16 @@ public class GraphImportRunner {
 
     public void writeArgs(List<String> args, String dbName, boolean highIO) throws IOException {
 
-        args.add("--input-encoding");
-        args.add("utf-8");
-        args.add("--bad-tolerance");
-        args.add("0");
-        args.add("--database");
-        args.add(dbName);
+        // Neo4j 5 CLI options use the --opt=value form: boolean options no longer accept a
+        // space-separated value, --high-io was renamed to --high-parallel-io=on|off|auto, and the
+        // legacy --database flag was replaced by a trailing <database> positional argument.
+        args.add("--input-encoding=utf-8");
+        args.add("--bad-tolerance=0");
         if (highIO) {
-            args.add("--high-io");
-            args.add("true");
+            args.add("--high-parallel-io=on");
         }
-        
-        args.add("--ignore-empty-strings");
-        args.add("true");
-        args.add("--skip-duplicate-nodes");
-        args.add("true");
+        args.add("--ignore-empty-strings=true");
+        args.add("--skip-duplicate-nodes=true");
 
         for (File input : inputs) {
             File[] argsFiles = input.listFiles(new ArgsFileFilter());
@@ -147,6 +139,11 @@ public class GraphImportRunner {
                 }
             }
         }
+
+        // End-of-options marker so the variadic --nodes/--relationships do not swallow the
+        // database name as an extra file; <database> is the trailing positional in Neo4j 5.
+        args.add("--");
+        args.add(dbName);
     }
 
     private static class ArgsFileFilter implements FileFilter {
@@ -156,32 +153,6 @@ public class GraphImportRunner {
             return pathname.getName().startsWith(ARGS_FILE_NAME) && !pathname.getName().equals(ARGS_FILE_NAME + ".txt");
         }
 
-    }
-
-    private boolean isWindows() {
-        String os = System.getProperty("os.name");
-        if (os == null) {
-            throw new IllegalStateException("os.name");
-        }
-        os = os.toLowerCase();
-        return os.startsWith("windows");
-    }
-
-    private File getJreExecutable() throws FileNotFoundException {
-        String jreDirectory = System.getProperty("java.home");
-        if (jreDirectory == null) {
-            throw new IllegalStateException("java.home");
-        }
-        File exe;
-        if (isWindows()) {
-            exe = new File(jreDirectory, "bin/java.exe");
-        } else {
-            exe = new File(jreDirectory, "bin/java");
-        }
-        if (!exe.isFile()) {
-            throw new FileNotFoundException(exe.toString());
-        }
-        return exe;
     }
 
 }

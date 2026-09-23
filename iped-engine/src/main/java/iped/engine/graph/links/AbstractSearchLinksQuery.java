@@ -7,39 +7,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.Transaction;
 
+import iped.engine.graph.GraphService;
 import iped.engine.graph.PathQueryListener;
 
 public abstract class AbstractSearchLinksQuery implements SearchLinksQuery {
 
     @Override
-    public void search(String start, String end, GraphDatabaseService graphDB, PathQueryListener listener) {
+    public void search(String start, String end, GraphService graphService, PathQueryListener listener) {
         Map<String, Object> params = new HashMap<>(2);
         params.put("start", start);
         params.put("end", end);
 
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            Result result = tx.execute(getQuery(), params);
-            ResourceIterator<Path> resourceIterator = result.columnAs("path");
-
-            boolean continueQuery = true;
-            while (continueQuery && resourceIterator.hasNext()) {
-                Path path = resourceIterator.next();
-                continueQuery = listener.pathFound(path);
-            }
-
-            tx.commit();
-        } finally {
-            tx.close();
-        }
+        // The .cypher resource returns a column named "path"; the query now runs over Bolt.
+        graphService.searchPaths(getQuery(), params, listener);
     }
 
     protected String getQuery() {
