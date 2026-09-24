@@ -39,16 +39,24 @@ import iped.parsers.standard.StandardParser;
  *     Thread 3 (Phone):  outgoing audio call (2), incoming audio call (1),
  *                        missed audio call (3), missed video call (8)
  *
+ *   Calls (table call). Only the message rows a call row points to are replaced, so
+ *   the missed video call row 12, which has no call row, is still extracted from the
+ *   message table, and calls with no message row exist only here:
+ *     peer 4: outgoing audio accepted (msg 8), incoming audio accepted (msg 9),
+ *             incoming audio missed (msg 10), incoming video declined (no msg row)
+ *     peer 3: outgoing group call accepted (msg 11), incoming group call rung by
+ *             Alice (no msg row, ringer=1), generic group call event with no ringer
+ *
  *   Expected output (extractMessages=true):
- *     3 x-signal-chat + 12 x-signal-message = 15 docs
+ *     3 x-signal-chat + 14 x-signal-message = 17 docs
  */
 public class SignalParserTest extends AbstractPkgTest {
 
     private static final String FIXTURE = "test-files/test_signal.db";
 
     private static final int EXPECTED_CHAT_DOCS    = 3;
-    private static final int EXPECTED_MESSAGE_DOCS = 12;  // system (JOINED_TYPE) excluded; 3+5+4
-    private static final int EXPECTED_TOTAL_DOCS   = 15;
+    private static final int EXPECTED_MESSAGE_DOCS = 15;  // system (JOINED_TYPE) excluded; 3+7+5
+    private static final int EXPECTED_TOTAL_DOCS   = 18;
 
     private static final String EXPECTED_GROUP_TITLE      = "Signal Group - Operacao Digital";
     private static final String EXPECTED_INDIVIDUAL_TITLE = "Signal Chat - Alice Walker (+5511999990001)";
@@ -94,7 +102,8 @@ public class SignalParserTest extends AbstractPkgTest {
         long msgCount = tracker.contentTypes.stream()
                 .filter(t -> t.equals(SignalParser.SIGNAL_MESSAGE.toString()))
                 .count();
-        // 13 raw rows; 1 system (JOINED_TYPE) filtered → 12 indexed (3+5+4)
+        // 13 message rows + 7 call rows; 1 system filtered, 4 message rows replaced
+        // by their call rows → 15 indexed (3+7+5)
         assertEquals("System messages must be excluded from indexed message count",
                 EXPECTED_MESSAGE_DOCS, (int) msgCount);
     }
@@ -156,15 +165,57 @@ public class SignalParserTest extends AbstractPkgTest {
     }
 
     public void testCallBodyLabels() throws Exception {
+        // Calls come from the call table, which knows direction, media and outcome
         EmbeddedSignalParser tracker = parse(true);
-        assertTrue("Outgoing call must be labeled [Outgoing Call]",
-                tracker.messageBodies.contains("[Outgoing Call]"));
-        assertTrue("Incoming call must be labeled [Incoming Call]",
-                tracker.messageBodies.contains("[Incoming Call]"));
-        assertTrue("Missed call must be labeled [Missed Call]",
+        assertTrue("Outgoing audio call must describe its outcome",
+                tracker.messageBodies.contains("[Outgoing audio call (accepted)]"));
+        assertTrue("Incoming missed call must be described as missed",
+                tracker.messageBodies.contains("[Incoming audio call (missed)]"));
+        assertTrue("Group call must be described as such",
+                tracker.messageBodies.contains("[Outgoing group call (accepted)]"));
+    }
+
+    public void testCallWithoutMessageRowIsExtracted() throws Exception {
+        // A call whose message row is gone has message_id NULL and exists only in the
+        // call table: reading messages alone would lose it
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("Call with no message row must still be extracted",
+                tracker.messageBodies.contains("[Incoming video call (declined)]"));
+    }
+
+    public void testCallsAreNotCountedTwice() throws Exception {
+        // Call rows exist in both tables; they must be read from the call table only
+        EmbeddedSignalParser tracker = parse(true);
+        long callBodies = tracker.messageBodies.stream().filter(b -> b.contains(" call (")).count();
+        assertEquals("Each call must produce exactly one message", 6, callBodies);
+        assertTrue("A generic group call event carries no outcome in its label",
+                tracker.messageBodies.contains("[group call]"));
+    }
+
+    public void testCallRowWithoutCallTableEntryIsKept() throws Exception {
+        // Message row 12 is a missed video call with no row in the call table: it must
+        // still be extracted, since only rows a call row points to are replaced
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("Call present only in the message table must be kept",
                 tracker.messageBodies.contains("[Missed Call]"));
-        assertTrue("Group call must be labeled [Group Call]",
-                tracker.messageBodies.contains("[Group Call]"));
+    }
+
+    public void testGroupCallWithoutRingerHasNoSender() throws Exception {
+        // With no ringer recorded, the caller is unknown — attributing the call to the
+        // group recipient would invent a person node in link analysis
+        EmbeddedSignalParser tracker = parse(true);
+        assertFalse("The group recipient must not be reported as a caller",
+                tracker.messageFroms.stream().anyMatch(f -> f.startsWith("Unknown")));
+    }
+
+    public void testIncomingGroupCallSenderIsTheRinger() throws Exception {
+        // On a group thread the peer is the group itself, so the caller must come from
+        // the ringer column — otherwise the group would be reported as the sender
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("Incoming group call must be attributed to the ringer",
+                tracker.messageFroms.contains(ALICE_FULL_ID));
+        assertTrue("Incoming group call must be described as a group call",
+                tracker.messageBodies.contains("[Incoming group call (accepted)]"));
     }
 
     public void testSentMessagesUseBaseSentType() throws Exception {

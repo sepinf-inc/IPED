@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import junit.framework.TestCase;
 
@@ -49,6 +50,30 @@ public class SignalExtractorSchemaTest extends TestCase {
         createSchema("recipient_id");
         assertFalse("Pre-6.19 schema should be rejected instead of yielding empty chats",
                 new SignalExtractor(connection, "test.db").isValidSignalDatabase());
+    }
+
+    public void testCallsSurviveAnUnreadableCallTable() throws Exception {
+        // A call table with an older, narrower column set makes the call query fail.
+        // The call rows in the message table must then still be extracted, instead of
+        // being dropped as replaced by rows that never loaded.
+        createSchema("from_recipient_id");
+        try (Statement st = connection.createStatement()) {
+            // no timestamp/ringer columns, as in the first version of the table
+            st.executeUpdate("CREATE TABLE call (_id INTEGER PRIMARY KEY, call_id INTEGER, "
+                    + "message_id INTEGER, peer INTEGER, type INTEGER, direction INTEGER, event INTEGER)");
+            st.executeUpdate("INSERT INTO call VALUES (1, 100, 1, 7, 0, 0, 3)");
+            st.executeUpdate("INSERT INTO recipient (_id, e164) VALUES (7, '+5511900000007')");
+            st.executeUpdate("INSERT INTO thread (_id, recipient_id, date) VALUES (1, 7, 1700000000000)");
+            // MISSED_AUDIO_CALL_TYPE
+            st.executeUpdate("INSERT INTO message (_id, thread_id, from_recipient_id, date_sent, "
+                    + "date_received, body, type) VALUES (1, 1, 7, 1700000000000, 1700000000000, NULL, 3)");
+        }
+
+        List<SignalChat> chats = new SignalExtractor(connection, "test.db").extractChats();
+        assertEquals("The thread must be extracted", 1, chats.size());
+        assertEquals("The call must survive the failed call query", 1, chats.get(0).getMessages().size());
+        assertEquals(SignalMessage.MessageType.CALL_MISSED,
+                chats.get(0).getMessages().get(0).getMessageType());
     }
 
     public void testRejectsDatabaseWithoutMessageTable() throws Exception {

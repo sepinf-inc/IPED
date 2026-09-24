@@ -6,10 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +43,26 @@ public class SignalExtractor {
             "SELECT gm.recipient_id FROM group_membership gm " +
             "INNER JOIN groups g ON g.group_id = gm.group_id WHERE g.recipient_id = ?";
 
+    // The call table (since Signal 6.7) holds every call event with its direction and
+    // outcome. Its message_id is nullable, so calls with no row in the message table
+    // exist and would be missed if only messages were read.
+    private static final String SELECT_CALLS =
+            "SELECT _id, message_id, peer, type, direction, event, timestamp, ringer " +
+            "FROM call WHERE peer = ? ORDER BY timestamp ASC";
+
     // MessageTypes.BASE_TYPE_MASK in Signal-Android: the lower 5 bits of the type
     // column hold the base type, the remaining bits are flags.
     private static final long BASE_TYPE_MASK = 0x1F;
+
+    // CallTable.Type / Direction / Event codes in Signal-Android
+    private static final int CALL_TYPE_AUDIO = 0, CALL_TYPE_VIDEO = 1, CALL_TYPE_GROUP = 3,
+            CALL_TYPE_AD_HOC = 4;
+    private static final int CALL_DIRECTION_OUTGOING = 1;
+    private static final int CALL_EVENT_ONGOING = 0, CALL_EVENT_ACCEPTED = 1,
+            CALL_EVENT_NOT_ACCEPTED = 2, CALL_EVENT_MISSED = 3, CALL_EVENT_DELETE = 4,
+            CALL_EVENT_GENERIC_GROUP = 5, CALL_EVENT_JOINED = 6, CALL_EVENT_RINGING = 7,
+            CALL_EVENT_DECLINED = 8, CALL_EVENT_OUTGOING_RING = 9,
+            CALL_EVENT_MISSED_NOTIFICATION_PROFILE = 10;
 
     private static final String VALIDATE_TABLES =
             "SELECT COUNT(*) FROM sqlite_master WHERE type='table' " +
@@ -115,6 +135,62 @@ public class SignalExtractor {
         return true;
     }
 
+    private boolean hasTable(String table) {
+        try (PreparedStatement st = connection
+                .prepareStatement("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = ?")) {
+            st.setString(1, table);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    private static SignalMessage.MessageType callMessageType(int type, int direction, int event) {
+        if (event == CALL_EVENT_MISSED || event == CALL_EVENT_MISSED_NOTIFICATION_PROFILE)
+            return SignalMessage.MessageType.CALL_MISSED;
+        if (type == CALL_TYPE_GROUP || type == CALL_TYPE_AD_HOC)
+            return SignalMessage.MessageType.CALL_GROUP;
+        return direction == CALL_DIRECTION_OUTGOING ? SignalMessage.MessageType.CALL_OUTGOING
+                : SignalMessage.MessageType.CALL_INCOMING;
+    }
+
+    /** Human readable description of a call event, e.g. "Incoming video call (declined)". */
+    private static String callDescription(int type, int direction, int event) {
+        StringBuilder sb = new StringBuilder(48);
+        if (event != CALL_EVENT_GENERIC_GROUP)
+            sb.append(direction == CALL_DIRECTION_OUTGOING ? "Outgoing " : "Incoming ");
+        switch (type) {
+            case CALL_TYPE_VIDEO:  sb.append("video call"); break;
+            case CALL_TYPE_GROUP:  sb.append("group call"); break;
+            case CALL_TYPE_AD_HOC: sb.append("call link call"); break;
+            case CALL_TYPE_AUDIO:
+            default:               sb.append("audio call"); break;
+        }
+        String outcome = callOutcome(event);
+        if (outcome != null)
+            sb.append(" (").append(outcome).append(")");
+        return sb.toString();
+    }
+
+    private static String callOutcome(int event) {
+        switch (event) {
+            case CALL_EVENT_ONGOING:       return "ongoing";
+            case CALL_EVENT_ACCEPTED:      return "accepted";
+            case CALL_EVENT_NOT_ACCEPTED:  return "not accepted";
+            case CALL_EVENT_MISSED:        return "missed";
+            case CALL_EVENT_MISSED_NOTIFICATION_PROFILE: return "missed, notification profile";
+            case CALL_EVENT_DELETE:        return "deleted";
+            case CALL_EVENT_GENERIC_GROUP: return null; // the call type already says it
+            case CALL_EVENT_JOINED:        return "joined";
+            case CALL_EVENT_RINGING:       return "ringing";
+            case CALL_EVENT_DECLINED:      return "declined";
+            case CALL_EVENT_OUTGOING_RING: return "ringing";
+            default:                       return null;
+        }
+    }
+
     private boolean hasColumn(String table, String column) {
         try (Statement st = connection.createStatement();
              ResultSet rs = st.executeQuery("PRAGMA table_info(" + table + ")")) {
@@ -158,6 +234,7 @@ public class SignalExtractor {
 
     private List<SignalChat> loadThreads(Map<Long, SignalContact> recipients) {
         List<SignalChat> chats = new ArrayList<>();
+        boolean callsAvailable = hasTable("call");
         try (Statement st = connection.createStatement();
              ResultSet rs = st.executeQuery(SELECT_THREADS)) {
             while (rs.next()) {
@@ -176,7 +253,21 @@ public class SignalExtractor {
                     loadGroupMembers(recipientId, recipients, chat);
                 }
 
-                chat.setMessages(loadMessages(threadId, recipients));
+                // Calls are read first: only the message rows they actually replace are
+                // skipped, so a call event that exists only in the message table (or one
+                // whose query failed) is still extracted
+                Set<Long> replacedMessageIds = new HashSet<>();
+                List<SignalMessage> calls = callsAvailable
+                        ? loadCalls(recipientId, recipients, replacedMessageIds)
+                        : new ArrayList<>();
+
+                List<SignalMessage> messages = loadMessages(threadId, recipients, replacedMessageIds);
+                messages.addAll(calls);
+                // SQLite sorts rows with no usable date first; keep that order here so the
+                // report does not depend on whether the database has a call table
+                messages.sort(Comparator.comparing(SignalExtractor::effectiveDate,
+                        Comparator.nullsFirst(Comparator.naturalOrder())));
+                chat.setMessages(messages);
 
                 // Groups are kept even when empty, since their membership is evidence on
                 // its own; 1:1 threads only when they have messages or an identified contact
@@ -219,14 +310,82 @@ public class SignalExtractor {
         }
     }
 
-    private List<SignalMessage> loadMessages(long threadId, Map<Long, SignalContact> recipients) {
+    private static Date effectiveDate(SignalMessage m) {
+        return m.getDateSent() != null ? m.getDateSent() : m.getDateReceived();
+    }
+
+    /**
+     * Loads the call events of a conversation from the call table, which carries the
+     * direction and the outcome of each call. Calls whose message row was deleted have
+     * a null message_id and only show up here.
+     */
+    private List<SignalMessage> loadCalls(long peerRecipientId, Map<Long, SignalContact> recipients,
+            Set<Long> replacedMessageIds) {
+        List<SignalMessage> calls = new ArrayList<>();
+        try (PreparedStatement st = connection.prepareStatement(SELECT_CALLS)) {
+            st.setLong(1, peerRecipientId);
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) {
+                    int type = rs.getInt("type");
+                    int direction = rs.getInt("direction");
+                    int event = rs.getInt("event");
+
+                    long messageId = rs.getLong("message_id");
+                    if (!rs.wasNull())
+                        replacedMessageIds.add(messageId);
+
+                    SignalMessage m = new SignalMessage();
+                    m.setId(rs.getLong("_id"));
+                    m.setFromRecipientId(peerRecipientId);
+                    m.setMessageType(callMessageType(type, direction, event));
+                    m.setCallDetail(callDescription(type, direction, event));
+                    m.setFromMe(direction == CALL_DIRECTION_OUTGOING);
+                    if (!m.isFromMe()) {
+                        // On a group thread the peer is the group itself; the caller is the
+                        // ringer, and is left unset when the column is absent or null
+                        long ringer = rs.getLong("ringer");
+                        boolean hasRinger = !rs.wasNull();
+                        boolean groupCall = type == CALL_TYPE_GROUP || type == CALL_TYPE_AD_HOC;
+                        if (!groupCall) {
+                            m.setSender(recipients.get(peerRecipientId));
+                        } else if (hasRinger) {
+                            m.setSender(recipients.get(ringer));
+                            m.setFromRecipientId(ringer);
+                        } else {
+                            // Signal only fills ringer for ring events, and the peer of a
+                            // group call is the group: the caller is simply not recorded
+                            m.setFromRecipientId(0);
+                        }
+                    }
+
+                    long timestamp = rs.getLong("timestamp");
+                    if (timestamp > 0) {
+                        m.setDateSent(new Date(timestamp));
+                        m.setDateReceived(new Date(timestamp));
+                    }
+                    calls.add(m);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.warn("Error loading Signal calls from {}: {}", itemPath, e.getMessage());
+        }
+        return calls;
+    }
+
+    private List<SignalMessage> loadMessages(long threadId, Map<Long, SignalContact> recipients,
+            Set<Long> replacedMessageIds) {
         List<SignalMessage> messages = new ArrayList<>();
         try (PreparedStatement st = connection.prepareStatement(SELECT_MESSAGES)) {
             st.setLong(1, threadId);
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
+                    long messageId = rs.getLong("_id");
+                    // Already covered by the richer row from the call table
+                    if (replacedMessageIds.contains(messageId))
+                        continue;
+
                     SignalMessage m = new SignalMessage();
-                    m.setId(rs.getLong("_id"));
+                    m.setId(messageId);
                     m.setThreadId(threadId);
                     long fromRecipientId = rs.getLong("from_recipient_id");
                     m.setFromRecipientId(fromRecipientId);

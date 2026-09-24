@@ -231,9 +231,11 @@ public class SignalParser extends SQLite3DBParser {
             } else {
                 if (chat.isGroupChat()) {
                     // Resolved from the recipient table, so former members are named too
+                    // Left unset when the sender cannot be resolved: an "Unknown" literal
+                    // would merge unrelated people into one node in link analysis
                     SignalContact sender = m.getSender();
-                    msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM,
-                            sender != null ? sender.getFullId() : "Unknown");
+                    if (sender != null)
+                        msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, sender.getFullId());
                     msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_TO, groupTo);
                 } else if (contact != null) {
                     msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, contact.getFullId());
@@ -250,6 +252,9 @@ public class SignalParser extends SQLite3DBParser {
     }
 
     private static String resolveBody(SignalMessage m) {
+        // Calls read from the call table describe their own type and outcome
+        if (m.getCallDetail() != null)
+            return "[" + m.getCallDetail() + "]";
         switch (m.getMessageType()) {
             case CALL_OUTGOING: return "[Outgoing Call]";
             case CALL_INCOMING: return "[Incoming Call]";

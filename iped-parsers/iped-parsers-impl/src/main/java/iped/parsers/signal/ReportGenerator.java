@@ -38,7 +38,9 @@ public class ReportGenerator {
     });
 
     private static final ThreadLocal<SimpleDateFormat> TIME_FMT = ThreadLocal.withInitial(() -> {
-        SimpleDateFormat f = new SimpleDateFormat("HH:mm");
+        // Full timestamp with the UTC offset, so the report does not depend on the
+        // timezone of the machine that processed the case
+        SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX");
         f.setTimeZone(TimeZone.getDefault());
         return f;
     });
@@ -108,6 +110,9 @@ public class ReportGenerator {
 
     private String buildBodyHtml(SignalMessage m) {
         SignalMessage.MessageType type = m.getMessageType();
+        if (m.getCallDetail() != null) {
+            return "<div class=\"body call-label\">&#128222; " + escapeHtml(m.getCallDetail()) + "</div>";
+        }
         if (type == SignalMessage.MessageType.CALL_OUTGOING) {
             return "<div class=\"body call-label\">&#128222; Outgoing call</div>";
         }

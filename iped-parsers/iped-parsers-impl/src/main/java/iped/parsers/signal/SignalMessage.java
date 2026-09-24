@@ -10,6 +10,11 @@ public class SignalMessage {
         public boolean isRegular() {
             return this == INCOMING || this == OUTGOING;
         }
+
+        public boolean isCall() {
+            return this == CALL_INCOMING || this == CALL_OUTGOING
+                    || this == CALL_MISSED || this == CALL_GROUP;
+        }
     }
 
     private long id;
@@ -23,6 +28,9 @@ public class SignalMessage {
     private Date dateReceived;
     private boolean fromMe;
     private MessageType messageType = MessageType.OUTGOING;
+    // Description of a call event taken from the call table (type, direction and
+    // outcome), null for ordinary messages.
+    private String callDetail;
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
@@ -47,6 +55,9 @@ public class SignalMessage {
 
     public boolean isFromMe() { return fromMe; }
     public void setFromMe(boolean fromMe) { this.fromMe = fromMe; }
+
+    public String getCallDetail() { return callDetail; }
+    public void setCallDetail(String callDetail) { this.callDetail = callDetail; }
 
     public MessageType getMessageType() { return messageType; }
     public void setMessageType(MessageType messageType) { this.messageType = messageType; }

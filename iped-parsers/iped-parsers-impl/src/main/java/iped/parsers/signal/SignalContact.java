@@ -61,11 +61,17 @@ public class SignalContact {
         return UNKNOWN;
     }
 
-    /** Full identifier used in metadata: display name + phone (if available). */
+    /**
+     * Full identifier used in metadata: display name + phone (if available). Recipients
+     * with neither name nor phone are qualified with their recipient id, so that
+     * unrelated unidentified people do not collapse into a single node in link analysis.
+     */
     public String getFullId() {
         String name = getDisplayName();
         if (phone != null && !phone.isBlank() && !name.equals(phone))
             return name + " (" + phone + ")";
+        if (!isIdentified())
+            return name + " (rid:" + id + ")";
         return name;
     }
 }
