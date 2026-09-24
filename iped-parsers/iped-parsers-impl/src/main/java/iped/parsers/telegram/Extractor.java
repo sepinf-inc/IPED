@@ -35,6 +35,7 @@ import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,7 +185,8 @@ public class Extractor {
 
                     searchAvatarFileName(cont, androidDecoder.getPhotoData());
 
-                    ChatGroup group = new ChatGroup(chatId, cont, chatName);
+                    String chatNameToUse = StringUtils.firstNonBlank((String) androidDecoder.getAlltMetadata().get("title"), chatName);
+                    ChatGroup group = new ChatGroup(chatId, cont, chatNameToUse);
 
                     Map<String, Object> m = androidDecoder.getAlltMetadata();
                     if ("true".equals(m.get("broadcast"))) {
@@ -351,7 +353,7 @@ public class Extractor {
             }
             setFrom(message, chat);
 
-            if (cg != null && message.getFrom().getId() != 0) {
+            if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
                 cg.addMember(message.getFrom().getId());
             }
 
@@ -469,7 +471,7 @@ public class Extractor {
                             }
                         }
     
-                        if (cg != null && message.getFrom().getId() != 0) {
+                        if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
                             cg.addMember(message.getFrom().getId());
                         }
     
@@ -601,6 +603,10 @@ public class Extractor {
                                 // TODO: handle exception
                                 e.printStackTrace();
                             }
+                        }
+
+                        if (Boolean.parseBoolean((String) androidDecoder.getAlltMetadata().get("self"))) {
+                            userAccount = c;
                         }
                     }
                 }
@@ -745,11 +751,11 @@ public class Extractor {
             + "           from dialogs d LEFT join users u on u.uid=d.did  WHERE d.did NOT IN (SELECT -uid FROM chats) "
             + "            order by date desc";
 
-    private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
+    private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=? AND uid > 0";
 
     private static final String SELECT_CHATS_SETTINGS = "SELECT participants_count FROM chat_settings_v2 WHERE uid=?";
 
-    private static final String SELECT_CHANNEL_ADMINS = "SELECT uid FROM channel_admins_v3 WHERE did=?";
+    private static final String SELECT_CHANNEL_ADMINS = "SELECT uid FROM channel_admins_v3 WHERE did=? AND uid > 0";
 
     private static final String CHATS_SQL_IOS = "select substr(key,16,8) as chatid, false as deleted from t9 "
             + "UNION SELECT  substr(t7.key,1,8) as chatid, true as deleted from t7  "

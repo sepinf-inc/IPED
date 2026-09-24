@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -30,6 +31,7 @@ import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ChildPornHashLookup;
+import iped.parsers.util.ConversationConstants;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
@@ -174,6 +176,8 @@ public class SkypeParser extends AbstractParser {
                     }
 
                     /* adiciona a conversação */
+                    boolean isGroup = conv.getParticipantes() != null && conv.getParticipantes().size() > 1;
+
                     Metadata chatMetadata = new Metadata();
                     chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, CONVERSATION_MIME_TYPE);
                     chatMetadata.set(HttpHeaders.CONTENT_TYPE, CONVERSATION_MIME_TYPE);
@@ -183,6 +187,25 @@ public class SkypeParser extends AbstractParser {
                     chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, conv.getId());
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                     chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                    // Conversation:Account
+                    addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_ACCOUNT, contactMap, account.getSkypeName());
+                    addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, contactMap, account.getSkypeName());
+
+                    // Conversation:Participants
+                    if (conv.getParticipantes() != null) {
+                        for (String participant : conv.getParticipantes()) {
+                            addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, contactMap, participant);
+                        }
+                    }
+
+                    // Conversation:{ID, Name, Type, MessagesCount}
+                    chatMetadata.set(ExtraProperties.CONVERSATION_ID, conv.getId());
+                    chatMetadata.set(ExtraProperties.CONVERSATION_NAME,
+                            StringUtils.firstNonBlank(conv.getDisplayName(), conv.getChatName(), conv.getTitle()));
+                    chatMetadata.set(ExtraProperties.CONVERSATION_TYPE,
+                            isGroup ? ConversationConstants.TYPE_GROUP : ConversationConstants.TYPE_ONEONONE);
+                    chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, conv.getMessages().size());
 
                     storeSharedHashes(conv, chatMetadata);
 
@@ -205,8 +228,17 @@ public class SkypeParser extends AbstractParser {
                             meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(sm.getId()));
                             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, SKYPE);
                             meta.set(ExtraProperties.MESSAGE_DATE, sm.getData());
-                            meta.set(Metadata.MESSAGE_FROM, formatSkypeName(contactMap, sm.getAutor()));
-                            meta.set(Metadata.MESSAGE_TO, formatSkypeName(contactMap, sm.getDestino()));
+                            meta.set(ExtraProperties.COMMUNICATION_DIRECTION, sm.isFromMe()
+                                    ? ConversationConstants.DIRECTION_OUTGOING : ConversationConstants.DIRECTION_INCOMING);
+                            addPartyFields(meta, ExtraProperties.COMMUNICATION_FROM, contactMap, sm.getAutor());
+                            if (sm.getDestino() != null) {
+                                addPartyFields(meta, ExtraProperties.COMMUNICATION_TO, contactMap, sm.getDestino());
+                            } else if (isGroup) {
+                                meta.set(ExtraProperties.COMMUNICATION_TO, conv.getTitle());
+                            }
+                            if (isGroup) {
+                                meta.set(ExtraProperties.IS_GROUP_MESSAGE, Boolean.toString(true));
+                            }
                             meta.set(ExtraProperties.MESSAGE_BODY, sm.getConteudo());
                             meta.set("messageStatus", String.valueOf(sm.getChatMessageStatus()));
                             meta.set("sendingStatus", String.valueOf(sm.getSendingStatus()));
@@ -251,11 +283,15 @@ public class SkypeParser extends AbstractParser {
                     tMetadata.set(TikaCoreProperties.MODIFIED, t.getFinish());
                     tMetadata.set(ExtraProperties.MESSAGE_DATE, t.getStart());
                     tMetadata.set(ExtraProperties.MESSAGE_BODY, name);
-                    tMetadata.set(Metadata.MESSAGE_FROM, formatSkypeName(contactMap, t.getFrom()));
+                    tMetadata.set(ExtraProperties.COMMUNICATION_DIRECTION,
+                            t.getFrom() != null && t.getFrom().equals(sqlite.getSkypeName())
+                                    ? ConversationConstants.DIRECTION_OUTGOING : ConversationConstants.DIRECTION_INCOMING);
+                    addPartyFields(tMetadata, ExtraProperties.COMMUNICATION_FROM, contactMap, t.getFrom());
                     if (t.getType() == 3 && t.getConversation().getParticipantes() != null && t.getConversation().getParticipantes().size() > 1) {
-                        tMetadata.set(Metadata.MESSAGE_TO, t.getConversation().getTitle());
+                        tMetadata.set(ExtraProperties.COMMUNICATION_TO, t.getConversation().getTitle());
+                        tMetadata.set(ExtraProperties.IS_GROUP_MESSAGE, Boolean.toString(true));
                     } else {
-                        tMetadata.set(Metadata.MESSAGE_TO, formatSkypeName(contactMap, t.getTo()));
+                        addPartyFields(tMetadata, ExtraProperties.COMMUNICATION_TO, contactMap, t.getTo());
                     }
 
                     if (searcher != null) {
@@ -331,6 +367,19 @@ public class SkypeParser extends AbstractParser {
             tmp.dispose();
         }
 
+    }
+
+    private void addPartyFields(Metadata meta, String field, Map<String, SkypeUser> contactMap, String skypeName) {
+        if (StringUtils.isBlank(skypeName)) {
+            return;
+        }
+        meta.add(field, formatSkypeName(contactMap, skypeName));
+        SkypeUser user = contactMap.get(skypeName);
+        String id = (user != null && StringUtils.isNotBlank(user.getSkypeName())) ? user.getSkypeName() : skypeName;
+        meta.add(field + ExtraProperties.CONVERSATION_SUFFIX_ID, id);
+        if (user != null && StringUtils.isNotBlank(user.getBestName())) {
+            meta.add(field + ExtraProperties.CONVERSATION_SUFFIX_NAME, user.getBestName());
+        }
     }
 
     private String formatSkypeName(Map<String, SkypeUser> contactMap, String skypeName) {

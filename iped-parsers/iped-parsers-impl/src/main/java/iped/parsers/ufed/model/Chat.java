@@ -20,11 +20,6 @@ public class Chat extends BaseModel {
 
     private static final long serialVersionUID = -568791121571161053L;
 
-    public static final String TYPE_ONEONONE = "OneOnOne";
-    public static final String TYPE_GROUP = "Group";
-    public static final String TYPE_BROADCAST = "Broadcast";
-    public static final String TYPE_UNKNOWN = "Unknown";
-
     public static final String SOURCE_WHATSAPP = "WhatsApp";
     public static final String SOURCE_WHATSAPP_BUSINESS = "WhatsApp Business";
     public static final String SOURCE_TELEGRAM = "Telegram";

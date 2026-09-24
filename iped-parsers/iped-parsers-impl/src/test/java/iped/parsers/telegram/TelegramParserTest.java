@@ -1,5 +1,8 @@
 package iped.parsers.telegram;
 
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -36,7 +39,8 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals(236, telegramtracker.userphone.size());
             assertEquals(261, telegramtracker.useraccount.size());
             assertEquals(118, telegramtracker.usernotes.size());
-            assertEquals(32, telegramtracker.participants.size());
+            assertEquals(32, telegramtracker.groupParticipants.size());
+            assertEquals(69, telegramtracker.privateParticipants.size());
             assertEquals(151, telegramtracker.messagefrom.size());
             assertEquals(151, telegramtracker.messagebody.size());
             assertEquals(151, telegramtracker.messageto.size());
@@ -46,10 +50,10 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("Karol Braz", telegramtracker.title.get(1));
             assertEquals("Budi", telegramtracker.title.get(2));
             assertEquals("Nickerida", telegramtracker.title.get(3));
-            assertEquals("Telegram_Chat_Marilê", telegramtracker.title.get(505));
-            assertEquals("Telegram_Chat_Marilê_message_0", telegramtracker.title.get(506));
-            assertEquals("Telegram_Chat_Rafael CiC", telegramtracker.title.get(507));
-            assertEquals("Telegram_Chat_Rafael CiC_message_0", telegramtracker.title.get(508));
+            assertEquals("Telegram Chat - Marilê (+5561981993740)", telegramtracker.title.get(505));
+            assertEquals("Telegram Chat - Marilê (+5561981993740)_message_0", telegramtracker.title.get(506));
+            assertEquals("Telegram Chat - Rafael CiC (+5562991688700)", telegramtracker.title.get(507));
+            assertEquals("Telegram Chat - Rafael CiC (+5562991688700)_message_0", telegramtracker.title.get(508));
 
             assertEquals("Tiago", telegramtracker.username.get(0));
             assertEquals("Karol Braz", telegramtracker.username.get(1));
@@ -67,19 +71,22 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("RafaelCampos", telegramtracker.usernotes.get(1));
             assertEquals("gif", telegramtracker.usernotes.get(3));
 
-            assertEquals("Vayu (phone: 5561985757632)", telegramtracker.participants.get(0));
-            assertEquals("Felix (phone: 5561982943741)", telegramtracker.participants.get(1));
-            assertEquals("Nake Douglas (phone: 5561982616052)", telegramtracker.participants.get(2));
+            assertThat(telegramtracker.groupParticipants, hasItems(
+                    "Bruno Chaves (+33667514279)",
+                    "Nake Douglas (+5561982616052)",
+                    "Guilherme Andreúce (@guileb | +5561986143035)"));
+            assertThat(telegramtracker.privateParticipants, hasItems(
+                    "Telegram (+42777)",
+                    "Nickerida (+5561983125151)",
+                    "Yan Victor (@YanVictor | +5561995328012)"));
 
-            assertEquals("Vayu (phone: 5561985757632)", telegramtracker.messagefrom.get(0));
-            assertEquals("Felix (phone: 5561982943741)", telegramtracker.messagefrom.get(1));
-            assertEquals("Caio Brandão (ID:445292655)", telegramtracker.messagefrom.get(3));
+            assertEquals("Vayu (+5561985757632)", telegramtracker.messagefrom.get(0));
+            assertEquals("Felix (@Very_Hungery_Boye | +5561982943741)", telegramtracker.messagefrom.get(1));
+            assertEquals("Caio Brandão (@CaioBrandao)", telegramtracker.messagefrom.get(3));
 
-            assertEquals("Group constelação familiar e barras de access (id:-1459548546)",
-                    telegramtracker.messageto.get(0));
-            assertEquals("Group le chad et les chadettes (id:-1391969250)", telegramtracker.messageto.get(1));
-            assertEquals("Rafael CiC (phone: 5562991688700)", telegramtracker.messageto.get(150));
-
+            assertEquals("Group Constelação Familiar e Barras de Access (ID:1459548546)", telegramtracker.messageto.get(0));
+            assertEquals("Group Le Chad et les Chadettes (ID:1391969250)", telegramtracker.messageto.get(1));
+            assertEquals("Rafael CiC (+5562991688700)", telegramtracker.messageto.get(150));
 
             assertTrue(telegramtracker.messagebody.get(1).contains("KKKKK"));
             assertTrue(telegramtracker.messagebody.get(2).contains("Parece outro carro até"));
