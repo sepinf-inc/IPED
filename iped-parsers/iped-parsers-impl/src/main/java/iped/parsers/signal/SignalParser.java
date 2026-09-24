@@ -45,6 +45,10 @@ public class SignalParser extends SQLite3DBParser {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SignalParser.class);
 
+    // Service name used in USER_ACCOUNT_TYPE, as WhatsAppParser.WHATSAPP does:
+    // it becomes the service of the account nodes in link analysis.
+    public static final String SIGNAL = "Signal";
+
     public static final MediaType SIGNAL_DB      = MediaType.application("x-signal-db");
     public static final MediaType SIGNAL_CHAT    = MediaType.application("x-signal-chat");
     public static final MediaType SIGNAL_MESSAGE = MediaType.parse("message/x-signal-message");
@@ -82,9 +86,16 @@ public class SignalParser extends SQLite3DBParser {
             ItemInfo itemInfo = context.get(ItemInfo.class);
             String itemPath = itemInfo != null ? itemInfo.getPath() : "";
 
-            Connection connection = getConnection(tis, metadata, context);
-            if (connection == null)
+            Connection connection;
+            try {
+                connection = getConnection(tis, metadata, context);
+            } catch (IOException e) {
+                // Signal databases are SQLCipher-encrypted by default and are matched by
+                // file name, so an unreadable file is expected here: skip the item instead
+                // of reporting a parsing error for it.
+                LOGGER.debug("Could not open {} as a SQLite database, skipping it: {}", itemPath, e.getMessage());
                 return;
+            }
 
             try {
                 SignalExtractor signalExtractor = new SignalExtractor(connection, itemPath);
@@ -94,6 +105,9 @@ public class SignalParser extends SQLite3DBParser {
                 }
                 List<SignalChat> chats = signalExtractor.extractChats();
                 SignalContact selfContact = signalExtractor.findSelfContact();
+                if (selfContact == null)
+                    LOGGER.warn("Could not identify the device owner in {}: outgoing messages will have no sender",
+                            itemPath);
                 createReports(chats, selfContact, handler, extractor);
             } finally {
                 try { connection.close(); } catch (SQLException e) { /* ignore */ }
@@ -139,7 +153,9 @@ public class SignalParser extends SQLite3DBParser {
             } else if (chat.getContact() != null) {
                 if (selfContact != null)
                     chatMeta.add(ExtraProperties.PARTICIPANTS, selfContact.getFullId());
-                chatMeta.add(ExtraProperties.PARTICIPANTS, chat.getContact().getFullId());
+                // Note to Self has the owner as the chat contact: do not list them twice
+                if (selfContact == null || chat.getContact().getId() != selfContact.getId())
+                    chatMeta.add(ExtraProperties.PARTICIPANTS, chat.getContact().getFullId());
             }
 
             if (extractMessages && indexableCount > 0)
@@ -164,7 +180,7 @@ public class SignalParser extends SQLite3DBParser {
             int parentVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor)
             throws SAXException, IOException {
 
-        String selfId = selfContact != null ? selfContact.getFullId() : "";
+        String selfId = selfContact != null ? selfContact.getFullId() : null;
 
         int msgCount = 0;
         for (SignalMessage m : chat.getMessages()) {
@@ -189,32 +205,40 @@ public class SignalParser extends SQLite3DBParser {
             }
 
             msgMeta.set(ExtraProperties.MESSAGE_BODY, resolveBody(m));
-            msgMeta.set(ExtraProperties.USER_ACCOUNT_TYPE, SIGNAL_MESSAGE.toString());
+            msgMeta.set(ExtraProperties.USER_ACCOUNT_TYPE, SIGNAL);
 
             if (chat.isGroupChat())
                 msgMeta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
 
             SignalContact contact = chat.getContact();
+            // Includes the Signal group_id so untitled or same-named groups do not
+            // collapse into a single node in link analysis
+            String groupTo = chat.isGroupChat()
+                    ? chatTitle + " (id:" + chat.getContact().getGroupId() + ")"
+                    : null;
             if (m.isFromMe()) {
-                msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, selfId);
+                // The row's own sender is more precise than the global heuristic, which
+                // picks a single recipient row even when the owner changed numbers
+                String fromId = m.getSender() != null ? m.getSender().getFullId() : selfId;
+                if (fromId != null)
+                    msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, fromId);
                 // For groups, TO is the chat title; for individual, TO is the contact
                 if (chat.isGroupChat()) {
-                    msgMeta.add(org.apache.tika.metadata.Message.MESSAGE_TO, chatTitle);
+                    msgMeta.add(org.apache.tika.metadata.Message.MESSAGE_TO, groupTo);
                 } else if (contact != null) {
                     msgMeta.add(org.apache.tika.metadata.Message.MESSAGE_TO, contact.getFullId());
                 }
             } else {
                 if (chat.isGroupChat()) {
-                    String senderName = chat.getParticipants().stream()
-                            .filter(p -> p.getId() == m.getFromRecipientId())
-                            .map(SignalContact::getFullId)
-                            .findFirst()
-                            .orElse("Unknown");
-                    msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, senderName);
-                    msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_TO, chatTitle);
+                    // Resolved from the recipient table, so former members are named too
+                    SignalContact sender = m.getSender();
+                    msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM,
+                            sender != null ? sender.getFullId() : "Unknown");
+                    msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_TO, groupTo);
                 } else if (contact != null) {
                     msgMeta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, contact.getFullId());
-                    msgMeta.add(org.apache.tika.metadata.Message.MESSAGE_TO, selfId);
+                    if (selfId != null)
+                        msgMeta.add(org.apache.tika.metadata.Message.MESSAGE_TO, selfId);
                 }
             }
 
@@ -230,8 +254,11 @@ public class SignalParser extends SQLite3DBParser {
             case CALL_OUTGOING: return "[Outgoing Call]";
             case CALL_INCOMING: return "[Incoming Call]";
             case CALL_MISSED:   return "[Missed Call]";
+            case CALL_GROUP:    return "[Group Call]";
             default:
-                return m.getBody() != null ? m.getBody() : "[Attachment]";
+                // Body is also null for deleted, expired and reaction-only rows, and
+                // attachments are not extracted yet, so do not claim there is one
+                return m.getBody() != null ? m.getBody() : "[Empty message]";
         }
     }
 }

@@ -5,7 +5,7 @@ import java.util.Date;
 public class SignalMessage {
 
     public enum MessageType {
-        INCOMING, OUTGOING, SYSTEM, CALL_INCOMING, CALL_OUTGOING, CALL_MISSED;
+        INCOMING, OUTGOING, SYSTEM, CALL_INCOMING, CALL_OUTGOING, CALL_MISSED, CALL_GROUP;
 
         public boolean isRegular() {
             return this == INCOMING || this == OUTGOING;
@@ -15,6 +15,9 @@ public class SignalMessage {
     private long id;
     private long threadId;
     private long fromRecipientId;
+    // Resolved from the full recipient table, so senders who are no longer group
+    // members are still identified.
+    private SignalContact sender;
     private String body;
     private Date dateSent;
     private Date dateReceived;
@@ -26,6 +29,9 @@ public class SignalMessage {
 
     public long getThreadId() { return threadId; }
     public void setThreadId(long threadId) { this.threadId = threadId; }
+
+    public SignalContact getSender() { return sender; }
+    public void setSender(SignalContact sender) { this.sender = sender; }
 
     public long getFromRecipientId() { return fromRecipientId; }
     public void setFromRecipientId(long fromRecipientId) { this.fromRecipientId = fromRecipientId; }

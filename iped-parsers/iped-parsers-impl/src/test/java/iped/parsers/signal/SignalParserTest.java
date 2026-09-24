@@ -27,22 +27,28 @@ import iped.parsers.standard.StandardParser;
  *     3 – Phone-only                (date=1700000500000)
  *     1 – Alice Walker              (date=1700000100000)
  *
- *   Messages:
- *     Thread 1 (Alice):  incoming, sent, null-body sent, system (type=14, filtered)
- *     Thread 2 (Group):  incoming from Alice, incoming from Bob (emoji+HTML chars),
- *                        OUTGOING from self (type=2) — tests group outgoing MESSAGE_TO
- *     Thread 3 (Phone):  CALL_OUTGOING (type=1), CALL_INCOMING (type=21), CALL_MISSED (type=22)
+ *   Messages (base types from MessageTypes.java; text rows also carry the
+ *   SECURE_MESSAGE_BIT and PUSH_MESSAGE_BIT flags a real database has, so the
+ *   base-type masking is exercised):
+ *     Thread 1 (Alice):  incoming (20), sent (23), null-body sent (23),
+ *                        system JOINED_TYPE (4, filtered)
+ *     Thread 2 (Group):  incoming from Alice (20), incoming from Bob (20, emoji+HTML
+ *                        chars), OUTGOING from self (23) — tests group outgoing
+ *                        MESSAGE_TO, GROUP_CALL (12), and incoming from recipient 4,
+ *                        who is NOT in group_membership (a former member)
+ *     Thread 3 (Phone):  outgoing audio call (2), incoming audio call (1),
+ *                        missed audio call (3), missed video call (8)
  *
  *   Expected output (extractMessages=true):
- *     3 x-signal-chat + 9 x-signal-message = 12 docs
+ *     3 x-signal-chat + 12 x-signal-message = 15 docs
  */
 public class SignalParserTest extends AbstractPkgTest {
 
     private static final String FIXTURE = "test-files/test_signal.db";
 
     private static final int EXPECTED_CHAT_DOCS    = 3;
-    private static final int EXPECTED_MESSAGE_DOCS = 9;   // system (type=14) excluded; 3+3+3
-    private static final int EXPECTED_TOTAL_DOCS   = 12;
+    private static final int EXPECTED_MESSAGE_DOCS = 12;  // system (JOINED_TYPE) excluded; 3+5+4
+    private static final int EXPECTED_TOTAL_DOCS   = 15;
 
     private static final String EXPECTED_GROUP_TITLE      = "Signal Group - Operacao Digital";
     private static final String EXPECTED_INDIVIDUAL_TITLE = "Signal Chat - Alice Walker (+5511999990001)";
@@ -88,7 +94,7 @@ public class SignalParserTest extends AbstractPkgTest {
         long msgCount = tracker.contentTypes.stream()
                 .filter(t -> t.equals(SignalParser.SIGNAL_MESSAGE.toString()))
                 .count();
-        // 10 raw rows; 1 system (type=14) filtered → 9 indexed (3+3+3)
+        // 13 raw rows; 1 system (JOINED_TYPE) filtered → 12 indexed (3+5+4)
         assertEquals("System messages must be excluded from indexed message count",
                 EXPECTED_MESSAGE_DOCS, (int) msgCount);
     }
@@ -136,8 +142,9 @@ public class SignalParserTest extends AbstractPkgTest {
 
     public void testNullBodyIsLabeledAttachment() throws Exception {
         EmbeddedSignalParser tracker = parse(true);
-        assertTrue("Null-body message must be labeled [Attachment]",
-                tracker.messageBodies.contains("[Attachment]"));
+        assertTrue("Null-body message must be labeled [Empty message], since attachments "
+                + "are not extracted yet and the body is also null for deleted rows",
+                tracker.messageBodies.contains("[Empty message]"));
     }
 
     public void testEmojiAndSpecialCharsInMessageBody() throws Exception {
@@ -156,6 +163,19 @@ public class SignalParserTest extends AbstractPkgTest {
                 tracker.messageBodies.contains("[Incoming Call]"));
         assertTrue("Missed call must be labeled [Missed Call]",
                 tracker.messageBodies.contains("[Missed Call]"));
+        assertTrue("Group call must be labeled [Group Call]",
+                tracker.messageBodies.contains("[Group Call]"));
+    }
+
+    public void testSentMessagesUseBaseSentType() throws Exception {
+        // BASE_SENT_TYPE (23) is what real databases store for sent messages, and it
+        // arrives with flag bits set. Both bodies below come from such rows: if the
+        // base-type masking regressed they would be classified as system and dropped.
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("Sent message with flag bits must be indexed",
+                tracker.messageBodies.contains("Hi Alice, how are you?"));
+        assertTrue("Sent group message with flag bits must be indexed",
+                tracker.messageBodies.contains("Yes, I will be there."));
     }
 
     // ── FROM / TO / participants ──────────────────────────────────────────────
@@ -176,8 +196,20 @@ public class SignalParserTest extends AbstractPkgTest {
         // When self sends a message in a group, MESSAGE_TO must be the group title,
         // NOT "Unknown" (which is what the group placeholder contact returns via getFullId())
         EmbeddedSignalParser tracker = parse(true);
-        assertTrue("Group outgoing message must have group title as MESSAGE_TO",
-                tracker.messageTos.contains(EXPECTED_GROUP_TITLE));
+        // The group_id is appended so untitled or same-named groups stay distinct nodes
+        assertTrue("Group outgoing message must have group title and id as MESSAGE_TO",
+                tracker.messageTos.contains(EXPECTED_GROUP_TITLE + " (id:GRP001FORENSICS)"));
+    }
+
+    public void testFormerGroupMemberIsNamed() throws Exception {
+        // Senders are resolved against the whole recipient table, not just current group
+        // membership, so someone who left the group is still identified by name/number
+        // instead of falling back to "Unknown".
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("Former group member must be named as sender",
+                tracker.messageFroms.contains("+5511999990004"));
+        assertFalse("No group message should fall back to Unknown",
+                tracker.messageFroms.contains("Unknown"));
     }
 
     public void testGroupMessageSenderIsBob() throws Exception {
@@ -238,9 +270,8 @@ public class SignalParserTest extends AbstractPkgTest {
         EmbeddedSignalParser tracker = parse(true);
         assertEquals("Every message doc must carry USER_ACCOUNT_TYPE",
                 EXPECTED_MESSAGE_DOCS, tracker.userAccountTypes.size());
-        assertTrue("USER_ACCOUNT_TYPE must equal SIGNAL_MESSAGE MIME type",
-                tracker.userAccountTypes.stream()
-                        .allMatch(t -> t.equals(SignalParser.SIGNAL_MESSAGE.toString())));
+        assertTrue("USER_ACCOUNT_TYPE must be the service name, as the other parsers do",
+                tracker.userAccountTypes.stream().allMatch(t -> t.equals(SignalParser.SIGNAL)));
     }
 
     // ── Dates ─────────────────────────────────────────────────────────────────
@@ -284,6 +315,26 @@ public class SignalParserTest extends AbstractPkgTest {
         int count = 0, idx = 0;
         while ((idx = text.indexOf(sub, idx)) != -1) { count++; idx += sub.length(); }
         return count;
+    }
+
+    // ── Encrypted / unreadable databases ─────────────────────────────────────
+
+    public void testEncryptedDatabaseIsSkipped() throws Exception {
+        // signal.db is SQLCipher-encrypted by default and is matched by file name, so
+        // its content is not a readable SQLite database. Such items must be skipped
+        // quietly instead of raising a parsing error for every Signal install in a case.
+        SignalParser parser = new SignalParser();
+        ContentHandler handler = new BodyContentHandler(-1);
+        Metadata metadata = new Metadata();
+        metadata.set(StandardParser.INDEXER_CONTENT_TYPE, SignalParser.SIGNAL_DB.toString());
+
+        byte[] encrypted = new byte[1024];
+        new java.util.Random(42).nextBytes(encrypted);
+
+        parser.parse(new java.io.ByteArrayInputStream(encrypted), handler, metadata, signalContext);
+
+        assertTrue("No documents should be extracted from an unreadable database",
+                signalTracker.contentTypes.isEmpty());
     }
 
     // ── extractMessages flag ──────────────────────────────────────────────────

@@ -30,7 +30,8 @@ public class SignalExtractor {
 
     private static final String SELECT_MESSAGES =
             "SELECT _id, thread_id, from_recipient_id, " +
-            "date_sent, date_received, body, type FROM message WHERE thread_id = ? ORDER BY date_sent ASC";
+            "date_sent, date_received, body, type FROM message WHERE thread_id = ? " +
+            "ORDER BY COALESCE(NULLIF(date_sent, 0), date_received) ASC";
 
     private static final String SELECT_GROUP_TITLE =
             "SELECT title FROM groups WHERE recipient_id = ?";
@@ -39,12 +40,17 @@ public class SignalExtractor {
             "SELECT gm.recipient_id FROM group_membership gm " +
             "INNER JOIN groups g ON g.group_id = gm.group_id WHERE g.recipient_id = ?";
 
+    // MessageTypes.BASE_TYPE_MASK in Signal-Android: the lower 5 bits of the type
+    // column hold the base type, the remaining bits are flags.
+    private static final long BASE_TYPE_MASK = 0x1F;
+
     private static final String VALIDATE_TABLES =
             "SELECT COUNT(*) FROM sqlite_master WHERE type='table' " +
             "AND name IN ('recipient','thread','message')";
 
     // Identifies the device owner: the recipient who appears most frequently as
-    // the sender in outgoing messages (from_recipient_id for type & 31 in {0..5}).
+    // the sender in outgoing messages. The base types below are Signal's
+    // OUTGOING_MESSAGE_TYPES (MessageTypes.java).
     // Returns the full recipient row in one query using a correlated subquery.
     private static final String SELECT_SELF =
             "SELECT r._id, r.e164, r.profile_given_name, r.profile_family_name, " +
@@ -52,7 +58,7 @@ public class SignalExtractor {
             "FROM recipient r " +
             "WHERE r._id = (" +
             "  SELECT from_recipient_id FROM message " +
-            "  WHERE (type & 31) IN (0,1,2,3,4,5) AND from_recipient_id > 0 " +
+            "  WHERE (type & 31) IN (2,11,21,22,23,24,25,26,28) AND from_recipient_id > 0 " +
             "  GROUP BY from_recipient_id ORDER BY COUNT(*) DESC LIMIT 1" +
             ")";
 
@@ -91,10 +97,36 @@ public class SignalExtractor {
     public boolean isValidSignalDatabase() {
         try (Statement st = connection.createStatement();
              ResultSet rs = st.executeQuery(VALIDATE_TABLES)) {
-            return rs.next() && rs.getInt(1) == 3;
+            if (!rs.next() || rs.getInt(1) != 3) {
+                return false;
+            }
         } catch (SQLException e) {
             return false;
         }
+        // The message table alone is not enough: it already exists since Signal
+        // 6.7 (sms and mms were merged into it), but from_recipient_id was only
+        // added in 6.19. Without this check such databases would be accepted and
+        // then yield empty chats, since every message query would fail.
+        if (!hasColumn("message", "from_recipient_id")) {
+            LOGGER.warn("Signal database at {} predates version 6.19 (message.from_recipient_id is missing), skipping it",
+                    itemPath);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean hasColumn(String table, String column) {
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery("PRAGMA table_info(" + table + ")")) {
+            while (rs.next()) {
+                if (column.equalsIgnoreCase(rs.getString("name"))) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.warn("Could not read columns of table {} from {}: {}", table, itemPath, e.getMessage());
+        }
+        return false;
     }
 
     public List<SignalChat> extractChats() {
@@ -144,9 +176,11 @@ public class SignalExtractor {
                     loadGroupMembers(recipientId, recipients, chat);
                 }
 
-                chat.setMessages(loadMessages(threadId));
+                chat.setMessages(loadMessages(threadId, recipients));
 
-                if (!chat.getMessages().isEmpty() || !contact.getDisplayName().equals("Unknown")) {
+                // Groups are kept even when empty, since their membership is evidence on
+                // its own; 1:1 threads only when they have messages or an identified contact
+                if (!chat.getMessages().isEmpty() || contact.isGroup() || contact.isIdentified()) {
                     chats.add(chat);
                 }
             }
@@ -185,7 +219,7 @@ public class SignalExtractor {
         }
     }
 
-    private List<SignalMessage> loadMessages(long threadId) {
+    private List<SignalMessage> loadMessages(long threadId, Map<Long, SignalContact> recipients) {
         List<SignalMessage> messages = new ArrayList<>();
         try (PreparedStatement st = connection.prepareStatement(SELECT_MESSAGES)) {
             st.setLong(1, threadId);
@@ -194,7 +228,9 @@ public class SignalExtractor {
                     SignalMessage m = new SignalMessage();
                     m.setId(rs.getLong("_id"));
                     m.setThreadId(threadId);
-                    m.setFromRecipientId(rs.getLong("from_recipient_id"));
+                    long fromRecipientId = rs.getLong("from_recipient_id");
+                    m.setFromRecipientId(fromRecipientId);
+                    m.setSender(recipients.get(fromRecipientId));
 
                     long dateSentMs = rs.getLong("date_sent");
                     if (dateSentMs > 0)
@@ -206,7 +242,7 @@ public class SignalExtractor {
 
                     m.setBody(rs.getString("body"));
 
-                    SignalMessage.MessageType msgType = classifyMessageType(rs.getInt("type"));
+                    SignalMessage.MessageType msgType = classifyMessageType(rs.getLong("type"));
                     m.setMessageType(msgType);
                     // outgoing calls are initiated by self; missed/incoming are from the other party
                     m.setFromMe(msgType == SignalMessage.MessageType.OUTGOING
@@ -221,25 +257,34 @@ public class SignalExtractor {
         return messages;
     }
 
-    // Signal message type classification based on the lower 5 bits (MessageTypes.kt)
-    private static SignalMessage.MessageType classifyMessageType(int rawType) {
-        switch (rawType & 0x1F) {
-            case 0:  // BASE_OUTBOX_TYPE
-            case 2:  // BASE_SENT_TYPE
-            case 3:  // BASE_PENDING_SECURE_SMS_FALLBACK
-            case 4:  // BASE_PENDING_INSECURE_SMS_FALLBACK
-            case 5:  // BASE_SENDING_TYPE
-                return SignalMessage.MessageType.OUTGOING;
+    // Signal message type classification based on the lower 5 bits.
+    // Values taken from MessageTypes.java (BASE_TYPE_MASK area) in Signal-Android.
+    private static SignalMessage.MessageType classifyMessageType(long rawType) {
+        switch ((int) (rawType & BASE_TYPE_MASK)) {
             case 20: // BASE_INBOX_TYPE
                 return SignalMessage.MessageType.INCOMING;
-            case 1:  // OUTGOING_AUDIO_CALL_TYPE
-                return SignalMessage.MessageType.CALL_OUTGOING;
-            case 21: // INCOMING_AUDIO_CALL_TYPE
+            case 21: // BASE_OUTBOX_TYPE
+            case 22: // BASE_SENDING_TYPE
+            case 23: // BASE_SENT_TYPE
+            case 24: // BASE_SENT_FAILED_TYPE
+            case 25: // BASE_PENDING_SECURE_SMS_FALLBACK
+            case 26: // BASE_PENDING_INSECURE_SMS_FALLBACK
+            case 28: // BASE_SENDING_SKIPPED_TYPE
+                return SignalMessage.MessageType.OUTGOING;
+            case 1:  // INCOMING_AUDIO_CALL_TYPE
+            case 10: // INCOMING_VIDEO_CALL_TYPE
                 return SignalMessage.MessageType.CALL_INCOMING;
-            case 22: // MISSED_AUDIO_CALL_TYPE
-            case 25: // REJECTED_AUDIO_CALL_TYPE
+            case 2:  // OUTGOING_AUDIO_CALL_TYPE
+            case 11: // OUTGOING_VIDEO_CALL_TYPE
+                return SignalMessage.MessageType.CALL_OUTGOING;
+            case 3:  // MISSED_AUDIO_CALL_TYPE
+            case 8:  // MISSED_VIDEO_CALL_TYPE
                 return SignalMessage.MessageType.CALL_MISSED;
+            case 12: // GROUP_CALL_TYPE
+                return SignalMessage.MessageType.CALL_GROUP;
             default:
+                // JOINED_TYPE, UNSUPPORTED_MESSAGE_TYPE, BASE_DRAFT_TYPE, profile
+                // changes, group updates and every other event message
                 return SignalMessage.MessageType.SYSTEM;
         }
     }

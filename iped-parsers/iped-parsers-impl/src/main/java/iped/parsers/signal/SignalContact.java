@@ -2,6 +2,8 @@ package iped.parsers.signal;
 
 public class SignalContact {
 
+    private static final String UNKNOWN = "Unknown";
+
     private final long id;
     private final String phone;
     private final String profileGivenName;
@@ -38,6 +40,11 @@ public class SignalContact {
     }
 
     /** Best available display name for this contact. */
+    /** True when the recipient has any name or phone number of its own. */
+    public boolean isIdentified() {
+        return !getDisplayName().equals(UNKNOWN);
+    }
+
     public String getDisplayName() {
         if (systemDisplayName != null && !systemDisplayName.isBlank())
             return systemDisplayName;
@@ -51,7 +58,7 @@ public class SignalContact {
         }
         if (phone != null && !phone.isBlank())
             return phone;
-        return "Unknown";
+        return UNKNOWN;
     }
 
     /** Full identifier used in metadata: display name + phone (if available). */

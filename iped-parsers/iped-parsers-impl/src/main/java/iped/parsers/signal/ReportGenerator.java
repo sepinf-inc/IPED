@@ -86,7 +86,8 @@ public class ReportGenerator {
         String dirClass    = incoming ? "incoming" : "outgoing";
 
         String bodyHtml = buildBodyHtml(m);
-        String timeHtml = "<div class=\"time\">" + formatTime(m.getDateSent()) + "</div>";
+        Date timeDate = m.getDateSent() != null ? m.getDateSent() : m.getDateReceived();
+        String timeHtml = "<div class=\"time\">" + formatTime(timeDate) + "</div>";
 
         StringBuilder sb = new StringBuilder(256);
         sb.append("<div class=\"linha ").append(dirClass).append("\">");
@@ -116,8 +117,11 @@ public class ReportGenerator {
         if (type == SignalMessage.MessageType.CALL_MISSED) {
             return "<div class=\"body call-label\">&#128222; Missed call</div>";
         }
+        if (type == SignalMessage.MessageType.CALL_GROUP) {
+            return "<div class=\"body call-label\">&#128222; Group call</div>";
+        }
         if (m.getBody() == null) {
-            return "<div class=\"body attachment-label\">[Attachment]</div>";
+            return "<div class=\"body attachment-label\">[Empty message]</div>";
         }
         return "<div class=\"body\">" + escapeHtml(m.getBody()) + "</div>";
     }
@@ -132,11 +136,9 @@ public class ReportGenerator {
     }
 
     private String resolveSenderName(SignalMessage m, SignalChat chat) {
-        return chat.getParticipants().stream()
-                .filter(p -> p.getId() == m.getFromRecipientId())
-                .map(SignalContact::getDisplayName)
-                .findFirst()
-                .orElse(null);
+        // Taken from the message itself (resolved against the whole recipient table),
+        // so senders who left the group still show a name
+        return m.getSender() != null ? m.getSender().getDisplayName() : null;
     }
 
     private String formatTime(Date date) {
