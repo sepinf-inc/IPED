@@ -95,7 +95,7 @@ BR_BOLETO = \b[0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{6}(\s|\.)?[0
 
 BR_BANK_ACCOUNT = (ag|agen|ag[eê]ncia)(\s|\.|:){0,10}[0-9]{4}(\-?[0-9xX])?.{0,10}(cc|conta|conta[ \-]corrente)(\s|\.|:){0,10}[0-9]{5,11}(\-?[0-9xX])?
 
-BR_CAR_PLATE = \b((([A-Z]{3})(()|-)([0-9]{4}))|(Placas?( |:|: )([A-Za-z]{3})( )([0-9]{4})))\b
+BR_CAR_PLATE = \b((([A-Z]{3})(()|-)([0-9][0-9A-Z][0-9]{2}))|(Placas?( |:|: )([A-Za-z]{3})( )([0-9][0-9A-Za-z][0-9]{2})))\b
 
 #Only the 11-digit format (standard since 2013); legacy 9-digit numbers are not detected to reduce false positives
 BR_RENAVAM = \b[0-9]{11}\b
