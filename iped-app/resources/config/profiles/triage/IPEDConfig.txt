@@ -33,3 +33,4 @@ enableSearchHardwareWallets = true
 enableVideoThumbs = false
 enableDocThumbs = false
 enableHTMLReport = false
+enableAleapp = false
