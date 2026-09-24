@@ -1,0 +1,691 @@
+package iped.app.ui.ai.controller;
+
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+
+import iped.app.ui.App;
+import iped.app.ui.Messages;
+import iped.app.ui.ai.AIChatCoordinator;
+import iped.app.ui.ai.backend.AIBackendClient;
+import iped.app.ui.ai.backend.AIBackendConfig;
+import iped.app.ui.ai.context.AIContextManager;
+import iped.app.ui.ai.context.ContextChangeEvent;
+import iped.app.ui.ai.context.ContextChangeListener;
+import iped.app.ui.ai.context.ConversationManager;
+import iped.app.ui.ai.model.AIChatMessage;
+import iped.app.ui.ai.model.Conversation;
+import iped.app.ui.ai.model.StandardConversation;
+import iped.app.ui.ai.model.AgentConversation;
+import iped.app.ui.ai.util.ConversationPersistence;
+import iped.app.ui.ai.view.AIAssistantPanel;
+import iped.app.ui.ai.view.ChatAreaPanel;
+import iped.app.ui.ai.view.ContextPanel;
+import iped.app.ui.ai.view.HeaderPanel;
+import iped.app.ui.ai.view.SidebarPanel;
+import iped.data.IItem;
+import iped.data.IItemId;
+import iped.engine.search.IPEDSearcher;
+import iped.engine.search.MultiSearchResult;
+
+/**
+ * Main controller for the AI Assistant feature, responsible for orchestrating interactions between the UI and the AI backend.
+ */
+public class AIAssistantController {
+
+    private final AIAssistantPanel mainView;
+    private SidebarPanel sidebarView;
+    private ChatAreaPanel chatAreaView;
+    private ContextPanel contextView;
+    private HeaderPanel headerView;
+    private JPanel tasksView;
+
+    private AIChatCoordinator coordinator;
+    private final ConversationManager conversationManager;
+    private final AIContextManager contextManager;
+
+    private boolean isSwitchingChats = false;
+
+    /**
+        * Constructor that injects only the main view, keeping things decoupled.
+        * @param mainView The main layout container.
+     */
+    public AIAssistantController(AIAssistantPanel mainView) {
+        this.mainView = mainView;
+        this.conversationManager = ConversationManager.getInstance();
+        this.contextManager = AIContextManager.getInstance();
+    }
+
+    /**
+        * Entry point called by the main view to assemble the UI and logic.
+     */
+    public void initialize() {
+        // 1. Initialize essential dependencies
+        ensureChatServiceInitialized();
+
+        // 2. Instantiate sub-panels and inject listeners
+        initViews();
+
+        // 3. Configure global domain observers
+        setupStateObservers();
+
+        // 4. Hand off the constructed views so the main panel can layout
+        mainView.assembleLayout(headerView, sidebarView, contextView, chatAreaView, tasksView);
+
+        // 5. Render initial state (messages, lists, context, etc.)
+        sidebarView.updateConversationsList(conversationManager.getConversations());
+        
+        List<iped.app.ui.ai.model.ContextFileEntry> initialEntries = contextManager.getContextEntriesForUI();
+        contextView.updateContextData(initialEntries);
+        
+        List<iped.app.ui.ai.model.ContextFileEntry> validE = initialEntries.stream()
+                .filter(iped.app.ui.ai.model.ContextFileEntry::isValidForContext)
+                .collect(Collectors.toList());
+        int totalChunks = AIChatCoordinator.calculateTotalChunks(validE);
+        contextView.setSummarizedMode(validE.size() > 1 && totalChunks > 10);
+        
+        refreshChatArea();
+    }
+
+    private void initViews() {
+        // Initialize sidebar (injecting click-handling logic)
+        this.sidebarView = new SidebarPanel(mainView.getFrame(), new SidebarPanel.SidebarListener() {
+            @Override
+            public void onNewChatRequested() {
+                startNewChat();
+            }
+
+            @Override
+            public void onNewAgentChatRequested() {
+                startNewAgentChat();
+            }
+
+            @Override
+            public void onDeleteRequested(Conversation conversation) {
+                deleteChat(conversation);
+            }
+
+            @Override
+            public void onConversationSelected(Conversation conversation) {
+                loadConversation(conversation);
+            }
+        });
+
+        // Initialize header
+        String title = "AI Assistant";
+        try { title = Messages.getString("AIAssistant.Title"); } catch (Exception e) {}
+        this.headerView = new HeaderPanel(title, e -> mainView.toggleSidebar());
+
+        // Initialize context panel with injected behavior (listener)
+        this.contextView = new ContextPanel(new ContextPanel.ContextListener() {
+            @Override
+            public void onClearContextRequested() {
+                contextManager.clearContext();
+            }
+
+            @Override
+            public void onRemoveFileRequested(IItem item) {
+                contextManager.removeContextFile(item);
+            }
+        });
+
+        // Initialize chat area
+        String sendText = "Send";
+        try { sendText = Messages.getString("AIAssistant.Send"); } catch (Exception e) {}
+        this.chatAreaView = new ChatAreaPanel(750, sendText);
+        
+        // Wire chat area send events to the controller
+        this.chatAreaView.getSendButton().addActionListener(e -> handleSendAction());
+        this.chatAreaView.getInputArea().addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER && !e.isShiftDown()) {
+                    e.consume();
+                    handleSendAction();
+                }
+            }
+        });
+
+        // Delegate token click handling back to IPED (open file)
+        this.chatAreaView.installTextPaneClickListener(
+            (hash, chunkId) -> navigateToItem(hash, chunkId),
+            this::refreshChatArea
+        );
+
+        // Initialize right-side quick tasks panel
+        this.tasksView = createTasksPanel();
+    }
+
+    private void setupStateObservers() {
+        this.contextManager.addContextChangeListener(new ContextChangeListener() {
+            @Override
+            public void contextChanged(ContextChangeEvent event) {
+                // 1. Inject new data into the passive view for rendering on the correct thread
+                SwingUtilities.invokeLater(() -> {
+                    if (contextView != null) {
+                        List<iped.app.ui.ai.model.ContextFileEntry> uiEntries = contextManager.getContextEntriesForUI();
+                        contextView.updateContextData(uiEntries);
+                        
+                        List<iped.app.ui.ai.model.ContextFileEntry> validEntries = uiEntries.stream()
+                                .filter(iped.app.ui.ai.model.ContextFileEntry::isValidForContext)
+                                .collect(Collectors.toList());
+                        int totalChunks = AIChatCoordinator.calculateTotalChunks(validEntries);
+                        boolean isSummarized = validEntries.size() > 1 && totalChunks > 10;
+                        contextView.setSummarizedMode(isSummarized);
+                    }
+                });
+
+                // 2. Domain persistence logic
+                if (isSwitchingChats) return; // Abort if the system is switching chats
+                
+                Conversation activeConv = conversationManager.getActiveConversation();
+                if (activeConv instanceof StandardConversation) {
+                    StandardConversation stdConv = (StandardConversation) activeConv;
+                    List<Integer> currentIds = contextManager.getContextFiles().stream()
+                            .map(IItem::getId)
+                            .collect(Collectors.toList());
+                    
+                    stdConv.setContextIds(currentIds);
+                    stdConv.updateLastModified();
+                    
+                    final Conversation convToSave = stdConv;
+                    new Thread(() -> ConversationPersistence.saveConversation(convToSave)).start();
+                }
+            }
+        });
+    }
+
+    private boolean ensureChatServiceInitialized() {
+        if (coordinator != null) {
+            return true;
+        }
+        try {
+            coordinator = new AIChatCoordinator(new AIBackendClient(AIBackendConfig.loadFromSystemProperties()));
+            return true;
+        } catch (Throwable t) {
+            addMessage("System Error", "Failed to initialize AI backend: " + t.getMessage(), "error");
+            t.printStackTrace();
+            return false;
+        }
+    }
+
+    // ========================================================================
+    // SIDEBAR BUSINESS LOGIC
+    // ========================================================================
+
+    private void startNewChat() {
+        conversationManager.startNewConversation();
+        mainView.setContextPanelVisible(true);
+        mainView.setTasksPanelVisible(true);
+        clearChatScreenAndMemory();
+        contextManager.clearContext();
+        sidebarView.updateConversationsList(conversationManager.getConversations());
+        refreshChatArea();
+        
+        addMessage("System", "Started a new conversation session.", "system");
+        chatAreaView.getInputArea().requestFocusInWindow();
+    }
+
+    private void startNewAgentChat() {
+        conversationManager.startNewConversation(true);
+        mainView.setContextPanelVisible(false);
+        mainView.setTasksPanelVisible(false);
+        clearChatScreenAndMemory();
+        contextManager.clearContext();
+        sidebarView.updateConversationsList(conversationManager.getConversations());
+        refreshChatArea();
+        
+        addMessage("System", "Started a new agent conversation session.", "system");
+        chatAreaView.getInputArea().requestFocusInWindow();
+    }
+
+    private void deleteChat(Conversation conv) {
+        ConversationPersistence.deleteConversation(conv);
+        conversationManager.removeConversation(conv);
+        
+        Conversation active = conversationManager.getActiveConversation();
+        boolean isActiveDeleted = (active == null || active.getId().equals(conv.getId()));
+        
+        if (isActiveDeleted) {
+            List<Conversation> remaining = conversationManager.getConversations();
+            if (!remaining.isEmpty()) {
+                conversationManager.setActiveConversation(remaining.get(0));
+                loadConversation(remaining.get(0));
+            } else {
+                conversationManager.setActiveConversation(null);
+                clearChatScreenAndMemory();
+                contextManager.clearContext();
+                refreshChatArea();
+            }
+        }
+        
+        sidebarView.updateConversationsList(conversationManager.getConversations());
+    }
+
+    private void loadConversation(Conversation conv) {
+        isSwitchingChats = true;
+        conversationManager.setActiveConversation(conv);
+        mainView.setContextPanelVisible(!conv.isAgentConversation());
+        mainView.setTasksPanelVisible(!conv.isAgentConversation());
+ 
+        if (coordinator != null) {
+            if (conv instanceof StandardConversation) {
+                StandardConversation std = (StandardConversation) conv;
+                coordinator.loadHistoricalContext(std.getChatHashes(), std.getContextIds(), conv.getMessages());
+            } else {
+                coordinator.loadHistoricalContext(null, null, conv.getMessages());
+            }
+        }
+ 
+        if (conv.isAgentConversation()) {
+            isSwitchingChats = false;
+            if (chatAreaView != null) chatAreaView.forceDiscardStreaming();
+            refreshChatArea();
+            sidebarView.setSelectedValue(conv, true);
+            return;
+        }
+
+        contextManager.clearContext();
+        
+        new Thread(() -> {
+            List<IItem> restoredItems = new ArrayList<>();
+            try {
+                if (conv instanceof StandardConversation) {
+                    StandardConversation std = (StandardConversation) conv;
+                    if (std.getChatHashes() != null && !std.getChatHashes().isEmpty()) {
+                        for (String hash : std.getChatHashes()) {
+                            try {
+                                IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, "hash:" + hash);
+                                MultiSearchResult result = searcher.multiSearch();
+                                if (result != null && result.getLength() > 0) {
+                                    IItemId qualifiedItemId = result.getItem(0);
+                                    IItem item = App.get().appCase.getItemByItemId(qualifiedItemId);
+                                    if (item != null) restoredItems.add(item);
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Could not restore context item hash: " + hash);
+                            }
+                        }
+                    } else if (std.getContextIds() != null && !std.getContextIds().isEmpty()) {
+                        for (Integer itemId : std.getContextIds()) {
+                            try {
+                                IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, "id:" + itemId);
+                                MultiSearchResult result = searcher.multiSearch();
+                                if (result != null && result.getLength() > 0) {
+                                    IItemId qualifiedItemId = result.getItem(0);
+                                    IItem item = App.get().appCase.getItemByItemId(qualifiedItemId);
+                                    if (item != null) restoredItems.add(item);
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Could not restore context item ID: " + itemId);
+                            }
+                        }
+                    }
+                }
+            } finally {
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        if (!restoredItems.isEmpty()) {
+                            Conversation currentActive = conversationManager.getActiveConversation();
+                            if (currentActive == null || !currentActive.getId().equals(conv.getId())) {
+                                return;
+                            }
+                            List<Integer> freshIds = restoredItems.stream()
+                                    .map(IItem::getId).collect(Collectors.toList());
+                            
+                            if (coordinator != null) {
+                                if (conv instanceof StandardConversation) {
+                                    StandardConversation std = (StandardConversation) conv;
+                                    coordinator.loadHistoricalContext(std.getChatHashes(), freshIds, conv.getMessages());
+                                } else {
+                                    coordinator.loadHistoricalContext(null, freshIds, conv.getMessages());
+                                }
+                            }
+                            contextManager.addContextFiles(restoredItems);
+                        }
+                    } finally {
+                        isSwitchingChats = false;
+                    }
+                });
+            }
+        }).start();
+        
+        if (chatAreaView != null) chatAreaView.forceDiscardStreaming(); 
+        
+        refreshChatArea();
+        sidebarView.setSelectedValue(conv, true);
+    }
+
+    /**
+     * Starts a new conversation by carrying over the current context and merging
+     * additional pending items.
+     *
+     * This method is used by the auto-fork flow when the active conversation
+     * already has an assistant reply and its context is no longer directly editable
+     * from the ContextPanel UI.
+     *
+     * The previous conversation remains unchanged; the new one becomes the active
+     * editable workspace.
+    */
+    public void startNewConversationWithCurrentContext(List<IItem> pendingItems) {
+        Conversation newConversation = conversationManager.startNewConversation();
+
+        List<Integer> contextIds = new ArrayList<>();
+        for (IItem item : contextManager.getContextFiles()) {
+            if (item != null && !contextIds.contains(item.getId())) {
+                contextIds.add(item.getId());
+            }
+        }
+
+        if (pendingItems != null) {
+            for (IItem item : pendingItems) {
+                if (item != null && !contextIds.contains(item.getId())) {
+                    contextIds.add(item.getId());
+                }
+            }
+        }
+
+        if (newConversation instanceof StandardConversation) {
+            StandardConversation std = (StandardConversation) newConversation;
+            std.setContextIds(contextIds);
+            std.setChatHashes(new ArrayList<>());
+        }
+        newConversation.setMessages(new ArrayList<>());
+        newConversation.updateLastModified();
+
+        if (pendingItems != null) {
+            contextManager.addContextFiles(pendingItems);
+        }
+
+        if (coordinator != null) coordinator.clearHistory();
+
+        sidebarView.updateConversationsList(conversationManager.getConversations());
+        refreshChatArea();
+        sidebarView.setSelectedValue(newConversation, true);
+        mainView.showFrame();
+    }
+
+    // ========================================================================
+    // CHAT / NETWORK BUSINESS LOGIC
+    // ========================================================================
+
+    private void handleSendAction() {
+        String text = chatAreaView.getInputArea().getText().trim();
+        if (text.isEmpty()) return;
+
+        if (!ensureChatServiceInitialized()) return;
+
+        Conversation activeConv = conversationManager.getActiveConversation();
+        if (activeConv == null) {
+            activeConv = conversationManager.startNewConversation();
+            sidebarView.updateConversationsList(conversationManager.getConversations());
+        }
+
+        addMessage("You", text, "user");
+        chatAreaView.getInputArea().setText("");
+        mainView.setProcessing(true);
+        
+        AIChatMessage assistantDraft = AIChatMessage.create("Assistant", "", "assistant");
+        chatAreaView.startMessageStreaming(assistantDraft);
+
+        if (activeConv.isAgentConversation()) {
+            coordinator.askAgentQuestion(
+                text,
+                (token) -> SwingUtilities.invokeLater(() -> chatAreaView.enqueueStreamingToken(token)),
+                () -> SwingUtilities.invokeLater(() -> {
+                    chatAreaView.pruneStreaming(() -> {
+                        if (!assistantDraft.getContent().isEmpty()) {
+                            conversationManager.addMessageToActive(assistantDraft);
+                            sidebarView.updateConversationsList(conversationManager.getConversations());
+                        }
+                        mainView.setProcessing(false);
+                    });
+                }),
+                (errorMessage) -> SwingUtilities.invokeLater(() -> {
+                    AIChatMessage partialDraft = chatAreaView.salvageStreamingDraft();
+
+                    if (partialDraft != null && !partialDraft.getContent().isEmpty()) {
+                        conversationManager.addMessageToActive(partialDraft);
+                        sidebarView.updateConversationsList(conversationManager.getConversations());
+                    }
+
+                    addMessage("System Error", errorMessage, "error");
+                    mainView.setProcessing(false);
+                })
+            );
+        } else {
+            coordinator.askQuestion(
+                text, 
+                (token) -> SwingUtilities.invokeLater(() -> chatAreaView.enqueueStreamingToken(token)),
+                () -> SwingUtilities.invokeLater(() -> {
+                    chatAreaView.pruneStreaming(() -> {
+                        if (!assistantDraft.getContent().isEmpty()) {
+                            conversationManager.addMessageToActive(assistantDraft);
+                            sidebarView.updateConversationsList(conversationManager.getConversations());
+                        }
+                        mainView.setProcessing(false);
+                    });
+                }),
+                (errorMessage) -> SwingUtilities.invokeLater(() -> {
+                    AIChatMessage partialDraft = chatAreaView.salvageStreamingDraft();
+
+                    if (partialDraft != null && !partialDraft.getContent().isEmpty()) {
+                        conversationManager.addMessageToActive(partialDraft);
+                        sidebarView.updateConversationsList(conversationManager.getConversations());
+                    }
+
+                    addMessage("System Error", errorMessage, "error");
+                    mainView.setProcessing(false);
+                })
+            );
+        }
+    }
+
+    private void addMessage(String sender, String message, String type) {
+        AIChatMessage chatMessage = AIChatMessage.create(sender, message, type);
+        conversationManager.addMessageToActive(chatMessage);
+        refreshChatArea();
+    }
+
+    private void refreshChatArea() {
+        if (chatAreaView != null) {
+            List<AIChatMessage> renderableMessages = new ArrayList<>();
+            Conversation activeConv = conversationManager.getActiveConversation();
+            
+            boolean hasMessages = false;
+            
+            if (activeConv != null) {
+                renderableMessages.addAll(activeConv.getMessages());
+                hasMessages = activeConv.hasAssistantReply();
+            }
+            
+            if (chatAreaView.getCurrentDraftMessage() != null) {
+                renderableMessages.add(chatAreaView.getCurrentDraftMessage());
+                hasMessages = true; // if there's a draft we already lock
+            }
+            
+            chatAreaView.renderHistoricalMessages(renderableMessages);
+            
+            // Business rule: once a conversation has an assistant reply, or while an
+            // assistant draft is streaming, direct context editing in the panel is disabled
+            // Additional files must be added through the auto-fork flow, which starts a new
+            // conversation and carries the previous context forward
+            if (contextView != null) {
+                contextView.setContextEditLocked(hasMessages);
+            }
+        }
+    }
+
+    private void clearChatScreenAndMemory() {
+        if (coordinator != null) coordinator.clearHistory();
+        if (chatAreaView != null) chatAreaView.clearChatScreen();
+    }
+
+    // ========================================================================
+    // NAVIGATION AND HELPER UTILITIES
+    // ========================================================================
+
+    private void navigateToItem(String hash, String chunkId) {
+        if (hash == null || hash.isEmpty() || App.get() == null || App.get().appCase == null) return;
+
+        new Thread(() -> {
+            try {
+                IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, "hash:" + hash);
+                MultiSearchResult result = searcher.multiSearch();
+                if (result == null || result.getLength() == 0) {
+                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(mainView.getFrame(),
+                            "Item not found for hash: " + hash, "Not found", JOptionPane.INFORMATION_MESSAGE));
+                    return;
+                }
+
+                IItemId itemId = result.getItem(0);
+                int luceneId = App.get().appCase.getLuceneId(itemId);
+                
+                if (chunkId != null && !chunkId.isEmpty()) {
+                    try {
+                        App.get().getViewerController().getHtmlLinkViewer().setElementIDToScroll(chunkId);
+                    } catch (Exception e) {}
+                }
+                
+                iped.app.ui.FileProcessor fp = new iped.app.ui.FileProcessor(luceneId, true);
+                fp.execute();
+                
+                SwingUtilities.invokeLater(() -> selectItemInResultsTable(luceneId));
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(mainView.getFrame(),
+                        "Error opening item: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE));
+            }
+        }).start();
+    }
+
+    private void selectItemInResultsTable(int luceneId) {
+        if (App.get() == null || App.get().getResults() == null || App.get().getResultsTable() == null) return;
+        
+        for (int i = 0; i < App.get().getResults().getLength(); i++) {
+            try {
+                IItemId item = App.get().getResults().getItem(i);
+                if (App.get().appCase.getLuceneId(item) == luceneId) {
+                    int viewIndex = App.get().getResultsTable().convertRowIndexToView(i);
+                    App.get().getResultsTable().setRowSelectionInterval(viewIndex, viewIndex);
+                    java.awt.Rectangle cellRect = App.get().getResultsTable().getCellRect(viewIndex, 0, false);
+                    App.get().getResultsTable().scrollRectToVisible(cellRect);
+                    break;
+                }
+            } catch (Exception e) {}
+        }
+    }
+
+    private JPanel createTasksPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), ""),
+            BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+
+        JLabel titleLabel = new JLabel("Quick Actions");
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(java.awt.Font.BOLD));
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(6));
+
+        Map<String, String> taskPrompts = new java.util.HashMap<>();
+        taskPrompts.put("Summarize", "Resuma o arquivo fornecido.");
+        taskPrompts.put("Find Patterns", "Encontre padrões no arquivo fornecido.");
+
+        String[] tasks = {"Summarize", "Find Patterns"};
+        for (String task : tasks) {
+            JButton btn = new JButton(task);
+            btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            btn.setMaximumSize(new Dimension(200, 30));
+            btn.addActionListener(e -> {
+                chatAreaView.getInputArea().setText(taskPrompts.get(task));
+                handleSendAction();
+            });
+            panel.add(btn);
+            panel.add(Box.createVerticalStrut(5));
+        }
+        
+        return panel;
+    }
+
+    /**
+     * Evaluates the current chat state and orchestrates the addition of new items to the AI context.
+     * <p>
+     * This method enforces the "context-edit lock" behavior:
+     * <ul>
+     * <li>If a response is currently streaming, it blocks the addition to prevent race conditions.</li>
+     * <li>If the active conversation is "sealed" (contains an assistant reply), it prompts the user 
+     * to auto-fork into a new conversation merging the old and new contexts.</li>
+     * <li>If the conversation is empty or a draft, it appends the items normally.</li>
+     * </ul>
+     *
+     * @param itemsToAdd The list of IPED items selected by the user.
+     */
+    public void addItemsToContext(List<IItem> itemsToAdd) {
+        if (itemsToAdd == null || itemsToAdd.isEmpty()) {
+            return;
+        }
+
+        if (mainView.isProcessing()) {
+            JOptionPane.showMessageDialog(
+                    mainView.getFrame(),
+                    "Aguarde a resposta atual terminar antes de adicionar novos itens ao contexto.",
+                    "AI Assistant",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        Conversation activeConversation = conversationManager.getActiveConversation();
+
+        if (activeConversation != null && activeConversation.isAgentConversation()) {
+            JOptionPane.showMessageDialog(
+                    mainView.getFrame(),
+                    "Agent conversations do not support context files.",
+                    "AI Assistant",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        if (activeConversation == null) {
+            startNewConversationWithCurrentContext(itemsToAdd);
+            return;
+        }
+
+        if (!activeConversation.hasAssistantReply()) {
+            contextManager.addContextFiles(itemsToAdd);
+            mainView.showFrame();
+            return;
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+                mainView.getFrame(),
+                "This conversation’s context is no longer directly editable because it already contains an assistant reply. Start a new conversation that keeps the current context and adds the newly selected files?",
+                "New Chat",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (result == JOptionPane.YES_OPTION) {
+            startNewConversationWithCurrentContext(itemsToAdd); // Auto-Fork
+        } else if (result == JOptionPane.NO_OPTION) {
+            mainView.showFrame();
+        }
+    }
+}

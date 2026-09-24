@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot Broader Project Report</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --primary: #2c3e50;
+      --accent: #3498db;
+      --green: #27ae60;
+      --orange: #e67e22;
+      --purple: #8e44ad;
+      --red: #c0392b;
+      --text: #333;
+      --muted: #7f8c8d;
+      --border: #e0e4e8;
+    }
+
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.75;
+      color: var(--text);
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      background: var(--bg);
+    }
+
+    h1 {
+      color: var(--primary);
+      font-size: 2em;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95em;
+      margin-bottom: 32px;
+    }
+
+    h2 {
+      color: var(--primary);
+      font-size: 1.4em;
+      margin-top: 48px;
+      margin-bottom: 12px;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      color: var(--primary);
+      font-size: 1.15em;
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .highlight {
+      background: #eaf4fd;
+      border-left: 4px solid var(--accent);
+      padding: 14px 18px;
+      border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+
+    .highlight.green {
+      background: #eafaf1;
+      border-color: var(--green);
+    }
+
+    .highlight.orange {
+      background: #fef5e7;
+      border-color: var(--orange);
+    }
+
+    .highlight.purple {
+      background: #f4ecf7;
+      border-color: var(--purple);
+    }
+
+    ul { margin: 8px 0; padding-left: 24px; }
+    li { margin-bottom: 4px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      text-align: left;
+    }
+    th {
+      background: #f0f3f6;
+      font-weight: 600;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+    .tag.new      { background: #d5f5e3; color: #1e8449; }
+    .tag.modified { background: #fdebd0; color: #b9770e; }
+    .tag.moved    { background: #ebdef0; color: #7d3c98; }
+    .tag.config   { background: #d6eaf8; color: #2471a3; }
+
+    .diagram-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      margin: 16px 0;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .stat-box {
+      text-align: center;
+      padding: 18px 12px;
+      border-radius: 8px;
+      background: #f8f9fb;
+      border: 1px solid var(--border);
+    }
+    .stat-box .number {
+      font-size: 2em;
+      font-weight: 700;
+      color: var(--accent);
+      display: block;
+    }
+    .stat-box .label {
+      font-size: 0.85em;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    code {
+      background: #eef1f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.88em;
+    }
+
+    .file-tree {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.88em;
+      background: #2d2d2d;
+      color: #ccc;
+      padding: 18px;
+      border-radius: 6px;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    .file-tree .dir  { color: #66d9ef; }
+    .file-tree .new  { color: #a6e22e; }
+    .file-tree .mod  { color: #e6db74; }
+    .file-tree .dim  { color: #666; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: "default", securityLevel: "loose" });
+  </script>
+</head>
+<body>
+
+<h1>Chatbot Broader Project Report</h1>
+<p class="subtitle">Project Report &mdash; Branch: <code>last-branch-documentation</code> &mdash; July 2026</p>
+
+<!-- ============================================================ -->
+<!-- EXECUTIVE SUMMARY                                            -->
+<!-- ============================================================ -->
+<section>
+<h2>Executive Summary</h2>
+<div class="card">
+<p>
+  The chatbot feature adds a conversational AI assistant to IPED. Investigators
+  can select WhatsApp chat exports from a forensic case, add them to an AI
+  context, and ask natural-language questions. An LLM processes the chat data
+  and returns answers with clickable citations that navigate directly to the
+  referenced items in IPED's viewer.
+</p>
+<p>
+  Development was structured as a progressive build-up over <strong>157 commits</strong>,
+  evolving from a minimal backend integration contract into a full-featured
+  assistant with context management, multi-chat routing, streaming responses,
+  markdown rendering, collapsible thinking blocks, and persistent conversation
+  history.
+</p>
+
+<div class="stat-grid">
+  <div class="stat-box">
+    <span class="number">~40</span>
+    <span class="label">New Java files</span>
+  </div>
+  <div class="stat-box">
+    <span class="number">~5,800</span>
+    <span class="label">Lines added (Java)</span>
+  </div>
+  <div class="stat-box">
+    <span class="number">6</span>
+    <span class="label">Existing files touched</span>
+  </div>
+  <div class="stat-box">
+    <span class="number">~95%</span>
+    <span class="label">Changes inside <code>ai/</code></span>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- WHERE THE CHANGES LIVE                                       -->
+<!-- ============================================================ -->
+<section>
+<h2>Where the Changes Live</h2>
+<div class="card">
+<p>
+  The vast majority of the work is self-contained within the
+  <code>iped.app.ui.ai</code> package and its subpackages. Existing IPED code
+  was touched minimally &mdash; just enough to wire the assistant into the
+  application shell.
+</p>
+
+<h3>The AI Package (new)</h3>
+<div class="file-tree">
+<span class="dir">iped/app/ui/ai/</span>
+  <span class="dir">agent/</span>
+    <span class="new">OpenCodeAgentService.java</span>      <span class="dim">(agent feature, not chatbot)</span>
+  <span class="dir">backend/</span>
+    <span class="new">AIBackendClient.java</span>           <span class="dim">HTTP/SSE client, 6 endpoints</span>
+    <span class="new">AIBackendConfig.java</span>            <span class="dim">baseUrl + apiKey</span>
+    <span class="new">AIBackendService.java</span>           <span class="dim">interface contract</span>
+    <span class="new">AIBackendException.java</span>         <span class="dim">checked exception</span>
+    <span class="new">AIInitChatRequest.java</span>          <span class="dim">single-chat init DTO</span>
+    <span class="new">AIStreamChatRequest.java</span>        <span class="dim">stream request DTO</span>
+    <span class="new">AIInitMultiChatRequest.java</span>     <span class="dim">summarized multi-chat DTO</span>
+    <span class="new">AIInitMultiChatFullRequest.java</span> <span class="dim">raw HTML multi-chat DTO</span>
+    <span class="new">AIMultiChatStreamRequest.java</span>   <span class="dim">multi-chat stream DTO</span>
+  <span class="dir">context/</span>
+    <span class="new">AIContextManager.java</span>           <span class="dim">thread-safe context file list</span>
+    <span class="new">ConversationManager.java</span>        <span class="dim">active conversation, auto-title</span>
+    <span class="new">ContextChangeEvent.java</span>         <span class="dim">event model</span>
+    <span class="new">ContextChangeListener.java</span>      <span class="dim">listener interface</span>
+  <span class="dir">controller/</span>
+    <span class="new">AIAssistantController.java</span>      <span class="dim">main controller, event routing</span>
+  <span class="dir">model/</span>
+    <span class="new">AIChatMessage.java</span>              <span class="dim">chat message model</span>
+    <span class="new">Conversation.java</span>               <span class="dim">abstract base</span>
+    <span class="new">StandardConversation.java</span>       <span class="dim">chatbot conversation</span>
+    <span class="new">AgentConversation.java</span>          <span class="dim">agent conversation</span>
+    <span class="new">ContextFileEntry.java</span>           <span class="dim">wraps IItem with validation</span>
+  <span class="dir">util/</span>
+    <span class="new">AIPayloadFactory.java</span>           <span class="dim">builds DTOs from context entries</span>
+    <span class="new">AIWhatsappChatExtractor.java</span>    <span class="dim">reads items into HTML</span>
+    <span class="new">SummaryValueExtractor.java</span>      <span class="dim">extracts pre-computed summaries</span>
+    <span class="new">ContextItemValidator.java</span>       <span class="dim">validates items for context</span>
+    <span class="new">ConversationPersistence.java</span>    <span class="dim">JSON save/load to disk</span>
+  <span class="dir">view/</span>
+    <span class="new">AIAssistantPanel.java</span>           <span class="dim">top-level JFrame container</span>
+    <span class="new">ChatAreaPanel.java</span>              <span class="dim">chat rendering, streaming</span>
+    <span class="new">ChatStreamAnimator.java</span>         <span class="dim">teletype animation engine</span>
+    <span class="new">AIMarkdownRenderer.java</span>         <span class="dim">markdown-to-StyledDocument</span>
+    <span class="new">SidebarPanel.java</span>               <span class="dim">conversation list</span>
+    <span class="new">ContextPanel.java</span>               <span class="dim">file context list</span>
+    <span class="new">HeaderPanel.java</span>                <span class="dim">title bar, toggle button</span>
+  <span class="dir">filters/</span>
+    <span class="mod">AIFiltersLoader.java</span>            <span class="dim">(moved from ai/ root)</span>
+    <span class="mod">AIFiltersLocalization.java</span>      <span class="dim">(moved)</span>
+    <span class="mod">AIFiltersTreeCellRenderer.java</span>  <span class="dim">(moved)</span>
+    <span class="mod">AIFiltersTreeListener.java</span>      <span class="dim">(moved)</span>
+    <span class="mod">AIFiltersTreeModel.java</span>         <span class="dim">(moved)</span>
+</div>
+
+<h3>Existing Files Modified (outside <code>ai/</code>)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>What Changed</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>App.java</code></td>
+      <td>Added an AI Assistant toolbar button and a Ctrl+Shift+A keyboard shortcut</td>
+      <td>Provides the entry point to launch the assistant from the main IPED window</td>
+    </tr>
+    <tr>
+      <td><code>MenuClass.java</code></td>
+      <td>Added two right-click menu items: "Add all highlighted to AI context" and "Add all checked to AI context", plus helper methods to resolve items from the results table</td>
+      <td>Enables users to send forensic items from the results table directly into the AI context</td>
+    </tr>
+    <tr>
+      <td><code>ViewerController.java</code></td>
+      <td>Added a <code>SummaryViewer</code> to the viewer list, excluded it from auto-selection, and added cleanup logic to remove it when no summaries exist in the case index</td>
+      <td>Provides a viewer tab for AI-generated summaries in the case analysis interface</td>
+    </tr>
+    <tr>
+      <td><code>UICaseDataLoader.java</code></td>
+      <td>Updated import path for <code>AIFiltersLoader</code> (moved to <code>filters</code> subpackage)</td>
+      <td>Package reorganization</td>
+    </tr>
+    <tr>
+      <td><code>UiUtil.java</code></td>
+      <td>Added an overloaded <code>getUIEmptyHtml(String msg)</code> that renders a centered message on the viewer background</td>
+      <td>Used by <code>SummaryViewer</code> to display summary content in the viewer pane</td>
+    </tr>
+    <tr>
+      <td><code>ExtraProperties.java</code></td>
+      <td>Added <code>SUMMARY</code> and <code>CHUNK_IDS</code> constant definitions</td>
+      <td>Defines the metadata keys used by the summarization pipeline and the chatbot's routing logic</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Configuration and Resources</h3>
+<table>
+  <thead>
+    <tr><th>File</th><th>What</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>IPEDConfig.txt</code></td><td>Added <code>enableAISummarization</code> toggle (default: false)</td></tr>
+    <tr><td><code>AISummarizationConfig.txt</code></td><td>New config file for summarization service address, batch sizes, and chat analysis questions</td></tr>
+    <tr><td><code>AIFiltersConfig.json</code></td><td>New config for AI-specific filter categories</td></tr>
+    <tr><td><code>TaskInstaller.xml</code></td><td>Registered <code>AISummarizationTask</code> in the task pipeline</td></tr>
+    <tr><td><code>AISummarizationTask.py</code></td><td>New 677-line Python task that calls a remote summarization service and stores results in item metadata</td></tr>
+    <tr><td>Localization files (6 languages)</td><td>Added 3 keys: <code>AIAssistant.Tooltip</code>, <code>AIAssistant.Title</code>, <code>AIAssistant.Send</code>, plus 2 menu labels</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ARCHITECTURE AT A GLANCE                                     -->
+<!-- ============================================================ -->
+<section>
+<h2>Architecture at a Glance</h2>
+<div class="card">
+<p>
+  The chatbot is built as a layered architecture inside IPED. Five layers
+  collaborate to process user queries, from button click to rendered answer.
+</p>
+
+<div class="diagram-container">
+  <div class="mermaid">
+graph TB
+  subgraph UI["User Interface"]
+    A[Toolbar Button /<br>Ctrl+Shift+A]
+    B[Context Panel<br>file list + status]
+    C[Chat Panel<br>messages + input]
+    D[Sidebar<br>conversation history]
+  end
+
+  subgraph Core["Core Logic"]
+    E[AIAssistantController<br>event routing]
+    F[AIChatCoordinator<br>pipeline engine]
+  end
+
+  subgraph Data["Data Pipeline"]
+    G[Context Manager<br>file validation]
+    H[Payload Factory<br>DTO construction]
+    I[Chat Extractor<br>HTML extraction]
+  end
+
+  subgraph Backend["Backend"]
+    J[AIBackendClient<br>HTTP / SSE]
+    K[Python Backend<br>LLM + summarization]
+  end
+
+  A --> E
+  B --> G
+  C --> E
+  D --> E
+  E --> F
+  F --> G
+  F --> H
+  H --> I
+  F --> J
+  J -->|HTTP| K
+  K -->|SSE stream| J
+  </div>
+</div>
+
+<p>
+  The key insight is that the AI package is self-contained. It plugs into
+  IPED through three integration points: the toolbar button in
+  <code>App.java</code>, the right-click context menu in
+  <code>MenuClass.java</code>, and the summarization viewer in
+  <code>ViewerController.java</code>. Everything else lives inside the
+  <code>ai</code> package.
+</p>
+
+<div class="highlight">
+  <strong>Design principle:</strong> Minimize changes to existing IPED code.
+  The assistant is an opt-in module that coexists with the rest of the
+  application without disrupting its core workflows.
+</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- HOW IT WORKS (HIGH LEVEL)                                    -->
+<!-- ============================================================ -->
+<section>
+<h2>How It Works (High Level)</h2>
+<div class="card">
+
+<h3>1. Setting Up Context</h3>
+<p>
+  The user right-clicks one or more WhatsApp chat exports in IPED's results
+  table and selects "Add to AI context." The items are validated (must be
+  WhatsApp chats, not empty, not flagged), wrapped in <code>ContextFileEntry</code>
+  objects, and added to the <code>AIContextManager</code>'s thread-safe list.
+  The context panel in the UI updates to show the selected files.
+</p>
+
+<h3>2. Asking a Question</h3>
+<p>
+  The user types a question and presses Send. The controller creates a user
+  message, starts a streaming animation, and delegates to the coordinator.
+  The coordinator runs on a background thread to avoid blocking the UI.
+</p>
+
+<h3>3. Choosing the Right Backend Path</h3>
+<p>
+  The coordinator looks at two things: how many files are in context, and how
+  many "chunks" they contain (a chunk is a segment the summarization pipeline
+  produced during case processing). Based on this, it picks one of three
+  backend paths:
+</p>
+
+<div class="diagram-container">
+  <div class="mermaid">
+graph TD
+  Start["User asks a question"] --> Check{"How many files?"}
+  Check -->|"1 file"| Single["Send full HTML<br>to /api/init_chat"]
+  Check -->|"2+ files"| Chunks{"Total chunks?"}
+  Chunks -->|"10 or fewer"| Full["Send raw HTML<br>to /api/init_multichat_full"]
+  Chunks -->|"More than 10"| Summary["Send pre-computed summaries<br>to /api/init_multichat_with_summaries"]
+  Single --> Stream1["Stream from /api/chat/stream"]
+  Full --> Stream2["Stream from /api/multichat_full/stream"]
+  Summary --> Stream3["Stream from /api/multichat/stream"]
+  </div>
+</div>
+
+<p>
+  This three-way split exists because sending raw HTML for many chats would
+  overwhelm the LLM's context window. For small contexts, full HTML gives the
+  best answer quality. For large contexts, summaries compress the essential
+  information into a manageable size.
+</p>
+
+<h3>4. Streaming the Answer</h3>
+<p>
+  The backend streams tokens back via Server-Sent Events. Each token is
+  forwarded from the background thread to the Swing EDT (Event Dispatch Thread),
+  where it enters a timer-based animation queue. Every 30 milliseconds, one
+  token is dequeued and appended to the draft message, which is then
+  re-rendered as markdown. This creates a smooth "typewriter" effect.
+</p>
+
+<h3>5. Rendering</h3>
+<p>
+  The markdown renderer handles headings, bold, italic, blockquotes, lists,
+  and &mdash; importantly &mdash; citation tokens. Citations use the format
+  <code>&lt;&lt;hash-chunkId&gt;&gt;</code> and are rendered as blue
+  underlined links. Clicking one navigates IPED's viewer to the referenced
+  forensic item.
+</p>
+
+<h3>6. Persisting the Conversation</h3>
+<p>
+  Every message is saved to disk as a JSON file in
+  <code>&lt;case_dir&gt;/iped/data/ai_chats/</code>. Conversations can be
+  switched, resumed, or deleted (soft-delete preserves the file for
+  auditability). The coordinator caches backend session hashes so follow-up
+  questions within the same context skip re-initialization.
+</p>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DEVELOPMENT JOURNEY                                          -->
+<!-- ============================================================ -->
+<section>
+<h2>Development Journey</h2>
+<div class="card">
+<p>
+  The feature was built incrementally over 157 commits. Here is a summary
+  of the major phases:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>What Was Built</th>
+      <th>Key Commits</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="tag new">Foundation</span></td>
+      <td>Backend HTTP client, config, DTOs, WhatsApp HTML extraction, basic send flow wired to a mock backend</td>
+      <td><code>feat(llm integration): add backend http client</code><br><code>feat: add WhatsApp chat content extraction</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag new">Multi-turn</span></td>
+      <td>Conversational memory, previous messages sent with each request, markdown rendering with draft/commit/discard lifecycle</td>
+      <td><code>feat(llm): add multi turn conversational memory</code><br><code>feat(markdown): enhance message handling</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag new">Multi-chat</span></td>
+      <td>Multi-chat DTOs, payload factory, three backend endpoints (single, full, summarized), chunk-based routing</td>
+      <td><code>feat(multi-chat-integration): implement multi-chat DTOs</code><br><code>feat: add multi-chat routing to coordinator</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag modified">UI Refactor</span></td>
+      <td>Extracted ChatAreaPanel, SidebarPanel, ContextPanel, HeaderPanel from monolithic assistant panel. Moved events through controller.</td>
+      <td><code>refactor: Introduce ChatAreaPanel and HeaderPanel</code><br><code>Refactor: make the panel components purely visual</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag new">Persistence</span></td>
+      <td>Conversation model, JSON persistence, sidebar with conversation list, auto-title generation, soft-delete</td>
+      <td><code>feat: define conversation data model</code><br><code>feat: implement conversation persistence layer</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag new">Context Management</span></td>
+      <td>Context-edit lock, auto-fork flow, validation, right-click menu integration in MenuClass</td>
+      <td><code>refactor: implement context locking mechanism</code><br><code>refactor: Move AI context-add workflow from MenuClass to AIAssistantController</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag new">Summarization Pipeline</span></td>
+      <td>Python summarization task, config files, summary viewer in IPED's viewer panel</td>
+      <td><code>AISummarizationTask.py</code> (677 lines), <code>SummaryViewer.java</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag new">Polish</span></td>
+      <td>Error recovery, partial draft salvage, thinking blocks, collapsible UI, quick actions, localization</td>
+      <td><code>fix: preserve partial streaming draft</code><br><code>feat: implement collapsible thinking blocks</code></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- KEY DESIGN DECISIONS                                         -->
+<!-- ============================================================ -->
+<section>
+<h2>Key Design Decisions</h2>
+<div class="card">
+
+<h3>Self-Contained AI Package</h3>
+<p>
+  All chatbot logic lives under <code>iped.app.ui.ai</code>. Existing IPED
+  code was modified in only three places: the toolbar button
+  (<code>App.java</code>), the context menu (<code>MenuClass.java</code>), and
+  the viewer panel (<code>ViewerController.java</code>). This keeps the
+  feature isolated and removable without affecting the rest of the application.
+</p>
+
+<h3>Controller-Mediator Pattern</h3>
+<p>
+  The <code>AIAssistantController</code> acts as the single entry point for
+  all events. View components (panels) are purely visual &mdash; they don't
+  contain business logic. All user actions flow through the controller, which
+  delegates to the coordinator, context manager, or conversation manager as
+  needed. This made it possible to refactor individual panels without breaking
+  the overall flow.
+</p>
+
+<h3>Three-Path Backend Routing</h3>
+<p>
+  Rather than a single endpoint that tries to handle all data volumes, the
+  system uses three purpose-built backend paths. This keeps the backend simple
+  and deterministic: each endpoint knows exactly what format to expect and how
+  to process it. The trade-off is slightly more routing logic on the client
+  side, but the clarity is worth it.
+</p>
+
+<h3>Context-Edit Lock + Auto-Fork</h3>
+<p>
+  Once the LLM has processed a context, it's locked in the UI. Modifying it
+  afterward would create an inconsistent state (the backend's cache reflects the
+  old context, but the UI shows new files). Instead, the system offers an
+  "auto-fork": a new conversation is created that inherits the old context and
+  merges the new files. The previous conversation remains as a historical
+  record.
+</p>
+
+<h3>Soft Delete</h3>
+<p>
+  Conversations are never truly deleted from disk. They're marked with
+  <code>status = "deleted"</code> and hidden from the UI, but the JSON file
+  remains for forensic auditability.
+</p>
+
+<h3>Progressive Enhancement</h3>
+<p>
+  The feature was built in layers: first a mock backend, then real HTTP, then
+  streaming, then multi-chat, then persistence, then polish. Each phase was
+  functional on its own, which allowed continuous testing and integration.
+</p>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- WHAT'S IN THE CHATBOT VS WHAT'S NOT                          -->
+<!-- ============================================================ -->
+<section>
+<h2>What's in the Chatbot vs. What's Not</h2>
+<div class="card">
+<p>
+  This report covers the <strong>chatbot feature only</strong>. The agent
+  feature (opencode CLI integration, MCP server, JVM bridge) is a separate
+  capability that shares some infrastructure but is not part of this report.
+</p>
+
+<table>
+  <thead>
+    <tr><th>In Scope (Chatbot)</th><th>Out of Scope (Agent)</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>WhatsApp chat context management</td>
+      <td>OpenCodeAgentService</td>
+    </tr>
+    <tr>
+      <td>Three-path backend routing (single / full / summarized)</td>
+      <td>MCP server (Python, stdio transport)</td>
+    </tr>
+    <tr>
+      <td>SSE streaming with teletype animation</td>
+      <td>JVM bridge (PyJnius)</td>
+    </tr>
+    <tr>
+      <td>Markdown rendering with citation tokens</td>
+      <td>opencode CLI subprocess</td>
+    </tr>
+    <tr>
+      <td>Context-edit lock and auto-fork</td>
+      <td>Agent session persistence</td>
+    </tr>
+    <tr>
+      <td>Conversation persistence and management</td>
+      <td>Agent citation tools (get_citation_token, etc.)</td>
+    </tr>
+    <tr>
+      <td>Error recovery and partial draft salvage</td>
+      <td>Agent error recovery flow</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  Both features share the <code>AIAssistantController</code>,
+  <code>AIChatCoordinator</code>, <code>ChatAreaPanel</code>,
+  <code>AIMarkdownRenderer</code>, <code>ChatStreamAnimator</code>,
+  <code>ConversationManager</code>, <code>ConversationPersistence</code>, and
+  the conversation model classes. The controller routes between them based on
+  <code>isAgentConversation()</code>.
+</p>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- FILE IMPACT SUMMARY                                          -->
+<!-- ============================================================ -->
+<section>
+<h2>File Impact Summary</h2>
+<div class="card">
+
+<table>
+  <thead>
+    <tr><th>Category</th><th>Count</th><th>Details</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="tag new">New Java files</span></td>
+      <td>~40</td>
+      <td>All under <code>iped.app.ui.ai.*</code> subpackages</td>
+    </tr>
+    <tr>
+      <td><span class="tag modified">Modified Java files</span></td>
+      <td>6</td>
+      <td><code>App.java</code>, <code>MenuClass.java</code>, <code>ViewerController.java</code>, <code>UICaseDataLoader.java</code>, <code>UiUtil.java</code>, <code>ExtraProperties.java</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag moved">Moved Java files</span></td>
+      <td>5</td>
+      <td>AI filter classes moved from <code>ai/</code> to <code>ai/filters/</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag config">New config/resource files</span></td>
+      <td>5</td>
+      <td><code>AISummarizationConfig.txt</code>, <code>AIFiltersConfig.json</code>, <code>AISummarizationTask.py</code>, updates to <code>IPEDConfig.txt</code> and <code>TaskInstaller.xml</code></td>
+    </tr>
+    <tr>
+      <td><span class="tag config">Localization files</span></td>
+      <td>6</td>
+      <td>3 keys added to each of 6 languages (en, de, es, fr, it, pt)</td>
+    </tr>
+    <tr>
+      <td><span class="tag new">Documentation (HTML)</span></td>
+      <td>4+</td>
+      <td>Technical reference (chatbot), 2 Sequence diagrams flow files, this report</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="highlight green">
+  <strong>Impact on existing IPED code is minimal.</strong> The 6 modified Java
+  files received small, targeted changes: a toolbar button, two menu items, a
+  viewer registration, an import path update, a utility method overload, and
+  two constant definitions. No existing behavior was altered.
+</div>
+
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CONCLUSION                                                   -->
+<!-- ============================================================ -->
+<section>
+<h2>Conclusion</h2>
+<div class="card">
+<p>
+  The chatbot feature is a substantial addition to IPED, adding conversational
+  AI capabilities for forensic WhatsApp chat analysis. Despite its scope
+  (~5,800 lines of new Java code), it was designed to be minimally invasive:
+  nearly all changes live inside the new <code>ai</code> package, and the six
+  modified files received only small, surgical additions.
+</p>
+<p>
+  The architecture prioritizes clarity (three purpose-built backend paths over
+  one generic endpoint), safety (context-edit lock prevents inconsistent state),
+  and resilience (partial draft salvage, hash cache invalidation on backend
+  restarts). The progressive build-up from mock backend to full feature was
+  enabled by a clean separation between UI, controller, coordinator, and
+  network layers.
+</p>
+<p>
+  For detailed sequence diagrams covering all 12 flows, see the companion
+  document: <a href="Chatbot%20sequence%20diagrams.html">
+  <code>Chatbot sequence diagrams.html</code></a>. For the full technical
+  reference, see <a href="Chatbot%20Complete%20Technical%20Documentation.html">
+  <code>Chatbot Complete Technical Documentation.html</code></a>.
+</p>
+</div>
+</section>
+
+</body>
+</html>

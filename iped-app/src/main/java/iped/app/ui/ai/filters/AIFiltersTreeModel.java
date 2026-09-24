@@ -1,4 +1,4 @@
-package iped.app.ui.ai;
+package iped.app.ui.ai.filters;
 
 import java.util.ArrayList;
 import java.util.List;
