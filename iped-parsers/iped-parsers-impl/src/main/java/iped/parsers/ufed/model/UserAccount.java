@@ -13,9 +13,9 @@ public class UserAccount extends Accountable {
     }
 
     // Specific field getters
-    public String getUsername() { return (String) getField("Username"); }
-    public String getPassword() { return (String) getField("Password"); }
-    public String getServerAddress() { return (String) getField("ServerAddress"); }
+    public String getUsername() { return getFieldAsString("Username"); }
+    public String getPassword() { return getFieldAsString("Password"); }
+    public String getServerAddress() { return getFieldAsString("ServerAddress"); }
     public Date getTimeCreated() { return (Date) getField("TimeCreated"); }
 
 }

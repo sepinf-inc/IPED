@@ -1,10 +1,13 @@
 package iped.parsers.ufed.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import org.apache.commons.lang3.BooleanUtils;
@@ -16,6 +19,8 @@ import org.apache.commons.lang3.StringUtils;
 public class InstantMessage extends BaseModel implements Comparable<InstantMessage> {
 
     private static final long serialVersionUID = -6119178123925362471L;
+
+    private static final String EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
 
     public static enum MessageStatus {
         Unknown, Default, Unsent, Sent, Delivered, Read, Unread;
@@ -57,19 +62,19 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     }
 
     // Specific field getters
-    public String getBody() { return (String) getField("Body"); }
-    public String getType() { return (String) getField("Type"); }
-    public String getPlatform() { return (String) getField("Platform"); }
-    public String getIdentifier() { return (String) getField("Identifier"); }
+    public String getBody() { return getFieldAsString("Body"); }
+    public String getType() { return getFieldAsString("Type"); }
+    public String getPlatform() { return getFieldAsString("Platform"); }
+    public String getIdentifier() { return getFieldAsString("Identifier"); }
     public Date getTimeStamp() { return (Date) getField("TimeStamp"); }
-    public String getSource() { return (String) getField("Source"); }
-    public String getLabel() { return (String) getField("Label"); }
-    public String getSourceApplication() { return (String) getField("SourceApplication"); }
+    public String getSource() { return getFieldAsString("Source"); }
+    public String getLabel() { return getFieldAsString("Label"); }
+    public String getSourceApplication() { return getFieldAsString("SourceApplication"); }
     public boolean isLocationSharing() { return BooleanUtils.toBoolean((Boolean) getField("IsLocationSharing")); }
-    public String getSubject() { return (String) getField("Subject"); }
+    public String getSubject() { return getFieldAsString("Subject"); }
 
     public MessageStatus getStatus() {
-        return MessageStatus.parse((String) getField("Status"));
+        return MessageStatus.parse(getFieldAsString("Status"));
     }
 
     public Chat getChat() {
@@ -91,6 +96,83 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
     public List<Attachment> getAttachments() {
         return attachments;
+    }
+
+    /**
+     * @return the embedded message, if it is the forwarded content of this message
+     */
+    public Optional<InstantMessage> getForwardedEmbeddedMessage() {
+        if (embeddedMessage != null && isForwardedMessage() && findForwardedMessage(chat) == embeddedMessage) {
+            return Optional.of(embeddedMessage);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Attachments of the forwarded embedded message. When an attachment is also present
+     * in this message, the one with available content is preferred (own attachment on a tie).
+     */
+    public List<Attachment> getForwardedEmbeddedAttachments() {
+        List<Attachment> fwdAttachments = getForwardedEmbeddedMessage().map(InstantMessage::getAttachments).orElse(null);
+        if (fwdAttachments == null || fwdAttachments.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (attachments.isEmpty()) {
+            return fwdAttachments;
+        }
+        List<Attachment> result = new ArrayList<>(fwdAttachments.size());
+        for (Attachment fwd : fwdAttachments) {
+            Attachment own = findSameAttachment(attachments, fwd);
+            result.add(own != null && (own.hasContent() || !fwd.hasContent()) ? own : fwd);
+        }
+        return result;
+    }
+
+    /**
+     * Own attachments that are not present in the forwarded embedded message.
+     */
+    public List<Attachment> getOwnAttachmentsNotForwarded() {
+        if (attachments.isEmpty()) {
+            return attachments;
+        }
+        List<Attachment> fwdAttachments = getForwardedEmbeddedMessage().map(InstantMessage::getAttachments).orElse(null);
+        if (fwdAttachments == null || fwdAttachments.isEmpty()) {
+            return attachments;
+        }
+        List<Attachment> result = new ArrayList<>(attachments.size());
+        for (Attachment own : attachments) {
+            if (findSameAttachment(fwdAttachments, own) == null) {
+                result.add(own);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Own attachments plus attachments of the forwarded embedded message, without duplicates.
+     */
+    public List<Attachment> getAllAttachments() {
+        List<Attachment> fwd = getForwardedEmbeddedAttachments();
+        if (fwd.isEmpty()) {
+            return attachments;
+        }
+        List<Attachment> own = getOwnAttachmentsNotForwarded();
+        if (own.isEmpty()) {
+            return fwd;
+        }
+        List<Attachment> result = new ArrayList<>(own.size() + fwd.size());
+        result.addAll(own);
+        result.addAll(fwd);
+        return result;
+    }
+
+    private static Attachment findSameAttachment(List<Attachment> list, Attachment attachment) {
+        for (Attachment a : list) {
+            if (a.isSameAs(attachment)) {
+                return a;
+            }
+        }
+        return null;
     }
 
     public List<Contact> getSharedContacts() {
@@ -134,8 +216,62 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
         return getFrom().map(Party::isPhoneOwner).orElse(false);
     }
 
+    /**
+     * Labels from <multiField name="Labels"> (PA 10.10+). Older versions use
+     * MessageLabel models inside MessageExtraData instead.
+     */
+    public List<String> getLabels() {
+        return getFieldAsList("Labels");
+    }
+
+    /**
+     * Labels of this message itself, without duplicates: the "Label" field, the "Labels"
+     * multiField (PA 10.10+) and MessageLabel models. Labels inside Forwarded/Reply/Quoted
+     * data are not used, since they may refer to the referenced message; only the presence
+     * of ForwardedMessageData/ReplyMessageData (older PA versions) adds "Forwarded"/"Reply".
+     */
+    public Set<String> getOwnLabels() {
+        Set<String> labels = new LinkedHashSet<>();
+        addLabel(labels, getLabel());
+        Object multiLabels = getField("Labels");
+        if (multiLabels instanceof List) {
+            for (Object l : (List<?>) multiLabels) {
+                addLabel(labels, String.valueOf(l));
+            }
+        }
+        for (MessageLabel l : messageExtraData.getMessageLabels()) {
+            addLabel(labels, l.getLabel());
+        }
+        if (messageExtraData.getForwardedMessage().isPresent()) {
+            addLabel(labels, "Forwarded");
+        }
+        if (messageExtraData.getReplyMessage().isPresent()) {
+            addLabel(labels, "Reply");
+        }
+        return labels;
+    }
+
+    private static void addLabel(Set<String> labels, String label) {
+        if (StringUtils.isNotBlank(label)) {
+            labels.add(label);
+        }
+    }
+
     public boolean hasLabel(String label) {
-        return messageExtraData.getMessageLabels().stream().anyMatch(l -> label.equalsIgnoreCase(l.getLabel()));
+        Object labels = getField("Labels");
+        if (labels instanceof List) {
+            for (Object l : (List<?>) labels) {
+                if (label.equalsIgnoreCase(String.valueOf(l))) {
+                    return true;
+                }
+            }
+        }
+        for (MessageLabel l : messageExtraData.getMessageLabels()) {
+            if (label.equalsIgnoreCase(l.getLabel())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isEdited() {
@@ -234,8 +370,13 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
     private InstantMessage findMessageUsingReferenceId(String referenceId, Chat chat) {
 
-        // first compare with embeddedMessage
-        if (embeddedMessage != null && StringUtils.equals(embeddedMessage.getId(), referenceId)) {
+        if (StringUtils.isBlank(referenceId) || EMPTY_GUID.equals(referenceId)) {
+            return null;
+        }
+
+        // first compare with embeddedMessage (ReferenceId matches "pa_id" in newer PA versions, "id" in older ones)
+        if (embeddedMessage != null
+                && (referenceId.equals(embeddedMessage.getPaId()) || referenceId.equals(embeddedMessage.getId()))) {
             return embeddedMessage;
         }
 
