@@ -59,10 +59,16 @@ public class SignalParser extends SQLite3DBParser {
     private static final ReportGenerator REPORT_GEN = new ReportGenerator();
 
     private boolean extractMessages = true;
+    private int minChatSplitSize = 6000000;
 
     @Field
     public void setExtractMessages(boolean extractMessages) {
         this.extractMessages = extractMessages;
+    }
+
+    @Field
+    public void setMinChatSplitSize(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     @Override
@@ -129,61 +135,90 @@ public class SignalParser extends SQLite3DBParser {
         int chatVirtualId = 0;
         for (SignalChat chat : chats) {
             String chatTitle = chat.getTitle();
+            List<SignalMessage> allMessages = chat.getMessages();
 
-            // Count only indexable (non-system) messages for HASCHILD
-            long indexableCount = chat.getMessages().stream()
-                    .filter(m -> m.getMessageType() != SignalMessage.MessageType.SYSTEM)
-                    .count();
+            int firstMessage = 0;
+            int fragmentNum = 0;
+            boolean hasMore;
 
-            Metadata chatMeta = new Metadata();
-            chatMeta.set(TikaCoreProperties.TITLE, chatTitle);
-            chatMeta.set(StandardParser.INDEXER_CONTENT_TYPE, SIGNAL_CHAT.toString());
-            chatMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
-            chatMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+            // A long conversation becomes several items, as the WhatsApp, Telegram and
+            // Threema parsers do, instead of one huge preview held whole in memory
+            do {
+                ReportGenerator.Fragment fragment =
+                        REPORT_GEN.generateChatFragment(chat, firstMessage, minChatSplitSize);
+                List<SignalMessage> fragmentMessages =
+                        allMessages.subList(firstMessage, fragment.getNextMessage());
+                hasMore = fragment.getNextMessage() < allMessages.size();
 
-            if (chat.isGroupChat()) {
-                chatMeta.add(ExtraProperties.GROUP_ID, chat.getContact().getGroupId());
-                // Self first (device owner); then members, excluding self to avoid duplication
-                if (selfContact != null)
-                    chatMeta.add(ExtraProperties.PARTICIPANTS, selfContact.getFullId());
-                for (SignalContact member : chat.getParticipants()) {
-                    if (selfContact == null || member.getId() != selfContact.getId())
-                        chatMeta.add(ExtraProperties.PARTICIPANTS, member.getFullId());
+                String fragmentTitle = (fragmentNum > 0 || hasMore)
+                        ? chatTitle + "_" + fragmentNum
+                        : chatTitle;
+
+                // Count only indexable (non-system) messages for HASCHILD
+                long indexableCount = fragmentMessages.stream()
+                        .filter(m -> m.getMessageType() != SignalMessage.MessageType.SYSTEM)
+                        .count();
+
+                Metadata chatMeta = new Metadata();
+                chatMeta.set(TikaCoreProperties.TITLE, fragmentTitle);
+                chatMeta.set(StandardParser.INDEXER_CONTENT_TYPE, SIGNAL_CHAT.toString());
+                chatMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
+                chatMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                if (chat.isGroupChat()) {
+                    chatMeta.add(ExtraProperties.GROUP_ID, chat.getContact().getGroupId());
+                    // Self first (device owner); then members, excluding self to avoid duplication
+                    if (selfContact != null)
+                        chatMeta.add(ExtraProperties.PARTICIPANTS, selfContact.getFullId());
+                    for (SignalContact member : chat.getParticipants()) {
+                        if (selfContact == null || member.getId() != selfContact.getId())
+                            chatMeta.add(ExtraProperties.PARTICIPANTS, member.getFullId());
+                    }
+                } else if (chat.getContact() != null) {
+                    if (selfContact != null)
+                        chatMeta.add(ExtraProperties.PARTICIPANTS, selfContact.getFullId());
+                    // Note to Self has the owner as the chat contact: do not list them twice
+                    if (selfContact == null || chat.getContact().getId() != selfContact.getId())
+                        chatMeta.add(ExtraProperties.PARTICIPANTS, chat.getContact().getFullId());
                 }
-            } else if (chat.getContact() != null) {
-                if (selfContact != null)
-                    chatMeta.add(ExtraProperties.PARTICIPANTS, selfContact.getFullId());
-                // Note to Self has the owner as the chat contact: do not list them twice
-                if (selfContact == null || chat.getContact().getId() != selfContact.getId())
-                    chatMeta.add(ExtraProperties.PARTICIPANTS, chat.getContact().getFullId());
-            }
 
-            if (extractMessages && indexableCount > 0)
-                chatMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+                // Period covered by this fragment, so split conversations are readable
+                // on the timeline without opening each one
+                Date firstDate = messageDate(fragmentMessages, true);
+                Date lastDate = messageDate(fragmentMessages, false);
+                if (firstDate != null)
+                    chatMeta.set(TikaCoreProperties.CREATED, firstDate);
+                if (lastDate != null)
+                    chatMeta.set(TikaCoreProperties.MODIFIED, lastDate);
 
-            if (!extractor.shouldParseEmbedded(chatMeta)) {
+                if (extractMessages && indexableCount > 0)
+                    chatMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+
+                if (extractor.shouldParseEmbedded(chatMeta)) {
+                    extractor.parseEmbedded(new ByteArrayInputStream(fragment.getHtml()), handler,
+                            chatMeta, false);
+
+                    if (extractMessages) {
+                        extractMessages(fragmentTitle, chat, fragmentMessages, selfContact,
+                                chatVirtualId, handler, extractor);
+                    }
+                }
+
+                firstMessage = fragment.getNextMessage();
+                fragmentNum++;
                 chatVirtualId++;
-                continue;
-            }
-
-            byte[] reportBytes = REPORT_GEN.generateChatHtml(chat);
-            extractor.parseEmbedded(new ByteArrayInputStream(reportBytes), handler, chatMeta, false);
-
-            if (extractMessages) {
-                extractMessages(chatTitle, chat, selfContact, chatVirtualId, handler, extractor);
-            }
-            chatVirtualId++;
+            } while (hasMore);
         }
     }
 
-    private void extractMessages(String chatTitle, SignalChat chat, SignalContact selfContact,
-            int parentVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor)
-            throws SAXException, IOException {
+    private void extractMessages(String chatTitle, SignalChat chat, List<SignalMessage> messages,
+            SignalContact selfContact, int parentVirtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
 
         String selfId = selfContact != null ? selfContact.getFullId() : null;
 
         int msgCount = 0;
-        for (SignalMessage m : chat.getMessages()) {
+        for (SignalMessage m : messages) {
             // System messages are rendered only in the HTML report; not indexed individually
             if (m.getMessageType() == SignalMessage.MessageType.SYSTEM)
                 continue;
@@ -209,12 +244,16 @@ public class SignalParser extends SQLite3DBParser {
 
             if (chat.isGroupChat())
                 msgMeta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
+            // Sub-items have no content of their own: an empty length becomes null,
+            // instead of being indexed as 0 bytes (same as WhatsApp/Telegram/Threema)
+            msgMeta.set(BasicProps.LENGTH, "");
 
             SignalContact contact = chat.getContact();
-            // Includes the Signal group_id so untitled or same-named groups do not
-            // collapse into a single node in link analysis
+            // Built from the conversation title, not the fragment one, so splitting a long
+            // conversation does not split its group node; the Signal group_id keeps
+            // untitled or same-named groups apart
             String groupTo = chat.isGroupChat()
-                    ? chatTitle + " (id:" + chat.getContact().getGroupId() + ")"
+                    ? chat.getTitle() + " (id:" + chat.getContact().getGroupId() + ")"
                     : null;
             if (m.isFromMe()) {
                 // The row's own sender is more precise than the global heuristic, which
@@ -249,6 +288,16 @@ public class SignalParser extends SQLite3DBParser {
 
             extractor.parseEmbedded(new EmptyInputStream(), handler, msgMeta, false);
         }
+    }
+
+    private static Date messageDate(List<SignalMessage> messages, boolean first) {
+        for (int i = 0; i < messages.size(); i++) {
+            SignalMessage m = messages.get(first ? i : messages.size() - 1 - i);
+            Date date = m.getDateSent() != null ? m.getDateSent() : m.getDateReceived();
+            if (date != null)
+                return date;
+        }
+        return null;
     }
 
     private static String resolveBody(SignalMessage m) {

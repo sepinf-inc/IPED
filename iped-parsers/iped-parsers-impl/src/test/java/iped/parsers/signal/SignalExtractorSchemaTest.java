@@ -76,6 +76,20 @@ public class SignalExtractorSchemaTest extends TestCase {
                 chats.get(0).getMessages().get(0).getMessageType());
     }
 
+    public void testRejectsDatabaseMissingRecipientColumns() throws Exception {
+        // Without a recipient column the recipient query fails and every thread loses its
+        // contact, so the database must be rejected instead of yielding an empty case
+        connection = DriverManager.getConnection("jdbc:sqlite::memory:");
+        try (Statement st = connection.createStatement()) {
+            st.executeUpdate("CREATE TABLE recipient (_id INTEGER PRIMARY KEY, e164 TEXT)");
+            st.executeUpdate("CREATE TABLE thread (_id INTEGER PRIMARY KEY, recipient_id INTEGER, date INTEGER)");
+            st.executeUpdate("CREATE TABLE message (_id INTEGER PRIMARY KEY, thread_id INTEGER, "
+                    + "from_recipient_id INTEGER, date_sent INTEGER, date_received INTEGER, body TEXT, type INTEGER)");
+        }
+        assertFalse("Database missing recipient columns should be rejected",
+                new SignalExtractor(connection, "test.db").isValidSignalDatabase());
+    }
+
     public void testRejectsDatabaseWithoutMessageTable() throws Exception {
         createSchema("from_recipient_id");
         try (Statement st = connection.createStatement()) {

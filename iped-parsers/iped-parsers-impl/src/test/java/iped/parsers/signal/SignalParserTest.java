@@ -48,7 +48,7 @@ import iped.parsers.standard.StandardParser;
  *             Alice (no msg row, ringer=1), generic group call event with no ringer
  *
  *   Expected output (extractMessages=true):
- *     3 x-signal-chat + 14 x-signal-message = 17 docs
+ *     3 x-signal-chat + 15 x-signal-message = 18 docs
  */
 public class SignalParserTest extends AbstractPkgTest {
 
@@ -67,8 +67,13 @@ public class SignalParserTest extends AbstractPkgTest {
     private static final String SELF_FULL_ID  = "Device Owner (+5511999990005)";
 
     private EmbeddedSignalParser parse(boolean extractMessages) throws Exception {
+        return parse(extractMessages, 6000000);
+    }
+
+    private EmbeddedSignalParser parse(boolean extractMessages, int minChatSplitSize) throws Exception {
         SignalParser parser = new SignalParser();
         parser.setExtractMessages(extractMessages);
+        parser.setMinChatSplitSize(minChatSplitSize);
 
         ContentHandler handler = new BodyContentHandler(-1);
         Metadata metadata = new Metadata();
@@ -366,6 +371,54 @@ public class SignalParserTest extends AbstractPkgTest {
         int count = 0, idx = 0;
         while ((idx = text.indexOf(sub, idx)) != -1) { count++; idx += sub.length(); }
         return count;
+    }
+
+    // ── Chat splitting ───────────────────────────────────────────────────────
+
+    public void testLongChatIsSplitIntoFragments() throws Exception {
+        // A split size of 1 byte forces a fragment per message
+        EmbeddedSignalParser tracker = parse(true, 1);
+        long chatCount = tracker.contentTypes.stream()
+                .filter(t -> t.equals(SignalParser.SIGNAL_CHAT.toString()))
+                .count();
+        assertTrue("A split conversation must produce more chat items than conversations",
+                chatCount > EXPECTED_CHAT_DOCS);
+        assertTrue("Fragments must be numbered", tracker.titles.contains(EXPECTED_GROUP_TITLE + "_0"));
+        assertTrue("Fragments must be numbered", tracker.titles.contains(EXPECTED_GROUP_TITLE + "_1"));
+    }
+
+    public void testSplittingKeepsEveryMessageExactlyOnce() throws Exception {
+        // Splitting must not lose a message at a fragment boundary nor repeat one
+        EmbeddedSignalParser split = parse(true, 1);
+        long splitMsgs = split.contentTypes.stream()
+                .filter(t -> t.equals(SignalParser.SIGNAL_MESSAGE.toString()))
+                .count();
+        assertEquals("Split and unsplit runs must index the same messages",
+                EXPECTED_MESSAGE_DOCS, (int) splitMsgs);
+        assertTrue("A message body must still be indexed once",
+                split.messageBodies.contains("Hi Alice, how are you?"));
+        assertEquals("No message may be indexed twice", 1,
+                split.messageBodies.stream().filter(b -> b.equals("Hi Alice, how are you?")).count());
+    }
+
+    public void testSplitGroupKeepsASingleGraphNode() throws Exception {
+        // MESSAGE_TO feeds the group node in link analysis: it must stay the conversation
+        // title, otherwise each fragment would become a separate group in the graph
+        EmbeddedSignalParser split = parse(true, 1);
+        String expected = EXPECTED_GROUP_TITLE + " (id:GRP001FORENSICS)";
+        assertTrue("Group MESSAGE_TO must not carry the fragment suffix",
+                split.messageTos.contains(expected));
+        assertFalse("No fragment-numbered group node may exist",
+                split.messageTos.stream().anyMatch(t -> t.startsWith(EXPECTED_GROUP_TITLE + "_")));
+    }
+
+    public void testUnsplitChatKeepsItsPlainTitle() throws Exception {
+        // A conversation that fits in one fragment must not get a _0 suffix
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("Single-fragment chat keeps its title",
+                tracker.titles.contains(EXPECTED_GROUP_TITLE));
+        assertFalse("Single-fragment chat must not be numbered",
+                tracker.titles.contains(EXPECTED_GROUP_TITLE + "_0"));
     }
 
     // ── Encrypted / unreadable databases ─────────────────────────────────────

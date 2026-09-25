@@ -325,6 +325,7 @@
         </parser>
         <parser class="iped.parsers.signal.SignalParser">
             <params>
+                <param name="minChatSplitSize" type="int">6000000</param>
                 <param name="extractMessages" type="bool">true</param>
             </params>
         </parser>

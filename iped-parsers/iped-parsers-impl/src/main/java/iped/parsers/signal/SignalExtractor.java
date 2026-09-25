@@ -132,7 +132,12 @@ public class SignalExtractor {
                     itemPath);
             return false;
         }
-        return true;
+        // The recipient query selects these; missing any of them would fail it and leave
+        // every thread without a contact, which reads as an empty case
+        return hasColumns("recipient", "e164", "profile_given_name", "profile_family_name",
+                    "profile_joined_name", "system_joined_name", "group_id")
+                && hasColumns("thread", "recipient_id", "date")
+                && hasColumns("message", "thread_id", "date_sent", "date_received", "body", "type");
     }
 
     private boolean hasTable(String table) {
@@ -189,6 +194,17 @@ public class SignalExtractor {
             case CALL_EVENT_OUTGOING_RING: return "ringing";
             default:                       return null;
         }
+    }
+
+    /** All columns the queries need must be there, or the case would come out empty. */
+    private boolean hasColumns(String table, String... columns) {
+        for (String column : columns) {
+            if (!hasColumn(table, column)) {
+                LOGGER.warn("Signal database at {} has no {}.{} column, skipping it", itemPath, table, column);
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean hasColumn(String table, String column) {
@@ -258,7 +274,7 @@ public class SignalExtractor {
                 // whose query failed) is still extracted
                 Set<Long> replacedMessageIds = new HashSet<>();
                 List<SignalMessage> calls = callsAvailable
-                        ? loadCalls(recipientId, recipients, replacedMessageIds)
+                        ? loadCalls(threadId, recipientId, recipients, replacedMessageIds)
                         : new ArrayList<>();
 
                 List<SignalMessage> messages = loadMessages(threadId, recipients, replacedMessageIds);
@@ -319,8 +335,8 @@ public class SignalExtractor {
      * direction and the outcome of each call. Calls whose message row was deleted have
      * a null message_id and only show up here.
      */
-    private List<SignalMessage> loadCalls(long peerRecipientId, Map<Long, SignalContact> recipients,
-            Set<Long> replacedMessageIds) {
+    private List<SignalMessage> loadCalls(long threadId, long peerRecipientId,
+            Map<Long, SignalContact> recipients, Set<Long> replacedMessageIds) {
         List<SignalMessage> calls = new ArrayList<>();
         try (PreparedStatement st = connection.prepareStatement(SELECT_CALLS)) {
             st.setLong(1, peerRecipientId);
@@ -336,6 +352,7 @@ public class SignalExtractor {
 
                     SignalMessage m = new SignalMessage();
                     m.setId(rs.getLong("_id"));
+                    m.setThreadId(threadId);
                     m.setFromRecipientId(peerRecipientId);
                     m.setMessageType(callMessageType(type, direction, event));
                     m.setCallDetail(callDescription(type, direction, event));
@@ -346,14 +363,14 @@ public class SignalExtractor {
                         long ringer = rs.getLong("ringer");
                         boolean hasRinger = !rs.wasNull();
                         boolean groupCall = type == CALL_TYPE_GROUP || type == CALL_TYPE_AD_HOC;
-                        if (!groupCall) {
-                            m.setSender(recipients.get(peerRecipientId));
-                        } else if (hasRinger) {
-                            m.setSender(recipients.get(ringer));
-                            m.setFromRecipientId(ringer);
+                        // On a group thread the peer is the group, so the caller comes from
+                        // the ringer column, which Signal only fills for ring events; with
+                        // no ringer the caller was simply not recorded and stays unset
+                        long senderId = groupCall ? ringer : peerRecipientId;
+                        if (!groupCall || hasRinger) {
+                            m.setSender(recipients.get(senderId));
+                            m.setFromRecipientId(senderId);
                         } else {
-                            // Signal only fills ringer for ring events, and the peer of a
-                            // group call is the group: the caller is simply not recorded
                             m.setFromRecipientId(0);
                         }
                     }

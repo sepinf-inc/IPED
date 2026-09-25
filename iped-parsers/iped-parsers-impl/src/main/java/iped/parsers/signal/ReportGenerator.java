@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,11 +46,46 @@ public class ReportGenerator {
         return f;
     });
 
+    /** One piece of a conversation report, and where the next piece starts. */
+    public static class Fragment {
+        private final byte[] html;
+        private final int nextMessage;
+
+        Fragment(byte[] html, int nextMessage) {
+            this.html = html;
+            this.nextMessage = nextMessage;
+        }
+
+        public byte[] getHtml() { return html; }
+
+        /** Index of the first message not included in this fragment. */
+        public int getNextMessage() { return nextMessage; }
+    }
+
     public byte[] generateChatHtml(SignalChat chat) {
+        return generateChatFragment(chat, 0, Integer.MAX_VALUE).getHtml();
+    }
+
+    /**
+     * Renders the conversation from {@code firstMessage} on, stopping once the messages
+     * block reaches {@code minSplitSize}, so that a long conversation becomes several
+     * items instead of a single huge one. Holds no state between calls: the caller walks
+     * the conversation through {@link Fragment#getNextMessage()}.
+     */
+    public Fragment generateChatFragment(SignalChat chat, int firstMessage, int minSplitSize) {
         StringBuilder messages = new StringBuilder(1024);
         Date lastDate = null;
 
-        for (SignalMessage m : chat.getMessages()) {
+        List<SignalMessage> all = chat.getMessages();
+        int current = firstMessage;
+        // A fragment must not end on a tail of system messages, which are not indexed
+        int lastIndexable = lastIndexableMessage(all);
+
+        if (current > 0)
+            messages.append(renderChatNote("Continuation of the previous conversation fragment"));
+
+        while (current < all.size()) {
+            SignalMessage m = all.get(current++);
             SignalMessage.MessageType type = m.getMessageType();
 
             if (type == SignalMessage.MessageType.SYSTEM) {
@@ -64,6 +100,11 @@ public class ReportGenerator {
             }
 
             messages.append(renderMessage(m, chat));
+
+            if (messages.length() >= minSplitSize && current <= lastIndexable) {
+                messages.append(renderChatNote("Conversation continues on the next fragment"));
+                break;
+            }
         }
 
         final String escapedTitle  = escapeHtml(chat.getTitle());
@@ -79,7 +120,20 @@ public class ReportGenerator {
             }
         });
 
-        return html.getBytes(StandardCharsets.UTF_8);
+        return new Fragment(html.getBytes(StandardCharsets.UTF_8), current);
+    }
+
+    /** Index of the last message that becomes an item of its own, or -1 when there is none. */
+    private static int lastIndexableMessage(List<SignalMessage> messages) {
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if (messages.get(i).getMessageType() != SignalMessage.MessageType.SYSTEM)
+                return i;
+        }
+        return -1;
+    }
+
+    private String renderChatNote(String text) {
+        return "<div class=\"systemmessage\"><span>" + escapeHtml(text) + "</span></div>\n";
     }
 
     private String renderMessage(SignalMessage m, SignalChat chat) {
