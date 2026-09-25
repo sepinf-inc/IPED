@@ -21,8 +21,11 @@ import iped.parsers.standard.StandardParser;
  *     4 – phone-only  (+5511999990004) [no name fields]
  *     5 – Device Owner (+5511999990005) [profile_joined_name] — self (device owner;
  *         from_recipient_id on all outgoing messages; member of the group)
+ *     6 – no phone and no name, only an aci (phone number privacy)
+ *     7 – no phone and no name, only a username
  *
- *   Threads (DESC by date → group first, then phone-only, then alice):
+ *   Threads (DESC by date → group first, then phone-only, then alice, then the two
+ *   contacts with no phone number):
  *     2 – Group "Operacao Digital"  (date=1700001000000)
  *     3 – Phone-only                (date=1700000500000)
  *     1 – Alice Walker              (date=1700000100000)
@@ -31,7 +34,10 @@ import iped.parsers.standard.StandardParser;
  *   SECURE_MESSAGE_BIT and PUSH_MESSAGE_BIT flags a real database has, so the
  *   base-type masking is exercised):
  *     Thread 1 (Alice):  incoming (20), sent (23), null-body sent (23),
- *                        system JOINED_TYPE (4, filtered)
+ *                        system JOINED_TYPE (4, filtered), an edited message kept as
+ *                        two rows (the earlier one points at the latest through
+ *                        latest_revision_id), one deleted by the sender, plus a story
+ *                        and a story reply, which are not conversation messages
  *     Thread 2 (Group):  incoming from Alice (20), incoming from Bob (20, emoji+HTML
  *                        chars), OUTGOING from self (23) — tests group outgoing
  *                        MESSAGE_TO, GROUP_CALL (12), and incoming from recipient 4,
@@ -48,15 +54,15 @@ import iped.parsers.standard.StandardParser;
  *             Alice (no msg row, ringer=1), generic group call event with no ringer
  *
  *   Expected output (extractMessages=true):
- *     3 x-signal-chat + 15 x-signal-message = 18 docs
+ *     5 x-signal-chat + 21 x-signal-message = 26 docs
  */
 public class SignalParserTest extends AbstractPkgTest {
 
     private static final String FIXTURE = "test-files/test_signal.db";
 
-    private static final int EXPECTED_CHAT_DOCS    = 3;
-    private static final int EXPECTED_MESSAGE_DOCS = 15;  // system (JOINED_TYPE) excluded; 3+7+5
-    private static final int EXPECTED_TOTAL_DOCS   = 18;
+    private static final int EXPECTED_CHAT_DOCS    = 5;
+    private static final int EXPECTED_MESSAGE_DOCS = 21;  // system excluded, stories skipped
+    private static final int EXPECTED_TOTAL_DOCS   = 26;
 
     private static final String EXPECTED_GROUP_TITLE      = "Signal Group - Operacao Digital";
     private static final String EXPECTED_INDIVIDUAL_TITLE = "Signal Chat - Alice Walker (+5511999990001)";
@@ -107,8 +113,8 @@ public class SignalParserTest extends AbstractPkgTest {
         long msgCount = tracker.contentTypes.stream()
                 .filter(t -> t.equals(SignalParser.SIGNAL_MESSAGE.toString()))
                 .count();
-        // 13 message rows + 7 call rows; 1 system filtered, 4 message rows replaced
-        // by their call rows → 15 indexed (3+7+5)
+        // 21 message rows + 7 call rows; 1 system filtered, 2 stories skipped,
+        // 4 message rows replaced by their call rows → 21 indexed
         assertEquals("System messages must be excluded from indexed message count",
                 EXPECTED_MESSAGE_DOCS, (int) msgCount);
     }
@@ -209,8 +215,9 @@ public class SignalParserTest extends AbstractPkgTest {
         // With no ringer recorded, the caller is unknown — attributing the call to the
         // group recipient would invent a person node in link analysis
         EmbeddedSignalParser tracker = parse(true);
+        // Recipient 3 is the group placeholder, which has no name, phone or account id
         assertFalse("The group recipient must not be reported as a caller",
-                tracker.messageFroms.stream().anyMatch(f -> f.startsWith("Unknown")));
+                tracker.messageFroms.contains("Unknown (rid:3)"));
     }
 
     public void testIncomingGroupCallSenderIsTheRinger() throws Exception {
@@ -373,6 +380,61 @@ public class SignalParserTest extends AbstractPkgTest {
         return count;
     }
 
+    // ── Contacts without a phone number ──────────────────────────────────────
+
+    public void testContactWithOnlyAnAciIsIdentifiedByIt() throws Exception {
+        // Since phone number privacy a contact may have no phone and no name. The account
+        // id is then the only stable identifier: without it two such people would share a
+        // single node in link analysis, and could not be matched across devices.
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("A contact known only by its account id must be identified by it",
+                tracker.messageFroms.contains("Unknown (aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb)"));
+    }
+
+    public void testContactWithOnlyAUsernameIsIdentifiedByIt() throws Exception {
+        EmbeddedSignalParser tracker = parse(true);
+        // The username itself identifies the account, including on another device
+        assertTrue("A contact known only by its username must be identified by it",
+                tracker.messageFroms.contains("carol.42"));
+    }
+
+    // ── Edited, deleted and story rows ───────────────────────────────────────
+
+    public void testEarlierRevisionOfEditedMessageIsKeptAndFlagged() throws Exception {
+        // Signal keeps every revision of an edited message and shows only the last one.
+        // The edit history is evidence, so earlier versions are kept, but flagged, or
+        // they would read as separate messages the person never sent twice.
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("The final version must be indexed as an ordinary message",
+                tracker.messageBodies.contains("Meet at 10am"));
+        assertTrue("The earlier version must be kept and flagged",
+                tracker.messageBodies.contains("[Edited, earlier version] Meet at 9am"));
+    }
+
+    public void testScheduledMessageIsLabeled() throws Exception {
+        // A message composed with "send later" and never sent carries a future date and
+        // an outgoing type: without the label it would read as a message actually sent
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("A scheduled message must say it was never sent",
+                tracker.messageBodies.contains("[Scheduled, never sent] see you tomorrow"));
+    }
+
+    public void testMessageDeletedBySenderIsLabeled() throws Exception {
+        // remote_deleted rows have no body: without the label they would be
+        // indistinguishable from a message whose content was simply not decoded
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("A message deleted by the sender must say so",
+                tracker.messageBodies.contains("[Message deleted by sender]"));
+    }
+
+    public void testStoriesAreNotConversationMessages() throws Exception {
+        EmbeddedSignalParser tracker = parse(true);
+        assertFalse("A story must not be indexed as a chat message",
+                tracker.messageBodies.contains("my story"));
+        assertFalse("A story reply must not be indexed as a chat message",
+                tracker.messageBodies.contains("reply to story"));
+    }
+
     // ── Chat splitting ───────────────────────────────────────────────────────
 
     public void testLongChatIsSplitIntoFragments() throws Exception {
@@ -439,6 +501,33 @@ public class SignalParserTest extends AbstractPkgTest {
 
         assertTrue("No documents should be extracted from an unreadable database",
                 signalTracker.contentTypes.isEmpty());
+    }
+
+    public void testUnsupportedDatabaseFallsBackToSqlite() throws Exception {
+        // signal.db is matched by file name alone, so an older Signal database or an
+        // unrelated file lands here. It must still reach the generic SQLite parser,
+        // which is what the examiner would have got before this parser existed.
+        java.io.File db = java.io.File.createTempFile("not_signal", ".db");
+        db.deleteOnExit();
+        try (java.sql.Connection c = java.sql.DriverManager.getConnection("jdbc:sqlite:" + db.getAbsolutePath());
+             java.sql.Statement st = c.createStatement()) {
+            st.executeUpdate("CREATE TABLE notes (_id INTEGER PRIMARY KEY, text TEXT)");
+            st.executeUpdate("INSERT INTO notes VALUES (1, 'a plain sqlite file')");
+        }
+
+        SignalParser parser = new SignalParser();
+        ContentHandler handler = new BodyContentHandler(-1);
+        Metadata metadata = new Metadata();
+        metadata.set(StandardParser.INDEXER_CONTENT_TYPE, SignalParser.SIGNAL_DB.toString());
+
+        try (InputStream is = new java.io.FileInputStream(db)) {
+            parser.parse(is, handler, metadata, signalContext);
+        }
+
+        assertTrue("No Signal items may be produced from a non-Signal database",
+                signalTracker.contentTypes.stream().noneMatch(t -> t.startsWith("application/x-signal")));
+        assertTrue("The generic SQLite parser must have produced the table item",
+                signalTracker.contentTypes.contains("application/x-database-table"));
     }
 
     // ── extractMessages flag ──────────────────────────────────────────────────

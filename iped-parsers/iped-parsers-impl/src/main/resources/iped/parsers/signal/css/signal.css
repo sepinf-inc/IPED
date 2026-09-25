@@ -183,6 +183,11 @@ body {
     opacity: 0.75;
 }
 
+.revision-label {
+    opacity: 0.75;
+    font-style: italic;
+}
+
 /* --- System messages --- */
 
 .systemmessage {

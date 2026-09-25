@@ -22,19 +22,31 @@ public class SignalExtractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(SignalExtractor.class);
 
     // Signal Android column names (RecipientTable.kt / MessageTable.kt).
-    // aci and to_recipient_id are intentionally omitted: aci was added in v5.15
-    // (late 2021) and breaks the query on older backups; to_recipient_id is unused.
-    private static final String SELECT_RECIPIENTS =
+    // to_recipient_id is unused; aci and username are read only when present, since
+    // older schemas do not have them.
+    private static final String SELECT_RECIPIENTS_COLUMNS =
             "SELECT _id, e164, profile_given_name, profile_family_name, " +
-            "profile_joined_name, system_joined_name, group_id FROM recipient";
+            "profile_joined_name, system_joined_name, group_id";
+
+    private static final String COL_ACI = "aci";
+    private static final String COL_USERNAME = "username";
 
     private static final String SELECT_THREADS =
             "SELECT _id, recipient_id, date FROM thread ORDER BY date DESC";
 
-    private static final String SELECT_MESSAGES =
-            "SELECT _id, thread_id, from_recipient_id, " +
-            "date_sent, date_received, body, type FROM message WHERE thread_id = ? " +
-            "ORDER BY COALESCE(NULLIF(date_sent, 0), date_received) ASC";
+    private static final String SELECT_MESSAGES_COLUMNS =
+            "SELECT _id, thread_id, from_recipient_id, date_sent, date_received, body, type";
+
+    private static final String SELECT_MESSAGES_TAIL =
+            " FROM message WHERE thread_id = ? ORDER BY COALESCE(NULLIF(date_sent, 0), date_received) ASC";
+
+    // Columns Signal added along the way. They all exist from 6.19 on, but are read only
+    // when present so that a schema variant does not fail the whole query.
+    private static final String COL_LATEST_REVISION = "latest_revision_id";
+    private static final String COL_REMOTE_DELETED = "remote_deleted";
+    private static final String COL_STORY_TYPE = "story_type";
+    private static final String COL_PARENT_STORY = "parent_story_id";
+    private static final String COL_SCHEDULED_DATE = "scheduled_date";
 
     private static final String SELECT_GROUP_TITLE =
             "SELECT title FROM groups WHERE recipient_id = ?";
@@ -68,22 +80,18 @@ public class SignalExtractor {
             "SELECT COUNT(*) FROM sqlite_master WHERE type='table' " +
             "AND name IN ('recipient','thread','message')";
 
-    // Identifies the device owner: the recipient who appears most frequently as
-    // the sender in outgoing messages. The base types below are Signal's
-    // OUTGOING_MESSAGE_TYPES (MessageTypes.java).
-    // Returns the full recipient row in one query using a correlated subquery.
-    private static final String SELECT_SELF =
-            "SELECT r._id, r.e164, r.profile_given_name, r.profile_family_name, " +
-            "r.profile_joined_name, r.system_joined_name, r.group_id " +
-            "FROM recipient r " +
-            "WHERE r._id = (" +
-            "  SELECT from_recipient_id FROM message " +
-            "  WHERE (type & 31) IN (2,11,21,22,23,24,25,26,28) AND from_recipient_id > 0 " +
-            "  GROUP BY from_recipient_id ORDER BY COUNT(*) DESC LIMIT 1" +
-            ")";
+    // Identifies the device owner: the recipient who appears most frequently as the
+    // sender in outgoing messages. The base types are Signal's OUTGOING_MESSAGE_TYPES
+    // (MessageTypes.java).
+    private static final String SELECT_SELF_ID =
+            "SELECT from_recipient_id FROM message " +
+            "WHERE (type & 31) IN (2,11,21,22,23,24,25,26,28) AND from_recipient_id > 0 " +
+            "GROUP BY from_recipient_id ORDER BY COUNT(*) DESC LIMIT 1";
 
     private final Connection connection;
     private final String itemPath;
+    private List<String> optionalMessageColumns;
+    private Map<Long, SignalContact> recipients;
 
     public SignalExtractor(Connection connection, String itemPath) {
         this.connection = connection;
@@ -97,21 +105,29 @@ public class SignalExtractor {
      */
     public SignalContact findSelfContact() {
         try (Statement st = connection.createStatement();
-             ResultSet rs = st.executeQuery(SELECT_SELF)) {
+             ResultSet rs = st.executeQuery(SELECT_SELF_ID)) {
             if (rs.next()) {
-                return new SignalContact(
-                        rs.getLong("_id"),
-                        rs.getString("e164"),
-                        rs.getString("profile_given_name"),
-                        rs.getString("profile_family_name"),
-                        rs.getString("profile_joined_name"),
-                        rs.getString("system_joined_name"),
-                        rs.getString("group_id"));
+                // Taken from the same map as every other contact, so the owner is not
+                // identified one way here and another way as the sender of their messages
+                return recipients().get(rs.getLong("from_recipient_id"));
             }
         } catch (SQLException e) {
             LOGGER.warn("Could not identify device owner from {}: {}", itemPath, e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * True when the file can be read as SQLite at all. An encrypted database (Signal
+     * encrypts it by default) fails here, and there is nothing any parser can do with it.
+     */
+    public boolean isReadableDatabase() {
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM sqlite_master")) {
+            return rs.next();
+        } catch (SQLException e) {
+            return false;
+        }
     }
 
     public boolean isValidSignalDatabase() {
@@ -222,14 +238,30 @@ public class SignalExtractor {
     }
 
     public List<SignalChat> extractChats() {
-        Map<Long, SignalContact> recipients = loadRecipients();
-        return loadThreads(recipients);
+        return loadThreads(recipients());
+    }
+
+    /** The recipient table, loaded once per database. */
+    private Map<Long, SignalContact> recipients() {
+        if (recipients == null)
+            recipients = loadRecipients();
+        return recipients;
     }
 
     private Map<Long, SignalContact> loadRecipients() {
         Map<Long, SignalContact> map = new HashMap<>();
+        List<String> optional = new ArrayList<>();
+        for (String column : new String[] { COL_ACI, COL_USERNAME }) {
+            if (hasColumn("recipient", column))
+                optional.add(column);
+        }
+        StringBuilder sql = new StringBuilder(SELECT_RECIPIENTS_COLUMNS);
+        for (String column : optional)
+            sql.append(", ").append(column);
+        sql.append(" FROM recipient");
+
         try (Statement st = connection.createStatement();
-             ResultSet rs = st.executeQuery(SELECT_RECIPIENTS)) {
+             ResultSet rs = st.executeQuery(sql.toString())) {
             while (rs.next()) {
                 long id = rs.getLong("_id");
                 SignalContact c = new SignalContact(
@@ -240,6 +272,10 @@ public class SignalExtractor {
                         rs.getString("profile_joined_name"),
                         rs.getString("system_joined_name"),
                         rs.getString("group_id"));
+                if (optional.contains(COL_ACI))
+                    c.setAci(rs.getString(COL_ACI));
+                if (optional.contains(COL_USERNAME))
+                    c.setUsername(rs.getString(COL_USERNAME));
                 map.put(id, c);
             }
         } catch (SQLException e) {
@@ -257,8 +293,11 @@ public class SignalExtractor {
                 long threadId = rs.getLong("_id");
                 long recipientId = rs.getLong("recipient_id");
                 SignalContact contact = recipients.get(recipientId);
-                if (contact == null)
+                if (contact == null) {
+                    LOGGER.warn("Signal thread {} in {} was skipped: its recipient {} is not in the database",
+                            threadId, itemPath, recipientId);
                     continue;
+                }
 
                 SignalChat chat = new SignalChat();
                 chat.setId(threadId);
@@ -347,13 +386,9 @@ public class SignalExtractor {
                     int event = rs.getInt("event");
 
                     long messageId = rs.getLong("message_id");
-                    if (!rs.wasNull())
-                        replacedMessageIds.add(messageId);
+                    boolean hasMessageRow = !rs.wasNull();
 
                     SignalMessage m = new SignalMessage();
-                    m.setId(rs.getLong("_id"));
-                    m.setThreadId(threadId);
-                    m.setFromRecipientId(peerRecipientId);
                     m.setMessageType(callMessageType(type, direction, event));
                     m.setCallDetail(callDescription(type, direction, event));
                     m.setFromMe(direction == CALL_DIRECTION_OUTGOING);
@@ -366,13 +401,10 @@ public class SignalExtractor {
                         // On a group thread the peer is the group, so the caller comes from
                         // the ringer column, which Signal only fills for ring events; with
                         // no ringer the caller was simply not recorded and stays unset
-                        long senderId = groupCall ? ringer : peerRecipientId;
-                        if (!groupCall || hasRinger) {
-                            m.setSender(recipients.get(senderId));
-                            m.setFromRecipientId(senderId);
-                        } else {
-                            m.setFromRecipientId(0);
-                        }
+                        // With no ringer on a group call the caller was not recorded, so the
+                        // sender is left unset rather than pointing at the group itself
+                        if (!groupCall || hasRinger)
+                            m.setSender(recipients.get(groupCall ? ringer : peerRecipientId));
                     }
 
                     long timestamp = rs.getLong("timestamp");
@@ -381,6 +413,10 @@ public class SignalExtractor {
                         m.setDateReceived(new Date(timestamp));
                     }
                     calls.add(m);
+                    // Only now, with the call row built: otherwise a failure halfway
+                    // through would drop the message row too and lose the call entirely
+                    if (hasMessageRow)
+                        replacedMessageIds.add(messageId);
                 }
             }
         } catch (SQLException e) {
@@ -389,10 +425,29 @@ public class SignalExtractor {
         return calls;
     }
 
+    /** The optional columns this database actually has, resolved once. */
+    private List<String> optionalMessageColumns() {
+        if (optionalMessageColumns == null) {
+            optionalMessageColumns = new ArrayList<>();
+            for (String column : new String[] { COL_LATEST_REVISION, COL_REMOTE_DELETED,
+                    COL_STORY_TYPE, COL_PARENT_STORY, COL_SCHEDULED_DATE }) {
+                if (hasColumn("message", column))
+                    optionalMessageColumns.add(column);
+            }
+        }
+        return optionalMessageColumns;
+    }
+
     private List<SignalMessage> loadMessages(long threadId, Map<Long, SignalContact> recipients,
             Set<Long> replacedMessageIds) {
         List<SignalMessage> messages = new ArrayList<>();
-        try (PreparedStatement st = connection.prepareStatement(SELECT_MESSAGES)) {
+        List<String> optional = optionalMessageColumns();
+        StringBuilder sql = new StringBuilder(SELECT_MESSAGES_COLUMNS);
+        for (String column : optional)
+            sql.append(", ").append(column);
+        sql.append(SELECT_MESSAGES_TAIL);
+
+        try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
             st.setLong(1, threadId);
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
@@ -401,12 +456,18 @@ public class SignalExtractor {
                     if (replacedMessageIds.contains(messageId))
                         continue;
 
+                    // Stories are not conversation messages. For replies, ParentStoryId
+                    // serializes a group reply as a positive id and a direct reply as a
+                    // negative one, and Signal's own conversation query keeps
+                    // parent_story_id <= 0: a direct reply to a story is a message in the
+                    // conversation, a group reply belongs to the story view
+                    if (optional.contains(COL_STORY_TYPE) && rs.getInt(COL_STORY_TYPE) != 0)
+                        continue;
+                    if (optional.contains(COL_PARENT_STORY) && rs.getLong(COL_PARENT_STORY) > 0)
+                        continue;
+
                     SignalMessage m = new SignalMessage();
-                    m.setId(messageId);
-                    m.setThreadId(threadId);
-                    long fromRecipientId = rs.getLong("from_recipient_id");
-                    m.setFromRecipientId(fromRecipientId);
-                    m.setSender(recipients.get(fromRecipientId));
+                    m.setSender(recipients.get(rs.getLong("from_recipient_id")));
 
                     long dateSentMs = rs.getLong("date_sent");
                     if (dateSentMs > 0)
@@ -417,6 +478,24 @@ public class SignalExtractor {
                         m.setDateReceived(new Date(dateReceivedMs));
 
                     m.setBody(rs.getString("body"));
+
+                    // Signal hides superseded revisions and deleted messages from the
+                    // conversation; here they are kept and flagged, since the edit history
+                    // and the deletion are themselves evidence
+                    if (optional.contains(COL_LATEST_REVISION)) {
+                        rs.getLong(COL_LATEST_REVISION);
+                        m.setEarlierRevision(!rs.wasNull());
+                    }
+                    if (optional.contains(COL_REMOTE_DELETED))
+                        m.setRemoteDeleted(rs.getInt(COL_REMOTE_DELETED) != 0);
+                    // Composed with "send later" and never sent: Signal keeps it out of the
+                    // conversation, and its date is a future one
+                    if (optional.contains(COL_SCHEDULED_DATE)) {
+                        // -1 means "not scheduled", and NULL (read as 0) must not be taken
+                        // for a schedule either: only a real date counts
+                        long scheduledDate = rs.getLong(COL_SCHEDULED_DATE);
+                        m.setScheduled(!rs.wasNull() && scheduledDate > 0);
+                    }
 
                     SignalMessage.MessageType msgType = classifyMessageType(rs.getLong("type"));
                     m.setMessageType(msgType);

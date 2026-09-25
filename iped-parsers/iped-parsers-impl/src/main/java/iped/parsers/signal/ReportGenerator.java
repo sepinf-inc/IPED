@@ -39,8 +39,9 @@ public class ReportGenerator {
     });
 
     private static final ThreadLocal<SimpleDateFormat> TIME_FMT = ThreadLocal.withInitial(() -> {
-        // Full timestamp with the UTC offset, so the report does not depend on the
-        // timezone of the machine that processed the case
+        // Times are shown in the timezone of the machine that processed the case, as the
+        // WhatsApp and Threema reports do; the UTC offset is printed so that the instant
+        // is still unambiguous for whoever reads the report
         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX");
         f.setTimeZone(TimeZone.getDefault());
         return f;
@@ -164,6 +165,9 @@ public class ReportGenerator {
 
     private String buildBodyHtml(SignalMessage m) {
         SignalMessage.MessageType type = m.getMessageType();
+        if (m.isRemoteDeleted()) {
+            return "<div class=\"body attachment-label\">[Message deleted by sender]</div>";
+        }
         if (m.getCallDetail() != null) {
             return "<div class=\"body call-label\">&#128222; " + escapeHtml(m.getCallDetail()) + "</div>";
         }
@@ -179,10 +183,15 @@ public class ReportGenerator {
         if (type == SignalMessage.MessageType.CALL_GROUP) {
             return "<div class=\"body call-label\">&#128222; Group call</div>";
         }
+        String prefix = "";
+        if (m.isEarlierRevision())
+            prefix = "<span class=\"revision-label\">[Edited, earlier version]</span> ";
+        else if (m.isScheduled())
+            prefix = "<span class=\"revision-label\">[Scheduled, never sent]</span> ";
         if (m.getBody() == null) {
-            return "<div class=\"body attachment-label\">[Empty message]</div>";
+            return "<div class=\"body attachment-label\">" + prefix + "[Empty message]</div>";
         }
-        return "<div class=\"body\">" + escapeHtml(m.getBody()) + "</div>";
+        return "<div class=\"body\">" + prefix + escapeHtml(m.getBody()) + "</div>";
     }
 
     private String renderSystemMessage(SignalMessage m) {
@@ -223,20 +232,14 @@ public class ReportGenerator {
     }
 
     private static String readResource(String path) {
-        InputStream is = ReportGenerator.class.getResourceAsStream(path);
-        if (is == null) {
-            LOGGER.warn("Signal report resource not found on classpath: {}", path);
-            return "";
-        }
-        try {
-            byte[] bytes = IOUtil.loadInputStream(is);
-            if (bytes == null) {
-                LOGGER.warn("Failed to read Signal report resource: {}", path);
+        try (InputStream is = ReportGenerator.class.getResourceAsStream(path)) {
+            if (is == null) {
+                LOGGER.warn("Signal report resource not found on classpath: {}", path);
                 return "";
             }
-            return new String(bytes, StandardCharsets.UTF_8);
+            return new String(IOUtil.loadInputStream(is), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            LOGGER.warn("Error loading Signal report resource {}: {}", path, e.getMessage());
+            LOGGER.warn("Failed to read Signal report resource {}: {}", path, e.getMessage());
             return "";
         }
     }

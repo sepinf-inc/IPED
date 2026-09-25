@@ -26,6 +26,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.sqlite.SQLite3DBParser;
+import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.properties.BasicProps;
@@ -45,8 +46,10 @@ public class SignalParser extends SQLite3DBParser {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SignalParser.class);
 
-    // Service name used in USER_ACCOUNT_TYPE, as WhatsAppParser.WHATSAPP does:
-    // it becomes the service of the account nodes in link analysis.
+    // Service name used in USER_ACCOUNT_TYPE, as TelegramParser and ThreemaParser do:
+    // it becomes the service of the account nodes in link analysis. Note this keeps
+    // Signal accounts on their own nodes instead of merging them into phone nodes,
+    // which is what WhatsAppParser opts into (see GraphTask.getAccountNodeValues).
     public static final String SIGNAL = "Signal";
 
     public static final MediaType SIGNAL_DB      = MediaType.application("x-signal-db");
@@ -57,6 +60,8 @@ public class SignalParser extends SQLite3DBParser {
 
     // ReportGenerator uses ThreadLocal formatters; singleton is safe
     private static final ReportGenerator REPORT_GEN = new ReportGenerator();
+
+    private final SQLite3Parser sqliteParser = new SQLite3Parser();
 
     private boolean extractMessages = true;
     private int minChatSplitSize = 6000000;
@@ -103,20 +108,44 @@ public class SignalParser extends SQLite3DBParser {
                 return;
             }
 
+            boolean unsupported;
             try {
                 SignalExtractor signalExtractor = new SignalExtractor(connection, itemPath);
-                if (!signalExtractor.isValidSignalDatabase()) {
-                    LOGGER.debug("Skipping: DB at {} does not have required Signal tables", itemPath);
-                    return;
+                unsupported = !signalExtractor.isValidSignalDatabase();
+                if (unsupported) {
+                    // Signal encrypts its database by default and the media type comes
+                    // from the file name alone, so an unreadable file is expected here
+                    if (!signalExtractor.isReadableDatabase()) {
+                        LOGGER.debug("DB at {} could not be read as SQLite, skipping it", itemPath);
+                        unsupported = false;
+                    }
+                } else {
+                    List<SignalChat> chats = signalExtractor.extractChats();
+                    SignalContact selfContact = signalExtractor.findSelfContact();
+                    markOwnMessagesAsOutgoing(chats, selfContact);
+                    if (selfContact == null)
+                        LOGGER.warn("Could not identify the device owner in {}: outgoing messages will have no sender",
+                                itemPath);
+                    createReports(chats, selfContact, handler, extractor);
                 }
-                List<SignalChat> chats = signalExtractor.extractChats();
-                SignalContact selfContact = signalExtractor.findSelfContact();
-                if (selfContact == null)
-                    LOGGER.warn("Could not identify the device owner in {}: outgoing messages will have no sender",
-                            itemPath);
-                createReports(chats, selfContact, handler, extractor);
             } finally {
+                // Closed before any fallback: the generic parser opens the same temporary
+                // file and would rewrite and delete its -wal/-shm under this connection
                 try { connection.close(); } catch (SQLException e) { /* ignore */ }
+            }
+
+            if (unsupported) {
+                // An older Signal database or an unrelated file with that name: the generic
+                // SQLite parser still gives the examiner a table preview. A failure here is
+                // not a Signal parsing error, so it is logged instead of thrown.
+                LOGGER.debug("DB at {} is not a supported Signal database, parsing it as plain SQLite", itemPath);
+                try {
+                    sqliteParser.parse(tis, handler, metadata, context);
+                } catch (SAXException e) {
+                    throw e;
+                } catch (Exception e) {
+                    LOGGER.warn("Could not parse {} as a plain SQLite database: {}", itemPath, e.getMessage());
+                }
             }
 
         } catch (SAXException e) {
@@ -126,6 +155,24 @@ public class SignalParser extends SQLite3DBParser {
         } catch (Exception e) {
             LOGGER.warn("Error parsing Signal database", e);
             throw new TikaException("SignalParser error", e);
+        }
+    }
+
+    /**
+     * Base types carry no direction for some rows, group calls among them, so a message
+     * whose sender is the device owner is marked as outgoing here, where the owner is known.
+     */
+    private static void markOwnMessagesAsOutgoing(List<SignalChat> chats, SignalContact selfContact) {
+        if (selfContact == null)
+            return;
+        for (SignalChat chat : chats) {
+            for (SignalMessage m : chat.getMessages()) {
+                // Only where the base type carries no direction: the owner is found by a
+                // heuristic, and an incoming row already knows it is incoming
+                if (m.getMessageType() != SignalMessage.MessageType.INCOMING
+                        && m.getSender() != null && m.getSender().getId() == selfContact.getId())
+                    m.setFromMe(true);
+            }
         }
     }
 
@@ -302,8 +349,14 @@ public class SignalParser extends SQLite3DBParser {
 
     private static String resolveBody(SignalMessage m) {
         // Calls read from the call table describe their own type and outcome
+        if (m.isRemoteDeleted())
+            return "[Message deleted by sender]";
         if (m.getCallDetail() != null)
             return "[" + m.getCallDetail() + "]";
+        if (m.isEarlierRevision())
+            return "[Edited, earlier version] " + (m.getBody() != null ? m.getBody() : "[Empty message]");
+        if (m.isScheduled())
+            return "[Scheduled, never sent] " + (m.getBody() != null ? m.getBody() : "[Empty message]");
         switch (m.getMessageType()) {
             case CALL_OUTGOING: return "[Outgoing Call]";
             case CALL_INCOMING: return "[Incoming Call]";
