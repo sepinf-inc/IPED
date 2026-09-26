@@ -1,0 +1,178 @@
+###############################################################################
+#                    IPED RAG & AI ASSISTANT CONFIGURATION                    #
+#                                                                             #
+# Native Retrieval-Augmented Generation & Vector Search Engine for IPED       #
+# Default Opt-In: Set enableRAG = true to activate vector embedding indexing. #
+###############################################################################
+
+###############################################################################
+# 1. PROCESSING & INDEXING (INDEX TIME)
+# Controls text fragmenting (chunking), GPU batching, and embedding generation
+# performed during case processing.
+###############################################################################
+
+# Provider for text embeddings. Options: local, remote
+# - local  : Ollama server (use 'local' for Ollama EVEN IF running on a remote GPU server over IP/network).
+# - remote : OpenAI-compatible API endpoint (e.g. OpenAI text-embedding-3-small, Azure, Cohere).
+embeddingProvider = local
+
+# Model name for text embeddings:
+# - Ollama (local) : bge-m3 (1024 dims), nomic-embed-text (768 dims), mxbai-embed-large (1024 dims)
+# - OpenAI (remote): text-embedding-3-small (1536 dims), text-embedding-3-large (3072 dims)
+embeddingModel = bge-m3
+
+# (OPTIONAL OVERRIDE) Vector dimension size of the embedding model.
+# Automatically detected for local Ollama models and standard cloud models.
+# Only uncomment and set this if using a custom remote embedding endpoint/model with non-standard dimensions.
+# embeddingDimensions = 1024
+
+# HTTP Endpoint for generating embeddings:
+# - Ollama (local) : http://localhost:11434/api/embeddings or http://<remote-gpu-ip>:11434/api/embeddings
+#   * Concurrency Tip: For dedicated GPU setups, environment variables like OLLAMA_NUM_PARALLEL (e.g. 2-4) and OLLAMA_MAX_QUEUE (e.g. 512) can improve throughput depending on available VRAM/GPU hardware (requires further testing for optimal lab setup).
+# - OpenAI (remote): https://api.openai.com/v1/embeddings
+embeddingEndpoint = http://localhost:11434/api/embeddings
+
+# Size (in characters) of each text chunk/fragment created during indexing.
+# Recommendation: 3000-5000 chars. Default: 3500
+chunkSize = 3500
+
+# Overlap (in characters) between consecutive chunks to prevent boundary context loss.
+# Recommendation: 10%-15% of chunkSize. Default: 350
+chunkOverlap = 350
+
+# Maximum cumulative characters sent per HTTP sub-batch request.
+# Controls HTTP payload sizing based on character volume to maximize GPU throughput
+# and prevent VRAM memory overflow / server timeouts.
+# Rule of Thumb: Must be >= chunkSize (recommended: multiples of chunkSize, e.g. 42000).
+# Default: 42000 (~10500 tokens).
+maxBatchChars = 42000
+
+
+###############################################################################
+# 2. QUERY & AI ASSISTANT (QUERY TIME / CHAT)
+# Controls hybrid search fusion, LLM model integration, and context window.
+#
+# MATHEMATICAL RELATIONSHIP & FORMULAS:
+# 1. Character-to-Token Ratio: 1 token ~ 4 characters in Portuguese (3500 chars ~ 875 tokens).
+# 2. Retrieved Context Formula:
+#    Retrieved Context Tokens ~ maxRetrievedChunks * (chunkSize / 4)
+#
+# RECOMMENDED SETTINGS BY GPU VRAM / HARDWARE (For Local Ollama Models):
+# - 6 GB VRAM GPU (RTX 2060 / 3050):
+#   llmContextWindow = 4096 | chunkSize = 3000 | maxRetrievedChunks = 4 (4B models)
+# - 8 GB VRAM GPU (RTX 3060 / 4060) [DEFAULT BASELINE]:
+#   llmContextWindow = 9216 | chunkSize = 3500 | maxRetrievedChunks = 5 (4B models ~6GB VRAM)
+# - 16 GB VRAM GPU (RTX A4000 / 4060 Ti 16GB / 4080):
+#   llmContextWindow = 9216 | chunkSize = 3500 | maxRetrievedChunks = 5 (8B models ~16GB VRAM, 100% GPU)
+#   * Note: Setting 16384 on 8B models balloons VRAM allocation to 25GB, forcing 43% CPU offload!
+# - 24 GB VRAM GPU (RTX 3090 / 4090):
+#   llmContextWindow = 16384 | chunkSize = 4000 | maxRetrievedChunks = 10 (8B models ~24GB VRAM)
+#
+# NOTE FOR COMMERCIAL CLOUD MODELS (Google Gemini / Anthropic Claude / OpenAI):
+# - Commercial APIs have massive native context windows (128k to 2M tokens).
+# - Therefore, llmContextWindow is IGNORED for commercial providers (llmProvider != local).
+# - For Cloud Models, simply increase maxRetrievedChunks = 15-20 and chunkSize = 4000.
+###############################################################################
+
+# Maximum number of fragment chunks to retrieve and include in LLM context.
+# Recommended for 8GB VRAM GPU: 5 | Cloud (Gemini/Claude/OpenAI): 15-20. Default: 5
+maxRetrievedChunks = 5
+
+# Context window size (in tokens) STRICTLY FOR LOCAL OLLAMA MODELS (llmProvider = local).
+# Dynamically configures 'num_ctx' on Ollama to prevent truncation and VRAM OOM.
+# NOTE: Ignored for commercial APIs (Gemini, Claude, OpenAI) which natively accept huge contexts.
+# Range: 2048 to 16384. Default: 9216 (optimized for 8GB VRAM GPUs).
+llmContextWindow = 9216
+
+
+###############################################################################
+# 3. VECTOR STORE BACKEND & HYBRID SEARCH RANKING (BM25 + KNN)
+###############################################################################
+
+# Vector store backend for semantic (KNN) search:
+# - lucene     : (default) Vectors stored directly in local Lucene index. Cases are 100% portable.
+# - opensearch : Vectors stored in external OpenSearch cluster via REST API.
+#                NOTE: Requires 'enableIndexToElasticSearch = true' in IPEDConfig.txt for cluster indexing.
+#                FALLBACK: Automatically falls back to 'lucene' if OpenSearch cluster is unreachable.
+vectorStoreMode = lucene
+
+# Minimum raw vector similarity threshold applied BEFORE Reciprocal Rank Fusion (RRF).
+# Discards weak vector matches below 0.62. Range: 0.0 to 1.0. Default: 0.62
+chunkSimilarityThreshold = 0.62
+
+# Weight of vector (semantic) search in Reciprocal Rank Fusion (RRF). Range: 0.0 to 1.0. Default: 0.4
+# Note: Lexical (BM25) weight is automatically (1.0 - vectorSearchWeight) = 0.6.
+vectorSearchWeight = 0.4
+
+
+###############################################################################
+# 4. EVIDENCE FILTERING RULES (BLACKLIST & WHITELIST)
+# Controls which evidence items generate embeddings during IPED indexing.
+###############################################################################
+
+# Filtering mode for generating embeddings during indexing. Options: blacklist, whitelist
+# - blacklist : excludes categories and MIME types matching the blacklist patterns below
+# - whitelist : ONLY includes categories and MIME types matching the whitelist patterns below (Default)
+embeddingFilterMode = whitelist
+
+# -----------------------------------------------------------------------------
+# BLACKLIST RULES
+# - embeddingMimeTypeBlacklist is an ABSOLUTE VETO active in BOTH whitelist and blacklist modes.
+# - embeddingCategoryBlacklist is only active when embeddingFilterMode = blacklist.
+# -----------------------------------------------------------------------------
+
+# Blacklisted IPED Categories (Active ONLY when embeddingFilterMode = blacklist):
+# System noise categories, binaries, and non-textual metadata.
+embeddingCategoryBlacklist = ^(Multimedia|Texts in System Folders|Temporary Internet Texts|Images in System Folders|Other files|XML Files|Georeferenced Files|OLE files|Links|Apple Artifacts|Databases|Compressed Archives|Programs and Libraries|Unallocated|File Slacks|Image Disks|Main Registry Files|Other Registry Files|USN Journal|Cell Towers|SIM Data|Power Events|Mobile Cards|Activities Sensor|Device Connectivity|Device Events|Networks Usage|Recognized Devices|Journeys|Fuzzy Data)$
+
+# Blacklisted MIME Types (ABSOLUTE VETO - Active in BOTH Whitelist and Blacklist modes):
+# Raw unclassified binary data that must NEVER generate embeddings under any circumstance.
+embeddingMimeTypeBlacklist = ^(application/octet-stream)$
+
+# -----------------------------------------------------------------------------
+# WHITELIST RULES (Active ONLY when embeddingFilterMode = whitelist)
+# Restricts vector embeddings strictly to high-value textual evidence and parsed reports.
+# -----------------------------------------------------------------------------
+
+# Whitelisted IPED Categories (Active when embeddingFilterMode = whitelist):
+# Restricts vector embeddings strictly to high-value textual evidence, parsed reports, OCR images, and audio transcriptions.
+embeddingCategoryWhitelist = ^(Documents|Spreadsheets|Presentations|Emails|Appointments|Email Attachments|Chats|SMS Messages|MMS Messages|Notes|Calls|Contacts|User Accounts|Passwords|Autofill|User Dictionaries|Calendar|Searches|Locations|Notifications|Wireless Networks|IP Connections|Applications Usage|Device Information|Registry Full Reports|Registry Custom Reports|Event Transcript|User Activities|Web Bookmarks|Mozilla Firefox Saved Session|TorTCFragment|GDrive File Entries|Internal Revenue of Brazil|Open Financial Exchange|Credit Cards|Financial Accounts|Transfers of Funds|Social Media Activities|File Downloads|File Uploads|Recordings|Extraction Summary|Scanned Documents|Audios)$
+
+# Whitelisted MIME Types (Fast-path — Active ONLY when embeddingFilterMode = whitelist):
+# Unconditionally allows specific MIME types (e.g. CSV), bypassing category checks.
+# NOTE: This option has NO effect when embeddingFilterMode = blacklist.
+embeddingMimeTypeWhitelist = ^(text/csv|text/tab-separated-values)$
+
+
+###############################################################################
+# 5. LLM ASSISTANT INTEGRATION & QUERY SETTINGS
+###############################################################################
+
+# Enables natural language questions through LLM integration (AI Assistant Chat Tab in IPED-SearchApp)
+enableLLMQueries = true
+
+# Provider for LLM chat/queries. Options: local, remote, gemini, claude
+# - local  : Ollama server (use 'local' for Ollama EVEN IF running on a remote GPU server over IP/network!
+#            'local' dynamically manages num_ctx context window tuning for Ollama without OOM/truncation).
+# - remote : Official OpenAI API (gpt-4o, gpt-4o-mini) or OpenAI-compatible APIs requiring API Key (vLLM, LMStudio, Azure).
+# - gemini : Google Gemini API (use free API Key from Google AI Studio).
+# - claude : Anthropic Claude API.
+llmProvider = local
+
+# Model name for the LLM:
+# - Ollama (local) : qwen3:4b, gemma3:4b, llama3.1:8b, phi4
+# - OpenAI (remote): gpt-4o, gpt-4o-mini, o3-mini, gpt-4-turbo
+# - Gemini (remote): gemini-2.5-flash, gemini-1.5-pro
+# - Claude (remote): claude-sonnet-4-6
+llmModel = qwen3:8b
+
+# HTTP Endpoint for LLM requests:
+# - Ollama (local) : http://localhost:11434/v1 or http://<remote-gpu-ip>:11434/v1 (e.g. http://10.89.42.211:11434/v1)
+# - OpenAI (remote): https://api.openai.com/v1 (or custom enterprise endpoint, e.g. http://<host>:8000/v1)
+# - Gemini/Claude  : leave empty to use official API endpoint automatically
+llmEndpoint = http://localhost:11434/v1
+
+# API Key for remote cloud providers (remote, gemini, claude):
+# - Required when using OpenAI (gpt-4o / gpt-4o-mini), Gemini, Claude, or authenticated APIs.
+# - Leave blank for Ollama (llmProvider = local).
+llmApiKey =

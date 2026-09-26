@@ -48,7 +48,7 @@ public class MenuClass extends JPopupMenu {
     JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted, readHighlighted, unreadHighlighted, exportChecked, copyChecked, saveBookmarks, loadBookmarks,
             checkHighlightedAndSubItems, uncheckHighlightedAndSubItems, checkHighlightedAndParent, uncheckHighlightedAndParent, checkHighlightedAndReferences, uncheckHighlightedAndReferences, checkHighlightedAndReferencedBy, uncheckHighlightedAndReferencedBy,
             changeGalleryColCount, defaultLayout, changeLayout, previewScreenshot, manageBookmarks, clearSearchHistory, importKeywords, navigateToParent, exportTerms, manageFilters, manageColumns, exportCheckedToZip, exportCheckedTreeToZip,
-            exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
+            exportTree, exportTreeChecked, similarDocs, similarDocsAI, openViewfile, createReport, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
             similarFacesCurrent, similarFacesExternal, toggleTimelineView, uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout;
 
     MenuListener menuListener = new MenuListener(this);
@@ -289,6 +289,11 @@ public class MenuClass extends JPopupMenu {
         IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         similarDocs.setEnabled(indexConfig.isStoreTermVectors());
         this.add(similarDocs);
+
+        similarDocsAI = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocsAI")); //$NON-NLS-1$
+        similarDocsAI.addActionListener(menuListener);
+        similarDocsAI.setEnabled(SemanticSimilarityFilterActions.isFeatureEnabled());
+        this.add(similarDocsAI);
 
         submenu = new JMenu(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$
         submenu.setEnabled(SimilarImagesFilterActions.isFeatureEnabled());

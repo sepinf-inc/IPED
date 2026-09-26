@@ -28,6 +28,8 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
     private static final String VALIDATE_SSL = "validateSSL";
     private static final String TERM_VECTOR = "useTermVector";
     private static final String RETRIES = "retries";
+    private static final String USERNAME_KEY = "username";
+    private static final String PASSWORD_KEY = "password";
 
     private static final int DEFAULT_RETRIES = 1;
 
@@ -47,6 +49,8 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
     private boolean validateSSL = true;
     private boolean termVector = false;
     private int retries;
+    private String username;
+    private String password;
 
     public String getHost() {
         return host;
@@ -134,7 +138,10 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
         }
 
         retries = Integer.parseInt(properties.getProperty(RETRIES, Integer.toString(DEFAULT_RETRIES)).trim());
-
+        username = props.getProperty(USERNAME_KEY);
+        username = username == null ? null : username.trim();
+        password = props.getProperty(PASSWORD_KEY);
+        password = password == null ? null : password.trim();
     }
 
     public boolean getValidateSSL() {
@@ -147,6 +154,14 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
 
     public int getRetries() {
         return retries;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
 }

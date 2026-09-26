@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import iped.app.ui.ai.AIFiltersLoader;
 import iped.app.ui.columns.ColumnsManagerUI;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.rag.RAGService;
 import iped.engine.core.EvidenceStatus;
 import iped.engine.core.Manager;
 import iped.engine.data.IPEDMultiSource;
@@ -90,10 +91,35 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                     singleCase = new IPEDSource(App.get().casesPathFile, manager.getIndexWriter());
 
                 App.get().appCase = new IPEDMultiSource(singleCase);
-            } else
+            } else {
                 App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
+            }
 
             checkIfProcessingFinished(App.get().appCase);
+
+            // Initialize RAGService for App UI if RAGConfig is available
+            try {
+                iped.engine.config.RAGConfig ragConfig = ConfigurationManager.get().findObject(iped.engine.config.RAGConfig.class);
+                if (ragConfig != null) {
+                    java.io.File caseDir = App.get().isMultiCase ? App.get().casesPathFile : App.get().appCase.getAtomicSources().get(0).getCaseDir();
+                    RAGService.initialize(caseDir, ragConfig);
+                    
+                    // Inject the Lucene IndexSearcher so RAGService can perform local KNN/lexical searches.
+                    RAGService ragService = RAGService.getInstance();
+                    if (ragService != null && "lucene".equalsIgnoreCase(ragConfig.getVectorStoreMode()) && App.get().appCase != null) {
+                        try {
+                            org.apache.lucene.search.IndexSearcher luceneSearcher = App.get().appCase.getSearcher();
+                            ragService.setLuceneSearcher(luceneSearcher);
+                            ragService.setLuceneAnalyzer(App.get().appCase.getAnalyzer());
+                        } catch (Exception e) {
+                            LOGGER.warn("Could not inject Lucene IndexSearcher into RAGService in UICaseDataLoader.", e);
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                LOGGER.error("Error initializing RAGService in UICaseDataLoader", t);
+            }
+
 
             App.get().appCase.checkImagePaths();
             App.get().appCase.getMultiBookmarks().addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
@@ -135,8 +161,8 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
             }
 
             treeModel = new TreeViewModel();
-
         } catch (Throwable e) {
+            LOGGER.error("Error loading case in doInBackground", e);
             e.printStackTrace();
             showErrorDialog(e);
         }
@@ -204,10 +230,23 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
     @Override
     public void done() {
         try {
+            get();
+        } catch (Throwable t) {
+            System.err.println("DIAGNOSTIC: Exception thrown by doInBackground():");
+            t.printStackTrace();
+        }
+        try {
             CategoryTreeModel.install();
             AIFiltersLoader.load();
             App.get().filterManager.loadFilters();
             BookmarksController.get().updateUIandHistory();
+
+            try {
+                App.get().initRAGFeatures();
+            } catch (Throwable t) {
+                LOGGER.error("Error showing RAG UI features", t);
+            }
+
 
             App.get().tree.setModel(treeModel);
             App.get().tree.setLargeModel(true);

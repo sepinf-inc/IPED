@@ -57,6 +57,7 @@ import iped.engine.search.QueryBuilder;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.task.NamedEntityTask;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.index.IndexTask;
 import iped.engine.task.regex.RegexTask;
 import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.exception.ParseException;
@@ -208,7 +209,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
             Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
             for (String f : fields) {
-                if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL) || f.startsWith(ImageSimilarityTask.IMAGE_FEATURES) || f.startsWith(SimilarFacesSearch.FACE_FEATURES))
+                if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL) || f.startsWith(ImageSimilarityTask.IMAGE_FEATURES) || f.startsWith(SimilarFacesSearch.FACE_FEATURES) || f.equalsIgnoreCase(IndexTask.CONTENT_EMBEDDING) || f.equalsIgnoreCase(IndexTask.HAS_EMBEDDING_FRAG))
                     continue;
                 if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))
                     props.addItem(f);

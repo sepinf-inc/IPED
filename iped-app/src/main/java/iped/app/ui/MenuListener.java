@@ -422,6 +422,9 @@ public class MenuListener implements ActionListener {
                 App.get().appletListener.updateFileListing();
             }
 
+        } else if (e.getSource() == menu.similarDocsAI) {
+            SemanticSimilarityFilterActions.searchSimilarItems();
+
         } else if (e.getSource() == menu.openViewfile) {
             int selIdx = App.get().resultsTable.getSelectedRow();
             IItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
