@@ -282,8 +282,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
-    final static String FILTRO_TODOS = Messages.getString("App.NoFilter"); //$NON-NLS-1$
-    final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
+    final static String FILTER_NO_FILTER = "[" + Messages.getString("App.NoFilter") + "]";
+    final static String FILTER_CHECKED = "[" + Messages.getString("App.Checked") + "]";
     public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
 
     static int MAX_HITS = 10000;
@@ -542,7 +542,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterComboBox = new JComboBox<String>();
         filterComboBox.setMaximumSize(new Dimension(100, 50));
         filterComboBox.setMaximumRowCount(30);
-        filterComboBox.addItem(App.FILTRO_TODOS);
+        filterComboBox.addItem(App.FILTER_NO_FILTER);
         filterComboBox.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
         filterManager = new FilterManager(filterComboBox);
 
