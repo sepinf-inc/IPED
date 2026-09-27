@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.index.LeafReader;
@@ -51,21 +53,22 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
         LeafReader reader = ipedCase.getLeafReader();
         SortedDocValues fsModifiedValues = reader.getSortedDocValues(BasicProps.MODIFIED);
 
-        ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
-        ArrayList<Float> scores = new ArrayList<Float>();
+        List<IItemId> selectedItems = new ArrayList<IItemId>();
+        List<Float> scores = new ArrayList<Float>();
 
-        int i = 0;
+        Map<String, SortedSetDocValues> fieldValuesMap = new HashMap<String, SortedSetDocValues>();
 
-        HashMap<String, SortedSetDocValues> fieldValuesMap = new HashMap<String, SortedSetDocValues>();
-
+        int i = -1;
         OUT: for (IItemId item : src.getIterator()) {
+            i++;
             int docId = ipedCase.getLuceneId(item);
 
             if (fsModifiedValues.advanceExact(docId)) {
                 int fsord = fsModifiedValues.ordValue();
-
                 String fsdate = fsModifiedValues.lookupOrd(fsord).utf8ToString();
-
+                if (fsdate.isEmpty()) {
+                    continue;
+                }
                 for (Iterator<String> iterator = internalCreatedFieldName.iterator(); iterator.hasNext();) {
                     String field = (String) iterator.next();
                     SortedSetDocValues internalValues = fieldValuesMap.get(field);
@@ -104,8 +107,6 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
                     }
                 }
             }
-            i++;
-
         }
 
         return new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
