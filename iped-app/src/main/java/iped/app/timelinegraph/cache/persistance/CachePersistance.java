@@ -25,7 +25,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.HexFormat;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
@@ -95,7 +95,7 @@ public class CachePersistance {
                 md.update(string.getBytes());
             }
 
-            String uuid = DatatypeConverter.printHexBinary(md.digest());
+            String uuid = HexFormat.of().withUpperCase().formatHex(md.digest());
 
             baseDir = new File(startDir, uuid);
             if (!baseDir.exists() && !baseDir.mkdirs()) {

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 
@@ -16,8 +15,6 @@ public interface GraphService {
     void start(File path) throws IOException;
 
     void stop() throws IOException;
-
-    GraphDatabaseService getGraphDb();
 
     File getDbHome();
 
@@ -51,6 +48,13 @@ public interface GraphService {
     void findLinks(ExportLinksQuery query, LinkQueryListener listener);
 
     void advancedSearch(String string, FreeQueryListener listener);
+
+    /**
+     * Runs an arbitrary Cypher query expected to return a column named {@code path} and reports
+     * each resulting path. Used by the {@code SearchLinksQuery} SPI (replaces the former direct
+     * embedded {@code GraphDatabaseService} access).
+     */
+    void searchPaths(String cypher, Map<String, Object> params, PathQueryListener listener);
 
     void getRelationships(Collection<Long> ids, EdgeQueryListener listener);
 
