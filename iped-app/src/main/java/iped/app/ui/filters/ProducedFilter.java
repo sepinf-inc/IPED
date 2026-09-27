@@ -34,8 +34,9 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
 
     static HashSet<String> internalCreatedFieldName = new HashSet<String>();
     public static String FILTER_NAME = Messages.getString("ProducedFilter.Produced");
-    
-    public static int PRODUCTION_TIMERANGE = 60 * 1000;// 1 minute is the acceptable date difference between FS date and content date
+
+    public static int PRODUCTION_TIMERANGE = 60 * 1000;// 1 minute is the acceptable date difference between FS date and
+                                                       // content date
 
     static {
         internalCreatedFieldName.add("common:dcterms:created");
@@ -44,7 +45,8 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
     }
 
     @Override
-    public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
+    public IMultiSearchResult filterResult(IMultiSearchResult src)
+            throws ParseException, QueryNodeException, IOException {
         IPEDMultiSource ipedCase = (IPEDMultiSource) src.getIPEDSource();
         LeafReader reader = ipedCase.getLeafReader();
         SortedDocValues fsModifiedValues = reader.getSortedDocValues(BasicProps.MODIFIED);
@@ -56,8 +58,7 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
 
         HashMap<String, SortedSetDocValues> fieldValuesMap = new HashMap<String, SortedSetDocValues>();
 
-        principal:
-        for (IItemId item : src.getIterator()) {
+        OUT: for (IItemId item : src.getIterator()) {
             int docId = ipedCase.getLuceneId(item);
 
             if (fsModifiedValues.advanceExact(docId)) {
@@ -65,7 +66,7 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
 
                 String fsdate = fsModifiedValues.lookupOrd(fsord).utf8ToString();
 
-                for (Iterator iterator = internalCreatedFieldName.iterator(); iterator.hasNext();) {
+                for (Iterator<String> iterator = internalCreatedFieldName.iterator(); iterator.hasNext();) {
                     String field = (String) iterator.next();
                     SortedSetDocValues internalValues = fieldValuesMap.get(field);
                     if (internalValues == null) {
@@ -78,7 +79,7 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
                         try {
                             if (internalValues.advanceExact(docId)) {
                                 long intord = internalValues.nextOrd();
-                                while (intord != internalValues.NO_MORE_ORDS) {
+                                while (intord != SortedSetDocValues.NO_MORE_ORDS) {
                                     String intdate = internalValues.lookupOrd(intord).utf8ToString();
 
                                     try {
@@ -88,7 +89,7 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
                                         if (Math.abs(fsDate.getTime() - intDate.getTime()) < PRODUCTION_TIMERANGE) {
                                             selectedItems.add(item);
                                             scores.add(src.getScore(i));
-                                            continue principal;
+                                            continue OUT;
                                         }
                                     } catch (Exception e) {
                                         // ignore
@@ -107,8 +108,8 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
 
         }
 
-
-        return new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        return new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
+                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
     }
 
     public String toString() {
