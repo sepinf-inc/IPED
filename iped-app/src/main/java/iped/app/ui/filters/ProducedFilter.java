@@ -32,11 +32,11 @@ import iped.viewers.api.IResultSetFilter;
  */
 public class ProducedFilter implements IResultSetFilter, IMutableFilter {
 
-    static HashSet<String> internalCreatedFieldName = new HashSet<String>();
-    public static String FILTER_NAME = Messages.getString("ProducedFilter.Produced");
+    private static final HashSet<String> internalCreatedFieldName = new HashSet<String>();
+    public static final String FILTER_NAME = Messages.getString("ProducedFilter.Produced");
 
-    public static int PRODUCTION_TIMERANGE = 60 * 1000;// 1 minute is the acceptable date difference between FS date and
-                                                       // content date
+    // 1 minute is the acceptable date difference between FS date and content date
+    public static final int PRODUCTION_TIMERANGE = 60 * 1000;
 
     static {
         internalCreatedFieldName.add("common:dcterms:created");
