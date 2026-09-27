@@ -35,8 +35,8 @@ public class AppIDCalculator {
         currentPath = currentPath.replaceAll("(?i).*/Windows", "%WINDIR%");
         currentPath = currentPath.replaceAll("(?i).*/Users/[^/]+?/AppData/Roaming", "%APPDATA%");
         currentPath = currentPath.replaceAll("(?i).*/Users/[^/]+?/AppData/Local", "%LOCALAPPDATA%");
-        currentPath = currentPath.replaceAll("(?i).*/Users/[^/]+?", "%USERPROFILE%");
-        currentPath = currentPath.replaceAll("(?i).*/Users/Public", "%PUBLIC%");
+        currentPath = currentPath.replaceAll("(?i).*/Users/Public(?=/|$)", "%PUBLIC%");
+        currentPath = currentPath.replaceAll("(?i).*/Users/[^/]+", "%USERPROFILE%");
         currentPath = currentPath.replaceAll("(?i).*/Program Files \\(x86\\)/Common Files", "%COMMONPROGRAMFILES(X86)%");
         currentPath = currentPath.replaceAll("(?i).*/Program Files/Common Files", "%COMMONPROGRAMFILES%");
         currentPath = currentPath.replaceAll("(?i).*/Program Files \\(x86\\)", "%PROGRAMFILES(X86)%");
