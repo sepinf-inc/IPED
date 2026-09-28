@@ -1,9 +1,6 @@
+# Python AI summarization task. For dependency installation instructions, see
+# conf/AISummarizationConfig.txt.
 import time
-#need to install requests lib: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py requests
-#also numpy for some reason: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py "numpy<2.0" 
-# git add iped-app/resources/scripts/tasks/AISummarizationTask.py
-# git commit -m "#2641: "
-# git push origin add-aisummarizationtask --force-with-lease
 import json
 import re
 import threading
@@ -74,7 +71,8 @@ def _validate_optional_dependencies():
         package = exc.name or "unknown"
         raise RuntimeError(
             f"[AISummarizationTask]: Missing Python dependency '{package}'. "
-            "Install requests, urllib3 and beautifulsoup4 to enable this task."
+            "Install requests and beautifulsoup4 in the Python environment used by IPED. "
+            "See conf/AISummarizationConfig.txt for installation instructions."
         ) from exc
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

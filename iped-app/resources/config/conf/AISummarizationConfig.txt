@@ -2,6 +2,18 @@
 # Configuration file for AI-based summarization of evidence items.
 ##############################################################################
 
+# Before enabling enableAISummarization in IPEDConfig.txt, install requests and
+# beautifulsoup4 in the Python environment used by IPED. Installing requests also
+# installs urllib3 and its other dependencies.
+# Windows: run these commands from the IPED installation directory:
+#   .\python\python.exe .\python\get-pip.py
+#   .\python\python.exe -m pip install requests beautifulsoup4
+# Linux: run this command in the Python environment used by IPED:
+#   python3 -m pip install requests beautifulsoup4
+# For Python/JEP setup, including NumPy requirements, see:
+# https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
+# AISummarizationTask does not use NumPy directly.
+
 # IP:PORT of the service/central node used by the AISummarizationTask implementation.
 # remoteServiceAddress = 127.0.0.1:8000
 
