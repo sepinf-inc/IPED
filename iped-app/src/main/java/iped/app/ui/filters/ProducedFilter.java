@@ -34,7 +34,7 @@ import iped.viewers.api.IResultSetFilter;
  */
 public class ProducedFilter implements IResultSetFilter, IMutableFilter {
 
-    private static final HashSet<String> internalCreatedFieldName = new HashSet<String>();
+    private static final List<String> internalCreatedFieldName = new ArrayList<String>();
     public static final String FILTER_NAME = "[" + Messages.getString("ProducedFilter.Produced") + "]";
 
     // 1 minute is the acceptable date difference between FS date and content date
@@ -56,7 +56,12 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
         List<IItemId> selectedItems = new ArrayList<IItemId>();
         List<Float> scores = new ArrayList<Float>();
 
-        Map<String, SortedSetDocValues> fieldValuesMap = new HashMap<String, SortedSetDocValues>();
+        List<SortedSetDocValues> fieldValues = new ArrayList<SortedSetDocValues>();
+        for (int i = 0; i < internalCreatedFieldName.size(); i++) {
+            String field = internalCreatedFieldName.get(i);
+            SortedSetDocValues internalValues = reader.getSortedSetDocValues(field);
+            fieldValues.add(internalValues);
+        }
 
         int i = -1;
         OUT: for (IItemId item : src.getIterator()) {
@@ -64,45 +69,29 @@ public class ProducedFilter implements IResultSetFilter, IMutableFilter {
             int docId = ipedCase.getLuceneId(item);
 
             if (fsModifiedValues.advanceExact(docId)) {
-                int fsord = fsModifiedValues.ordValue();
-                String fsdate = fsModifiedValues.lookupOrd(fsord).utf8ToString();
-                if (fsdate.isEmpty()) {
+                int fsOrd = fsModifiedValues.ordValue();
+                String fsStrDate = fsModifiedValues.lookupOrd(fsOrd).utf8ToString();
+                if (fsStrDate.isEmpty()) {
                     continue;
                 }
-                for (Iterator<String> iterator = internalCreatedFieldName.iterator(); iterator.hasNext();) {
-                    String field = (String) iterator.next();
-                    SortedSetDocValues internalValues = fieldValuesMap.get(field);
-                    if (internalValues == null) {
-                        internalValues = reader.getSortedSetDocValues(field);
-                        if (internalValues != null) {
-                            fieldValuesMap.put(field, internalValues);
-                        }
-                    }
-                    if (internalValues != null) {
-                        try {
-                            if (internalValues.advanceExact(docId)) {
-                                long intord = internalValues.nextOrd();
-                                while (intord != SortedSetDocValues.NO_MORE_ORDS) {
-                                    String intdate = internalValues.lookupOrd(intord).utf8ToString();
-
-                                    try {
-                                        Date fsDate = DateUtil.stringToDate(fsdate);
-                                        Date intDate = DateUtil.stringToDate(intdate);
-
-                                        if (Math.abs(fsDate.getTime() - intDate.getTime()) < PRODUCTION_TIMERANGE) {
-                                            selectedItems.add(item);
-                                            scores.add(src.getScore(i));
-                                            continue OUT;
-                                        }
-                                    } catch (Exception e) {
-                                        // ignore
-                                    }
-
-                                    intord = internalValues.nextOrd();
+                for (SortedSetDocValues internalValues : fieldValues) {
+                    if (internalValues != null && internalValues.advanceExact(docId)) {
+                        long intOrd = internalValues.nextOrd();
+                        while (intOrd != SortedSetDocValues.NO_MORE_ORDS) {
+                            String intStrDate = internalValues.lookupOrd(intOrd).utf8ToString();
+                            try {
+                                Date fsDate = DateUtil.stringToDate(fsStrDate);
+                                Date intDate = DateUtil.stringToDate(intStrDate);
+                                if (Math.abs(fsDate.getTime() - intDate.getTime()) < PRODUCTION_TIMERANGE) {
+                                    selectedItems.add(item);
+                                    scores.add(src.getScore(i));
+                                    continue OUT;
                                 }
+                            } catch (Exception e) {
+                                // ignore
                             }
-                        } catch (Exception e) {
-                            continue;
+
+                            intOrd = internalValues.nextOrd();
                         }
                     }
                 }
