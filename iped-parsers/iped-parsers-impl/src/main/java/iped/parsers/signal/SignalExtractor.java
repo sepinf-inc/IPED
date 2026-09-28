@@ -31,8 +31,16 @@ public class SignalExtractor {
     private static final String COL_ACI = "aci";
     private static final String COL_USERNAME = "username";
 
-    private static final String SELECT_THREADS =
-            "SELECT _id, recipient_id, date FROM thread ORDER BY date DESC";
+    private static final String SELECT_THREADS_COLUMNS = "SELECT _id, recipient_id, date";
+    private static final String SELECT_THREADS_TAIL = " FROM thread ORDER BY date DESC";
+
+    // Signal only lists threads with active = 1; a conversation removed by the user keeps
+    // its row marked inactive, with the messages still in the database.
+    private static final String COL_ACTIVE = "active";
+
+    // Calls are read per conversation, but a call whose peer has no thread — a call link,
+    // for one, which Signal keeps in the calls tab only — would then never be read.
+    private static final String SELECT_CALL_PEERS = "SELECT DISTINCT peer FROM call";
 
     private static final String SELECT_MESSAGES_COLUMNS =
             "SELECT _id, thread_id, from_recipient_id, date_sent, date_received, body, type";
@@ -47,6 +55,10 @@ public class SignalExtractor {
     private static final String COL_STORY_TYPE = "story_type";
     private static final String COL_PARENT_STORY = "parent_story_id";
     private static final String COL_SCHEDULED_DATE = "scheduled_date";
+    // Since Signal 8.x deletions are recorded in deleted_by, which also names who deleted
+    // the message; remote_deleted is no longer written, only kept for older rows.
+    private static final String COL_DELETED_BY = "deleted_by";
+    private static final String COL_VIEW_ONCE = "view_once";
 
     private static final String SELECT_GROUP_TITLE =
             "SELECT title FROM groups WHERE recipient_id = ?";
@@ -65,6 +77,16 @@ public class SignalExtractor {
     // MessageTypes.BASE_TYPE_MASK in Signal-Android: the lower 5 bits of the type
     // column hold the base type, the remaining bits are flags.
     private static final long BASE_TYPE_MASK = 0x1F;
+
+    // Flags above the base type (MessageTypes.java). A group update or a timer change is
+    // stored as BASE_INBOX_TYPE with one of these set, so the base type alone would make
+    // them look like ordinary incoming messages.
+    private static final long GROUP_UPDATE_BIT = 0x10000;
+    private static final long GROUP_LEAVE_BIT = 0x20000;
+    private static final long GROUP_V2_BIT = 0x80000;
+    private static final long EXPIRATION_TIMER_UPDATE_BIT = 0x40000;
+    private static final long KEY_EXCHANGE_BIT = 0x8000;
+    private static final long END_SESSION_BIT = 0x400000;
 
     // CallTable.Type / Direction / Event codes in Signal-Android
     private static final int CALL_TYPE_AUDIO = 0, CALL_TYPE_VIDEO = 1, CALL_TYPE_GROUP = 3,
@@ -177,6 +199,37 @@ public class SignalExtractor {
                 : SignalMessage.MessageType.CALL_INCOMING;
     }
 
+    /** What kind of event a flagged row records, or null when it is a plain message. */
+    private static String systemDescription(long rawType) {
+        if ((rawType & GROUP_UPDATE_BIT) != 0) {
+            // MessageTypes.isGroupQuit: the leave bit only means a quit on a v1 group; on a
+            // v2 group leaving arrives as an ordinary group update
+            boolean quit = (rawType & GROUP_LEAVE_BIT) != 0 && (rawType & GROUP_V2_BIT) == 0;
+            return quit ? "Left the group" : "Group updated";
+        }
+        if ((rawType & EXPIRATION_TIMER_UPDATE_BIT) != 0)
+            return "Disappearing messages timer changed";
+        if ((rawType & END_SESSION_BIT) != 0)
+            return "Secure session ended";
+        if ((rawType & KEY_EXCHANGE_BIT) != 0)
+            return "Encryption key exchange";
+
+        // Base types that are events rather than messages (MessageTypes.java)
+        switch ((int) (rawType & BASE_TYPE_MASK)) {
+            case 4:  return "Joined Signal";
+            case 5:  return "Message not supported by this Signal version";
+            case 6:  return "Invalid message";
+            case 7:  return "Profile changed";
+            case 9:  return "Group migrated to a new version";
+            case 13: return "Message could not be decrypted";
+            case 14: return "Phone number changed";
+            case 16: return "Conversations merged";
+            case 17: return "SMS export";
+            case 18: return "Session switched over";
+            default: return null;
+        }
+    }
+
     /** Human readable description of a call event, e.g. "Incoming video call (declined)". */
     private static String callDescription(int type, int direction, int event) {
         StringBuilder sb = new StringBuilder(48);
@@ -287,11 +340,16 @@ public class SignalExtractor {
     private List<SignalChat> loadThreads(Map<Long, SignalContact> recipients) {
         List<SignalChat> chats = new ArrayList<>();
         boolean callsAvailable = hasTable("call");
+        boolean hasActive = hasColumn("thread", COL_ACTIVE);
+        Set<Long> peersWithThread = new HashSet<>();
+        String sql = SELECT_THREADS_COLUMNS + (hasActive ? ", " + COL_ACTIVE : "") + SELECT_THREADS_TAIL;
+
         try (Statement st = connection.createStatement();
-             ResultSet rs = st.executeQuery(SELECT_THREADS)) {
+             ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 long threadId = rs.getLong("_id");
                 long recipientId = rs.getLong("recipient_id");
+                peersWithThread.add(recipientId);
                 SignalContact contact = recipients.get(recipientId);
                 if (contact == null) {
                     LOGGER.warn("Signal thread {} in {} was skipped: its recipient {} is not in the database",
@@ -302,6 +360,10 @@ public class SignalExtractor {
                 SignalChat chat = new SignalChat();
                 chat.setId(threadId);
                 chat.setContact(contact);
+                if (hasActive) {
+                    int active = rs.getInt(COL_ACTIVE);
+                    chat.setListed(rs.wasNull() || active != 0);
+                }
 
                 if (contact.isGroup()) {
                     chat.setGroupTitle(loadGroupTitle(recipientId));
@@ -332,6 +394,52 @@ public class SignalExtractor {
             }
         } catch (SQLException e) {
             LOGGER.warn("Error loading Signal threads from {}: {}", itemPath, e.getMessage());
+        }
+
+        if (callsAvailable)
+            chats.addAll(loadThreadlessCalls(peersWithThread, recipients));
+
+        return chats;
+    }
+
+    /**
+     * Conversations holding only calls, for peers that have no thread of their own. Signal
+     * keeps call link calls in the calls tab without creating a conversation for them.
+     */
+    private List<SignalChat> loadThreadlessCalls(Set<Long> peersWithThread,
+            Map<Long, SignalContact> recipients) {
+        List<SignalChat> chats = new ArrayList<>();
+        List<Long> peers = new ArrayList<>();
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery(SELECT_CALL_PEERS)) {
+            while (rs.next()) {
+                long peer = rs.getLong("peer");
+                if (!peersWithThread.contains(peer))
+                    peers.add(peer);
+            }
+        } catch (SQLException e) {
+            LOGGER.warn("Error listing Signal call peers from {}: {}", itemPath, e.getMessage());
+            return chats;
+        }
+
+        for (long peer : peers) {
+            SignalContact contact = recipients.get(peer);
+            if (contact == null) {
+                LOGGER.warn("Signal calls with peer {} in {} were skipped: it is not in the recipient table",
+                        peer, itemPath);
+                continue;
+            }
+            List<SignalMessage> calls = loadCalls(0, peer, recipients, new HashSet<>());
+            if (calls.isEmpty())
+                continue;
+
+            SignalChat chat = new SignalChat();
+            chat.setId(-peer);
+            chat.setContact(contact);
+            if (contact.isGroup())
+                chat.setGroupTitle(loadGroupTitle(peer));
+            chat.setMessages(calls);
+            chats.add(chat);
         }
         return chats;
     }
@@ -430,7 +538,8 @@ public class SignalExtractor {
         if (optionalMessageColumns == null) {
             optionalMessageColumns = new ArrayList<>();
             for (String column : new String[] { COL_LATEST_REVISION, COL_REMOTE_DELETED,
-                    COL_STORY_TYPE, COL_PARENT_STORY, COL_SCHEDULED_DATE }) {
+                    COL_STORY_TYPE, COL_PARENT_STORY, COL_SCHEDULED_DATE, COL_DELETED_BY,
+                    COL_VIEW_ONCE }) {
                 if (hasColumn("message", column))
                     optionalMessageColumns.add(column);
             }
@@ -488,6 +597,17 @@ public class SignalExtractor {
                     }
                     if (optional.contains(COL_REMOTE_DELETED))
                         m.setRemoteDeleted(rs.getInt(COL_REMOTE_DELETED) != 0);
+                    if (optional.contains(COL_DELETED_BY)) {
+                        // 0 and -1 are Signal's UNKNOWN recipient ids, and a schema variant
+                        // may store 0 instead of NULL for "not deleted"
+                        long deletedBy = rs.getLong(COL_DELETED_BY);
+                        if (!rs.wasNull() && deletedBy > 0) {
+                            m.setRemoteDeleted(true);
+                            m.setDeletedBy(recipients.get(deletedBy));
+                        }
+                    }
+                    if (optional.contains(COL_VIEW_ONCE))
+                        m.setViewOnce(rs.getInt(COL_VIEW_ONCE) != 0);
                     // Composed with "send later" and never sent: Signal keeps it out of the
                     // conversation, and its date is a future one
                     if (optional.contains(COL_SCHEDULED_DATE)) {
@@ -497,8 +617,10 @@ public class SignalExtractor {
                         m.setScheduled(!rs.wasNull() && scheduledDate > 0);
                     }
 
-                    SignalMessage.MessageType msgType = classifyMessageType(rs.getLong("type"));
+                    long rawType = rs.getLong("type");
+                    SignalMessage.MessageType msgType = classifyMessageType(rawType);
                     m.setMessageType(msgType);
+                    m.setSystemDetail(systemDescription(rawType));
                     // outgoing calls are initiated by self; missed/incoming are from the other party
                     m.setFromMe(msgType == SignalMessage.MessageType.OUTGOING
                             || msgType == SignalMessage.MessageType.CALL_OUTGOING);
@@ -515,6 +637,10 @@ public class SignalExtractor {
     // Signal message type classification based on the lower 5 bits.
     // Values taken from MessageTypes.java (BASE_TYPE_MASK area) in Signal-Android.
     private static SignalMessage.MessageType classifyMessageType(long rawType) {
+        // Event rows come with an ordinary base type and a flag: they are not messages
+        if (systemDescription(rawType) != null)
+            return SignalMessage.MessageType.SYSTEM;
+
         switch ((int) (rawType & BASE_TYPE_MASK)) {
             case 20: // BASE_INBOX_TYPE
                 return SignalMessage.MessageType.INCOMING;

@@ -23,6 +23,11 @@ import iped.parsers.standard.StandardParser;
  *         from_recipient_id on all outgoing messages; member of the group)
  *     6 – no phone and no name, only an aci (phone number privacy)
  *     7 – no phone and no name, only a username
+ *     8 – a call link, which has calls but no conversation
+ *     9, 10 – two different people whose only identity is the same profile name
+ *
+ *   Recipients 1, 2, 4 and 5 also carry an aci, as real databases do, so the phone
+ *   number stays the identifier for contacts that have one.
  *
  *   Threads (DESC by date → group first, then phone-only, then alice, then the two
  *   contacts with no phone number):
@@ -54,15 +59,15 @@ import iped.parsers.standard.StandardParser;
  *             Alice (no msg row, ringer=1), generic group call event with no ringer
  *
  *   Expected output (extractMessages=true):
- *     5 x-signal-chat + 21 x-signal-message = 26 docs
+ *     8 x-signal-chat + 26 x-signal-message = 34 docs
  */
 public class SignalParserTest extends AbstractPkgTest {
 
     private static final String FIXTURE = "test-files/test_signal.db";
 
-    private static final int EXPECTED_CHAT_DOCS    = 5;
-    private static final int EXPECTED_MESSAGE_DOCS = 21;  // system excluded, stories skipped
-    private static final int EXPECTED_TOTAL_DOCS   = 26;
+    private static final int EXPECTED_CHAT_DOCS    = 8;  // 7 threads + the call-link calls
+    private static final int EXPECTED_MESSAGE_DOCS = 26;  // system excluded, stories skipped
+    private static final int EXPECTED_TOTAL_DOCS   = 34;
 
     private static final String EXPECTED_GROUP_TITLE      = "Signal Group - Operacao Digital";
     private static final String EXPECTED_INDIVIDUAL_TITLE = "Signal Chat - Alice Walker (+5511999990001)";
@@ -113,8 +118,8 @@ public class SignalParserTest extends AbstractPkgTest {
         long msgCount = tracker.contentTypes.stream()
                 .filter(t -> t.equals(SignalParser.SIGNAL_MESSAGE.toString()))
                 .count();
-        // 21 message rows + 7 call rows; 1 system filtered, 2 stories skipped,
-        // 4 message rows replaced by their call rows → 21 indexed
+        // 23 message rows + 7 call rows; 1 system filtered, 2 stories skipped,
+        // 4 message rows replaced by their call rows → 23 indexed
         assertEquals("System messages must be excluded from indexed message count",
                 EXPECTED_MESSAGE_DOCS, (int) msgCount);
     }
@@ -186,6 +191,14 @@ public class SignalParserTest extends AbstractPkgTest {
                 tracker.messageBodies.contains("[Outgoing group call (accepted)]"));
     }
 
+    public void testCallWhosePeerHasNoConversationIsExtracted() throws Exception {
+        // Signal keeps call link calls in the calls tab without creating a conversation,
+        // so reading the call table per conversation alone would never see them
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("A call whose peer has no thread must still be extracted",
+                tracker.messageBodies.contains("[Outgoing call link call (accepted)]"));
+    }
+
     public void testCallWithoutMessageRowIsExtracted() throws Exception {
         // A call whose message row is gone has message_id NULL and exists only in the
         // call table: reading messages alone would lose it
@@ -198,7 +211,7 @@ public class SignalParserTest extends AbstractPkgTest {
         // Call rows exist in both tables; they must be read from the call table only
         EmbeddedSignalParser tracker = parse(true);
         long callBodies = tracker.messageBodies.stream().filter(b -> b.contains(" call (")).count();
-        assertEquals("Each call must produce exactly one message", 6, callBodies);
+        assertEquals("Each call must produce exactly one message", 7, callBodies);
         assertTrue("A generic group call event carries no outcome in its label",
                 tracker.messageBodies.contains("[group call]"));
     }
@@ -382,6 +395,22 @@ public class SignalParserTest extends AbstractPkgTest {
 
     // ── Contacts without a phone number ──────────────────────────────────────
 
+    public void testSameProfileNameDoesNotCollapseIntoOneIdentity() throws Exception {
+        // Two people whose only identity is the same profile name would otherwise share a
+        // single account node in link analysis, merging their conversations
+        EmbeddedSignalParser tracker = parse(true);
+        long anas = tracker.messageFroms.stream().filter(f -> f.startsWith("Ana")).distinct().count();
+        assertEquals("Each contact named Ana must keep its own identity", 2, anas);
+    }
+
+    public void testGroupUpdateBodyBlobDoesNotReachTheReport() throws Exception {
+        // The fixture has a group update carrying the serialized protobuf Signal stores
+        // in the body; the report must show the event, not the blob
+        EmbeddedSignalParser tracker = parse(true);
+        assertFalse("The serialized group update must not be indexed as a message",
+                tracker.messageBodies.stream().anyMatch(b -> b.contains("CAESGQoUChIKEP")));
+    }
+
     public void testContactWithOnlyAnAciIsIdentifiedByIt() throws Exception {
         // Since phone number privacy a contact may have no phone and no name. The account
         // id is then the only stable identifier: without it two such people would share a
@@ -411,6 +440,85 @@ public class SignalParserTest extends AbstractPkgTest {
                 tracker.messageBodies.contains("[Edited, earlier version] Meet at 9am"));
     }
 
+    public void testConversationNoLongerListedIsFlagged() throws Exception {
+        // A conversation removed on the device keeps its row, marked inactive, with the
+        // messages still there. It is reported, but the report says Signal no longer
+        // lists it, so nobody reads it as a conversation still on the phone.
+        SignalChat removed = new SignalChat();
+        removed.setId(42L);
+        removed.setContact(new SignalContact(42L, "+5511999990042", null, null, null, null, null));
+        removed.setListed(false);
+        SignalMessage m = new SignalMessage();
+        m.setBody("this conversation was removed on the device");
+        m.setMessageType(SignalMessage.MessageType.INCOMING);
+        removed.setMessages(new java.util.ArrayList<>(java.util.List.of(m)));
+
+        String html = new String(new ReportGenerator().generateChatHtml(removed),
+                java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue("A conversation Signal no longer lists must say so",
+                html.contains("does not list this conversation"));
+    }
+
+    public void testEmptyInactiveThreadIsNotReportedAsRemoved() throws Exception {
+        // A thread created and never used is inactive too: claiming it was removed would
+        // put a deletion in the report that never happened
+        SignalChat neverUsed = new SignalChat();
+        neverUsed.setId(43L);
+        neverUsed.setContact(new SignalContact(43L, "+5511999990043", null, null, null, null, null));
+        neverUsed.setListed(false);
+        neverUsed.setMessages(new java.util.ArrayList<>());
+
+        String html = new String(new ReportGenerator().generateChatHtml(neverUsed),
+                java.nio.charset.StandardCharsets.UTF_8);
+        assertFalse("An empty inactive thread must not be reported as removed",
+                html.contains("does not list this conversation"));
+    }
+
+    public void testGroupUpdateShowsItsDescriptionNotTheRawBody() throws Exception {
+        // Signal stores a serialized protobuf in the body of group updates; showing it
+        // would put a base64 blob in the report where the event should be
+        SignalChat chat = new SignalChat();
+        chat.setId(44L);
+        chat.setContact(new SignalContact(44L, null, null, null, null, null, "GRP44"));
+        SignalMessage update = new SignalMessage();
+        update.setMessageType(SignalMessage.MessageType.SYSTEM);
+        update.setSystemDetail("Group updated");
+        update.setBody("CAESGQoUChIKEP//////////////////AAAAABAB");  // protobuf blob
+        chat.setMessages(new java.util.ArrayList<>(java.util.List.of(update)));
+
+        String html = new String(new ReportGenerator().generateChatHtml(chat),
+                java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue("The event description must be shown", html.contains("Group updated"));
+        assertFalse("The serialized body must not reach the report",
+                html.contains("CAESGQoUChIKEP"));
+    }
+
+    public void testGroupUpdatesAreSystemEventsNotEmptyMessages() throws Exception {
+        // A group update is stored as BASE_INBOX_TYPE with a flag above the base type and
+        // carries no body: read by base type alone it would be indexed as an ordinary
+        // incoming message with no content, one per membership change.
+        EmbeddedSignalParser tracker = parse(true);
+        assertEquals("Group updates and the timer change must not become message items",
+                EXPECTED_MESSAGE_DOCS, (int) tracker.contentTypes.stream()
+                        .filter(t -> t.equals(SignalParser.SIGNAL_MESSAGE.toString())).count());
+    }
+
+    public void testDeletionRecordedInDeletedByIsDetected() throws Exception {
+        // Since Signal 8.x a deletion sets deleted_by and leaves remote_deleted at 0, so
+        // reading only the old column would miss every recent deletion
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("A deletion recorded in deleted_by must be detected and attributed",
+                tracker.messageBodies.contains("[Message deleted by " + ALICE_FULL_ID + "]"));
+    }
+
+    public void testViewOnceMediaIsLabeled() throws Exception {
+        // Opened view-once media leaves a row with no body: without the label it is
+        // indistinguishable from content that simply could not be decoded
+        EmbeddedSignalParser tracker = parse(true);
+        assertTrue("View-once media must be labeled",
+                tracker.messageBodies.contains("[View-once media]"));
+    }
+
     public void testScheduledMessageIsLabeled() throws Exception {
         // A message composed with "send later" and never sent carries a future date and
         // an outgoing type: without the label it would read as a message actually sent
@@ -419,12 +527,13 @@ public class SignalParserTest extends AbstractPkgTest {
                 tracker.messageBodies.contains("[Scheduled, never sent] see you tomorrow"));
     }
 
-    public void testMessageDeletedBySenderIsLabeled() throws Exception {
-        // remote_deleted rows have no body: without the label they would be
-        // indistinguishable from a message whose content was simply not decoded
+    public void testMessageDeletedTheOldWayIsLabeled() throws Exception {
+        // Older rows only carry remote_deleted, with no record of who deleted the message.
+        // They have no body either, so without the label they would be indistinguishable
+        // from content that simply could not be decoded.
         EmbeddedSignalParser tracker = parse(true);
-        assertTrue("A message deleted by the sender must say so",
-                tracker.messageBodies.contains("[Message deleted by sender]"));
+        assertTrue("A deleted message must say so even when nobody is named",
+                tracker.messageBodies.contains("[Message deleted]"));
     }
 
     public void testStoriesAreNotConversationMessages() throws Exception {

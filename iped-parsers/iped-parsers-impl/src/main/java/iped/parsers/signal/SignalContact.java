@@ -82,8 +82,9 @@ public class SignalContact {
      */
     public String getFullId() {
         String name = getDisplayName();
-        if (phone != null && !phone.isBlank() && !name.equals(phone))
-            return name + " (" + phone + ")";
+        boolean hasPhone = phone != null && !phone.isBlank();
+        if (hasPhone)
+            return name.equals(phone) ? name : name + " (" + phone + ")";
         // Without a phone number the account id keeps people apart, and keeps the same
         // person together across devices, which a database-local recipient id cannot do
         if (aci != null && !aci.isBlank())
@@ -92,10 +93,8 @@ public class SignalContact {
         // which a database-local recipient id cannot do
         if (username != null && !username.isBlank())
             return name.equals(username) ? name : name + " (" + username + ")";
-        // Nothing global identifies this contact: the recipient id at least keeps two
-        // people with the same name apart within the case
-        if (!isIdentified())
-            return name + " (rid:" + id + ")";
-        return name;
+        // Nothing outside this database identifies the contact: the recipient id at least
+        // keeps two people sharing a profile name apart within the case
+        return name + " (rid:" + id + ")";
     }
 }

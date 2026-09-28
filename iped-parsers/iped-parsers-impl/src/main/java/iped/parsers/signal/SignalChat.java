@@ -5,11 +5,17 @@ import java.util.List;
 
 public class SignalChat {
 
+    private boolean listed = true;
+
     private long id;
     private SignalContact contact;
     private String groupTitle;
     private List<SignalMessage> messages = new ArrayList<>();
     private List<SignalContact> participants = new ArrayList<>();
+
+    /** False when Signal no longer lists the conversation, e.g. the user removed it. */
+    public boolean isListed() { return listed; }
+    public void setListed(boolean listed) { this.listed = listed; }
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }

@@ -26,6 +26,12 @@ public class SignalMessage {
     private boolean remoteDeleted;
     // Composed to be sent later and never actually sent
     private boolean scheduled;
+    // Who deleted the message for everyone, when the database records it
+    private SignalContact deletedBy;
+    // Media meant to be opened once; its content is gone after that
+    private boolean viewOnce;
+    // What a group update or other event row records, null for plain messages
+    private String systemDetail;
 
     public SignalContact getSender() { return sender; }
     public void setSender(SignalContact sender) { this.sender = sender; }
@@ -47,6 +53,15 @@ public class SignalMessage {
 
     public boolean isRemoteDeleted() { return remoteDeleted; }
     public void setRemoteDeleted(boolean remoteDeleted) { this.remoteDeleted = remoteDeleted; }
+
+    public SignalContact getDeletedBy() { return deletedBy; }
+    public void setDeletedBy(SignalContact deletedBy) { this.deletedBy = deletedBy; }
+
+    public String getSystemDetail() { return systemDetail; }
+    public void setSystemDetail(String systemDetail) { this.systemDetail = systemDetail; }
+
+    public boolean isViewOnce() { return viewOnce; }
+    public void setViewOnce(boolean viewOnce) { this.viewOnce = viewOnce; }
 
     public boolean isScheduled() { return scheduled; }
     public void setScheduled(boolean scheduled) { this.scheduled = scheduled; }

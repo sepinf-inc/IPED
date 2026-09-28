@@ -350,7 +350,11 @@ public class SignalParser extends SQLite3DBParser {
     private static String resolveBody(SignalMessage m) {
         // Calls read from the call table describe their own type and outcome
         if (m.isRemoteDeleted())
-            return "[Message deleted by sender]";
+            return m.getDeletedBy() != null
+                    ? "[Message deleted by " + m.getDeletedBy().getFullId() + "]"
+                    : "[Message deleted]";
+        if (m.isViewOnce() && m.getBody() == null)
+            return "[View-once media]";
         if (m.getCallDetail() != null)
             return "[" + m.getCallDetail() + "]";
         if (m.isEarlierRevision())

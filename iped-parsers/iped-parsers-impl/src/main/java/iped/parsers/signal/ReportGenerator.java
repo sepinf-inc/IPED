@@ -82,6 +82,14 @@ public class ReportGenerator {
         // A fragment must not end on a tail of system messages, which are not indexed
         int lastIndexable = lastIndexableMessage(all);
 
+        // Only for a conversation that actually holds messages: a thread that was created
+        // and never used is inactive too, and saying it was removed would be wrong
+        if (!chat.isListed() && !all.isEmpty())
+            messages.append(renderChatNote(
+                    "Signal does not list this conversation: the thread is marked inactive in the "
+                    + "database, as happens when a conversation is removed on the device. Its "
+                    + "messages are still there"));
+
         if (current > 0)
             messages.append(renderChatNote("Continuation of the previous conversation fragment"));
 
@@ -166,7 +174,13 @@ public class ReportGenerator {
     private String buildBodyHtml(SignalMessage m) {
         SignalMessage.MessageType type = m.getMessageType();
         if (m.isRemoteDeleted()) {
-            return "<div class=\"body attachment-label\">[Message deleted by sender]</div>";
+            String by = m.getDeletedBy() != null
+                    ? "[Message deleted by " + escapeHtml(m.getDeletedBy().getFullId()) + "]"
+                    : "[Message deleted]";
+            return "<div class=\"body attachment-label\">" + by + "</div>";
+        }
+        if (m.isViewOnce() && m.getBody() == null) {
+            return "<div class=\"body attachment-label\">[View-once media]</div>";
         }
         if (m.getCallDetail() != null) {
             return "<div class=\"body call-label\">&#128222; " + escapeHtml(m.getCallDetail()) + "</div>";
@@ -195,7 +209,10 @@ public class ReportGenerator {
     }
 
     private String renderSystemMessage(SignalMessage m) {
-        String text = m.getBody() != null ? escapeHtml(m.getBody()) : "System message";
+        // The description comes first: Signal stores a serialized protobuf in the body of
+        // group updates, profile changes and merges, which would be shown as a blob
+        String text = m.getSystemDetail() != null ? escapeHtml(m.getSystemDetail())
+                : m.getBody() != null ? escapeHtml(m.getBody()) : "System message";
         return "<div class=\"systemmessage\"><span>" + text + "</span></div>\n";
     }
 
