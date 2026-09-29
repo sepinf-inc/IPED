@@ -2,6 +2,7 @@
 # Default Filters
 ############################
 
+Possibly produced = possiblyProduced:true 
 Filter Known Hashes = *:* -hashDb\:status:known
 Hash Alert = hashDb\:status:alert
 Hash Alert (CSAM) = hashDb\:status:pedo
@@ -21,6 +22,7 @@ Explicit Images & Videos = nudityScore:[500 TO *]
 Files with Thumbnails = hasThumb:true
 Files with Faces = face\_count:[1 TO *]
 Files with Child Faces = faceAge\:labels:child
+
 
 # Obsolete filters (suppressed in UI)
 Hash Alert (Child Porn) = OBSOLETE

@@ -40,7 +40,6 @@ import javax.swing.event.ListSelectionListener;
 import org.apache.lucene.search.Query;
 import org.roaringbitmap.RoaringBitmap;
 
-import iped.app.ui.filters.ProducedFilter;
 import iped.data.IItemId;
 import iped.engine.config.AgeEstimationConfig;
 import iped.engine.config.ConfigurationManager;
@@ -167,7 +166,6 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         comboFilter.removeAllItems();
         comboFilter.addItem(App.FILTER_NO_FILTER);
         comboFilter.addItem(App.FILTER_CHECKED);
-        comboFilter.addItem(ProducedFilter.FILTER_NAME);
 
         List<String> filternames = filters.keySet().stream().map(i -> (String) i).collect(Collectors.toList());
         Collections.sort(filternames, new FilterComparator());
@@ -506,9 +504,6 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer {
         if (App.FILTER_CHECKED.equals(comboFilter.getSelectedItem())) {
             return new CheckedFilter();
         }
-        if (ProducedFilter.FILTER_NAME.equals(comboFilter.getSelectedItem())) {
-            return new ProducedFilter();
-        }
         return null;
     }
 
@@ -519,7 +514,7 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer {
 
     @Override
     public Query getQuery() {
-        if (comboFilter.getSelectedIndex() == -1 || ProducedFilter.FILTER_NAME.equals(comboFilter.getSelectedItem()) || App.FILTER_NO_FILTER.equals(comboFilter.getSelectedItem())
+        if (comboFilter.getSelectedIndex() == -1 || App.FILTER_NO_FILTER.equals(comboFilter.getSelectedItem())
                 || App.FILTER_CHECKED.equals(comboFilter.getSelectedItem())) {
             return null;
         }
