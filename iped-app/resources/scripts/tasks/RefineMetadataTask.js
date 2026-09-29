@@ -1,9 +1,12 @@
 /*
- * Javascript processing task to add "common:geo:locations" from other metadata.
+ * Javascript processing task to derive some new metadata info from other metadatas or item content 
+ *
+ * For example: add "common:geo:locations" from other metadata.
+ * For example: add "possiblyProduced" id file system modified date matches content metadata date.
  */
 
 function getName() {
-    return "AddGeoMetadataTask";
+    return "RefineMetadataTask";
 }
 
 function getConfigurables() {
@@ -32,6 +35,11 @@ function parseISO6709(location) {
     };
 }
 
+function getRange(datetime, reference) {
+  return new Date(datetime).getTime() - new Date(reference).getTime();        
+}
+
+
 function process(item) {
     var metadata = item.getMetadata();
 
@@ -48,11 +56,29 @@ function process(item) {
                     var geoInfo = geoParsers[metadataName](geodata);
 
                     if (geoInfo && geoInfo.latitude) {
-                        metadata.add(
-                            "common:geo:locations",
-                            geoInfo.latitude + ";" + geoInfo.longitude
-                        );
+                        metadata.add("common:geo:locations", geoInfo.latitude + ";" + geoInfo.longitude);
                         break;
+                    }
+                }
+            }
+        }
+
+        var dateTimeContentMetadata = {
+            "common:dcterms:created": getRange,
+            "image:Exif SubIFD:Date/Time Original": getRange,
+            "image:Exif IFD0:Date/Time": getRange,
+        };
+
+        for (var metadataName in dateTimeContentMetadata) {
+            if (dateTimeContentMetadata.hasOwnProperty(metadataName)) {
+                var intDate = metadata.get(metadataName);
+                var fsDate = item.getModDate();
+
+                if (intDate && fsDate) {                    
+                    // Check whether datetime is within reference ± 1 minutes                    
+                    var result = new Date(intDate).getTime() - fsDate.getTime();
+                    if(result){
+                        metadata.add("modToInternalTimeDiff", result);
                     }
                 }
             }
