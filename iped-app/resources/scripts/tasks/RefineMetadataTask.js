@@ -82,7 +82,7 @@ function process(item) {
                 if (intDate && fsDate) {                    
                     var result = new Date(intDate).getTime() - fsDate.getTime();
                     if(result){
-                        metadata.add("modToInternalTimeDiff", result);
+                        item.setExtraAttribute("modToInternalTimeDiff", result);
                     }
                 }
             }
