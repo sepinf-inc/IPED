@@ -1,4 +1,4 @@
-﻿import sys
+﻿﻿import sys
 stdout = sys.stdout
 sys.stdout = sys.stderr
 
@@ -9,8 +9,6 @@ finished = 'transcription_finished'
 ping = 'ping'
 
 def main():
-
-    stdout.reconfigure(encoding="utf-8")
 
     modelName = sys.argv[1]
     deviceNum = sys.argv[2]
