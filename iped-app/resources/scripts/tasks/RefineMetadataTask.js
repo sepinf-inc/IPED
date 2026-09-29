@@ -1,8 +1,5 @@
 /*
- * Javascript processing task to derive some new metadata info from other metadatas or item content 
- *
- * For example: add "common:geo:locations" from other metadata.
- * For example: add "possiblyProduced" id file system modified date matches content metadata date.
+ * Javascript processing task to derive some new metadata info from other metadata or item content. 
  */
 
 function getName() {
@@ -44,6 +41,10 @@ function process(item) {
     var metadata = item.getMetadata();
 
     if (metadata) {
+
+        // GEO LOCATIONS (#2983)
+        // Set "common:geo:locations" when other geo location metadata is present.
+
         var geoParsers = {
             "video:com.apple.quicktime.location.ISO6709": parseISO6709,
         };
@@ -63,6 +64,10 @@ function process(item) {
             }
         }
 
+        // POSSIBLY PRODUCED (#2934)
+        // Set "modToInternalTimeDiff" with the difference between file modified date
+        // and "internal" (EXIF, PDF) dates.
+ 
         var dateTimeContentMetadata = {
             "common:dcterms:created": getRange,
             "image:Exif SubIFD:Date/Time Original": getRange,
@@ -75,7 +80,6 @@ function process(item) {
                 var fsDate = item.getModDate();
 
                 if (intDate && fsDate) {                    
-                    // Check whether datetime is within reference ± 1 minutes                    
                     var result = new Date(intDate).getTime() - fsDate.getTime();
                     if(result){
                         metadata.add("modToInternalTimeDiff", result);
