@@ -88,7 +88,7 @@ public class Docs {
                     result.setSelected(source.getBookmarks().isChecked(id));
 
                     resultList.add(result);
-                } catch (Exception e) {
+                } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
                     // Ignore invalid IDs
                 }
             }
