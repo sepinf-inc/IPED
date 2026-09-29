@@ -2,13 +2,13 @@
 # Default Filters
 ############################
 
-Possibly produced = modToInternalTimeDiff\:number:[-60000 TO 60000]
+Possibly Produced = modToInternalTimeDiff\:number:[-60000 TO 60000]
 Filter Known Hashes = *:* -hashDb\:status:known
 Hash Alert = hashDb\:status:alert
 Hash Alert (CSAM) = hashDb\:status:pedo
 PhotoDNA Alert (CSAM) = photoDnaDb\:status:pedo
 Encrypted Files = encrypted:true
-Possibly encrypted (entropy) = compressRatioLZ4:[1,0039 TO *] && (parserException:true || X-Parsed-By:(RawStringParser EmptyParser) || contentType:video) && tamanho:[100000000 TO *]
+Possibly Encrypted (entropy) = compressRatioLZ4:[1,0039 TO *] && (parserException:true || X-Parsed-By:(RawStringParser EmptyParser) || contentType:video) && tamanho:[100000000 TO *]
 Parsing Error = parserException:true
 Read Error = ioError:true
 Timeout = timeout:true OR thumbTimeout:true
