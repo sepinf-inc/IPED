@@ -122,6 +122,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import iped.parsers.sqlite.SQLite3DBParser;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
 
@@ -156,7 +157,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     WAContact remote = contacts.getContact(contactId);
                     Chat c = new Chat(remote);
                     c.setId(rs.getLong("id"));
-                    c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
+                    c.setSubject(ChatUtil.getUTF8String(rs, "subject")); //$NON-NLS-1$
                     if (contactId.endsWith(WAContact.waGroupSuffix)) {
                         c.setGroupChat(true);
                     } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
@@ -515,7 +516,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 }
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
-                m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
+                m.setData(ChatUtil.getUTF8String(rs, "text_data")); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
                 if (caption == null || caption.isBlank()) {
                     caption = m.getData();
@@ -548,7 +549,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
 
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
-                    m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
+                    m.setVcards(Arrays.asList(new String[] { ChatUtil.getUTF8String(rs, "vcard") }));
                 }
                 byte[] thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$
                 if (thumbData == null) {
@@ -761,7 +762,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
 
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 m.setRemoteResource(rs.getString("remoteResource")); // $NON-NLS-1$
-                m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
+                m.setData(ChatUtil.getUTF8String(rs, "text_data")); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
                 if (caption == null || caption.isBlank()) {
                     caption = m.getData();
@@ -778,7 +779,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1, -1, m.getMediaMime()));
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
-                    m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
+                    m.setVcards(Arrays.asList(new String[] { ChatUtil.getUTF8String(rs, "vcard") }));
                 }
 
                 byte[] thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$

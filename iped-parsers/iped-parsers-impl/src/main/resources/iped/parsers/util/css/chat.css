@@ -190,9 +190,7 @@ div.catalogIcon {
     100% { opacity: 0.2; }
 }
 
-/********************
- * WhatsApp Top Bar *
- ********************/
+/** Top Bar **/
 
 #topbar {
     position: fixed;
@@ -222,9 +220,7 @@ div.catalogIcon {
     color: #ffffff;
 }
 
-/***********************
- * WhatsApp Chats List *
- ***********************/
+/** Chats List **/
 
 #chatlist {
     width: 640px;
@@ -257,9 +253,7 @@ div.catalogIcon {
     color: #666666;
 }
 
-/**************************
- * WhatsApp Conversations *
- **************************/
+/** Conversations **/
 
 #conversation {
     width: 640px;

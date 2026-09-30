@@ -1,4 +1,4 @@
-package iped.parsers.whatsapp;
+package iped.parsers.util;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -12,7 +12,7 @@ import iped.utils.IOUtil;
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class Util {
+public class ChatUtil {
 
     public static String encodeBase64(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
@@ -46,7 +46,7 @@ public class Util {
     private static byte[] readResourceAsBytes(String resource) {
         byte[] result = null;
         try {
-            result = IOUtil.loadInputStream(Util.class.getResourceAsStream(resource));
+            result = IOUtil.loadInputStream(ChatUtil.class.getResourceAsStream(resource));
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Throwable e) {

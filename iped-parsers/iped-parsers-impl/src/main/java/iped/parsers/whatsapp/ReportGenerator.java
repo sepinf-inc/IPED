@@ -21,6 +21,7 @@ import org.apache.commons.text.lookup.StringLookupFactory;
 import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.whatsapp.Message.MessageType;
 import iped.properties.ExtraProperties;
 import iped.utils.EmojiUtil;
@@ -37,9 +38,9 @@ public class ReportGenerator {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
-    private static final String template = Util.readResourceAsString("wachat-html-template.txt");
-    private static final String css = Util.readResourceAsString("css/whatsapp.css");
-    private static final String js = Util.readResourceAsString("js/whatsapp.js");
+    private static final String template = ChatUtil.readResourceAsString("chat-html-template.txt");
+    private static final String css = ChatUtil.readResourceAsString("css/chat.css");
+    private static final String js = ChatUtil.readResourceAsString("js/chat.js");
     private boolean firstFragment = true;
     private int currentMsg = 0;
     private static final String deletedIcon = "<img class=\"del\">";
@@ -74,7 +75,7 @@ public class ReportGenerator {
                 + "<body>\n"); //$NON-NLS-1$
 
         if (contact.getAvatar() != null)
-            out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(contact.getAvatar()) //$NON-NLS-1$
+            out.println("<img src=\"data:image/jpg;base64," + ChatUtil.encodeBase64(contact.getAvatar()) //$NON-NLS-1$
                     + "\" width=\"112\"><br>"); //$NON-NLS-1$
         out.println(Messages.getString("WhatsAppReport.ContactID") + format(contact.getId())); //$NON-NLS-1$
         out.println("<br>" + Messages.getString("WhatsAppReport.DisplayName") + format(contact.getDisplayName())); //$NON-NLS-1$ //$NON-NLS-2$
@@ -110,7 +111,7 @@ public class ReportGenerator {
                 + "<body>\n"); //$NON-NLS-1$
 
         if (account.getAvatar() != null)
-            out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(account.getAvatar()) //$NON-NLS-1$
+            out.println("<img src=\"data:image/jpg;base64," + ChatUtil.encodeBase64(account.getAvatar()) //$NON-NLS-1$
                     + "\" width=\"112\"><br>"); //$NON-NLS-1$
         out.println(Messages.getString("WhatsAppReport.AccountID") + format(account.getId())); //$NON-NLS-1$
         out.println("<br>" + Messages.getString("WhatsAppReport.WAName") + format(account.getWaName())); //$NON-NLS-1$ //$NON-NLS-2$
@@ -209,7 +210,7 @@ public class ReportGenerator {
             }
             if (currentMsg > 0)
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                        + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+                        + Messages.getString("ChatReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
 
             String lastDate = null;
             String lastId = "1000000000";
@@ -235,7 +236,7 @@ public class ReportGenerator {
                 lastId = m.getUniqueId();
                 if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                            + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+                            + Messages.getString("ChatReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                     break;
                 }
             }
@@ -985,7 +986,7 @@ public class ReportGenerator {
                                     out.println(Messages.getString("WhatsAppReport.VideoMessageTitle") + "<br>"); //$NON-NLS-1$
                                     if (thumb != null) {
                                         out.print("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
-                                        out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                                         out.print(" data-src1=\"" + format(exportPath) + "\"");
                                         out.print(" data-src2=\"" + format(source) + "\"");
                                         out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1018,7 +1019,7 @@ public class ReportGenerator {
                                     if (getTitle(message).equals("video")) //$NON-NLS-1$
                                         out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                                     out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
-                                    out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                    out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                                     out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                 } else {
@@ -1051,7 +1052,7 @@ public class ReportGenerator {
                                     if (thumb != null) {
                                         out.println(Messages.getString("WhatsAppReport.Video") + ":<br>");
                                         out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
-                                        out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                                         out.print(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
                                     } else {
                                         out.println("<div class=\"videoImg\" title=\"Video\">");
@@ -1068,7 +1069,7 @@ public class ReportGenerator {
                                         if (getTitle(message).equals("video")) //$NON-NLS-1$
                                             out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                                         out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
-                                        out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                                         out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                     } else if (message.getMessageType() == MessageType.DOC_MESSAGE) {
@@ -1134,7 +1135,7 @@ public class ReportGenerator {
         }
 
         if (!message.getChildPornSets().isEmpty()) {
-            out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
+            out.print("<p><i>" + Messages.getString("ChatReport.FoundInPedoHashDB") + " "
                     + format(message.getChildPornSets().toString()) + "</i></p>");
         }
 
@@ -1231,7 +1232,7 @@ public class ReportGenerator {
         }
         if (thumb != null) {
             out.print("<img class=\"thumb\" src=\"");
-            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"><br>");
+            out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(thumb) + "\"><br>");
         }
     }
 
@@ -1376,7 +1377,7 @@ public class ReportGenerator {
                             + quoteEnd);
                     if (quoteThumb != null) {
                         out.print("<div><img class=\"quoteImg\" src=\"");
-                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                        out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(quoteThumb) + "\"></div>");
                     } else {
                         out.print("<div class=\"videoImg quoteImg\" title=\"Video\"></div>");
                     }
@@ -1394,7 +1395,7 @@ public class ReportGenerator {
                             + "</span><br><span class=\"quoteMsg\">" + quoteIcon + " " + quoteMsg + quoteEnd);
                     if (quoteThumb != null) {
                         out.print("<div><img class=\"quoteImg\" src=\"");
-                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                        out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(quoteThumb) + "\"></div>");
                     } else {
                         out.print("<div class=\"imageImg quoteImg\" title=\"Image\"></div>");
                     }
@@ -1410,7 +1411,7 @@ public class ReportGenerator {
                             + "</span><br><span class=\"quoteMsg\">" + quoteIcon + " " + quoteMsg + quoteEnd);
                     if (quoteThumb != null) {
                         out.print("<div><img class=\"quoteImg\" src=\"");
-                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                        out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(quoteThumb) + "\"></div>");
                     } else {
                         out.print("<div class=\"attachImg quoteImg\" title=\"Doc\"></div>");
                     }
@@ -1428,7 +1429,7 @@ public class ReportGenerator {
                             + "</span><br><span class=\"quoteMsg\">" + formatURL(messageQuote) + quoteEnd);
                     if (quoteThumb != null) {
                         out.print("<div><img class=\"quoteImg\" src=\"");
-                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                        out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(quoteThumb) + "\"></div>");
                     }
                     break;
 
@@ -1438,7 +1439,7 @@ public class ReportGenerator {
                             + "</span><br><span class=\"quoteMsg\">" + formatLocation(messageQuote) + quoteEnd);
                     if (quoteThumb != null) {
                         out.print("<div><img class=\"quoteImg\" src=\"");
-                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                        out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(quoteThumb) + "\"></div>");
                     }
                     break;
 
@@ -1465,7 +1466,7 @@ public class ReportGenerator {
                             + "</span><br><span class=\"quoteMsg\">" + formatProduct(product, seller) + quoteEnd);
                     if (quoteThumb != null) {
                         out.print("<div><img class=\"quoteImg\" src=\"");
-                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                        out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(quoteThumb) + "\"></div>");
                     }
                     break;
                 default:
@@ -1685,9 +1686,9 @@ public class ReportGenerator {
             boolean isBroadcast, Supplier<String> messages) {
         String strAvatar;
         if (avatar == null || avatar.length == 0) {
-            strAvatar = Util.getImageResourceAsEmbedded("img/avatar.png");
+            strAvatar = ChatUtil.getImageResourceAsEmbedded("img/avatar.png");
         } else {
-            strAvatar = "data:image/jpg;base64," + Util.encodeBase64(avatar);
+            strAvatar = "data:image/jpg;base64," + ChatUtil.encodeBase64(avatar);
         }
         String deletedDiv;
         if (isDeleted) {
@@ -1696,7 +1697,7 @@ public class ReportGenerator {
         } else {
             deletedDiv = "";
         }
-        String favicon = Util.getImageResourceAsEmbedded("img/whatsapp.png");
+        String favicon = ChatUtil.getImageResourceAsEmbedded("img/whatsapp.png");
         StringSubstitutor interpolator = new StringSubstitutor(new StringLookup() {
 
             @Override

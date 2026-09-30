@@ -60,6 +60,7 @@ import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.sqlite.SQLiteUndeleteTableResultSetAdapter;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
 
@@ -185,7 +186,7 @@ public abstract class ExtractorAndroid extends Extractor {
                         WAContact remote = contacts.getContact(contactId);
                         Chat c = new Chat(remote);
                         c.setId(rs.getLong("id")); //$NON-NLS-1$
-                        c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
+                        c.setSubject(ChatUtil.getUTF8String(rs, "subject")); //$NON-NLS-1$
                         c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                         if (recoverDeletedRecords) {
                             activeChats.add(contactId);

@@ -1,6 +1,6 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Util.nullToEmpty;
+import static iped.parsers.util.ChatUtil.nullToEmpty;
 
 import java.io.File;
 import java.sql.Connection;
@@ -15,6 +15,7 @@ import fqlite.base.SqliteRow;
 import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
+import iped.parsers.util.ChatUtil;
 
 public abstract class WAContactsExtractorIOS extends WAContactsExtractor {
     
@@ -87,7 +88,7 @@ public abstract class WAContactsExtractorIOS extends WAContactsExtractor {
                 if (!id.endsWith(WAContact.waSuffix)) {
                     id += WAContact.waSuffix;
                 }
-                if (! directory.hasContact(Util.getNameFromId(id))) { // only recover contact if it does not exist already
+                if (! directory.hasContact(ChatUtil.getNameFromId(id))) { // only recover contact if it does not exist already
                     WAContact c = directory.getContact(id);
                     c.setWaName(nullToEmpty(row.getTextValue("ZHIGHLIGHTEDNAME"))); //$NON-NLS-1$
                     c.setDisplayName(nullToEmpty(row.getTextValue("ZFULLNAME"))); //$NON-NLS-1$
