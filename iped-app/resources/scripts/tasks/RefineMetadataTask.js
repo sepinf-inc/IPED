@@ -81,8 +81,8 @@ function process(item) {
 
                 if (intDate && fsDate) {                    
                     var result = new Date(intDate).getTime() - fsDate.getTime();
-                    if(result){
-                        item.setExtraAttribute("modToInternalTimeDiff", result);
+                    if (result) {
+                        metadata.add("modToInternalTimeDiff", result / 1000);
                     }
                 }
             }

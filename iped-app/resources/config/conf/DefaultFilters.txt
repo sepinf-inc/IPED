@@ -2,7 +2,7 @@
 # Default Filters
 ############################
 
-Possibly Produced = modToInternalTimeDiff:[-60000 TO 60000]
+Possibly Produced = modToInternalTimeDiff:[-60 TO 60]
 Filter Known Hashes = *:* -hashDb\:status:known
 Hash Alert = hashDb\:status:alert
 Hash Alert (CSAM) = hashDb\:status:pedo

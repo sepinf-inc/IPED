@@ -4644,4 +4644,4 @@ CarvedOffset = java.lang.Long
 mediaSize = java.lang.Long
 mediaMime = java.lang.String
 mediaName = java.lang.String
-modToInternalTimeDiff = java.lang.Long
+modToInternalTimeDiff = java.lang.Integer
