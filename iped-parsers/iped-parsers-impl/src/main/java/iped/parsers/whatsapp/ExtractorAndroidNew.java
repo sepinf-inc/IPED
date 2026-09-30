@@ -1180,6 +1180,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
             case 112:
                 result = ADVANCED_PRIVACY_ON;
                 break;
+            case 87:
             case 116:
                 // Nothing is shown in the app itself
                 result = IGNORE_MESSAGE;
