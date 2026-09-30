@@ -1,4 +1,4 @@
-﻿﻿import sys
+﻿import sys
 stdout = sys.stdout
 sys.stdout = sys.stderr
 
