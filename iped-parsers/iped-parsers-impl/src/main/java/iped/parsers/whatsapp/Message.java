@@ -405,6 +405,7 @@ public class Message implements Comparable<Message> {
         switch (messageType) {
             case ADVANCED_PRIVACY_ON:
             case AI_RECEIVE_MESSAGES:
+            case AI_RESPONSE:
             case AI_THIRD_PARTY:
             case ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP:
             case BLOCKED_CONTACT:

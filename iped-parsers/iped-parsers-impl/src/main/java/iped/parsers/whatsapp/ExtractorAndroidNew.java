@@ -2,6 +2,7 @@ package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
+import static iped.parsers.whatsapp.Message.MessageType.AI_RESPONSE;
 import static iped.parsers.whatsapp.Message.MessageType.AI_THIRD_PARTY;
 import static iped.parsers.whatsapp.Message.MessageType.ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -101,7 +102,9 @@ import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -113,6 +116,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
@@ -211,6 +217,57 @@ public abstract class ExtractorAndroidNew extends Extractor {
             }
         }
         return isUnblocked;
+    }
+
+    private boolean extractAIResponse(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_AI_RESPONSE)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                byte[] b = rs.getBytes("ai_rich_response_core_blob");
+                if (b != null && b.length > 2) {
+                    try {
+                        String s = fixCesu8(b, 2);
+                        JSONObject root = new JSONObject(s);
+                        JSONArray subMessages = root.optJSONArray("subMessages");
+                        if (subMessages != null && !subMessages.isEmpty()) {
+                            JSONObject firstMsg = subMessages.optJSONObject(0);
+                            if (firstMsg != null) {
+                                String text = firstMsg.optString("messageText", null);
+                                if (text != null) {
+                                    m.setData(text);
+                                    return true;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static String fixCesu8(byte[] bytes, int offset) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream(bytes.length - offset);
+        int i = offset;
+        while (i < bytes.length) {
+            if (i + 5 < bytes.length && (bytes[i] & 0xFF) == 0xED && (bytes[i + 1] & 0xF0) == 0xA0
+                    && (bytes[i + 3] & 0xFF) == 0xED && (bytes[i + 4] & 0xF0) == 0xB0) {
+                int high = (((bytes[i] & 0x0F) << 12) | ((bytes[i + 1] & 0x3F) << 6) | (bytes[i + 2] & 0x3F));
+                int low = (((bytes[i + 3] & 0x0F) << 12) | ((bytes[i + 4] & 0x3F) << 6) | (bytes[i + 5] & 0x3F));
+                int codePoint = 0x10000 + ((high - 0xD800) << 10) + (low - 0xDC00);
+                out.write(0xF0 | (codePoint >> 18));
+                out.write(0x80 | ((codePoint >> 12) & 0x3F));
+                out.write(0x80 | ((codePoint >> 6) & 0x3F));
+                out.write(0x80 | (codePoint & 0x3F));
+                i += 6;
+            } else {
+                out.write(bytes[i]);
+                i++;
+            }
+        }
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
 
     private void extractAddOns(Connection conn, Message m, boolean hasReactionTable) throws SQLException {
@@ -419,6 +476,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
         boolean hasRevokedTable = SQLite3DBParser.containsTable("message_revoked", conn);
         boolean hasOrderTable = SQLite3DBParser.containsTable("message_order", conn);
         boolean hasProductTable = SQLite3DBParser.containsTable("message_product", conn);
+        boolean hasAIResponse = SQLite3DBParser.containsTable("ai_rich_response_message_core_info", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -481,6 +539,12 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     continue;
                 }
                 
+                if (m.getMessageType() == AI_RESPONSE) {
+                    if (hasAIResponse && extractAIResponse(conn, m)) {
+                        m.setMessageType(TEXT_MESSAGE);
+                    }
+                }
+
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -1109,6 +1173,10 @@ public abstract class ExtractorAndroidNew extends Extractor {
             case 99:
                 result = MESSAGE_ASSOCIATION;
                 break;
+            case 110:
+                // AI bot chat response
+                result = AI_RESPONSE;
+                break;
             case 112:
                 result = ADVANCED_PRIVACY_ON;
                 break;
@@ -1126,6 +1194,8 @@ public abstract class ExtractorAndroidNew extends Extractor {
             + " sort_timestamp FROM chat c, jid j WHERE c.jid_row_id = j._id ORDER BY c.sort_timestamp DESC";
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
+
+    private static final String SELECT_AI_RESPONSE = "SELECT ai_rich_response_core_blob FROM ai_rich_response_message_core_info WHERE message_row_id=?";
 
     private static final String SELECT_ADD_ONS_REACTIONS = "SELECT message_add_on_type as type, timestamp, status,"
             + " jid.raw_string as remoteResource, jid2.raw_string as remoteResource2, from_me as fromMe, r.reaction as reaction"
