@@ -34,7 +34,11 @@ public class Content {
 
         IIPEDSource source = Sources.getSource(sourceID);
         final IItem item = source.getItemByID(id);
-        return Response.status(200).header("Content-Length", String.valueOf(item.getLength()))
+        org.apache.tika.mime.MediaType itemMediaType = item.getMediaType();
+        String contentType = (itemMediaType != null && !itemMediaType.toString().isEmpty())
+                ? itemMediaType.toString() : MediaType.APPLICATION_OCTET_STREAM;
+        return Response.status(200).type(contentType)
+                .header("Content-Length", String.valueOf(item.getLength()))
                 .header("Content-Disposition", "attachment; filename=\"" + item.getName() + "\"")
                 .entity(new StreamingOutput() {
                     @Override
