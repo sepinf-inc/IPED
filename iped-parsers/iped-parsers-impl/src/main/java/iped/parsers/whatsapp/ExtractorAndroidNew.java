@@ -14,6 +14,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_DEVICE;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_TO;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_DELETED;
 import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHAT_STARTED_FROM_AD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
@@ -943,6 +944,9 @@ public abstract class ExtractorAndroidNew extends Extractor {
                         break;
                     case 132:
                         result = CHANNEL_CREATED;
+                        break;
+                    case 133:
+                        result = CHANNEL_DELETED;
                         break;
                     case 134:
                         result = CHANNEL_ADDED_PRIVACY;
