@@ -38,6 +38,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ADMIN_APPROVAL_OFF;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
@@ -1029,6 +1030,9 @@ public abstract class ExtractorAndroidNew extends Extractor {
                         break;
                     case 158:
                         result = CHAT_STARTED_FROM_AD;
+                        break;
+                    case 188:
+                        result = GROUP_CHANGED_ALL_MEMBERS_CAN_INVITE;
                         break;
                     default:
                         break;
