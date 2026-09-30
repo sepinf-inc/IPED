@@ -84,7 +84,7 @@ function process(item) {
                 if (intDate && fsDate) {                    
                     var diff = new Date(intDate).getTime() - fsDate.getTime();
                     if (diff) {
-                        diff = Math.round(dif / 1000);
+                        diff = Math.round(diff / 1000);
                         if (Math.abs(diff) < maxDiff) {
                             metadata.add("modToInternalTimeDiff", diff);
                         }
