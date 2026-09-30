@@ -74,15 +74,20 @@ function process(item) {
             "image:Exif IFD0:Date/Time": getRange,
         };
 
+        var maxDiff = 365 * 86400 * 20; // ~20 years (in seconds)
+
         for (var metadataName in dateTimeContentMetadata) {
             if (dateTimeContentMetadata.hasOwnProperty(metadataName)) {
                 var intDate = metadata.get(metadataName);
                 var fsDate = item.getModDate();
 
                 if (intDate && fsDate) {                    
-                    var result = new Date(intDate).getTime() - fsDate.getTime();
-                    if (result) {
-                        metadata.add("modToInternalTimeDiff", result / 1000);
+                    var diff = new Date(intDate).getTime() - fsDate.getTime();
+                    if (diff) {
+                        diff = Math.round(dif / 1000);
+                        if (Math.abs(diff) < maxDiff) {
+                            metadata.add("modToInternalTimeDiff", diff);
+                        }
                     }
                 }
             }
