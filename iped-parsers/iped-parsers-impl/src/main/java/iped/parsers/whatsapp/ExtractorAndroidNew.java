@@ -1,6 +1,7 @@
 package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
+import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AI_THIRD_PARTY;
 import static iped.parsers.whatsapp.Message.MessageType.ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -951,6 +952,9 @@ public abstract class ExtractorAndroidNew extends Extractor {
                         break;
                     case 142:
                         result = OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
+                        break;
+                    case 147:
+                        result = AI_RECEIVE_MESSAGES;
                         break;
                     case 155:
                         result = AI_THIRD_PARTY;
