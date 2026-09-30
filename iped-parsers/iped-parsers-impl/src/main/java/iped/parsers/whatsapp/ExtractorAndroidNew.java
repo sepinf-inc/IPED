@@ -1046,6 +1046,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
             case 26:
             case 27:
             case 28:
+            case 62:
                 result = TEMPLATE_MESSAGE;
                 break;
             case 32:
@@ -1065,6 +1066,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 result = ORDER_MESSAGE;
                 break;
             case 45:
+            case 54:
             case 55:
             case 57:
                 result = UI_ELEMENTS;
