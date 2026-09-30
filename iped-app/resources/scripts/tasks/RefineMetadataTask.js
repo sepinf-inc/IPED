@@ -76,17 +76,19 @@ function process(item) {
 
         var maxDiff = 365 * 86400 * 20; // ~20 years (in seconds)
 
-        for (var metadataName in dateTimeContentMetadata) {
-            if (dateTimeContentMetadata.hasOwnProperty(metadataName)) {
-                var intDate = metadata.get(metadataName);
-                var fsDate = item.getModDate();
+        var fsDate = item.getModDate();
+        if (fsDate) {                    
+            for (var metadataName in dateTimeContentMetadata) {
+                if (dateTimeContentMetadata.hasOwnProperty(metadataName)) {
+                    var intDate = metadata.get(metadataName);
 
-                if (intDate && fsDate) {                    
-                    var diff = new Date(intDate).getTime() - fsDate.getTime();
-                    if (diff) {
-                        diff = Math.round(diff / 1000);
-                        if (Math.abs(diff) < maxDiff) {
-                            metadata.add("modToInternalTimeDiff", diff);
+                    if (intDate) {
+                        var diff = new Date(intDate).getTime() - fsDate.getTime();
+                        if (diff) {
+                            diff = Math.round(diff / 1000);
+                            if (Math.abs(diff) < maxDiff) {
+                                metadata.add("modToInternalTimeDiff", diff);
+                            }
                         }
                     }
                 }
