@@ -869,6 +869,7 @@ public class ReportGenerator {
                         for (String c : message.getVcards()) {
                             if (notNullNorBlank(c)) {
                                 VCardParser.printHtmlFromString(out, c);
+                                out.println("<br>");
                             }
                         }
                         break;
@@ -973,7 +974,7 @@ public class ReportGenerator {
                                 String source = iped.parsers.util.Util.getSourceFileIfExists(mediaItem).orElse("");
                                 if (message.getMessageType() == MessageType.AUDIO_MESSAGE
                                         || message.getMessageType() == MessageType.VIEW_ONCE_AUDIO_MESSAGE) {
-                                    out.println(Messages.getString("WhatsAppReport.AudioMessageTitle") + "<br>"); //$NON-NLS-1$
+                                    out.println("<span>" + Messages.getString("WhatsAppReport.AudioMessageTitle") + "</span><br>");
                                     out.println("<div class=\"audioImg iped-audio\" "
                                             + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" "
                                             + "data-src2=\""
@@ -981,9 +982,9 @@ public class ReportGenerator {
                                     out.print("<span class=\"duration\"> " + formatDuration(message.getDuration())
                                             + "</span>");
                                     out.print("</div>");
-                                    out.println("</a><br>");
+                                    out.println("</a>");
                                 } else {
-                                    out.println(Messages.getString("WhatsAppReport.VideoMessageTitle") + "<br>"); //$NON-NLS-1$
+                                    out.println("<span>" + Messages.getString("WhatsAppReport.VideoMessageTitle") + "</span><br>");
                                     if (thumb != null) {
                                         out.print("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
                                         out.print("data:image/jpg;base64," + ChatUtil.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -996,11 +997,11 @@ public class ReportGenerator {
                                         out.println(" data-src1=\"" + format(exportPath) + "\"");
                                         out.println(" data-src2=\"" + format(source) + "\" ></div>");
                                     }
-                                    out.println("</a><br>"); //$NON-NLS-1$
+                                    out.println("</a>");
                                 }
                                 if (mediaItem.getMetadata().get(ExtraProperties.DOWNLOADED_DATA) != null) {
                                     out.println(
-                                            "<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br>");
+                                            "<br><b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b>");
                                 }
                                 String transcription = mediaItem.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
                                 if (transcription != null) {
@@ -1451,6 +1452,7 @@ public class ReportGenerator {
                     for (String c : messageQuote.getVcards()) {
                         if (notNullNorBlank(c)) {
                             VCardParser.printHtmlFromString(out, c);
+                            out.println("<br>");
                         }
                     }
                     out.print(quoteEnd);

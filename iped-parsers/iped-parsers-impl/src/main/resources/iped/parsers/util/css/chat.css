@@ -8,6 +8,14 @@ body {
     font-family: Arial, "Microsoft Tai Le", "Javanese Text";
 }
 
+a {
+	text-decoration: none;
+}
+
+a span {
+	text-decoration: underline;
+}
+
 video {
 	max-width:400px;
 	max-height:400px;
