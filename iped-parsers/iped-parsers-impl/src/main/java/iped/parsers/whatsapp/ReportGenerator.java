@@ -1031,10 +1031,10 @@ public class ReportGenerator {
                                         out.println("<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
                                     }
                                 }
-                                out.println("</a><br>"); //$NON-NLS-1$
+                                out.println("</a>");
                                 if (mediaItem.getMetadata().get(ExtraProperties.DOWNLOADED_DATA) != null) {
                                     out.println(
-                                            "<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br>");
+                                            "<br><b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b>");
                                 }
                             }
                         } else { // mediaItem is null (media file not found)
