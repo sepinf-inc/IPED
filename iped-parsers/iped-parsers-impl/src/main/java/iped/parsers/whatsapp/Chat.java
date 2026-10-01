@@ -137,8 +137,9 @@ public class Chat {
                     title += " - " + remote.getName().strip(); //$NON-NLS-1$
                 }
             }
-            if (getPrintId() != null && !getPrintId().isBlank()) {
-                title += " - " + getPrintId().strip();
+            String printId = getPrintId();
+            if (printId != null && !printId.isBlank() && !printId.equals("0")) {
+                title += " - " + printId.strip();
             }
         }
         return title;

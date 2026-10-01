@@ -1649,7 +1649,7 @@ public class ReportGenerator {
             }
         }
         name = name == null ? "" : name.trim();
-        number = number == null ? "" : number.trim();
+        number = number == null || number.equals("0") ? "" : number.trim();
         if (!number.isEmpty()) {
             if (name.isEmpty()) {
                 name = number;

@@ -43,7 +43,7 @@ public class ChatUtil {
         return result;
     }
 
-    private static byte[] readResourceAsBytes(String resource) {
+    public static byte[] readResourceAsBytes(String resource) {
         byte[] result = null;
         try {
             result = IOUtil.loadInputStream(ChatUtil.class.getResourceAsStream(resource));
