@@ -127,9 +127,12 @@ public class ReportGenerator {
 
     private static final String format(String s) {
         if (s == null || s.trim().isEmpty())
-            return "-"; //$NON-NLS-1$
+            return "-";
 
         String ret = SimpleHTMLEncoder.htmlEncode(s.trim());
+
+        // Limit the number of consecutive line breaks to 2
+        ret = ret.replaceAll("(\\r?\\n){3,}", "\n\n");
 
         // Keep line breaks present in the content, converting to an HTML <br>
         ret = ret.replaceAll("\n", "<br>\n");
