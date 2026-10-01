@@ -258,7 +258,7 @@ div.catalogIcon {
 #conversation {
     width: 640px;
     color: #000000;
-    padding-top: 90px;
+    padding-top: 86px;
 }
 
 #conversation .linha {
@@ -276,7 +276,7 @@ div.catalogIcon {
 .name {
     color: #B0C040;
     display: inline-block;
-    padding-bottom: 3px;
+    padding-bottom: 2px;
 }
 
 .name_call {
@@ -394,7 +394,7 @@ div:target {
     float: right;
     padding-right: 6px;
     display: table-cell;
-    margin: 4px 0px 4px 0px;
+    margin: 3px 0px 3px 0px;
     max-width: 90%;
 }
 
@@ -419,7 +419,7 @@ div:target {
     float: left;
     padding-left: 6px;
     display: table-cell;
-    margin: 4px 0px 4px 0px;
+    margin: 3px 0px 3px 0px;
     max-width: 90%;
 }
 
@@ -517,7 +517,7 @@ div:target {
     cursor: pointer;
     border-radius: 6px;
     display: block;
-    padding: 6px 8px;
+    padding: 4px 8px;
     word-break: break-word;
 }
 
@@ -538,8 +538,8 @@ div:target {
     width: 160px;
     margin: 0 auto;
     text-align: center;
-    margin-top: 8px;
-    margin-bottom: 4px;
+    margin-top: 7px;
+    margin-bottom: 3px;
     box-shadow: 0 0 6px #a7a7a7;
 }
 
@@ -574,7 +574,7 @@ div:target {
     text-align: right;
     padding-left: 10px;
     font-size: small;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 #conversation .link {
     color: #0000EE;
