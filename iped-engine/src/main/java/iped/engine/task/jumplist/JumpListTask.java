@@ -64,8 +64,9 @@ public class JumpListTask extends AbstractTask {
      * Extracts the AppID from the name of a jump list file, e.g.
      * "5d696d521de238c3.automaticDestinations-ms" returns "5d696d521de238c3".
      *
-     * @return the AppID in lower case or null if it is not a jump list file name or
-     *         if its AppID is not a hexadecimal number.
+     * @return the normalized AppID (see {@link AppIDsConfig#normalize(String)}) or
+     *         null if it is not a jump list file name or if its AppID is not a
+     *         hexadecimal number.
      */
     static String getAppIDFromFileName(String fileName) {
 
@@ -74,7 +75,7 @@ public class JumpListTask extends AbstractTask {
         }
         String appID = StringUtils.removeEnd(fileName, AUTOMATIC_DESTINATIONS_SUFIX);
         appID = StringUtils.removeEnd(appID, CUSTOM_DESTINATIONS_SUFIX);
-        appID = appID.toLowerCase();
+        appID = AppIDsConfig.normalize(appID);
 
         if (appID.isEmpty() || appID.length() > APP_ID_MAX_LENGTH || !StringUtils.containsOnly(appID, APP_ID_VALID_CHARS)) {
             return null;
@@ -122,6 +123,8 @@ public class JumpListTask extends AbstractTask {
                 List<String> appIDs = AppIDCalculator.calculateAppIDs(evidence.getPath());
 
                 for (String appID : appIDs) {
+
+                    appID = AppIDsConfig.normalize(appID);
 
                     // add appID
                     evidence.getMetadata().add(JUMPLIST_PROGRAM_APP_IDS, appID);

@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 import iped.engine.config.AbstractTaskConfig;
 
 public class AppIDsConfig extends AbstractTaskConfig<ConcurrentMap<String, String>> {
@@ -41,6 +43,17 @@ public class AppIDsConfig extends AbstractTaskConfig<ConcurrentMap<String, Strin
         return CONFIG_FILE;
     }
 
+    /**
+     * The AppID is a 64-bit number written in hexadecimal. It may be found with or
+     * without leading zeros and in upper or lower case, so it must be normalized
+     * before being compared.
+     *
+     * @return the AppID in lower case and without leading zeros.
+     */
+    public static String normalize(String appID) {
+        return StringUtils.stripStart(StringUtils.lowerCase(appID), "0");
+    }
+
     @Override
     public void processTaskConfig(Path resource) throws IOException {
 
@@ -57,7 +70,7 @@ public class AppIDsConfig extends AbstractTaskConfig<ConcurrentMap<String, Strin
                 if (!matcher.find()) {
                     continue;
                 }
-                String appID = matcher.group(1).toLowerCase();
+                String appID = normalize(matcher.group(1));
 
                 if (!matcher.find()) {
                     continue;
