@@ -476,7 +476,7 @@ public abstract class ExtractorAndroid extends Extractor {
         m.setData(rs.getString("data")); //$NON-NLS-1$
         m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
         m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
-        m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
+        m.setUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
         m.setMediaMime(rs.getString("mediaMime")); //$NON-NLS-1$
         m.setMediaName(rs.getString("mediaName")); //$NON-NLS-1$
         m.setMediaCaption(caption); // $NON-NLS-1$

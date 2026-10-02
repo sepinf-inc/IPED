@@ -42,7 +42,6 @@ public class Message implements Comparable<Message> {
     private boolean deleted;
     private boolean forwarded;
     private Date timeStamp;
-    private String mediaUrl;
     private String mediaMime;
     private long mediaSize;
     private String mediaName;
@@ -195,14 +194,6 @@ public class Message implements Comparable<Message> {
 
     public void setTimeStamp(Date timeStamp) {
         this.timeStamp = timeStamp;
-    }
-
-    public String getMediaUrl() {
-        return mediaUrl;
-    }
-
-    public void setMediaUrl(String mediaUrl) {
-        this.mediaUrl = mediaUrl;
     }
 
     public String getMediaMime() {
