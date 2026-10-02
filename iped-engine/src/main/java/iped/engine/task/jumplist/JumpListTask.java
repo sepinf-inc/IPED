@@ -17,11 +17,11 @@ import iped.properties.MediaTypes;
 
 public class JumpListTask extends AbstractTask {
 
-    public static final MediaType AUTOMATIC_DESTINATIONS_MIME = MediaType.application("x-customdestinations");
-    public static final MediaType CUSTOM_DESTINATIONS_MIME = MediaType.application("x-automaticdestinations");
+    public static final MediaType AUTOMATIC_DESTINATIONS_MIME = MediaType.application("x-automaticdestinations");
+    public static final MediaType CUSTOM_DESTINATIONS_MIME = MediaType.application("x-customdestinations");
 
-    public static final MediaType AUTOMATIC_DESTINATIONS_ENTRY_MIME = MediaType.application("x-customdestinations-entry");
-    public static final MediaType CUSTOM_DESTINATIONS_ENTRY_MIME = MediaType.application("x-automaticdestinations-entry");
+    public static final MediaType AUTOMATIC_DESTINATIONS_ENTRY_MIME = MediaType.application("x-automaticdestinations-entry");
+    public static final MediaType CUSTOM_DESTINATIONS_ENTRY_MIME = MediaType.application("x-customdestinations-entry");
 
     private static final String AUTOMATIC_DESTINATIONS_SUFIX = ".automaticDestinations-ms";
     private static final String CUSTOM_DESTINATIONS_SUFIX = ".customDestinations-ms";
