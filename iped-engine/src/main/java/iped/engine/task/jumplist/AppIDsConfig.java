@@ -45,7 +45,7 @@ public class AppIDsConfig extends AbstractTaskConfig<ConcurrentMap<String, Strin
     public void processTaskConfig(Path resource) throws IOException {
 
         try (BufferedReader reader = Files.newBufferedReader(resource)) {
-            String line = reader.readLine();
+            String line;
 
             while ((line = reader.readLine()) != null) {
                 if (line.trim().startsWith("#") || line.trim().isEmpty()) {
@@ -62,7 +62,7 @@ public class AppIDsConfig extends AbstractTaskConfig<ConcurrentMap<String, Strin
                 if (!matcher.find()) {
                     continue;
                 }
-                String appName = matcher.group(1);
+                String appName = matcher.group(1).trim();
 
                 appIDsMap.put(appID, appName);
             }
