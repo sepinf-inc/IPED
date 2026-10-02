@@ -284,7 +284,7 @@ div.catalogIcon {
 .name {
     color: #B0C040;
     display: inline-block;
-    padding-bottom: 2px;
+    padding-bottom: 1px;
 }
 
 .name_call {
@@ -329,29 +329,43 @@ div:target {
 }
 
 .quoteFrom {
-      background:#F5F7F6;
+    background:#F0F4F2;
+	border-left: 4px solid #B1CBBE;
+	border-radius: 5px;
+	padding: 1px 3px 1px 3px;
 }
 
 .quoteTo {
-    background:#DEF6D4;
+	background:#D7F2D0;
+	border-left: 4px solid #8AAB81;
+	border-radius: 5px;
+	padding: 1px 3px 1px 3px;
 }
 
 .quoteUser {
-    font-size: 90%;
     color: #01A280;
     margin-right: 4px;
 }
 
 .quoteMsg {
-    font-size: 90%;
+    font-size: 85%;
     color: #67747D;
+    flex: 1;
+	display: -webkit-box;
+	-webkit-line-clamp: 5;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.quoteMsg img {
+	zoom: 0.85;
 }
 
 .quoteImg {
-    max-width: 120px;
-    max-height: 100px;
-    display: table-cell;
-    float: right;
+    max-width: 100px;
+    max-height: 80px;
+	padding: 3px;
 }
 
 .quoteTop {
@@ -359,6 +373,12 @@ div:target {
     vertical-align: top;
     border-right: 10px solid transparent;
     width: 100%;
+}
+
+.quoteContent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
 }
 
 .check {
