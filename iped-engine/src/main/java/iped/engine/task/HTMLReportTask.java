@@ -54,6 +54,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
@@ -96,6 +97,9 @@ import iped.viewers.util.ImageMetadataUtil;
 public class HTMLReportTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(HTMLReportTask.class);
+
+    private static final Pattern searchHelpLink = Pattern
+            .compile("\\R[ \t]*<p>\\s*<a href=\"\\.\\./iped/help/[^\"]*\"[^>]*>[^<]*</a>\\s*</p>[ \t]*\\R"); //$NON-NLS-1$
 
     private IPEDSource ipedCase;
 
@@ -190,6 +194,8 @@ public class HTMLReportTask extends AbstractTask {
 
     private boolean extractThumb;
 
+    private boolean noPortableCase;
+
     private Set<String> selectedProperties;
 
     private static Collator getCollator() {
@@ -251,6 +257,7 @@ public class HTMLReportTask extends AbstractTask {
             // especificado
             CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
             if (args != null) {
+                noPortableCase = caseData.isIpedReport() && args.isNoPortableCase();
                 File infoFile = args.getAsap();
                 if (infoFile != null) {
                     logger.info("Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
@@ -291,7 +298,14 @@ public class HTMLReportTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
         ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
+        try {
+            createReport();
+        } finally {
+            ipedCase.close();
+        }
+    }
 
+    private void createReport() throws Exception {
         if (isEnabled() && caseData.containsReport() && info != null) {
 
             String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
@@ -563,6 +577,10 @@ public class HTMLReportTask extends AbstractTask {
 
         EncodedFile arq = EncodedFile.readFile(src, StandardCharsets.UTF_8); //$NON-NLS-1$
         replace(arq.content, "%BOOKMARKS%", sb.toString()); //$NON-NLS-1$
+
+        if (noPortableCase) {
+            arq.content = new StringBuilder(removeSearchHelpLink(arq.content.toString()));
+        }
 
         arq.file = target;
         arq.write();
@@ -999,6 +1017,10 @@ public class HTMLReportTask extends AbstractTask {
             height = thumbSize;
         }
         return ImageUtil.resizeImage(img, width, height);
+    }
+
+    static String removeSearchHelpLink(String contents) {
+        return searchHelpLink.matcher(contents).replaceAll(""); //$NON-NLS-1$
     }
 
     private static void replace(StringBuilder sb, String a, String b) {
