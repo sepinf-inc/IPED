@@ -1,0 +1,15 @@
+# BFAC (Banco Federal de Arquivos Conhecidos) Backend Configuration
+# Configuration for the BFAC backend API client
+
+# Enables BFAC Client
+# It connects to BFAC Server for submitting hashes and files for the BFAC known files database.
+# Default: false
+enableBFACClient = false
+
+# Base URL for the BFAC backend API server
+# Default: https://10.61.86.109:443/
+baseUrl = https://10.61.86.109:443/
+
+# Maximum number of concurrent file uploads
+# Default: 5
+maxConcurrentUploads = 5
