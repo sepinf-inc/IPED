@@ -1,0 +1,4 @@
+fastmcp>=0.5.0
+pyjnius>=1.6.1
+pydantic>=2.0
+python-dotenv>=1.0

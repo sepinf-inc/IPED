@@ -1,0 +1,949 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Complete Technical Documentation</title>
+  <style>
+    :root {
+      --color-primary: #2c3e50;
+      --color-accent: #3498db;
+      --color-success: #2ecc71;
+      --color-warning: #f39c12;
+      --color-danger: #e74c3c;
+      --color-purple: #9b59b6;
+      --color-teal: #1abc9c;
+      --color-orange: #e67e22;
+      --color-bg: #f8f9fa;
+      --color-card: #ffffff;
+      --color-border: #dee2e6;
+      --color-text: #333333;
+      --color-muted: #6c757d;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; line-height: 1.7; color: var(--color-text); max-width: 1100px; margin: 0 auto; padding: 24px; background-color: var(--color-bg); }
+    h1 { color: var(--color-primary); font-size: 2em; border-bottom: 3px solid var(--color-orange); padding-bottom: 10px; }
+    h2 { color: var(--color-primary); font-size: 1.5em; margin-top: 48px; }
+    h3 { color: var(--color-primary); font-size: 1.2em; }
+    .card { background: var(--color-card); border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .callout { border-left: 4px solid; padding: 14px 18px; margin: 16px 0; border-radius: 4px; font-size: 0.95em; }
+    .callout-info { border-color: var(--color-accent); background: #eaf4fd; }
+    .callout-warning { border-color: var(--color-warning); background: #fef9e7; }
+    .callout-success { border-color: var(--color-success); background: #eafaf1; }
+    .callout-danger { border-color: var(--color-danger); background: #fdedec; }
+    code { background: #eef; padding: 2px 6px; border-radius: 3px; font-family: Consolas, "Courier New", monospace; font-size: 0.9em; }
+    pre { background: #2d2d2d; color: #f8f8f2; padding: 16px; border-radius: 6px; overflow-x: auto; font-size: 0.88em; line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th, td { border: 1px solid var(--color-border); padding: 10px 14px; text-align: left; }
+    th { background: #f0f4f8; font-weight: 600; }
+    tr:nth-child(even) { background: #fafbfc; }
+    .component-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 16px 0; }
+    .component-box { padding: 16px; border-left: 5px solid; background: #fdfdfd; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .component-box.view { border-color: var(--color-accent); }
+    .component-box.controller { border-color: var(--color-danger); }
+    .component-box.agent { border-color: var(--color-orange); }
+    .component-box.mcp { border-color: var(--color-purple); }
+    .component-box.external { border-color: var(--color-teal); }
+    .component-box.state { border-color: var(--color-success); }
+    .diagram-container { background: white; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid var(--color-border); margin: 16px 0; }
+    nav#toc { background: #eaf2f8; padding: 18px 22px; border-radius: 8px; margin-bottom: 30px; }
+    nav#toc a { color: var(--color-primary); text-decoration: none; display: inline-block; padding: 3px 0; margin-right: 14px; }
+    nav#toc a:hover { text-decoration: underline; }
+    nav#toc ol { margin: 8px 0 0 0; padding-left: 20px; }
+    nav#toc li { margin-bottom: 2px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: "default", securityLevel: "loose" });</script>
+</head>
+<body>
+
+<h1>Agent Complete Technical Documentation</h1>
+<p style="color: var(--color-muted); font-size: 0.95em;">Internal developer documentation &mdash; IPED AI Agent Module &mdash; July 2026</p>
+
+<nav id="toc">
+  <strong>Table of Contents</strong>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#components">Component Inventory</a></li>
+    <li><a href="#java-integration">Java Integration Layer</a></li>
+    <li><a href="#opencode-cli">opencode CLI</a></li>
+    <li><a href="#mcp-server">MCP Server Architecture</a></li>
+    <li><a href="#mcp-config">MCP Configuration</a></li>
+    <li><a href="#jvm-bridge">JVM Bridge (PyJnius)</a></li>
+    <li><a href="#case-manager">Case Manager</a></li>
+    <li><a href="#mcp-tools">MCP Tools Reference</a></li>
+    <li><a href="#request-lifecycle">Request Lifecycle</a></li>
+    <li><a href="#session-management">Session Management</a></li>
+    <li><a href="#json-lines">JSON-Lines Parsing</a></li>
+    <li><a href="#error-recovery">Error Recovery</a></li>
+    <li><a href="#comparison">Agent vs Chatbot Comparison</a></li>
+    <li><a href="#source-files">Source Files</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<h2 id="overview">1. Overview</h2>
+
+<div class="card">
+<p>The <strong>Agent</strong> is an AI assistant integrated into IPED that communicates with an external <code>opencode</code> CLI process via JSON-Lines over stdin/stdout. It has autonomous access to the IPED case through a <strong>MCP (Model Context Protocol) server</strong> that exposes case data as callable tools.</p>
+
+<p>The agent differs fundamentally from the chatbot in that:</p>
+<ul>
+  <li>The AI model runs <strong>outside</strong> IPED (external process), not as an embedded model</li>
+  <li>The model can <strong>autonomously decide</strong> to call IPED tools (search, bookmark, document access) without user prompting</li>
+  <li>Conversations are <strong>stateless</strong> &mdash; no local persistence, no history summary</li>
+  <li>Each new chat session spawns a fresh <code>opencode</code> process</li>
+</ul>
+
+<div class="callout callout-info">
+<strong>Key concept:</strong> The agent is <em>not</em> a direct API integration. It shells out to <code>opencode.exe</code>, which manages its own LLM provider connections, context, and conversation state. IPED acts as the <strong>orchestrator</strong>, launching the process and parsing its JSON-Lines output.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="architecture">2. Architecture</h2>
+
+<div class="card">
+<p>The agent module is organized in five layers. The Java UI layer routes
+user input to <code>OpenCodeAgentService</code>, which spawns and
+communicates with the external <code>opencode</code> process. opencode
+delegates IPED-specific work to the MCP server, which calls back into
+the Java API through PyJnius.</p>
+
+<div class="diagram-container">
+  <div class="mermaid">
+graph TB
+  subgraph Java["Java / IPED"]
+    subgraph UI["UI Layer"]
+      SP[SidebarPanel]
+      AC[AIAssistantController]
+      CC[AIChatCoordinator]
+    end
+    subgraph Agent["Agent Service"]
+      AS[OpenCodeAgentService]
+      ACV[AgentConversation]
+    end
+    subgraph JavaAPI["IPED Java API"]
+      SR[SearchRequest]
+      IS[IPEDSearcher]
+      IC[IPEDCase]
+    end
+  end
+
+  subgraph External["External Process"]
+    OC[opencode CLI]
+    subgraph MCP["MCP Server (Python)"]
+      MC[case_manager.py]
+      JB[jvm_bridge.py]
+      TL[tools/]
+    end
+  end
+
+  AC --> CC
+  CC --> AS
+  AS -->|stdin JSON| OC
+  OC -->|stdout JSON-Lines| AS
+  AS --> ACV
+  OC -->|MCP stdio| TL
+  TL --> MC
+  MC --> JB
+  JB -->|PyJnius| SR
+  JB -->|PyJnius| IS
+  JB -->|PyJnius| IC
+  </div>
+</div>
+
+<h3>Request flow (simplified)</h3>
+<div class="diagram-container">
+  <div class="mermaid">
+sequenceDiagram
+    participant User
+    participant AC as AIAssistantController
+    participant AS as OpenCodeAgentService
+    participant OC as opencode CLI
+    participant MC as MCP Server
+    participant IPED as IPED Java API
+
+    User->>AC: askQuestion(text)
+    AC->>AS: askAgentQuestion(text, convId, cb)
+    AS->>OC: stdin &larr; JSON command
+    OC->>MC: MCP tool call (e.g. search)
+    MC->>IPED: SearchRequest + IPEDSearcher
+    IPED-->>MC: results
+    MC-->>OC: tool result (JSON)
+    OC-->>AS: stdout &rarr; JSON-Lines
+    AS-->>AC: callback.setAnswer(text)
+    AC-->>User: display response
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="components">3. Component Inventory</h2>
+
+<div class="card">
+
+<table>
+  <tr>
+    <th>Layer</th>
+    <th>Component</th>
+    <th>File</th>
+    <th>Responsibility</th>
+  </tr>
+  <tr>
+    <td rowspan="2"><strong>View</strong></td>
+    <td>SidebarPanel</td>
+    <td><code>SidebarPanel.java</code></td>
+    <td>"New Agent Chat" dropdown, "(Agent)" label</td>
+  </tr>
+  <tr>
+    <td>AIChatPanel</td>
+    <td><code>AIChatPanel.java</code></td>
+    <td>Shared chat panel (same as chatbot)</td>
+  </tr>
+  <tr>
+    <td rowspan="2"><strong>Controller</strong></td>
+    <td>AIAssistantController</td>
+    <td><code>AIAssistantController.java</code></td>
+    <td>Routes to agent via <code>isAgentConversation()</code></td>
+  </tr>
+  <tr>
+    <td>AIChatCoordinator</td>
+    <td><code>AIChatCoordinator.java</code></td>
+    <td>Dispatches via <code>askAgentQuestion()</code></td>
+  </tr>
+  <tr>
+    <td><strong>Agent Service</strong></td>
+    <td>OpenCodeAgentService</td>
+    <td><code>OpenCodeAgentService.java</code></td>
+    <td>Process lifecycle, JSON-Lines parsing, stdin/stdout</td>
+  </tr>
+  <tr>
+    <td rowspan="3"><strong>Model</strong></td>
+    <td>AgentConversation</td>
+    <td><code>AgentConversation.java</code></td>
+    <td>Extends Conversation with <code>sessionId</code></td>
+  </tr>
+  <tr>
+    <td>ConversationManager</td>
+    <td><code>ConversationManager.java</code></td>
+    <td><code>startNewConversation(true)</code> creates agent conv.</td>
+  </tr>
+  <tr>
+    <td>ConversationPersistence</td>
+    <td><code>ConversationPersistence.java</code></td>
+    <td><code>agent_</code> prefix, persists sessionId</td>
+  </tr>
+  <tr>
+    <td><strong>External</strong></td>
+    <td>opencode CLI</td>
+    <td><code>opencode.exe</code></td>
+    <td>LLM provider, MCP tool execution</td>
+  </tr>
+  <tr>
+    <td rowspan="4"><strong>MCP Server</strong></td>
+    <td>main.py</td>
+    <td><code>src/main.py</code></td>
+    <td>Entry point, stdio transport, stdout redirect</td>
+  </tr>
+  <tr>
+    <td>config.py</td>
+    <td><code>src/config.py</code></td>
+    <td>Settings, path resolution</td>
+  </tr>
+  <tr>
+    <td>jvm_bridge.py</td>
+    <td><code>src/jvm_bridge.py</code></td>
+    <td>PyJnius JVM initialization</td>
+  </tr>
+  <tr>
+    <td>case_manager.py</td>
+    <td><code>src/case_manager.py</code></td>
+    <td>IPEDCaseManager (search, items)</td>
+  </tr>
+</table>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="java-integration">4. Java Integration Layer</h2>
+
+<div class="card">
+<h3>4.1 OpenCodeAgentService.java</h3>
+<p>The core service class that manages the <code>opencode</code> process lifecycle and handles all communication.</p>
+
+<div class="callout callout-info">
+<strong>Location:</strong> <code>iped-app/src/main/java/iped/app/ui/ai/agent/OpenCodeAgentService.java</code>
+</div>
+
+<h4>Key Fields</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+  <tr><td><code>process</code></td><td><code>Process</code></td><td>Handle to the running opencode process</td></tr>
+  <tr><td><code>processWriter</code></td><td><code>BufferedWriter</code></td><td>Writes commands to opencode's stdin</td></tr>
+  <tr><td><code>readerThread</code></td><td><code>Thread</code></td><td>Background thread reading stdout JSON-Lines</td></tr>
+  <tr><td><code>chatHistories</code></td><td><code>Map&lt;Integer, List&lt;Message&gt;&gt;</code></td><td>Local chat history per conversation (in-memory only)</td></tr>
+  <tr><td><code>activeCallbacks</code></td><td><code>Map&lt;Integer, MessageCallback&gt;</code></td><td>Tracks active callbacks for streaming responses</td></tr>
+</table>
+
+<h4>Key Methods</h4>
+<table>
+  <tr><th>Method</th><th>Purpose</th></tr>
+  <tr><td><code>askAgentQuestion(text, convId, callback)</code></td><td>Main entry point. Spawns process if needed, sends message, starts reader</td></tr>
+  <tr><td><code>spawn()</code></td><td>Launches <code>opencode.exe</code> as a subprocess with configured arguments</td></tr>
+  <tr><td><code>sendCommand(command)</code></td><td>Writes a JSON command to the process stdin</td></tr>
+  <tr><td><code>readResponse(convId)</code></td><td>Reads JSON-Lines from stdout until a complete response is assembled</td></tr>
+  <tr><td><code>parseJsonLine(line)</code></td><td>Parses a single JSON-Lines entry, extracting text/tool usage</td></tr>
+  <tr><td><code>extractSessionId(line)</code></td><td>Extracts the session ID from opencode's initial response</td></tr>
+  <tr><td><code>stopAgent()</code></td><td>Sends termination command and destroys the process</td></tr>
+</table>
+
+<h3>4.2 AgentConversation.java</h3>
+<div class="callout callout-info">
+<strong>Location:</strong> <code>iped-app/src/main/java/iped/app/ui/ai/model/AgentConversation.java</code>
+</div>
+<p>Extends <code>Conversation</code> with a single additional field:</p>
+<pre>
+public class AgentConversation extends Conversation {
+    private String sessionId;  // opencode session ID for resuming conversations
+    // getter/setter
+}
+</pre>
+<p>The <code>sessionId</code> is extracted from the opencode process output and used to maintain conversation context across multiple questions within the same chat session.</p>
+
+<h3>4.3 Routing Logic</h3>
+<p>In <code>AIAssistantController.java</code>, the method <code>isAgentConversation()</code> checks if the current conversation is an <code>AgentConversation</code> instance. When true:</p>
+<ul>
+  <li><code>AIChatCoordinator.askAgentQuestion()</code> is called instead of the chatbot path</li>
+  <li><code>AgentConversationManager.getAgentConversations()</code> returns only agent-type conversations</li>
+  <li>The sidebar shows "(Agent)" label on agent conversations</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="opencode-cli">5. opencode CLI</h2>
+
+<div class="card">
+<h3>5.1 What is opencode?</h3>
+<p><code>opencode</code> is a command-line AI coding assistant that:</p>
+<ul>
+  <li>Connects to LLM providers (configured via <code>opencode.json</code>)</li>
+  <li>Manages its own conversation context and tool execution</li>
+  <li>Communicates via <strong>JSON-Lines</strong> over stdin/stdout when run in non-interactive mode</li>
+  <li>Supports MCP tool registration for external capabilities</li>
+</ul>
+
+<h3>5.2 How IPED Launches It</h3>
+<p><code>OpenCodeAgentService.spawn()</code> executes:</p>
+<pre>
+opencode.exe --non-interactive --cwd &lt;case-dir&gt;
+</pre>
+<p>Key launch details:</p>
+<ul>
+  <li>The process is started with its working directory set to the <strong>current IPED case directory</strong></li>
+  <li>stdin is configured for writing (PIPE), stdout for reading (PIPE)</li>
+  <li>The process inherits no console window (hidden process)</li>
+  <li>A reader thread is started immediately to process stdout</li>
+</ul>
+
+<h3>5.3 opencode.json Configuration</h3>
+<div class="callout callout-info">
+<strong>Location:</strong> <code>iped-app/resources/scripts/mcp/iped-mcp-server/opencode.json</code>
+</div>
+<p>This configuration file is placed alongside the MCP server and tells opencode:</p>
+<ul>
+  <li><strong>Which LLM provider to use</strong> — e.g., OpenAI, Anthropic, or custom endpoints</li>
+  <li><strong>Which MCP servers to register</strong> — the IPED MCP server with its tool definitions</li>
+  <li><strong>Model settings</strong> — temperature, max tokens, etc.</li>
+</ul>
+
+<div class="callout callout-warning">
+<strong>Important:</strong> The opencode.json is distributed with IPED but the LLM API key must be provided by the user (typically via environment variable or opencode's own configuration).
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="mcp-server">6. MCP Server Architecture</h2>
+
+<div class="card">
+<h3>6.1 Overview</h3>
+<p>The MCP server is a <strong>Python process</strong> that runs inside the opencode process space. It communicates with opencode via <strong>stdio</strong> (stdin/stdout JSON-RPC) and with IPED's Java API via <strong>PyJnius</strong> (Python-Java bridge).</p>
+
+<div class="diagram-container">
+  <div class="mermaid">
+graph TB
+  subgraph opencode["opencode CLI"]
+    OC[opencode]
+  end
+
+  subgraph MCP["MCP Server (Python)"]
+    direction TB
+    MC[main.py<br/>entry point + stdout redirect]
+    CF[config.py<br/>Settings]
+    JB[jvm_bridge.py<br/>PyJnius JVM init]
+    CM[case_manager.py<br/>IPEDCaseManager]
+    subgraph Tools["tools/"]
+      direction LR
+      T1[search.py]
+      T2[documents.py]
+      T3[bookmarks.py]
+      T4[sources.py]
+    end
+  end
+
+  subgraph JavaAPI["IPED Java API"]
+    direction TB
+    SR[SearchRequest]
+    IS[IPEDSearcher]
+    IC[IPEDCase]
+  end
+
+  OC <-->|stdio JSON-RPC| MC
+  MC --> CF
+  MC --> JB
+  MC --> CM
+  T1 --> CM
+  T2 --> CM
+  T3 --> CM
+  T4 --> CM
+  JB -->|PyJnius| SR
+  JB -->|PyJnius| IS
+  JB -->|PyJnius| IC
+  </div>
+</div>
+
+<h3>6.2 main.py — Entry Point</h3>
+<div class="callout callout-info">
+<strong>Location:</strong> <code>iped-app/resources/scripts/mcp/iped-mcp-server/src/main.py</code>
+</div>
+<p>The entry point performs three critical tasks:</p>
+<ol>
+  <li><strong>Redirects stdout</strong> — Before any imports, <code>sys.stdout</code> is re-assigned to <code>sys.stderr</code>. This is essential because MCP uses <strong>stdin/stdout for JSON-RPC protocol</strong>, and any stray print statements would corrupt the protocol. All logging goes to stderr instead.</li>
+  <li><strong>Initializes the JVM</strong> — Calls <code>jvm_bridge.init_jvm()</code> to start the Java Virtual Machine via PyJnius</li>
+  <li><strong>Registers tools and starts the MCP server</strong> — Creates the FastMCP server instance, registers all tool functions, and runs it</li>
+</ol>
+
+<pre>
+import sys
+sys.stdout = sys.stderr  # Critical: redirect stdout for MCP protocol
+
+from config import Settings
+from jvm_bridge import init_jvm
+from case_manager import IPEDCaseManager
+# ... tool imports ...
+
+settings = Settings()
+init_jvm(settings)
+
+server = FastMCP("IPED MCP Server")
+
+@server.tool()
+def search(query: str, ...): ...
+
+# ... register all tools ...
+
+if __name__ == "__main__":
+    server.run()
+</pre>
+
+<h3>6.3 config.py — Settings</h3>
+<div class="callout callout-info">
+<strong>Location:</strong> <code>iped-app/resources/scripts/mcp/iped-mcp-server/src/config.py</code>
+</div>
+<p>The <code>Settings</code> dataclass manages all configuration:</p>
+<table>
+  <tr><th>Field</th><th>Default</th><th>Purpose</th></tr>
+  <tr><td><code>iped_jar_path</code></td><td>auto-detected</td><td>Path to <code>iped.jar</code></td></tr>
+  <tr><td><code>iped_lib_dir</code></td><td>auto-detected</td><td>Path to <code>lib/</code> directory for classpath</td></tr>
+  <tr><td><code>case_path</code></td><td>from env or CWD</td><td>Path to the IPED case directory</td></tr>
+  <tr><td><code>temp_dir</code></td><td><code>temp/iped-mcp</code></td><td>Temporary files directory</td></tr>
+  <tr><td><code>max_results</code></td><td>100</td><td>Default max search results</td></tr>
+  <tr><td><code>jvm_args</code></td><td><code>-Xmx2g</code></td><td>JVM heap configuration</td></tr>
+</table>
+<p>Path resolution follows a priority chain: environment variable → relative to script location → working directory fallback.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="mcp-config">7. MCP Configuration</h2>
+
+<div class="card">
+<h3>7.1 opencode.json — MCP Server Registration</h3>
+<p>The opencode configuration registers the IPED MCP server:</p>
+<pre>
+{
+  "mcpServers": {
+    "iped": {
+      "command": "python",
+      "args": ["src/main.py"],
+      "cwd": "iped-app/resources/scripts/mcp/iped-mcp-server",
+      "env": {
+        "IPED_CASE_PATH": "${IPED_CASE_PATH}"
+      }
+    }
+  }
+}
+</pre>
+
+<div class="callout callout-warning">
+<strong>Environment variable passing:</strong> The <code>IPED_CASE_PATH</code> is injected by <code>OpenCodeAgentService</code> when spawning the process, so the MCP server knows which case to open.
+</div>
+
+<h3>7.2 Tool Declarations</h3>
+<p>Tools are declared via Python decorators in the MCP server. opencode reads these declarations at startup and makes the tools available to the LLM. The LLM then decides when to call each tool based on the user's request.</p>
+<p>Available tools:</p>
+<table>
+  <tr><th>Category</th><th>Tools</th></tr>
+  <tr><td>Search</td><td><code>search</code>, <code>search_by_type</code>, <code>search_by_name</code>, <code>get_searchable_fields</code></td></tr>
+  <tr><td>Documents</td><td><code>get_document</code>, <code>get_document_content</code>, <code>get_document_text</code></td></tr>
+  <tr><td>Bookmarks</td><td><code>list_bookmarks</code>, <code>get_bookmark</code></td></tr>
+  <tr><td>Sources</td><td><code>list_sources</code></td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="jvm-bridge">8. JVM Bridge (PyJnius)</h2>
+
+<div class="card">
+<h3>8.1 How It Works</h3>
+<div class="callout callout-info">
+<strong>Location:</strong> <code>iped-app/resources/scripts/mcp/iped-mcp-server/src/jvm_bridge.py</code>
+</div>
+<p>The JVM bridge uses <strong>PyJnius</strong> (a Python library for accessing Java classes from CPython) to call IPED's Java API directly from Python.</p>
+
+<h4>Initialization Sequence</h4>
+<ol>
+  <li>Configure PyJnius classpath to include <code>iped.jar</code> and all JARs in <code>lib/</code></li>
+  <li>Set JVM arguments (heap size, etc.)</li>
+  <li>Start the JVM via <code>jnius.start_jvm()</code></li>
+  <li>Cache references to key Java classes:
+    <ul>
+      <li><code>SearchRequest</code></li>
+      <li><code>IPEDSearcher</code></li>
+      <li><code>ItemId</code></li>
+      <li><code>IPEDCase</code></li>
+    </ul>
+  </li>
+</ol>
+
+<pre>
+from jnius import autoclass, cast
+
+def init_jvm(settings):
+    classpath = f"{settings.iped_jar_path};{settings.iped_lib_dir}/*"
+    jnius.start_jvm(
+        classpath=classpath,
+        jvmargs=settings.jvm_args.split()
+    )
+    # Cache commonly used classes
+    global SearchRequest, IPEDSearcher, ItemId, IPEDCase
+    SearchRequest = autoclass("iped.search.SearchRequest")
+    IPEDSearcher = autoclass("iped.search.IPEDSearcher")
+    ItemId = autoclass("iped.data.ItemId")
+    IPEDCase = autoclass("iped.config.IPEDCase")
+</pre>
+
+<h3>8.2 Limitations</h3>
+<ul>
+  <li>The JVM is a <strong>singleton</strong> — once started, it cannot be restarted in the same process</li>
+  <li>Thread safety: Java calls from Python must be synchronized if accessing shared IPED state</li>
+  <li>Memory: JVM heap is shared with the MCP server process</li>
+  <li>Class loading: All IPED classes must be on the classpath at JVM init time</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="case-manager">9. Case Manager</h2>
+
+<div class="card">
+<h3>9.1 IPEDCaseManager</h3>
+<div class="callout callout-info">
+<strong>Location:</strong> <code>iped-app/resources/scripts/mcp/iped-mcp-server/src/case_manager.py</code>
+</div>
+<p>The <code>IPEDCaseManager</code> is a Python class that wraps the IPED Java API calls, providing a clean Python interface for the MCP tools.</p>
+
+<h4>Core Capabilities</h4>
+<table>
+  <tr><th>Method</th><th>Purpose</th></tr>
+  <tr><td><code>open_case(case_path)</code></td><td>Opens an IPED case and initializes the case object</td></tr>
+  <tr><td><code>search(query)</code></td><td>Executes a Lucene query, returns list of matching items</td></tr>
+  <tr><td><code>get_item_by_id(item_id)</code></td><td>Retrieves a specific item by its ID</td></tr>
+  <tr><td><code>get_item_children(item_id)</code></td><td>Lists child items of a container</td></tr>
+  <tr><td><code>get_item_text(item_id)</code></td><td>Extracts text content from a document</td></tr>
+</table>
+
+<h4>Search Implementation</h4>
+<pre>
+def search(self, query: str, max_results: int = 100):
+    search_request = SearchRequest()
+    search_request.setQuery(query)
+    search_request.setMaxResults(max_results)
+    
+    searcher = IPEDSearcher(self.case, search_request)
+    results = searcher.search()
+    
+    items = []
+    for item_id in results.getIds():
+        item = self.case.getItem(item_id)
+        items.append({
+            "id": str(item_id),
+            "name": item.getName(),
+            "type": item.getType(),
+            "size": item.getLength(),
+            "path": item.getPath()
+        })
+    return items
+</pre>
+
+<div class="callout callout-warning">
+<strong>Case must be open:</strong> All MCP tools require the case to be initialized. The first call to any tool will trigger <code>open_case()</code> if not already done. The case path is determined from the <code>IPED_CASE_PATH</code> environment variable.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="mcp-tools">10. MCP Tools Reference</h2>
+
+<div class="card">
+
+<h3>10.1 Search Tools</h3>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>search(query, max_results=100)</code></strong><br/>
+Executes a Lucene query against the case. Returns a list of matching items with id, name, type, size, and path.
+<pre>
+# Example LLM tool call
+search(query="*.pdf AND text:fraude")
+# Returns: [{"id": "12345", "name": "doc.pdf", "type": "application/pdf", ...}]
+</pre>
+</div>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>search_by_type(mime_type, max_results=100)</code></strong><br/>
+Searches by MIME type. Useful for filtering to specific file categories.
+<pre>
+search_by_type(mime_type="image/jpeg")
+search_by_type(mime_type="video/mp4")
+</pre>
+</div>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>search_by_name(name, max_results=100)</code></strong><br/>
+Searches by filename (supports wildcards).
+<pre>
+search_by_name(name="*.xlsx")
+search_by_name(name="%relatorio%")
+</pre>
+</div>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>get_searchable_fields()</code></strong><br/>
+Returns a list of all available Lucene fields in the case index. Essential for the LLM to understand what can be queried.
+<pre>
+# Returns: ["name", "ext", "type", "size", "created", "modified", 
+#           "accessed", "path", "content", "hash", ...]
+</pre>
+</div>
+
+<h3>10.2 Document Tools</h3>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>get_document(item_id)</code></strong><br/>
+Returns full metadata for a specific item.
+<pre>
+get_document(item_id="12345")
+# Returns: {id, name, type, size, path, created, modified, ...}
+</pre>
+</div>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>get_document_content(item_id)</code></strong><br/>
+Returns the extracted text content of a document.
+<pre>
+get_document_content(item_id="12345")
+# Returns: "Full text content of the document..."
+</pre>
+</div>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>get_document_text(item_id)</code></strong><br/>
+Similar to get_document_content but may return formatted/structured text.
+</div>
+
+<h3>10.3 Bookmark Tools</h3>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>list_bookmarks()</code></strong><br/>
+Returns all bookmark categories in the case.
+<pre>
+# Returns: [{"name": "Relevant", "count": 15}, {"name": "Suspicious", "count": 8}]
+</pre>
+</div>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>get_bookmark(category)</code></strong><br/>
+Returns all items in a specific bookmark category.
+<pre>
+get_bookmark(category="Relevant")
+# Returns: [{id, name, type, ...}, ...]
+</pre>
+</div>
+
+<h3>10.4 Source Tools</h3>
+
+<div class="component-box mcp" style="margin-bottom: 16px;">
+<strong><code>list_sources()</code></strong><br/>
+Returns all evidence sources in the case.
+<pre>
+# Returns: [{"name": "disk.E01", "type": "disk", "path": "/evidence/disk.E01"}]
+</pre>
+</div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="request-lifecycle">11. Request Lifecycle</h2>
+
+<div class="card">
+<h3>11.1 First Question (no session)</h3>
+<div class="diagram-container">
+  <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant AC as AIAssistantController
+    participant AS as OpenCodeAgentService
+    participant OC as opencode CLI
+    participant MC as MCP Server
+    participant IPED as IPED Java API
+
+    U->>AC: askQuestion(text)
+    AC->>AS: askAgentQuestion(text, convId, cb)
+    Note over AS: process == null → spawn()
+    AS->>OC: stdin &larr; {message, no sessionId}
+    OC->>MC: MCP: init_jvm() + tool call
+    MC->>IPED: SearchRequest + IPEDSearcher
+    IPED-->>MC: results
+    MC-->>OC: tool result JSON
+    OC-->>AS: stdout &rarr; text + sessionId
+    Note over AS: extractSessionId() → persist
+    AS-->>AC: callback.setAnswer(text)
+    AC-->>U: display response
+  </div>
+</div>
+
+<h3>11.2 Follow-up Question (session exists)</h3>
+<div class="diagram-container">
+  <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant AC as AIAssistantController
+    participant AS as OpenCodeAgentService
+    participant OC as opencode CLI
+    participant MC as MCP Server
+    participant IPED as IPED Java API
+
+    U->>AC: askQuestion(text)
+    AC->>AS: askAgentQuestion(text, convId, cb)
+    Note over AS: process running, sessionId loaded
+    AS->>OC: stdin &larr; {message, sessionId}
+    OC->>MC: MCP: tool call (if needed)
+    MC->>IPED: SearchRequest
+    IPED-->>MC: results
+    MC-->>OC: tool result JSON
+    OC-->>AS: stdout &rarr; JSON-Lines
+    AS-->>AC: callback.setAnswer(text)
+    AC-->>U: display response
+  </div>
+</div>
+
+<h3>11.3 Command Format</h3>
+<p>Messages sent to opencode's stdin follow this JSON structure:</p>
+<pre>
+{
+  "command": "chat",
+  "message": "What emails mention 'confidential'?",
+  "sessionId": "abc123-def456"       // null on first question
+}
+</pre>
+
+<h3>11.4 Response Format</h3>
+<p>opencode outputs JSON-Lines on stdout. Each line is a separate JSON object:</p>
+<pre>
+{"type":"text","content":"I found 5 emails mentioning "}
+{"type":"text","content":"'confidential'. Here are the results:"}
+{"type":"tool_use","name":"search","args":{"query":"confidential"}}
+{"type":"tool_result","content":"[5 results found]"}
+{"type":"text","content":"The most relevant email is..."}
+</pre>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="session-management">12. Session Management</h2>
+
+<div class="card">
+<h3>12.1 Session ID Lifecycle</h3>
+<ol>
+  <li><strong>First question:</strong> <code>OpenCodeAgentService</code> sends the question without a session ID. opencode creates a new session and returns the session ID in its initial response.</li>
+  <li><strong>Session ID extraction:</strong> <code>extractSessionId()</code> parses the opencode output to find the session ID. It is stored in <code>AgentConversation.sessionId</code>.</li>
+  <li><strong>Subsequent questions:</strong> The session ID is included in each command, allowing opencode to maintain conversation context.</li>
+  <li><strong>Persistence:</strong> Session ID is persisted with the conversation via <code>ConversationPersistence</code> (saved in the <code>agent_</code> prefixed properties file).</li>
+</ol>
+
+<h3>12.2 Local Chat History</h3>
+<p>Despite conversations being stateless on the opencode side, <code>OpenCodeAgentService</code> maintains a <strong>local chat history</strong> in-memory:</p>
+<pre>
+Map&lt;Integer, List&lt;Message&gt;&gt; chatHistories = new ConcurrentHashMap&lt;&gt;();
+</pre>
+<p>This allows the UI to display the full conversation history even after opencode's session state is lost.</p>
+
+<h3>12.3 Process Lifecycle</h3>
+<table>
+  <tr><th>Event</th><th>Action</th></tr>
+  <tr><td>User asks first question</td><td>Spawn opencode process</td></tr>
+  <tr><td>User asks follow-up</td><td>Reuse existing process (if running)</td></tr>
+  <tr><td>User clicks "New Agent Chat"</td><td>Stop old process, spawn new one</td></tr>
+  <tr><td>User switches between conversations</td><td>Stop current process, spawn new one for target conversation</td></tr>
+  <tr><td>IPED shutdown</td><td>Destroy all opencode processes</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="json-lines">13. JSON-Lines Parsing</h2>
+
+<div class="card">
+<h3>13.1 parseJsonLine()</h3>
+<p>The <code>parseJsonLine(line)</code> method processes each line of output from opencode:</p>
+<ol>
+  <li>Trim whitespace and skip empty lines</li>
+  <li>Parse JSON using a JSON library (e.g., Jackson or Gson)</li>
+  <li>Check the <code>type</code> field to determine the message type:
+    <ul>
+      <li><code>"text"</code> — Extract <code>content</code> field, append to response buffer</li>
+      <li><code>"tool_use"</code> — Log the tool call (tool name + args), optionally display in UI</li>
+      <li><code>"tool_result"</code> — Log the tool result, may append summary to response</li>
+      <li><code>"session_id"</code> — Extract and store the session ID</li>
+      <li><code>"error"</code> — Handle error messages</li>
+    </ul>
+  </li>
+</ol>
+
+<h3>13.2 Response Assembly</h3>
+<p>Text fragments are accumulated in a <code>StringBuilder</code> until the process signals completion (EOF or a terminal marker). The assembled text is then passed to the callback as the final answer.</p>
+
+<div class="callout callout-info">
+<strong>Streaming support:</strong> The callback can receive partial text updates as they arrive, enabling real-time display of the agent's response (similar to chatbot streaming).
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="error-recovery">14. Error Recovery</h2>
+
+<div class="card">
+<h3>14.1 Process Crash Recovery</h3>
+<p>If the opencode process crashes or exits unexpectedly:</p>
+<ol>
+  <li>The reader thread detects EOF on stdout</li>
+  <li><code>activeCallbacks</code> is checked — any pending callback receives an error message</li>
+  <li>The process reference is set to <code>null</code></li>
+  <li>On the next question, <code>spawn()</code> is called again automatically</li>
+</ol>
+
+<h3>14.2 MCP Server Failure</h3>
+<p>If the MCP server (Python process) fails to start or crashes:</p>
+<ul>
+  <li>opencode will report the MCP server as unavailable</li>
+  <li>The LLM will respond without tool access (general knowledge only)</li>
+  <li>IPED logs the error but does not crash</li>
+</ul>
+
+<h3>14.3 JVM Initialization Failure</h3>
+<div class="callout callout-danger">
+<strong>Critical error:</strong> If PyJnius cannot start the JVM (e.g., IPED JARs not found, incompatible Java version), the MCP server will fail to initialize. The error is logged to stderr, and opencode reports the tools as unavailable.
+</div>
+
+<h3>14.4 Communication Errors</h3>
+<table>
+  <tr><th>Error Type</th><th>Detection</th><th>Recovery</th></tr>
+  <tr><td>Invalid JSON</td><td>JSON parse exception in <code>parseJsonLine()</code></td><td>Log warning, skip line, continue reading</td></tr>
+  <tr><td>Stdin write failure</td><td>IOException when writing to process</td><td>Kill process, spawn new one on next request</td></tr>
+  <tr><td>Stdin closed (process exited)</td><td>Broken pipe error</td><td>Same as crash recovery</td></tr>
+  <tr><td>Timeout</td><td>No output for extended period</td><td>Configurable timeout, kill and restart</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="comparison">15. Agent vs Chatbot Comparison</h2>
+
+<div class="card">
+<table>
+  <tr><th>Aspect</th><th>Chatbot</th><th>Agent</th></tr>
+  <tr><td><strong>AI Model</strong></td><td>Embedded (local inference)</td><td>External (opencode CLI → cloud/local LLM)</td></tr>
+  <tr><td><strong>Tool Access</strong></td><td>None — user must manually search</td><td>Autonomous MCP tools (search, bookmarks, docs)</td></tr>
+  <tr><td><strong>Conversation State</strong></td><td>Persistent — saved to disk, summary on overflow</td><td>Stateless — fresh process per conversation</td></tr>
+  <tr><td><strong>History Management</strong></td><td>Full persistence, summary extraction</td><td>In-memory only, session ID in opencode</td></tr>
+  <tr><td><strong>Startup</strong></td><td>Immediate (model loaded once)</td><td>Spawns opencode process on first question</td></tr>
+  <tr><td><strong>Resource Usage</strong></td><td>GPU/CPU for local model</td><td>Process memory + network (for cloud LLMs)</td></tr>
+  <tr><td><strong>Independence</strong></td><td>Relies on user to provide context via search</td><td>Can autonomously explore the case</td></tr>
+  <tr><td><strong>Error Handling</strong></td><td>Model inference errors, timeout</td><td>Process crashes, MCP failures, JVM issues</td></tr>
+  <tr><td><strong>Configuration</strong></td><td>IPED settings (model path, params)</td><td>opencode.json + MCP server config</td></tr>
+  <tr><td><strong>Conversation ID Prefix</strong></td><td>none</td><td><code>agent_</code></td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="source-files">16. Source Files</h2>
+
+<div class="card">
+<h3>16.1 Java Files</h3>
+<table>
+  <tr><th>File</th><th>Path</th></tr>
+  <tr><td><code>OpenCodeAgentService.java</code></td><td><code>iped-app/src/main/java/iped/app/ui/ai/agent/</code></td></tr>
+  <tr><td><code>AgentConversation.java</code></td><td><code>iped-app/src/main/java/iped/app/ui/ai/model/</code></td></tr>
+  <tr><td><code>AIAssistantController.java</code></td><td><code>iped-app/src/main/java/iped/app/ui/ai/controller/</code></td></tr>
+  <tr><td><code>AIChatCoordinator.java</code></td><td><code>iped-app/src/main/java/iped/app/ui/ai/</code></td></tr>
+  <tr><td><code>SidebarPanel.java</code></td><td><code>iped-app/src/main/java/iped/app/ui/ai/view/</code></td></tr>
+  <tr><td><code>ConversationManager.java</code></td><td><code>iped-app/src/main/java/iped/app/ui/ai/context/</code></td></tr>
+  <tr><td><code>ConversationPersistence.java</code></td><td><code>iped-app/src/main/java/iped/app/ui/ai/util/</code></td></tr>
+</table>
+
+<h3>16.2 Python Files</h3>
+<table>
+  <tr><th>File</th><th>Path</th></tr>
+  <tr><td><code>main.py</code></td><td><code>iped-app/resources/scripts/mcp/iped-mcp-server/src/</code></td></tr>
+  <tr><td><code>config.py</code></td><td><code>iped-app/resources/scripts/mcp/iped-mcp-server/src/</code></td></tr>
+  <tr><td><code>jvm_bridge.py</code></td><td><code>iped-app/resources/scripts/mcp/iped-mcp-server/src/</code></td></tr>
+  <tr><td><code>case_manager.py</code></td><td><code>iped-app/resources/scripts/mcp/iped-mcp-server/src/</code></td></tr>
+  <tr><td><code>search.py</code></td><td><code>iped-app/resources/scripts/mcp/iped-mcp-server/src/tools/</code></td></tr>
+  <tr><td><code>documents.py</code></td><td><code>iped-app/resources/scripts/mcp/iped-mcp-server/src/tools/</code></td></tr>
+  <tr><td><code>bookmarks.py</code></td><td><code>iped-app/resources/scripts/mcp/iped-mcp-server/src/tools/</code></td></tr>
+  <tr><td><code>sources.py</code></td><td><code>iped-app/resources/scripts/mcp/iped-mcp-server/src/tools/</code></td></tr>
+</table>
+
+<h3>16.3 Configuration Files</h3>
+<table>
+  <tr><th>File</th><th>Path</th></tr>
+  <tr><td><code>opencode.json</code></td><td><code>iped-app/resources/scripts/mcp/iped-mcp-server/</code></td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="conclusion">17. Conclusion</h2>
+
+<div class="card">
+<p>The IPED Agent module provides a powerful AI assistant that can <strong>autonomously explore forensic cases</strong> through MCP tool integration. Unlike the chatbot (which requires the user to manually provide context), the agent can independently search for evidence, examine documents, and build understanding of the case.</p>
+
+<p>Key architectural decisions:</p>
+<ul>
+  <li><strong>External process isolation:</strong> The LLM runs in a separate process (opencode), preventing AI-related crashes from affecting IPED's stability</li>
+  <li><strong>MCP standard:</strong> Using the Model Context Protocol ensures the tool interface is well-defined and could be used with other MCP-compatible AI assistants</li>
+  <li><strong>JVM bridge:</strong> PyJnius allows direct access to IPED's Java API without reimplementing case access in Python</li>
+  <li><strong>Stateless design:</strong> Each conversation is independent, simplifying process management at the cost of conversation persistence</li>
+</ul>
+
+<div class="callout callout-success">
+<strong>For developers:</strong> When modifying agent behavior, focus on <code>OpenCodeAgentService.java</code> for process management and JSON-Lines parsing, and on the Python MCP server files for tool behavior. The Java controller layer (<code>AIAssistantController</code>, <code>AIChatCoordinator</code>) handles routing and is rarely modified.
+</div>
+</div>
+
+</body>
+</html>
