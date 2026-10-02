@@ -17,8 +17,8 @@ a span {
 }
 
 video {
-	max-width:400px;
-	max-height:400px;
+	max-width:360px;
+	max-height:360px;
 	margin-top:6px;
 }
 
@@ -364,8 +364,8 @@ div:target {
 }
 
 .quoteImg {
-	max-width:100px;
-	max-height:80px;
+	max-width:90px;
+	max-height:70px;
 	padding:3px;
 }
 
