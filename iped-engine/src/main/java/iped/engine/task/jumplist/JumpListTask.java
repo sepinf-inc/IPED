@@ -26,6 +26,10 @@ public class JumpListTask extends AbstractTask {
     private static final String AUTOMATIC_DESTINATIONS_SUFIX = ".automaticDestinations-ms";
     private static final String CUSTOM_DESTINATIONS_SUFIX = ".customDestinations-ms";
 
+    // the AppID is a 64-bit hash written in hexadecimal
+    private static final String APP_ID_VALID_CHARS = "0123456789abcdef";
+    private static final int APP_ID_MAX_LENGTH = 16;
+
     public static final String JUMPLIST_META_PREFIX = "jumpList:";
     public static final String JUMPLIST_APP_ID = JUMPLIST_META_PREFIX + "appID";
     public static final String JUMPLIST_APP_NAME = JUMPLIST_META_PREFIX + "appName";
@@ -60,7 +64,8 @@ public class JumpListTask extends AbstractTask {
      * Extracts the AppID from the name of a jump list file, e.g.
      * "5d696d521de238c3.automaticDestinations-ms" returns "5d696d521de238c3".
      *
-     * @return the AppID in lower case or null if it is not a jump list file name.
+     * @return the AppID in lower case or null if it is not a jump list file name or
+     *         if its AppID is not a hexadecimal number.
      */
     static String getAppIDFromFileName(String fileName) {
 
@@ -69,7 +74,12 @@ public class JumpListTask extends AbstractTask {
         }
         String appID = StringUtils.removeEnd(fileName, AUTOMATIC_DESTINATIONS_SUFIX);
         appID = StringUtils.removeEnd(appID, CUSTOM_DESTINATIONS_SUFIX);
-        return appID.toLowerCase();
+        appID = appID.toLowerCase();
+
+        if (appID.isEmpty() || appID.length() > APP_ID_MAX_LENGTH || !StringUtils.containsOnly(appID, APP_ID_VALID_CHARS)) {
+            return null;
+        }
+        return appID;
     }
 
     private void processAutomaticDestinationsEntry(IItem evidence) {
