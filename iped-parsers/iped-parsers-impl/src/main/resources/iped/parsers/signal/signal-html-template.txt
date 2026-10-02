@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+${css}
+</style>
+</head>
+<body>
+<div class="chat-container">
+<div class="chat-header">${title}</div>
+<div class="messages">
+${messages}
+</div>
+</div>
+<script>${javascript}</script>
+</body>
+</html>
