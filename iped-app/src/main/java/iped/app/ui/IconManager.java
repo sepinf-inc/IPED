@@ -52,8 +52,10 @@ public class IconManager {
 
     private static final Map<String, QualityIcon> catIconMap = loadIconsFromJar("cat", initialSizes[0]);
     private static final Map<String, QualityIcon> filterIconMap = loadIconsFromJar("filter", initialSizes[0]);
-    private static final Map<String, QualityIcon> filterSmallIconMap = loadIconsFromJar("filter", smallSize(initialSizes[0]));
-    private static final Map<String, QualityIcon> filterDisabledIconMap = loadIconsFromJar("filter", initialSizes[0], false);
+    private static final Map<String, QualityIcon> filterSmallIconMap = loadIconsFromJar("filter",
+            smallSize(initialSizes[0]));
+    private static final Map<String, QualityIcon> filterDisabledIconMap = loadIconsFromJar("filter", initialSizes[0],
+            false);
 
     private static final Map<String, QualityIcon> extIconMap = loadIconsFromJar("file", currentIconSize);
     private static final Map<String, QualityIcon> treeIconMap = loadIconsFromJar("tree", currentIconSize);
@@ -87,11 +89,13 @@ public class IconManager {
                         if (e == null) {
                             break;
                         }
-                        String path = IconManager.class.getName().toString().replace(".", separator).replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
+                        String path = IconManager.class.getName().toString().replace(".", separator)
+                                .replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
-                            BufferedImage img = ImageIO.read(IconManager.class.getResource(iconPath + separator + name));
+                            BufferedImage img = ImageIO
+                                    .read(IconManager.class.getResource(iconPath + separator + name));
                             QualityIcon icon = new QualityIcon(img, size, enabled);
                             map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), icon);
                         }
@@ -141,7 +145,8 @@ public class IconManager {
         return getFileIcon(mimeType, extension, mimeIconMap, extIconMap, defaultIcon);
     }
 
-    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap, Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
+    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap,
+            Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
         if (mimeType != null && !mimeType.isBlank()) {
             Icon icon = mimeIconMap.get(mimeType.strip());
             if (icon != null) {
@@ -299,6 +304,17 @@ public class IconManager {
         icon = availableIconsMap.get("facebook");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-facebook", icon);
+            mimeIconMap.put("application/x-paraben-facebook-settings", icon);
+            mimeIconMap.put("application/x-paraben-facebook-settings-recovered", icon);
+            mimeIconMap.put("application/x-paraben-facebook-recovered-conversations", icon);
+            mimeIconMap.put("application/x-facebook-chat", icon);
+            mimeIconMap.put("application/x-paraben-facebook-messenger-message", icon);
+            mimeIconMap.put("application/x-paraben-facebook-messenger-chat-html", icon);
+            mimeIconMap.put("application/x-paraben-fb-setting", icon);
+            mimeIconMap.put("application/x-paraben-fb-recovered-settings", icon);
+            mimeIconMap.put("application/x-paraben-fb-current-settings", icon);
+            mimeIconMap.put("application/x-paraben-facebook-account", icon);
+            mimeIconMap.put("application/x-facebook-recovered-blob", icon);
         }
 
         icon = availableIconsMap.get("signal");
@@ -361,6 +377,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-simdata", icon);
             mimeIconMap.put("application/x-ufed-html-simdata", icon);
             mimeIconMap.put("application/x-ufed-html-summary", icon);
+            mimeIconMap.put("application/x-paraben-device", icon);
         }
 
         icon = availableIconsMap.get("location");
@@ -388,6 +405,7 @@ public class IconManager {
             mimeIconMap.put("application/outlook-contact", icon);
             mimeIconMap.put("contact/x-skype-account", icon);
             mimeIconMap.put("contact/x-skype-contact", icon);
+            mimeIconMap.put("application/x-paraben-contact", icon);
         }
 
         icon = availableIconsMap.get("user-telegram");
@@ -423,6 +441,8 @@ public class IconManager {
             mimeIconMap.put("application/x-ios-calllog-db", icon);
             mimeIconMap.put("application/x-ios8-calllog-db", icon);
             mimeIconMap.put("call/x-discord-call", icon);
+            mimeIconMap.put("application/x-paraben-call-history", icon);
+            mimeIconMap.put("application/x-paraben-call", icon);
         }
 
         icon = availableIconsMap.get("web");
@@ -463,6 +483,7 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/vnd.android.package-archive", icon);
             mimeIconMap.put("application/x-ufed-installedapplication", icon);
+            mimeIconMap.put("application/x-paraben-app", icon);
         }
 
         icon = availableIconsMap.get("network");
@@ -475,6 +496,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-appsusagelog", icon);
             mimeIconMap.put("application/x-ufed-applicationusage", icon);
             mimeIconMap.put("application/x-ufed-deviceevent", icon);
+            mimeIconMap.put("application/x-paraben-timeline", icon);
         }
 
         icon = availableIconsMap.get("attachment");
@@ -601,6 +623,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-html-sms", icon);
             mimeIconMap.put("application/x-ufed-sms", icon);
             mimeIconMap.put("application/x-ios-sms-db", icon);
+            mimeIconMap.put("application/x-paraben-message", icon);
         }
 
         icon = availableIconsMap.get("wireless");
@@ -728,6 +751,11 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-mobilecard", icon);
         }
 
+        icon = availableIconsMap.get("paraben");
+        if (icon != null) {
+            mimeIconMap.put("application/x-paraben-info", icon);
+        }
+
         return mimeIconMap;
     }
 
@@ -774,7 +802,7 @@ public class IconManager {
     public static int getIconSize() {
         return currentIconSize;
     }
-    
+
     private static int smallSize(int size) {
         return (size - 16) / 4 + 16;
     }
