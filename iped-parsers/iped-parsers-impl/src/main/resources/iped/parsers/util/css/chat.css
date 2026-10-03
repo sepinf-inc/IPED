@@ -551,14 +551,15 @@ div:target {
 }
 
 #conversation .systemmessage {
+	font-size:90%;
 	cursor:pointer;
-	border-radius:4px;
+	border-radius:6px;
 	box-shadow:0 0 6px #a7a7a7;
 	display:block;
-	padding:8px 8px 20px 8px;
-	background-color:#f7f787;
+	padding:4px 6px 18px 6px;
+	background-color:#f7f7A0;
 	color:#444400;
-	margin:4px 2px 4px 3px;
+	margin:3px 2px 3px 3px;
 	text-align:center;
 }
 
