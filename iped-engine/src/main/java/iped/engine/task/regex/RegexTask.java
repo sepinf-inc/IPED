@@ -6,13 +6,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,7 +60,15 @@ public class RegexTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(RegexTask.class);
 
-    private static final File cacheFile = new File(System.getProperty("user.home"), ".iped/regexAutomata.cache");
+    private final File cacheFile;
+
+    public RegexTask() {
+        this(new File(System.getProperty("user.home"), ".iped/regexAutomata.cache"));
+    }
+
+    RegexTask(File cacheFile) {
+        this.cacheFile = cacheFile;
+    }
 
     private static List<Regex> regexList;
 
@@ -208,8 +217,12 @@ public class RegexTask extends AbstractTask {
                 regexFull = new Regex("FULL", automata); //$NON-NLS-1$
                 logger.info("Created the unique automaton for all regexes.");
 
-                writeCache(regexConfig, exportConfig);
-                logger.info("Regex cache saved to {}", cacheFile.getAbsolutePath());
+                try {
+                    writeCache(regexConfig, exportConfig);
+                    logger.info("Regex cache saved to {}", cacheFile.getAbsolutePath());
+                } catch (IOException | RuntimeException | StackOverflowError e) {
+                    logger.warn("Could not save regex cache to {}; continuing without it", cacheFile, e);
+                }
             }
 
             initValidators(new File(output, "scripts"));
@@ -217,43 +230,85 @@ public class RegexTask extends AbstractTask {
 
     }
 
+    byte[] serializeCache(Object value) {
+        return fastSerializer.asByteArray(value);
+    }
+
     private void writeCache(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig) throws IOException {
-        cacheFile.getParentFile().mkdirs();
-        try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFile));
-                DataOutputStream dos = new DataOutputStream(bos)) {
-            byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
-            byte[] list = fastSerializer.asByteArray(regexList);
-            byte[] full = fastSerializer.asByteArray(regexFull);
-            dos.write(md5);
-            dos.writeInt(list.length);
-            dos.write(list);
-            dos.writeInt(full.length);
-            dos.write(full);
+        Path target = cacheFile.toPath().toAbsolutePath();
+        Files.createDirectories(target.getParent());
+        Path temporary = Files.createTempFile(target.getParent(), "regexAutomata-", ".tmp");
+        try {
+            try (DataOutputStream dos = new DataOutputStream(
+                    new BufferedOutputStream(Files.newOutputStream(temporary)))) {
+                byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
+                byte[] list = serializeCache(regexList);
+                byte[] full = serializeCache(regexFull);
+                dos.write(md5);
+                dos.writeInt(list.length);
+                dos.write(list);
+                dos.writeInt(full.length);
+                dos.write(full);
+            }
+            // This cache is optional: if atomic replacement is unsupported, keep the old cache.
+            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            try {
+                Files.deleteIfExists(temporary);
+            } catch (IOException e) {
+                logger.warn("Could not remove temporary regex cache {}", temporary, e);
+            }
         }
     }
 
-    private boolean loadCache(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig)
-            throws IOException, ClassNotFoundException {
+    @SuppressWarnings("unchecked")
+    private boolean loadCache(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig) {
         if (!cacheFile.exists()) {
             return false;
         }
-        try (DataInputStream dis = new DataInputStream(
-                new BufferedInputStream(Files.newInputStream(cacheFile.toPath())))) {
-            byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
-            byte[] cacheMd5 = new byte[16];
-            dis.readFully(cacheMd5);
-            if (!new String(md5).equals(new String(cacheMd5))) {
-                return false;
+        try {
+            List<Regex> loadedList;
+            Regex loadedFull;
+            try (DataInputStream dis = new DataInputStream(
+                    new BufferedInputStream(Files.newInputStream(cacheFile.toPath())))) {
+                long size = Files.size(cacheFile.toPath());
+                byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
+                byte[] cacheMd5 = new byte[16];
+                dis.readFully(cacheMd5);
+                if (!Arrays.equals(md5, cacheMd5)) {
+                    return false;
+                }
+                // Bound both allocations by the file size, excluding the digest and length fields.
+                int listLen = dis.readInt();
+                if (listLen < 0 || listLen > size - 24) {
+                    throw new IOException("Invalid regex list cache length: " + listLen);
+                }
+                byte[] list = new byte[listLen];
+                dis.readFully(list);
+                loadedList = (List<Regex>) fastSerializer.asObject(list);
+                int fullLen = dis.readInt();
+                if (fullLen < 0 || fullLen > size - 24 - listLen) {
+                    throw new IOException("Invalid combined regex cache length: " + fullLen);
+                }
+                byte[] full = new byte[fullLen];
+                dis.readFully(full);
+                loadedFull = (Regex) fastSerializer.asObject(full);
+                if (loadedList == null || loadedFull == null || loadedFull.pattern == null) {
+                    throw new IOException("Incomplete regex cache");
+                }
+                for (Regex regex : loadedList) {
+                    if (regex == null || regex.pattern == null) {
+                        throw new IOException("Incomplete regex list cache");
+                    }
+                }
             }
-            int listLen = dis.readInt();
-            byte[] list = new byte[listLen];
-            dis.readFully(list);
-            regexList = (List<Regex>) fastSerializer.asObject(list);
-            int fullLen = dis.readInt();
-            byte[] full = new byte[fullLen];
-            dis.readFully(full);
-            regexFull = (Regex) fastSerializer.asObject(full);
+            // Never publish half a cache if reading or deserializing the second part fails.
+            regexList = loadedList;
+            regexFull = loadedFull;
             return true;
+        } catch (IOException | RuntimeException | StackOverflowError e) {
+            logger.warn("Could not load regex cache from {}; rebuilding it", cacheFile, e);
+            return false;
         }
     }
 
