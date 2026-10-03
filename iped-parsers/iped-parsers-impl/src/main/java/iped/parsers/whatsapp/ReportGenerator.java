@@ -1009,15 +1009,16 @@ public class ReportGenerator {
                                 }
                                 String transcription = mediaItem.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
                                 if (transcription != null) {
-                                    out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
+                                    out.print("<span class=\"title\">");
+                                    out.print(Messages.getString("ReportGenerator.TranscriptionTitle"));
                                     String confidence = mediaItem.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR);
                                     if (confidence != null) {
                                         float score = Float.valueOf(confidence) * 100;
-                                        out.print(" [" + (int) score + "%]"); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.print(" [" + (int) score + "%]");
                                     }
-                                    out.println(": <i>"); //$NON-NLS-1$
-                                    out.println(format(transcription));
-                                    out.println("</i><br>"); //$NON-NLS-1$
+                                    out.print(": </span><i>");
+                                    out.print(format(transcription));
+                                    out.println("</i><br>");
                                 }
                             } else {
                                 if (thumb != null) {

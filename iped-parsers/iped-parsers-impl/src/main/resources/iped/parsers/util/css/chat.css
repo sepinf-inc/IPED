@@ -299,6 +299,11 @@ span.duration {
 	text-decoration:none;
 }
 
+span.title {
+	font-size:80%;
+	color:#888888;
+}
+
 span.info {
 	font-size:80%;
 	color:#777777;
