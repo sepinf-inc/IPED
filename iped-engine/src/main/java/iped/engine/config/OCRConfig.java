@@ -47,11 +47,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
 
         String value = properties.getProperty("enableOCR"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
-            if (Boolean.valueOf(value.trim())) {
-                enableOCR = true;
-            } else if (enableOCR == null) {
-                enableOCR = false;
-            }
+            enableOCR = Boolean.valueOf(value.trim());
         } else if (enableOCR == null) {
             enableOCR = false;
         }
