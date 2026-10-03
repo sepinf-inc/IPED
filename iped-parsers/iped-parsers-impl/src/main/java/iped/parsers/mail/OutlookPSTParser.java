@@ -39,6 +39,7 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
@@ -69,6 +70,7 @@ import com.pff.PSTFolder;
 import com.pff.PSTMessage;
 import com.pff.PSTObject;
 import com.pff.PSTRecipient;
+import com.pff.PSTTimeZone;
 
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
@@ -407,11 +409,23 @@ public class OutlookPSTParser extends AbstractParser {
             String name = method.getName();
             if (name.startsWith("get") && !name.equals("getRTFBody")) { //$NON-NLS-1$ //$NON-NLS-2$
                 name = name.substring(3);
-                Object value = method.invoke(obj);
-                if (value != null && !value.toString().trim().isEmpty())
+                String value = formatValue(method.invoke(obj));
+                if (value != null && !value.trim().isEmpty())
                     preview.append(name + ": " + value + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
+    }
+
+    private String formatValue(Object value) {
+        if (value == null)
+            return null;
+        if (value instanceof byte[])
+            return Hex.encodeHexString((byte[]) value);
+        if (value instanceof Object[])
+            return Arrays.stream((Object[]) value).map(this::formatValue).collect(Collectors.joining(", ")); //$NON-NLS-1$
+        if (value instanceof PSTTimeZone)
+            return ((PSTTimeZone) value).getName();
+        return value.toString();
     }
 
     private class MethodComarator implements Comparator<Method> {
