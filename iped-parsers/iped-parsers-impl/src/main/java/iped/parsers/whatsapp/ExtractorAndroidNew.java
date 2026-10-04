@@ -784,7 +784,10 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     m.setVcards(Arrays.asList(new String[] { ChatUtil.getUTF8String(rs, "vcard") }));
                 }
 
-                byte[] thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$
+                byte[] thumbData = rs.getBytes("thumbData");
+                if (thumbData == null) {
+                    thumbData = rs.getBytes("textThumb");
+                }
 
                 if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
                     m.setMessageType(UNBLOCKED_CONTACT);
@@ -1339,18 +1342,29 @@ public abstract class ExtractorAndroidNew extends Extractor {
         String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_quoted_media", "media_caption")
                 ? "mm.media_caption"
                 : "null";
-        String editCol = "null as edit_row_id,";
+
+        String editCol = "null";
         String editTableJoin = "";
         if (SQLite3DBParser.containsTable("message_edit_info", conn)) {
-            editCol = "mei.message_row_id as edit_row_id,";
+            editCol = "mei.message_row_id";
             editTableJoin = " left join message_edit_info mei on mei.original_key_id=mq.key_id";
-        }                
+        }
+
+        String textThumbCol = "null";
+        String textTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_quoted_text", conn)) {
+            textThumbCol = "mqt.thumbnail";
+            textTableJoin = " left join message_quoted_text mqt on mqt.message_row_id=mq.message_row_id";
+        }
+
         return "select mq.message_row_id as id,mq.chat_row_id as chatId, chatJid.raw_string as remoteId,"
                 + " jid.raw_string as remoteResource, mv.vcard, mq.text_data, mq.parent_message_chat_row_id,"
                 + " mq.from_me as fromMe, mq.timestamp as timestamp, message_url as mediaUrl,"
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName,"
                 + " mq.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
-                + " as mediaCaption, mm.file_hash as mediaHash, mm.thumbnail as thumbData, " + editCol
+                + " as mediaCaption, mm.file_hash as mediaHash, mm.thumbnail as thumbData, " 
+                + " " + editCol + " as edit_row_id,"
+                + " " + textThumbCol + " as textThumb,"
                 + " mq.key_id as uuid"
                 + " from message_quoted mq"
                 + " left join chat on mq.chat_row_id=chat._id"
@@ -1359,6 +1373,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 + " left join jid on jid._id=mq.sender_jid_row_id"
                 + " left join message_quoted_location ml on mq.message_row_id=ml.message_row_id"
                 + " left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id"
+                + textTableJoin
                 + editTableJoin;
     }
 
