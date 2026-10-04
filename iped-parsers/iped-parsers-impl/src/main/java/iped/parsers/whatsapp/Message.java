@@ -56,6 +56,8 @@ public class Message implements Comparable<Message> {
     private double longitude;
     private List<String> vcards;
     private String url;
+    private String title;
+    private String description;
     private String thumbpath;
     private int duration;
     private MessageStatus messageStatus;
@@ -686,6 +688,22 @@ public class Message implements Comparable<Message> {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public static enum MessageType {

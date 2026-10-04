@@ -299,9 +299,20 @@ span.duration {
 	text-decoration:none;
 }
 
-span.title {
+span.transcriptTitle {
 	font-size:80%;
 	color:#888888;
+}
+
+span.textTitle {
+	font-size:80%;
+	font-weight:bold;
+	color:#555555;
+}
+
+span.textDesc {
+	font-size:80%;
+	color:#555555;
 }
 
 span.info {

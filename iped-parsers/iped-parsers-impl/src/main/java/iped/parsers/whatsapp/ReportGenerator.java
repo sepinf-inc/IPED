@@ -823,7 +823,7 @@ public class ReportGenerator {
                 if (message.isQuoted()) {
                     printQuote(out, message, contactsDirectory, account);
                 }
-
+ 
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                     case TEMPLATE_QUOTE:
@@ -831,6 +831,7 @@ public class ReportGenerator {
                     case UI_ELEMENTS:
                         // Some textual messages may have thumbs, URL and UIElements
                         printThumb(out, message);
+                        printTitleDesc(out, message);
                         if (notNullNorBlank(message.getUrl())) {
                             out.print(format(message.getUrl()) + "<br>");
                         }
@@ -1009,7 +1010,7 @@ public class ReportGenerator {
                                 }
                                 String transcription = mediaItem.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
                                 if (transcription != null) {
-                                    out.print("<span class=\"title\">");
+                                    out.print("<span class=\"transcriptTitle\">");
                                     out.print(Messages.getString("ReportGenerator.TranscriptionTitle"));
                                     String confidence = mediaItem.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR);
                                     if (confidence != null) {
@@ -1095,6 +1096,7 @@ public class ReportGenerator {
                         if (thumb != null) {
                             out.print("<br>");
                         }
+                        printTitleDesc(out, message);
                         if (notNullNorBlank(message.getMediaCaption())) {
                             out.print(format(message.getMediaCaption()) + "<br>");
                         }
@@ -1224,6 +1226,19 @@ public class ReportGenerator {
                 out.print("</span>");
             }
             out.println("</div><br>");
+        }
+    }
+
+    private void printTitleDesc(PrintWriter out, Message message) {
+        if (notNullNorBlank(message.getTitle())) {
+            out.print("<span class=\"textTitle\">");
+            out.print(format(message.getTitle()));
+            out.print("</span><br>");
+        }
+        if (notNullNorBlank(message.getDescription())) {
+            out.print("<span class=\"textDesc\">");
+            out.print(format(message.getDescription()));
+            out.print("</span><br>");
         }
     }
 
