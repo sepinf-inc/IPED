@@ -1,21 +1,21 @@
 /*
-* Copyright 2012-2024, IPED Contributors
-*
-* This file is part of Indexador e Processador de Evidências Digitais (IPED).
-*
-* IPED is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* IPED is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with IPED. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright 2012-2024, IPED Contributors
+ *
+ * This file is part of Indexador e Processador de Evidências Digitais (IPED).
+ *
+ * IPED is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * IPED is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with IPED. If not, see <http://www.gnu.org/licenses/>.
+ */
 package iped.parsers.security;
 
 import java.io.BufferedInputStream;
@@ -58,12 +58,12 @@ import org.xml.sax.SAXException;
 import iped.properties.ExtraProperties;
 
 /**
-* Parser forense para assinaturas digitais em documentos PDF.
-* Extrai metadados técnicos de assinaturas PAdES/CMS sem realizar validação jurídica.
-* Opera offline por padrão — não acessa OCSP/CRL/TSA remotamente.
-*
-* @author ojaneri
-*/
+ * Parser forense para assinaturas digitais em documentos PDF.
+ * Extrai metadados técnicos de assinaturas PAdES/CMS sem realizar validação jurídica.
+ * Opera offline por padrão — não acessa OCSP/CRL/TSA remotamente.
+ *
+ * @author ojaneri
+ */
 public class DigitalSignatureParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
@@ -133,36 +133,37 @@ public class DigitalSignatureParser extends AbstractParser {
                     // incorrect revision numbers. Full revision analysis requires PDFBox 3.x.
                     // Path out: upgrade to PDFBox 3.x which has PDDocument.getRevisionAndIncrementalUpdateInfo().
                     List<PDSignature> sortedSignatures = new ArrayList<>(signatures);
-                    sortedSignatures.sort(Comparator.comparingInt(sig -> {
+                    sortedSignatures.sort(Comparator.comparingLong(sig -> {
                         int[] br = sig.getByteRange();
-                        return (br != null && br.length >= 2) ? br[0] : Integer.MAX_VALUE;
+                        return (br != null && br.length >= 2) ? (long) br[0] : Long.MAX_VALUE;
                     }));
 
-                    boolean parsingFailed = false;
                     int successfullyProcessed = 0;
-                    for (int i = 0; i < sigCount; i++) {
-                        PDSignature sig = sortedSignatures.get(i);
-                        String prefix = SIG_PREFIX + "[" + i + "]";
-                        try {
-                            extractSignatureMetadata(sig, tis.getFile(), docLength, i, prefix, metadata, xhtml);
-                            successfullyProcessed++;
-                        } catch (Exception e) {
-                            LOGGER.warn("Failed to extract metadata for signature {}: {}", i, e.getMessage());
-                            LOGGER.debug("Signature extraction error", e);
-                            parsingFailed = true;
-                            break;
+                    // Open a single reusable stream for all signatures to avoid file handle churn
+                    try (InputStream sharedStream = new BufferedInputStream(new FileInputStream(tis.getFile()))) {
+                        for (int i = 0; i < sigCount; i++) {
+                            PDSignature sig = sortedSignatures.get(i);
+                            String prefix = SIG_PREFIX + "[" + i + "]";
+                            try {
+                                extractSignatureMetadata(sig, sharedStream, docLength, i, prefix, metadata, xhtml);
+                                successfullyProcessed++;
+                            } catch (Exception e) {
+                                LOGGER.warn("Failed to extract metadata for signature {}: {}", i, e.getMessage());
+                                LOGGER.debug("Signature extraction error", e);
+                                // Continue processing remaining signatures; one corrupt signature
+                                // should not prevent extraction from other valid signatures.
+                            }
                         }
                     }
 
                     xhtml.endElement("div");
 
-                    // If parsing failed mid-way, update SIG_COUNT to reflect only successfully processed
-                    // signatures. This maintains consistency between count and actual metadata fields present.
-                    if (parsingFailed) {
+                    // Update SIG_COUNT to reflect only successfully processed signatures
+                    // so downstream consumers see consistent count vs metadata fields.
+                    if (successfullyProcessed < sigCount) {
                         metadata.set(SIG_COUNT, Integer.toString(successfullyProcessed));
                     }
                 }
-
                 xhtml.endDocument();
             } catch (SAXException e) {
                 throw e;
@@ -178,7 +179,7 @@ public class DigitalSignatureParser extends AbstractParser {
         }
     }
 
-    private void extractSignatureMetadata(PDSignature sig, java.io.File file, long docLength,
+    private void extractSignatureMetadata(PDSignature sig, InputStream sharedStream, long docLength,
             int index, String prefix, Metadata metadata, XHTMLContentHandler xhtml) throws SAXException {
         setIfNotNull(metadata, prefix + SIGNER_NAME, sig.getName());
         setIfNotNull(metadata, prefix + CONTACT_INFO, sig.getContactInfo());
@@ -222,8 +223,8 @@ public class DigitalSignatureParser extends AbstractParser {
         String subFilter = sig.getSubFilter();
         setIfNotNull(metadata, prefix + SUB_FILTER, subFilter);
 
-        try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
-            byte[] contents = sig.getContents(fileStream);
+        try {
+            byte[] contents = sig.getContents(sharedStream);
             if (contents != null && contents.length > 0) {
                 extractCMSMetadata(contents, prefix, metadata, xhtml);
             } else {
@@ -263,26 +264,31 @@ public class DigitalSignatureParser extends AbstractParser {
                 Store<X509CertificateHolder> certStore = signedData.getCertificates();
                 Collection<X509CertificateHolder> certCollection = certStore.getMatches(signerInfo.getSID());
 
-                // Use the first matching certificate for both metadata and verification
+                // Use the first successfully converted matching certificate for both metadata and verification
                 X509Certificate matchedCert = null;
                 for (X509CertificateHolder certHolder : certCollection) {
-                    X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
-                    if (matchedCert == null) {
-                        matchedCert = cert;
-                        metadata.set(signerPrefix + CERT_SUBJECT, cert.getSubjectX500Principal().getName());
-                        metadata.set(signerPrefix + CERT_ISSUER, cert.getIssuerX500Principal().getName());
-                        metadata.set(signerPrefix + CERT_SERIAL, cert.getSerialNumber().toString());
-                        metadata.set(signerPrefix + CERT_VALID_FROM,
-                                ISO_FORMATTER.format(cert.getNotBefore().toInstant()));
-                        metadata.set(signerPrefix + CERT_VALID_TO,
-                                ISO_FORMATTER.format(cert.getNotAfter().toInstant()));
-                        try {
-                            MessageDigest md = MessageDigest.getInstance("SHA-256");
-                            byte[] fingerprint = md.digest(cert.getEncoded());
-                            metadata.set(signerPrefix + CERT_FINGERPRINT_SHA256, bytesToHex(fingerprint));
-                        } catch (Exception e) {
-                            LOGGER.debug("Failed to compute certificate fingerprint", e);
+                    try {
+                        X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
+                        if (matchedCert == null) {
+                            matchedCert = cert;
+                            metadata.set(signerPrefix + CERT_SUBJECT, cert.getSubjectX500Principal().getName());
+                            metadata.set(signerPrefix + CERT_ISSUER, cert.getIssuerX500Principal().getName());
+                            metadata.set(signerPrefix + CERT_SERIAL, cert.getSerialNumber().toString());
+                            metadata.set(signerPrefix + CERT_VALID_FROM,
+                                    ISO_FORMATTER.format(cert.getNotBefore().toInstant()));
+                            metadata.set(signerPrefix + CERT_VALID_TO,
+                                    ISO_FORMATTER.format(cert.getNotAfter().toInstant()));
+                            try {
+                                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                                byte[] fingerprint = md.digest(cert.getEncoded());
+                                metadata.set(signerPrefix + CERT_FINGERPRINT_SHA256, bytesToHex(fingerprint));
+                            } catch (Exception e) {
+                                LOGGER.debug("Failed to compute certificate fingerprint", e);
+                            }
                         }
+                    } catch (Exception e) {
+                        LOGGER.debug("Failed to convert certificate holder, trying next match", e);
+                        // Continue to next certificate holder; one bad cert should not block others
                     }
                 }
 
