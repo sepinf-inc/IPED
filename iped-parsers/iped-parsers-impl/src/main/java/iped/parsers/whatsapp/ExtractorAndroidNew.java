@@ -297,10 +297,13 @@ public abstract class ExtractorAndroidNew extends Extractor {
     }
 
     private void extractCalls(Connection conn, Map<Long, Chat> idToChat) throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_CALLS)) {
+        try (PreparedStatement stmt = conn.prepareStatement(getSelectCallsQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                long chatId = rs.getLong("groupChatId");
+                long chatId = rs.getLong("msgChatId");
+                if (chatId == 0) {
+                    chatId = rs.getLong("groupChatId");
+                }
                 if (chatId == 0) {
                     chatId = rs.getLong("chatId");
                 }
@@ -1384,15 +1387,27 @@ public abstract class ExtractorAndroidNew extends Extractor {
         return "select is_blocked as isBlocked from message_system_block_contact where message_row_id=?";
     }
 
-    private static final String SELECT_CALLS = "select log._id as id, log.call_id, log.video_call, log.duration,"
+    private static String getSelectCallsQuery(Connection conn) throws SQLException {
+        String messageChatIdCol = "0";
+        String messageTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_call_log", conn)) {
+            messageChatIdCol = "msg.chat_row_id";
+            messageTableJoin = " left join message_call_log mcl on mcl.call_log_row_id = log._id"
+                             + " left join message msg on mcl.message_row_id = msg._id";
+        }
+
+        return "select log._id as id, log.call_id, log.video_call, log.duration,"
             + " log.timestamp, log.call_result, log.from_me,"
             + " jid.raw_string as remoteId,"
             + " chat1._id as chatId,"
-            + " chat2._id as groupChatId"
+            + " chat2._id as groupChatId,"
+            + " " + messageChatIdCol + " as msgChatId"
             + " from call_log log"
             + " left join jid on jid._id = log.jid_row_id"
             + " left join chat chat1 on chat1.jid_row_id = log.jid_row_id"
-            + " left join chat chat2 on chat2.jid_row_id = log.group_jid_row_id";
+            + " left join chat chat2 on chat2.jid_row_id = log.group_jid_row_id"
+            + messageTableJoin;
+    }
 
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
             + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
