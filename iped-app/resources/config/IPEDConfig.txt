@@ -1,4 +1,4 @@
-﻿﻿########################################################################
+﻿########################################################################
 # Processing Settings
 ########################################################################
 
@@ -82,8 +82,8 @@ enableAutomaticExportFiles = false
 enableLanguageDetect = true
 
 # Feature to recognize named entities: people, organizations or places.
-# StanfordCoreNLP 3.8 language models must be downloaded from https://stanfordnlp.github.io/CoreNLP/history.html and put in plugins folder.
-# This feature is CPU heavy, it can increase processing time by 4x.
+# Uses SpaCy by default (supports Portuguese, English, Spanish, and 70+ languages).
+# Legacy StanfordCoreNLP is also supported (models must be placed in plugins folder).
 # Advanced settings can be modified in "conf/NamedEntityRecognitionConfig.txt" file.
 enableNamedEntityRecogniton = false
 

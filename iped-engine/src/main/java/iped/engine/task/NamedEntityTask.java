@@ -1,35 +1,23 @@
 package iped.engine.task;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.Reader;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Set;
 
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.ner.NamedEntityParser;
-import org.apache.tika.parser.ner.corenlp.CoreNLPNERecogniser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.NamedEntityTaskConfig;
 import iped.engine.data.Item;
-import iped.exception.IPEDException;
+import iped.engine.task.ner.INamedEntityRecognizer;
+import iped.engine.task.ner.spacy.SpaCyNERecogniser;
+import iped.engine.task.ner.tika.TikaNERAdapter;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.IgnoreContentHandler;
-import iped.utils.EmptyInputStream;
 
 public class NamedEntityTask extends AbstractTask {
 
@@ -39,11 +27,7 @@ public class NamedEntityTask extends AbstractTask {
 
     private static final int MAX_ENTITY_BYTES_LEN = 32766;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NamedEntityTask.class);
-
-    private static AtomicBoolean inited = new AtomicBoolean();
-
-    private static Map<String, NamedEntityParser> nerParserPerLang = new HashMap<String, NamedEntityParser>();
+    private static INamedEntityRecognizer recognizer;
 
     private NamedEntityTaskConfig nerConfig;
 
@@ -61,57 +45,37 @@ public class NamedEntityTask extends AbstractTask {
 
         nerConfig = configurationManager.findObject(NamedEntityTaskConfig.class);
 
-        if (inited.getAndSet(true))
-            return;
-
         if (!nerConfig.isEnabled())
             return;
 
-        if (nerConfig.getNerImpl().contains("CoreNLPNERecogniser")) { //$NON-NLS-1$
-            try {
-                Class.forName("edu.stanford.nlp.ie.crf.CRFClassifier"); //$NON-NLS-1$
-
-            } catch (ClassNotFoundException e) {
-                LOGGER.error("StanfordCoreNLP not found. Did you put the jar in 'plugins' folder?");
-                nerConfig.setEnabled(false);
-                return;
+        synchronized (NamedEntityTask.class) {
+            if (recognizer == null) {
+                String impl = nerConfig.getNerImpl();
+                if (impl != null && (impl.contains("SpaCyNERecogniser") || "spacy".equalsIgnoreCase(impl.trim()))) { //$NON-NLS-1$ //$NON-NLS-2$
+                    recognizer = new SpaCyNERecogniser();
+                } else {
+                    recognizer = new TikaNERAdapter();
+                }
+                recognizer.init(nerConfig);
             }
-        }
-
-        System.setProperty(NamedEntityParser.SYS_PROP_NER_IMPL, nerConfig.getNerImpl());
-
-        for (Entry<String, String> entry : nerConfig.getLangToModelMap().entrySet()) {
-            String lang = entry.getKey();
-            String modelPath = entry.getValue();
-
-            URL modelResource = this.getClass().getResource("/" + modelPath); //$NON-NLS-1$
-            if (modelResource == null) {
-                LOGGER.error(modelPath + " not found. Did you put the model in 'plugins' folder?");
-                nerConfig.setEnabled(false);
-                return;
-            }
-
-            System.setProperty(CoreNLPNERecogniser.MODEL_PROP_NAME, modelPath);
-            NamedEntityParser nerParser = new NamedEntityParser();
-            // first call to initialize
-            Metadata metadata = new Metadata();
-            metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
-            nerParser.parse(new EmptyInputStream(), new IgnoreContentHandler(), metadata, new ParseContext());
-            nerParserPerLang.put(lang, nerParser);
         }
 
     }
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-
+        synchronized (NamedEntityTask.class) {
+            if (recognizer != null) {
+                recognizer.finish();
+                recognizer = null;
+            }
+        }
     }
 
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!isEnabled() || !evidence.isToAddToCase())
+        if (!isEnabled() || !evidence.isToAddToCase() || recognizer == null || !recognizer.isAvailable())
             return;
 
         String mime = evidence.getMediaType().toString();
@@ -128,22 +92,13 @@ public class NamedEntityTask extends AbstractTask {
             if (categories.contains(ignore))
                 return;
 
-        NamedEntityParser nerParser = null;
         Float langScore = (Float) evidence.getExtraAttribute("language:detected_score_1"); //$NON-NLS-1$
         String lang = (String) evidence.getExtraAttribute("language:detected_1"); //$NON-NLS-1$
-        if (langScore != null && langScore >= nerConfig.getMinLangScore())
-            nerParser = nerParserPerLang.get(lang);
-        if (nerParser == null) {
+        if (langScore == null || langScore < nerConfig.getMinLangScore()) {
             langScore = (Float) evidence.getExtraAttribute("language:detected_score_2"); //$NON-NLS-1$
             lang = (String) evidence.getExtraAttribute("language:detected_2"); //$NON-NLS-1$
-            if (langScore != null && langScore >= nerConfig.getMinLangScore())
-                nerParser = nerParserPerLang.get(lang);
-        }
-        if (nerParser == null) {
-            nerParser = nerParserPerLang.get("default"); //$NON-NLS-1$
-            if (nerParser == null) {
-                throw new IPEDException(
-                        "No 'default' NER language model configured in " + NamedEntityTaskConfig.CONF_FILE);
+            if (langScore == null || langScore < nerConfig.getMinLangScore()) {
+                lang = "default"; //$NON-NLS-1$
             }
         }
 
@@ -164,47 +119,19 @@ public class NamedEntityTask extends AbstractTask {
                         textFrag = textFrag.substring(0, k);
                 }
 
-                Metadata metadata = new Metadata();
-                metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
+                if (textFrag.trim().isEmpty()) {
+                    continue;
+                }
 
-                try (InputStream is = new ByteArrayInputStream(textFrag.getBytes(StandardCharsets.UTF_8))) {
-
-                    nerParser.parse(is, new IgnoreContentHandler(), metadata, new ParseContext());
-
-                } finally {
-                    cleanHugeResults(metadata);
-                    // save results in item metadata
-                    for (String key : metadata.names()) {
-                        if (key.startsWith(NER_PREFIX)) {
-                            for (String val : metadata.getValues(key)) {
+                Map<String, Set<String>> entities = recognizer.recognize(textFrag, lang);
+                if (entities != null && !entities.isEmpty()) {
+                    for (Map.Entry<String, Set<String>> entry : entities.entrySet()) {
+                        String key = entry.getKey().startsWith(NER_PREFIX) ? entry.getKey() : (NER_PREFIX + entry.getKey());
+                        for (String val : entry.getValue()) {
+                            if (val != null && val.getBytes(StandardCharsets.UTF_8).length <= MAX_ENTITY_BYTES_LEN) {
                                 evidence.getMetadata().add(key, val);
                             }
                         }
-                    }
-                }
-            }
-        }
-
-    }
-
-    // workaround for issue #783
-    private void cleanHugeResults(Metadata meta) {
-        for (String key : meta.names()) {
-            if (key.startsWith(NER_PREFIX)) {
-                ArrayList<String> list = new ArrayList<>();
-                String[] vals = meta.getValues(key);
-                boolean remove = false;
-                for (String val : vals) {
-                    if (val.getBytes(StandardCharsets.UTF_8).length <= MAX_ENTITY_BYTES_LEN) {
-                        list.add(val);
-                    } else {
-                        remove = true;
-                    }
-                }
-                if (remove) {
-                    meta.remove(key);
-                    for (String val : list) {
-                        meta.add(key, val);
                     }
                 }
             }
