@@ -24,14 +24,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -117,16 +115,13 @@ public class DigitalSignatureParser extends AbstractParser {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             try (PDDocument document = PDDocument.load(tis.getFile())) {
                 List<PDSignature> signatures = document.getSignatureDictionaries();
-
                 XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
                 xhtml.startDocument();
-
                 if (signatures == null || signatures.isEmpty()) {
                     metadata.set(SIG_COUNT, "0");
                 } else {
                     int sigCount = signatures.size();
                     metadata.set(SIG_COUNT, Integer.toString(sigCount));
-
                     xhtml.startElement("div", "class", "digital-signatures");
                     long docLength = tis.getFile().length();
 
@@ -137,14 +132,29 @@ public class DigitalSignatureParser extends AbstractParser {
                         return (br != null && br.length >= 2) ? br[0] : Integer.MAX_VALUE;
                     }));
 
+                    boolean parsingFailed = false;
                     for (int i = 0; i < sigCount; i++) {
                         PDSignature sig = sortedSignatures.get(i);
                         String prefix = SIG_PREFIX + "[" + i + "]";
-                        extractSignatureMetadata(sig, tis.getFile(), docLength, i, prefix, metadata, xhtml);
+                        try {
+                            extractSignatureMetadata(sig, tis.getFile(), docLength, i, prefix, metadata, xhtml);
+                        } catch (Exception e) {
+                            LOGGER.warn("Failed to extract metadata for signature {}: {}", i, e.getMessage());
+                            LOGGER.debug("Signature extraction error", e);
+                            // Stop processing further signatures to avoid inconsistent state
+                            parsingFailed = true;
+                            break;
+                        }
                     }
                     xhtml.endElement("div");
-                }
 
+                    // If parsing failed mid-way, reset partial metadata to maintain consistency
+                    if (parsingFailed) {
+                        metadata.set(SIG_COUNT, "0");
+                        // Note: Tika Metadata does not support removal by prefix;
+                        // downstream consumers should treat SIG_COUNT=0 as authoritative.
+                    }
+                }
                 xhtml.endDocument();
             } catch (SAXException e) {
                 throw e;
@@ -176,9 +186,15 @@ public class DigitalSignatureParser extends AbstractParser {
         // Require full 4-element byte range for meaningful forensic analysis
         if (byteRange != null && byteRange.length >= 4) {
             metadata.set(prefix + BYTE_RANGE_START, Integer.toString(byteRange[0]));
-            // Gap size = offset2 - (offset1 + length1), represents the signature content hole
+
+            // Gap size = offset2 - (offset1 + length1), represents the signature content region
             // Cast each operand individually to prevent integer overflow in addition
             long gapSize = (long) byteRange[2] - ((long) byteRange[0] + (long) byteRange[1]);
+            // Validate: negative gap indicates malformed/crafted byte range
+            if (gapSize < 0) {
+                LOGGER.warn("Negative byte range gap size ({}) for signature {}, setting to 0", gapSize, index);
+                gapSize = 0;
+            }
             metadata.set(prefix + BYTE_RANGE_GAP_SIZE, Long.toString(gapSize));
 
             boolean coversWhole = coversWholeDocument(byteRange, docLength);
@@ -261,6 +277,7 @@ public class DigitalSignatureParser extends AbstractParser {
                             LOGGER.debug("Failed to compute certificate fingerprint", e);
                         }
                     }
+                    // Render certificate info for ALL matching certs (consistent with metadata note)
                     renderCertificateInfo(xhtml, cert);
                 }
 
@@ -287,6 +304,7 @@ public class DigitalSignatureParser extends AbstractParser {
             // ponytail: RFC 3161 timestamp token parsing from CMS unsigned attributes
             // is complex; deferring full implementation to next iteration.
             // Path out: parse SignerInfo.getUnsignedAttributes() for id-smime-aa-timeStampToken.
+
         } catch (Exception e) {
             LOGGER.warn("Failed to parse CMS signed data: {}", e.getMessage());
             LOGGER.debug("CMS parsing error", e);
@@ -298,9 +316,13 @@ public class DigitalSignatureParser extends AbstractParser {
         if (byteRange == null || byteRange.length < 4) {
             return false;
         }
+        // Validate byte range integrity: first segment must not overlap second segment
+        long endOfFirstSegment = (long) byteRange[0] + (long) byteRange[1];
+        if (endOfFirstSegment > (long) byteRange[2]) {
+            // Malformed byte range: segments overlap or are inverted
+            return false;
+        }
         // Exact match required: signed content must end exactly at document length
-        // to claim whole-document coverage. Tolerating beyond-EOF ranges would be
-        // forensically misleading for malformed/crafted byte ranges.
         return byteRange[0] == 0 && ((long) byteRange[2] + (long) byteRange[3]) == docLength;
     }
 
