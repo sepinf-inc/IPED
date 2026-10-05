@@ -25,10 +25,11 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -92,7 +93,7 @@ public class DigitalSignatureParser extends AbstractParser {
     public static final String CERT_FINGERPRINT_SHA256 = ".certificateFingerprintSHA256";
     public static final String COVERS_WHOLE_DOCUMENT = ".coversWholeDocument";
     public static final String BYTE_RANGE_START = ".byteRangeStart";
-    public static final String BYTE_RANGE_LENGTH = ".byteRangeLength";
+    public static final String BYTE_RANGE_GAP_SIZE = ".byteRangeGapSize";
     public static final String REVISION_NUMBER = ".revisionNumber";
     public static final String MODIFIED_AFTER_SIGNING = ".modifiedAfterSigning";
     public static final String TIMESTAMP_TIME = ".timestampTime";
@@ -135,15 +136,27 @@ public class DigitalSignatureParser extends AbstractParser {
                 xhtml.startElement("div", "class", "digital-signatures");
 
                 long docLength = tis.getFile().length();
+
+                // Sort signatures by byte range start position to determine chronological revision order
+                List<PDSignature> sortedSignatures = new ArrayList<>(signatures);
+                sortedSignatures.sort(Comparator.comparingInt(sig -> {
+                    int[] br = sig.getByteRange();
+                    return (br != null && br.length >= 2) ? br[0] : Integer.MAX_VALUE;
+                }));
+
                 for (int i = 0; i < sigCount; i++) {
-                    PDSignature sig = signatures.get(i);
+                    PDSignature sig = sortedSignatures.get(i);
                     String prefix = SIG_PREFIX + "[" + i + "]";
                     extractSignatureMetadata(sig, tis.getFile(), docLength, i, prefix, metadata, xhtml);
                 }
 
                 xhtml.endElement("div");
                 xhtml.endDocument();
+            } catch (SAXException e) {
+                throw e;
             } catch (Exception e) {
+                // Catch all exceptions including IOException from corrupted/malformed PDFs gracefully.
+                // A corrupted document should not crash the entire IPED processing pipeline.
                 LOGGER.warn("Failed to parse digital signatures from PDF: {}", e.getMessage());
                 LOGGER.debug("Digital signature parsing error", e);
                 metadata.set(SIG_COUNT, "0");
@@ -167,11 +180,22 @@ public class DigitalSignatureParser extends AbstractParser {
         }
 
         int[] byteRange = sig.getByteRange();
-        if (byteRange != null && byteRange.length >= 2) {
+        // Require full 4-element byte range for meaningful forensic analysis
+        if (byteRange != null && byteRange.length >= 4) {
             metadata.set(prefix + BYTE_RANGE_START, Integer.toString(byteRange[0]));
-            metadata.set(prefix + BYTE_RANGE_LENGTH, Integer.toString(byteRange[1]));
+            // Gap size = offset2 - (offset1 + length1), represents the signature content hole
+            long gapSize = (long) byteRange[2] - ((long) byteRange[0] + byteRange[1]);
+            metadata.set(prefix + BYTE_RANGE_GAP_SIZE, Long.toString(gapSize));
+
             boolean coversWhole = coversWholeDocument(byteRange, docLength);
             metadata.set(prefix + COVERS_WHOLE_DOCUMENT, Boolean.toString(coversWhole));
+
+            boolean modifiedAfter = isModifiedAfterSigning(byteRange, docLength);
+            metadata.set(prefix + MODIFIED_AFTER_SIGNING, Boolean.toString(modifiedAfter));
+        } else {
+            // Explicitly set coverage flags to false when byte range is incomplete
+            metadata.set(prefix + COVERS_WHOLE_DOCUMENT, "false");
+            metadata.set(prefix + MODIFIED_AFTER_SIGNING, "false");
         }
 
         String subFilter = sig.getSubFilter();
@@ -181,20 +205,19 @@ public class DigitalSignatureParser extends AbstractParser {
             byte[] contents = sig.getContents(fileStream);
             if (contents != null && contents.length > 0) {
                 extractCMSMetadata(contents, prefix, metadata, xhtml);
+            } else {
+                metadata.set(prefix + INTEGRITY_STATUS, "UNKNOWN");
             }
         } catch (IOException e) {
             LOGGER.warn("Failed to extract signature contents for signature {}: {}", index, e.getMessage());
             metadata.set(prefix + INTEGRITY_STATUS, "UNKNOWN");
         }
 
+        // Revision number based on sorted position (index after sorting by byte range start)
         // ponytail: PDFBox 2.0.27 does not expose revision number directly;
-        // we infer from byte range position relative to document length.
+        // we use sorted position as best available approximation.
         // Path out: upgrade to PDFBox 3.x which has PDDocument.getRevisionAndIncrementalUpdateInfo().
-        int revision = estimateRevision(index, byteRange, docLength);
-        metadata.set(prefix + REVISION_NUMBER, Integer.toString(revision));
-
-        boolean modifiedAfter = isModifiedAfterSigning(byteRange, docLength);
-        metadata.set(prefix + MODIFIED_AFTER_SIGNING, Boolean.toString(modifiedAfter));
+        metadata.set(prefix + REVISION_NUMBER, Integer.toString(index + 1));
     }
 
     private void extractCMSMetadata(byte[] contents, String prefix, Metadata metadata,
@@ -203,52 +226,65 @@ public class DigitalSignatureParser extends AbstractParser {
             CMSSignedData signedData = new CMSSignedData(contents);
             SignerInformationStore signerStore = signedData.getSignerInfos();
 
+            // Handle multiple SignerInformation objects (countersignatures) by indexing them
+            int signerIndex = 0;
             for (SignerInformation signerInfo : signerStore.getSigners()) {
+                String signerPrefix = (signerStore.size() > 1)
+                        ? prefix + ".signer[" + signerIndex + "]"
+                        : prefix;
+
                 String digestAlgOID = signerInfo.getDigestAlgOID();
-                setIfNotNull(metadata, prefix + DIGEST_ALGORITHM, digestAlgOID);
+                setIfNotNull(metadata, signerPrefix + DIGEST_ALGORITHM, digestAlgOID);
 
                 String encryptionAlgOID = signerInfo.getEncryptionAlgOID();
-                setIfNotNull(metadata, prefix + SIG_ALGORITHM, encryptionAlgOID);
+                setIfNotNull(metadata, signerPrefix + SIG_ALGORITHM, encryptionAlgOID);
 
                 Store<X509CertificateHolder> certStore = signedData.getCertificates();
                 Collection<X509CertificateHolder> certCollection = certStore.getMatches(signerInfo.getSID());
 
+                // Use the first matching certificate for both metadata and verification
+                X509Certificate matchedCert = null;
                 for (X509CertificateHolder certHolder : certCollection) {
                     X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
 
-                    metadata.set(prefix + CERT_SUBJECT, cert.getSubjectX500Principal().getName());
-                    metadata.set(prefix + CERT_ISSUER, cert.getIssuerX500Principal().getName());
-                    metadata.set(prefix + CERT_SERIAL, cert.getSerialNumber().toString());
-                    metadata.set(prefix + CERT_VALID_FROM, ISO_FORMAT.get().format(cert.getNotBefore()));
-                    metadata.set(prefix + CERT_VALID_TO, ISO_FORMAT.get().format(cert.getNotAfter()));
+                    // Only populate top-level cert metadata from the first matching cert
+                    if (matchedCert == null) {
+                        matchedCert = cert;
+                        metadata.set(signerPrefix + CERT_SUBJECT, cert.getSubjectX500Principal().getName());
+                        metadata.set(signerPrefix + CERT_ISSUER, cert.getIssuerX500Principal().getName());
+                        metadata.set(signerPrefix + CERT_SERIAL, cert.getSerialNumber().toString());
+                        metadata.set(signerPrefix + CERT_VALID_FROM, ISO_FORMAT.get().format(cert.getNotBefore()));
+                        metadata.set(signerPrefix + CERT_VALID_TO, ISO_FORMAT.get().format(cert.getNotAfter()));
 
-                    try {
-                        MessageDigest md = MessageDigest.getInstance("SHA-256");
-                        byte[] fingerprint = md.digest(cert.getEncoded());
-                        metadata.set(prefix + CERT_FINGERPRINT_SHA256, bytesToHex(fingerprint));
-                    } catch (Exception e) {
-                        LOGGER.debug("Failed to compute certificate fingerprint", e);
+                        try {
+                            MessageDigest md = MessageDigest.getInstance("SHA-256");
+                            byte[] fingerprint = md.digest(cert.getEncoded());
+                            metadata.set(signerPrefix + CERT_FINGERPRINT_SHA256, bytesToHex(fingerprint));
+                        } catch (Exception e) {
+                            LOGGER.debug("Failed to compute certificate fingerprint", e);
+                        }
                     }
 
                     renderCertificateInfo(xhtml, cert);
                 }
 
+                // Verify signature against the first matched certificate only
                 // ponytail: Full chain validation requires trust store configuration;
                 // we only verify the signature against the embedded certificate.
                 // Path out: add configurable trust store and CRL/OCSP checking in future PR.
                 try {
-                    if (!certCollection.isEmpty()) {
-                        X509CertificateHolder certHolder = certCollection.iterator().next();
-                        X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
-                        boolean valid = signerInfo.verify(new JcaSimpleSignerInfoVerifierBuilder().build(cert));
-                        metadata.set(prefix + INTEGRITY_STATUS, valid ? "VALID" : "INVALID");
+                    if (matchedCert != null) {
+                        boolean valid = signerInfo.verify(new JcaSimpleSignerInfoVerifierBuilder().build(matchedCert));
+                        metadata.set(signerPrefix + INTEGRITY_STATUS, valid ? "VALID" : "INVALID");
                     } else {
-                        metadata.set(prefix + INTEGRITY_STATUS, "UNKNOWN");
+                        metadata.set(signerPrefix + INTEGRITY_STATUS, "UNKNOWN");
                     }
                 } catch (Exception e) {
-                    LOGGER.debug("Signature verification failed for {}", prefix, e);
-                    metadata.set(prefix + INTEGRITY_STATUS, "UNKNOWN");
+                    LOGGER.debug("Signature verification failed for {}", signerPrefix, e);
+                    metadata.set(signerPrefix + INTEGRITY_STATUS, "UNKNOWN");
                 }
+
+                signerIndex++;
             }
 
             // ponytail: RFC 3161 timestamp token parsing from CMS unsigned attributes
@@ -275,10 +311,6 @@ public class DigitalSignatureParser extends AbstractParser {
         }
         long endOfSignedContent = (long) byteRange[2] + byteRange[3];
         return endOfSignedContent < docLength;
-    }
-
-    private int estimateRevision(int signatureIndex, int[] byteRange, long docLength) {
-        return signatureIndex + 1;
     }
 
     private void setIfNotNull(Metadata metadata, String key, String value) {
