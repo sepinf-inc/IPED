@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
+import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -68,7 +70,6 @@ public class DigitalSignatureParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = LoggerFactory.getLogger(DigitalSignatureParser.class);
-
     public static final MediaType PDF_TYPE = MediaType.application("pdf");
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(PDF_TYPE);
 
@@ -122,9 +123,7 @@ public class DigitalSignatureParser extends AbstractParser {
                     metadata.set(SIG_COUNT, "0");
                 } else {
                     int sigCount = signatures.size();
-                    metadata.set(SIG_COUNT, Integer.toString(sigCount));
                     xhtml.startElement("div", "class", "digital-signatures");
-
                     long docLength = tis.getFile().length();
 
                     // Sort signatures by byte range start position to determine chronological revision order.
@@ -138,31 +137,31 @@ public class DigitalSignatureParser extends AbstractParser {
                         return (br != null && br.length >= 2) ? (long) br[0] : Long.MAX_VALUE;
                     }));
 
-                    int successfullyProcessed = 0;
-                    // Open a single reusable stream for all signatures to avoid file handle churn
-                    try (InputStream sharedStream = new BufferedInputStream(new FileInputStream(tis.getFile()))) {
-                        for (int i = 0; i < sigCount; i++) {
-                            PDSignature sig = sortedSignatures.get(i);
-                            String prefix = SIG_PREFIX + "[" + i + "]";
-                            try {
-                                extractSignatureMetadata(sig, sharedStream, docLength, i, prefix, metadata, xhtml);
-                                successfullyProcessed++;
-                            } catch (Exception e) {
-                                LOGGER.warn("Failed to extract metadata for signature {}: {}", i, e.getMessage());
-                                LOGGER.debug("Signature extraction error", e);
-                                // Continue processing remaining signatures; one corrupt signature
-                                // should not prevent extraction from other valid signatures.
-                            }
+                    // Use dense output index so metadata keys are always contiguous [0..N-1]
+                    // regardless of how many signatures fail extraction.
+                    int outputIndex = 0;
+                    for (int i = 0; i < sigCount; i++) {
+                        PDSignature sig = sortedSignatures.get(i);
+                        String prefix = SIG_PREFIX + "[" + outputIndex + "]";
+                        try {
+                            extractSignatureMetadata(sig, tis.getFile(), docLength, outputIndex, prefix, metadata, xhtml);
+                            outputIndex++;
+                        } catch (SAXException e) {
+                            // XHTML rendering errors are unrecoverable for this signature;
+                            // re-throw to signal document-level output corruption.
+                            throw e;
+                        } catch (Exception e) {
+                            LOGGER.warn("Failed to extract metadata for signature at sort position {}: {}", i, e.getMessage());
+                            LOGGER.debug("Signature extraction error", e);
+                            // Continue processing remaining signatures; one corrupt signature
+                            // should not prevent extraction from other valid signatures.
                         }
                     }
-
                     xhtml.endElement("div");
 
-                    // Update SIG_COUNT to reflect only successfully processed signatures
-                    // so downstream consumers see consistent count vs metadata fields.
-                    if (successfullyProcessed < sigCount) {
-                        metadata.set(SIG_COUNT, Integer.toString(successfullyProcessed));
-                    }
+                    // SIG_COUNT reflects only successfully extracted signatures, matching
+                    // the dense index range [0..outputIndex-1] used in metadata keys.
+                    metadata.set(SIG_COUNT, Integer.toString(outputIndex));
                 }
                 xhtml.endDocument();
             } catch (SAXException e) {
@@ -179,7 +178,7 @@ public class DigitalSignatureParser extends AbstractParser {
         }
     }
 
-    private void extractSignatureMetadata(PDSignature sig, InputStream sharedStream, long docLength,
+    private void extractSignatureMetadata(PDSignature sig, java.io.File file, long docLength,
             int index, String prefix, Metadata metadata, XHTMLContentHandler xhtml) throws SAXException {
         setIfNotNull(metadata, prefix + SIGNER_NAME, sig.getName());
         setIfNotNull(metadata, prefix + CONTACT_INFO, sig.getContactInfo());
@@ -188,7 +187,13 @@ public class DigitalSignatureParser extends AbstractParser {
 
         Calendar signDate = sig.getSignDate();
         if (signDate != null) {
-            metadata.set(prefix + SIGNING_TIME, ISO_FORMATTER.format(signDate.toInstant()));
+            try {
+                Instant instant = signDate.toInstant();
+                metadata.set(prefix + SIGNING_TIME, ISO_FORMATTER.format(instant));
+            } catch (DateTimeException e) {
+                LOGGER.warn("Unrepresentable signing date for signature {}: {}", index, e.getMessage());
+                metadata.set(prefix + SIGNING_TIME, "UNKNOWN");
+            }
         }
 
         int[] byteRange = sig.getByteRange();
@@ -223,8 +228,10 @@ public class DigitalSignatureParser extends AbstractParser {
         String subFilter = sig.getSubFilter();
         setIfNotNull(metadata, prefix + SUB_FILTER, subFilter);
 
-        try {
-            byte[] contents = sig.getContents(sharedStream);
+        // Open a fresh stream per signature to avoid mark/reset/positioning issues
+        // with PDFBox's internal COSFilterInputStream across sequential reads.
+        try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
+            byte[] contents = sig.getContents(fileStream);
             if (contents != null && contents.length > 0) {
                 extractCMSMetadata(contents, prefix, metadata, xhtml);
             } else {
@@ -264,7 +271,9 @@ public class DigitalSignatureParser extends AbstractParser {
                 Store<X509CertificateHolder> certStore = signedData.getCertificates();
                 Collection<X509CertificateHolder> certCollection = certStore.getMatches(signerInfo.getSID());
 
-                // Use the first successfully converted matching certificate for both metadata and verification
+                // Find the first successfully converted certificate AND verify against it.
+                // This ensures metadata (subject, issuer, fingerprint) describes exactly
+                // the certificate used for cryptographic verification.
                 X509Certificate matchedCert = null;
                 for (X509CertificateHolder certHolder : certCollection) {
                     try {
@@ -274,10 +283,20 @@ public class DigitalSignatureParser extends AbstractParser {
                             metadata.set(signerPrefix + CERT_SUBJECT, cert.getSubjectX500Principal().getName());
                             metadata.set(signerPrefix + CERT_ISSUER, cert.getIssuerX500Principal().getName());
                             metadata.set(signerPrefix + CERT_SERIAL, cert.getSerialNumber().toString());
-                            metadata.set(signerPrefix + CERT_VALID_FROM,
-                                    ISO_FORMATTER.format(cert.getNotBefore().toInstant()));
-                            metadata.set(signerPrefix + CERT_VALID_TO,
-                                    ISO_FORMATTER.format(cert.getNotAfter().toInstant()));
+                            try {
+                                metadata.set(signerPrefix + CERT_VALID_FROM,
+                                        ISO_FORMATTER.format(cert.getNotBefore().toInstant()));
+                            } catch (DateTimeException e) {
+                                LOGGER.warn("Unrepresentable cert notBefore for {}: {}", signerPrefix, e.getMessage());
+                                metadata.set(signerPrefix + CERT_VALID_FROM, "UNKNOWN");
+                            }
+                            try {
+                                metadata.set(signerPrefix + CERT_VALID_TO,
+                                        ISO_FORMATTER.format(cert.getNotAfter().toInstant()));
+                            } catch (DateTimeException e) {
+                                LOGGER.warn("Unrepresentable cert notAfter for {}: {}", signerPrefix, e.getMessage());
+                                metadata.set(signerPrefix + CERT_VALID_TO, "UNKNOWN");
+                            }
                             try {
                                 MessageDigest md = MessageDigest.getInstance("SHA-256");
                                 byte[] fingerprint = md.digest(cert.getEncoded());
@@ -296,6 +315,8 @@ public class DigitalSignatureParser extends AbstractParser {
                 // to avoid misleading XHTML output implying all matching certs were verified.
                 if (matchedCert != null) {
                     renderCertificateInfo(xhtml, matchedCert);
+                } else {
+                    LOGGER.warn("No matching certificate found for signer {} in CMS store", signerPrefix);
                 }
 
                 // Verify signature against the first matched certificate only
