@@ -220,12 +220,6 @@ public class ReportGenerator {
             String lastId = "1000000000";
             while (currentMsg < c.getMessages().size()) {
                 Message m = c.getMessages().get(currentMsg++);
-                if (m.getMessageType() == MessageType.CALL_MESSAGE) {
-                    // These messages are currently redundant with calls information already
-                    // extracted from other tables (these come from messages table). So, at least
-                    // for now, nothing should be included in the report.
-                    continue;
-                }
                 if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION) {
                     // These messages are not visible on the app and don't contain any data
                     continue;
@@ -382,6 +376,19 @@ public class ReportGenerator {
                 } else {
                     out.println(Messages.getString("WhatsAppReport.ChatNowEncrypted") + "<br>"); //$NON-NLS-1$
                 }
+                break;
+            case CALL_MESSAGE:
+                if (message.isFromMe()) {
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
+                } else {
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && isGroupOrChannel) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
+                    }
+                }
+                out.println(Messages.getString("WhatsAppReport.CallMessage"));
                 break;
             case MISSED_VIDEO_CALL:
                 if (message.isFromMe()) {

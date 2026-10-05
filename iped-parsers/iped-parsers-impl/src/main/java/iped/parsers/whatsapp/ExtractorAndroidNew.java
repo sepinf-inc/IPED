@@ -115,8 +115,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -125,6 +127,7 @@ import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.util.ChatUtil;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -173,6 +176,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 extractCalls(conn, idToChat);
 
                 for (Chat c : list) {
+                    cleanCalls(c.getMessages());
                     Message.sort(c.getMessages());
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
@@ -185,6 +189,36 @@ public abstract class ExtractorAndroidNew extends Extractor {
         }
 
         return list;
+    }
+
+    private void cleanCalls(List<Message> l) {
+        Set<Long> callTimes = new HashSet<Long>();
+        boolean hasCallMessage = false;
+        for (Message m : l) {
+            MessageType type = m.getMessageType();
+            if (type == MISSED_VIDEO_CALL || type == MISSED_VOICE_CALL || type == REFUSED_VIDEO_CALL
+                    || type == REFUSED_VOICE_CALL || type == UNAVAILABLE_VIDEO_CALL || type == UNAVAILABLE_VOICE_CALL
+                    || type == UNKNOWN_VIDEO_CALL || type == UNKNOWN_VOICE_CALL || type == VIDEO_CALL
+                    || type == VOICE_CALL) {
+                callTimes.add(m.getTimeStamp().getTime());
+            }
+            if (type == CALL_MESSAGE) {
+                hasCallMessage = true;
+            }
+        }
+        if (hasCallMessage) {
+            List<Message> aux = new ArrayList<Message>(l.size());
+            for (Message m : l) {
+                if (m.getMessageType() == CALL_MESSAGE && callTimes.contains(m.getTimeStamp().getTime())) {
+                    continue;
+                }
+                aux.add(m);
+            }
+            if (aux.size() < l.size()) {
+                l.clear();
+                l.addAll(aux);
+            }
+        }
     }
 
     private void updateContactsDirectoryMapping() throws SQLException {
