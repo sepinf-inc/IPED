@@ -374,6 +374,7 @@
         <parser class="iped.parsers.misc.OFXParser"></parser>
         <parser class="iped.parsers.misc.OFCParser"></parser>
         <parser class="iped.parsers.misc.PDFTextParser"></parser>
+        <parser class="iped.parsers.security.DigitalSignatureParser"></parser>
         <parser class="iped.parsers.video.FLVParserWrapper"></parser>
         <parser class="iped.parsers.video.EmptyVideoParser"></parser>
         <parser class="iped.parsers.standard.RawStringParser">

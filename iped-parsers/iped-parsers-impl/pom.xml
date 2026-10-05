@@ -133,6 +133,11 @@
 			<artifactId>metadata-extractor</artifactId>
 			<version>2.20.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<version>1.70</version>
+		</dependency>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>java-dbf</artifactId>
