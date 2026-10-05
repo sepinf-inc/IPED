@@ -416,13 +416,13 @@ public class OutlookPSTParser extends AbstractParser {
         }
     }
 
-    private String formatValue(Object value) {
+    private static String formatValue(Object value) {
         if (value == null)
             return null;
         if (value instanceof byte[])
             return Hex.encodeHexString((byte[]) value);
         if (value instanceof Object[])
-            return Arrays.stream((Object[]) value).map(this::formatValue).collect(Collectors.joining(", ")); //$NON-NLS-1$
+            return Arrays.stream((Object[]) value).map(OutlookPSTParser::formatValue).collect(Collectors.joining(", ", "[", "]"));
         if (value instanceof PSTTimeZone)
             return ((PSTTimeZone) value).getName();
         return value.toString();
