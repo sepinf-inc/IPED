@@ -1240,12 +1240,12 @@ public class ReportGenerator {
         if (notNullNorBlank(message.getTitle())) {
             out.print("<span class=\"textTitle\">");
             out.print(format(message.getTitle()));
-            out.print("</span><br>");
+            out.print("</span><br><br>");
         }
         if (notNullNorBlank(message.getDescription())) {
             out.print("<span class=\"textDesc\">");
             out.print(format(message.getDescription()));
-            out.print("</span><br>");
+            out.print("</span><br><br>");
         }
     }
 
