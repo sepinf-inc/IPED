@@ -1,21 +1,21 @@
 /*
- * Copyright 2012-2024, IPED Contributors
- *
- * This file is part of Indexador e Processador de Evidências Digitais (IPED).
- *
- * IPED is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * IPED is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with IPED. If not, see <http://www.gnu.org/licenses/>.
- */
+* Copyright 2012-2024, IPED Contributors
+*
+* This file is part of Indexador e Processador de Evidências Digitais (IPED).
+*
+* IPED is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* IPED is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with IPED. If not, see <http://www.gnu.org/licenses/>.
+*/
 package iped.parsers.security;
 
 import java.io.BufferedInputStream;
@@ -58,12 +58,12 @@ import org.xml.sax.SAXException;
 import iped.properties.ExtraProperties;
 
 /**
- * Parser forense para assinaturas digitais em documentos PDF.
- * Extrai metadados técnicos de assinaturas PAdES/CMS sem realizar validação jurídica.
- * Opera offline por padrão — não acessa OCSP/CRL/TSA remotamente.
- *
- * @author ojaneri
- */
+* Parser forense para assinaturas digitais em documentos PDF.
+* Extrai metadados técnicos de assinaturas PAdES/CMS sem realizar validação jurídica.
+* Opera offline por padrão — não acessa OCSP/CRL/TSA remotamente.
+*
+* @author ojaneri
+*/
 public class DigitalSignatureParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
@@ -117,15 +117,21 @@ public class DigitalSignatureParser extends AbstractParser {
                 List<PDSignature> signatures = document.getSignatureDictionaries();
                 XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
                 xhtml.startDocument();
+
                 if (signatures == null || signatures.isEmpty()) {
                     metadata.set(SIG_COUNT, "0");
                 } else {
                     int sigCount = signatures.size();
                     metadata.set(SIG_COUNT, Integer.toString(sigCount));
                     xhtml.startElement("div", "class", "digital-signatures");
+
                     long docLength = tis.getFile().length();
 
-                    // Sort signatures by byte range start position to determine chronological revision order
+                    // Sort signatures by byte range start position to determine chronological revision order.
+                    // ponytail: This heuristic assumes incremental updates are appended sequentially.
+                    // Crafted or malformed PDFs with overlapping/reordered byte ranges may produce
+                    // incorrect revision numbers. Full revision analysis requires PDFBox 3.x.
+                    // Path out: upgrade to PDFBox 3.x which has PDDocument.getRevisionAndIncrementalUpdateInfo().
                     List<PDSignature> sortedSignatures = new ArrayList<>(signatures);
                     sortedSignatures.sort(Comparator.comparingInt(sig -> {
                         int[] br = sig.getByteRange();
@@ -133,28 +139,30 @@ public class DigitalSignatureParser extends AbstractParser {
                     }));
 
                     boolean parsingFailed = false;
+                    int successfullyProcessed = 0;
                     for (int i = 0; i < sigCount; i++) {
                         PDSignature sig = sortedSignatures.get(i);
                         String prefix = SIG_PREFIX + "[" + i + "]";
                         try {
                             extractSignatureMetadata(sig, tis.getFile(), docLength, i, prefix, metadata, xhtml);
+                            successfullyProcessed++;
                         } catch (Exception e) {
                             LOGGER.warn("Failed to extract metadata for signature {}: {}", i, e.getMessage());
                             LOGGER.debug("Signature extraction error", e);
-                            // Stop processing further signatures to avoid inconsistent state
                             parsingFailed = true;
                             break;
                         }
                     }
+
                     xhtml.endElement("div");
 
-                    // If parsing failed mid-way, reset partial metadata to maintain consistency
+                    // If parsing failed mid-way, update SIG_COUNT to reflect only successfully processed
+                    // signatures. This maintains consistency between count and actual metadata fields present.
                     if (parsingFailed) {
-                        metadata.set(SIG_COUNT, "0");
-                        // Note: Tika Metadata does not support removal by prefix;
-                        // downstream consumers should treat SIG_COUNT=0 as authoritative.
+                        metadata.set(SIG_COUNT, Integer.toString(successfullyProcessed));
                     }
                 }
+
                 xhtml.endDocument();
             } catch (SAXException e) {
                 throw e;
@@ -187,8 +195,10 @@ public class DigitalSignatureParser extends AbstractParser {
         if (byteRange != null && byteRange.length >= 4) {
             metadata.set(prefix + BYTE_RANGE_START, Integer.toString(byteRange[0]));
 
-            // Gap size = offset2 - (offset1 + length1), represents the signature content region
-            // Cast each operand individually to prevent integer overflow in addition
+            // Byte range format per PDF spec: [offset1, length1, offset2, length2]
+            // The signed content gap (where signature bytes are stored) spans from
+            // (offset1 + length1) to offset2. This value represents the size of that region.
+            // Cast each operand individually to prevent integer overflow in addition.
             long gapSize = (long) byteRange[2] - ((long) byteRange[0] + (long) byteRange[1]);
             // Validate: negative gap indicates malformed/crafted byte range
             if (gapSize < 0) {
@@ -257,8 +267,6 @@ public class DigitalSignatureParser extends AbstractParser {
                 X509Certificate matchedCert = null;
                 for (X509CertificateHolder certHolder : certCollection) {
                     X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
-
-                    // Only populate top-level cert metadata from the first matching cert
                     if (matchedCert == null) {
                         matchedCert = cert;
                         metadata.set(signerPrefix + CERT_SUBJECT, cert.getSubjectX500Principal().getName());
@@ -268,7 +276,6 @@ public class DigitalSignatureParser extends AbstractParser {
                                 ISO_FORMATTER.format(cert.getNotBefore().toInstant()));
                         metadata.set(signerPrefix + CERT_VALID_TO,
                                 ISO_FORMATTER.format(cert.getNotAfter().toInstant()));
-
                         try {
                             MessageDigest md = MessageDigest.getInstance("SHA-256");
                             byte[] fingerprint = md.digest(cert.getEncoded());
@@ -277,8 +284,12 @@ public class DigitalSignatureParser extends AbstractParser {
                             LOGGER.debug("Failed to compute certificate fingerprint", e);
                         }
                     }
-                    // Render certificate info for ALL matching certs (consistent with metadata note)
-                    renderCertificateInfo(xhtml, cert);
+                }
+
+                // Render certificate info ONLY for the certificate used in verification
+                // to avoid misleading XHTML output implying all matching certs were verified.
+                if (matchedCert != null) {
+                    renderCertificateInfo(xhtml, matchedCert);
                 }
 
                 // Verify signature against the first matched certificate only
@@ -304,7 +315,6 @@ public class DigitalSignatureParser extends AbstractParser {
             // ponytail: RFC 3161 timestamp token parsing from CMS unsigned attributes
             // is complex; deferring full implementation to next iteration.
             // Path out: parse SignerInfo.getUnsignedAttributes() for id-smime-aa-timeStampToken.
-
         } catch (Exception e) {
             LOGGER.warn("Failed to parse CMS signed data: {}", e.getMessage());
             LOGGER.debug("CMS parsing error", e);
