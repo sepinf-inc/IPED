@@ -70,6 +70,7 @@ public class DigitalSignatureParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = LoggerFactory.getLogger(DigitalSignatureParser.class);
+
     public static final MediaType PDF_TYPE = MediaType.application("pdf");
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(PDF_TYPE);
 
@@ -230,6 +231,9 @@ public class DigitalSignatureParser extends AbstractParser {
 
         // Open a fresh stream per signature to avoid mark/reset/positioning issues
         // with PDFBox's internal COSFilterInputStream across sequential reads.
+        // ponytail: For PDFs with dozens of signatures, this creates file handle churn.
+        // Acceptable trade-off for correctness; OS limits are unlikely in typical forensic cases.
+        // Path out: use RandomAccessFile with explicit seek if profiling shows FD exhaustion.
         try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
             byte[] contents = sig.getContents(fileStream);
             if (contents != null && contents.length > 0) {
@@ -242,9 +246,11 @@ public class DigitalSignatureParser extends AbstractParser {
             metadata.set(prefix + CRYPTOGRAPHIC_MATCH, "UNKNOWN");
         }
 
-        // Revision number based on sorted position (index after sorting by byte range start)
-        // ponytail: PDFBox 2.0.27 does not expose revision number directly;
-        // we use sorted position as best available approximation.
+        // Revision number based on sorted position (index after sorting by byte range start).
+        // WARNING: This is a heuristic approximation, NOT the actual PDF revision number.
+        // For forensically accurate revision tracking, consumers should use dedicated PDF
+        // revision analysis tools or await PDFBox 3.x upgrade.
+        // ponytail: PDFBox 2.0.27 does not expose revision number directly.
         // Path out: upgrade to PDFBox 3.x which has PDDocument.getRevisionAndIncrementalUpdateInfo().
         metadata.set(prefix + REVISION_NUMBER, Integer.toString(index + 1));
     }
@@ -335,7 +341,6 @@ public class DigitalSignatureParser extends AbstractParser {
                     LOGGER.debug("Signature verification failed for {}", signerPrefix, e);
                     metadata.set(signerPrefix + CRYPTOGRAPHIC_MATCH, "UNKNOWN");
                 }
-
                 signerIndex++;
             }
 
