@@ -209,9 +209,9 @@ public class DigitalSignatureParserTest extends TestCase {
         assertNotNull("Certificate fingerprint should be extracted",
                 metadata.get(prefix + DigitalSignatureParser.CERT_FINGERPRINT_SHA256));
 
-        // Integrity status
-        assertNotNull("Integrity status should be set",
-                metadata.get(prefix + DigitalSignatureParser.INTEGRITY_STATUS));
+        // Cryptographic match status
+        assertNotNull("Cryptographic match should be set",
+                metadata.get(prefix + DigitalSignatureParser.CRYPTOGRAPHIC_MATCH));
     }
 
     @Test
