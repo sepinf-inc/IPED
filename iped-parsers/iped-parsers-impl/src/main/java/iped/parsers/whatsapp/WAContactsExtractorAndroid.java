@@ -1,6 +1,6 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Util.nullToEmpty;
+import static iped.parsers.util.ChatUtil.nullToEmpty;
 
 import java.io.File;
 import java.sql.Connection;

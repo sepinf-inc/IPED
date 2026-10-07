@@ -17,7 +17,7 @@ from iped.properties import ExtraProperties
 from iped.properties import BasicProps
 from iped.parsers.standard import StandardParser
 from iped.utils import EmptyInputStream
-from iped.parsers.whatsapp import Util
+from iped.parsers.util import ChatUtil
 from iped.parsers.util import IndentityHtmlParser
 from org.apache.commons.codec.binary import StringUtils
 from java.io import ByteArrayInputStream
@@ -104,7 +104,7 @@ class PythonParserJabber:
         try:
             r'''
             Read file contents from the stream using the java.io.InputStream API.
-            Do not hold too much data in memory. If you neUtil.readResourceAsString("wachat-html-template.txt")ed, you can spool to file
+            Do not hold too much data in memory. If you neUtil.readResourceAsString("chat-html-template.txt")ed, you can spool to file
             using the following code to create a temp file with the contents:
             
             from org.apache.tika.io import TikaInputStream
@@ -262,10 +262,10 @@ class PythonParserJabber:
 
 
             formatted_text = "\n".join(formatted_msgs)
-            util = Util()
-            html_chat_template = util.readResourceAsString("wachat-html-template.txt")
-            css_template = util.readResourceAsString("css/whatsapp.css") 
-            js_template = util.readResourceAsString("js/whatsapp.js")
+            util = ChatUtil()
+            html_chat_template = util.readResourceAsString("chat-html-template.txt")
+            css_template = util.readResourceAsString("css/chat.css") 
+            js_template = util.readResourceAsString("js/chat.js")
             avatar = util.getImageResourceAsEmbedded("img/avatar.png")
             favicon = util.getImageResourceAsEmbedded("img/favicon.ico")
 
