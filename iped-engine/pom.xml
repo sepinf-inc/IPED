@@ -13,6 +13,8 @@
     <properties>
         <release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
         <javacpp.ffmpeg.version>8.0.1-1.5.13</javacpp.ffmpeg.version>
+        <jersey.version>2.39</jersey.version>
+        <grizzly.version>2.4.4</grizzly.version>
     </properties>
 
     <repositories>
@@ -247,12 +249,12 @@
         <dependency>
         	<groupId>org.glassfish.jersey.containers</groupId>
         	<artifactId>jersey-container-grizzly2-servlet</artifactId>
-        	<version>2.30.1</version>
+        	<version>${jersey.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
-            <version>2.30.1</version>
+            <version>${jersey.version}</version>
         </dependency>
         <dependency>
     		<groupId>io.swagger</groupId>
@@ -262,9 +264,29 @@
 		<dependency>
   			<groupId>org.glassfish.jersey.media</groupId>
   			<artifactId>jersey-media-json-jackson</artifactId>
-  			<version>2.28</version>
+  			<version>${jersey.version}</version>
   			<scope>runtime</scope>
 		</dependency>
+        <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-http-server</artifactId>
+            <version>${grizzly.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-http-servlet</artifactId>
+            <version>${grizzly.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-http</artifactId>
+            <version>${grizzly.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-framework</artifactId>
+            <version>${grizzly.version}</version>
+        </dependency>
 		<dependency>
             <groupId>com.googlecode.libphonenumber</groupId>
             <artifactId>libphonenumber</artifactId>
