@@ -225,6 +225,80 @@ public class SpaCyNERecogniserTest {
             tempScript.delete();
         }
     }
+
+    @Test
+    public void testReinitializationAfterFinish() throws Exception {
+        String pythonBinary = null;
+        for (String candidate : new String[] { "python3", "python" }) {
+            try {
+                Process p = new ProcessBuilder(candidate, "--version").start();
+                if (p.waitFor() == 0) {
+                    pythonBinary = candidate;
+                    break;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        org.junit.Assume.assumeNotNull(pythonBinary);
+
+        java.io.File tempScript = java.io.File.createTempFile("mock_reinit_spacy", ".py");
+        tempScript.deleteOnExit();
+
+        String scriptContent = ""
+                + "import sys\n"
+                + "print('spacy_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "print('model_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "for line in sys.stdin:\n"
+                + "    line = line.strip()\n"
+                + "    if not line:\n"
+                + "        continue\n"
+                + "    if line == 'ping':\n"
+                + "        print('pong')\n"
+                + "        sys.stdout.flush()\n"
+                + "    elif line == 'terminate_process':\n"
+                + "        sys.exit(0)\n"
+                + "    elif line.startswith('RECOGNIZE'):\n"
+                + "        print('{\"PERSON\": [\"Reinit Person\"]}')\n"
+                + "        sys.stdout.flush()\n";
+
+        java.nio.file.Files.write(tempScript.toPath(), scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        try {
+            NamedEntityTaskConfig config = new NamedEntityTaskConfig();
+            config.setPythonPath(pythonBinary);
+            config.setNumProcesses(1);
+            config.getLangToModelMap().put("default", "mock_model");
+            config.setEnabled(true);
+
+            SpaCyNERecogniser recogniser = new SpaCyNERecogniser();
+            recogniser.setScriptPath(tempScript.getAbsolutePath());
+
+            // First initialization
+            recogniser.init(config);
+            assertTrue(recogniser.isAvailable());
+
+            // First finish
+            recogniser.finish();
+            assertFalse(recogniser.isAvailable());
+
+            // Second initialization (must succeed because isInitialized was reset in finish)
+            recogniser.init(config);
+            assertTrue(recogniser.isAvailable());
+
+            Map<String, Set<String>> result = recogniser.recognize("test text", "en");
+            assertNotNull(result);
+            assertTrue(result.containsKey("PERSON"));
+            assertTrue(result.get("PERSON").contains("Reinit Person"));
+
+            recogniser.finish();
+            assertFalse(recogniser.isAvailable());
+        } finally {
+            tempScript.delete();
+        }
+    }
 }
+
 
 

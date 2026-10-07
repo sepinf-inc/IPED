@@ -2,6 +2,7 @@ package iped.engine.task.ner.spacy;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -179,11 +180,13 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             is = getClass().getResourceAsStream("/SpaCyProcess.py");
         }
         if (is != null) {
-            File tempScript = File.createTempFile("SpaCyProcess", ".py");
-            tempScript.deleteOnExit();
-            Files.copy(is, tempScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            this.resolvedScriptPath = tempScript.getAbsolutePath();
-            return;
+            try (InputStream in = is) {
+                File tempScript = File.createTempFile("SpaCyProcess", ".py");
+                tempScript.deleteOnExit();
+                Files.copy(in, tempScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                this.resolvedScriptPath = tempScript.getAbsolutePath();
+                return;
+            }
         }
 
         throw new IOException("Could not locate SpaCyProcess.py script.");
@@ -194,11 +197,13 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
         pb.redirectError(ProcessBuilder.Redirect.INHERIT);
 
         Process process = null;
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
         try {
             process = pb.start();
-            BufferedReader reader = new BufferedReader(
+            reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
-            BufferedWriter writer = new BufferedWriter(
+            writer = new BufferedWriter(
                     new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
 
             String line = reader.readLine();
@@ -210,6 +215,8 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
                 } else {
                     LOGGER.warn("Unexpected response starting SpaCy process: {}", line);
                 }
+                closeQuietly(writer);
+                closeQuietly(reader);
                 destroyProcess(process);
                 return null;
             }
@@ -217,6 +224,8 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             line = reader.readLine();
             if (line == null || !line.equals(MODEL_LOADED)) {
                 LOGGER.warn("Failed to load SpaCy models ('{}'): {}", modelsArg, line);
+                closeQuietly(writer);
+                closeQuietly(reader);
                 destroyProcess(process);
                 return null;
             }
@@ -229,6 +238,8 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
 
         } catch (Exception e) {
             LOGGER.warn("Error starting SpaCy process: {}", e.getMessage());
+            closeQuietly(writer);
+            closeQuietly(reader);
             if (process != null) {
                 destroyProcess(process);
             }
@@ -269,8 +280,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             if (responseLine == null) {
                 // Process died
                 LOGGER.warn("SpaCy worker process terminated unexpectedly.");
-                server.alive = false;
-                destroyProcess(server.process);
+                destroyServer(server);
                 server = replaceServer();
                 return Map.of();
             }
@@ -280,8 +290,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
         } catch (IOException e) {
             LOGGER.warn("I/O error communicating with SpaCy worker process: {}", e.getMessage());
             if (server != null) {
-                server.alive = false;
-                destroyProcess(server.process);
+                destroyServer(server);
                 server = replaceServer();
             }
             throw e;
@@ -340,6 +349,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
     @Override
     public void finish() {
         isAvailable = false;
+        isInitialized.set(false);
         SpaCyServer server;
         while ((server = serverQueue.poll()) != null) {
             try {
@@ -347,7 +357,26 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
                 server.writer.flush();
             } catch (Exception ignored) {
             }
-            destroyProcess(server.process);
+            destroyServer(server);
+        }
+    }
+
+    private void destroyServer(SpaCyServer server) {
+        if (server == null) {
+            return;
+        }
+        server.alive = false;
+        closeQuietly(server.writer);
+        closeQuietly(server.reader);
+        destroyProcess(server.process);
+    }
+
+    private static void closeQuietly(Closeable c) {
+        if (c != null) {
+            try {
+                c.close();
+            } catch (Exception ignored) {
+            }
         }
     }
 
