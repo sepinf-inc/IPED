@@ -14,6 +14,8 @@ public interface CmdLineArgs {
 
     File getKeywords();
 
+    File getPasswordDictionary();
+
     List<String> getOcr();
 
     File getLogFile();
