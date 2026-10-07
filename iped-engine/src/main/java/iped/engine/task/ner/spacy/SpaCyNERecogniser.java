@@ -297,7 +297,11 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
 
         } finally {
             if (server != null && server.alive) {
-                serverQueue.offer(server);
+                if (isAvailable) {
+                    serverQueue.offer(server);
+                } else {
+                    destroyServer(server);
+                }
             }
         }
     }
@@ -352,11 +356,6 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
         isInitialized.set(false);
         SpaCyServer server;
         while ((server = serverQueue.poll()) != null) {
-            try {
-                server.writer.write(TERMINATE + "\n");
-                server.writer.flush();
-            } catch (Exception ignored) {
-            }
             destroyServer(server);
         }
     }
@@ -366,6 +365,13 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             return;
         }
         server.alive = false;
+        if (server.writer != null) {
+            try {
+                server.writer.write(TERMINATE + "\n");
+                server.writer.flush();
+            } catch (Exception ignored) {
+            }
+        }
         closeQuietly(server.writer);
         closeQuietly(server.reader);
         destroyProcess(server.process);

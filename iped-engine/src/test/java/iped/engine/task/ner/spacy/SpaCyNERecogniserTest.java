@@ -320,7 +320,93 @@ public class SpaCyNERecogniserTest {
             tempScript.delete();
         }
     }
+
+    @Test
+    public void testFinishDuringConcurrentRecognitionDestroysCheckedOutServer() throws Exception {
+        String pythonBinary = null;
+        for (String candidate : new String[] { "python3", "python" }) {
+            try {
+                Process p = new ProcessBuilder(candidate, "--version").start();
+                if (p.waitFor() == 0) {
+                    pythonBinary = candidate;
+                    break;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        org.junit.Assume.assumeNotNull(pythonBinary);
+
+        java.io.File tempScript = java.io.File.createTempFile("mock_concurrent_finish_spacy", ".py");
+        tempScript.deleteOnExit();
+
+        String scriptContent = ""
+                + "import sys, time\n"
+                + "print('spacy_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "print('model_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "for line in sys.stdin:\n"
+                + "    line = line.strip()\n"
+                + "    if not line:\n"
+                + "        continue\n"
+                + "    if line == 'terminate_process':\n"
+                + "        sys.exit(0)\n"
+                + "    elif line.startswith('RECOGNIZE'):\n"
+                + "        time.sleep(0.5)\n"
+                + "        print('{\"PERSON\": [\"Slow Person\"]}')\n"
+                + "        sys.stdout.flush()\n";
+
+        java.nio.file.Files.write(tempScript.toPath(), scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        try {
+            NamedEntityTaskConfig config = new NamedEntityTaskConfig();
+            config.setPythonPath(pythonBinary);
+            config.setNumProcesses(1);
+            config.getLangToModelMap().put("default", "mock_model");
+            config.setEnabled(true);
+
+            SpaCyNERecogniser recogniser = new SpaCyNERecogniser();
+            recogniser.setScriptPath(tempScript.getAbsolutePath());
+            recogniser.init(config);
+            assertTrue(recogniser.isAvailable());
+
+            // Run recognize in background thread
+            java.util.concurrent.CountDownLatch started = new java.util.concurrent.CountDownLatch(1);
+            java.util.concurrent.atomic.AtomicBoolean threadDone = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+            Thread workerThread = new Thread(() -> {
+                started.countDown();
+                try {
+                    recogniser.recognize("slow text", "en");
+                } catch (Exception ignored) {
+                }
+                threadDone.set(true);
+            });
+            workerThread.start();
+
+            started.await();
+            // Wait slightly so worker thread checks out the server from serverQueue
+            Thread.sleep(150);
+
+            // Call finish while worker thread is mid-recognition
+            recogniser.finish();
+            assertFalse(recogniser.isAvailable());
+
+            workerThread.join(5000);
+            assertTrue("Worker thread should have completed", threadDone.get());
+
+            // Check that serverQueue did NOT retain the server
+            java.lang.reflect.Field queueField = SpaCyNERecogniser.class.getDeclaredField("serverQueue");
+            queueField.setAccessible(true);
+            java.util.concurrent.BlockingQueue<?> queue = (java.util.concurrent.BlockingQueue<?>) queueField.get(recogniser);
+            assertTrue("Server queue should be empty and not leak checked-out server", queue.isEmpty());
+
+        } finally {
+            tempScript.delete();
+        }
+    }
 }
+
 
 
 
