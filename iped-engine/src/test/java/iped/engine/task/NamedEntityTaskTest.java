@@ -3,6 +3,8 @@ package iped.engine.task;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -37,6 +39,8 @@ public class NamedEntityTaskTest {
         if (task != null) {
             task.finish();
         }
+        NamedEntityTask.recognizer = null;
+        NamedEntityTask.activeInstances.set(0);
     }
 
     @Test
@@ -78,7 +82,7 @@ public class NamedEntityTaskTest {
             }
         };
 
-        setField(null, "recognizer", mockRecognizer);
+        NamedEntityTask.recognizer = mockRecognizer;
 
         TestItem item = new TestItem("O perito João da Silva chegou em Brasília para trabalhar na Polícia Federal.");
         item.setMediaType(MediaType.TEXT_PLAIN);
@@ -100,6 +104,51 @@ public class NamedEntityTaskTest {
         assertNotNull(orgs);
         assertEquals(1, orgs.length);
         assertEquals("Polícia Federal", orgs[0]);
+    }
+
+    @Test
+    public void testMultiInstanceLifecycleWithActiveInstances() throws Exception {
+        java.util.concurrent.atomic.AtomicBoolean finished = new java.util.concurrent.atomic.AtomicBoolean(false);
+        INamedEntityRecognizer mockRecognizer = new INamedEntityRecognizer() {
+            @Override
+            public void init(NamedEntityTaskConfig config) {
+            }
+
+            @Override
+            public boolean isAvailable() {
+                return true;
+            }
+
+            @Override
+            public Map<String, Set<String>> recognize(String text, String lang) {
+                return Map.of();
+            }
+
+            @Override
+            public void finish() {
+                finished.set(true);
+            }
+        };
+
+        NamedEntityTask.recognizer = mockRecognizer;
+        NamedEntityTask.activeInstances.set(2);
+
+        NamedEntityTask task1 = new NamedEntityTask();
+        NamedEntityTask task2 = new NamedEntityTask();
+
+        // Worker 1 finishes while Worker 2 is still running
+        task1.finish();
+
+        // Recognizer must NOT be finished yet
+        assertFalse("Recognizer should not finish while active instances remain", finished.get());
+        assertNotNull("Static recognizer should remain non-null", NamedEntityTask.recognizer);
+
+        // Worker 2 finishes (the last active instance)
+        task2.finish();
+
+        // Now recognizer must be finished and set to null
+        assertTrue("Recognizer should finish when last instance finishes", finished.get());
+        assertNull(NamedEntityTask.recognizer);
     }
 
     private static class TestItem extends Item {

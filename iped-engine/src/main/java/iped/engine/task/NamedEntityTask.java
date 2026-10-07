@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.tika.parser.ner.NamedEntityParser;
 
 import iped.configuration.Configurable;
@@ -27,7 +29,9 @@ public class NamedEntityTask extends AbstractTask {
 
     private static final int MAX_ENTITY_BYTES_LEN = 32766;
 
-    private static INamedEntityRecognizer recognizer;
+    static INamedEntityRecognizer recognizer;
+
+    static final AtomicInteger activeInstances = new AtomicInteger();
 
     private NamedEntityTaskConfig nerConfig;
 
@@ -48,6 +52,8 @@ public class NamedEntityTask extends AbstractTask {
         if (!nerConfig.isEnabled())
             return;
 
+        activeInstances.incrementAndGet();
+
         synchronized (NamedEntityTask.class) {
             if (recognizer == null) {
                 String impl = nerConfig.getNerImpl();
@@ -64,10 +70,12 @@ public class NamedEntityTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        synchronized (NamedEntityTask.class) {
-            if (recognizer != null) {
-                recognizer.finish();
-                recognizer = null;
+        if (activeInstances.get() > 0 && activeInstances.decrementAndGet() == 0) {
+            synchronized (NamedEntityTask.class) {
+                if (recognizer != null) {
+                    recognizer.finish();
+                    recognizer = null;
+                }
             }
         }
     }
