@@ -227,7 +227,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         itens.setText(getItemList());
         stats.setText(getStats());
         parsers.setText(getParserTimes());
-        if (processedItems > 0)
+        if (processedItems > 0 && !workers[0].manager.isHtmlReportOnly())
             openApp.setEnabled(true);
 
         String msg = progressBar.getString();
