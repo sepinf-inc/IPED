@@ -130,7 +130,7 @@ def main():
                 if mention not in result[cat]:
                     result[cat].append(mention)
 
-            output = json.dumps(result, ensure_ascii=False)
+            output = json.dumps(result, ensure_ascii=True)
             print(output, file=stdout, flush=True)
         except Exception as e:
             print(f"Error during recognition: {e}", file=sys.stderr)

@@ -84,6 +84,28 @@ public class SpaCyNERecogniserTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void testJsonParsingWithUnicodeEscapes() throws Exception {
+        SpaCyNERecogniser recogniser = new SpaCyNERecogniser();
+        Method method = SpaCyNERecogniser.class.getDeclaredMethod("parseJsonResponse", String.class);
+        method.setAccessible(true);
+
+        String json = "{\"PERSON\": [\"Jo\\u00e3o da Silva\"], \"LOCATION\": [\"Bras\\u00edlia\"]}";
+        Map<String, Set<String>> map = (Map<String, Set<String>>) method.invoke(recogniser, json);
+
+        assertNotNull(map);
+        assertEquals(2, map.size());
+
+        Set<String> persons = map.get("PERSON");
+        assertNotNull(persons);
+        assertTrue(persons.contains("João da Silva"));
+
+        Set<String> locations = map.get("LOCATION");
+        assertNotNull(locations);
+        assertTrue(locations.contains("Brasília"));
+    }
+
+    @Test
     public void testEndToEndMockPythonProcess() throws Exception {
         String pythonBinary = null;
         for (String candidate : new String[] { "python3", "python" }) {
