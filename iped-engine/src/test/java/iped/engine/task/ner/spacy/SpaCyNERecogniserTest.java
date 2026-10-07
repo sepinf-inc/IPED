@@ -562,6 +562,98 @@ public class SpaCyNERecogniserTest {
             tempScript.delete();
         }
     }
+
+    @Test
+    public void testFailFastWhenProcessReplacementFails() throws Exception {
+        String pythonBinary = null;
+        for (String candidate : new String[] { "python3", "python" }) {
+            try {
+                Process p = new ProcessBuilder(candidate, "--version").start();
+                if (p.waitFor() == 0) {
+                    pythonBinary = candidate;
+                    break;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        org.junit.Assume.assumeNotNull(pythonBinary);
+
+        java.io.File tempScript = java.io.File.createTempFile("mock_failfast_spacy", ".py");
+        tempScript.deleteOnExit();
+
+        String scriptContent = ""
+                + "import sys\n"
+                + "print('spacy_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "print('model_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "while True:\n"
+                + "    try:\n"
+                + "        line = input()\n"
+                + "    except EOFError:\n"
+                + "        break\n"
+                + "    line = line.strip()\n"
+                + "    if not line:\n"
+                + "        continue\n"
+                + "    if line == 'terminate_process':\n"
+                + "        break\n"
+                + "    elif line.startswith('RECOGNIZE'):\n"
+                + "        print('{\"PERSON\": [\"Initial Person\"]}')\n"
+                + "        sys.stdout.flush()\n";
+
+        java.nio.file.Files.write(tempScript.toPath(), scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        try {
+            NamedEntityTaskConfig config = new NamedEntityTaskConfig();
+            config.setPythonPath(pythonBinary);
+            config.setNumProcesses(1);
+            config.getLangToModelMap().put("default", "mock_model");
+            config.setEnabled(true);
+
+            SpaCyNERecogniser recogniser = new SpaCyNERecogniser();
+            recogniser.setScriptPath(tempScript.getAbsolutePath());
+            recogniser.init(config);
+            assertTrue(recogniser.isAvailable());
+
+            // Delete the script so future replacement process fails to start
+            tempScript.delete();
+
+            // Forcibly kill the worker process so it crashes
+            java.lang.reflect.Field queueField = SpaCyNERecogniser.class.getDeclaredField("serverQueue");
+            queueField.setAccessible(true);
+            java.util.concurrent.BlockingQueue<?> queue = (java.util.concurrent.BlockingQueue<?>) queueField.get(recogniser);
+            Object server = queue.peek();
+            assertNotNull(server);
+            java.lang.reflect.Field processField = server.getClass().getDeclaredField("process");
+            processField.setAccessible(true);
+            Process proc = (Process) processField.get(server);
+            proc.destroyForcibly();
+            proc.waitFor();
+
+            // First recognition after crash attempts replacement, fails to spawn, sets isAvailable = false
+            Map<String, Set<String>> crashedResult = recogniser.recognize("text 1", "en");
+            assertNotNull(crashedResult);
+            assertTrue(crashedResult.isEmpty());
+            assertFalse("Recogniser should be marked unavailable after replacement fails", recogniser.isAvailable());
+            assertFalse("Task configuration should be disabled", config.isEnabled());
+
+            // Subsequent recognition call MUST fail fast immediately without waiting for queue poll timeout
+            long startTime = System.currentTimeMillis();
+            Map<String, Set<String>> failFastResult = recogniser.recognize("text 2", "en");
+            long elapsedMs = System.currentTimeMillis() - startTime;
+
+            assertNotNull(failFastResult);
+            assertTrue(failFastResult.isEmpty());
+            assertTrue("Subsequent call should fail fast (< 1000ms) instead of hanging on 60s timeout, took " + elapsedMs + "ms",
+                    elapsedMs < 1000);
+
+            recogniser.finish();
+        } finally {
+            if (tempScript.exists()) {
+                tempScript.delete();
+            }
+        }
+    }
 }
 
 

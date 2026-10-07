@@ -20,6 +20,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.json.simple.JSONArray;
@@ -49,6 +50,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
 
     private final BlockingQueue<SpaCyServer> serverQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
+    private final AtomicInteger activeServers = new AtomicInteger(0);
     private volatile boolean isAvailable = false;
     private NamedEntityTaskConfig taskConfig;
     private String resolvedPythonPath;
@@ -59,7 +61,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
         Process process;
         BufferedReader reader;
         BufferedWriter writer;
-        volatile boolean alive = true;
+        final AtomicBoolean alive = new AtomicBoolean(true);
     }
 
     @Override
@@ -68,6 +70,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
         if (isInitialized.getAndSet(true)) {
             return;
         }
+        activeServers.set(0);
 
         resolvePythonBinary(config);
         if (this.resolvedScriptPath == null) {
@@ -234,6 +237,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             server.process = process;
             server.reader = reader;
             server.writer = writer;
+            activeServers.incrementAndGet();
             return server;
 
         } catch (Exception e) {
@@ -249,12 +253,12 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
 
     @Override
     public boolean isAvailable() {
-        return isAvailable;
+        return isAvailable && activeServers.get() > 0;
     }
 
     @Override
     public Map<String, Set<String>> recognize(String text, String lang) throws Exception {
-        if (!isAvailable || text == null || text.trim().isEmpty()) {
+        if (!isAvailable || activeServers.get() == 0 || text == null || text.trim().isEmpty()) {
             return Map.of();
         }
 
@@ -267,7 +271,15 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
         }
 
         if (server == null) {
-            LOGGER.warn("Timed out waiting for available SpaCy worker process. Skipping NER for this text fragment.");
+            if (activeServers.get() == 0) {
+                isAvailable = false;
+                LOGGER.error("No active SpaCy worker processes remaining. Disabling SpaCy NER.");
+                if (taskConfig != null) {
+                    taskConfig.setEnabled(false);
+                }
+            } else {
+                LOGGER.warn("Timed out waiting for available SpaCy worker process. Skipping NER for this text fragment.");
+            }
             return Map.of();
         }
 
@@ -281,7 +293,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
                 destroyServer(server);
                 server = replaceServer();
             }
-            if (server != null && server.alive) {
+            if (server != null && server.alive.get()) {
                 try {
                     return sendRecognizeRequest(server, text, lang);
                 } catch (IOException retryEx) {
@@ -294,7 +306,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             return Map.of();
 
         } finally {
-            if (server != null && server.alive) {
+            if (server != null && server.alive.get()) {
                 if (isAvailable) {
                     serverQueue.offer(server);
                 } else {
@@ -323,12 +335,21 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             return null;
         }
         LOGGER.warn("Attempting to spawn replacement SpaCy worker process...");
+        SpaCyServer server = null;
         try {
-            return startServer();
+            server = startServer();
         } catch (Exception e) {
             LOGGER.error("Failed to spawn replacement SpaCy worker process: {}", e.getMessage(), e);
-            return null;
         }
+
+        if (server == null && activeServers.get() == 0 && serverQueue.isEmpty()) {
+            isAvailable = false;
+            LOGGER.error("Failed to spawn replacement SpaCy worker process and no active workers remain. Disabling SpaCy NER.");
+            if (taskConfig != null) {
+                taskConfig.setEnabled(false);
+            }
+        }
+        return server;
     }
 
     private Map<String, Set<String>> parseJsonResponse(String jsonStr) {
@@ -376,7 +397,10 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
         if (server == null) {
             return;
         }
-        server.alive = false;
+        if (!server.alive.compareAndSet(true, false)) {
+            return;
+        }
+        activeServers.decrementAndGet();
         if (server.writer != null) {
             try {
                 server.writer.write(TERMINATE + "\n");
