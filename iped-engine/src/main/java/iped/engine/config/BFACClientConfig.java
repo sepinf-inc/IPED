@@ -17,7 +17,7 @@ public class BFACClientConfig extends AbstractPropertiesConfigurable {
     private static final long serialVersionUID = 1L;
 
     private static final String BFAC_CONFIG_FILE = "conf/BFACConfig.txt"; //$NON-NLS-1$
-    private static final String DEFAULT_BASE_URL = "http://localhost:8000/"; //$NON-NLS-1$
+    private static final String DEFAULT_BASE_URL = "https://10.61.86.109:443/"; //$NON-NLS-1$
     private static final int DEFAULT_MAX_CONCURRENT_UPLOADS = 5;
 
     private boolean enabled = true;

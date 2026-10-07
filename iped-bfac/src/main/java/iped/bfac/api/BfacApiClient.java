@@ -50,6 +50,7 @@ public class BfacApiClient {
     private static final Logger logger = LoggerFactory.getLogger(BfacApiClient.class);
     private static final Gson GSON = new Gson();
     private static final Duration TIMEOUT = Duration.ofSeconds(60);
+    private static final Duration REACHABILITY_TIMEOUT = Duration.ofSeconds(10);
     private static final String USER_AGENT = "IPED-BFAC-Client/" + Version.APP_VERSION + " (" + Version.APP_EXT + ")";
     private static final int MAX_STATUS_BATCH_FILE_IDS = 50;
     private static final String SESSION_USER_ENDPOINT = "api/auth/users/me";
@@ -175,7 +176,7 @@ public class BfacApiClient {
         this.config = BfacConfig.getInstance();
         // Load base URL from IPED configuration
         BFACClientConfig bfacClientConfig = ConfigurationManager.get().findObject(BFACClientConfig.class);
-        this.baseUrl = bfacClientConfig != null ? bfacClientConfig.getBaseUrl() : "http://localhost:8000/";
+        this.baseUrl = bfacClientConfig != null ? bfacClientConfig.getBaseUrl() : "https://10.61.86.109:443/";
         if (!this.baseUrl.endsWith("/")) {
             this.baseUrl += "/";
         }
@@ -200,6 +201,10 @@ public class BfacApiClient {
      * @return HttpClient configured to trust all certificates
      */
     private HttpClient createHttpClient() {
+        return createHttpClient(TIMEOUT);
+    }
+
+    private HttpClient createHttpClient(Duration connectTimeout) {
         try {
             // Create a trust manager that accepts all certificates
             TrustManager[] trustAllCerts = new TrustManager[]{
@@ -219,7 +224,7 @@ public class BfacApiClient {
             sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
 
             return HttpClient.newBuilder()
-                    .connectTimeout(TIMEOUT)
+                    .connectTimeout(connectTimeout)
                     .version(HttpClient.Version.HTTP_1_1)
                     .sslContext(sslContext)
                     .build();
@@ -227,7 +232,7 @@ public class BfacApiClient {
             logger.warn("Failed to create insecure SSL context, falling back to default: {}", e.getMessage());
             // Fallback to default HTTP client if SSL configuration fails
             return HttpClient.newBuilder()
-                    .connectTimeout(TIMEOUT)
+                    .connectTimeout(connectTimeout)
                     .version(HttpClient.Version.HTTP_1_1)
                     .build();
         }
@@ -1072,6 +1077,30 @@ public class BfacApiClient {
 
     private void markConnectionError() {
         lastCallConnectionError = true;
+    }
+
+    /**
+     * Checks whether the BFAC server can be reached over the network, using a short timeout.
+     * Any HTTP response (regardless of status code) means the server is reachable.
+     * @return null if the server is reachable, otherwise a description of the connection failure
+     */
+    public String checkServerReachable() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl))
+                    .timeout(REACHABILITY_TIMEOUT)
+                    .header("User-Agent", USER_AGENT)
+                    .GET()
+                    .build();
+            createHttpClient(REACHABILITY_TIMEOUT).send(request, HttpResponse.BodyHandlers.discarding());
+            return null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return e.toString();
+        } catch (Exception e) {
+            logger.warn("BFAC server {} is not reachable: {}", baseUrl, e.toString());
+            return e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+        }
     }
 
     /**

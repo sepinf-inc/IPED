@@ -1,16 +1,24 @@
 package iped.bfac;
 
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 
 import iped.bfac.api.BfacApiClient;
@@ -46,6 +54,7 @@ public class BfacDialog extends JDialog {
 
     private SubmissionWorker currentWorker;
     private boolean connectionErrorShown;
+    private JDialog connectingDialog;
 
     private LoginPanel loginPanel;
     private SubmissionPanel submissionPanel;
@@ -75,14 +84,108 @@ public class BfacDialog extends JDialog {
         return instance;
     }
 
+    /**
+     * Shows the dialog. If it is not already visible, first checks whether the BFAC
+     * server is reachable (showing a "connecting" progress dialog meanwhile); the
+     * dialog is only opened when the server can be reached.
+     */
     public void showDialog() {
         if (parentFrame != null && parentFrame.getState() == Frame.ICONIFIED) {
             parentFrame.setState(Frame.NORMAL);
         }
+        if (isVisible()) {
+            toFront();
+            requestFocus();
+            return;
+        }
+
+        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() {
+                return apiClient.checkServerReachable();
+            }
+
+            @Override
+            protected void done() {
+                if (connectingDialog != null) {
+                    connectingDialog.dispose();
+                    connectingDialog = null;
+                }
+                if (isCancelled()) {
+                    closeAndCleanup();
+                    return;
+                }
+                String error;
+                try {
+                    error = get();
+                } catch (Exception e) {
+                    error = e.toString();
+                }
+                if (error == null) {
+                    openAfterConnectionCheck();
+                } else {
+                    showServerUnreachableAndClose();
+                }
+            }
+        };
+
+        connectingDialog = createConnectingDialog(() -> worker.cancel(true));
+        worker.execute();
+        // modal: blocks here (while still pumping events) until the worker disposes it
+        connectingDialog.setVisible(true);
+    }
+
+    private JDialog createConnectingDialog(Runnable onCancel) {
+        JDialog dialog = new JDialog(parentFrame, Messages.getString("BfacDialog.ConnectingTitle"), true);
+        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                onCancel.run();
+            }
+        });
+
+        JPanel content = new JPanel(new BorderLayout(0, 10));
+        content.setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
+
+        JPanel labels = new JPanel();
+        labels.setLayout(new BoxLayout(labels, BoxLayout.Y_AXIS));
+        labels.add(new JLabel(Messages.getString("BfacDialog.ConnectingMessage")));
+        labels.add(new JLabel(Messages.getString("BfacDialog.BackendUrl", apiClient.getBaseUrl())));
+        content.add(labels, BorderLayout.NORTH);
+
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setIndeterminate(true);
+        content.add(progressBar, BorderLayout.CENTER);
+
+        JButton cancelButton = new JButton(Messages.getString("BfacDialog.Cancel"));
+        cancelButton.addActionListener(e -> onCancel.run());
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        buttons.add(cancelButton);
+        content.add(buttons, BorderLayout.SOUTH);
+
+        dialog.setContentPane(content);
+        dialog.pack();
+        dialog.setMinimumSize(new java.awt.Dimension(380, dialog.getHeight()));
+        dialog.setResizable(false);
+        dialog.setLocationRelativeTo(parentFrame);
+        return dialog;
+    }
+
+    private void openAfterConnectionCheck() {
         checkStoredSessionOnOpen();
         setVisible(true);
         toFront();
         requestFocus();
+    }
+
+    private void showServerUnreachableAndClose() {
+        JOptionPane.showMessageDialog(
+                parentFrame,
+                Messages.getString("BfacDialog.ServerUnreachable", apiClient.getBaseUrl()),
+                Messages.getString("BfacDialog.ServerUnreachableTitle"),
+                JOptionPane.WARNING_MESSAGE);
+        closeAndCleanup();
     }
 
     private void handleWindowClosing() {
