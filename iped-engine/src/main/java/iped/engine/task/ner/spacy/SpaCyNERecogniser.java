@@ -272,28 +272,26 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
         }
 
         try {
-            String b64Text = Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
-            server.writer.write("RECOGNIZE " + lang + " " + b64Text + "\n");
-            server.writer.flush();
-
-            String responseLine = server.reader.readLine();
-            if (responseLine == null) {
-                // Process died
-                LOGGER.warn("SpaCy worker process terminated unexpectedly.");
-                destroyServer(server);
-                server = replaceServer();
-                return Map.of();
-            }
-
-            return parseJsonResponse(responseLine);
+            return sendRecognizeRequest(server, text, lang);
 
         } catch (IOException e) {
-            LOGGER.warn("I/O error communicating with SpaCy worker process: {}", e.getMessage());
+            LOGGER.warn("I/O error communicating with SpaCy worker process: {}. Attempting retry with fresh worker.",
+                    e.getMessage());
             if (server != null) {
                 destroyServer(server);
                 server = replaceServer();
             }
-            throw e;
+            if (server != null && server.alive) {
+                try {
+                    return sendRecognizeRequest(server, text, lang);
+                } catch (IOException retryEx) {
+                    LOGGER.warn("Retry failed after I/O error on fresh SpaCy worker: {}. Skipping NER for this text fragment.",
+                            retryEx.getMessage());
+                    destroyServer(server);
+                    server = replaceServer();
+                }
+            }
+            return Map.of();
 
         } finally {
             if (server != null && server.alive) {
@@ -304,6 +302,20 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
                 }
             }
         }
+    }
+
+    private Map<String, Set<String>> sendRecognizeRequest(SpaCyServer server, String text, String lang)
+            throws IOException {
+        String b64Text = Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
+        server.writer.write("RECOGNIZE " + lang + " " + b64Text + "\n");
+        server.writer.flush();
+
+        String responseLine = server.reader.readLine();
+        if (responseLine == null) {
+            throw new IOException("SpaCy worker process terminated unexpectedly (unexpected EOF).");
+        }
+
+        return parseJsonResponse(responseLine);
     }
 
     private SpaCyServer replaceServer() {

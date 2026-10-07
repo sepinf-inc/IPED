@@ -483,6 +483,85 @@ public class SpaCyNERecogniserTest {
             tempScript.delete();
         }
     }
+
+    @Test
+    public void testIdleWorkerDiedBrokenPipeRecovery() throws Exception {
+        String pythonBinary = null;
+        for (String candidate : new String[] { "python3", "python" }) {
+            try {
+                Process p = new ProcessBuilder(candidate, "--version").start();
+                if (p.waitFor() == 0) {
+                    pythonBinary = candidate;
+                    break;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        org.junit.Assume.assumeNotNull(pythonBinary);
+
+        java.io.File tempScript = java.io.File.createTempFile("mock_broken_pipe_spacy", ".py");
+        tempScript.deleteOnExit();
+
+        String scriptContent = ""
+                + "import sys\n"
+                + "print('spacy_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "print('model_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "while True:\n"
+                + "    try:\n"
+                + "        line = input()\n"
+                + "    except EOFError:\n"
+                + "        break\n"
+                + "    line = line.strip()\n"
+                + "    if not line:\n"
+                + "        continue\n"
+                + "    if line == 'terminate_process':\n"
+                + "        break\n"
+                + "    elif line.startswith('RECOGNIZE'):\n"
+                + "        print('{\"PERSON\": [\"Replacement Worker Result\"]}')\n"
+                + "        sys.stdout.flush()\n";
+
+        java.nio.file.Files.write(tempScript.toPath(), scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        try {
+            NamedEntityTaskConfig config = new NamedEntityTaskConfig();
+            config.setPythonPath(pythonBinary);
+            config.setNumProcesses(1);
+            config.getLangToModelMap().put("default", "mock_model");
+            config.setEnabled(true);
+
+            SpaCyNERecogniser recogniser = new SpaCyNERecogniser();
+            recogniser.setScriptPath(tempScript.getAbsolutePath());
+            recogniser.init(config);
+            assertTrue(recogniser.isAvailable());
+
+            // Forcibly destroy the idle worker process in the queue to simulate unexpected death / broken pipe
+            java.lang.reflect.Field queueField = SpaCyNERecogniser.class.getDeclaredField("serverQueue");
+            queueField.setAccessible(true);
+            java.util.concurrent.BlockingQueue<?> queue = (java.util.concurrent.BlockingQueue<?>) queueField.get(recogniser);
+            Object server = queue.peek();
+            assertNotNull(server);
+            java.lang.reflect.Field processField = server.getClass().getDeclaredField("process");
+            processField.setAccessible(true);
+            Process proc = (Process) processField.get(server);
+            proc.destroyForcibly();
+            proc.waitFor();
+
+            // Calling recognize should detect the broken pipe / terminated process, replace it with a fresh worker,
+            // retry once, and return valid results without throwing an exception.
+            Map<String, Set<String>> result = recogniser.recognize("sample query", "en");
+            assertNotNull(result);
+            assertTrue(result.containsKey("PERSON"));
+            assertTrue(result.get("PERSON").contains("Replacement Worker Result"));
+            assertTrue(recogniser.isAvailable());
+
+            recogniser.finish();
+            assertFalse(recogniser.isAvailable());
+        } finally {
+            tempScript.delete();
+        }
+    }
 }
 
 
