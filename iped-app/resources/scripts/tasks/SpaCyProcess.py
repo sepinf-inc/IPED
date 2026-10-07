@@ -58,6 +58,7 @@ def main():
         print(msg, file=stdout, flush=True)
         sys.exit(1)
 
+    loaded_models = {}
     nlp_cache = {}
     for entry in models_config.split(','):
         entry = entry.strip()
@@ -67,9 +68,9 @@ def main():
         lang = lang.strip()
         model_name = model_name.strip()
         try:
-            # Exclude unused components if available for faster NER inference
-            nlp = spacy.load(model_name)
-            nlp_cache[lang] = nlp
+            if model_name not in loaded_models:
+                loaded_models[model_name] = spacy.load(model_name)
+            nlp_cache[lang] = loaded_models[model_name]
         except Exception as e:
             msg = f"ERROR_MODEL: Model '{model_name}' for lang '{lang}' failed to load: {repr(e).replace(chr(10), ' ')}"
             print(msg, file=stdout, flush=True)
