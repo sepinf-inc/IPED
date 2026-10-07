@@ -201,7 +201,7 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
     }
 
     @Override
-    public void close() {
+    public void dispose() {
         if (content instanceof AbstractFile) {
             ((AbstractFile) content).close();
         }
