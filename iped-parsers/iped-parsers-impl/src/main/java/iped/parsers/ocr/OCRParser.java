@@ -138,7 +138,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     private int MAX_CONV_IMAGE_SIZE = Integer.valueOf(System.getProperty(MAX_CONV_IMAGE_SIZE_PROP, "3000")); //$NON-NLS-1$
 
     private static AtomicBoolean checked = new AtomicBoolean();
-    private static String tessVersion = "";
 
     private static HashMap<File, Connection> connMap = new HashMap<>();
 
@@ -250,17 +249,15 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         if (!TOOL_PATH.isEmpty())
             tesseractPath = TOOL_PATH + "/" + TOOL_NAME; //$NON-NLS-1$ //$NON-NLS-2$
 
-        String[] cmd = { tesseractPath, INPUT_FILE_TOKEN, OUTPUT_FILE_TOKEN, "-l", LANGUAGE, "-psm", PAGESEGMODE }; //$NON-NLS-1$ //$NON-NLS-2$
+        String[] cmd = { tesseractPath, INPUT_FILE_TOKEN, OUTPUT_FILE_TOKEN, "-l", LANGUAGE, "--psm", PAGESEGMODE }; //$NON-NLS-1$ //$NON-NLS-2$
         this.command = cmd;
 
         try {
             synchronized (checked) {
                 if (ENABLED && !checked.getAndSet(true)) {
                     List<String> info = checkVersionInfo(cmd[0], "-v"); //$NON-NLS-1$
-                    if (!info.isEmpty()) 
-                        tessVersion = info.get(0);
                     LOGGER = LoggerFactory.getLogger(OCRParser.class);
-                    LOGGER.info("Detected Tesseract " + tessVersion); //$NON-NLS-1$
+                    LOGGER.info("Detected Tesseract " + (info.isEmpty() ? "" : info.get(0))); //$NON-NLS-1$
                     if (info.size() <= 1) {
                         LOGGER.info("No Tesseract optional image libraries detected."); //$NON-NLS-1$
                     } else {
@@ -275,12 +272,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                             PROCESS_NON_STANDARD_FORMATS ? "enabled" : "disabled");
                 }
             }
-            if (ENABLED && Integer.valueOf(tessVersion.charAt(0)) >= 4) { // $NON-NLS-1$
-                for (int i = 0; i < command.length; i++)
-                    if (command[i].equals("-psm")) //$NON-NLS-1$
-                        command[i] = "--psm"; //$NON-NLS-1$
-            }
-
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error running " + cmd[0], e); //$NON-NLS-1$
         }
@@ -583,7 +574,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     if (!success || !imageFile.exists())
                         continue;
                     File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
-                    parse(xhtml, imageFile, imageText, itemPath);
+                    parsePage(xhtml, imageFile, imageText, itemPath, page);
                     if (imageText.exists()) {
                         if (outputBase != null)
                             IOUtil.copyFile(imageText, output, true);
@@ -596,6 +587,25 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             }
         } finally {
             pdfConverter.close();
+        }
+    }
+
+    /**
+     * OCR one rendered PDF page. A tesseract error on a single page (e.g. "Image
+     * too large" for pages rendered above 32767px) is logged and skipped, so the
+     * other pages are still OCRed. Other exceptions, like interruption, are
+     * propagated.
+     */
+    private void parsePage(XHTMLContentHandler xhtml, File input, File output, String itemPath, int page)
+            throws IOException, SAXException, TikaException {
+        try {
+            parse(xhtml, input, output, itemPath);
+        } catch (TikaException e) {
+            if (e.toString().contains(TESSERACT_ERROR_MSG)) {
+                LOGGER.warn("Skipping OCR of page " + (page + 1) + " of " + itemPath + ": " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+            } else {
+                throw e;
+            }
         }
     }
 
@@ -697,11 +707,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         if (result != 0) {
             throw new IOException("Returned error code " + result); //$NON-NLS-1$
         }
-        try {
-            return extractVersion(process.getInputStream());
-        } catch (Exception e) {
-            return extractVersion(process.getErrorStream());
-        }
+        return extractVersion(process.getInputStream());
     }
 
     private static List<String> extractVersion(InputStream is) throws IOException {

@@ -473,7 +473,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "path", //$NON-NLS-1$
                 "size", //$NON-NLS-1$
                 "deleted", //$NON-NLS-1$
-                "deleted_state" //$NON-NLS-1$
+                "deleted_state",
+                "dedup_hash"
         ));
 
         HashSet<String> ignoreNameAttrs = new HashSet<>(Arrays.asList("Tags", //$NON-NLS-1$

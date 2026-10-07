@@ -25,7 +25,15 @@ public class UTF8Properties extends Properties {
     public synchronized void load(File file) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
         String str = null;
+        boolean first = true;
         while ((str = in.readLine()) != null) {
+            if (first) {
+                first = false;
+                if (str.startsWith("\uFEFF")) {
+                    // Ignore UTF-8 BOM
+                    str = str.substring(1);
+                }
+            }
             if (str.isEmpty() || str.charAt(0) == '#') {
                 continue;
             }
