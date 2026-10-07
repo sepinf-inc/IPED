@@ -88,7 +88,11 @@ def main():
         except EOFError:
             break
 
-        if not line or line == TERMINATE:
+        line = line.strip()
+        if not line:
+            continue
+
+        if line == TERMINATE:
             break
 
         if line == PING:

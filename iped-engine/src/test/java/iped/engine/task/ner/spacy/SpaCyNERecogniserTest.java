@@ -405,7 +405,86 @@ public class SpaCyNERecogniserTest {
             tempScript.delete();
         }
     }
+
+    @Test
+    public void testBlankLinesDoNotCrashProcess() throws Exception {
+        String pythonBinary = null;
+        for (String candidate : new String[] { "python3", "python" }) {
+            try {
+                Process p = new ProcessBuilder(candidate, "--version").start();
+                if (p.waitFor() == 0) {
+                    pythonBinary = candidate;
+                    break;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        org.junit.Assume.assumeNotNull(pythonBinary);
+
+        java.io.File tempScript = java.io.File.createTempFile("mock_blank_lines_spacy", ".py");
+        tempScript.deleteOnExit();
+
+        String scriptContent = ""
+                + "import sys\n"
+                + "print('spacy_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "print('model_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "while True:\n"
+                + "    try:\n"
+                + "        line = input()\n"
+                + "    except EOFError:\n"
+                + "        break\n"
+                + "    line = line.strip()\n"
+                + "    if not line:\n"
+                + "        continue\n"
+                + "    if line == 'terminate_process':\n"
+                + "        break\n"
+                + "    elif line.startswith('RECOGNIZE'):\n"
+                + "        print('{\"PERSON\": [\"Active Person\"]}')\n"
+                + "        sys.stdout.flush()\n";
+
+        java.nio.file.Files.write(tempScript.toPath(), scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        try {
+            NamedEntityTaskConfig config = new NamedEntityTaskConfig();
+            config.setPythonPath(pythonBinary);
+            config.setNumProcesses(1);
+            config.getLangToModelMap().put("default", "mock_model");
+            config.setEnabled(true);
+
+            SpaCyNERecogniser recogniser = new SpaCyNERecogniser();
+            recogniser.setScriptPath(tempScript.getAbsolutePath());
+            recogniser.init(config);
+            assertTrue(recogniser.isAvailable());
+
+            // Send blank lines directly through server writer to test resilience
+            java.lang.reflect.Field queueField = SpaCyNERecogniser.class.getDeclaredField("serverQueue");
+            queueField.setAccessible(true);
+            java.util.concurrent.BlockingQueue<?> queue = (java.util.concurrent.BlockingQueue<?>) queueField.get(recogniser);
+            Object server = queue.peek();
+            assertNotNull(server);
+            java.lang.reflect.Field writerField = server.getClass().getDeclaredField("writer");
+            writerField.setAccessible(true);
+            java.io.BufferedWriter writer = (java.io.BufferedWriter) writerField.get(server);
+            writer.write("\n\n   \n");
+            writer.flush();
+
+            // Next recognition must succeed because blank lines were ignored
+            Map<String, Set<String>> result = recogniser.recognize("sample query", "en");
+            assertNotNull(result);
+            assertTrue(result.containsKey("PERSON"));
+            assertTrue(result.get("PERSON").contains("Active Person"));
+
+            recogniser.finish();
+            assertFalse(recogniser.isAvailable());
+
+        } finally {
+            tempScript.delete();
+        }
+    }
 }
+
 
 
 
