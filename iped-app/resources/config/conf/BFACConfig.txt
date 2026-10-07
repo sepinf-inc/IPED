@@ -3,8 +3,8 @@
 
 # Enables BFAC Client
 # It connects to BFAC Server for submitting hashes and files for the BFAC known files database.
-# Default: false
-enableBFACClient = false
+# Default: true
+enableBFACClient = true
 
 # Base URL for the BFAC backend API server
 # Default: https://10.61.86.109:443/

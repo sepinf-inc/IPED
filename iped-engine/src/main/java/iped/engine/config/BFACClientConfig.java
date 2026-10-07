@@ -20,7 +20,7 @@ public class BFACClientConfig extends AbstractPropertiesConfigurable {
     private static final String DEFAULT_BASE_URL = "http://localhost:8000/"; //$NON-NLS-1$
     private static final int DEFAULT_MAX_CONCURRENT_UPLOADS = 5;
 
-    private boolean enabled = false;
+    private boolean enabled = true;
     private String baseUrl = DEFAULT_BASE_URL;
     private int maxConcurrentUploads = DEFAULT_MAX_CONCURRENT_UPLOADS;
 
@@ -63,7 +63,7 @@ public class BFACClientConfig extends AbstractPropertiesConfigurable {
 
     /**
      * Returns whether BFAC Client is enabled.
-     * @return true if enabled, false otherwise (default is false)
+     * @return true if enabled, false otherwise (default is true)
      */
     public boolean isEnabled() {
         return enabled;
