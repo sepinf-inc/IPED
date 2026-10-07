@@ -273,6 +273,25 @@
         <sub-class-of type="application/x-whatsapp-db"/>
     </mime-type>
 
+    <mime-type type="application/x-whatsapp-crypt">
+        <_comment>WhatsApp encrypted backup (crypt12, crypt14 or crypt15). Besides the
+        databases, WhatsApp encrypts other backed up files with the same scheme, like
+        stickers and backup_settings.json, and all of them are decrypted</_comment>
+        <glob pattern="*.crypt12"/>
+        <glob pattern="*.crypt14"/>
+        <glob pattern="*.crypt15"/>
+    </mime-type>
+
+    <mime-type type="application/x-whatsapp-key">
+        <_comment>WhatsApp backup encryption key. It is a java serialized byte array,
+        131 bytes long for crypt12/crypt14 ("key") and 32 bytes long for crypt15 ("encrypted_backup.key")</_comment>
+        <magic priority="60">
+            <match value="0xACED0005757200025B42ACF317F8060854E0020000787000000083" type="string" offset="0"/>
+            <match value="0xACED0005757200025B42ACF317F8060854E0020000787000000020" type="string" offset="0"/>
+        </magic>
+        <glob pattern="encrypted_backup.key"/>
+    </mime-type>
+
 	<mime-type type="application/x-usnjournal-$J">
         <glob pattern="$UsnJrnl:$J*"/>
 		<glob pattern="$UsnJrnl$J*"/>
