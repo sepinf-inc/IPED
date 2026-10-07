@@ -3,6 +3,7 @@ package iped.engine.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import iped.utils.UTF8Properties;
@@ -40,6 +41,50 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     @Override
     public Filter<Path> getResourceLookupFilter() {
         return filter;
+    }
+
+    @Override
+    public void processConfig(Path resource) throws IOException {
+        UTF8Properties loaded = new UTF8Properties();
+        loaded.load(resource.toFile());
+        checkEnableOCRConflict(resource, loaded);
+        properties.putAll(loaded);
+        processProperties(properties);
+    }
+
+    private void checkEnableOCRConflict(Path resource, UTF8Properties loaded) throws IOException {
+        // Compare sibling files in the same layer, preserving root/profile overrides.
+        Path current = resource.toAbsolutePath().normalize();
+        Path ipedConfig;
+        Path ocrConfig;
+        boolean isMainConfig;
+        if (current.endsWith(CONFIG_FILE0)) {
+            ipedConfig = current;
+            ocrConfig = current.getParent().resolve(CONFIG_FILE);
+            isMainConfig = true;
+        } else if (current.endsWith(CONFIG_FILE)) {
+            ipedConfig = current.getParent().getParent().resolve(CONFIG_FILE0);
+            ocrConfig = current;
+            isMainConfig = false;
+        } else {
+            return;
+        }
+
+        Path sibling = isMainConfig ? ocrConfig : ipedConfig;
+        if (!Files.isRegularFile(sibling)) {
+            return;
+        }
+        UTF8Properties other = new UTF8Properties();
+        other.load(sibling.toFile());
+        String mainValue = (isMainConfig ? loaded : other).getProperty("enableOCR"); //$NON-NLS-1$
+        String legacyValue = (isMainConfig ? other : loaded).getProperty("enableOCR"); //$NON-NLS-1$
+        if (mainValue != null && !mainValue.trim().isEmpty()
+                && legacyValue != null && !legacyValue.trim().isEmpty()
+                && !Boolean.valueOf(mainValue.trim()).equals(Boolean.valueOf(legacyValue.trim()))) {
+            throw new IOException("Conflicting enableOCR values in " + ipedConfig + " (" + mainValue.trim()
+                    + ") and " + ocrConfig + " (" + legacyValue.trim()
+                    + "). Remove enableOCR from OCRConfig.txt and configure it in IPEDConfig.txt.");
+        }
     }
 
     @Override
