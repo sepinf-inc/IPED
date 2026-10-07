@@ -80,4 +80,17 @@ public class NamedEntityTaskConfigTest {
         config2.processConfig(correctFile.toPath());
         assertTrue(config2.isEnabled());
     }
+
+    @Test
+    public void testWindowsModelPathWithDriveLetter() {
+        NamedEntityTaskConfig config = new NamedEntityTaskConfig();
+        UTF8Properties props = new UTF8Properties();
+        props.setProperty("langModel_0", "default : C:\\models\\en_core_web_sm");
+        props.setProperty("langModel_1", "pt : D:\\shared\\models\\pt_core_news_sm");
+
+        config.processProperties(props);
+
+        assertEquals("C:\\models\\en_core_web_sm", config.getLangToModelMap().get("default"));
+        assertEquals("D:\\shared\\models\\pt_core_news_sm", config.getLangToModelMap().get("pt"));
+    }
 }

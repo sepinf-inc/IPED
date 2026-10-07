@@ -108,10 +108,12 @@ public class NamedEntityTaskConfig extends AbstractTaskPropertiesConfig {
         String langAndModel;
         int i = 0;
         while ((langAndModel = properties.getProperty("langModel_" + i++)) != null) { //$NON-NLS-1$
-            String[] strs = langAndModel.split(":"); //$NON-NLS-1$
-            String lang = strs[0].trim();
-            String modelPath = strs[1].trim();
-            langToModelMap.put(lang, modelPath);
+            String[] strs = langAndModel.split(":", 2); //$NON-NLS-1$
+            if (strs.length == 2) {
+                String lang = strs[0].trim();
+                String modelPath = strs[1].trim();
+                langToModelMap.put(lang, modelPath);
+            }
         }
 
         String mimes = properties.getProperty("mimeTypesToIgnore"); //$NON-NLS-1$
