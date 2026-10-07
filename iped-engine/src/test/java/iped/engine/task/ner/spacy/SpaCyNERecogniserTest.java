@@ -149,5 +149,82 @@ public class SpaCyNERecogniserTest {
             tempScript.delete();
         }
     }
+
+    @Test
+    public void testProcessCrashRecovery() throws Exception {
+        String pythonBinary = null;
+        for (String candidate : new String[] { "python3", "python" }) {
+            try {
+                Process p = new ProcessBuilder(candidate, "--version").start();
+                if (p.waitFor() == 0) {
+                    pythonBinary = candidate;
+                    break;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        org.junit.Assume.assumeNotNull(pythonBinary);
+
+        java.io.File tempScript = java.io.File.createTempFile("mock_crash_spacy", ".py");
+        tempScript.deleteOnExit();
+
+        // Script that crashes (exits) when input contains "crash_now", otherwise responds normally
+        String scriptContent = ""
+                + "import sys, base64\n"
+                + "print('spacy_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "print('model_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "for line in sys.stdin:\n"
+                + "    line = line.strip()\n"
+                + "    if not line:\n"
+                + "        continue\n"
+                + "    if line == 'ping':\n"
+                + "        print('pong')\n"
+                + "        sys.stdout.flush()\n"
+                + "    elif line == 'terminate_process':\n"
+                + "        sys.exit(0)\n"
+                + "    elif line.startswith('RECOGNIZE'):\n"
+                + "        parts = line.split(' ', 2)\n"
+                + "        text = base64.b64decode(parts[2]).decode('utf-8', errors='ignore')\n"
+                + "        if 'crash_now' in text:\n"
+                + "            sys.exit(1)\n"
+                + "        print('{\"PERSON\": [\"Recovered Person\"]}')\n"
+                + "        sys.stdout.flush()\n";
+
+        java.nio.file.Files.write(tempScript.toPath(), scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        try {
+            NamedEntityTaskConfig config = new NamedEntityTaskConfig();
+            config.setPythonPath(pythonBinary);
+            config.setNumProcesses(1);
+            config.getLangToModelMap().put("default", "mock_model");
+            config.setEnabled(true);
+
+            SpaCyNERecogniser recogniser = new SpaCyNERecogniser();
+            recogniser.setScriptPath(tempScript.getAbsolutePath());
+            recogniser.init(config);
+
+            assertTrue(recogniser.isAvailable());
+
+            // 1. Send crashing input: process should exit, get detected, and trigger replacement
+            Map<String, Set<String>> crashedResult = recogniser.recognize("crash_now please", "en");
+            assertNotNull(crashedResult);
+            assertTrue(crashedResult.isEmpty());
+
+            // 2. Subsequent call should succeed through the replacement process
+            Map<String, Set<String>> recoveredResult = recogniser.recognize("normal text", "en");
+            assertNotNull(recoveredResult);
+            assertEquals(1, recoveredResult.size());
+            assertTrue(recoveredResult.containsKey("PERSON"));
+            assertTrue(recoveredResult.get("PERSON").contains("Recovered Person"));
+
+            recogniser.finish();
+            assertFalse(recogniser.isAvailable());
+        } finally {
+            tempScript.delete();
+        }
+    }
 }
+
 

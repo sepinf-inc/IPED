@@ -44,6 +44,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
     private static final String MODEL_LOADED = "model_loaded";
     private static final String PING = "ping";
     private static final String TERMINATE = "terminate_process";
+    private static final long QUEUE_POLL_TIMEOUT_SECONDS = 60;
 
     private final BlockingQueue<SpaCyServer> serverQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
@@ -246,13 +247,17 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             return Map.of();
         }
 
-        SpaCyServer server = serverQueue.poll(10, TimeUnit.SECONDS);
+        SpaCyServer server;
+        try {
+            server = serverQueue.poll(QUEUE_POLL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return Map.of();
+        }
+
         if (server == null) {
-            // Try to create a new one on demand if queue was empty
-            server = startServer();
-            if (server == null) {
-                return Map.of();
-            }
+            LOGGER.warn("Timed out waiting for available SpaCy worker process. Skipping NER for this text fragment.");
+            return Map.of();
         }
 
         try {
@@ -263,19 +268,21 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             String responseLine = server.reader.readLine();
             if (responseLine == null) {
                 // Process died
+                LOGGER.warn("SpaCy worker process terminated unexpectedly.");
                 server.alive = false;
                 destroyProcess(server.process);
-                server = null;
+                server = replaceServer();
                 return Map.of();
             }
 
             return parseJsonResponse(responseLine);
 
         } catch (IOException e) {
+            LOGGER.warn("I/O error communicating with SpaCy worker process: {}", e.getMessage());
             if (server != null) {
                 server.alive = false;
                 destroyProcess(server.process);
-                server = null;
+                server = replaceServer();
             }
             throw e;
 
@@ -283,6 +290,19 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             if (server != null && server.alive) {
                 serverQueue.offer(server);
             }
+        }
+    }
+
+    private SpaCyServer replaceServer() {
+        if (!isAvailable) {
+            return null;
+        }
+        LOGGER.warn("Attempting to spawn replacement SpaCy worker process...");
+        try {
+            return startServer();
+        } catch (Exception e) {
+            LOGGER.error("Failed to spawn replacement SpaCy worker process: {}", e.getMessage(), e);
+            return null;
         }
     }
 
