@@ -726,9 +726,11 @@ public class HTMLReportTask extends AbstractTask {
             if (selectedProperties.contains(BasicProps.HASH))
                 fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemHash"), reg.hash);
 
-            // Fill extra properties
+            // Fill extra properties (per-rule yara:match:* fields render as ordinary
+            // multi-valued metadata; the legacy yara:matches JSON block was removed as
+            // redundant with the per-rule fields).
             for (String property : selectedProperties) {
-                if (!basicReportProps.contains(property)) { // filter for additional properties selected by the user
+                if (!basicReportProps.contains(property)) {
                     String propertyValue = ipedCase.getItemProperty(reg.evidenceId, property);
                     fillItemProperty(it, item, property, propertyValue);
                 }

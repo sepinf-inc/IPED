@@ -34,6 +34,12 @@
 		    <artifactId>httpmime</artifactId>
 		    <version>4.5.13</version>
 		</dependency>
+		<dependency>
+		    <!-- JNA bindings for libyara (YaraScanTask). Version matches iped-parsers-impl to avoid skew. -->
+		    <groupId>net.java.dev.jna</groupId>
+		    <artifactId>jna</artifactId>
+		    <version>5.7.0</version>
+		</dependency>
         <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core-java11</artifactId>
