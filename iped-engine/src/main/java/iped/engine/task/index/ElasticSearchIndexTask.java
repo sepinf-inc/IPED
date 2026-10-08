@@ -7,11 +7,13 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -45,15 +47,25 @@ import org.opensearch.common.settings.Settings.Builder;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.common.xcontent.XContentBuilder;
 import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.common.xcontent.XContentType;
+import org.opensearch.index.query.BoolQueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.index.query.TermQueryBuilder;
+import org.opensearch.index.query.TermsQueryBuilder;
+import org.opensearch.index.reindex.UpdateByQueryRequest;
+import org.opensearch.script.Script;
+import org.opensearch.script.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.configuration.Configurable;
+import iped.data.IBookmarks;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ElasticSearchTaskConfig;
 import iped.engine.config.IndexTaskConfig;
+import iped.engine.data.BitmapBookmarks;
 import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
@@ -281,13 +293,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
         properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
         properties.put("extraAttributes." + ImageSimilarityTask.IMAGE_FEATURES,
-                Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures, "method",
-                        Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+                Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures, "method", Map.of("name", "hnsw", "space_type", "l2", "engine", "faiss")));
 
         // mapping faces as nested field
         var faces_mapping = new HashMap<String, Object>();
-        faces_mapping.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method",
-                Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+        faces_mapping.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method", Map.of("name", "hnsw", "space_type", "l2", "engine", "faiss")));
         faces_mapping.put("face_location", Collections.singletonMap("type", "short"));
         properties.put("faces", Map.of("type", "nested", "properties", faces_mapping));
 
@@ -324,6 +334,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         if (!isEnabled)
             return;
         UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", "Commiting to ElasticSearch...");
+
         for (ElasticSearchIndexTask instance : taskInstances) {
             LOGGER.info("Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$ //$NON-NLS-2$
             instance.onCommit.set(true);
@@ -349,6 +360,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
         if (indexException != null) {
             throw indexException;
         }
+        //postpones commit and finish code so the bookmarks can be sent to Elastic too, in P2PBookmarker.jaca
+    }
+
+    public static void finishAfterBookmarks() throws Exception {
         if (!taskInstances.isEmpty()) {
             commit();
             taskInstances.clear();
@@ -628,6 +643,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(IndexItem.SOURCE_DECODER, sourcePath != null ? isisf.getClass().getName() : null);
 
         for (String key : getMetadataKeys(item)) {
+            if (BasicProps.LENGTH.equals(key)) {
+                // size is already in the item
+                continue;
+            }
             if (PREVIEW_IN_DATASOURCE.equals(key)) {
                 HashMap<String, String> previewInDataSource = new HashMap<>();
                 for (String preview : item.getMetadata().getValues(key)) {
@@ -700,6 +719,63 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private String[] getMetadataKeys(IItem item) {
         return item.getMetadata().names();
+    }
+
+
+    public static void processBookmarks(IBookmarks bookmarks) {
+        if (isEnabled) {
+            try {
+                commit();
+
+                Date dateProcessFinished = new Date();
+
+                String BOOKMARKS_NESTED_MAPPING = "{ \"properties\":{ \"bookmarks\": {\"type\": \"nested\", \"properties\": {\"date\": { \"type\": \"date\" }, \"name\": { \"type\": \"keyword\" },\"type\": { \"type\": \"keyword\" },\"user\": { \"type\": \"keyword\" },\"color\": { \"type\": \"keyword\" }}}}}";
+
+                PutMappingRequest putMappings = new PutMappingRequest(indexName);
+                putMappings.source(BOOKMARKS_NESTED_MAPPING, XContentType.JSON);
+                AcknowledgedResponse putMappingResponse = client.indices().putMapping(putMappings, RequestOptions.DEFAULT);
+
+                String addcode = "if (ctx._source.bookmarks == null) { ctx._source.bookmarks = new ArrayList(); } ctx._source.bookmarks.add( params.bookmark );";
+
+                bookmarks.getBookmarkMap().forEach(new BiConsumer<Integer, String>() {
+                    Exception e = null;
+
+                    @Override
+                    public void accept(Integer bookmarkId, String label) {
+                        if (e == null) {
+                            try {
+                                UpdateByQueryRequest ur = new UpdateByQueryRequest(indexName);
+                                int[] ids = ((BitmapBookmarks) bookmarks).getBookmarkedItemList(bookmarkId);
+                                int chunkSize = 300;
+                                for (int i = 0; i < ids.length; i += chunkSize) {
+                                    int[] chunck = Arrays.copyOfRange(ids, i, Math.min(ids.length, i + chunkSize));
+                                    BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().must(new TermsQueryBuilder("id", chunck)).must(new TermQueryBuilder("document_content", "document"));
+                                    ur.setQuery(boolQueryBuilder);
+                                    Map<String, Object> parameters = new HashMap<String, Object>();
+                                    parameters.put("bookmark", Map.of("name", label, "date", dateProcessFinished, "type", "iped", "user", "IPED"));
+                                    Script inline = new Script(ScriptType.INLINE, "painless", addcode, parameters);
+                                    ur.setScript(inline);
+                                    client.updateByQuery(ur, RequestOptions.DEFAULT);
+                                }
+                            } catch (Exception ex) {
+                                this.e = ex;
+                            }
+                        }
+                    }
+                });
+
+            } catch (Exception e) {
+                // Do not abort all index creation if anything fails
+                System.out.println("Erro ao exportar bookmarks para o ElasticSearch");
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            finishAfterBookmarks();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
