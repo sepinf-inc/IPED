@@ -82,7 +82,7 @@ ICE JNI Registry
 - Site: http://www.trustice.com/java/jnireg/
 - License: Public Domain
 
-ZSTD-jni
+ZSTD-jni 1.5.6-9
 - Site: https://github.com/luben/zstd-jni
 - License: BSD 2 clause
 
@@ -183,3 +183,48 @@ JUnRAR
 Lottie-player
 - Site: https://github.com/LottieFiles/lottie-player/blob/master/LICENSE
 - License: licenses/LOTTIE-PLAYER.txt
+
+Neo4j Community Edition 5.26.0
+- Site: https://github.com/neo4j/neo4j
+- License: GNU GPL v3 (text in licenses/GPL 3.txt)
+- Usage: graph database engine for IPED's link analysis (calls, e-mails,
+  messages, wireless networks). The full embedded engine 5.26.0 (plus its
+  Cypher/antlr 4.13 stack) is bundled isolated under lib/neo4j/ and run as a
+  separate child JVM (GraphServer) speaking the Bolt protocol — this isolates
+  Cypher's antlr 4.13 from the antlr 4.9.2 required by libfqlite on the main
+  classpath. The processing/UI JVMs only carry the API jar (neo4j-graphdb-api)
+  and the Bolt client (see below); they never load the full engine.
+  Imports use neo4j-admin (org.neo4j.cli.AdminTool) from the same lib/neo4j/.
+
+Neo4j Java Driver 5.26.0
+- Site: https://github.com/neo4j/neo4j-java-driver
+- License: Apache License, Version 2.0 (text in licenses/Apache 2.0.txt)
+- Usage: Bolt client (org.neo4j.driver) used by iped.engine.graph.GraphServiceImpl
+  to query the out-of-process GraphServer; results are exposed to the UI through
+  read-only Bolt{Node,Relationship,Path} adapters over neo4j-graphdb-api.
+
+Jersey / Grizzly / HK2 — REST Web API stack (Jersey 2.41, Grizzly 2.4.4, HK2 2.6.1)
+- Site: https://eclipse-ee4j.github.io/jersey/ ; https://github.com/eclipse-ee4j/grizzly ; https://github.com/eclipse-ee4j/glassfish-hk2
+- License: Eclipse Public License 2.0, with GNU GPL v2 + Classpath Exception as
+  secondary license. EPL 2.0 text: https://www.eclipse.org/legal/epl-2.0/
+- Usage: JAX-RS (Jersey) + embedded HTTP server (Grizzly) + dependency injection
+  (HK2) powering the optional REST Web API (iped.engine.webapi.Main,
+  lib/iped-webapi.jar); the jars are bundled in lib/.
+
+ANTLR 4 Runtime
+- Site: https://www.antlr.org/
+- License: BSD 3 clause (https://www.antlr.org/license.html)
+- Usage: parser runtime distributed in lib/ as antlr4-runtime-4.9.2.jar (required
+  by libfqlite, SQLite undelete) and, on a separate isolated classpath, in
+  lib/neo4j/ as antlr4-runtime-4.13.2.jar (required by the Neo4j 5 Cypher parser).
+  The two versions are kept apart on purpose (see the Neo4j entry above).
+
+launch4j — Windows .exe launcher generator
+- Site: https://launch4j.sourceforge.net/
+- License: BSD 3 clause (the native launcher "head" embedded in the generated
+  .exe) + MIT (the rest of launch4j).
+  https://sourceforge.net/p/launch4j/git/ci/master/tree/LICENSE.txt
+- Usage: build-time tool (launch4j-maven-plugin) that generates iped.exe (console)
+  and bin/IPED-SearchApp.exe (GUI). The small BSD-licensed launcher stub is
+  embedded in those distributed executables, which start IPED using the bundled
+  jre/ (no Windows-registry Java lookup).

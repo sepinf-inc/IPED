@@ -138,8 +138,8 @@
         }
     ],
     "post-generation-statements":[
-        "CREATE INDEX ON :EVIDENCIA(category)",
-        "CREATE INDEX ON :EVIDENCIA(source)",
-        "CREATE INDEX ON :EVIDENCIA(evidenceId)"
+        "CREATE INDEX IF NOT EXISTS FOR (n:EVIDENCIA) ON (n.category)",
+        "CREATE INDEX IF NOT EXISTS FOR (n:EVIDENCIA) ON (n.source)",
+        "CREATE INDEX IF NOT EXISTS FOR (n:EVIDENCIA) ON (n.evidenceId)"
     ]
 }

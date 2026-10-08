@@ -2,12 +2,14 @@ package iped.engine.task.regex;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.io.Serializable;
@@ -23,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.nustaq.serialization.FSTConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +65,6 @@ public class RegexTask extends AbstractTask {
     private static List<Regex> regexList;
 
     private static Regex regexFull;
-
-    private static FSTConfiguration fastSerializer = FSTConfiguration.createDefaultConfiguration();
 
     private static final Set<String> ignoredKeys = new HashSet<String>();
     static {
@@ -222,8 +221,8 @@ public class RegexTask extends AbstractTask {
         try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFile));
                 DataOutputStream dos = new DataOutputStream(bos)) {
             byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
-            byte[] list = fastSerializer.asByteArray(regexList);
-            byte[] full = fastSerializer.asByteArray(regexFull);
+            byte[] list = serialize(regexList);
+            byte[] full = serialize(regexFull);
             dos.write(md5);
             dos.writeInt(list.length);
             dos.write(list);
@@ -248,12 +247,33 @@ public class RegexTask extends AbstractTask {
             int listLen = dis.readInt();
             byte[] list = new byte[listLen];
             dis.readFully(list);
-            regexList = (List<Regex>) fastSerializer.asObject(list);
+            regexList = (List<Regex>) deserialize(list);
             int fullLen = dis.readInt();
             byte[] full = new byte[fullLen];
             dis.readFully(full);
-            regexFull = (Regex) fastSerializer.asObject(full);
+            regexFull = (Regex) deserialize(full);
             return true;
+        } catch (Exception e) {
+            // Stale or incompatible cache (e.g., the previous FST format): treat as a
+            // cache miss so it is rebuilt from the current configuration.
+            logger.warn("Could not load regex cache ({}); it will be rebuilt.", e.toString());
+            regexList = null;
+            regexFull = null;
+            return false;
+        }
+    }
+
+    private static byte[] serialize(Object obj) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+            oos.writeObject(obj);
+        }
+        return baos.toByteArray();
+    }
+
+    private static Object deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+            return ois.readObject();
         }
     }
 

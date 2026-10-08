@@ -1,67 +1,170 @@
 package iped.engine.graph;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.neo4j.dbms.api.DatabaseManagementService;
-import org.neo4j.dbms.api.DatabaseManagementServiceBuilder;
-import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.driver.AuthTokens;
+import org.neo4j.driver.Driver;
+import org.neo4j.driver.GraphDatabase;
+import org.neo4j.driver.Record;
+import org.neo4j.driver.Result;
+import org.neo4j.driver.Session;
+import org.neo4j.driver.Value;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * {@link GraphService} backed by an out-of-process Neo4j 5 database reached over Bolt.
+ *
+ * <p>
+ * {@link #start(File)} spawns the {@code GraphServer} child (isolated {@code lib/neo4j/}
+ * classpath with antlr 4.13.x), reads back its Bolt port and opens a {@link Driver}. The
+ * Cypher engine therefore never loads in this JVM, which keeps antlr 4.9.2 for libfqlite.
+ * Driver results are wrapped in {@link BoltNode}/{@link BoltRelationship}/{@link BoltPath}
+ * (which implement the {@code org.neo4j.graphdb} interfaces) so the graph UI is unchanged.
+ * Java 21 migration.
+ * </p>
+ */
 public class GraphServiceImpl implements GraphService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(GraphServiceImpl.class);
 
-    private DatabaseManagementService managementService;
-    private GraphDatabaseService graphDB;
+    // Wire protocol with GraphServer (in module iped-graph-server). Kept as literals to avoid a
+    // compile dependency from iped-engine on the isolated server module.
+    private static final String GRAPH_SERVER_CLASS = "iped.engine.graph.server.GraphServer";
+    private static final String BOLT_PORT_PREFIX = "BOLT_PORT=";
+    private static final String READY_TOKEN = "GRAPH_SERVER_READY";
+    private static final String STOP_COMMAND = "STOP";
+
+    private Process serverProcess;
+    private BufferedWriter serverStdin;
+    private Driver driver;
     private boolean started = false;
     private File dbHome;
 
-    public void start(File dbHome) {
-        if (!started) {
-            this.dbHome = dbHome;
-            LOGGER.info("Starting neo4j service at " + dbHome.getAbsolutePath());
-
-            managementService = new DatabaseManagementServiceBuilder(dbHome.toPath()).build();
-            graphDB = managementService.database(GraphTask.DB_NAME);
-
-            started = true;
-
-        } else {
-            LOGGER.info("Service already started.");
-        }
-    }
-
-    public synchronized void stop() {
+    @Override
+    public synchronized void start(File dbHome) throws IOException {
         if (started) {
-            LOGGER.info("Shutting down neo4j service.");
-            managementService.shutdown();
-            started = false;
-        } else {
-            LOGGER.info("Service already stopped.");
+            LOGGER.info("Graph service already started.");
+            return;
         }
+        this.dbHome = dbHome;
+        dbHome.mkdirs();
+        LOGGER.info("Starting out-of-process neo4j graph server at " + dbHome.getAbsolutePath());
+
+        List<String> cmd = Neo4jChildLauncher.baseCommand();
+        cmd.add(GRAPH_SERVER_CLASS);
+        cmd.add(dbHome.getAbsolutePath());
+        cmd.add(GraphTask.DB_NAME);
+
+        ProcessBuilder processBuilder = new ProcessBuilder(cmd);
+        processBuilder.redirectErrorStream(true);
+        serverProcess = processBuilder.start();
+        serverStdin = new BufferedWriter(new OutputStreamWriter(serverProcess.getOutputStream(), StandardCharsets.UTF_8));
+
+        int port = readBoltPort(serverProcess);
+        if (port <= 0) {
+            stop();
+            throw new IOException("Could not start neo4j graph server (no Bolt port reported).");
+        }
+
+        driver = GraphDatabase.driver("bolt://127.0.0.1:" + port, AuthTokens.none());
+        driver.verifyConnectivity();
+        started = true;
+        LOGGER.info("Neo4j graph server ready on Bolt port " + port);
     }
 
-    public GraphDatabaseService getGraphDb() {
-        return graphDB;
+    private int readBoltPort(Process process) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+        int port = -1;
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith(BOLT_PORT_PREFIX)) {
+                try {
+                    port = Integer.parseInt(line.substring(BOLT_PORT_PREFIX.length()).trim());
+                } catch (NumberFormatException e) {
+                    LOGGER.warn("Invalid bolt port line from graph server: {}", line);
+                }
+            } else if (READY_TOKEN.equals(line)) {
+                break;
+            } else {
+                LOGGER.debug("[graph-server] {}", line);
+            }
+        }
+        // Keep draining the child output so it never blocks on a full pipe.
+        Thread drain = new Thread(() -> {
+            try {
+                String l;
+                while ((l = reader.readLine()) != null) {
+                    LOGGER.debug("[graph-server] {}", l);
+                }
+            } catch (IOException e) {
+                // child gone
+            }
+        }, "graph-server-output");
+        drain.setDaemon(true);
+        drain.start();
+        return port;
+    }
+
+    @Override
+    public synchronized void stop() throws IOException {
+        if (!started && serverProcess == null) {
+            LOGGER.info("Graph service already stopped.");
+            return;
+        }
+        LOGGER.info("Shutting down neo4j graph server.");
+        try {
+            if (driver != null) {
+                driver.close();
+            }
+        } finally {
+            driver = null;
+            if (serverProcess != null) {
+                try {
+                    if (serverStdin != null) {
+                        serverStdin.write(STOP_COMMAND);
+                        serverStdin.newLine();
+                        serverStdin.flush();
+                        serverStdin.close();
+                    }
+                } catch (IOException e) {
+                    // child may already be gone
+                }
+                try {
+                    if (!serverProcess.waitFor(30, TimeUnit.SECONDS)) {
+                        serverProcess.destroyForcibly();
+                    }
+                } catch (InterruptedException e) {
+                    serverProcess.destroyForcibly();
+                    Thread.currentThread().interrupt();
+                }
+                serverProcess = null;
+                serverStdin = null;
+            }
+            started = false;
+        }
     }
 
     @Override
@@ -69,167 +172,148 @@ public class GraphServiceImpl implements GraphService {
         return dbHome;
     }
 
+    // ------------------------------------------------------------------
+    // Driver result -> graphdb-api snapshot helpers
+    // ------------------------------------------------------------------
+
+    private static BoltNode node(Record rec, String column) {
+        return BoltNode.from(rec.get(column).asNode());
+    }
+
+    /**
+     * Same as {@link #node(Record, String)} but also carries the node degree returned by the query in
+     * {@code degreeColumn} (the {@code COUNT {{ (n)--() }}} columns), used by the UI to size nodes.
+     * Falls back to an unknown degree when the column is absent/null.
+     */
+    private static BoltNode nodeWithDegree(Record rec, String nodeColumn, String degreeColumn) {
+        int degree = rec.containsKey(degreeColumn) && !rec.get(degreeColumn).isNull() ? rec.get(degreeColumn).asInt()
+                : -1;
+        return BoltNode.from(rec.get(nodeColumn).asNode(), degree);
+    }
+
+    /** Builds a relationship carrying its start/end nodes (queries add startNode(r) as sn, endNode(r) as en). */
+    private static BoltRelationship relWithEnds(Record rec) {
+        return BoltRelationship.from(rec.get("edge").asRelationship(), node(rec, "sn"), node(rec, "en"));
+    }
+
+    private static Object convertValue(Value value) {
+        switch (value.type().name()) {
+            case "NODE":
+                return BoltNode.from(value.asNode());
+            case "RELATIONSHIP":
+                org.neo4j.driver.types.Relationship r = value.asRelationship();
+                return new BoltRelationship(r.id(), r.elementId(), r.type(), null, null, r.asMap());
+            case "PATH":
+                return BoltPath.from(value.asPath());
+            default:
+                return value.asObject();
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Queries
+    // ------------------------------------------------------------------
+
     @Override
     public List<Long> getMoreConnectedNodes(int maxNodes) {
-        Transaction tx = null;
         List<Long> ids = new ArrayList<>();
-        try {
-            tx = graphDB.beginTx();
-
-            Result result = tx.execute(
-                    "MATCH (n) RETURN id(n) as id, size((n)--()) as degree ORDER BY degree DESC LIMIT " + maxNodes);
+        try (Session session = driver.session()) {
+            // Cypher 5 removed size(<pattern>); use COUNT { ... } instead.
+            Result result = session.run(
+                    "MATCH (n) RETURN id(n) as id, COUNT { (n)--() } as degree ORDER BY degree DESC LIMIT " + maxNodes);
             while (result.hasNext()) {
-                Map<String, Object> map = result.next();
-                Long id = (Long) map.get("id");
-                Long degree = (Long) map.get("degree");
-                if (degree > 0) {
-                    ids.add(id);
+                Record rec = result.next();
+                if (rec.get("degree").asLong() > 0) {
+                    ids.add(rec.get("id").asLong());
                 }
             }
-            tx.commit();
-
-        } finally {
-            tx.close();
         }
         return ids;
     }
 
     @Override
     public void getEdges(String[] ids, EdgeQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("param", ids);
-            Result result = tx.execute("MATCH ()-[r]-() WHERE r.relId IN $param RETURN DISTINCT r as edge",
-                    parameters);
-
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    "MATCH ()-[r]-() WHERE r.relId IN $param RETURN DISTINCT r as edge, startNode(r) as sn, endNode(r) as en",
+                    Collections.singletonMap("param", Arrays.asList(ids)));
             boolean proceed = true;
             while (result.hasNext() && proceed) {
-                Relationship edge = (Relationship) result.next().get("edge");
-                proceed = listener.edgeFound(edge);
+                proceed = listener.edgeFound(relWithEnds(result.next()));
             }
-
-            tx.commit();
-        } finally {
-            tx.close();
         }
     }
 
     @Override
     public void getNodes(Collection<Long> ids, NodeQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("param", ids);
-            Result result = tx.execute("MATCH (n) WHERE ID(n) IN $param RETURN n", parameters);
-
-            ResourceIterator<Node> resourceIterator = result.columnAs("n");
+        try (Session session = driver.session()) {
+            Result result = session.run("MATCH (n) WHERE id(n) IN $param RETURN n, COUNT { (n)--() } as deg",
+                    Collections.singletonMap("param", new ArrayList<>(ids)));
             boolean proceed = true;
-            while (resourceIterator.hasNext() && proceed) {
-                Node node = resourceIterator.next();
-                proceed = listener.nodeFound(node);
+            while (result.hasNext() && proceed) {
+                proceed = listener.nodeFound(nodeWithDegree(result.next(), "n", "deg"));
             }
+        }
+    }
 
-            tx.commit();
-        } finally {
-            tx.close();
+    @Override
+    public void getNeighbours(Long id, NodeEdgeQueryListener listener, int maxNodes) {
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    "MATCH (n)-[r]-(m) WHERE id(n) = $param RETURN m as node, COUNT { (m)--() } as deg, r as edge, startNode(r) as sn, endNode(r) as en",
+                    Collections.singletonMap("param", id));
+            emitNeighbours(result, listener, maxNodes);
         }
     }
 
     @Override
     public void getNeighboursWithLabels(Collection<String> labels, Long nodeId, NodeEdgeQueryListener listener,
             int maxNodes) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("labels", labels);
-            parameters.put("nodeId", nodeId);
-            Result result = tx.execute(
-                    "MATCH (n)-[r]-(m) WHERE ID(n) = $nodeId AND ANY(l IN LABELS(m) WHERE l IN $labels) RETURN m as node, r as edge",
-                    parameters);
-            if (maxNodes == -1) {
-                emitAllNeighbours(result, listener);
-            } else {
-                emitTopNeighbours(result, listener, maxNodes);
-            }
-
-            tx.commit();
-        } finally {
-            tx.close();
-        }
-    }
-
-    @Override
-    public void getNeighbours(Long id, NodeEdgeQueryListener listener, int maxNodes) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("param", id);
-            Result result = tx.execute("MATCH (n)-[r]-(m) WHERE ID(n) = $param RETURN m as node, r as edge",
-                    parameters);
-            if (maxNodes == -1) {
-                emitAllNeighbours(result, listener);
-            } else {
-                emitTopNeighbours(result, listener, maxNodes);
-            }
-
-            tx.commit();
-        } finally {
-            tx.close();
+        Map<String, Object> params = new HashMap<>(2);
+        params.put("labels", new ArrayList<>(labels));
+        params.put("nodeId", nodeId);
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    "MATCH (n)-[r]-(m) WHERE id(n) = $nodeId AND ANY(l IN labels(m) WHERE l IN $labels) "
+                            + "RETURN m as node, COUNT { (m)--() } as deg, r as edge, startNode(r) as sn, endNode(r) as en",
+                    params);
+            emitNeighbours(result, listener, maxNodes);
         }
     }
 
     @Override
     public void getNeighboursWithRelationships(Collection<String> relationships, Long nodeId,
             NodeEdgeQueryListener listener, int maxNodes) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
+        // Cypher 5 type alternation is A|B (the old A|:B form was removed).
+        String typeFilter = relationships.isEmpty() ? "" : ":" + relationships.stream().collect(Collectors.joining("|"));
+        String query = "MATCH (n)-[r" + typeFilter + "]-(m) WHERE id(n) = $nodeId "
+                + "RETURN m as node, COUNT { (m)--() } as deg, r as edge, startNode(r) as sn, endNode(r) as en";
+        try (Session session = driver.session()) {
+            Result result = session.run(query, Collections.singletonMap("nodeId", nodeId));
+            emitNeighbours(result, listener, maxNodes);
+        }
+    }
 
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("nodeId", nodeId);
-            String query = "MATCH (n)-[r:$types]-(m) WHERE ID(n) = $nodeId RETURN m as node, r as edge";
-            query = relationships.isEmpty() ? query.replace(":$types", "")
-                    : query.replace("$types", relationships.stream().collect(Collectors.joining("|:")));
-            Result result = tx.execute(query, parameters);
-            if (maxNodes == -1) {
-                emitAllNeighbours(result, listener);
-            } else {
-                emitTopNeighbours(result, listener, maxNodes);
-            }
-            tx.commit();
-        } finally {
-            tx.close();
+    private void emitNeighbours(Result result, NodeEdgeQueryListener listener, int maxNodes) {
+        if (maxNodes == -1) {
+            emitAllNeighbours(result, listener);
+        } else {
+            emitTopNeighbours(result, listener, maxNodes);
         }
     }
 
     private void emitAllNeighbours(Result result, NodeEdgeQueryListener listener) {
         boolean proceed = true;
         while (result.hasNext() && proceed) {
-            Map<String, Object> next = result.next();
-            Node node = (Node) next.get("node");
-            proceed = listener.nodeFound(node);
-            Relationship edge = (Relationship) next.get("edge");
-            proceed = proceed && listener.edgeFound(edge);
+            Record next = result.next();
+            proceed = listener.nodeFound(nodeWithDegree(next, "node", "deg"));
+            proceed = proceed && listener.edgeFound(relWithEnds(next));
         }
     }
 
-    private class NodeRels implements Comparable<NodeRels> {
+    private static class NodeRels implements Comparable<NodeRels> {
         Node node;
-        List<Relationship> rels;
-
-        private NodeRels(Node node, List<Relationship> rels) {
-            this.node = node;
-            this.rels = rels;
-        }
+        List<Relationship> rels = new ArrayList<>();
 
         @Override
         public int compareTo(NodeRels o) {
@@ -238,17 +322,16 @@ public class GraphServiceImpl implements GraphService {
     }
 
     private void emitTopNeighbours(Result result, NodeEdgeQueryListener listener, int top) {
-        HashMap<Long, NodeRels> edgeMap = new HashMap<>();
+        Map<Long, NodeRels> edgeMap = new HashMap<>();
         while (result.hasNext()) {
-            Map<String, Object> next = result.next();
-            Node node = (Node) next.get("node");
-            NodeRels nodeRels = edgeMap.get(node.getId());
-            if (nodeRels == null) {
-                nodeRels = new NodeRels(node, new ArrayList<>());
-                edgeMap.put(node.getId(), nodeRels);
-            }
-            Relationship edge = (Relationship) next.get("edge");
-            nodeRels.rels.add(edge);
+            Record next = result.next();
+            Node node = nodeWithDegree(next, "node", "deg");
+            NodeRels nodeRels = edgeMap.computeIfAbsent(node.getId(), k -> {
+                NodeRels nr = new NodeRels();
+                nr.node = node;
+                return nr;
+            });
+            nodeRels.rels.add(relWithEnds(next));
         }
         List<NodeRels> list = new ArrayList<>(edgeMap.values());
         Collections.sort(list);
@@ -258,366 +341,238 @@ public class GraphServiceImpl implements GraphService {
             for (Relationship edge : nodeRels.rels) {
                 listener.edgeFound(edge);
             }
-            if (++added == top)
+            if (++added == top) {
                 break;
+            }
         }
     }
 
     @Override
     public void getConnections(Set<Long> ids, EdgeQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("param", ids);
-
-            Result result = tx.execute(
-                    "MATCH (n)-[r]-(m) WHERE ID(n) IN $param AND ID(m) IN $param RETURN r as edge", parameters);
-            ResourceIterator<Relationship> iterator = result.columnAs("edge");
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    "MATCH (n)-[r]-(m) WHERE id(n) IN $param AND id(m) IN $param "
+                            + "RETURN r as edge, startNode(r) as sn, endNode(r) as en",
+                    Collections.singletonMap("param", new ArrayList<>(ids)));
             boolean proceed = true;
-            while (iterator.hasNext() && proceed) {
-                Relationship edge = iterator.next();
-                proceed = listener.edgeFound(edge);
+            while (result.hasNext() && proceed) {
+                proceed = listener.edgeFound(relWithEnds(result.next()));
             }
-            tx.commit();
-        } finally {
-            tx.close();
         }
     }
 
     @Override
     public void getPaths(Long source, Long target, int maxDistance, PathQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("source", source);
-            parameters.put("target", target);
-
-            StringBuilder queryBuilder = new StringBuilder("MATCH p = allShortestPaths((n1)-[*1..").append(maxDistance)
-                    .append("]-(n2))");
-            queryBuilder.append(" WHERE ID(n1) = $source");
-            queryBuilder.append(" AND ID(n2) = $target");
-            queryBuilder.append(" RETURN p");
-
-            Result result = tx.execute(queryBuilder.toString(), parameters);
-            ResourceIterator<Path> iterator = result.columnAs("p");
+        Map<String, Object> params = new HashMap<>(2);
+        params.put("source", source);
+        params.put("target", target);
+        String query = "MATCH p = allShortestPaths((n1)-[*1.." + maxDistance + "]-(n2))"
+                + " WHERE id(n1) = $source AND id(n2) = $target RETURN p";
+        try (Session session = driver.session()) {
+            Result result = session.run(query, params);
             boolean proceed = true;
-            while (iterator.hasNext() && proceed) {
-                Path path = iterator.next();
-                proceed = listener.pathFound(path);
+            while (result.hasNext() && proceed) {
+                proceed = listener.pathFound(BoltPath.from(result.next().get("p").asPath()));
             }
-            tx.commit();
-        } finally {
-            tx.close();
         }
-
     }
 
     @Override
     public void search(String param, NodeQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("param", param.toUpperCase());
-
-            String query = "MATCH (n) WHERE ANY(prop IN keys(n) WHERE toUpper(toString(n[prop])) CONTAINS $param) RETURN n";
-
-            Result result = tx.execute(query, parameters);
-            ResourceIterator<Node> resourceIterator = result.columnAs("n");
+        String query = "MATCH (n) WHERE ANY(prop IN keys(n) WHERE toUpper(toString(n[prop])) CONTAINS $param) "
+                + "RETURN n, COUNT { (n)--() } as deg";
+        try (Session session = driver.session()) {
+            Result result = session.run(query, Collections.singletonMap("param", param.toUpperCase()));
             boolean proceed = true;
-            while (resourceIterator.hasNext() && proceed) {
-                Node node = resourceIterator.next();
-                proceed = listener.nodeFound(node);
+            while (result.hasNext() && proceed) {
+                proceed = listener.nodeFound(nodeWithDegree(result.next(), "n", "deg"));
             }
-
-            tx.commit();
-        } finally {
-            tx.close();
         }
-
     }
 
     @Override
     public void findConnections(Long id, ConnectionQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("param", id);
-
-            String query = "MATCH (n)--(m) WHERE ID(n) = $param RETURN DISTINCT m as neighbour, LABELS(m) AS labels";
-
-            Result result = tx.execute(query, parameters);
-            ResourceIterator<Collection<String>> resourceIterator = result.columnAs("labels");
-
+        String query = "MATCH (n)--(m) WHERE id(n) = $param RETURN DISTINCT m as neighbour, labels(m) AS labels";
+        try (Session session = driver.session()) {
+            Result result = session.run(query, Collections.singletonMap("param", id));
             Map<String, Integer> accum = new HashMap<>();
-            while (resourceIterator.hasNext()) {
-                Collection<String> labels = resourceIterator.next();
+            while (result.hasNext()) {
+                List<Object> labels = result.next().get("labels").asList();
                 for (Object label : labels) {
-                    Integer cnt = accum.get(label.toString());
-                    if (cnt == null) {
-                        cnt = 0;
-                    }
-                    cnt++;
-                    accum.put(label.toString(), cnt);
+                    accum.merge(label.toString(), 1, Integer::sum);
                 }
             }
             for (Entry<String, Integer> entry : accum.entrySet()) {
                 listener.connectionsFound(entry.getKey(), entry.getValue());
             }
-            tx.commit();
-        } finally {
-            tx.close();
         }
-
     }
 
     @Override
     public void findRelationships(Long id, ConnectionQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("param", id);
-            String query = "MATCH (n)-[r]-() WHERE ID(n) = $param RETURN r as edge";
-            Result result = tx.execute(query, parameters);
-
+        try (Session session = driver.session()) {
+            Result result = session.run("MATCH (n)-[r]-() WHERE id(n) = $param RETURN r as edge",
+                    Collections.singletonMap("param", id));
             Map<String, Integer> accum = new HashMap<>();
             while (result.hasNext()) {
-                Relationship edge = (Relationship) result.next().get("edge");
-                Integer i = accum.get(edge.getType().name());
-                if (i == null)
-                    i = 0;
-                accum.put(edge.getType().name(), ++i);
+                String type = result.next().get("edge").asRelationship().type();
+                accum.merge(type, 1, Integer::sum);
             }
             for (Entry<String, Integer> entry : accum.entrySet()) {
                 listener.connectionsFound(entry.getKey(), entry.getValue());
             }
-            tx.commit();
-        } finally {
-            tx.close();
         }
-
     }
 
     @Override
     public List<Node> search(Label label, Map<String, Object> params) {
         final List<Node> result = new ArrayList<>();
-        search(label, params, new NodeQueryListener() {
-
-            @Override
-            public boolean nodeFound(Node node) {
-                result.add(node);
-                return true;
-            }
+        search(label, params, node -> {
+            result.add(node);
+            return true;
         });
         return result;
     }
 
     @Override
     public void search(Label label, Map<String, Object> params, NodeQueryListener listener, String... ordering) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            StringBuilder queryBuilder = new StringBuilder();
-            queryBuilder.append("MATCH (n:").append(label.name()).append(") ");
-            if (!params.isEmpty()) {
-                queryBuilder.append(" WHERE ");
-                Iterator<String> iterator = params.keySet().iterator();
-                while (iterator.hasNext()) {
-                    String name = iterator.next();
-                    queryBuilder.append(" n.").append(name);
-                    if (iterator.hasNext()) {
-                        queryBuilder.append(" AND ");
-                    }
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append("MATCH (n:").append(label.name()).append(") ");
+        if (!params.isEmpty()) {
+            queryBuilder.append(" WHERE ");
+            Iterator<String> iterator = params.keySet().iterator();
+            while (iterator.hasNext()) {
+                String name = iterator.next();
+                queryBuilder.append(" n.").append(name);
+                if (iterator.hasNext()) {
+                    queryBuilder.append(" AND ");
                 }
             }
-            queryBuilder.append(" RETURN n ");
-
-            if (ordering.length > 0) {
-                queryBuilder.append(" ORDER BY ");
-                queryBuilder.append(Arrays.stream(ordering).map(o -> "n." + o).collect(Collectors.joining(", ")));
-            }
-
-            Result result = tx.execute(queryBuilder.toString(), params);
-            ResourceIterator<Node> resourceIterator = result.columnAs("n");
-            boolean proceed = true;
-            while (resourceIterator.hasNext() && proceed) {
-                Node node = resourceIterator.next();
-                proceed = listener.nodeFound(node);
-            }
-
-            tx.commit();
-        } finally
-
-        {
-            tx.close();
         }
-
+        queryBuilder.append(" RETURN n, COUNT { (n)--() } as deg ");
+        if (ordering.length > 0) {
+            queryBuilder.append(" ORDER BY ");
+            queryBuilder.append(Arrays.stream(ordering).map(o -> "n." + o).collect(Collectors.joining(", ")));
+        }
+        try (Session session = driver.session()) {
+            Result result = session.run(queryBuilder.toString(), params);
+            boolean proceed = true;
+            while (result.hasNext() && proceed) {
+                proceed = listener.nodeFound(nodeWithDegree(result.next(), "n", "deg"));
+            }
+        }
     }
 
     @Override
     public void findLabels(LabelQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            StringBuilder query = new StringBuilder();
-            query.append(" MATCH (n) ");
-            query.append(" WITH DISTINCT labels(n) AS labels ");
-            query.append(" UNWIND labels AS label ");
-            query.append(" RETURN DISTINCT label ");
-            query.append(" ORDER BY label ");
-
-            Result result = tx.execute(query.toString());
-            ResourceIterator<String> resourceIterator = result.columnAs("label");
-            while (resourceIterator.hasNext()) {
-                String label = resourceIterator.next();
-                listener.labelFound(label);
+        String query = " MATCH (n) WITH DISTINCT labels(n) AS labels UNWIND labels AS label "
+                + " RETURN DISTINCT label ORDER BY label ";
+        try (Session session = driver.session()) {
+            Result result = session.run(query);
+            while (result.hasNext()) {
+                listener.labelFound(result.next().get("label").asString());
             }
-
-            tx.commit();
-        } finally {
-            tx.close();
         }
-
     }
 
     @Override
     public void findLinks(ExportLinksQuery query, LinkQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
+        StringBuilder queryBuilder = new StringBuilder("MATCH ");
+        StringBuilder whereBuilder = new StringBuilder(" WHERE ");
+        StringBuilder returnBuilder = new StringBuilder(" RETURN DISTINCT ");
 
-            StringBuilder queryBuilder = new StringBuilder("MATCH ");
-            StringBuilder whereBuilder = new StringBuilder(" WHERE ");
-            StringBuilder returnBuilder = new StringBuilder(" RETURN DISTINCT ");
+        int numOfLinks = query.getNumOfLinks();
+        for (int index = 0; index < numOfLinks; index++) {
+            List<String> types = query.getTypes(index);
+            String node = "n_" + index;
+            queryBuilder.append("(").append(node).append(")");
 
-            int numOfLinks = query.getNumOfLinks();
-            for (int index = 0; index < numOfLinks; index++) {
-                List<String> types = query.getTypes(index);
-
-                String node = "n_" + index;
-                queryBuilder.append("(").append(node).append(")");
-
-                Iterator<String> iterator = types.iterator();
-                whereBuilder.append("(");
-                while (iterator.hasNext()) {
-                    String type = iterator.next();
-                    whereBuilder.append(node).append(":").append(type).append(" ");
-                    if (iterator.hasNext()) {
-                        whereBuilder.append("OR ");
-                    }
-                }
-                whereBuilder.append(")");
-
-                returnBuilder.append(node);
-                if (index + 1 < numOfLinks) {
-                    int distance = query.getDistance(index);
-                    queryBuilder.append("-[*").append(distance).append("]-");
-                    returnBuilder.append(",");
-                    whereBuilder.append(" AND ");
+            Iterator<String> iterator = types.iterator();
+            whereBuilder.append("(");
+            while (iterator.hasNext()) {
+                String type = iterator.next();
+                whereBuilder.append(node).append(":").append(type).append(" ");
+                if (iterator.hasNext()) {
+                    whereBuilder.append("OR ");
                 }
             }
+            whereBuilder.append(")");
 
-            queryBuilder.append(whereBuilder).append(returnBuilder);
+            returnBuilder.append(node);
+            if (index + 1 < numOfLinks) {
+                int distance = query.getDistance(index);
+                queryBuilder.append("-[*").append(distance).append("]-");
+                returnBuilder.append(",");
+                whereBuilder.append(" AND ");
+            }
+        }
 
-            Result result = tx.execute(queryBuilder.toString());
+        queryBuilder.append(whereBuilder).append(returnBuilder);
 
+        try (Session session = driver.session()) {
+            Result result = session.run(queryBuilder.toString());
             while (result.hasNext()) {
-                Map<String, Object> next = result.next();
+                Record next = result.next();
                 for (int index = 0; index < numOfLinks - 1; index++) {
-                    String node1Name = "n_" + index;
-                    String node2Name = "n_" + (index + 1);
-
-                    Node node1 = (Node) next.get(node1Name);
-                    Node node2 = (Node) next.get(node2Name);
-
+                    Node node1 = node(next, "n_" + index);
+                    Node node2 = node(next, "n_" + (index + 1));
                     listener.linkFound(node1, node2);
                 }
-
             }
-
-            tx.commit();
         } catch (Exception e) {
             LOGGER.error("Error executing query.", e);
-        } finally {
-            tx.close();
         }
     }
 
     @Override
     public void advancedSearch(String query, FreeQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            Result result = tx.execute(query);
-            listener.columnsFound(result.columns());
+        try (Session session = driver.session()) {
+            Result result = session.run(query);
+            listener.columnsFound(result.keys());
             while (result.hasNext()) {
-                listener.resultFound(result.next());
+                Record rec = result.next();
+                Map<String, Object> map = new LinkedHashMap<>();
+                for (String key : rec.keys()) {
+                    map.put(key, convertValue(rec.get(key)));
+                }
+                listener.resultFound(map);
             }
-
-            tx.commit();
-        } finally {
-            tx.close();
         }
-
     }
 
     @Override
     public void getRelationships(Collection<Long> ids, EdgeQueryListener listener) {
-        Transaction tx = null;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("param", ids);
-            Result result = tx.execute("MATCH (n)-[r]-(m) WHERE ID(r) IN $param RETURN r", parameters);
-
-            ResourceIterator<Relationship> resourceIterator = result.columnAs("r");
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    "MATCH (n)-[r]-(m) WHERE id(r) IN $param RETURN r as edge, startNode(r) as sn, endNode(r) as en",
+                    Collections.singletonMap("param", new ArrayList<>(ids)));
             boolean proceed = true;
-            while (resourceIterator.hasNext() && proceed) {
-                Relationship relationship = resourceIterator.next();
-                proceed = listener.edgeFound(relationship);
+            while (result.hasNext() && proceed) {
+                proceed = listener.edgeFound(relWithEnds(result.next()));
             }
+        }
+    }
 
-            tx.commit();
-        } finally {
-            tx.close();
+    @Override
+    public void searchPaths(String cypher, Map<String, Object> params, PathQueryListener listener) {
+        try (Session session = driver.session()) {
+            Result result = session.run(cypher, params);
+            boolean proceed = true;
+            while (result.hasNext() && proceed) {
+                proceed = listener.pathFound(BoltPath.from(result.next().get("path").asPath()));
+            }
         }
     }
 
     @Override
     public int deleteRelationshipsFromDatasource(String evidenceUUID) {
-        Transaction tx = null;
-        long deletions = 0;
-        try {
-            tx = graphDB.beginTx();
-
-            HashMap<String, Object> parameters = new HashMap<>(1);
-            parameters.put("param", evidenceUUID);
-            Result result = tx.execute("MATCH ()-[r]-() WHERE r." + GraphTask.RELATIONSHIP_SOURCE
-                    + " = $param WITH DISTINCT r as dr DELETE dr RETURN count(dr) as size",
-                    parameters);
-
-            if (result.hasNext()) {
-                deletions += (Long) result.next().get("size");
-            }
-
-            tx.commit();
-        } finally {
-            tx.close();
+        String query = "MATCH ()-[r]-() WHERE r." + GraphTask.RELATIONSHIP_SOURCE
+                + " = $param WITH DISTINCT r as dr DELETE dr RETURN count(dr) as size";
+        try (Session session = driver.session()) {
+            return session.executeWrite(tx -> {
+                Result result = tx.run(query, Collections.singletonMap("param", evidenceUUID));
+                return result.hasNext() ? (int) result.next().get("size").asLong() : 0;
+            });
         }
-        return (int) deletions;
     }
-
 }
