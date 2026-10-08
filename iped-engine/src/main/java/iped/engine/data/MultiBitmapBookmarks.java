@@ -215,6 +215,20 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         return null;
     }
 
+    public void setBookmarkQuery(String bookmarkName, String query) {
+        for (IBookmarks m : map.values())
+            m.setBookmarkQuery(m.getBookmarkId(bookmarkName), query);
+    }
+
+    public String getBookmarkQuery(String bookmarkName) {
+        for (IBookmarks m : map.values()) {
+            String query = m.getBookmarkQuery(m.getBookmarkId(bookmarkName));
+            if (query != null)
+                return query;
+        }
+        return null;
+    }
+
     public void setBookmarkKeyStroke(String bookmarkName, KeyStroke key) {
         for (IBookmarks m : map.values())
             m.setBookmarkKeyStroke(m.getBookmarkId(bookmarkName), key);
