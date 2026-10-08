@@ -1,0 +1,39 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "iped": {
+      "type": "local",
+      "command": [
+        "python",
+        "-m",
+        "src.main"
+      ],
+      "cwd": ".",
+      "enabled": true
+    }
+  },
+  "model": "local/Qwen3.5-122B",
+  "small_model": "local/Qwen3.5-122B",
+  "enabled_providers": ["local"],
+  "share": "disabled",
+  "autoupdate": false,
+  "provider": {
+    "local": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Local",
+      "options": {
+        "baseURL": "http://10.61.86.107:8080/v1",
+        "apiKey": "INSERIR_CHAVE_AQUI"
+      },
+      "models": {
+        "Qwen3.5-122B": {
+          "name": "Qwen3.5-122B",
+          "limit": {
+            "context": 200000,
+            "output": 32768
+          }
+        }
+      }
+    }
+  }
+}

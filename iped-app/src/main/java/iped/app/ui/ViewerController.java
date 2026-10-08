@@ -26,6 +26,7 @@ import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
+import bibliothek.gui.dock.common.CControl;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.viewers.AttachmentSearcherImpl;
 import iped.app.ui.viewers.HexSearcherImpl;
@@ -51,6 +52,7 @@ import iped.viewers.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import iped.viewers.MetadataViewer;
 import iped.viewers.MsgViewer;
 import iped.viewers.MultiViewer;
+import iped.viewers.SummaryViewer;
 import iped.viewers.ReferencedFileViewer;
 import iped.viewers.TiffViewer;
 import iped.viewers.api.AbstractViewer;
@@ -99,6 +101,7 @@ public class ViewerController {
                 return IndexItem.isNumeric(field);
             }
         });
+        viewers.add(new SummaryViewer());
         viewers.add(viewersRepository = new MultiViewer());
 
         // These are content-specific viewers (inside a single ViewersRepository)
@@ -377,6 +380,10 @@ public class ViewerController {
     private AbstractViewer getBestViewer(String contentType) {
         AbstractViewer result = null;
         for (AbstractViewer viewer : viewers) {
+
+            // Never make Summary the default tab
+            if (viewer instanceof SummaryViewer) continue;
+
             if (viewer.isSupportedType(contentType, true)) {
                 if (viewer instanceof MetadataViewer) {
                     if (((MetadataViewer) viewer).isMetadataEntry(contentType)) {
@@ -416,5 +423,24 @@ public class ViewerController {
                     viewer.setEnableHighlightFacesButton(enableHighlightFacesButton);
                     viewer.setEnableAgeEstimationCombo(enableAgeEstimationCombo);
                 });
+
+        // Remove Summary viewer and dock if no summary was found.
+        boolean hasSummaryInIndex = App.get().appCase.getLeafReader().getFieldInfos()
+                .fieldInfo(ExtraProperties.SUMMARY) != null;
+        if (!hasSummaryInIndex) {
+            for (int i = 0; i < viewers.size(); i++) {
+                AbstractViewer viewer = viewers.get(i);
+                if (viewer instanceof SummaryViewer) {
+                    DefaultSingleCDockable dock = dockPerViewer.get(viewer);
+                    dockPerViewer.remove(viewer);
+                    viewers.remove(i);
+                    CControl cControl = dock.getControl();
+                    if (cControl != null) {
+                        cControl.removeDockable(dock);
+                    }
+                    break;
+                }
+            }
+        }
     }
 }
