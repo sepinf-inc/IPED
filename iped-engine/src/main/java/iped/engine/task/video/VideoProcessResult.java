@@ -239,7 +239,11 @@ public class VideoProcessResult implements Closeable {
         int p2 = info.indexOf('\n', p1);
         String s = info.substring(p1 + s1.length(), p2);
         try {
-            return Integer.parseInt(s.trim());
+            int rot = (int) -Math.round(Double.parseDouble(s.trim()));
+            if (rot < 0) {
+                rot += 360;
+            }
+            return rot;
         } catch (NumberFormatException e) {
             return 0;
         }
