@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.config.Field;
 import org.apache.tika.detect.apple.BPListDetector;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -63,6 +64,13 @@ public abstract class AbstractPListParser<T> implements Parser {
     protected static final String PLIST_META_PREFIX = "plist:";
     protected static final String PLIST_DATES_META = PLIST_META_PREFIX + "dates";
     protected static final String PLIST_POSSIBLE_DATES_META = PLIST_META_PREFIX + "possibleDates";
+
+    protected boolean extractEntries = true;
+
+    @Field
+    public void setExtractEntries(boolean value) {
+        this.extractEntries = value;
+    }
 
     protected class State {
         final XHTMLContentHandler xhtml;
@@ -342,6 +350,8 @@ public abstract class AbstractPListParser<T> implements Parser {
         state.xhtml.characters(": " + displayText + " (Base64 encoded, " + value.length() + " bytes)");
         state.xhtml.endElement("p");
 
-        extractDataAsSubItem(value, path, state);
+        if (extractEntries) {
+            extractDataAsSubItem(value, path, state);
+        }
     }
 }
