@@ -274,9 +274,16 @@ public class SkipCommitedTask extends AbstractTask {
             // parent being processed again, coming from some datasource reader, AND if it
             // was already committed, coming from the index.
             if (!parentsWithLostSubitems.remove(trackID)) {
-                item.setToIgnore(true);
+                // In --yara-only mode we deliberately do NOT setToIgnore: the item must
+                // keep flowing through the pipeline so YaraScanTask can re-scan its
+                // content and IndexTask can issue an updateDocuments for the existing
+                // trackID. We still tag IS_COMMITTED so IndexTask knows it's the
+                // update branch (vs. addDocuments for new items).
                 item.setTempAttribute(IS_COMMITTED, Boolean.TRUE.toString());
-                return;
+                if (!args.isYaraOnly()) {
+                    item.setToIgnore(true);
+                    return;
+                }
             } else {
                 removedParents.add(trackID);
             }

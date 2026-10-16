@@ -50,6 +50,25 @@ jobs:
           cd ..
           sudo apt-get install gsfonts
 
+    - name: Verify bundled libyara-x-capi (YARA-X engine, Linux)
+      # The YARA-X 1.16.0 upstream release does NOT publish a prebuilt
+      # libyara-x-capi for Linux x86_64 (only Windows MSVC). We build it
+      # manually via `cargo build -p yara-x-capi --release` (see
+      # tools/yara-x/README.md "Linux (x86_64)") and bundle the resulting
+      # libyara_x_capi.so directly in tools/yara-x/linux64/. The maven
+      # `copy-yara-x` execution in iped-app/pom.xml ships it into the
+      # release tree at build time.
+      #
+      # The integration tests still gate on YARA_X_LIB_PATH (and the JNA
+      # path); we point it at the bundled .so so YaraEngineTest etc. run
+      # in this CI job too. If the file is missing the build fails fast
+      # rather than silently skipping.
+      run: |
+          test -f tools/yara-x/linux64/libyara_x_capi.so \
+            || { echo "Missing tools/yara-x/linux64/libyara_x_capi.so — see tools/yara-x/README.md"; exit 1; }
+          echo "YARA_X_LIB_PATH=$(pwd)/tools/yara-x/linux64/libyara_x_capi.so" >> "$GITHUB_ENV"
+          ldd tools/yara-x/linux64/libyara_x_capi.so
+
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
@@ -108,6 +127,25 @@ jobs:
           sudo ldconfig /usr/local/lib
           cd ..
           sudo apt-get install gsfonts
+
+    - name: Verify bundled libyara-x-capi (YARA-X engine, Linux)
+      # The YARA-X 1.16.0 upstream release does NOT publish a prebuilt
+      # libyara-x-capi for Linux x86_64 (only Windows MSVC). We build it
+      # manually via `cargo build -p yara-x-capi --release` (see
+      # tools/yara-x/README.md "Linux (x86_64)") and bundle the resulting
+      # libyara_x_capi.so directly in tools/yara-x/linux64/. The maven
+      # `copy-yara-x` execution in iped-app/pom.xml ships it into the
+      # release tree at build time.
+      #
+      # The integration tests still gate on YARA_X_LIB_PATH (and the JNA
+      # path); we point it at the bundled .so so YaraEngineTest etc. run
+      # in this CI job too. If the file is missing the build fails fast
+      # rather than silently skipping.
+      run: |
+          test -f tools/yara-x/linux64/libyara_x_capi.so \
+            || { echo "Missing tools/yara-x/linux64/libyara_x_capi.so — see tools/yara-x/README.md"; exit 1; }
+          echo "YARA_X_LIB_PATH=$(pwd)/tools/yara-x/linux64/libyara_x_capi.so" >> "$GITHUB_ENV"
+          ldd tools/yara-x/linux64/libyara_x_capi.so
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml

@@ -846,6 +846,23 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <!-- COPY YARA-X NATIVES (libyara-x-capi DLL + header + README + LICENSE) -->
+                    <execution>
+                        <id>copy-yara-x</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${tools.dir}/yara-x</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>false</filtering>
+                                    <directory>${project.basedir}/../tools/yara-x</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

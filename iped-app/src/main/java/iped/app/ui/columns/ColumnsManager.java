@@ -61,6 +61,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
             Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.PeerToPeer"), Messages.getString("ColumnsManager.UFED"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.WindowsEvt"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Yara"), //$NON-NLS-1$
             Messages.getString("ColumnsManager.Other"), Messages.getString("ColumnsManager.All") }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final File getGlobalColsFile() {
@@ -299,6 +300,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         ArrayList<String> communicationFields = new ArrayList<String>();
         ArrayList<String> commonFields = new ArrayList<String>();
         ArrayList<String> winEvtFields = new ArrayList<String>();
+        ArrayList<String> yaraFields = new ArrayList<String>();
 
         for (String f : allExtraAttrs) {
             if (f.startsWith(RegexTask.REGEX_PREFIX))
@@ -338,6 +340,9 @@ public class ColumnsManager implements Serializable, IColumnsManager {
             else if (f.startsWith(EvtxParser.EVTX_METADATA_PREFIX)) {
                 winEvtFields.add(f);
             }
+            else if (f.startsWith(ExtraProperties.YARA_PREFIX)) {
+                yaraFields.add(f);
+            }
         }
 
         String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
@@ -348,7 +353,8 @@ public class ColumnsManager implements Serializable, IColumnsManager {
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
                 regexFields.toArray(new String[0]), languageFields.toArray(new String[0]),
                 nerFields.toArray(new String[0]), p2pFields.toArray(new String[0]),
-                ufedFields.toArray(new String[0]), winEvtFields.toArray(new String[0]) };
+                ufedFields.toArray(new String[0]), winEvtFields.toArray(new String[0]),
+                yaraFields.toArray(new String[0]) };
 
         ArrayList<String> otherFields = new ArrayList<String>();
         for (String f : indexFields) {
