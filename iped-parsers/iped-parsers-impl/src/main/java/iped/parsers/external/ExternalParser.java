@@ -67,6 +67,12 @@ public class ExternalParser extends AbstractParser {
 
     private static Logger LOGGER;
 
+    public final static int IGNORE = 0;
+    public final static int APPEND = 1;
+    public final static int SPLITSUBITEM = 2;
+
+    int outputExtractionScheme = APPEND;// default is to ignore
+
     public static final String EXTERNAL_PARSERS_ROOT = "iped.extParsers.root";
 
     /**
@@ -88,11 +94,11 @@ public class ExternalParser extends AbstractParser {
          */
         LineConsumer NULL = new LineConsumer() {
             /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-			@Override
+            @Override
             public void consume(String line) {
                 // ignores
             }
@@ -211,6 +217,15 @@ public class ExternalParser extends AbstractParser {
     }
 
     /**
+     * Sets the map of regular expression patterns and Metadata keys. Any matching
+     * patterns will have the matching metadata entries set. Set this to null to
+     * disable Metadata extraction.
+     */
+    public void setOutputExtractionScheme(int scheme) {
+        this.outputExtractionScheme = scheme;
+    }
+
+    /**
      * Executes the configured external command and passes the given document stream
      * as a simple XHTML document to the given SAX content handler. Metadata is only
      * extracted if {@link #setMetadataExtractionPatterns(Map)} has been called to
@@ -255,7 +270,7 @@ public class ExternalParser extends AbstractParser {
         boolean inputToStdIn = true;
         boolean outputFromStdOut = true;
         boolean hasPatterns = (metadataPatterns != null && !metadataPatterns.isEmpty());
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
         File outputFile = tmp.createTemporaryFile();
 
         // Build our command
@@ -330,15 +345,17 @@ public class ExternalParser extends AbstractParser {
 
             process.waitFor();
 
-            try (InputStream is = new FileInputStream(outputFile)) {
-                if (hasPatterns) {
+            if (hasPatterns) {
+                try (InputStream is = new FileInputStream(outputFile)) {
                     extractMetadata(is, metadata);
-                } else {
+                }
+            }
+            if (outputExtractionScheme == APPEND) {
+                try (InputStream is = new FileInputStream(outputFile)) {
                     File tmpFile = inputToStdIn ? null : stream.getFile();
                     extractOutput(is, xhtml, metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY), tmpFile);
                 }
             }
-
         } catch (InterruptedException e) {
             LOGGER.warn(
                     parserName + " interrupted while processing " + metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY)
@@ -360,8 +377,8 @@ public class ExternalParser extends AbstractParser {
             public void run() {
                 try {
                     Files.copy(stream, outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
                 } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         };
@@ -515,7 +532,20 @@ public class ExternalParser extends AbstractParser {
                         if (metadataPatterns.get(p) != null && !metadataPatterns.get(p).equals("")) {
                             metadata.add(metadataPatterns.get(p), m.group(1));
                         } else {
-                            metadata.add(m.group(1), m.group(2));
+                            String propertyName;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+                            String value;
+                            try {
+                                propertyName = m.group("key");
+                                propertyName=propertyName.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "");
+                            }catch (IllegalArgumentException iae) {
+                                propertyName = m.group(1);
+                            }
+                            try {
+                                value = m.group("value");
+                            }catch (IllegalArgumentException iae) {
+                                value = m.group(2);
+                            }
+                            metadata.add(parserName+":"+propertyName, value);
                         }
                     }
                 }
