@@ -231,6 +231,19 @@ public class Bootstrap {
     private static List<String> getCustomJVMArgs(){
         return Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
                 "-XX:+HeapDumpOnOutOfMemoryError",
+                // Java 18+ disables System.setSecurityManager() by default. IPED still installs a
+                // SecurityManager (see Configuration.loadConfigurables) to block network access from
+                // the HTML viewers, so re-enable it. (SecurityManager is only removed in Java 24+.)
+                "-Djava.security.manager=allow",
+                // The bundled patched PNG reader (png-reader-*.jar, package
+                // com.sun.imageio.plugins.png2) reaches into JDK-internal java.desktop packages
+                // (com.sun.imageio.plugins.common.{SubImageInputStream,InputStreamAdapter,ReaderUtil}
+                // and sun.awt.image.ByteInterleavedRaster -- full list via `jdeps -jdkinternals`).
+                // Under Java 11's default --illegal-access=permit this only warned; Java 17+ strongly
+                // encapsulates JDK internals (JEP 396), turning it into an IllegalAccessError. Export
+                // the packages to the classpath so PNG decoding (IconUtil, ImageThumbTask) keeps working.
+                "--add-exports=java.desktop/com.sun.imageio.plugins.common=ALL-UNNAMED",
+                "--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED",
                 "--add-opens=java.base/java.util=ALL-UNNAMED",
                 "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
                 "--add-opens=java.base/java.lang=ALL-UNNAMED",

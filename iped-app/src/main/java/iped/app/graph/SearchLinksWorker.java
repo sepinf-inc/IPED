@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
 
 import javax.swing.SwingWorker;
 
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.Messages;
+import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.PathQueryListener;
 import iped.engine.graph.links.SearchLinksQuery;
@@ -132,9 +132,9 @@ public class SearchLinksWorker extends SwingWorker<Void, Void> implements PathQu
         public void run() {
             try {
                 LOGGER.info("Running query {}.", queryName);
-                GraphDatabaseService graphDb = GraphServiceFactoryImpl.getInstance().getGraphService().getGraphDb();
+                GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
                 SearchLinksQuery query = SearchLinksQueryProvider.get().getQuery(queryName);
-                query.search(start, end, graphDb, listener);
+                query.search(start, end, graphService, listener);
                 LOGGER.info("Done query {}.", queryName);
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);

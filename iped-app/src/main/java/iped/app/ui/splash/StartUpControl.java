@@ -1,24 +1,17 @@
 package iped.app.ui.splash;
 
 import java.io.File;
-import java.lang.reflect.Field;
-import java.util.Vector;
+import java.lang.management.ManagementFactory;
 
 public class StartUpControl {
     public static final String ipedChildProcessPID = "iped.childProcessPID";
 
     public static int getCurrentProcessSize() {
-        try {
-            Field f = ClassLoader.class.getDeclaredField("classes");
-            f.setAccessible(true);
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            @SuppressWarnings("unchecked")
-            Vector<Class<?>> classes = (Vector<Class<?>>) f.get(classLoader);
-            return classes.size();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0;
+        // Coarse startup-progress signal: the number of classes loaded so far.
+        // This used to read the private ClassLoader.classes field by reflection, which no
+        // longer works on modern JDKs (the field was removed and strong encapsulation blocks
+        // such access). The public class-loading MXBean gives an equivalent, growing count.
+        return ManagementFactory.getClassLoadingMXBean().getLoadedClassCount();
     }
 
     public static File getTempFolder() {

@@ -75,7 +75,7 @@
 		<dependency>
   		    <groupId>net.java.dev.jna</groupId>
 		    <artifactId>jna</artifactId>
-		    <version>5.7.0</version>
+		    <version>5.14.0</version>
 		</dependency>
 		<dependency>
   		    <groupId>com.fasterxml.jackson.core</groupId>
@@ -289,9 +289,30 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+                <configuration>
+                    <!-- The bundled patched PNG reader (png-reader-*.jar, package
+                         com.sun.imageio.plugins.png2) is registered ahead of the JDK PNG
+                         reader and reaches into JDK-internal java.desktop packages
+                         (com.sun.imageio.plugins.common, sun.awt.image). Under Java 11's
+                         relaxed access policy this only warned; Java 17+ strongly
+                         encapsulates them (JEP 396), so ImageIO.read() of any PNG throws
+                         IllegalAccessError and returns null. The product grants these exports
+                         at runtime in Bootstrap.getCustomJVMArgs(); the test JVM must match,
+                         otherwise OCRParserTest (PSD/SVG, which convert via ImageMagick then
+                         ImageIO.read the PNG) fails. @{argLine} keeps the JaCoCo agent. -->
+                    <argLine>@{argLine} --add-exports=java.desktop/com.sun.imageio.plugins.common=ALL-UNNAMED --add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.8</version>
+                <!-- 0.8.12 understands Java 21 class files (major 65); 0.8.8 threw
+                     IllegalClassFormatException "Unsupported class file major version 65"
+                     while instrumenting, breaking coverage on the Java 21 build. -->
+                <version>0.8.12</version>
                 <executions>
                     <execution>
                         <goals>

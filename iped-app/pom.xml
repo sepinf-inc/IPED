@@ -26,6 +26,26 @@
             <artifactId>iped-geo</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Out-of-process Neo4j graph server distribution (zip). Declared only so the reactor
+             builds it before iped-app and the unpack-graph-server execution can resolve it; the
+             zip type keeps it off this module's classpath (and excludeTypes=zip keeps it out of
+             the flat lib/). Java 21 migration. -->
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-graph-server</artifactId>
+            <version>${project.version}</version>
+            <classifier>neo4j</classifier>
+            <type>zip</type>
+            <!-- The zip already bundles the full embedded Neo4j stack (unpacked into lib/neo4j/).
+                 Exclude its transitive POM deps so the embedded engine + antlr 4.13.x do NOT also
+                 leak into the flat lib/ (which keeps antlr 4.9.2 for libfqlite). -->
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
       	<dependency>
           <groupId>com.beust</groupId>
           <artifactId>jcommander</artifactId>
@@ -88,13 +108,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.10</version>
+                <version>3.8.1</version>
                 <executions>
                     <execution>
                         <goals>
                             <goal>analyze</goal>
                         </goals>
-                    </execution>                                        
+                    </execution>
                     <execution>
                         <id>unpack-jre</id>
                         <phase>package</phase>
@@ -106,10 +126,35 @@
                                 <artifactItem>
                                     <groupId>java</groupId>
                                     <artifactId>jre</artifactId>
-                                    <version>11.0.13</version>
+                                    <version>21.0.11</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <!-- Out-of-process Neo4j graph stack (embedded engine + antlr 4.13.x), unpacked
+                         into lib/neo4j/ and used only as the classpath of the GraphServer /
+                         GraphPostImport / neo4j-admin child JVMs. Java 21 migration. -->
+                    <execution>
+                        <id>unpack-graph-server</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>iped</groupId>
+                                    <artifactId>iped-graph-server</artifactId>
+                                    <version>${project.version}</version>
+                                    <classifier>neo4j</classifier>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <!-- The zip stores jars under a neo4j/ prefix; unpack into lib/
+                                         so they land in lib/neo4j/ (see Neo4jChildLauncher). -->
+                                    <outputDirectory>${lib.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -584,6 +629,9 @@
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
                             <excludeScope>provided</excludeScope>
+                            <!-- The iped-graph-server distribution is a zip; it is unpacked into
+                                 lib/neo4j/ (unpack-graph-server below), not copied flat into lib/. -->
+                            <excludeTypes>zip</excludeTypes>
                         </configuration>
                     </execution>
                 </executions>
@@ -609,16 +657,15 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <release>${maven.compiler.release}</release>
                     <showDeprecation>true</showDeprecation>
                 </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.5</version>
+                <version>2.6</version>
                 <executions>
                     <execution>
                         <id>create-jar</id>
@@ -851,7 +898,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
+                <version>3.5.4</version>
                 <configuration>
                     <testFailureIgnore>true</testFailureIgnore>
                     <aggregate>true</aggregate>
@@ -859,5 +906,105 @@
                 </configuration>
             </plugin>
         </plugins>
-    </build>    
+    </build>
+
+    <profiles>
+        <!-- Windows-only: (re)build the native .exe launchers for Java 21 with launch4j.
+             They wrap iped.jar (console) and lib/iped-search-app.jar (GUI) WITHOUT
+             bundling the jar (dontWrapJar), point at the bundled jre/ (no registry or
+             JAVA_HOME search) and pass -Djava.security.manager=allow (required on Java
+             18+). This replaces the old prebuilt Java-11 binaries, which selected a
+             Java 11 from the Windows registry and failed on a Java 21 build. The
+             profile auto-activates on Windows; on Linux it stays off (shell
+             launchers are used and a Windows .exe is irrelevant there). Java 21
+             migration. -->
+        <profile>
+            <id>windows-launchers</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                        <artifactId>launch4j-maven-plugin</artifactId>
+                        <version>2.5.2</version>
+                        <executions>
+                            <!-- iped.exe : processing CLI (console), wraps iped.jar at the release root -->
+                            <execution>
+                                <id>l4j-iped</id>
+                                <phase>package</phase>
+                                <goals><goal>launch4j</goal></goals>
+                                <configuration>
+                                    <headerType>console</headerType>
+                                    <outfile>${release.dir}/iped.exe</outfile>
+                                    <dontWrapJar>true</dontWrapJar>
+                                    <jar>iped.jar</jar>
+                                    <chdir>.</chdir>
+                                    <icon>${resources.dir}/root/iped.ico</icon>
+                                    <jre>
+                                        <path>jre</path>
+                                        <requiresJdk>false</requiresJdk>
+                                        <opts>
+                                            <opt>-Djava.security.manager=allow</opt>
+                                        </opts>
+                                    </jre>
+                                    <versionInfo>
+                                        <fileVersion>4.4.0.0</fileVersion>
+                                        <txtFileVersion>${project.version}</txtFileVersion>
+                                        <fileDescription>IPED - Digital Evidence Processor and Indexer (processing)</fileDescription>
+                                        <copyright>Brazilian Federal Police</copyright>
+                                        <productVersion>4.4.0.0</productVersion>
+                                        <txtProductVersion>${project.version}</txtProductVersion>
+                                        <productName>IPED</productName>
+                                        <internalName>iped</internalName>
+                                        <originalFilename>iped.exe</originalFilename>
+                                    </versionInfo>
+                                </configuration>
+                            </execution>
+                            <!-- IPED-SearchApp.exe : analysis UI (GUI), in bin/, wraps lib/iped-search-app.jar -->
+                            <execution>
+                                <id>l4j-searchapp</id>
+                                <phase>package</phase>
+                                <goals><goal>launch4j</goal></goals>
+                                <configuration>
+                                    <headerType>gui</headerType>
+                                    <outfile>${release.dir}/bin/IPED-SearchApp.exe</outfile>
+                                    <dontWrapJar>true</dontWrapJar>
+                                    <!-- This exe is built into release/bin/ but Manager.prepareOutputFolder
+                                         copies release/bin/* into the CASE ROOT (sibling of the case's iped/
+                                         folder). So at its real deploy location the bundled jre and search-app
+                                         jar live under iped/ (case/iped/jre, case/iped/lib). launch4j resolves
+                                         both <jar> and <jre><path> relative to the exe dir, so they must be
+                                         iped/... (NOT ../...). chdir=. keeps cwd at the case root, matching the
+                                         hand-written IPED-SearchApp.bat that this replaces. -->
+                                    <jar>iped/lib/iped-search-app.jar</jar>
+                                    <chdir>.</chdir>
+                                    <icon>${resources.dir}/root/iped.ico</icon>
+                                    <jre>
+                                        <path>iped/jre</path>
+                                        <requiresJdk>false</requiresJdk>
+                                        <opts>
+                                            <opt>-Djava.security.manager=allow</opt>
+                                        </opts>
+                                    </jre>
+                                    <versionInfo>
+                                        <fileVersion>4.4.0.0</fileVersion>
+                                        <txtFileVersion>${project.version}</txtFileVersion>
+                                        <fileDescription>IPED - Digital Evidence Processor and Indexer (analysis UI)</fileDescription>
+                                        <copyright>Brazilian Federal Police</copyright>
+                                        <productVersion>4.4.0.0</productVersion>
+                                        <txtProductVersion>${project.version}</txtProductVersion>
+                                        <productName>IPED</productName>
+                                        <internalName>IPED-SearchApp</internalName>
+                                        <originalFilename>IPED-SearchApp.exe</originalFilename>
+                                    </versionInfo>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

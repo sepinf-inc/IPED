@@ -14,13 +14,13 @@
         <module>iped-carvers</module>
         <module>iped-geo</module>
         <module>iped-engine</module>
+        <module>iped-graph-server</module>
         <module>iped-app</module>
     </modules>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
         <resources.dir>${basedir}/resources</resources.dir>
         <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>  
         <lib.dir>${release.dir}/lib</lib.dir>
@@ -126,14 +126,9 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.0</version>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.13.0</version>
                 <configuration>
                     <forceJavacCompilerUse>false</forceJavacCompilerUse>
                 </configuration>
