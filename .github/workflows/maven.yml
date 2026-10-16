@@ -9,16 +9,17 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v6
     - name: Set up JDK 11
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v5
       with:
+        distribution: liberica  # Required for actions/setup-java upgrade
         java-version: 11
         java-package: jdk+fx
 
     - name: Load libagdb from cache
       id: libagdb
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: libagdb
         key: libagdb
@@ -57,7 +58,7 @@ jobs:
       run:
         cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
     - name: Upload snapshot
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: iped-snapshot-${{ github.sha }}
         path: iped-snapshot.tar.gz
@@ -67,17 +68,18 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v6
     - run: curl -O "https://download.bell-sw.com/java/14.0.2+13/bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz"
     - name: Set up JDK 14
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v5
       with:
+        distribution: jdkfile  # Required for actions/setup-java upgrade
         java-version: 14
         jdkFile: ./bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz
 
     - name: Load libagdb from cache
       id: libagdb
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: libagdb
         key: libagdb
