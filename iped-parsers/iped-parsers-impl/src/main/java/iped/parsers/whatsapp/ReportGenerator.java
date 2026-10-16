@@ -1164,7 +1164,7 @@ public class ReportGenerator {
 
         out.print(timeFormat.format(message.getTimeStamp()));
         boolean hasStatus = false;
-        if (message.isFromMe() && message.getMessageStatus() != null) {
+        if (message.isFromMe() && message.getMessageStatus() != null && !message.isSystemMessage()) {
             switch (message.getMessageStatus()) {
                 case MESSAGE_UNSENT:
                     out.print("<div class=\"unsent\"></div>"); //$NON-NLS-1$
