@@ -271,6 +271,17 @@ public class BitmapBookmarks implements IBookmarks {
         return bookmarkId;
     }
 
+    @Override
+    public synchronized int newBookmarkHierarchy(List<String> path) {
+        StringBuilder currentPath = new StringBuilder();
+        int lastId = -1;
+        for (int i = 0; i < path.size(); i++) {
+            currentPath.append(i == 0 ? "" : Bookmarks.PATH_SEPARATOR).append(path.get(i));
+            lastId = newBookmark(currentPath.toString());
+        }
+        return lastId;
+    }
+
     public synchronized void delBookmark(int bookmark) {
         if (bookmark == -1)
             return;

@@ -73,6 +73,13 @@ public interface IBookmarks extends Serializable {
 
     int newBookmark(String bookmarkName);
 
+    /**
+     * Creates a hierarchy of bookmarks.
+     * @param path List of strings representing each level in the hierarchy
+     * @return The ID of the final leaf bookmark.
+     */
+    int newBookmarkHierarchy(List<String> path);
+
     void removeBookmark(List<Integer> ids, int bookmark);
 
     void saveState();

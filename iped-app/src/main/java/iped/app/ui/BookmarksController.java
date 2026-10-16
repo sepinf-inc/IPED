@@ -114,7 +114,7 @@ public class BookmarksController implements IBookmarksController {
             try {
                 App.get().appCase.getMultiBookmarks().loadState(file);
                 updateUIandHistory();
-                BookmarksManager.get().updateList();
+                BookmarksManager.get().updateTree();
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.LoadSuccess"), //$NON-NLS-1$
                         Messages.getString("BookmarksController.LoadSuccess.Title"), JOptionPane.INFORMATION_MESSAGE); //$NON-NLS-1$
 
