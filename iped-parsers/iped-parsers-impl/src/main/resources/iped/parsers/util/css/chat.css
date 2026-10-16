@@ -202,7 +202,7 @@ div.catalogIcon {
 
 #topbar {
 	position:fixed;
-	background:#475959;
+	background:#054c44;
 	border:1px solid #394d4d;
 	width:640px;
 	z-index:100;
@@ -283,7 +283,8 @@ div.catalogIcon {
 }
 
 .name {
-	color:#B0C040;
+	font-size:90%;
+	color:#90a030;
 	display:inline-block;
 	padding-bottom:1px;
 }
@@ -419,7 +420,7 @@ div:target {
 	display:table-cell;
 	border-top:8px solid transparent;
 	border-bottom:8px solid transparent;
-	border-right:16px solid #fcfbf6;
+	border-right:16px solid #ffffff;
 	margin-top:16px;
 	cursor:pointer;
 }
@@ -429,7 +430,7 @@ div:target {
 	display:table-cell;
 	border-top:8px solid transparent;
 	border-bottom:8px solid transparent;
-	border-left:16px solid #f3ffe8;
+	border-left:16px solid #e7ffdb;
 	margin-top:16px;
 	cursor:pointer;
 }
@@ -562,7 +563,7 @@ div:target {
 	cursor:pointer;
 	border-radius:6px;
 	display:block;
-	padding:4px 8px;
+	padding:3px 8px;
 	word-break:break-word;
 }
 
@@ -573,7 +574,7 @@ div:target {
 	box-shadow:0 0 6px #a7a7a7;
 	display:block;
 	padding:4px 6px 18px 6px;
-	background-color:#f7f7A0;
+	background-color:#faf3b9;
 	color:#444400;
 	margin:3px 2px 3px 3px;
 	text-align:center;
@@ -644,7 +645,7 @@ div:target {
 
 #conversation .incoming {
 	color:#000000;
-	background-color:#fcfbf6;
+	background-color:#ffffff;
 }
 
 #conversation .specialmessage {
@@ -653,7 +654,7 @@ div:target {
 }
 
 #conversation .outgoing {
-	background-color:#f3ffe8;
+	background-color:#e7ffdb;
 }
 
 #conversation .to {
