@@ -304,6 +304,7 @@
         <parser class="iped.parsers.skype.SkypeParser"></parser>
         <parser class="iped.parsers.tor.TorTcParser"></parser>
         <parser class="iped.parsers.vcard.VCardParser"></parser>
+        <parser class="iped.parsers.whatsapp.WhatsAppCryptoParser"></parser>
         <parser class="iped.parsers.whatsapp.WhatsAppParser">
             <params>
                 <param name="extractMessages" type="bool">false</param>
