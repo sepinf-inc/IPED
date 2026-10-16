@@ -29,13 +29,31 @@ public class UiUtil {
     }
 
     public static String getUIEmptyHtml() {
+        return getUIEmptyHtml(null);
+    }
+
+    public static String getUIEmptyHtml(String msg) {
         StringBuilder sb = new StringBuilder();
-        sb.append("<html><body style=\""); //$NON-NLS-1$
-        Color background = UIManager.getColor("Viewer.background"); //$NON-NLS-1$
-        if (background != null) {
-            sb.append("background-color:").append(getHexRGB(background)).append(";"); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("<html><body style=\"");
+        Color background = UIManager.getColor("Viewer.background");
+        if (background == null) {
+            background = Color.white;
         }
-        sb.append("\"></body></html>"); //$NON-NLS-1$
+        sb.append("background-color:").append(getHexRGB(background)).append(";");
+        sb.append("\">");
+        if (msg != null && !msg.isBlank()) {
+            sb.append("<div style=\"font:12px sans-serif;margin:8px;text-align:center;");
+            Color foreground = UIManager.getColor("Viewer.foreground");
+            if (foreground == null) {
+                foreground = Color.black;
+            }
+            Color c = mix(foreground, background, 0.5);
+            sb.append("color:");
+            sb.append(getHexRGB(c));
+            sb.append(";");
+            sb.append("\">").append(msg).append("</p>");
+        }
+        sb.append("</body></html>");
         return sb.toString();
     }
 
