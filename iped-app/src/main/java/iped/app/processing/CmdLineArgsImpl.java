@@ -23,6 +23,7 @@ import iped.data.ICaseData;
 import iped.engine.CmdLineArgs;
 import iped.engine.Version;
 import iped.engine.config.LocalConfig;
+import iped.engine.dictionary.PasswordDictionaryFactoryImpl;
 import iped.engine.task.SkipCommitedTask;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
@@ -67,6 +68,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = { "-l", "-keywordlist" }, description = "line file with keywords to be imported into case. "
             + "Keywords with no hits are filtered out.", validateWith = FileExistsValidator.class)
     private File keywords;
+
+    @Parameter(names = { "-dictionary", "-dict" }, description = "line file (wordlist) with candidate passwords, one per line, "
+            + "used to crack encrypted data (e.g. Zoom DPAPI master keys)", validateWith = FileExistsValidator.class)
+    private File passwordDictionary;
 
     @Parameter(names = "-ocr", description = "only run OCR on a specific category or bookmark (can be used multiple times)", splitter = NoSplitter.class)
     private List<String> ocr;
@@ -161,6 +166,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Override
     public File getKeywords() {
         return keywords;
+    }
+
+    @Override
+    public File getPasswordDictionary() {
+        return passwordDictionary;
     }
 
     @Override
@@ -430,6 +440,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         }
         if (this.keywords != null) {
             Main.getInstance().keywords = this.keywords;
+        }
+        if (this.passwordDictionary != null) {
+            System.setProperty(PasswordDictionaryFactoryImpl.DICTIONARY_PATH_PROP,
+                    this.passwordDictionary.getAbsolutePath());
         }
         if (this.logFile != null) {
             Main.getInstance().logFile = this.logFile;

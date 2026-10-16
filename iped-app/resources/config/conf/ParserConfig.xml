@@ -317,6 +317,11 @@
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
+        <parser class="iped.parsers.zoomdpapi.ZoomDpapiParser">
+            <params>
+                <param name="extractMessages" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.threema.ThreemaParser">
             <params>
                 <param name="extractMessages" type="bool">true</param>
