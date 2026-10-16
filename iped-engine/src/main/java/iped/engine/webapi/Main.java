@@ -64,7 +64,7 @@ public class Main {
      * @throws IOException
      */
     public static void main(String[] args) throws Exception {
-        String host = "0.0.0.0";
+        String host = "127.0.0.1";
         int port = 8080;
         String urlToAskSources = null;
 
@@ -95,7 +95,7 @@ public class Main {
 
     public static void printHelp() {
         System.out.println("--sources=(URL|Path)\tfile or url with json: [{id, path}...]");
-        System.out.println("--host=\t\tdefault:0.0.0.0");
+        System.out.println("--host=\t\tdefault:127.0.0.1");
         System.out.println("--port=\t\tdefault:8080");
     }
 }
