@@ -118,6 +118,16 @@ public class Extractor {
         return this.userAccount;
     }
 
+    private boolean hasTables(String... tables) throws SQLException {
+        for (String table : tables) {
+            if (!SQLite3DBParser.containsTable(table, conn)) {
+                logger.warn("Telegram table {} not found, skipping the extraction that depends on it", table);
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void addParticipants(Connection conn, ChatGroup cg) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(MEMBERS_CHATS_SQL)) {
             stmt.setLong(1, cg.getId());
@@ -159,6 +169,11 @@ public class Extractor {
     protected List<Chat> extractChatList() throws Exception {
         List<Chat> l = new ArrayList<>();
         logger.debug("Extracting chat list Android");
+        if (!hasTables("chats", "dialogs", "users")) {
+            chatList = l;
+            return l;
+        }
+        boolean hasParticipants = SQLite3DBParser.containsTable("channel_users_v2", conn);
         try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_V2)) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -198,7 +213,9 @@ public class Extractor {
                     group.setDeleted(rs.getString("date") == null);
 
                     cg = group;
-                    addParticipants(conn, group);
+                    if (hasParticipants) {
+                        addParticipants(conn, group);
+                    }
                     addAdmins(conn, group);
 
                     int participantsCount = getParticipantsCount(conn, group);
@@ -285,7 +302,13 @@ public class Extractor {
     protected Chat extractMessages() throws Exception {
         boolean first = false;
         if (this.msgsResultSet == null) {
-            String SQL = getAndroidExtractMessagesSQL();
+            String SQL;
+            try {
+                SQL = getAndroidExtractMessagesSQL();
+            } catch (NoSuchTable e) {
+                logger.warn("{}, skipping messages extraction", e.getMessage());
+                return null;
+            }
             this.msgsResultSet = conn.prepareStatement(SQL).executeQuery();
             first = true;
         }
@@ -608,7 +631,7 @@ public class Extractor {
     
     protected void extractContacts() throws Exception {
 
-        if (conn != null) {
+        if (conn != null && hasTables("users")) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL)) {
                 ResultSet rs = stmt.executeQuery();
                 if (rs == null)
