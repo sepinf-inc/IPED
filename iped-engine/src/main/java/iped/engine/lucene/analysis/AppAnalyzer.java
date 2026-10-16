@@ -29,6 +29,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.task.HashTask;
 import iped.engine.task.PhotoDNATask;
+import iped.engine.task.RemoteImageExternalClassifierTask;
 import iped.engine.task.index.IndexItem;
 import iped.localization.LocalizedProperties;
 import iped.properties.ExtraProperties;
@@ -56,6 +57,8 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.CHANGED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.TIMESTAMP, new KeywordAnalyzer());
+
+        analyzerPerField.put(RemoteImageExternalClassifierTask.AI_REVIEW_PRIORITY_ATTR, new KeywordAnalyzer());
 
         IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer();

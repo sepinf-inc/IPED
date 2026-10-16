@@ -19,6 +19,14 @@
         {"name": "Other"}
     ]},
 
+    {"name": "External CSAM Detector", "prefix": "ExternalCSAM", "property": "ai\\:externalClassifier\\:reviewPriority", "value": "*", "children":[
+        {"name": "Very High", "value": "VERY_HIGH"},
+        {"name": "High", "value": "HIGH"},
+        {"name": "Medium", "value": "MEDIUM"},
+        {"name": "Low", "value": "LOW"},
+        {"name": "Very Low", "value": "VERY_LOW"}
+    ]},
+
     {"name": "Detected Faces", "prefix": "Face", "property": "face\\_count", "value": "[1 TO *]", "children":[
         {"name": "1"},
         {"name": "2"},
