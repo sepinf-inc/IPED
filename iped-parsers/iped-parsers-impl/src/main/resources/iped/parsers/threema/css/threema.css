@@ -187,11 +187,11 @@ div.deletedIcon {
     color: #000000;
 }
 
-#conversation .linha {
+#conversation .line {
     display: block;
 }
 
-#conversation .linha:after {
+#conversation .line:after {
     content: ".";
     display: block;
     height: 0;

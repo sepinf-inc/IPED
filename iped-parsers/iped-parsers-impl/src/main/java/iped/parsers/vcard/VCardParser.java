@@ -42,9 +42,9 @@ import ezvcard.property.TextProperty;
 import ezvcard.property.VCardProperty;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.util.IndentityHtmlParser;
 import iped.parsers.util.Messages;
-import iped.parsers.whatsapp.Util;
 import iped.properties.ExtraProperties;
 import iped.utils.SimpleHTMLEncoder;
 
@@ -406,7 +406,7 @@ public class VCardParser extends AbstractParser {
             newCell();
             byte[] data = photo.getData();
             if (data != null) {
-                println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(data) //$NON-NLS-1$
+                println("<img src=\"data:image/jpg;base64," + ChatUtil.encodeBase64(data) //$NON-NLS-1$
                         + "\" width=\"112\"/>", false); //$NON-NLS-1$
             } else {
                 String url = photo.getUrl();
