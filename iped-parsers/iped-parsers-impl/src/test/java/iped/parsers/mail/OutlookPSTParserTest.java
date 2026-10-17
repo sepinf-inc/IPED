@@ -4,9 +4,11 @@ import static org.apache.commons.codec.digest.MessageDigestAlgorithms.MD5;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.exception.TikaException;
@@ -23,6 +25,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import iped.parsers.standard.StandardParser;
 import iped.parsers.util.AbstractPkgTest;
 import iped.properties.ExtraProperties;
 
@@ -65,6 +68,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
         protected List<String> userurls = new ArrayList<String>();
         protected List<String> usernotes = new ArrayList<String>();
         protected List<String> contentmd5 = new ArrayList<String>();
+        protected List<String> contactpreview = new ArrayList<String>();
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -79,7 +83,8 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
             // information
             // for testing
             // md5
-            String hdigest = new DigestUtils(MD5).digestAsHex(stream);
+            byte[] content = stream.readAllBytes();
+            String hdigest = new DigestUtils(MD5).digestAsHex(content);
             // folder
             if (metadata.get(TikaCoreProperties.TITLE) != null)
                 foldertitle.add(metadata.get(TikaCoreProperties.TITLE));
@@ -122,6 +127,8 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
                 userurls.add(metadata.get(ExtraProperties.USER_URLS));
             if (metadata.get(ExtraProperties.USER_NOTES) != null)
                 usernotes.add(metadata.get(ExtraProperties.USER_NOTES));
+            if (OutlookPSTParser.OUTLOOK_CONTACT_MIME.equals(metadata.get(StandardParser.INDEXER_CONTENT_TYPE)))
+                contactpreview.add(new String(content, StandardCharsets.UTF_8));
 
             contentmd5.add(hdigest.toUpperCase());
 
@@ -270,6 +277,25 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
             assertEquals("github.com/streeg", psttracker.userurls.get(0));
 
         }
+    }
+
+    @Test
+    public void testOutlookPSTParserContactPreviewIsDeterministic() throws IOException, SAXException, TikaException {
+        List<String> previews = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            psttracker = new EmbeddedPSTParser();
+            pstContext.set(Parser.class, psttracker);
+            OutlookPSTParser parser = new OutlookPSTParser();
+            parser.setRecoverDeleted(false);
+            parser.setUseLibpffParser(false);
+            try (InputStream stream = getStream("test-files/test_sample.pst")) {
+                parser.parse(stream, new DefaultHandler(), new Metadata(), pstContext);
+            }
+            assertEquals(1, psttracker.contactpreview.size());
+            previews.add(psttracker.contactpreview.get(0));
+        }
+        assertEquals(previews.get(0), previews.get(1));
+        assertFalse(Pattern.compile("(\\[[BL]|com\\.pff\\.)[\\w.$;]*@[0-9a-f]+").matcher(previews.get(0)).find());
     }
 
 }
