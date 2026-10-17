@@ -212,7 +212,7 @@ public class ReportGenerator {
         boolean printModal = (chat.getMessages().size() - currentMsg) > MIN_MESSAGES_TO_SHOW_MODAL;
         printMessageFileHeader(out, title, title, firstPhotoData, source, printModal);
         if (currentMsg > 0) {
-            out.println("<div class=\"linha\"><div class=\"date\">"
+            out.println("<div class=\"line\"><div class=\"date\">"
                     + Messages.getString("ChatReport.ChatContinuation") + "</div></div>");
         }
 
@@ -221,14 +221,14 @@ public class ReportGenerator {
             InstantMessage m = chat.getMessages().get(currentMsg);
             String thisDate = m.getTimeStamp() != null ? dateFormat.format(m.getTimeStamp()) : Messages.getString("ReportGenerator.UnknownDate");
             if (lastDate == null || !lastDate.equals(thisDate)) {
-                out.println("<div class=\"linha\"><div class=\"date\">"
+                out.println("<div class=\"line\"><div class=\"date\">"
                         + thisDate + "</div></div>");
                 lastDate = thisDate;
             }
             printMessage(out, m, chat.isGroup(), chat.isDeleted());
 
             if (currentMsg++ != chat.getMessages().size() - 1 && bout.size() >= minChatSplitSize) {
-                out.println("<div class=\"linha\"><div class=\"date\">"
+                out.println("<div class=\"line\"><div class=\"date\">"
                         + Messages.getString("ChatReport.ChatContinues") + "</div></div>");
                 break;
             }
@@ -246,7 +246,7 @@ public class ReportGenerator {
 
         boolean isOutgoing = message.isFromPhoneOwner();
 
-        out.println("<div id=\"" + message.getAnchorId() + "\" class=\"linha\">");
+        out.println("<div id=\"" + message.getAnchorId() + "\" class=\"line\">");
         String name = null;
         if (message.isSystemMessage()) {
             out.println("<div class=\"systemmessage\"><div>");

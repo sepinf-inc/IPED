@@ -270,11 +270,11 @@ div.catalogIcon {
 	padding-top:86px;
 }
 
-#conversation .linha {
+#conversation .line {
 	display:block;
 }
 
-#conversation .linha:after {
+#conversation .line:after {
 	content:".";
 	display:block;
 	height:0;

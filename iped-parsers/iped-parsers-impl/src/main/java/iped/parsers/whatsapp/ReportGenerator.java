@@ -208,12 +208,12 @@ public class ReportGenerator {
                     ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
             if (c.getRecoveredFrom() != null) {
-                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                out.println("<div class=\"line\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.RecoveredFrom") + " " + format(c.getRecoveredFrom())
                         + "</div></div>");
             }
             if (currentMsg > 0)
-                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                out.println("<div class=\"line\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("ChatReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
 
             String lastDate = null;
@@ -226,14 +226,14 @@ public class ReportGenerator {
                 }
                 String thisDate = dateFormat.format(m.getTimeStamp());
                 if (lastDate == null || !lastDate.equals(thisDate)) {
-                    out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                    out.println("<div class=\"line\"><div class=\"date\">" //$NON-NLS-1$
                             + thisDate + "</div></div>"); //$NON-NLS-1$
                     lastDate = thisDate;
                 }
                 printMessage(out, m, c.isGroupOrChannelChat(), contactsDirectory, account);
                 lastId = m.getUniqueId();
                 if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
-                    out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                    out.println("<div class=\"line\"><div class=\"date\">" //$NON-NLS-1$
                             + Messages.getString("ChatReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                     break;
                 }
@@ -271,7 +271,7 @@ public class ReportGenerator {
         String bubbleFromSpecial = "<div class=\"bbls\"><div class=\"aw\"><div class=\"awls\"></div></div><div class=\"specialmessage from\">";
         String bubbleToSpecial = "<div class=\"bbrs\"><div class=\"specialmessage to\">";
 
-        out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
+        out.println("<div class=\"line\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
         String name = getBestContactName(message, contactsDirectory, account);
 
         switch (message.getMessageType()) {
@@ -1718,7 +1718,7 @@ public class ReportGenerator {
         }
         String deletedDiv;
         if (isDeleted) {
-            deletedDiv = "<div class=\"linha\"><div class=\"recoveredChat\">"
+            deletedDiv = "<div class=\"line\"><div class=\"recoveredChat\">"
                     + Messages.getString("WhatsAppReport.RecoveredChat") + "</div></div>";
         } else {
             deletedDiv = "";
