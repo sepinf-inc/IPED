@@ -14,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.App;
+import iped.app.ui.BookmarksController;
 import iped.app.ui.FileProcessor;
 import iped.app.ui.Messages;
 import iped.data.IIPEDSource;
@@ -54,6 +56,7 @@ import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.rag.RAGService;
 import iped.engine.rag.RAGService.RAGSourceDoc;
+import iped.properties.ExtraProperties;
 
 /**
  * Swing docking panel for the RAG (Retrieval-Augmented Generation) AI
@@ -73,7 +76,7 @@ import iped.engine.rag.RAGService.RAGSourceDoc;
  *
  * Double-clicking a row in the sources table calls
  * {@code new FileProcessor(luceneId, false).execute()} to open the evidence
- * item in the standard IPED viewer.
+ * item in the standard IPED viewer and mark it as checked.
  */
 public class RAGAssistantPanel extends JPanel {
 
@@ -351,14 +354,14 @@ public class RAGAssistantPanel extends JPanel {
         }
         sourcesTable.setColumnModel(colModel);
 
-        // Double-click to open the item in IPED viewer
+        // Double-click to check and open the item in IPED viewer
         sourcesTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
                     int row = sourcesTable.rowAtPoint(e.getPoint());
                     if (row >= 0) {
-                        openSourceItem(row);
+                        openSourceItem(sourcesTable.convertRowIndexToModel(row));
                     }
                 }
             }
@@ -654,27 +657,68 @@ public class RAGAssistantPanel extends JPanel {
 
     private void openSourceItem(int row) {
         RAGSourceDoc doc = sourcesModel.getRow(row);
-        if (doc == null || doc.itemId == null)
+        App app = App.get();
+        if (doc == null || app == null || app.appCase == null)
             return;
         try {
-            int ipedId = Integer.parseInt(doc.itemId);
-            // Search for the lucene docId matching this IPED itemId
-            App app = App.get();
-            if (app.appCase instanceof IPEDMultiSource) {
-                for (IPEDSource src : ((IPEDMultiSource) app.appCase).getAtomicSources()) {
-                    if (ipedId <= src.getLastId()) {
-                        IItemId itemId = new ItemId(src.getSourceId(), ipedId);
-                        int luceneId = app.appCase.getLuceneId(itemId);
-                        if (luceneId >= 0) {
-                            new FileProcessor(luceneId, false).execute();
-                            return;
-                        }
-                    }
-                }
+            IItemId itemId = resolveSourceItem(app.appCase.getAtomicSources(), doc);
+            if (itemId == null) {
+                JOptionPane.showMessageDialog(this, Messages.getString("RAGAssistant.SourceNotFound"),
+                        Messages.getString("RAGAssistant.ErrorTitle"), JOptionPane.WARNING_MESSAGE);
+                return;
             }
-        } catch (NumberFormatException nfe) {
-            // ignore
+            int luceneId = app.appCase.getLuceneId(itemId);
+            app.appCase.getMultiBookmarks().setChecked(true, itemId);
+            app.appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().updateUISelection();
+            new FileProcessor(luceneId, false).execute();
+        } catch (IOException e) {
+            LOGGER.error("Error resolving RAG source item", e);
+            JOptionPane.showMessageDialog(this, Messages.getString("RAGAssistant.SourceNotFound"),
+                    Messages.getString("RAGAssistant.ErrorTitle"), JOptionPane.WARNING_MESSAGE);
         }
+    }
+
+    /** Resolves a source without choosing arbitrarily between cases with the same numeric ID. */
+    static IItemId resolveSourceItem(List<? extends IIPEDSource> sources, RAGSourceDoc doc) throws IOException {
+        if (doc == null || doc.itemId == null) {
+            return null;
+        }
+        int id;
+        try {
+            id = Integer.parseInt(doc.itemId);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        if (id < 0) {
+            return null;
+        }
+        String globalId = null;
+        if (doc.contenttrackID != null) {
+            int sep = doc.contenttrackID.lastIndexOf('#');
+            if (sep > 0) {
+                globalId = doc.contenttrackID.substring(0, sep);
+            }
+        }
+        IItemId resolved = null;
+        for (IIPEDSource source : sources) {
+            if (id > source.getLastId()) {
+                continue;
+            }
+            int luceneId = source.getLuceneId(id);
+            if (luceneId < 0) {
+                continue;
+            }
+            if (globalId != null && !globalId.equals(source.getSearcher()
+                    .doc(luceneId, Collections.singleton(ExtraProperties.GLOBAL_ID)).get(ExtraProperties.GLOBAL_ID))) {
+                continue;
+            }
+            if (resolved != null) {
+                return null;
+            }
+            resolved = new ItemId(source.getSourceId(), id);
+        }
+        return resolved;
     }
 
     private void loadHistoryFromDatabase() {
@@ -1249,44 +1293,24 @@ public class RAGAssistantPanel extends JPanel {
             switch (columnIndex) {
                 case 0:
                     return doc.itemId;
-                case 1: {
-                    // Try to resolve the item name from the appCase
-                    try {
-                        int id = Integer.parseInt(doc.itemId);
-                        App app = App.get();
-                        if (app != null && app.appCase instanceof IPEDMultiSource) {
-                            for (IPEDSource src : ((IPEDMultiSource) app.appCase).getAtomicSources()) {
-                                if (id <= src.getLastId()) {
-                                    IItemId iid = new ItemId(src.getSourceId(), id);
-                                    iped.data.IItem item = app.appCase.getItemByItemId(iid);
-                                    if (item != null)
-                                        return item.getName();
-                                }
-                            }
-                        }
-                    } catch (Exception ignore) {
-                    }
-                    return doc.itemId;
-                }
                 case 2:
                     return String.format("%.3f", doc.score);
+                case 1:
                 case 3: {
                     try {
-                        int id = Integer.parseInt(doc.itemId);
                         App app = App.get();
-                        if (app != null && app.appCase instanceof IPEDMultiSource) {
-                            for (IPEDSource src : ((IPEDMultiSource) app.appCase).getAtomicSources()) {
-                                if (id <= src.getLastId()) {
-                                    IItemId iid = new ItemId(src.getSourceId(), id);
-                                    iped.data.IItem item = app.appCase.getItemByItemId(iid);
-                                    if (item != null)
-                                        return item.getPath();
+                        if (app != null && app.appCase != null) {
+                            IItemId itemId = resolveSourceItem(app.appCase.getAtomicSources(), doc);
+                            if (itemId != null) {
+                                iped.data.IItem item = app.appCase.getItemByItemId(itemId);
+                                if (item != null) {
+                                    return columnIndex == 1 ? item.getName() : item.getPath();
                                 }
                             }
                         }
                     } catch (Exception ignore) {
                     }
-                    return "";
+                    return columnIndex == 1 ? doc.itemId : "";
                 }
                 default:
                     return "";
