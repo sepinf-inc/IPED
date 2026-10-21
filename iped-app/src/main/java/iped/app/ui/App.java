@@ -235,6 +235,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private DefaultSingleCDockable categoriesTabDock, aiFiltersTabDock, metadataTabDock, bookmarksTabDock,
             evidenceTabDock;
     private DefaultSingleCDockable ragAssistantTabDock;
+    private RAGAssistantPanel ragAssistantPanel;
     private List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
     private DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
@@ -448,6 +449,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private void destroy() {
         boolean processingFinished = processingManager == null || processingManager.isProcessingFinished();
         try {
+            if (ragAssistantPanel != null) {
+                ragAssistantPanel.dispose();
+            }
             if (viewerController != null) {
                 viewerController.dispose();
             }
@@ -1123,8 +1127,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // Add AI Assistant tab if RAG is enabled for this case
         RAGService ragService = RAGService.getInstance();
         if (ragService != null && ragService.getConfig().isEnabled()) {
+            ragAssistantPanel = new RAGAssistantPanel();
             ragAssistantTabDock = createDockable("ragassistanttab", Messages.getString("App.RAGAssistant"),
-                    new RAGAssistantPanel());
+                    ragAssistantPanel);
             dockingControl.addDockable(ragAssistantTabDock);
 
             // Inject the Lucene IndexSearcher so RAGService can perform local KNN searches.
@@ -1580,13 +1585,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         RAGService ragService = RAGService.getInstance();
         if (ragService != null && ragService.getConfig().isEnabled()) {
             if (ragAssistantTabDock == null) {
+                ragAssistantPanel = new RAGAssistantPanel();
                 ragAssistantTabDock = createDockable("ragassistanttab", Messages.getString("App.RAGAssistant"),
-                        new RAGAssistantPanel());
+                        ragAssistantPanel);
                 dockingControl.addDockable(ragAssistantTabDock);
             }
             ragAssistantTabDock.setLocationsAside(aiFiltersTabDock);
             ragAssistantTabDock.setVisible(true);
             selectDockableTab(ragAssistantTabDock);
+            ragAssistantPanel.setCaseLoading(false);
+        }
+    }
+
+    void suspendRAGRequests() {
+        if (ragAssistantPanel != null) {
+            ragAssistantPanel.setCaseLoading(true);
         }
     }
 

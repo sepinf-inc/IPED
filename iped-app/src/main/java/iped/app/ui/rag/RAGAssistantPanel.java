@@ -100,6 +100,10 @@ public class RAGAssistantPanel extends JPanel {
     private SwingWorker<String, String> currentWorker;
     private final List<ChatSession> sessions = new ArrayList<>();
     private ChatSession activeSession;
+    private ChatSession workerSession;
+    private final RAGContextSnapshot.Cache contextSnapshots = new RAGContextSnapshot.Cache();
+    private volatile boolean disposed;
+    private volatile boolean caseLoading;
 
     // ---------------------------------------------------------------- constructor
 
@@ -373,6 +377,9 @@ public class RAGAssistantPanel extends JPanel {
     // ---------------------------------------------------------------- actions
 
     private void onAsk() {
+        if (disposed || caseLoading || currentWorker != null) {
+            return;
+        }
         String question = questionArea.getText().trim();
         String placeholder = Messages.getString("RAGAssistant.Question");
         if (question.isEmpty() || question.equals(placeholder)) {
@@ -397,21 +404,30 @@ public class RAGAssistantPanel extends JPanel {
             return;
         }
 
+        startAnswer(question, rag, searchScope);
+    }
+
+    void startAnswer(String question, RAGService rag, RAGSearchScope searchScope) {
+        if (disposed || caseLoading || currentWorker != null) {
+            return;
+        }
         if (activeSession == null) {
             startNewSession();
         }
 
         final String q = question;
-        final String currentSessionId = activeSession.sessionId;
-        final boolean isFirstQuestion = activeSession.entries.isEmpty();
+        final ChatSession originSession = activeSession;
+        final String currentSessionId = originSession.sessionId;
+        final String requestId = java.util.UUID.randomUUID().toString();
+        final String conversationBody = extractBodyContent(renderConversation(originSession));
 
         // Assemble chat history context (last 5 turns) from active session
         final List<RAGService.HistoryTurn> historyTurns = new ArrayList<>();
-        int entryCount = activeSession.entries.size();
+        int entryCount = originSession.entries.size();
         if (entryCount > 0) {
             int startIdx = Math.max(0, entryCount - 5);
             for (int i = startIdx; i < entryCount; i++) {
-                HistoryEntry he = activeSession.entries.get(i);
+                HistoryEntry he = originSession.entries.get(i);
                 String cleanAns = he.rawAnswer != null ? he.rawAnswer : stripHtml(he.answerHtml);
                 historyTurns.add(new RAGService.HistoryTurn(he.question, cleanAns));
             }
@@ -442,6 +458,7 @@ public class RAGAssistantPanel extends JPanel {
         SwingUtilities.invokeLater(() -> responsePane.setCaretPosition(responsePane.getDocument().getLength()));
         sourcesModel.setRows(new ArrayList<>());
 
+        workerSession = originSession;
         currentWorker = new SwingWorker<String, String>() {
             private List<RAGSourceDoc> foundDocs = new ArrayList<>();
             private int omittedChunksCount = 0;
@@ -449,20 +466,30 @@ public class RAGAssistantPanel extends JPanel {
             private int contextWindowValue = 4096;
             private int totalRetrievedChunksCount = 0;
             private final StringBuilder streamingRawAnswer = new StringBuilder();
+            private RAGContextSnapshot contextSnapshot;
+
+            private void checkCancelled() {
+                if (isCancelled() || disposed || Thread.currentThread().isInterrupted()) {
+                    throw new CancellationException();
+                }
+            }
 
             @Override
             protected String doInBackground() throws Exception {
+                checkCancelled();
                 // 1. Prepare contextualized search query for multi-turn questions
                 String searchQuery = extractSearchQueryWithHistory(q, historyTurns);
 
                 // 2. Embed the question
                 float[] qvec = rag.getEmbedding(searchQuery);
+                checkCancelled();
                 if (qvec == null) {
                     throw new IOException("Could not generate embedding for the question.");
                 }
 
                 // 3. Hybrid search using contextualized search query and scope filter
                 List<RAGSourceDoc> docs = rag.performHybridSearchInScope(searchQuery, qvec, searchScope);
+                checkCancelled();
                 foundDocs.addAll(docs);
 
                 if (docs.isEmpty()) {
@@ -487,50 +514,72 @@ public class RAGAssistantPanel extends JPanel {
 
                 int baseLength = 2500 + (q != null ? q.length() : 0);
                 totalRetrievedChunksCount = docs.size();
+                RAGContextSnapshot.Builder snapshot = new RAGContextSnapshot.Builder();
 
-                for (RAGSourceDoc doc : docs) {
-                    if (doc.content != null && !doc.content.isEmpty()) {
+                for (int retrievedOrdinal = 0; retrievedOrdinal < docs.size(); retrievedOrdinal++) {
+                    checkCancelled();
+                    RAGSourceDoc doc = docs.get(retrievedOrdinal);
+                    String content = doc.content;
+                    String itemId = doc.itemId;
+                    String track = doc.contenttrackID;
+                    float score = doc.score;
+                    if (content != null && !content.isEmpty()) {
                         String docName = getDocName(doc);
                         StringBuilder tempChunk = new StringBuilder();
-                        tempChunk.append("[").append(doc.itemId).append("]\n");
+                        tempChunk.append("[").append(itemId).append("]\n");
                         if (docName != null) {
                             tempChunk.append("Nome do Arquivo: ").append(docName).append("\n");
                         }
                         tempChunk.append("Score Híbrido: ")
-                                .append(String.format(java.util.Locale.US, "%.3f", doc.score)).append("\n");
+                                .append(String.format(java.util.Locale.US, "%.3f", score)).append("\n");
                         tempChunk.append("---\n");
-                        tempChunk.append(doc.content).append("\n\n========================================\n\n");
+                        int bodyStart = ctx.length() + tempChunk.length();
+                        tempChunk.append(content).append("\n\n========================================\n\n");
 
                         if (baseLength + ctx.length() + tempChunk.length() > maxChars) {
                             limitReached = true;
                             omittedCount++;
+                            snapshot.omit(retrievedOrdinal, itemId, track, false);
                             continue;
                         }
 
                         ctx.append(tempChunk);
+                        snapshot.include(itemId, track, docName, content, score, retrievedOrdinal, bodyStart);
                         docIndex++;
+                    } else {
+                        snapshot.omit(retrievedOrdinal, itemId, track, true);
                     }
                 }
 
                 omittedChunksCount = omittedCount;
                 contextLimitReached = limitReached;
+                contextSnapshot = snapshot.build();
+                checkCancelled();
 
                 // 4. Ask the LLM with Token Streaming
                 return rag.getLlmProvider().generateAnswerStream(q, ctx.toString(), historyTurns, token -> {
-                    publish(token);
+                    if (!isCancelled() && !disposed) {
+                        publish(token);
+                    }
                 });
             }
 
             @Override
             protected void process(List<String> chunks) {
+                if (disposed || currentWorker != this || isCancelled()) {
+                    return;
+                }
                 for (String chunk : chunks) {
                     streamingRawAnswer.append(chunk);
+                }
+                if (activeSession != originSession) {
+                    return;
                 }
 
                 StringBuilder liveHtml = new StringBuilder();
                 liveHtml.append("<html><body style='font-family:sans-serif;font-size:13px;padding:8px;'>");
                 if (entryCount > 0) {
-                    liveHtml.append(extractBodyContent(renderConversation(activeSession)));
+                    liveHtml.append(conversationBody);
                     liveHtml.append("<hr style='border:0; border-top:1px solid #E0E0E0; margin-bottom:15px;'/>");
                 }
                 // User Question
@@ -551,17 +600,12 @@ public class RAGAssistantPanel extends JPanel {
 
             @Override
             protected void done() {
-                setUIBusy(false);
+                if (disposed || currentWorker != this || originSession.deleted) {
+                    return;
+                }
                 try {
-                    // Use get() to propagate any exception; the actual content comes
-                    // from streamingRawAnswer (accumulated via publish/process) if streaming
-                    // was active, otherwise fall back to the returned value directly.
+                    // Providers return the complete answer; process() events may arrive later.
                     String answer = get();
-                    // If streaming was used, streamingRawAnswer may already be full;
-                    // use it if non-empty to avoid re-processing the same content.
-                    if (streamingRawAnswer.length() > 0) {
-                        answer = streamingRawAnswer.toString();
-                    }
                     String htmlAnswer = markdownToHtml(answer);
                     if (contextLimitReached) {
                         String formattedWarning = String.format(
@@ -583,22 +627,25 @@ public class RAGAssistantPanel extends JPanel {
                         dbId = rag.saveHistoryEntry(currentSessionId, q, html, displayDocs);
                     }
 
-                    // Add to active session
-                    HistoryEntry entry = new HistoryEntry(dbId, q, html, answer, displayDocs);
-                    activeSession.entries.add(entry);
+                    // Commit to the session that submitted this request, even after navigation.
+                    HistoryEntry entry = new HistoryEntry(dbId, q, html, answer, displayDocs, requestId);
+                    originSession.entries.add(entry);
+                    contextSnapshots.put(requestId, currentSessionId, contextSnapshot);
 
-                    if (isFirstQuestion) {
-                        if (activeSession.title == null
-                                || activeSession.title.equals(Messages.getString("RAGAssistant.NewChat"))) {
+                    if (!sessions.contains(originSession)) {
+                        if (originSession.title == null
+                                || originSession.title.equals(Messages.getString("RAGAssistant.NewChat"))) {
                             String title = q.length() > 30 ? q.substring(0, 27) + "..." : q;
-                            activeSession.title = title;
+                            originSession.title = title;
                         }
-                        sessions.add(activeSession);
-                        historyListModel.addElement(activeSession.title);
+                        sessions.add(originSession);
+                        historyListModel.addElement(originSession.title);
                         // Selecting triggers automatic list selection listener logic
-                        int newIdx = sessions.size() - 1;
-                        historyList.setSelectedIndex(newIdx);
-                    } else {
+                        if (activeSession == originSession) {
+                            historyList.setSelectedIndex(sessions.size() - 1);
+                        }
+                    }
+                    if (activeSession == originSession) {
                         // Just re-render conversation thread
                         responsePane.setContentType("text/html");
                         responsePane.setText(renderConversation(activeSession));
@@ -607,7 +654,10 @@ public class RAGAssistantPanel extends JPanel {
                         sourcesModel.setRows(new ArrayList<>(displayDocs));
                     }
 
-                    // Clear question area
+                    // Do not clear a question being composed in another session.
+                    if (activeSession != originSession) {
+                        return;
+                    }
                     String placeholderMsg = Messages.getString("RAGAssistant.Question");
                     if (questionArea.hasFocus()) {
                         questionArea.setText("");
@@ -619,10 +669,15 @@ public class RAGAssistantPanel extends JPanel {
 
                 } catch (CancellationException ce) {
                     // Restore conversation thread without thinking state
-                    responsePane.setContentType("text/html");
-                    responsePane.setText(renderConversation(activeSession));
+                    if (activeSession == originSession) {
+                        responsePane.setContentType("text/html");
+                        responsePane.setText(renderConversation(originSession));
+                    }
                 } catch (Exception ex) {
                     LOGGER.error("RAG answer generation error", ex);
+                    if (activeSession != originSession) {
+                        return;
+                    }
                     // Append error message to thread
                     StringBuilder errHtml = new StringBuilder();
                     errHtml.append("<html><body style='font-family:sans-serif;font-size:13px;padding:8px;'>");
@@ -642,6 +697,12 @@ public class RAGAssistantPanel extends JPanel {
                     errHtml.append("</body></html>");
                     responsePane.setContentType("text/html");
                     responsePane.setText(errHtml.toString());
+                } finally {
+                    if (currentWorker == this) {
+                        currentWorker = null;
+                        workerSession = null;
+                        setUIBusy(false);
+                    }
                 }
             }
         };
@@ -649,9 +710,38 @@ public class RAGAssistantPanel extends JPanel {
     }
 
     private void onCancel() {
-        if (currentWorker != null && !currentWorker.isDone()) {
-            currentWorker.cancel(true);
+        if (currentWorker != null) {
+            SwingWorker<String, String> worker = currentWorker;
+            currentWorker = null;
+            workerSession = null;
+            worker.cancel(true);
+            if (!disposed) {
+                setUIBusy(false);
+                responsePane.setContentType("text/html");
+                responsePane.setText(renderConversation(activeSession));
+            }
         }
+    }
+
+    /** Invalidates callbacks before the owning case closes its readers and services. */
+    public void dispose() {
+        disposed = true;
+        onCancel();
+        contextSnapshots.clear();
+    }
+
+    /** Called on the EDT before reloading case readers, and after loading finishes. */
+    public void setCaseLoading(boolean loading) {
+        if (disposed) {
+            return;
+        }
+        caseLoading = loading;
+        if (loading) {
+            onCancel();
+            contextSnapshots.clear();
+        }
+        setUIBusy(loading || currentWorker != null);
+        cancelButton.setEnabled(!loading && currentWorker != null);
     }
 
     private void setUIBusy(boolean busy) {
@@ -825,28 +915,38 @@ public class RAGAssistantPanel extends JPanel {
                     Messages.getString("RAGAssistant.ConfirmDeleteTitle"),
                     JOptionPane.YES_NO_OPTION);
             if (option == JOptionPane.YES_OPTION) {
-                ChatSession session = sessions.remove(idx);
-                historyListModel.remove(idx);
+                removeSession(idx);
+            }
+        }
+    }
 
-                if (sessions.isEmpty()) {
-                    startNewSession();
-                } else {
-                    int newSel = Math.max(0, idx - 1);
-                    historyList.setSelectedIndex(newSel);
-                }
+    void removeSession(int idx) {
+        ChatSession session = sessions.get(idx);
+        session.deleted = true;
+        if (workerSession == session) {
+            onCancel();
+        }
+        contextSnapshots.removeSession(session.sessionId);
+        sessions.remove(idx);
+        historyListModel.remove(idx);
 
-                if (session.sessionId != null && !session.sessionId.startsWith("legacy_")) {
-                    RAGService rag = RAGService.getInstance();
-                    if (rag != null) {
-                        new SwingWorker<Void, Void>() {
-                            @Override
-                            protected Void doInBackground() throws Exception {
-                                rag.deleteHistorySession(session.sessionId);
-                                return null;
-                            }
-                        }.execute();
+        if (sessions.isEmpty()) {
+            startNewSession();
+        } else {
+            int newSel = Math.max(0, idx - 1);
+            historyList.setSelectedIndex(newSel);
+        }
+
+        if (session.sessionId != null && !session.sessionId.startsWith("legacy_")) {
+            RAGService rag = RAGService.getInstance();
+            if (rag != null) {
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        rag.deleteHistorySession(session.sessionId);
+                        return null;
                     }
-                }
+                }.execute();
             }
         }
     }
@@ -1230,6 +1330,7 @@ public class RAGAssistantPanel extends JPanel {
         final String sessionId;
         String title;
         final List<HistoryEntry> entries = new ArrayList<>();
+        boolean deleted;
 
         ChatSession(String sessionId, String title) {
             this.sessionId = sessionId;
@@ -1247,14 +1348,21 @@ public class RAGAssistantPanel extends JPanel {
         final String answerHtml;
         final String rawAnswer;
         final List<RAGSourceDoc> displaySources;
+        final String contextRequestId;
 
         HistoryEntry(Long dbId, String question, String answerHtml, String rawAnswer,
                 List<RAGSourceDoc> displaySources) {
+            this(dbId, question, answerHtml, rawAnswer, displaySources, null);
+        }
+
+        HistoryEntry(Long dbId, String question, String answerHtml, String rawAnswer,
+                List<RAGSourceDoc> displaySources, String contextRequestId) {
             this.dbId = dbId;
             this.question = question;
             this.answerHtml = answerHtml;
             this.rawAnswer = rawAnswer;
             this.displaySources = displaySources;
+            this.contextRequestId = contextRequestId;
         }
     }
 

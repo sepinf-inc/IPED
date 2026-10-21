@@ -276,6 +276,12 @@ public class RAGService {
     private File resolveDbFile(File baseDir) {
         if (baseDir == null) return new File("iped/data/embedding_cache.db");
 
+        // Multicase lists are files, not case directories. Keep each list's history separate.
+        if (baseDir.isFile()) {
+            baseDir = new File(new File(baseDir.getAbsoluteFile().getParentFile(), "iped-multicases"),
+                    baseDir.getName());
+        }
+
         // Preserve legacy DB location if it already exists in an old case
         File oldDb = new File(baseDir, "storage/embedding_cache.db");
         if (oldDb.exists()) return oldDb;
@@ -297,7 +303,10 @@ public class RAGService {
     private synchronized Connection getConnection() throws SQLException {
         if (dbConnection == null || dbConnection.isClosed()) {
             File dbFile = resolveDbFile(caseDir);
-            dbFile.getParentFile().mkdirs();
+            File parent = dbFile.getParentFile();
+            if (!parent.isDirectory() && !parent.mkdirs() && !parent.isDirectory()) {
+                throw new SQLException("Could not create RAG database directory: " + parent);
+            }
             org.sqlite.SQLiteConfig sqliteConfig = new org.sqlite.SQLiteConfig();
             sqliteConfig.setJournalMode(org.sqlite.SQLiteConfig.JournalMode.WAL);
             dbConnection = sqliteConfig.createConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
