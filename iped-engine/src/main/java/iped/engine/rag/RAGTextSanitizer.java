@@ -1,24 +1,18 @@
 package iped.engine.rag;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Lightweight sanitizer for RAG fragment text.
+ * Removes technical noise from text already extracted by the parsers for RAG.
  *
- * <p>Strips technical metadata noise, HTML layout tags, and long separator
- * lines from RAG text fragments before they are (a) stored in the Lucene {@code
- * CONTENT_STORED} field and (b) sent to the embedding provider.</p>
-
- * <p><strong>The original Lucene {@code content} field used for BM25 keyword
- * search is never touched by this class.</strong> Only the RAG-specific stored
- * field and embedding pipeline are affected.</p>
+ * <p>The same sanitized text is used for embeddings and {@code content_stored}.
+ * Bracketed identifiers, meaningful whitespace and Unicode text are preserved.
+ * The original Lucene {@code content} field is never changed.</p>
  */
 public final class RAGTextSanitizer {
 
-    // -----------------------------------------------------------------------
-    // Technical metadata line prefixes to discard entirely from RAG fragments
-    // (Preserves all investigative metadata like SMS, Calls, Locations, OCR, Transcriptions)
-    // -----------------------------------------------------------------------
+    // Keep investigative metadata; exclude only the existing technical prefixes.
     private static final String[] NOISE_PREFIXES = {
             // Tika & Parser metadata
             "image:",
@@ -65,132 +59,233 @@ public final class RAGTextSanitizer {
             "audio:xmpDM:audioSampleRate",
     };
 
-    /**
-     * Matches URL-encoded JavaScript ad scripts such as document.write(decodeURIComponent("..."))
-     */
     private static final Pattern AD_SCRIPT = Pattern.compile(
             "document\\.write\\(decodeURIComponent\\(\"[^\"]+\"\\)\\);?",
             Pattern.CASE_INSENSITIVE);
 
-    /**
-     * Matches 5 or more consecutive underscores or hyphens used as visual separators
-     * (e.g. ________________________________________).
-     */
-    private static final Pattern LONG_SEPARATORS = Pattern.compile("[_\\-]{5,}");
-
-    /**
-     * Pre-compiled fast gatekeeper pattern dynamically built from {@link #NOISE_PREFIXES}.
-     */
-    private static final Pattern NOISE_FAST_PATTERN;
-
-    static {
-        StringBuilder sb = new StringBuilder(NOISE_PREFIXES.length * 15);
-        for (int i = 0; i < NOISE_PREFIXES.length; i++) {
-            if (i > 0) sb.append('|');
-            sb.append(Pattern.quote(NOISE_PREFIXES[i]));
-        }
-        NOISE_FAST_PATTERN = Pattern.compile(sb.toString(), Pattern.CASE_INSENSITIVE);
-    }
-
-    /**
-     * Matches 3 or more consecutive newlines (with optional whitespace on blank lines)
-     * to collapse them into a maximum of 2 newlines (\n\n).
-     */
-    private static final Pattern MULTI_NEWLINES = Pattern.compile("(?:[ \\t]*\\r?\\n){3,}");
-
-    // Utility class — no instances.
     private RAGTextSanitizer() {}
 
-    // -----------------------------------------------------------------------
-    // Public API
-    // -----------------------------------------------------------------------
-
     /**
-     * Returns a sanitized copy of {@code text} suitable for RAG storage and
-     * embedding. Returns an empty string when {@code text} is {@code null} or
-     * contains only whitespace after sanitization.
-     *
-     * @param text the raw fragment text produced by the IPED/Tika parser
-     * @return sanitized text, or {@code ""} when the sanitized result is blank
+     * Cleans RAG text without removing literal angle-bracket content or inline
+     * separators. Does not change fragmentation or embedding eligibility rules.
      */
     public static String sanitize(String text) {
         if (text == null || text.isEmpty()) {
             return "";
         }
 
-        String cleaned = text;
-
-        // 1. Remove inline RGB palette entries using ultra-fast non-recursive iterative loop
-        if (cleaned.contains("red=") && cleaned.contains("blue=")) {
-            cleaned = stripRGBPalettes(cleaned);
-        }
-
-        // 2. Remove URL-encoded ad scripts (document.write(decodeURIComponent("%3C...")))
-        if (cleaned.contains("decodeURIComponent(") && (cleaned.contains("OpenX") || cleaned.contains("comscore") || cleaned.contains("quantserve") || cleaned.contains("criteo"))) {
-            cleaned = AD_SCRIPT.matcher(cleaned).replaceAll("");
-        }
-
-        // 3. Strip HTML tags using fast stack-safe linear char loop (O(N) time, O(1) stack space)
-        if (cleaned.contains("<") && cleaned.contains(">")) {
-            cleaned = stripHtmlTags(cleaned);
-        }
-
-        // 4. Remove whole lines that are pure technical metadata noise
-        if (NOISE_FAST_PATTERN.matcher(cleaned).find()) {
-            String[] lines = cleaned.split("\n", -1);
-            StringBuilder sb = new StringBuilder(cleaned.length());
-            for (String line : lines) {
-                if (!isNoiseMetadataLine(line)) {
-                    sb.append(line).append('\n');
+        if (hasAdvertisingScript(text)) {
+            // Script matches may span lines. Normalize and remove RGB lines first,
+            // preserving the existing order before matching scripts and metadata.
+            String cleaned = normalizeForScripts(text);
+            if (cleaned.contains("red=") && cleaned.contains("blue=")) {
+                cleaned = stripRGBPalettes(cleaned);
+            }
+            Matcher matcher = hasAdvertisingScript(cleaned) ? AD_SCRIPT.matcher(cleaned) : null;
+            boolean match = matcher != null && matcher.find();
+            LineCleaner out = new LineCleaner(cleaned.length(), false, false);
+            for (int i = 0; i < cleaned.length();) {
+                if (match && i == matcher.start()) {
+                    i = matcher.end();
+                    match = matcher.find();
+                    continue;
+                }
+                char c = cleaned.charAt(i++);
+                if (c == '\n') {
+                    out.finishLine(true);
+                } else {
+                    out.text.append(c);
                 }
             }
-            cleaned = sb.toString();
+            out.finishLine(false);
+            return out.text.toString().trim();
         }
 
-        // 5. Collapse long separator lines (_______ or -------)
-        cleaned = LONG_SEPARATORS.matcher(cleaned).replaceAll("");
-
-        // 6. Collapse 3+ consecutive blank lines into at most 2 newlines (\n\n) using fast stack-safe char loop
-        cleaned = collapseNewlines(cleaned).trim();
-
-        return cleaned;
-    }
-
-    /**
-     * Fast stack-safe O(N) linear character loop to collapse 3+ consecutive newlines into at most 2 (\n\n).
-     * Prevents JVM StackOverflowError on huge unformatted text files.
-     */
-    private static String collapseNewlines(String text) {
-        if (text == null || text.length() < 3) {
-            return text;
-        }
-        int len = text.length();
-        StringBuilder sb = new StringBuilder(len);
-        int newlineCount = 0;
-
-        for (int i = 0; i < len; i++) {
+        LineCleaner out = new LineCleaner(text.length(), true,
+                text.contains("red=") && text.contains("blue="));
+        for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             if (c == '\r') {
-                continue; // Normalize CRLF to LF
+                if (i + 1 < text.length() && text.charAt(i + 1) == '\n') {
+                    i++;
+                }
+                c = '\n';
+            } else {
+                c = normalizeCharacter(c);
             }
             if (c == '\n') {
-                newlineCount++;
-                if (newlineCount <= 2) {
-                    sb.append('\n');
-                }
+                out.finishLine(true);
             } else {
-                if (c != ' ' && c != '\t') {
-                    newlineCount = 0;
-                }
-                sb.append(c);
+                out.text.append(c);
             }
         }
-        return sb.toString();
+        out.finishLine(false);
+        return out.text.toString().trim();
+    }
+
+    private static boolean hasAdvertisingScript(String text) {
+        return text.contains("decodeURIComponent(") && (text.contains("OpenX")
+                || text.contains("comscore") || text.contains("quantserve") || text.contains("criteo"));
+    }
+
+    private static char normalizeCharacter(char c) {
+        if (c == '\u00a0' || c == '\u202f') {
+            return ' ';
+        }
+        if (c == '\f' || c == '\u000b') {
+            return '\n';
+        }
+        if ((c < 32 && c != '\n' && c != '\r' && c != '\t') || c == 127) {
+            return ' ';
+        }
+        return c;
+    }
+
+    private static String normalizeForScripts(String text) {
+        StringBuilder out = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '\r') {
+                if (i + 1 < text.length() && text.charAt(i + 1) == '\n') {
+                    i++;
+                }
+                c = '\n';
+            } else {
+                c = normalizeCharacter(c);
+            }
+            if (c == '\n') {
+                trimLineEnd(out, 0);
+            }
+            out.append(c);
+        }
+        trimLineEnd(out, 0);
+        return out.toString();
+    }
+
+    private static void trimLineEnd(StringBuilder text, int start) {
+        int end = text.length();
+        while (end > start && isHorizontalSpace(text.charAt(end - 1))) {
+            end--;
+        }
+        text.setLength(end);
+    }
+
+    private static boolean isHorizontalSpace(char c) {
+        return c == ' ' || c == '\t';
+    }
+
+    private static boolean startsWith(StringBuilder text, int start, int end, String value) {
+        if (end - start < value.length()) {
+            return false;
+        }
+        for (int i = 0; i < value.length(); i++) {
+            if (text.charAt(start + i) != value.charAt(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean contains(StringBuilder text, int start, int end, String value) {
+        for (int i = start; i + value.length() <= end; i++) {
+            if (startsWith(text, i, end, value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Keeps line processing in one output buffer, without splitting the fragment. */
+    private static class LineCleaner {
+        private final StringBuilder text;
+        private final boolean trimLineEnds;
+        private final boolean removeRgb;
+        private int lineStart;
+        private int newlines;
+
+        private LineCleaner(int capacity, boolean trimLineEnds, boolean removeRgb) {
+            text = new StringBuilder(capacity);
+            this.trimLineEnds = trimLineEnds;
+            this.removeRgb = removeRgb;
+        }
+
+        private void finishLine(boolean newline) {
+            if (trimLineEnds) {
+                trimLineEnd(text, lineStart);
+            }
+            int end = text.length();
+            int content = lineStart;
+            while (content < end && Character.isWhitespace(text.charAt(content))) {
+                content++;
+            }
+            for (String prefix : NOISE_PREFIXES) {
+                if (startsWith(text, content, end, prefix)) {
+                    text.setLength(lineStart);
+                    return;
+                }
+            }
+            if (removeRgb && contains(text, lineStart, end, "index=")
+                    && contains(text, lineStart, end, "red=") && contains(text, lineStart, end, "blue=")) {
+                text.setLength(lineStart);
+                return;
+            }
+
+            int write = lineStart;
+            int segment = lineStart;
+            while (segment < end) {
+                int stop = segment;
+                while (stop < end && !isUnicodeLineSeparator(text.charAt(stop))) {
+                    stop++;
+                }
+                int left = segment;
+                int right = stop;
+                while (left < right && isHorizontalSpace(text.charAt(left))) {
+                    left++;
+                }
+                while (right > left && isHorizontalSpace(text.charAt(right - 1))) {
+                    right--;
+                }
+                boolean decorative = right - left >= 5;
+                for (int i = left; decorative && i < right; i++) {
+                    if (text.charAt(i) != '_' && text.charAt(i) != '-') {
+                        decorative = false;
+                    }
+                }
+                if (!decorative) {
+                    for (int i = segment; i < stop; i++) {
+                        char c = text.charAt(i);
+                        if (!isHorizontalSpace(c)) {
+                            newlines = 0;
+                        }
+                        text.setCharAt(write++, c);
+                    }
+                }
+                if (stop < end) {
+                    char separator = text.charAt(stop);
+                    text.setCharAt(write++, separator);
+                    newlines = 0;
+                }
+                segment = stop + 1;
+            }
+            text.setLength(write);
+            if (newline) {
+                if (newlines < 2) {
+                    text.append('\n');
+                }
+                newlines = Math.min(2, newlines + 1);
+            }
+            lineStart = text.length();
+        }
+    }
+
+    private static boolean isUnicodeLineSeparator(char c) {
+        // Preserve Java MULTILINE separator semantics without deleting delimiters.
+        return c == '\u0085' || c == '\u2028' || c == '\u2029';
     }
 
     /**
-     * Fast stack-safe O(N) linear character loop to strip HTML tags from text.
-     * Prevents JVM StackOverflowError on unclosed HTML tags or huge documents.
+     * Strips HTML tags for callers explicitly requesting that operation. RAG
+     * sanitation does not use it on text already extracted by the parsers.
      */
     public static String stripHtmlTags(String html) {
         if (html == null || !html.contains("<")) {
@@ -213,29 +308,20 @@ public final class RAGTextSanitizer {
         return sb.toString();
     }
 
-    /**
-     * Fast stack-safe O(N) iterative cleaner for RGB palette dumps.
-     */
     private static String stripRGBPalettes(String text) {
         if (text == null) return "";
         String[] lines = text.split("\n", -1);
         StringBuilder sb = new StringBuilder(text.length());
         for (String line : lines) {
             if (line.contains("index=") && line.contains("red=") && line.contains("blue=")) {
-                continue; // Skip lines containing inline RGB palette dumps
+                continue;
             }
             sb.append(line).append('\n');
         }
         return sb.toString();
     }
 
-    /**
-     * Determines whether a sanitized text fragment contains meaningful human text or
-     * investigative metadata (SMS, Calls, Locations, OCR, Transcriptions).
-     *
-     * @param text the sanitized fragment text
-     * @return {@code true} if the fragment is useful for RAG embedding
-     */
+    /** Determines whether text meets the existing RAG embedding eligibility gate. */
     public static boolean hasUsefulContent(String text) {
         if (text == null || text.isBlank()) {
             return false;
@@ -255,18 +341,5 @@ public final class RAGTextSanitizer {
         }
 
         return ((double) alphaNumericCount / len) >= 0.25;
-    }
-
-    /**
-     * Returns {@code true} when the line is pure technical metadata noise.
-     */
-    private static boolean isNoiseMetadataLine(String line) {
-        String trimmed = line.stripLeading();
-        for (String prefix : NOISE_PREFIXES) {
-            if (trimmed.startsWith(prefix)) {
-                return true;
-            }
-        }
-        return false;
     }
 }
