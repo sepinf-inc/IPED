@@ -14,6 +14,23 @@ import iped.utils.IOUtil;
  */
 public class ChatUtil {
 
+    private static final String navControls = 
+              "    <div id=\"nav-controls\" class=\"nav-controls\">\n"
+            + "        <div id=\"topbar-spinner\" class=\"topbar-spinner\"></div>\n"
+            + "        <div id=\"nav-content\" class=\"nav-content\" style=\"display: none;\">\n"
+            + "            <div class=\"nav-buttons-row\">\n"
+            + "                <button id=\"btn-prev\" title=\"" + Messages.getString("ChatReport.Prev") + "\">&#9650;</button>\n"
+            + "                <button id=\"btn-next\" title=\"" + Messages.getString("ChatReport.Next") + "\">&#9660;</button>\n"
+            + "             </div>\n" 
+            + "             <span id=\"nav-counter\" class=\"nav-counter\">0 / 0</span>\n"
+            + "             <button id=\"btn-clear\" title=\"" + Messages.getString("ChatReport.Clear") + "\">&#10005;</button>\n"
+            + "        </div>\n"
+            + "    </div>\n";
+
+    public static String getNavControls() {
+        return navControls; 
+    }
+
     public static String encodeBase64(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
     }

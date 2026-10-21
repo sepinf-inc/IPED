@@ -523,7 +523,9 @@ public class ReportGenerator {
                     + "\" width=\"60\" height=\"60\"/>");
 
         }
-        out.println(title + "</span>\n</div>\n<div id=\"conversation\">\n");
+        out.println(title + "</span>");
+        out.print(ChatUtil.getNavControls());
+        out.println("</div>\n<div id=\"conversation\">\n");
 
         if (isDeleted && (isGroup || isChannel)) {
             out.print("<div class=\"line\"><div class=\"recoveredChat\">");

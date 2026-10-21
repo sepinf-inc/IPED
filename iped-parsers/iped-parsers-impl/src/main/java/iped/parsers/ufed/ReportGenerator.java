@@ -713,6 +713,7 @@ public class ReportGenerator {
         }
 
         out.println(format(chatName) + "</span>\n"
+                + ChatUtil.getNavControls()
                 + "</div>\n"
                 + "<div id=\"conversation\">");
     }

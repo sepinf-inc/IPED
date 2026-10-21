@@ -204,9 +204,83 @@ div.catalogIcon {
 	position:fixed;
 	background:#054c44;
 	border:1px solid #394d4d;
-	width:640px;
+	width:642px;
 	z-index:100;
-	display:inline-flex
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	box-sizing:border-box;
+	padding:1px 1px;
+}
+
+.nav-controls {
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	min-width:55px;
+	min-height:50px;
+	user-select:none;
+}
+
+.topbar-spinner {
+	width:16px;
+	height:16px;
+	border:2px solid rgba(255, 255, 255, 0.3);
+	border-top:2px solid #ffffff;
+	border-radius:50%;
+	animation:spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	0% { transform:rotate(0deg); }
+	100% { transform:rotate(360deg); }
+}
+
+.nav-content {
+	display:flex;
+	flex-direction:column;
+	align-items:center;
+	justify-content:center;
+	gap:3px;
+}
+
+.nav-buttons-row {
+	display:flex;
+	flex-direction:row;
+	gap:4px;
+}
+
+.nav-controls button {
+	background:rgba(255, 255, 255, 0.12);
+	border:1px solid rgba(255, 255, 255, 0.25);
+	color:#ffffff;
+	font-size:9px;
+	width:18px;
+	height:16px;
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	padding:0;
+	border-radius:3px;
+	cursor:pointer;
+	outline:none;
+	transition:background 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-controls button:hover {
+	background:rgba(255, 255, 255, 0.25);
+	border-color:rgba(255, 255, 255, 0.4);
+}
+
+.nav-controls button:active {
+	background:rgba(255, 255, 255, 0.35);
+}
+
+.nav-counter {
+	font-size:10px;
+	line-height:1;
+	color:rgba(255, 255, 255, 0.9);
+	white-space:nowrap;
 }
 
 #topbar.status {
@@ -231,7 +305,7 @@ div.catalogIcon {
 /** Chats List **/
 
 #chatlist {
-	width:640px;
+	width:642px;
 }
 
 #chatlist .contact {
@@ -265,7 +339,7 @@ div.catalogIcon {
 /** Conversations **/
 
 #conversation {
-	width:640px;
+	width:642px;
 	color:#000000;
 	padding-top:86px;
 }
@@ -280,6 +354,11 @@ div.catalogIcon {
 	height:0;
 	clear:both;
 	visibility:hidden;
+}
+
+#conversation .line.sel {
+	background-color:rgba(240, 0, 0, 0.3);
+	transition:background-color 0.3s ease;
 }
 
 .name {
@@ -576,7 +655,7 @@ div:target {
 	padding:4px 6px 18px 6px;
 	background-color:#faf3b9;
 	color:#444400;
-	margin:3px 2px 3px 3px;
+	margin:3px 8px 3px 8px;
 	text-align:center;
 }
 

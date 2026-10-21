@@ -1747,6 +1747,8 @@ public class ReportGenerator {
                         return deletedDiv;
                     case "favicon":
                         return favicon;
+                    case "navcontrols":
+                        return ChatUtil.getNavControls();
                 }
                 return StringLookupFactory.INSTANCE.interpolatorStringLookup().lookup(key);
             }
