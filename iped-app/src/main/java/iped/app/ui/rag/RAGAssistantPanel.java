@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,11 +52,12 @@ import iped.app.ui.FileProcessor;
 import iped.app.ui.Messages;
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
-import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.rag.RAGService;
+import iped.engine.rag.RAGSearchScope;
 import iped.engine.rag.RAGService.RAGSourceDoc;
+import iped.search.IMultiSearchResult;
 import iped.properties.ExtraProperties;
 
 /**
@@ -387,6 +389,14 @@ public class RAGAssistantPanel extends JPanel {
             return;
         }
 
+        // Snapshot the selection on the EDT before changing the conversation or starting a worker.
+        final RAGSearchScope searchScope = collectSearchScope();
+        if (searchScope != null && searchScope.isEmpty()) {
+            JOptionPane.showMessageDialog(this, Messages.getString("RAGAssistant.ScopeEmpty"),
+                    Messages.getString("RAGAssistant.ErrorTitle"), JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
         if (activeSession == null) {
             startNewSession();
         }
@@ -432,11 +442,6 @@ public class RAGAssistantPanel extends JPanel {
         SwingUtilities.invokeLater(() -> responsePane.setCaretPosition(responsePane.getDocument().getLength()));
         sourcesModel.setRows(new ArrayList<>());
 
-        // Collect allowed item IDs here, on the EDT, before handing off to the worker.
-        // This guarantees that all Swing component reads happen on the Event Dispatch
-        // Thread.
-        final Set<String> scopeAllowedIds = collectAllowedParentIds();
-
         currentWorker = new SwingWorker<String, String>() {
             private List<RAGSourceDoc> foundDocs = new ArrayList<>();
             private int omittedChunksCount = 0;
@@ -457,7 +462,7 @@ public class RAGAssistantPanel extends JPanel {
                 }
 
                 // 3. Hybrid search using contextualized search query and scope filter
-                List<RAGSourceDoc> docs = rag.performHybridSearch(searchQuery, qvec, scopeAllowedIds);
+                List<RAGSourceDoc> docs = rag.performHybridSearchInScope(searchQuery, qvec, searchScope);
                 foundDocs.addAll(docs);
 
                 if (docs.isEmpty()) {
@@ -914,16 +919,27 @@ public class RAGAssistantPanel extends JPanel {
         java.util.Map<String, RAGSourceDoc> uniqueDocs = new java.util.LinkedHashMap<>();
         for (RAGSourceDoc doc : list) {
             if (doc.itemId != null) {
-                if (!uniqueDocs.containsKey(doc.itemId)) {
-                    uniqueDocs.put(doc.itemId, doc);
+                String key = getSourceItemKey(doc);
+                if (!uniqueDocs.containsKey(key)) {
+                    uniqueDocs.put(key, doc);
                 } else {
-                    if (doc.score > uniqueDocs.get(doc.itemId).score) {
-                        uniqueDocs.put(doc.itemId, doc);
+                    if (doc.score > uniqueDocs.get(key).score) {
+                        uniqueDocs.put(key, doc);
                     }
                 }
             }
         }
         return new ArrayList<>(uniqueDocs.values());
+    }
+
+    static String getSourceItemKey(RAGSourceDoc doc) {
+        if (doc.contenttrackID != null) {
+            int sep = doc.contenttrackID.lastIndexOf('#');
+            if (sep > 0) {
+                return doc.contenttrackID.substring(0, sep);
+            }
+        }
+        return doc.itemId;
     }
 
     /**
@@ -958,7 +974,7 @@ public class RAGAssistantPanel extends JPanel {
         // Match docs cited by bracket ID [5]
         for (RAGSourceDoc doc : docs) {
             if (doc.itemId != null && citedIds.contains(doc.itemId)) {
-                if (added.add(doc.itemId)) {
+                if (added.add(getSourceItemKey(doc))) {
                     citedList.add(doc);
                 }
             }
@@ -968,7 +984,7 @@ public class RAGAssistantPanel extends JPanel {
         // "PGR-00149505/2023" or "Relotacao.pdf")
         String lowerAnswer = answer.toLowerCase(java.util.Locale.ROOT);
         for (RAGSourceDoc doc : docs) {
-            if (doc.itemId != null && !added.contains(doc.itemId)) {
+            if (doc.itemId != null && !added.contains(getSourceItemKey(doc))) {
                 String name = getDocName(doc);
                 if (name != null && !name.trim().isEmpty()) {
                     String baseName = name;
@@ -977,7 +993,7 @@ public class RAGAssistantPanel extends JPanel {
                         baseName = name.substring(0, dotIdx);
                     }
                     if (baseName.length() >= 3 && lowerAnswer.contains(baseName.toLowerCase(java.util.Locale.ROOT))) {
-                        added.add(doc.itemId);
+                        added.add(getSourceItemKey(doc));
                         citedList.add(doc);
                     }
                 }
@@ -1010,68 +1026,51 @@ public class RAGAssistantPanel extends JPanel {
         return searchStr.toString();
     }
 
-    private Set<String> collectAllowedParentIds() {
+    private RAGSearchScope collectSearchScope() {
         if (chkScopeOnly == null || !chkScopeOnly.isSelected()) {
             return null;
         }
-        Set<String> allowedItemIds = new HashSet<>();
         try {
             App app = App.get();
             if (app != null && app.appCase != null) {
-                // 1. Check for checked items in bookmarks
-                if (app.appCase instanceof IPEDMultiSource) {
-                    for (IPEDSource src : ((IPEDMultiSource) app.appCase).getAtomicSources()) {
-                        int lastId = src.getLastId();
-                        for (int id = 1; id <= lastId; id++) {
-                            if (src.getBookmarks() != null && src.getBookmarks().isChecked(id)) {
-                                allowedItemIds.add(String.valueOf(id));
-                            }
-                        }
-                    }
-                } else if (app.appCase.getBookmarks() != null) {
-                    int lastId = app.appCase.getLastId();
-                    for (int id = 1; id <= lastId; id++) {
-                        if (app.appCase.getBookmarks().isChecked(id)) {
-                            allowedItemIds.add(String.valueOf(id));
-                        }
-                    }
-                }
+                List<IPEDSource> sources = app.appCase.getAtomicSources();
+                return new RAGSearchScope(sources, collectScopeItems(sources, app.getResultsTable(), app.getResults()));
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error collecting selected items for RAG scope filter", e);
+        }
+        // A failure to read a restricted scope must never turn into an unrestricted search.
+        return new RAGSearchScope(Collections.emptyList(), Collections.emptySet());
+    }
 
-                // 2. If no items are checked, check for selected/highlighted rows in
-                // resultsTable
-                javax.swing.JTable tbl = app.getResultsTable();
-                iped.search.IMultiSearchResult res = app.getResults();
-                if (allowedItemIds.isEmpty() && tbl != null && res != null) {
-                    int[] selectedRows = tbl.getSelectedRows();
-                    if (selectedRows != null) {
-                        for (int row : selectedRows) {
-                            int rowModel = tbl.convertRowIndexToModel(row);
-                            IItemId iid = res.getItem(rowModel);
-                            if (iid != null) {
-                                allowedItemIds.add(String.valueOf(iid.getId()));
-                            }
-                        }
-                    }
-                }
-
-                // 3. If still empty, use all currently filtered items visible in ipedResult
-                if (allowedItemIds.isEmpty() && res != null) {
-                    int count = res.getLength();
-                    LOGGER.warn(
-                            "RAG scope filter: no items checked or selected; falling back to all {} currently visible items.",
-                            count);
-                    for (int r = 0; r < count; r++) {
-                        IItemId iid = res.getItem(r);
-                        if (iid != null) {
-                            allowedItemIds.add(String.valueOf(iid.getId()));
-                        }
+    static Set<IItemId> collectScopeItems(List<? extends IIPEDSource> sources, JTable table, IMultiSearchResult results) {
+        Set<IItemId> selected = new LinkedHashSet<>();
+        // Checked items take priority, including items outside the current result table.
+        for (IIPEDSource source : sources) {
+            if (source.getBookmarks() != null) {
+                for (int id = 0; id <= source.getLastId(); id++) {
+                    if (source.getBookmarks().isChecked(id)) {
+                        selected.add(new ItemId(source.getSourceId(), id));
                     }
                 }
             }
-        } catch (Exception e) {
-            LOGGER.error("Error collecting allowed parent IDs for RAG scope filter", e);
         }
-        return allowedItemIds.isEmpty() ? null : allowedItemIds;
+        if (selected.isEmpty() && table != null && results != null) {
+            for (int row : table.getSelectedRows()) {
+                IItemId item = results.getItem(table.convertRowIndexToModel(row));
+                if (item != null) {
+                    selected.add(item);
+                }
+            }
+        }
+        if (selected.isEmpty() && results != null) {
+            for (IItemId item : results.getIterator()) {
+                if (item != null) {
+                    selected.add(item);
+                }
+            }
+        }
+        return selected;
     }
 
     private String getMessageSafely(String key, String defaultValue) {
@@ -1086,15 +1085,13 @@ public class RAGAssistantPanel extends JPanel {
         if (doc == null || doc.itemId == null)
             return null;
         try {
-            int id = Integer.parseInt(doc.itemId);
             App app = App.get();
-            if (app != null && app.appCase instanceof IPEDMultiSource) {
-                for (IPEDSource src : ((IPEDMultiSource) app.appCase).getAtomicSources()) {
-                    if (id <= src.getLastId()) {
-                        IItemId iid = new ItemId(src.getSourceId(), id);
-                        iped.data.IItem item = app.appCase.getItemByItemId(iid);
-                        if (item != null)
-                            return item.getName();
+            if (app != null && app.appCase != null) {
+                IItemId itemId = resolveSourceItem(app.appCase.getAtomicSources(), doc);
+                if (itemId != null) {
+                    iped.data.IItem item = app.appCase.getItemByItemId(itemId);
+                    if (item != null) {
+                        return item.getName();
                     }
                 }
             }

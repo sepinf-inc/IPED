@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,7 +41,9 @@ import org.apache.lucene.search.KnnVectorQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.util.BytesRef;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.RequestOptions;
@@ -623,16 +626,19 @@ public class RAGService {
     }
 
     public List<RAGSourceDoc> performVectorSearch(float[] queryVector, int k, java.util.Collection<String> allowedItemIds) throws IOException {
-        if ("lucene".equalsIgnoreCase(config.getVectorStoreMode())) {
-            return performVectorSearchLucene(queryVector, k, allowedItemIds);
+        if (allowedItemIds != null && allowedItemIds.isEmpty()) {
+            return Collections.emptyList();
         }
-        return performVectorSearchOpenSearch(queryVector, k, allowedItemIds);
+        if ("lucene".equalsIgnoreCase(config.getVectorStoreMode())) {
+            return performVectorSearchLucene(queryVector, k, allowedItemIds, null);
+        }
+        return performVectorSearchOpenSearch(queryVector, k, allowedItemIds, null);
     }
 
     // --- Lucene KNN backend ---
 
     private List<RAGSourceDoc> performVectorSearchLucene(float[] queryVector, int k,
-            java.util.Collection<String> allowedItemIds) throws IOException {
+            java.util.Collection<String> allowedItemIds, RAGSearchScope scope) throws IOException {
         IndexSearcher searcher = luceneSearcher;
         if (searcher == null) {
             throw new IOException("Lucene IndexSearcher not initialised. " +
@@ -641,23 +647,9 @@ public class RAGService {
 
         // Retrieve k*5 candidates then re-rank (consistent with OpenSearch behaviour)
         int candidates = k * 5;
-        Query knnQuery = new KnnVectorQuery(
-                iped.engine.task.index.IndexTask.CONTENT_EMBEDDING, queryVector, candidates);
-
-        Query finalQuery = knnQuery;
-        if (allowedItemIds != null && !allowedItemIds.isEmpty()) {
-            BooleanQuery.Builder b = new BooleanQuery.Builder();
-            b.add(knnQuery, BooleanClause.Occur.MUST);
-            // Filter: fragment's parent ID must match one of the allowed item IDs.
-            BooleanQuery.Builder idFilter = new BooleanQuery.Builder();
-            for (String id : allowedItemIds) {
-                idFilter.add(new TermQuery(
-                        new Term("fragParentNumericId", id)),
-                        BooleanClause.Occur.SHOULD);
-            }
-            b.add(idFilter.build(), BooleanClause.Occur.MUST);
-            finalQuery = b.build();
-        }
+        Query filter = createLuceneScopeFilter(allowedItemIds, scope);
+        Query finalQuery = new KnnVectorQuery(
+                iped.engine.task.index.IndexTask.CONTENT_EMBEDDING, queryVector, candidates, filter);
 
         TopDocs topDocs = searcher.search(finalQuery, Math.min(k, 1000));
 
@@ -688,7 +680,7 @@ public class RAGService {
     // --- OpenSearch backend (legacy) ---
 
     private List<RAGSourceDoc> performVectorSearchOpenSearch(float[] queryVector, int k,
-            java.util.Collection<String> allowedItemIds) throws IOException {
+            java.util.Collection<String> allowedItemIds, RAGSearchScope scope) throws IOException {
         RestHighLevelClient client = getOpenSearchClient();
         SearchRequest searchRequest = new SearchRequest(indexName);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
@@ -704,10 +696,10 @@ public class RAGService {
         QueryBuilder knnQuery = QueryBuilders.wrapperQuery(knnJson);
         QueryBuilder queryBuilder = knnQuery;
 
-        if (allowedItemIds != null && !allowedItemIds.isEmpty()) {
+        if (scope != null || allowedItemIds != null) {
             queryBuilder = QueryBuilders.boolQuery()
                     .must(knnQuery)
-                    .filter(QueryBuilders.termsQuery("id", allowedItemIds));
+                    .filter(createOpenSearchScopeFilter(allowedItemIds, scope));
         }
 
         sourceBuilder.query(queryBuilder);
@@ -736,16 +728,19 @@ public class RAGService {
     }
 
     public List<RAGSourceDoc> performLexicalSearch(String question, int k, java.util.Collection<String> allowedItemIds) throws IOException {
-        if ("lucene".equalsIgnoreCase(config.getVectorStoreMode())) {
-            return performLexicalSearchLucene(question, k, allowedItemIds);
+        if (allowedItemIds != null && allowedItemIds.isEmpty()) {
+            return Collections.emptyList();
         }
-        return performLexicalSearchOpenSearch(question, k, allowedItemIds);
+        if ("lucene".equalsIgnoreCase(config.getVectorStoreMode())) {
+            return performLexicalSearchLucene(question, k, allowedItemIds, null);
+        }
+        return performLexicalSearchOpenSearch(question, k, allowedItemIds, null);
     }
 
     // --- Lucene BM25 backend ---
 
     private List<RAGSourceDoc> performLexicalSearchLucene(String question, int k,
-            java.util.Collection<String> allowedItemIds) throws IOException {
+            java.util.Collection<String> allowedItemIds, RAGSearchScope scope) throws IOException {
         IndexSearcher searcher = luceneSearcher;
         if (searcher == null) {
             throw new IOException("Lucene IndexSearcher not initialised. " +
@@ -820,14 +815,9 @@ public class RAGService {
         boolBuilder.add(hasEmbeddingFilter, BooleanClause.Occur.MUST);
         boolBuilder.add(wordsQuery, BooleanClause.Occur.MUST);
 
-        if (allowedItemIds != null && !allowedItemIds.isEmpty()) {
-            BooleanQuery.Builder idFilter = new BooleanQuery.Builder();
-            for (String id : allowedItemIds) {
-                idFilter.add(new TermQuery(
-                        new Term("fragParentNumericId", id)),
-                        BooleanClause.Occur.SHOULD);
-            }
-            boolBuilder.add(idFilter.build(), BooleanClause.Occur.MUST);
+        Query filter = createLuceneScopeFilter(allowedItemIds, scope);
+        if (filter != null) {
+            boolBuilder.add(filter, BooleanClause.Occur.FILTER);
         }
 
         TopDocs topDocs = searcher.search(boolBuilder.build(), Math.min(k, 1000));
@@ -858,7 +848,7 @@ public class RAGService {
     // --- OpenSearch BM25 backend (legacy) ---
 
     private List<RAGSourceDoc> performLexicalSearchOpenSearch(String question, int k,
-            java.util.Collection<String> allowedItemIds) throws IOException {
+            java.util.Collection<String> allowedItemIds, RAGSearchScope scope) throws IOException {
         RestHighLevelClient client = getOpenSearchClient();
         SearchRequest searchRequest = new SearchRequest(indexName);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
@@ -869,8 +859,8 @@ public class RAGService {
                 .must(matchQuery)
                 .filter(QueryBuilders.termQuery(iped.engine.task.index.IndexTask.HAS_EMBEDDING_FRAG, "1"));
 
-        if (allowedItemIds != null && !allowedItemIds.isEmpty()) {
-            boolQuery.filter(QueryBuilders.termsQuery("id", allowedItemIds));
+        if (scope != null || allowedItemIds != null) {
+            boolQuery.filter(createOpenSearchScopeFilter(allowedItemIds, scope));
         }
 
         sourceBuilder.query(boolQuery);
@@ -899,9 +889,54 @@ public class RAGService {
     }
 
     public List<RAGSourceDoc> performHybridSearch(String question, float[] queryVector, java.util.Collection<String> allowedItemIds) throws IOException {
+        if (allowedItemIds != null && allowedItemIds.isEmpty()) {
+            return Collections.emptyList();
+        }
         int maxChunks = config.getMaxRetrievedChunks();
         List<RAGSourceDoc> vectorHits = performVectorSearch(queryVector, maxChunks * 5, allowedItemIds);
         List<RAGSourceDoc> lexicalHits = performLexicalSearch(question, maxChunks * 5, allowedItemIds);
+        return mergeHybridHits(vectorHits, lexicalHits);
+    }
+
+    public List<RAGSourceDoc> performHybridSearchInScope(String question, float[] queryVector, RAGSearchScope scope)
+            throws IOException {
+        if (scope == null) {
+            return performHybridSearch(question, queryVector);
+        }
+        if (scope.isEmpty()) {
+            return Collections.emptyList();
+        }
+        int k = config.getMaxRetrievedChunks() * 5;
+        boolean lucene = "lucene".equalsIgnoreCase(config.getVectorStoreMode());
+        List<RAGSourceDoc> vectorHits = lucene ? performVectorSearchLucene(queryVector, k, null, scope)
+                : performVectorSearchOpenSearch(queryVector, k, null, scope);
+        List<RAGSourceDoc> lexicalHits = lucene ? performLexicalSearchLucene(question, k, null, scope)
+                : performLexicalSearchOpenSearch(question, k, null, scope);
+        return mergeHybridHits(vectorHits, lexicalHits);
+    }
+
+    private Query createLuceneScopeFilter(java.util.Collection<String> allowedItemIds, RAGSearchScope scope) {
+        if (scope != null) {
+            return scope.createLuceneFilter();
+        }
+        if (allowedItemIds == null) {
+            return null;
+        }
+        List<BytesRef> ids = new ArrayList<>();
+        for (String id : allowedItemIds) {
+            ids.add(new BytesRef(id));
+        }
+        return new TermInSetQuery("fragParentNumericId", ids);
+    }
+
+    static QueryBuilder createOpenSearchScopeFilter(java.util.Collection<String> allowedItemIds, RAGSearchScope scope)
+            throws IOException {
+        return scope == null ? QueryBuilders.termsQuery("id", allowedItemIds)
+                : QueryBuilders.termsQuery("_routing", scope.getGlobalIds());
+    }
+
+    private List<RAGSourceDoc> mergeHybridHits(List<RAGSourceDoc> vectorHits, List<RAGSourceDoc> lexicalHits) {
+        int maxChunks = config.getMaxRetrievedChunks();
 
         // Raw similarity fallback: if there are no lexical matches and the best vector
         // match has a raw similarity score below the threshold, treat the whole query as noise.
