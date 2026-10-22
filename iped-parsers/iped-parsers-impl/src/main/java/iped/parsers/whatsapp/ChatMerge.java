@@ -85,19 +85,35 @@ public class ChatMerge {
     }
 
     private int mergeMessageList(List<Message> main, List<Message> backup) {
+        // Merge strategy (main is sorted by sort key, see compareTo()):
+        //
+        // 1. If the sort key of a backup message is not found in main, the message was
+        // deleted from the main DB and is recovered. If the backup has more than one
+        // message with that sort key, only the first one is recovered.
+        //
+        // 2. If the sort key is found in main, the message is already there and the
+        // backup message is ignored. The exception is when main has that message only
+        // as a record carved from deleted space by SQLiteUndelete (same content, see
+        // sameContent()). The backup record is complete (rowid, media, quotes...), so
+        // it replaces the carved record at the same position.
+        //
+        // 3. Recovered messages are not inserted one by one, as each insertion shifts
+        // the rest of the list. They are appended to main, which is then sorted once.
+        // As main and the appended messages are normally already sorted, TimSort just
+        // merges them, in about linear time.
+
         int tot_rec = 0;
         Map<Long, List<Integer>> carvedCopies = indexCarvedMessages(main);
         Set<Long> recoveredSortIds = new HashSet<>();
         List<Message> recovered = new ArrayList<>();
         for (Message m : backup) {
             if (Collections.binarySearch(main, m) < 0) {
-                // message was removed (only the first one with each sort key is recovered)
+                // step 1
                 if (recoveredSortIds.add(m.getSortId())) {
                     recovered.add(m);
                 }
             } else if (!m.isDeleted() && carvedCopies.containsKey(m.getSortId())) {
-                // present in main only as a record carved from deleted space: the backup
-                // record is complete (rowid, media, quotes...), so it replaces the carved one
+                // step 2: look for a carved record with the same content to replace
                 for (Iterator<Integer> it = carvedCopies.get(m.getSortId()).iterator(); it.hasNext();) {
                     int pos = it.next();
                     if (sameContent(main.get(pos), m)) {
@@ -111,9 +127,9 @@ public class ChatMerge {
             }
         }
         if (!recovered.isEmpty()) {
+            // step 3
             recovered.forEach(m -> m.setRecoveredFrom(dbname));
             main.addAll(recovered);
-            // TimSort merges the sorted main list with the appended messages
             Collections.sort(main);
         }
         return tot_rec + recovered.size();
