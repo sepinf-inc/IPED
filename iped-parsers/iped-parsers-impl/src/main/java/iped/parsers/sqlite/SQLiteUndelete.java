@@ -23,6 +23,7 @@ public class SQLiteUndelete {
     private Map<String, SQLiteRecordValidator> recordValidators = new HashMap<>();
     private boolean recoverOnlyDeletedRecords = true;
     private Set<String> tablesToRecoverOnlyDeleted = new HashSet<>();
+    private boolean fixCarvingPatterns = false;
 
     public SQLiteUndelete(Path sqliteFile) {
         this.sqliteFile = sqliteFile;
@@ -54,6 +55,19 @@ public class SQLiteUndelete {
         return recoverOnlyDeletedRecords;
     }
 
+    /**
+     * If true, the record header patterns used by fqlite to carve deleted records
+     * of the tables to recover are replaced by the ones built by
+     * {@link SQLiteHeaderPatternFixer}. Without it, records deleted into
+     * freeblocks of tables with integer columns holding 0 or 1, or with NULL
+     * text columns (most real databases), are not carved. As more (possibly
+     * partially overwritten) records are carved, callers should use strict
+     * record validators.
+     */
+    public void setFixCarvingPatterns(boolean fixCarvingPatterns) {
+        this.fixCarvingPatterns = fixCarvingPatterns;
+    }
+
     public void addTableToRecoverOnlyDeleted(String tableName) {
         tablesToRecoverOnlyDeleted.add(tableName);
     }
@@ -61,7 +75,20 @@ public class SQLiteUndelete {
     public Map<String, SQLiteUndeleteTable> undeleteData() throws InterruptedException, ExecutionException, IOException {
         Map<String, SQLiteUndeleteTable> result = null;
 
-        Job job = new Job();
+        Job job = new Job() {
+            @Override
+            protected void tableDescriptorReady(TableDescriptor td) {
+                // libfqlite 1.57.05 builds record header patterns that reject valid
+                // records (e.g. integer columns holding 0 or 1, NULL text columns), so
+                // records deleted into freeblocks would never be carved. Only the tables
+                // that will be returned are changed, to avoid carving more garbage into
+                // tables nobody reads (e.g. from index pages, tried with all patterns).
+                if (fixCarvingPatterns
+                        && (tablesToRecover.isEmpty() || tablesToRecover.contains(td.getName()))) {
+                    SQLiteHeaderPatternFixer.fix(td);
+                }
+            }
+        };
         job.setPath(sqliteFile.toString());
         if (null != walFile) {
             job.setWALPath(walFile.toString());
