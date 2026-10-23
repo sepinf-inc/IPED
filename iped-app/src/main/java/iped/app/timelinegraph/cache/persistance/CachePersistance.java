@@ -1,5 +1,6 @@
 package iped.app.timelinegraph.cache.persistance;
 
+import iped.app.timelinegraph.DateUtil;
 import java.nio.charset.StandardCharsets;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -277,12 +278,13 @@ public class CachePersistance {
                 }
                 dos.writeInt(-1);
 
+                Calendar ctDate = DateUtil.toLocalCalendar(ct.getDate());
                 c.clear();
-                c.set(Calendar.YEAR, 1900 + ct.getDate().getYear());
-                c.set(Calendar.MONTH, ct.getDate().getMonth());
-                c.set(Calendar.DAY_OF_MONTH, ct.getDate().getDate());
+                c.set(Calendar.YEAR, DateUtil.localYear(ctDate));
+                c.set(Calendar.MONTH, ctDate.get(Calendar.MONTH));
+                c.set(Calendar.DAY_OF_MONTH, ctDate.get(Calendar.DAY_OF_MONTH));
                 if (file.getName().contains("Minute") || file.getName().contains("Second")) {
-                    c.set(Calendar.HOUR_OF_DAY, ct.getDate().getHours());
+                    c.set(Calendar.HOUR_OF_DAY, ctDate.get(Calendar.HOUR_OF_DAY));
                 }
 
                 internalCount += events.length;

@@ -230,6 +230,8 @@ public class IpedGraphicsWrapper extends Graphics2D {
         return wrapped.toString();
     }
 
+    @Deprecated
+    @Override
     public Rectangle getClipRect() {
         return wrapped.getClipRect();
     }

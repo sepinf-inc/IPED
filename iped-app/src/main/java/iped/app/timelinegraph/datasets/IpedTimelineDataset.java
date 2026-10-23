@@ -301,8 +301,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                            // backward.
     List<CacheTimePeriodEntry> memoryWindowCache = new ArrayList<CacheTimePeriodEntry>();
 
-    static public Date MIN_DATE = new Date(0, 0, 1);// 01/01/1900 is the min JfreeChart date
-    static public Date MAX_DATE = new Date(8099, 11, 31);// 01/01/9999 is the maxJfreeChart date
+    static public Date MIN_DATE = DateUtil.newLocalDate(0, 0, 1);// 01/01/1900 is the min JfreeChart date
+    static public Date MAX_DATE = DateUtil.newLocalDate(8099, 11, 31);// 01/01/9999 is the maxJfreeChart date
 
     public void caseSearchFilterLoad() throws Exception {
         memoryCacheReloadSem.acquire();

@@ -305,18 +305,18 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
 
     public String ISO8601DateFormatUTC(Date date) {
         StringBuffer result = new StringBuffer();
-        Date d = new Date(date.getTime() - DateUtil.computerTimezoneOffset);
-        result.append(String.format("%04d", d.getYear() + 1900));
+        Calendar d = DateUtil.toLocalCalendar(new Date(date.getTime() - DateUtil.computerTimezoneOffset));
+        result.append(String.format("%04d", DateUtil.localYear(d)));
         result.append("-");
-        result.append(String.format("%02d", d.getMonth() + 1));
+        result.append(String.format("%02d", d.get(Calendar.MONTH) + 1));
         result.append("-");
-        result.append(String.format("%02d", d.getDate()));
+        result.append(String.format("%02d", d.get(Calendar.DAY_OF_MONTH)));
         result.append("T");
-        result.append(String.format("%02d", d.getHours()));
+        result.append(String.format("%02d", d.get(Calendar.HOUR_OF_DAY)));
         result.append(":");
-        result.append(String.format("%02d", d.getMinutes()));
+        result.append(String.format("%02d", d.get(Calendar.MINUTE)));
         result.append(":");
-        result.append(String.format("%02d", d.getSeconds()));
+        result.append(String.format("%02d", d.get(Calendar.SECOND)));
         result.append("Z");
         return result.toString();
     }
