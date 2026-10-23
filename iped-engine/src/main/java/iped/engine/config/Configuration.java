@@ -20,11 +20,9 @@ package iped.engine.config;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketPermission;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.Policy;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
@@ -37,7 +35,7 @@ import iped.configuration.IConfigurationDirectory;
 import iped.engine.task.AbstractTask;
 import iped.engine.util.Util;
 import iped.utils.UTF8Properties;
-import iped.viewers.util.DefaultPolicy;
+import iped.utils.net.WebKitNetworkGuard;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.
@@ -225,18 +223,8 @@ public class Configuration {
         configManager.loadConfigs();
 
 
-        // blocks internet access from html viewers
-        DefaultPolicy policy = new DefaultPolicy();
-        MinIOConfig minIOConfig = configManager.findObject(MinIOConfig.class);
-        if (minIOConfig.isEnabled()) {
-            String host = minIOConfig.getHostAndPort();
-            if (host.startsWith("http://") || host.startsWith("https://")) {
-                host = host.substring(host.indexOf("://") + 3);
-            }
-            policy.addAllowedPermission(new SocketPermission(host, "connect,resolve"));
-        }
-        Policy.setPolicy(policy);
-        System.setSecurityManager(new SecurityManager());
+        // blocks internet access from html viewers (WebView content), except online map resources
+        WebKitNetworkGuard.install();
     }
 
     // add plugin jars to the configuration resource look up engine

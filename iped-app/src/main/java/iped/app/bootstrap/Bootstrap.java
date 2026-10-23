@@ -233,6 +233,8 @@ public class Bootstrap {
     private static List<String> getCustomJVMArgs(){
         return Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
                 "-XX:+HeapDumpOnOutOfMemoryError",
+                // WebKitNetworkGuard needs the URLConnection based loader, see #1522
+                "-Dcom.sun.webkit.useHTTP2Loader=false",
                 "--add-opens=java.base/java.util=ALL-UNNAMED",
                 "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
                 "--add-opens=java.base/java.lang=ALL-UNNAMED",
