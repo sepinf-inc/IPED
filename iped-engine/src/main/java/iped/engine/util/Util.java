@@ -18,6 +18,7 @@
  */
 package iped.engine.util;
 
+import java.nio.charset.StandardCharsets;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -578,7 +579,7 @@ public class Util {
         if (SystemUtils.IS_OS_LINUX) {
             // In Linux systems, "free memory" != "available memory" (the latter includes
             // buff./cache), so "total" = "used" + "available" (not "free").
-            try (BufferedReader reader = new BufferedReader(new FileReader("/proc/meminfo"))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader("/proc/meminfo", StandardCharsets.US_ASCII))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (line.startsWith("MemAvailable:")) {

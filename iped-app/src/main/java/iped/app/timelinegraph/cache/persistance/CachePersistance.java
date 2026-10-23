@@ -1,5 +1,6 @@
 package iped.app.timelinegraph.cache.persistance;
 
+import java.nio.charset.StandardCharsets;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -92,7 +93,7 @@ public class CachePersistance {
             MessageDigest md = DigestUtils.getMd5Digest();
             for (Iterator iterator = uuids.iterator(); iterator.hasNext();) {
                 String string = (String) iterator.next();
-                md.update(string.getBytes());
+                md.update(string.getBytes(StandardCharsets.UTF_8));
             }
 
             String uuid = DatatypeConverter.printHexBinary(md.digest());

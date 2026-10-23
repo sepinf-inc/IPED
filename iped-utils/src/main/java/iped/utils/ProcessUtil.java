@@ -47,7 +47,7 @@ public class ProcessUtil {
             Process netstat = Runtime.getRuntime().exec(command);
 
             StringBuilder conectionList = new StringBuilder();
-            Reader reader = new InputStreamReader(netstat.getInputStream());
+            Reader reader = new InputStreamReader(netstat.getInputStream(), CharsetUtil.NATIVE);
             char[] buffer = new char[1024];
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer))
                 conectionList.append(buffer, 0, n);
@@ -84,7 +84,7 @@ public class ProcessUtil {
             Process netstat = Runtime.getRuntime().exec(command);
 
             StringBuilder conectionList = new StringBuilder();
-            Reader reader = new InputStreamReader(netstat.getInputStream());
+            Reader reader = new InputStreamReader(netstat.getInputStream(), CharsetUtil.NATIVE);
             char[] buffer = new char[1024];
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer))
                 conectionList.append(buffer, 0, n);
@@ -149,7 +149,7 @@ public class ProcessUtil {
             Process netstat = Runtime.getRuntime().exec(command);
 
             StringBuilder conectionList = new StringBuilder();
-            Reader reader = new InputStreamReader(netstat.getInputStream());
+            Reader reader = new InputStreamReader(netstat.getInputStream(), CharsetUtil.NATIVE);
             char[] buffer = new char[1024];
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer))
                 conectionList.append(buffer, 0, n);
@@ -177,7 +177,7 @@ public class ProcessUtil {
             Process netstat = Runtime.getRuntime().exec(command);
 
             StringBuilder conectionList = new StringBuilder();
-            Reader reader = new InputStreamReader(netstat.getInputStream());
+            Reader reader = new InputStreamReader(netstat.getInputStream(), CharsetUtil.NATIVE);
             char[] buffer = new char[1024];
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer))
                 conectionList.append(buffer, 0, n);

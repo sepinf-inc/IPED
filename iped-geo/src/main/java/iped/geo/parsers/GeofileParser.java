@@ -1,5 +1,6 @@
 package iped.geo.parsers;
 
+import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -129,7 +130,7 @@ public class GeofileParser extends AbstractParser {
     private int folderParser(Folder folder, int parentId, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor, int virtualId) throws TikaException {
         if (extractor.shouldParseEmbedded(metadata)) {
             try {
-                ByteArrayInputStream featureStream = new ByteArrayInputStream(folder.getName().getBytes());
+                ByteArrayInputStream featureStream = new ByteArrayInputStream(folder.getName().getBytes(StandardCharsets.UTF_8));
 
                 Metadata kmeta = new Metadata();
                 kmeta.set(BasicProps.HASCHILD, "true");

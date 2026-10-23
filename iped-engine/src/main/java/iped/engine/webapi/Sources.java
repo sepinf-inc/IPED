@@ -1,5 +1,6 @@
 package iped.engine.webapi;
 
+import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -151,7 +152,7 @@ public class Sources {
             in = (new URL(urlToAskSources)).openConnection().getInputStream();
         }
         try {
-            result = (JSONArray) JSONValue.parseWithException(new InputStreamReader(in));
+            result = (JSONArray) JSONValue.parseWithException(new InputStreamReader(in, StandardCharsets.UTF_8));
         } finally {
             in.close();
         }

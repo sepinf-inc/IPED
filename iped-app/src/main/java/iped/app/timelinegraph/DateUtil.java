@@ -1,5 +1,6 @@
 package iped.app.timelinegraph;
 
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -57,7 +58,7 @@ public class DateUtil {
     static long computerTimezoneOffset = TimeZone.getDefault().getRawOffset();
 
     public static Date ISO8601DateParse(String timeStr) {
-        byte b[] = timeStr.getBytes();
+        byte b[] = timeStr.getBytes(StandardCharsets.US_ASCII);
         if (b.length < 18)
             return null;
         int year = (b[0] - 48) * 1000 + (b[1] - 48) * 100 + (b[2] - 48) * 10 + (b[3] - 48) - 1900;
@@ -164,7 +165,7 @@ public class DateUtil {
 
     public static Date ISO8601DateParse(Class<? extends TimePeriod> timePeriodClass, String timeStr) {
         TimePeriod t = null;
-        byte b[] = timeStr.getBytes();
+        byte b[] = timeStr.getBytes(StandardCharsets.US_ASCII);
         return ISO8601DateParse(timePeriodClass, b);
     }
 

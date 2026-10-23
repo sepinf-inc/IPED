@@ -242,7 +242,7 @@ public class RegexTask extends AbstractTask {
             byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
             byte[] cacheMd5 = new byte[16];
             dis.readFully(cacheMd5);
-            if (!new String(md5).equals(new String(cacheMd5))) {
+            if (!Arrays.equals(md5, cacheMd5)) {
                 return false;
             }
             int listLen = dis.readInt();

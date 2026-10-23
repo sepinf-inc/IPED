@@ -1,5 +1,6 @@
 package iped.engine.task.video;
 
+import iped.utils.CharsetUtil;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -728,7 +729,7 @@ public class VideoThumbsMaker {
         public void run() {
             BufferedReader br = null;
             try {
-                br = new BufferedReader(new InputStreamReader(is), 4096);
+                br = new BufferedReader(new InputStreamReader(is, CharsetUtil.NATIVE), 4096);
                 String line = null;
                 while ((line = br.readLine()) != null) {
                     counter++;

@@ -1,5 +1,6 @@
 package iped.parsers.security;
 
+import iped.utils.CharsetUtil;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -249,7 +250,7 @@ public class CertificateParser extends AbstractParser {
                         }
 
                         if (prim instanceof ASN1OctetString) {
-                            altNameStr = new String(((ASN1OctetString) prim).getOctets());
+                            altNameStr = new String(((ASN1OctetString) prim).getOctets(), CharsetUtil.NATIVE);
                         } else if (prim instanceof ASN1String) {
                             altNameStr = ((ASN1String) prim).getString();
                         }

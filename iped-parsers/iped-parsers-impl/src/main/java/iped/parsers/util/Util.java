@@ -1,5 +1,6 @@
 package iped.parsers.util;
 
+import iped.utils.CharsetUtil;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -172,7 +173,7 @@ public class Util {
             return handler.toString();
 
         } catch (Exception e) {
-            return new String(data);
+            return new String(data, CharsetUtil.NATIVE);
         }
     }
 
@@ -242,7 +243,7 @@ public class Util {
                     while (read != -1) {
                         read = stream.read(out);
                         if (read > 0) {
-                            logger.warn(new String(out, 0, read));
+                            logger.warn(new String(out, 0, read, CharsetUtil.NATIVE));
                         }
                     }
                 } catch (Exception e) {

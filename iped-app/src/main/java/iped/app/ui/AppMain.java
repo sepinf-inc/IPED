@@ -1,5 +1,6 @@
 package iped.app.ui;
 
+import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -213,10 +214,10 @@ public class AppMain {
 
     private static void showError(Exception e) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (PrintStream ps = new PrintStream(baos, true)) {
+        try (PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8)) {
             e.printStackTrace(ps);
         }
-        JOptionPane.showMessageDialog(null, "Error: " + new String(baos.toByteArray()), // $NON-NLS-1$
+        JOptionPane.showMessageDialog(null, "Error: " + new String(baos.toByteArray(), StandardCharsets.UTF_8), // $NON-NLS-1$
                 Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
     }
 

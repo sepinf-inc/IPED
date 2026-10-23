@@ -18,11 +18,11 @@
  */
 package iped.engine.core;
 
+import iped.utils.CharsetUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -760,7 +760,7 @@ public class Manager {
             UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("Manager.FilteringKeywords")); //$NON-NLS-1$
             ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", //$NON-NLS-1$
-                    Charset.defaultCharset().name());
+                    CharsetUtil.NATIVE.name());
 
             if (palavras.size() != 0) {
                 IPEDSource ipedCase = new IPEDSource(output.getParentFile());

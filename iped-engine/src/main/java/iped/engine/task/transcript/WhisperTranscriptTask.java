@@ -1,5 +1,6 @@
 package iped.engine.task.transcript;
 
+import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -202,7 +203,7 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
                 int read = 0;
                 try {
                     while ((read = is.read(buf)) != -1) {
-                        String msg = new String(buf, 0, read).trim();
+                        String msg = new String(buf, 0, read, CharsetUtil.NATIVE).trim();
                         boolean ignore = false;
                         for (String i : ignoreMsgs) {
                             if (msg.contains(i)) {

@@ -1,5 +1,7 @@
 package iped.app.bootstrap;
 
+import iped.utils.CharsetUtil;
+import java.io.OutputStreamWriter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -294,8 +296,8 @@ public class Bootstrap {
         Thread t = new Thread() {
             public void run() {
                 try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                    PrintWriter writer = new PrintWriter(os, true);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is, CharsetUtil.NATIVE));
+                    PrintWriter writer = new PrintWriter(new OutputStreamWriter(os, CharsetUtil.NATIVE), true);
                     String line = null;
                     while ((line = reader.readLine()) != null) {
                         if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {

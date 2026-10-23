@@ -1,5 +1,6 @@
 package iped.app.ui;
 
+import iped.utils.CharsetUtil;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -351,7 +352,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
                 try {
                     int r = 0;
                     while ((r = process.getInputStream().read(b)) != -1) {
-                        String msg = new String(b, 0, r).trim();
+                        String msg = new String(b, 0, r, CharsetUtil.NATIVE).trim();
                         if (!msg.isEmpty())
                             logger.info(msg);
                     }

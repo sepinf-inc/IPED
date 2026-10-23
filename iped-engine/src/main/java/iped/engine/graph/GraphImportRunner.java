@@ -1,5 +1,6 @@
 package iped.engine.graph;
 
+import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -9,7 +10,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +56,7 @@ public class GraphImportRunner {
 
         @Override
         public void run() {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in, CharsetUtil.NATIVE));
             String line = null;
             try {
                 while ((line = reader.readLine()) != null) {

@@ -1,8 +1,8 @@
 package iped.app.processing;
 
+import iped.utils.CharsetUtil;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -364,7 +364,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             String line;
             try {
                 Process process = pb.start();
-                line = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset()).get(0);
+                line = IOUtils.readLines(process.getInputStream(), CharsetUtil.NATIVE).get(0);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

@@ -1,5 +1,6 @@
 package iped.engine.util;
 
+import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,13 +32,13 @@ public class ProcessUtil {
             OutputStream stdin = process.getOutputStream();
             InputStream stdout = process.getInputStream();
 
-            stdin.write(input.getBytes());
+            stdin.write(input.getBytes(CharsetUtil.NATIVE));
             stdin.flush();
             stdin.close();
 
             String line = null;
             StringBuilder ret = new StringBuilder();
-            BufferedReader out = new BufferedReader(new InputStreamReader(stdout));
+            BufferedReader out = new BufferedReader(new InputStreamReader(stdout, CharsetUtil.NATIVE));
             while ((line = out.readLine()) != null) {
                 ret.append(line).append('\n');
             }
