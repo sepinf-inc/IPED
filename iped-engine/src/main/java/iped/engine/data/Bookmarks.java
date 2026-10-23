@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -45,9 +47,6 @@ import iped.utils.IOUtil;
 
 public class Bookmarks implements IBookmarks {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
     private static Logger LOGGER = LoggerFactory.getLogger(Bookmarks.class);
@@ -64,6 +63,8 @@ public class Bookmarks implements IBookmarks {
     TreeMap<Integer, KeyStroke> bookmarkKeyStrokes = new TreeMap<Integer, KeyStroke>();
     TreeMap<Integer, Color> bookmarkColors = new TreeMap<Integer, Color>();
     Set<Integer> reportBookmarks = new TreeSet<Integer>();
+
+    Map<Integer, Set<String>> chatsMsgs = new HashMap<Integer, Set<String>>(); 
 
     int selectedItens = 0, totalItems, lastId;
 
@@ -518,6 +519,7 @@ public class Bookmarks implements IBookmarks {
         this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
         this.reportBookmarks = state.reportBookmarks;
         this.bookmarkColors = state.bookmarkColors;
+        this.chatsMsgs = state.chatsMsgs;
     }
 
     public static Bookmarks load(File file) throws ClassNotFoundException, IOException {
@@ -536,4 +538,58 @@ public class Bookmarks implements IBookmarks {
         selected[id] = value;
     }
 
+    @Override
+    public synchronized void setChatMessageSelected(boolean selected, int chatItemId, String msgId) {
+        if (chatsMsgs == null) {
+            return;
+        }
+        Set<String> msgs = chatsMsgs.get(chatItemId);
+        if (msgs == null) {
+            chatsMsgs.put(chatItemId, msgs = new HashSet<String>());
+        }
+        if (selected) {
+            msgs.add(msgId);
+        } else {
+            msgs.remove(msgId);
+        }
+    }
+
+    @Override
+    public synchronized boolean isChatMessageSelected(int chatItemId, String msgId) {
+        if (chatsMsgs == null) {
+            return false;
+        }
+        Set<String> msgs = chatsMsgs.get(chatItemId);
+        if (msgs == null) {
+            return false;
+        }
+        return msgs.contains(msgId);
+    }
+
+    @Override
+    public synchronized Set<Integer> getChatsWithSelectedMessages() {
+        if (chatsMsgs != null) {
+            Set<Integer> ret = new HashSet<Integer>();
+            for (int chatItemId : chatsMsgs.keySet()) {
+                Set<String> msgs = chatsMsgs.get(chatItemId);
+                if (msgs != null && !msgs.isEmpty()) {
+                    ret.add(chatItemId);
+                }
+            }
+            return ret;
+        }
+        return Collections.emptySet();
+    }
+
+    @Override
+    public SearchResult filterChatsWithSelectedMessages(SearchResult result) {
+        for (int i = 0; i < result.getLength(); i++) {
+            if (chatsMsgs == null || !chatsMsgs.containsKey(result.getId(i))
+                    || chatsMsgs.get(result.getId(i)).isEmpty()) {
+                result.getIds()[i] = -1;
+            }
+        }
+        result.compactResults();
+        return result;
+    }
 }
