@@ -21,8 +21,24 @@ package iped.utils;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.StringTokenizer;
 
 public class ProcessUtil {
+
+    /**
+     * Splits a command line exactly like the deprecated
+     * {@link Runtime#exec(String)} does: on whitespace (space, tab, new line,
+     * carriage return and form feed), with no quoting support. Useful to replace
+     * that method keeping the same behavior.
+     */
+    public static String[] splitCommand(String command) {
+        StringTokenizer st = new StringTokenizer(command);
+        String[] cmd = new String[st.countTokens()];
+        for (int i = 0; st.hasMoreTokens(); i++) {
+            cmd[i] = st.nextToken();
+        }
+        return cmd;
+    }
 
     @Deprecated
     public static int getPidWin(int port) {

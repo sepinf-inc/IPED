@@ -27,7 +27,7 @@ public class ProcessUtil {
      */
     public static final String run(String program, String input) {
         try {
-            Process process = Runtime.getRuntime().exec(program);
+            Process process = Runtime.getRuntime().exec(iped.utils.ProcessUtil.splitCommand(program));
             OutputStream stdin = process.getOutputStream();
             InputStream stdout = process.getInputStream();
 

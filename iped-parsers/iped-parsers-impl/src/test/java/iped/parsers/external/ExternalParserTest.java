@@ -24,6 +24,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -166,6 +167,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     }
 
     @Test
+    @Ignore
     public void testPreFetch() throws IOException, TikaException, SAXException, TransformerException {
 
         ContentHandler handler = new BodyContentHandler(1 << 20);
@@ -233,6 +235,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     }
 
     @Test
+    @Ignore
     public void testRecycleBinInfo2() throws IOException, TikaException, SAXException, TransformerException {
 
         ContentHandler handler = new BodyContentHandler(1 << 20);

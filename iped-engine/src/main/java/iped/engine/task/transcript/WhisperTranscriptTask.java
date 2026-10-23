@@ -36,7 +36,7 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
         if (!ffmpegTested.getAndSet(true)) {
             try {
-                Runtime.getRuntime().exec("ffmpeg");
+                Runtime.getRuntime().exec(new String[] { "ffmpeg" });
                 ffmpegFound = true;
             } catch (IOException e) {
                 ffmpegFound = false;

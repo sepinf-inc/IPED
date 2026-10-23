@@ -82,9 +82,6 @@ public class Util {
     public static final Integer MIN_JAVA_VER = 11;
     public static final Integer MAX_JAVA_VER = 14;
 
-    // These java versions have a WebView bug that crashes the JVM: JDK-8196011
-    private static final String[] buggedVersions = { "1.8.0_161", "1.8.0_162", "1.8.0_171" };
-
     private static CLibrary C_Library;
 
     public static void fsync(Path path) throws IOException {
@@ -92,13 +89,8 @@ public class Util {
     }
 
     public static String getJavaVersionWarn() {
-        String versionStr = System.getProperty("java.version"); //$NON-NLS-1$
-        if (versionStr.startsWith("1.")) //$NON-NLS-1$
-            versionStr = versionStr.substring(2, 3);
-        int dotIdx = versionStr.indexOf("."); //$NON-NLS-1$
-        if (dotIdx > -1)
-            versionStr = versionStr.substring(0, dotIdx);
-        Integer version = Integer.valueOf(versionStr);
+        // feature() also handles versions like "25", "25-ea" and "25.0.1+8"
+        Integer version = Runtime.version().feature();
 
         if (version < MIN_JAVA_VER) {
             return Messages.getString("JavaVersion.Error").replace("{}", MIN_JAVA_VER.toString()); //$NON-NLS-1$
@@ -106,12 +98,6 @@ public class Util {
         if (version > MAX_JAVA_VER) {
             return Messages.getString("JavaVersion.Warn").replace("{}", version.toString()); //$NON-NLS-1$
         }
-        for (String ver : buggedVersions) {
-            if (System.getProperty("java.version").equals(ver))
-                return Messages.getString("JavaVersion.Bug").replace("{1}", ver).replace("{2}", //$NON-NLS-1$
-                        MAX_JAVA_VER.toString());
-        }
-
         if (!System.getProperty("os.arch").contains("64"))
             return Messages.getString("JavaVersion.Arch"); //$NON-NLS-1$
 

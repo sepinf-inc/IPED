@@ -226,10 +226,6 @@ public class IpedGraphicsWrapper extends Graphics2D {
         wrapped.dispose();
     }
 
-    public void finalize() {
-        wrapped.finalize();
-    }
-
     public String toString() {
         return wrapped.toString();
     }
