@@ -91,7 +91,7 @@
         {"name": "Jabber", "mimes":["application/x-jabber-chat"]},
         {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
-        {"name": "Signal", "mimes":["application/x-ufed-chat-preview-signal"]},
+        {"name": "Signal", "mimes":["application/x-signal-db", "application/x-signal-chat", "application/x-ufed-chat-preview-signal"]},
         {"name": "Snapchat", "mimes":["application/x-ufed-chat-preview-snapchat"]},
         {"name": "TikTok", "mimes":["application/x-ufed-chat-preview-tiktok"]},
         {"name": "Viber", "mimes":["application/x-ufed-chat-preview-viber"]},
@@ -173,7 +173,7 @@
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
     {"name": "MMS Messages", "mimes": ["application/x-ufed-html-mms", "application/x-ufed-mms"]},
     {"name": "Instant Messages Artifacts", "categories":[
-      {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
+      {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-signal-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
       {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
       {"name": "Message Attachments", "mimes": ["application/x-ufed-attachment"]},
       {"name": "Shared Contacts"}
