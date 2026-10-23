@@ -9,10 +9,6 @@
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <!-- default for @{argLine} in surefire, in case JaCoCo is skipped -->
-        <argLine></argLine>
-    </properties>
     
     <dependencies>
     	<dependency>
@@ -324,9 +320,38 @@
                 <configuration>
                     <!-- Mockito 5 inline mock maker needs its agent; loading it dynamically is deprecated
                          since Java 21 (JEP 451). @{argLine} keeps the JaCoCo agent. -->
-                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
+                    <argLine>@{argLine} ${iped.jvm.flags} -javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
                 </configuration>
             </plugin>
     	</plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <!-- CI only (JEP_JAR set by the workflow): the pip installed jep native library must match its jar,
+                 so tests use that jar instead of black.ninia:jep; the packaged release keeps the pom version -->
+            <id>ci-jep</id>
+            <activation>
+                <property>
+                    <name>env.JEP_JAR</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <classpathDependencyExcludes>
+                                <classpathDependencyExclude>black.ninia:jep</classpathDependencyExclude>
+                            </classpathDependencyExcludes>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${env.JEP_JAR}</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

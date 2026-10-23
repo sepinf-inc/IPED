@@ -235,6 +235,10 @@ public class Bootstrap {
                 "-XX:+HeapDumpOnOutOfMemoryError",
                 // WebKitNetworkGuard needs the URLConnection based loader, see #1522
                 "-Dcom.sun.webkit.useHTTP2Loader=false",
+                // JNI/JNA (sleuthkit, sqlite, jep, javacpp) and sun.misc.Unsafe users (neo4j, lucene...),
+                // avoid JEP 472 and JEP 498 warnings; keep in sync with iped.jvm.flags in the root pom
+                "--enable-native-access=ALL-UNNAMED",
+                "--sun-misc-unsafe-memory-access=allow",
                 "--add-opens=java.base/java.util=ALL-UNNAMED",
                 "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
                 "--add-opens=java.base/java.lang=ALL-UNNAMED",

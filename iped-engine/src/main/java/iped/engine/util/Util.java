@@ -80,8 +80,9 @@ import iped.utils.IOUtil;
 
 public class Util {
 
-    public static final Integer MIN_JAVA_VER = 11;
-    public static final Integer MAX_JAVA_VER = 14;
+    public static final Integer MIN_JAVA_VER = 25;
+    /** newer versions are accepted with a warning */
+    public static final Integer MAX_JAVA_VER = 25;
 
     private static CLibrary C_Library;
 

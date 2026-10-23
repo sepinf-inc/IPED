@@ -629,6 +629,7 @@
                                     <mainClass>iped.app.bootstrap.Bootstrap</mainClass>
                                 </manifest>
                                 <manifestEntries>
+                                    <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
                                     <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
                                 </manifestEntries>  
                             </archive>
@@ -672,6 +673,7 @@
                                     <mainClass>iped.app.bootstrap.BootstrapUI</mainClass>
                                 </manifest>
                                 <manifestEntries>
+                                    <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
                                     <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
                                 </manifestEntries>                                
                             </archive>
@@ -692,6 +694,9 @@
                                     <addClasspath>true</addClasspath>
                                     <mainClass>iped.engine.webapi.Main</mainClass>
                                 </manifest>
+                                <manifestEntries>
+                                    <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
@@ -710,6 +715,9 @@
                                     <addClasspath>true</addClasspath>
                                     <mainClass>iped.engine.hashdb.HashDBTool</mainClass>
                                 </manifest>
+                                <manifestEntries>
+                                    <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+                                </manifestEntries>
                             </archive>
                             <includes>
                                 <include>**/hashdb/*</include>

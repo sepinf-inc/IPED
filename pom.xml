@@ -21,8 +21,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- source/target instead of release: javac release option only sees the standard platform API,
              not the JavaFX modules bundled in the JDK (Liberica jdk+fx) that IPED compiles against -->
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <!-- JNI/JNA/Unsafe users (sleuthkit, sqlite, jep, javacpp, neo4j, lucene...): avoid JEP 472/498 warnings.
+             Same flags as Bootstrap.getCustomJVMArgs(). @{argLine} keeps agents set by other plugins (JaCoCo). -->
+        <iped.jvm.flags>--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow</iped.jvm.flags>
+        <argLine></argLine>
         <resources.dir>${basedir}/resources</resources.dir>
         <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>  
         <lib.dir>${release.dir}/lib</lib.dir>
@@ -141,6 +145,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.6</version>
+                    <configuration>
+                        <argLine>@{argLine} ${iped.jvm.flags}</argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
