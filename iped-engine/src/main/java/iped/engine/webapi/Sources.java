@@ -17,6 +17,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -83,7 +84,14 @@ public class Sources {
     }
 
     public static IIPEDSource getSource(String sourceID) {
-        int id = sourceStringToInt.get(sourceID);
+        Integer id = sourceStringToInt.get(sourceID);
+        if (id == null) {
+            // P2-1: unknown sourceID -> 404 text/plain, same contract as
+            // Search.java (P0-2) and Docs.java (F-1); avoids NPE/500.
+            throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
+                    .type(MediaType.TEXT_PLAIN)
+                    .entity("source not found: " + sourceID).build());
+        }
         return multiSource.getAtomicSourceBySourceId(id);
     }
 
