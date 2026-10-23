@@ -36,7 +36,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
 
             int style = DateFormat.MEDIUM;
             DateFormat df;
-            df = DateFormat.getDateTimeInstance(style, style, new Locale("pt", "BR"));
+            df = DateFormat.getDateTimeInstance(style, style, Locale.of("pt", "BR"));
             df.setTimeZone(TimeZone.getTimeZone("America/Sao_Paulo"));
 
             assertEquals(3, usntracker.contenttype.size());
@@ -105,7 +105,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
 
             int style = DateFormat.MEDIUM;
             DateFormat df;
-            df = DateFormat.getDateTimeInstance(style, style, new Locale("pt", "BR"));
+            df = DateFormat.getDateTimeInstance(style, style, Locale.of("pt", "BR"));
             df.setTimeZone(TimeZone.getTimeZone("America/Sao_Paulo"));
 
             assertEquals(3, usntracker.contenttype.size());

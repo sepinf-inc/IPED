@@ -36,7 +36,8 @@ public class PythonTask extends AbstractTask {
     private static volatile IPEDSource ipedCase;
     private static volatile int numInstances = 0;
 
-    private Map<Long, Boolean> scriptLoaded = new ConcurrentHashMap<>();
+    /** Interpreter of the current thread where this script was loaded */
+    private final ThreadLocal<Jep> scriptLoadedIn = new ThreadLocal<>();
 
     private List<String> globals = Collections.synchronizedList(new ArrayList<>());
     private File scriptFile;
@@ -70,10 +71,10 @@ public class PythonTask extends AbstractTask {
 
     private Jep getJep(boolean init) throws JepException {
         Jep jep = PythonParser.getJep();
-        long threadId = Thread.currentThread().getId();
-        if (scriptLoaded.get(threadId) == null) {
+        // reload if this thread got a new interpreter (e.g. after PythonParser.closeJep())
+        if (jep == null || jep != scriptLoadedIn.get()) {
             loadScript(jep, init);
-            scriptLoaded.put(threadId, true);
+            scriptLoadedIn.set(jep);
         }
         return jep;
     }
@@ -230,7 +231,8 @@ public class PythonTask extends AbstractTask {
         }
 
         if (isEnabled && lastInstalledScript.equals(scriptFile)) {
-            getJep().close();
+            scriptLoadedIn.remove();
+            PythonParser.closeJep();
         }
 
     }
