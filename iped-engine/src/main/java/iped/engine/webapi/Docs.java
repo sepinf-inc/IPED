@@ -89,7 +89,7 @@ public class Docs {
 
                     resultList.add(result);
                 } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-                    // Ignore invalid IDs
+                    e.printStackTrace();
                 }
             }
         }
