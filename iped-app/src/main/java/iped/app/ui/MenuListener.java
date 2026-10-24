@@ -216,9 +216,7 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.uncheckHighlightedAndReferencedBy) {
             App.get().resultTableListener.itemSelectionAndReferencedBy(false);
-        }
-
-        if (e.getSource() == menu.readHighlighted) {
+        } else if (e.getSource() == menu.readHighlighted) {
             BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
@@ -356,6 +354,9 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.saveBookmarks) {
             BookmarksController.get().askAndSaveState();
+
+        } else if (e.getSource() == menu.importBookmarksFromAnotherCase) {
+            BookmarksController.get().askAndImportFromAnotherCase();
 
         } else if (e.getSource() == menu.previewScreenshot) {
             AbstractViewer viewer = App.get().getViewerController().getMultiViewer().getCurrentViewer();
