@@ -4,17 +4,38 @@
 # It can slowdown the processing up to 4x or more
 ####################################################################################
 
-# NER Implementation. Currently use one of:
-# org.apache.tika.parser.ner.corenlp.CoreNLPNERecogniser (StanfordCoreNLP - currently state of art)
+# NER Implementation. Choose one of:
+# iped.engine.task.ner.spacy.SpaCyNERecogniser (SpaCy - fast, lightweight CPU inference, supports pt-BR, en, es, and 70+ languages)
+# org.apache.tika.parser.ner.corenlp.CoreNLPNERecogniser (StanfordCoreNLP - requires external jars)
 # org.apache.tika.parser.ner.opennlp.OpenNLPNERecogniser (Apache OpenNLP)
 # org.apache.tika.parser.ner.nltk.NLTKNERecogniser (NLTK)
-NERImpl = org.apache.tika.parser.ner.corenlp.CoreNLPNERecogniser
+NERImpl = iped.engine.task.ner.spacy.SpaCyNERecogniser
 
 # Map between language and NER model. Syntax:
-# langModel_X = language : model_into_classpath
+# langModel_X = language : model_name_or_path
 # Use "default" for languages without model or languages not recognized.
-langModel_0 = default : edu/stanford/nlp/models/ner/english.all.3class.caseless.distsim.crf.ser.gz
+#
+# For SpaCy:
+# Models can be installed via:
+#   python -m spacy download pt_core_news_sm
+#   python -m spacy download en_core_web_sm
+# Small models ('sm') are fast and lightweight on CPU (~15MB RAM).
+# Medium ('md') and Large ('lg') models provide higher accuracy with larger memory footprints.
+langModel_0 = default : en_core_web_sm
+langModel_1 = pt : pt_core_news_sm
+#langModel_2 = es : es_core_news_sm
+
+# For StanfordCoreNLP (legacy):
+# Language models must be downloaded from https://stanfordnlp.github.io/CoreNLP/history.html and put in 'plugins' folder.
+#langModel_0 = default : edu/stanford/nlp/models/ner/english.all.3class.caseless.distsim.crf.ser.gz
 #langModel_1 = es : edu/stanford/nlp/models/ner/spanish.ancora.distsim.s512.crf.ser.gz
+
+# Number of concurrent SpaCy Python worker processes to run (defaults to 2).
+# Increase if you have many CPU cores and want higher NER throughput.
+#numProcesses = 2
+
+# Path to python executable (optional; defaults to system 'python3' on Linux or embedded 'python/python.exe' on Windows).
+#pythonPath = python3
 
 # Minimum detected language score to use its model.
 # If the score is smaller than configured, the "default" language model is used.
@@ -24,4 +45,4 @@ minLangScore = 0.2
 mimeTypesToIgnore = audio; video; application/x-unallocated; application/octet-stream
 
 # Do not run NER on the following categories
-categoriesToIgnore = Programs and Libraries; Virtual disks; Other files
+categoriesToIgnore = Programs and Libraries; Virtual disks; Other files; Texts in System Folders
