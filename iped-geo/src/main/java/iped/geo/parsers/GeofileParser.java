@@ -15,7 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.tika.exception.TikaException;
@@ -42,6 +41,7 @@ import iped.geo.parsers.kmlstore.FeatureListFactoryRegister;
 import iped.geo.parsers.kmlstore.Folder;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.utils.DateUtil;
 
 public class GeofileParser extends AbstractParser {
 
@@ -175,7 +175,7 @@ public class GeofileParser extends AbstractParser {
     }
 
     private Date toDate(String timestamp) {
-        return DatatypeConverter.parseDateTime(timestamp).getTime();
+        return DateUtil.parseXsdDateTime(timestamp);
     }
 
     private void featureParser(SimpleFeature feature, int parentId, String name, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor) throws TikaException {
