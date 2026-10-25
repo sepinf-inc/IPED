@@ -13,6 +13,8 @@
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
+    	<!-- also names the JRE copy in user home searched by the Windows launchers, see AppMain.getHomeJreFolder() -->
+    	<bundled.jre.version>25.0.5</bundled.jre.version>
     </properties>
     
     <dependencies>
@@ -100,7 +102,7 @@
                                 <artifactItem>
                                     <groupId>java</groupId>
                                     <artifactId>jre</artifactId>
-                                    <version>25.0.5</version>
+                                    <version>${bundled.jre.version}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
@@ -727,6 +729,63 @@
                 </executions>
             </plugin>
             
+            <plugin>
+                <!-- Windows launchers (built on any OS). They use the JRE copied to user home
+                     (see AppMain.getHomeJreFolder) or the bundled one. -->
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.7.0</version>
+                <executions>
+                    <execution>
+                        <id>launcher-iped</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>console</headerType>
+                            <outfile>${release.dir}/iped.exe</outfile>
+                            <dontWrapJar>true</dontWrapJar>
+                            <jar>iped.jar</jar>
+                            <icon>${resources.dir}/launcher/iped.ico</icon>
+                            <disableVersionInfoDefaults>true</disableVersionInfoDefaults>
+                            <jre>
+                                <path>%USERPROFILE%\.iped\jre-${bundled.jre.version};%EXEDIR%\jre</path>
+                                <requires64Bit>true</requires64Bit>
+                                <minVersion>25</minVersion>
+                            </jre>
+                            <messages>
+                                <jreVersionErr>This program needs Java 25 or newer.</jreVersionErr>
+                            </messages>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>launcher-search-app</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>${release.dir}/bin/IPED-SearchApp.exe</outfile>
+                            <dontWrapJar>true</dontWrapJar>
+                            <jar>iped\lib\iped-search-app.jar</jar>
+                            <chdir>.</chdir>
+                            <cmdLine>-Xms1G</cmdLine>
+                            <icon>${resources.dir}/launcher/iped-search-app.ico</icon>
+                            <disableVersionInfoDefaults>true</disableVersionInfoDefaults>
+                            <jre>
+                                <path>%USERPROFILE%\.iped\jre-${bundled.jre.version};%EXEDIR%\iped\jre</path>
+                                <requires64Bit>true</requires64Bit>
+                                <minVersion>25</minVersion>
+                            </jre>
+                            <messages>
+                                <jreVersionErr>This program needs Java 25 or newer.</jreVersionErr>
+                            </messages>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>

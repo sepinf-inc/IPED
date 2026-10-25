@@ -3,9 +3,11 @@ package iped.app.ui;
 import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -31,9 +33,30 @@ public class AppMain {
     private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
     private static StartUpControlClient startUpControlClient;
 
-    private static final String BUNDLED_JRE_VERSION = "11.0.13";
+    /**
+     * Folder in user home where the bundled JRE is copied on Windows. It must match
+     * the JRE search path of iped.exe and IPED-SearchApp.exe (see
+     * bundled.jre.version in iped-app/pom.xml).
+     */
+    public static String getHomeJreFolder(String jreVersion) {
+        return ".iped/jre-" + jreVersion;
+    }
 
-    public static final String HOME_JRE_FOLDER = ".iped/jre-" + BUNDLED_JRE_VERSION;
+    /**
+     * @return JAVA_VERSION from the release file of the JRE, or null if not found
+     */
+    private static String getJreVersion(File jreHome) {
+        try {
+            for (String line : Files.readAllLines(new File(jreHome, "release").toPath(), StandardCharsets.UTF_8)) {
+                if (line.startsWith("JAVA_VERSION=")) {
+                    return line.substring("JAVA_VERSION=".length()).replace("\"", "").trim();
+                }
+            }
+        } catch (IOException e) {
+            LoggerFactory.getLogger(AppMain.class).warn("Could not read bundled JRE version: {}", e.toString());
+        }
+        return null;
+    }
 
     File casePath;
 
@@ -252,8 +275,13 @@ public class AppMain {
             return;
         }
 
+        String jreVersion = getJreVersion(bundledJrePath);
+        if (jreVersion == null || jreVersion.isEmpty()) {
+            return;
+        }
+
         // Check if JRE is already present in user home
-        File userJrePath = new File(userHome, HOME_JRE_FOLDER);
+        File userJrePath = new File(userHome, getHomeJreFolder(jreVersion));
         File userJava = new File(userJrePath, "bin/java.exe");
         if (userJava != null && userJava.exists()) {
             return;
@@ -263,7 +291,7 @@ public class AppMain {
         Thread thread = new Thread() {
             public void run() {
                 try {
-                    File userTmpJrePath = new File(userHome, HOME_JRE_FOLDER + "-tmp");
+                    File userTmpJrePath = new File(userHome, getHomeJreFolder(jreVersion) + "-tmp");
                     if (userTmpJrePath.exists()) {
                         IOUtil.deleteDirectory(userTmpJrePath, false);
                     }
