@@ -61,6 +61,7 @@
         <!-- last JAXB versions with the javax.xml.bind package -->
         <jaxb.api.version>2.3.3</jaxb.api.version>
         <jaxb.runtime.version>2.3.9</jaxb.runtime.version>
+        <gson.version>2.13.1</gson.version>
     </properties>
 
     <repositories>
@@ -118,6 +119,11 @@
                 <groupId>org.glassfish.jaxb</groupId>
                 <artifactId>jaxb-runtime</artifactId>
                 <version>${jaxb.runtime.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
