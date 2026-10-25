@@ -281,13 +281,10 @@
                     <groupId>org.neo4j</groupId>
                     <artifactId>neo4j-slf4j-provider</artifactId>
                 </exclusion>
+                <!-- sends usage data to udc.neo4j.com, see also GraphServiceImpl -->
                 <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-nop</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.xml.bind</groupId>
-                    <artifactId>jaxb-api</artifactId>
+                    <groupId>org.neo4j</groupId>
+                    <artifactId>neo4j-udc</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>commons-logging</groupId>

@@ -45,8 +45,10 @@ public class GraphServiceImpl implements GraphService {
             managementService = new DatabaseManagementServiceBuilder(dbHome.toPath())
                     // community edition only opens the default database
                     .setConfig(GraphDatabaseSettings.initial_default_database, GraphTask.DB_NAME)
-                    // queries are written in Cypher 5, don't follow a future default change
-                    .setConfig(GraphDatabaseSettings.default_language, CypherVersion.Cypher5)
+                    // queries are valid Cypher 25, don't follow a future default change
+                    .setConfig(GraphDatabaseSettings.default_language, CypherVersion.Cypher25)
+                    // no usage data sent to neo4j (also excluded from the dependencies)
+                    .setConfig(GraphDatabaseSettings.udc_enabled, false)
                     .build();
             graphDB = managementService.database(GraphTask.DB_NAME);
 
