@@ -149,6 +149,8 @@ import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.rag.RAGService;
+import iped.app.ui.rag.RAGAssistantPanel;
 import iped.engine.search.ImageSimilarityLowScoreFilter;
 import iped.engine.search.ImageSimilarityScorer;
 import iped.engine.search.MultiSearchResult;
@@ -231,6 +233,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     TimelineListener timelineListener;
     public CControl dockingControl;
     private DefaultSingleCDockable categoriesTabDock, aiFiltersTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
+    private DefaultSingleCDockable ragAssistantTabDock;
+    private RAGAssistantPanel ragAssistantPanel;
     private List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
     private DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
@@ -275,6 +279,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public IItem similarFacesRefItem;
     public List<? extends SortKey> similarFacesPrevSortKeys;
     SimilarDocumentFilterer similarDocumentFilterer;
+    public SemanticSimilarityFilterer semanticSimilarityFilterer;
+    public RAGSourcesFilterer ragSourcesFilterer;
 
     public File casesPathFile;
     boolean isMultiCase;
@@ -441,6 +447,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private void destroy() {
         boolean processingFinished = processingManager == null || processingManager.isProcessingFinished();
         try {
+            if (ragAssistantPanel != null) {
+                ragAssistantPanel.dispose();
+            }
             if (viewerController != null) {
                 viewerController.dispose();
             }
@@ -548,6 +557,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterManager = new FilterManager(filterComboBox);
 
         similarDocumentFilterer = new SimilarDocumentFilterer();
+        semanticSimilarityFilterer = new SemanticSimilarityFilterer();
+        ragSourcesFilterer = new RAGSourcesFilterer();
 
         similarImagesFilterer = new SimilarImagesQueryFilterer();
 
@@ -830,6 +841,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterManager.addQueryFilterer(treeListener);
         filterManager.addQueryFilterer(similarImagesFilterer);
         filterManager.addQueryFilterer(similarDocumentFilterer);
+        filterManager.addResultSetFilterer(semanticSimilarityFilterer);
+        filterManager.addResultSetFilterer(ragSourcesFilterer);
         filterManager.addQueryFilterer(TableHeaderFilterManager.get());
         filterManager.addResultSetFilterer(bookmarksListener);
         filterManager.addResultSetFilterer(FilterSelectedEdges.getInstance());
@@ -1096,6 +1109,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             dockingControl.addDockable(graphDock);
         }
 
+        // Add AI Assistant tab if RAG is enabled for this case
+        RAGService ragService = RAGService.getInstance();
+        if (ragService != null && ragService.getConfig().isEnabled()) {
+            ragAssistantPanel = new RAGAssistantPanel();
+            ragAssistantTabDock = createDockable("ragassistanttab", Messages.getString("App.RAGAssistant"),
+                    ragAssistantPanel);
+            dockingControl.addDockable(ragAssistantTabDock);
+        }
+
         for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
             DefaultSingleCDockable tabDock = iterator.next();
             dockingControl.addDockable(tabDock);
@@ -1267,7 +1289,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         List<DefaultSingleCDockable> docks = new ArrayList<>();
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
                 bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, aiFiltersTabDock, graphDock,
-                referencesDock, referencedByDock, filtersTabDock));
+                referencesDock, referencedByDock, filtersTabDock, ragAssistantTabDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -1295,6 +1317,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private boolean bookmarksDefaultColor = true;
     private boolean graphDefaultColor = true;
     private boolean tableDefaultColor = true;
+    private boolean ragAssistantDefaultColor = true;
+
+    public void setRAGAssistantDefaultColor(boolean defaultColor) {
+        if (ragAssistantDefaultColor != defaultColor) {
+            ragAssistantDefaultColor = defaultColor;
+            setDockablesColors();
+        }
+    }
 
     public void setTableDefaultColor(boolean defaultColor) {
         if (tableDefaultColor != defaultColor) {
@@ -1361,6 +1391,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         setTabColor(bookmarksTabDock, bookmarksDefaultColor);
         setTabColor(graphDock, graphDefaultColor);
         setTabColor(tableTabDock, tableDefaultColor);
+        setTabColor(ragAssistantTabDock, ragAssistantDefaultColor);
     }
 
     private void setTabColor(DefaultSingleCDockable dock, boolean isDefault) {
@@ -1485,6 +1516,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         aiFiltersTabDock.setLocationsAside(metadataTabDock);
         aiFiltersTabDock.setVisible(true);
 
+        if (ragAssistantTabDock != null) {
+            ragAssistantTabDock.setLocationsAside(aiFiltersTabDock);
+            ragAssistantTabDock.setVisible(true);
+        }
+
         if (verticalLayout)
             adjustViewerLayout();
 
@@ -1515,6 +1551,33 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public void toggleHorizontalVerticalLayout() {
         verticalLayout = !verticalLayout;
         adjustLayout(true);
+    }
+
+    public void initRAGFeatures() {
+        RAGService ragService = RAGService.getInstance();
+        if (!RAGAssistantPanel.isAssistantEnabled(ragService != null ? ragService.getConfig() : null)) {
+            // Embeddings and similarity search stay available; only the chat tab is hidden.
+            if (ragAssistantTabDock != null) {
+                ragAssistantTabDock.setVisible(false);
+            }
+            return;
+        }
+        if (ragAssistantTabDock == null) {
+            ragAssistantPanel = new RAGAssistantPanel();
+            ragAssistantTabDock = createDockable("ragassistanttab", Messages.getString("App.RAGAssistant"),
+                    ragAssistantPanel);
+            dockingControl.addDockable(ragAssistantTabDock);
+        }
+        ragAssistantTabDock.setLocationsAside(aiFiltersTabDock);
+        ragAssistantTabDock.setVisible(true);
+        selectDockableTab(ragAssistantTabDock);
+        ragAssistantPanel.setCaseLoading(false);
+    }
+
+    void suspendRAGRequests() {
+        if (ragAssistantPanel != null) {
+            ragAssistantPanel.setCaseLoading(true);
+        }
     }
 
     @Override
@@ -1714,6 +1777,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicatesTable.repaint();
         referencesTable.repaint();
         referencedByTable.repaint();
+        if (ragAssistantPanel != null) {
+            ragAssistantPanel.repaint();
+        }
     }
 
     private class SpaceKeyListener extends KeyAdapter {

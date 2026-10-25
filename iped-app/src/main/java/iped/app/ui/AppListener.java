@@ -182,6 +182,7 @@ public class AppListener implements ActionListener, MouseListener {
         }
 
         if (evt.getSource() == App.get().updateCaseData) {
+            App.get().suspendRAGRequests();
             UICaseDataLoader init = new UICaseDataLoader(App.get().getProcessingManager(), true);
             init.execute();
         }
