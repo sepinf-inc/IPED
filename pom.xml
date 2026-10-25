@@ -56,6 +56,7 @@
         <!-- aligned with neo4j, which fails with mixed versions -->
         <jackson.version>2.22.3</jackson.version>
         <netty.version>4.2.19.Final</netty.version>
+        <jersey.version>2.48</jersey.version>
     </properties>
 
     <repositories>
@@ -94,6 +95,13 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-bom</artifactId>
                 <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jersey</groupId>
+                <artifactId>jersey-bom</artifactId>
+                <version>${jersey.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
