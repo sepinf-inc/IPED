@@ -908,8 +908,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <testFailureIgnore>true</testFailureIgnore>
-                    <aggregate>true</aggregate>
-                    <linkXRef>true</linkXRef>
                 </configuration>
             </plugin>
         </plugins>
