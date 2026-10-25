@@ -1054,7 +1054,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     IItemId itemId = resultSet.getItem(i);
                     int doc = srcCase.getLuceneId(itemId);
                     boolean adv = values.advanceExact(doc);
-                    if (adv = false) {
+                    if (!adv) {
                         values = reader.getSortedSetDocValues(eventField);
                         adv = values.advanceExact(doc);
                         if (!adv) {
@@ -1063,8 +1063,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     }
                     boolean found = false;
                     if (doc != DocIdSetIterator.NO_MORE_DOCS) {
-                        int ord = (int) values.nextOrd();
-                        while (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                        for (int ordIdx = 0, ordCnt = values.docValueCount(); ordIdx < ordCnt; ordIdx++) {
+                            int ord = (int) values.nextOrd();
                             String timeStr = EventTimestampCache.cloneBr(values.lookupOrd(ord));
                             if (timeStr.isEmpty()) {
                                 continue;
@@ -1073,7 +1073,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                             if (!(date.before(t.getStart()) || date.after(t.getEnd()))) {
                                 found = true;
                             }
-                            ord = (int) values.nextOrd();
                         }
                     }
                     if (found) {
@@ -1086,7 +1085,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     IItemId itemId = resultSet.getItem(i);
                     int doc = srcCase.getLuceneId(itemId);
                     boolean adv = svalues.advanceExact(doc);
-                    if (adv = false) {
+                    if (!adv) {
                         svalues = reader.getSortedDocValues(eventField);
                         adv = svalues.advanceExact(doc);
                         if (!adv) {
@@ -1096,7 +1095,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     boolean found = false;
                     if (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = (int) svalues.ordValue();
-                        if (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                        if (ord >= 0) {
                             String timeStr = EventTimestampCache.cloneBr(svalues.lookupOrd(ord));
                             if (timeStr.isEmpty()) {
                                 continue;

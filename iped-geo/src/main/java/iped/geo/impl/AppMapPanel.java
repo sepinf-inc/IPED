@@ -527,12 +527,12 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
                 IItemId item = resultsProvider.getResults()
                         .getItem(resultsProvider.getResultsTable().convertRowIndexToModel(leadIndex));
                 int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-                Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+                Document doc = resultsProvider.getIPEDSource().storedFields().document(docId);
                 String parentId = doc.get(IndexItem.PARENTID);
                 if (parentId != null) {
                     int parentDocId = resultsProvider.getIPEDSource()
                             .getLuceneId(new ItemId(item.getSourceId(), Integer.parseInt(parentId)));
-                    Document parentDoc = resultsProvider.getIPEDSource().getReader().document(parentDocId);
+                    Document parentDoc = resultsProvider.getIPEDSource().storedFields().document(parentDocId);
                     if ("1".equals(parentDoc.get("geo:isTrack"))) {
                         IIPEDSearcher search = resultsProvider.createNewSearch("parentId:" + parentId, trackSortFields);
 
@@ -561,7 +561,7 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
                 IItemId item = resultsProvider.getResults()
                         .getItem(resultsProvider.getResultsTable().convertRowIndexToModel(leadIndex));
                 int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-                Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+                Document doc = resultsProvider.getIPEDSource().storedFields().document(docId);
                 String jsonFeature = doc.get(GeofileParser.FEATURE_STRING);
                 return jsonFeature;
             }
@@ -575,7 +575,7 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         try {
             IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
             int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-            Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+            Document doc = resultsProvider.getIPEDSource().storedFields().document(docId);
 
             int count = 0;
             String[][] features = new String[fieldNames.length][];

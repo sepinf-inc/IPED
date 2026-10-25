@@ -1,5 +1,6 @@
 package iped.app.bootstrap;
 
+import iped.utils.JvmFlags;
 import iped.utils.CharsetUtil;
 import java.io.OutputStreamWriter;
 import java.io.BufferedReader;
@@ -231,23 +232,12 @@ public class Bootstrap {
     }
     
     private static List<String> getCustomJVMArgs(){
-        return Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
+        List<String> args = new ArrayList<>(Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
                 "-XX:+HeapDumpOnOutOfMemoryError",
                 // WebKitNetworkGuard needs the URLConnection based loader, see #1522
-                "-Dcom.sun.webkit.useHTTP2Loader=false",
-                // JNI/JNA (sleuthkit, sqlite, jep, javacpp) and sun.misc.Unsafe users (neo4j, lucene...),
-                // avoid JEP 472 and JEP 498 warnings; keep in sync with iped.jvm.flags in the root pom
-                "--enable-native-access=ALL-UNNAMED",
-                "--sun-misc-unsafe-memory-access=allow",
-                "--add-opens=java.base/java.util=ALL-UNNAMED",
-                "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-                "--add-opens=java.base/java.lang=ALL-UNNAMED",
-                "--add-opens=java.base/java.math=ALL-UNNAMED",
-                "--add-opens=java.base/java.net=ALL-UNNAMED",
-                "--add-opens=java.base/java.io=ALL-UNNAMED",
-                "--add-opens=java.base/java.nio=ALL-UNNAMED",
-                "--add-opens=java.base/java.text=ALL-UNNAMED",
-                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED");
+                "-Dcom.sun.webkit.useHTTP2Loader=false"));
+        args.addAll(JvmFlags.all());
+        return args;
     }
 
     private static List<String> getCurrentJVMArgs() {

@@ -1,5 +1,6 @@
 package iped.engine.graph;
 
+import iped.utils.JvmFlags;
 import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
 import java.io.File;
@@ -76,6 +77,8 @@ public class GraphImportRunner {
         List<String> args = new ArrayList<>();
 
         args.add(getJreExecutable().getAbsolutePath());
+        // neo4j needs e.g. java.nio opened, the import failed on Java 17+ without it (#1522)
+        args.addAll(JvmFlags.all());
         args.add("-cp");
         try {
             URL url = URLUtil.getURL(AdminTool.class);
@@ -85,7 +88,9 @@ public class GraphImportRunner {
         }
 
         args.add(AdminTool.class.getName());
+        args.add("database");
         args.add("import");
+        args.add("full");
 
         writeArgs(args, dbName, highIO);
 
@@ -123,21 +128,15 @@ public class GraphImportRunner {
 
     public void writeArgs(List<String> args, String dbName, boolean highIO) throws IOException {
 
-        args.add("--input-encoding");
-        args.add("utf-8");
-        args.add("--bad-tolerance");
-        args.add("0");
-        args.add("--database");
+        // database name is a positional parameter since neo4j 5
         args.add(dbName);
-        if (highIO) {
-            args.add("--high-io");
-            args.add("true");
-        }
-        
-        args.add("--ignore-empty-strings");
-        args.add("true");
-        args.add("--skip-duplicate-nodes");
-        args.add("true");
+        args.add("--input-encoding=utf-8");
+        args.add("--bad-tolerance=0");
+        args.add("--high-parallel-io=" + (highIO ? "on" : "auto"));
+        args.add("--ignore-empty-strings=true");
+        args.add("--skip-duplicate-nodes=true");
+        // csv file names are literal, not regular expressions
+        args.add("--path-pattern-style=none");
 
         for (File input : inputs) {
             File[] argsFiles = input.listFiles(new ArgsFileFilter());

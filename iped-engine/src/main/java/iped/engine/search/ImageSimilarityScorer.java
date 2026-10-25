@@ -7,11 +7,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.util.BytesRef;
 
 import iped.data.IItem;
@@ -82,6 +84,7 @@ public class ImageSimilarityScorer {
         }
         LeafReader leafReader = ipedCase.getLeafReader();
         int numThreads = Runtime.getRuntime().availableProcessors();
+        Set<String> hashField = Collections.singleton(BasicProps.HASH);
         Thread[] threads = new Thread[numThreads];
         int evalCut = (int) (100 * refSimilarityFeatures.length / distToScoreMult);
         int itemsPerThread = (len + numThreads - 1) / numThreads;
@@ -90,6 +93,7 @@ public class ImageSimilarityScorer {
             (threads[k] = new Thread() {
                 public void run() {
                     BinaryDocValues similarityFeaturesValues = null;
+                    StoredFields storedFields = null;
                     try {
                         similarityFeaturesValues = leafReader
                                 .getBinaryDocValues(ImageSimilarityTask.IMAGE_FEATURES);
@@ -114,7 +118,10 @@ public class ImageSimilarityScorer {
                                 String refHash = refItem.getHash();
                                 if (refHash != null) {
                                     try {
-                                        Document doc = leafReader.document(luceneId);
+                                        if (storedFields == null) {
+                                            storedFields = leafReader.storedFields();
+                                        }
+                                        Document doc = storedFields.document(luceneId, hashField);
                                         String currHash = doc.get(BasicProps.HASH);
                                         if (refHash.equals(currHash)) {
                                             score = identicalScore;

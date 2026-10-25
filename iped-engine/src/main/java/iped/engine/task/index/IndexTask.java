@@ -183,15 +183,23 @@ public class IndexTask extends AbstractTask {
                         if (Thread.interrupted()) {
                             throw new InterruptedException();
                         }
-                        hasMoreContentFrags = (numFrags == 0 || fragReader.nextFragment());
-                        return hasMoreContentFrags || !parentIndexed;
+                        // Lucene 10 calls hasNext() before indexing the doc returned by next() (to
+                        // detect the last doc of the block), so the reader must not be touched here.
+                        // The parent doc is always the last one.
+                        return !parentIndexed;
 
-                    } catch (InterruptedException | IOException e) {
+                    } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
                 }
 
                 public Document next() {
+                    try {
+                        // previous doc was already indexed, its fragment fully consumed
+                        hasMoreContentFrags = (numFrags == 0 || fragReader.nextFragment());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     if (hasMoreContentFrags) {
                         if (++numFrags > 1) {
                             stats.incSplits();

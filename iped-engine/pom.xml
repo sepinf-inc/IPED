@@ -167,7 +167,8 @@
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-high-level-client</artifactId>
-            <version>2.1.0</version>
+            <!-- 3.9.0 is built on the same lucene version -->
+            <version>3.9.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -273,8 +274,13 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j</artifactId>
-            <version>4.4.4</version>
+            <version>2026.10.1</version>
             <exclusions>
+                <!-- slf4j provider routing to neo4j logging, conflicts with log4j-slf4j2-impl -->
+                <exclusion>
+                    <groupId>org.neo4j</groupId>
+                    <artifactId>neo4j-slf4j-provider</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-nop</artifactId>

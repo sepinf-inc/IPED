@@ -258,7 +258,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
             if (progress.isCanceled())
                 return null;
             try {
-                Document doc = App.get().appCase.getReader().document(docs[i]);
+                Document doc = App.get().appCase.storedFields().document(docs[i]);
                 for (String field : indexFields) {
                     if (doc.getField(field) != null)
                         dinamicFields.add(field);

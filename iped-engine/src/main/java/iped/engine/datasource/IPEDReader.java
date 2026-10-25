@@ -40,6 +40,7 @@ import java.util.logging.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -291,16 +292,20 @@ public class IPEDReader extends DataSourceReader {
 
     private void insertParentTreeNodes(LuceneSearchResult result) throws Exception {
         boolean[] isParentToAdd = new boolean[ipedCase.getLastId() + 1];
+        boolean[] isInResult = new boolean[isParentToAdd.length];
+        StoredFields storedFields = ipedCase.storedFields();
+        Set<String> fieldsToLoad = Set.of(IndexItem.PARENTIDs, IndexItem.ID);
         for (int docID : result.getLuceneIds()) {
-            String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
+            Document doc = storedFields.document(docID, fieldsToLoad);
+            String parentIds = doc.get(IndexItem.PARENTIDs);
             if (!parentIds.trim().isEmpty())
                 for (String parentId : parentIds.trim().split(" ")) { //$NON-NLS-1$
                     isParentToAdd[Integer.parseInt(parentId)] = true;
                 }
+            isInResult[Integer.parseInt(doc.get(IndexItem.ID))] = true;
         }
-        for (int docID : result.getLuceneIds()) {
-            String id = ipedCase.getReader().document(docID).get(IndexItem.ID);
-            isParentToAdd[Integer.parseInt(id)] = false;
+        for (int i = 0; i < isParentToAdd.length; i++) {
+            isParentToAdd[i] &= !isInResult[i];
         }
         int num = 0;
         BooleanQuery.Builder query = new BooleanQuery.Builder();
@@ -325,13 +330,16 @@ public class IPEDReader extends DataSourceReader {
         if (!args.isNopstattachs()) {
             boolean[] isSelectedEmail = new boolean[ipedCase.getLastId() + 1];
             boolean hasEmail = false;
+            StoredFields storedFields = ipedCase.storedFields();
+            Set<String> fieldsToLoad = Set.of(IndexItem.CONTENTTYPE, IndexItem.ID);
             for (int docID : result.getLuceneIds()) {
-                String mimetype = ipedCase.getReader().document(docID).get(IndexItem.CONTENTTYPE);
+                Document doc = storedFields.document(docID, fieldsToLoad);
+                String mimetype = doc.get(IndexItem.CONTENTTYPE);
                 if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype)
                         || UfedXmlReader.UFED_EMAIL_MIME.equals(mimetype)
                         || Win10MailParser.WIN10_MAIL_MSG.toString().equals(mimetype)) {
                     hasEmail = true;
-                    isSelectedEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
+                    isSelectedEmail[Integer.parseInt(doc.get(IndexItem.ID))] = true;
                 }
             }
             if (!hasEmail)
@@ -357,8 +365,9 @@ public class IPEDReader extends DataSourceReader {
             }
 
             // remove duplicate attachs
+            Set<String> idField = Set.of(IndexItem.ID);
             for (int docID : result.getLuceneIds()) {
-                String id = ipedCase.getReader().document(docID).get(IndexItem.ID);
+                String id = storedFields.document(docID, idField).get(IndexItem.ID);
                 isAttachToAdd[Integer.parseInt(id)] = false;
             }
 
@@ -396,7 +405,7 @@ public class IPEDReader extends DataSourceReader {
                 if (Arrays.binarySearch(luceneIds, luceneId) < 0)
                     continue;
 
-                Document doc = ipedCase.getReader().document(luceneId);
+                Document doc = ipedCase.storedFields().document(luceneId);
                 String[] items = doc.getValues(ExtraProperties.LINKED_ITEMS);
                 if (items.length > 0) {
                     LOGGER.debug("Linked items to '" + doc.get(IndexItem.NAME) + "' found: " + items.length); //$NON-NLS-1$
@@ -458,7 +467,7 @@ public class IPEDReader extends DataSourceReader {
     private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode, boolean countVolume) throws Exception {
 
         for (int docID : result.getLuceneIds()) {
-            Document doc = ipedCase.getReader().document(docID);
+            Document doc = ipedCase.storedFields().document(docID);
 
             Item evidence = new Item();
 

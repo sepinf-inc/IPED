@@ -30,7 +30,7 @@ public class Docs {
             throws IOException {
         IIPEDSource source = Sources.getSource(sourceID);
         int luceneID = source.getLuceneId(id);
-        Document doc = source.getReader().document(luceneID);
+        Document doc = source.storedFields().document(luceneID);
 
         DocPropsJSON result = new DocPropsJSON();
         result.setSource(sourceID);

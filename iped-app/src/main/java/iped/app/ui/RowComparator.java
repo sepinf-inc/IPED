@@ -176,7 +176,8 @@ public class RowComparator implements Comparator<Integer> {
                 if (ssdv.advanceExact(i)) {
                     ArrayList<Integer> ords = new ArrayList<>();
                     int ord;
-                    while ((ord = (int) ssdv.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                    for (int ordIdx = 0, ordCnt = ssdv.docValueCount(); ordIdx < ordCnt; ordIdx++) {
+                        ord = (int) ssdv.nextOrd();
                         ords.add(ord);
                     }
                     ssdvOrds[i] = new int[ords.size()];
@@ -308,8 +309,8 @@ public class RowComparator implements Comparator<Integer> {
 
         // On demand sorting if DocValues does not exist for this field (much slower)
         try {
-            Document doc1 = app.appCase.getReader().document(a, fieldsToLoad);
-            Document doc2 = app.appCase.getReader().document(b, fieldsToLoad);
+            Document doc1 = app.appCase.storedFields().document(a, fieldsToLoad);
+            Document doc2 = app.appCase.storedFields().document(b, fieldsToLoad);
 
             String v1 = doc1.get(field);
             String v2 = doc2.get(field);

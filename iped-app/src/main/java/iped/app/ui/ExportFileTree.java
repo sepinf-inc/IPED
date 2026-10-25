@@ -91,7 +91,7 @@ public class ExportFileTree extends CancelableWorker {
         try {
             String textQuery = "*:*"; //$NON-NLS-1$
             if (baseDocId != root.docId) {
-                Document doc = App.get().appCase.getReader().document(baseDocId);
+                Document doc = App.get().appCase.storedFields().document(baseDocId);
 
                 String id = doc.get(IndexItem.ID);
 
@@ -132,7 +132,7 @@ public class ExportFileTree extends CancelableWorker {
             parentCache.put(docId, exportedItem);
         } else {
             try {
-                Document doc = App.get().appCase.getReader().document(docId);
+                Document doc = App.get().appCase.storedFields().document(docId);
 
                 int parentDocId = root.docId;
                 String parentIdStr = doc.get(IndexItem.PARENTID);

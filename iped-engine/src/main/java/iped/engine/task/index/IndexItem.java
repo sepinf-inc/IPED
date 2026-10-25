@@ -51,7 +51,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FloatDocValuesField;
 import org.apache.lucene.document.FloatPoint;
 import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.KnnVectorField;
+import org.apache.lucene.document.KnnFloatVectorField;
 import org.apache.lucene.document.LatLonDocValuesField;
 import org.apache.lucene.document.LatLonPoint;
 import org.apache.lucene.document.LongPoint;
@@ -661,7 +661,7 @@ public class IndexItem extends BasicProps {
             }
             doc.add(new SortedSetDocValuesField(key, new BytesRef(byteArray)));
             doc.add(new StoredField(key, byteArray));
-            doc.add(new KnnVectorField(knnKey, floatArray));
+            doc.add(new KnnFloatVectorField(knnKey, floatArray));
 
         } else {
             // value is typed as string

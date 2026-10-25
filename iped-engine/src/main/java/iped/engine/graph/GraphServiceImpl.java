@@ -13,6 +13,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.configuration.GraphDatabaseSettings.CypherVersion;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.dbms.api.DatabaseManagementServiceBuilder;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -40,7 +42,12 @@ public class GraphServiceImpl implements GraphService {
             this.dbHome = dbHome;
             LOGGER.info("Starting neo4j service at " + dbHome.getAbsolutePath());
 
-            managementService = new DatabaseManagementServiceBuilder(dbHome.toPath()).build();
+            managementService = new DatabaseManagementServiceBuilder(dbHome.toPath())
+                    // community edition only opens the default database
+                    .setConfig(GraphDatabaseSettings.initial_default_database, GraphTask.DB_NAME)
+                    // queries are written in Cypher 5, don't follow a future default change
+                    .setConfig(GraphDatabaseSettings.default_language, CypherVersion.Cypher5)
+                    .build();
             graphDB = managementService.database(GraphTask.DB_NAME);
 
             started = true;
@@ -77,7 +84,7 @@ public class GraphServiceImpl implements GraphService {
             tx = graphDB.beginTx();
 
             Result result = tx.execute(
-                    "MATCH (n) RETURN id(n) as id, size((n)--()) as degree ORDER BY degree DESC LIMIT " + maxNodes);
+                    "MATCH (n) RETURN id(n) as id, COUNT { (n)--() } as degree ORDER BY degree DESC LIMIT " + maxNodes);
             while (result.hasNext()) {
                 Map<String, Object> map = result.next();
                 Long id = (Long) map.get("id");
@@ -198,7 +205,7 @@ public class GraphServiceImpl implements GraphService {
             parameters.put("nodeId", nodeId);
             String query = "MATCH (n)-[r:$types]-(m) WHERE ID(n) = $nodeId RETURN m as node, r as edge";
             query = relationships.isEmpty() ? query.replace(":$types", "")
-                    : query.replace("$types", relationships.stream().collect(Collectors.joining("|:")));
+                    : query.replace("$types", relationships.stream().collect(Collectors.joining("|")));
             Result result = tx.execute(query, parameters);
             if (maxNodes == -1) {
                 emitAllNeighbours(result, listener);
@@ -325,7 +332,7 @@ public class GraphServiceImpl implements GraphService {
             HashMap<String, Object> parameters = new HashMap<>(1);
             parameters.put("param", param.toUpperCase());
 
-            String query = "MATCH (n) WHERE ANY(prop IN keys(n) WHERE toUpper(toString(n[prop])) CONTAINS $param) RETURN n";
+            String query = "MATCH (n) WHERE ANY(prop IN keys(n) WHERE toUpper(toStringOrNull(n[prop])) CONTAINS $param) RETURN n";
 
             Result result = tx.execute(query, parameters);
             ResourceIterator<Node> resourceIterator = result.columnAs("n");
