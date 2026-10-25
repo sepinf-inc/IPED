@@ -8,13 +8,13 @@ import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import iped.app.processing.Main;
 import iped.engine.io.FilterOutputStream;
-import iped.utils.IOUtil;
 
 public class LogConfiguration {
 
@@ -38,12 +38,26 @@ public class LogConfiguration {
                 String name = "IPED-" + df.format(new Date()) + ".log";
                 logFile = new File(rootPath + "/log", name);
                 logFile.getParentFile().mkdirs();
-                if (!IOUtil.canCreateFile(logFile.getParentFile())) {
+                if (!canCreateFile(logFile.getParentFile())) {
                     logFile = new File(System.getProperty("java.io.tmpdir"), name);
                 }
             }
         }
         iped.setLogFile(logFile);
+    }
+
+    private static boolean canCreateFile(File dir) {
+        try {
+            // #3028: Do not use File.createTempFile() here, before setting "java.io.tmpdir".
+            File test = new File(dir, "write-test-" + new Random().nextLong() + ".txt");
+            test.deleteOnExit();
+            if (test.createNewFile()) {
+                test.delete();
+                return true;
+            }
+        } catch (IOException e) {
+        }
+        return false;
     }
 
     public File getLogFile() {

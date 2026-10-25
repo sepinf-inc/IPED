@@ -5,7 +5,7 @@
     <artifactId>iped-parent</artifactId>
     <version>4.4.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    
+
     <modules>
         <module>iped-api</module>
         <module>iped-utils</module>
@@ -14,9 +14,10 @@
         <module>iped-carvers</module>
         <module>iped-geo</module>
         <module>iped-engine</module>
+        <module>iped-bfac</module>
         <module>iped-app</module>
     </modules>
-    
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- source/target instead of release: javac release option only sees the standard platform API,
@@ -28,13 +29,13 @@
         <iped.jvm.flags>--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow</iped.jvm.flags>
         <argLine></argLine>
         <resources.dir>${basedir}/resources</resources.dir>
-        <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>  
+        <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>
         <lib.dir>${release.dir}/lib</lib.dir>
         <tools.dir>${release.dir}/tools</tools.dir>
         <conf.dir>${release.dir}/conf</conf.dir>
         <plugin.dir>${release.dir}/../plugins</plugin.dir>
         <plugin.rsc>${basedir}/resources/plugins</plugin.rsc>
-        
+
         <!--dependencies-->
         <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit b673cf4 can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
         <tika.core.version>2.4.0-p1</tika.core.version>
@@ -137,7 +138,7 @@
             <artifactId>log4j-web</artifactId>
             <version>${log4j.version}</version>
         </dependency>
-        <dependency> 
+        <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j2-impl</artifactId>
             <version>${log4j.version}</version>
@@ -171,7 +172,7 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
+
     <build>
         <pluginManagement>
             <!-- single place for plugin versions, modules must not override them -->
@@ -275,7 +276,7 @@
             </plugin>
         </plugins>
     </build>
-    		
+
     <reporting>
         <plugins>
             <plugin>
@@ -289,7 +290,7 @@
                 <version>3.9.0</version>
                 <configuration>
                     <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
-                </configuration>                
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
