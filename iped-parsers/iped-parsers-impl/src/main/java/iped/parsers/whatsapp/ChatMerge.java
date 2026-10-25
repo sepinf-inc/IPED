@@ -2,7 +2,13 @@ package iped.parsers.whatsapp;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class ChatMerge {
 
@@ -79,20 +85,83 @@ public class ChatMerge {
     }
 
     private int mergeMessageList(List<Message> main, List<Message> backup) {
+        // Merge strategy (main is sorted by sort key, see compareTo()):
+        //
+        // 1. If the sort key of a backup message is not found in main, the message was
+        // deleted from the main DB and is recovered. If the backup has more than one
+        // message with that sort key, only the first one is recovered.
+        //
+        // 2. If the sort key is found in main, the message is already there and the
+        // backup message is ignored. The exception is when main has that message only
+        // as a record carved from deleted space by SQLiteUndelete (same content, see
+        // sameContent()). The backup record is complete (rowid, media, quotes...), so
+        // it replaces the carved record at the same position.
+        //
+        // 3. Recovered messages are not inserted one by one, as each insertion shifts
+        // the rest of the list. They are appended to main, which is then sorted once.
+        // As main and the appended messages are normally already sorted, TimSort just
+        // merges them, in about linear time.
+
         int tot_rec = 0;
-        int indexmain = 0;
+        Map<Long, List<Integer>> carvedCopies = indexCarvedMessages(main);
+        Set<Long> recoveredSortIds = new HashSet<>();
+        List<Message> recovered = new ArrayList<>();
         for (Message m : backup) {
-
-            indexmain = Collections.binarySearch(main, m);
-            if (indexmain < 0) {// message was removed
-                main.add(-indexmain - 1, m);
-                tot_rec++;
-                m.setRecoveredFrom(dbname);
-            } 
-
+            if (Collections.binarySearch(main, m) < 0) {
+                // step 1
+                if (recoveredSortIds.add(m.getSortId())) {
+                    recovered.add(m);
+                }
+            } else if (!m.isDeleted() && carvedCopies.containsKey(m.getSortId())) {
+                // step 2: look for a carved record with the same content to replace
+                for (Iterator<Integer> it = carvedCopies.get(m.getSortId()).iterator(); it.hasNext();) {
+                    int pos = it.next();
+                    if (sameContent(main.get(pos), m)) {
+                        it.remove();
+                        main.set(pos, m);
+                        m.setRecoveredFrom(dbname);
+                        tot_rec++;
+                        break;
+                    }
+                }
+            }
         }
-        return tot_rec;
+        if (!recovered.isEmpty()) {
+            // step 3
+            recovered.forEach(m -> m.setRecoveredFrom(dbname));
+            main.addAll(recovered);
+            Collections.sort(main);
+        }
+        return tot_rec + recovered.size();
+    }
 
+    /**
+     * Positions of the messages carved from deleted space (usually none) by sort
+     * key, except those also present as regular messages.
+     */
+    private static Map<Long, List<Integer>> indexCarvedMessages(List<Message> messages) {
+        Map<Long, List<Integer>> carved = new HashMap<>();
+        for (int i = 0; i < messages.size(); i++) {
+            if (messages.get(i).isDeleted()) {
+                carved.computeIfAbsent(messages.get(i).getSortId(), k -> new ArrayList<>()).add(i);
+            }
+        }
+        for (Message m : messages) {
+            List<Integer> positions = carved.get(m.getSortId());
+            if (positions != null && !m.isDeleted()) {
+                positions.removeIf(pos -> sameContent(messages.get(pos), m));
+            }
+        }
+        return carved;
+    }
+
+    /**
+     * Compares by content, as message keys are not available for every database
+     * version. The media hash is not used, because carved records have no media.
+     */
+    private static boolean sameContent(Message m1, Message m2) {
+        return m1.isFromMe() == m2.isFromMe() && m1.getMessageType() == m2.getMessageType()
+                && Objects.equals(m1.getTimeStamp(), m2.getTimeStamp()) && Objects.equals(m1.getData(), m2.getData());
     }
 
     private int findChatByContact(List<Chat> l, Chat key) {

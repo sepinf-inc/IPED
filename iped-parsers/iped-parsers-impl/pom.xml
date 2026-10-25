@@ -217,7 +217,7 @@
         <dependency>
             <groupId>io.github.fmpfeifer</groupId>
             <artifactId>libfqlite</artifactId>
-            <version>1.57.05</version>
+            <version>1.57.06</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.springframework/spring-expression -->
         <dependency>

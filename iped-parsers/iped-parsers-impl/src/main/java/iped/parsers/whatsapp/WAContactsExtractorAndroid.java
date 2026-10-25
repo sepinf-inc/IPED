@@ -81,7 +81,7 @@ public abstract class WAContactsExtractorAndroid extends WAContactsExtractor {
         if (undeletedContactsTable != null) {
             for (var row : undeletedContactsTable.getTableRows()) {
                 var jid = row.getTextValue("jid");
-                if (! directory.hasContact(jid)) { // only recover contact if it does not exist already
+                if (! directory.hasContact(Util.getNameFromId(jid))) { // only recover contact if it does not exist already
                     WAContact c = directory.getContact(jid);
                     c.setDisplayName(nullToEmpty(row.getTextValue("display_name"))); //$NON-NLS-1$
                     c.setWaName(nullToEmpty(row.getTextValue("wa_name"))); //$NON-NLS-1$
@@ -101,10 +101,7 @@ public abstract class WAContactsExtractorAndroid extends WAContactsExtractor {
         public boolean validateRecord(SqliteRow row) {
             try {
                 String jid = row.getTextValue("jid"); //$NON-NLS-1$
-                if (jid == null || jid.isBlank()) {
-                    return false;
-                }
-                return true;
+                return WAContact.isValidJid(jid);
                 
             } catch (Exception e) {
             }

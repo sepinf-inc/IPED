@@ -1448,7 +1448,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 new_db = false;
             }
             if (new_db) {
-                return new ExtractorAndroidNew(itemPath, file, directory, account) {
+                return new ExtractorAndroidNew(itemPath, file, directory, account, recoverDeletedRecords) {
                     @Override
                     protected Connection getConnection() throws SQLException {
                         return ExtractorAndroidFactory.this.getConnection();
