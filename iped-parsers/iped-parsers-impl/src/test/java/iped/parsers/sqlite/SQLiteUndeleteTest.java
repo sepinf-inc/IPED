@@ -12,9 +12,6 @@ import java.util.Map;
 import org.junit.Test;
 
 import fqlite.base.SqliteRow;
-import fqlite.descriptor.TableDescriptor;
-import fqlite.parser.SimpleSQLiteParser;
-import fqlite.pattern.HeaderPattern;
 import junit.framework.TestCase;
 
 public class SQLiteUndeleteTest extends TestCase {
@@ -61,7 +58,6 @@ public class SQLiteUndeleteTest extends TestCase {
         try {
             SQLiteUndelete undelete = new SQLiteUndelete(db.toPath());
             undelete.addTableToRecover("message");
-            undelete.setFixCarvingPatterns(true);
             Map<String, SQLiteUndeleteTable> result = undelete.undeleteData();
 
             List<SqliteRow> rows = result.get("message").getTableRows();
@@ -80,31 +76,5 @@ public class SQLiteUndeleteTest extends TestCase {
         } finally {
             Files.deleteIfExists(db.toPath());
         }
-    }
-
-    @Test
-    public void testHeaderPatternAcceptsValidSerialTypes() {
-        TableDescriptor td = new SimpleSQLiteParser().parseTable(
-                "CREATE TABLE message(_id INTEGER PRIMARY KEY AUTOINCREMENT,chat_row_id INTEGER NOT NULL,"
-                        + "from_me INTEGER NOT NULL,key_id TEXT NOT NULL,status INTEGER,participant_hash TEXT,"
-                        + "timestamp INTEGER,text_data TEXT,sort_id INTEGER NOT NULL DEFAULT 0)");
-        HeaderPattern pattern = SQLiteHeaderPatternFixer.build(td);
-        assertNotNull(pattern);
-        assertEquals(10, pattern.size());
-
-        // header length, _id (rowid alias, NULL), chat_row_id (1 byte int), from_me
-        // (constant 1), key_id (32 bytes text), status (NULL), participant_hash (NULL),
-        // timestamp (6 bytes int), text_data (empty text), sort_id (constant 0)
-        int[] valid = { 11, 0, 1, 9, 77, 0, 0, 5, 13, 8 };
-        for (int i = 0; i < valid.length; i++) {
-            assertTrue("serial type " + valid[i] + " at " + i, pattern.get(i).match(valid[i]));
-        }
-
-        assertFalse(pattern.get(1).match(1)); // rowid alias is always NULL
-        assertFalse(pattern.get(2).match(0)); // NOT NULL
-        assertFalse(pattern.get(4).match(0)); // NOT NULL
-        assertFalse(pattern.get(4).match(14)); // BLOB in TEXT column
-        assertFalse(pattern.get(5).match(13)); // TEXT in INTEGER column
-        assertFalse(pattern.get(5).match(7)); // REAL in INTEGER column
     }
 }

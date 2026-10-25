@@ -719,8 +719,6 @@ public abstract class ExtractorAndroidNew extends Extractor {
             SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
             undelete.addTableToRecover("message");
             undelete.addRecordValidator("message", new WAAndroidNewMessageValidator());
-            // without it, messages deleted into freeblocks are not carved
-            undelete.setFixCarvingPatterns(true);
             SQLiteUndeleteTable table = undelete.undeleteData().get("message");
             if (table != null) {
                 return table.getTableRowsGroupedByLongCol("chat_row_id");
