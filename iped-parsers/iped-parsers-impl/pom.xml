@@ -210,6 +210,15 @@
             <version>${java.dbx.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- JAXB is not part of the JDK anymore, used by OFCParser -->
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.github.fmpfeifer</groupId>
             <artifactId>libfqlite</artifactId>

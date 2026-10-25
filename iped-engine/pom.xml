@@ -258,11 +258,25 @@
     		<groupId>io.swagger</groupId>
     		<artifactId>swagger-jersey2-jaxrs</artifactId>
     		<version>1.6.10</version>
+            <exclusions>
+                <!-- same javax.xml.bind API as jakarta.xml.bind-api 2.3, see root pom -->
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>jaxb-api</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
 		<dependency>
   			<groupId>org.glassfish.jersey.media</groupId>
   			<artifactId>jersey-media-json-jackson</artifactId>
   			<scope>runtime</scope>
+            <exclusions>
+                <!-- same javax.xml.bind API as jakarta.xml.bind-api 2.3, see root pom -->
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>jaxb-api</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
 		<dependency>
             <groupId>com.googlecode.libphonenumber</groupId>

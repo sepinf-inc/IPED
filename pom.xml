@@ -57,6 +57,9 @@
         <jackson.version>2.22.3</jackson.version>
         <netty.version>4.2.19.Final</netty.version>
         <jersey.version>2.48</jersey.version>
+        <!-- last JAXB versions with the javax.xml.bind package -->
+        <jaxb.api.version>2.3.3</jaxb.api.version>
+        <jaxb.runtime.version>2.3.9</jaxb.runtime.version>
     </properties>
 
     <repositories>
@@ -104,6 +107,16 @@
                 <version>${jersey.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jaxb.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${jaxb.runtime.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
