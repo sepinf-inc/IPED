@@ -79,6 +79,45 @@ public class WebKitNetworkGuardTest {
     }
 
     @Test
+    public void testSocketOfAllowedUrl() {
+        // HttpURLConnection selects again with socket://host:port for a direct connection
+        WebKitNetworkGuard.allow(Pattern.compile("https://unpkg\\.com/leaflet@[^/]+/dist/"));
+        String loader = WebKitNetworkGuard.URL_LOADER;
+
+        assertTrue(blocked(loader, "socket://unpkg.com:443"));
+
+        assertFalse(blocked(loader, "https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"));
+        assertFalse(blocked(loader, "socket://unpkg.com:443"));
+        assertFalse(blocked(loader, "socket://UNPKG.com:443"));
+        assertTrue(blocked(loader, "socket://unpkg.com:80"));
+        assertTrue(blocked(loader, "socket://evil.net:443"));
+        assertTrue(blocked(SOCKET_STREAM, "socket://unpkg.com:443"));
+
+        // a blocked URL resets it
+        assertTrue(blocked(loader, "https://unpkg.com/evil@1.0/dist/evil.js"));
+        assertTrue(blocked(loader, "socket://unpkg.com:443"));
+
+        WebKitNetworkGuard.allowUrlTemplate("http://tile.example.com:8080/{z}/{x}/{y}.png");
+        assertFalse(blocked(loader, "http://tile.example.com:8080/1/2/3.png"));
+        assertFalse(blocked(loader, "socket://tile.example.com:8080"));
+        WebKitNetworkGuard.allowUrlTemplate("http://tile2.example.com/{z}/{x}/{y}.png");
+        assertFalse(blocked(loader, "http://tile2.example.com/1/2/3.png"));
+        assertFalse(blocked(loader, "socket://tile2.example.com:80"));
+    }
+
+    @Test
+    public void testSocketAllowedOnlyOnSameThread() throws InterruptedException {
+        WebKitNetworkGuard.allow(Pattern.compile("https://example\\.com/"));
+        String loader = WebKitNetworkGuard.URL_LOADER;
+        assertFalse(blocked(loader, "https://example.com/a.js"));
+        boolean[] otherThreadBlocked = new boolean[1];
+        Thread t = new Thread(() -> otherThreadBlocked[0] = blocked(loader, "socket://example.com:443"));
+        t.start();
+        t.join();
+        assertTrue(otherThreadBlocked[0]);
+    }
+
+    @Test
     public void testTileTemplates() {
         WebKitNetworkGuard.allowUrlTemplate("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
         WebKitNetworkGuard.allowUrlTemplate("http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1");

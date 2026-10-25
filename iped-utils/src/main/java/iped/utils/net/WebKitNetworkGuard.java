@@ -36,6 +36,10 @@ import org.slf4j.LoggerFactory;
  * transcription, Elastic, etc.) is passed to the previous selector unchanged.
  * WebKit requests are allowed only for URLs matching patterns registered with
  * {@link #allow(Pattern)}, i.e. the online map resources.
+ * <p>
+ * For a direct connection, HttpURLConnection opens a plain Socket, which calls
+ * select() again with a {@code socket://host:port} URI. It is allowed only for
+ * the host and port of the URL just allowed on the same thread.
  */
 public class WebKitNetworkGuard extends ProxySelector {
 
@@ -51,6 +55,11 @@ public class WebKitNetworkGuard extends ProxySelector {
 
     /** keyed by regex and flags, Pattern has no equals() */
     private static final Map<String, Pattern> allowed = new ConcurrentHashMap<>();
+
+    /** last URL allowed for the URLLoader on this thread, to check its socket */
+    private static final ThreadLocal<URI> lastAllowedUrl = new ThreadLocal<>();
+
+    private static final String SOCKET_SCHEME = "socket";
 
     private final ProxySelector delegate;
     private final Supplier<String> webKitCaller;
@@ -119,6 +128,7 @@ public class WebKitNetworkGuard extends ProxySelector {
 
     static void clearAllowedForTests() {
         allowed.clear();
+        lastAllowedUrl.remove();
     }
 
     static int allowedCountForTests() {
@@ -131,12 +141,38 @@ public class WebKitNetworkGuard extends ProxySelector {
                 .filter(c -> c.startsWith(WEBKIT_NETWORK_PACKAGE)).findFirst().orElse(null));
     }
 
+    private static int port(URI uri) {
+        if (uri.getPort() != -1) {
+            return uri.getPort();
+        }
+        return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+    }
+
+    /** socket://host:port of the URL allowed just before on this thread */
+    static boolean isSocketOfLastAllowedUrl(URI socket) {
+        URI url = lastAllowedUrl.get();
+        return url != null && url.getHost() != null && url.getHost().equalsIgnoreCase(socket.getHost())
+                && port(url) == socket.getPort();
+    }
+
+    private boolean isAllowedFromUrlLoader(URI uri) {
+        if (SOCKET_SCHEME.equalsIgnoreCase(uri.getScheme())) {
+            return isSocketOfLastAllowedUrl(uri);
+        }
+        if (isAllowed(uri)) {
+            lastAllowedUrl.set(uri);
+            return true;
+        }
+        lastAllowedUrl.remove();
+        return false;
+    }
+
     @Override
     public List<Proxy> select(URI uri) {
         String caller = webKitCaller.get();
         if (caller != null) {
             // only the HTTP loader is allowed, and only for registered URLs
-            if (!caller.startsWith(URL_LOADER) || !isAllowed(uri)) {
+            if (!caller.startsWith(URL_LOADER) || !isAllowedFromUrlLoader(uri)) {
                 LOGGER.debug("Blocked network access from WebView content: {} ({})", uri, caller); //$NON-NLS-1$
                 // HttpURLConnection reports it as IOException before connecting
                 throw new IllegalArgumentException("Network access blocked for WebView content: " + uri); //$NON-NLS-1$
