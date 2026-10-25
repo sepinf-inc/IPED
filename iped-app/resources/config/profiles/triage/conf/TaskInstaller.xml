@@ -51,6 +51,8 @@
     <task class="iped.engine.task.FragmentLargeBinaryTask"></task>
     <task class="iped.engine.task.EntropyTask"></task>
     <task class="iped.engine.task.MinIOTask"></task>
+    <!--EmbeddingTask generates the RAG embeddings that IndexTask stores (enableRAG)-->
+    <task class="iped.engine.task.index.EmbeddingTask"></task>
     <task class="iped.engine.task.index.ElasticSearchIndexTask"></task>
     <task class="iped.engine.task.index.IndexTask"></task>
     <task class="iped.engine.graph.GraphTask"></task>

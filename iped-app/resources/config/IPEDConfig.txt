@@ -104,6 +104,10 @@ indexFileContents = true
 # You must configure at least host/port options in conf/ElasticSearchConfig.txt
 enableIndexToElasticSearch = false
 
+# Enables Retrieval-Augmented Generation (RAG) capabilities.
+# Requires an embedding model server (e.g. Ollama). Advanced settings can be configured in conf/RAGConfig.txt.
+enableRAG = false
+
 # Enables exporting files to MinIO object storage cluster.
 # You must configure at least host/port options in conf/MinIOConfig.txt
 enableMinIO = false

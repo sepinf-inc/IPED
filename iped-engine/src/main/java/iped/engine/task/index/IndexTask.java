@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -14,7 +17,11 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.KnnVectorField;
+import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.VectorSimilarityFunction;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -39,6 +46,7 @@ import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.parsers.standard.StandardParser;
+import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 
 /**
@@ -60,10 +68,47 @@ public class IndexTask extends AbstractTask {
     public static final String FRAG_PARENT_ID = "fragParentId";
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
+    /** Stored field of a RAG fragment document: unique track-ID ("globalId#n") of the fragment. */
+    public static final String FRAG_TRACK_ID = "fragTrackId";
+
+    /** Stored field of a RAG fragment document: numeric ID of its item. */
+    public static final String FRAG_PARENT_NUMERIC_ID = "fragParentNumericId";
+
+    /** KNN vector field of a RAG fragment document: the text embedding of the fragment. */
+    public static final String CONTENT_EMBEDDING = "content_embedding";
+
+    /** Stored field of a RAG fragment document: the sanitized fragment text sent to the model. */
+    public static final String CONTENT_STORED = "content_stored";
+
+    /** Indexed field of a RAG fragment document: the original fragment text, for keyword search. */
+    public static final String RAG_CONTENT = "ragContent";
+
+    /** Marker field set to "1" on RAG fragment documents. */
+    public static final String HAS_EMBEDDING_FRAG = "hasEmbeddingFrag";
+
+    /** Indexed field: embedding model of the fragment vector, checked when the case is analyzed. */
+    public static final String EMBEDDING_MODEL = "embeddingModel";
+
+    /** Fields of RAG fragment documents, which are not item properties. */
+    public static final Set<String> RAG_FRAGMENT_FIELDS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            FRAG_TRACK_ID, FRAG_PARENT_NUMERIC_ID, CONTENT_EMBEDDING, CONTENT_STORED, RAG_CONTENT, HAS_EMBEDDING_FRAG,
+            EMBEDDING_MODEL)));
+
     private static final AtomicBoolean finished = new AtomicBoolean();
     private static final AtomicBoolean lastIDLoaded = new AtomicBoolean();
 
     private static FieldType contentField;
+
+    /** As the regular content, without term vectors: RAG keyword search does not use them. */
+    private static final FieldType RAG_CONTENT_FIELD = ragContentFieldType();
+
+    private static FieldType ragContentFieldType() {
+        FieldType field = new FieldType();
+        field.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        field.setOmitNorms(true);
+        field.freeze();
+        return field;
+    }
 
     private static final FieldType getContentFieldType() {
         if (contentField == null) {
@@ -146,7 +191,17 @@ public class IndexTask extends AbstractTask {
         FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
                 indexConfig.getTextOverlapSize());
         try {
-            worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader));
+            Iterable<Document> documents = new DocumentsIterable(evidence, fragReader);
+            List<Document> ragDocuments = ragDocuments(evidence,
+                    (EmbeddingTask.Fragments) evidence.getTempAttribute(EmbeddingTask.FRAGMENTS_ATTR));
+            if (!ragDocuments.isEmpty()) {
+                stats.addRagFragments(ragDocuments.size());
+                // children before the parent document, in the same block
+                Iterable<Document> itemDocuments = documents;
+                documents = () -> new ConcatIterator(ragDocuments.iterator(), itemDocuments.iterator());
+            }
+            worker.writer.addDocuments(documents);
+            evidence.setTempAttribute(EmbeddingTask.FRAGMENTS_ATTR, null);
 
         } catch (IOException e) {
             if (IOUtil.isDiskFull(e))
@@ -218,6 +273,55 @@ public class IndexTask extends AbstractTask {
             };
         }
 
+    }
+
+    /**
+     * One child document per embedded fragment, with the vector, the sanitized text sent to the model
+     * and the original text for keyword search. They have no regular content field, so the regular
+     * searches do not see them.
+     */
+    static List<Document> ragDocuments(IItem item, EmbeddingTask.Fragments fragments) {
+        String globalId = (String) item.getExtraAttribute(ExtraProperties.GLOBAL_ID);
+        if (fragments == null || globalId == null) {
+            return Collections.emptyList();
+        }
+        List<Document> docs = new ArrayList<>();
+        for (int i = 0; i < fragments.size(); i++) {
+            float[] vector = fragments.getVector(i);
+            if (vector == null || vector.length == 0) {
+                continue;
+            }
+            Document doc = new Document();
+            doc.add(new StringField(FRAG_TRACK_ID, globalId + "#" + (i + 1), Field.Store.YES));
+            doc.add(new StringField(FRAG_PARENT_NUMERIC_ID, String.valueOf(item.getId()), Field.Store.YES));
+            doc.add(new StoredField(CONTENT_STORED, fragments.getSanitizedText(i)));
+            doc.add(new Field(RAG_CONTENT, new StringReader(fragments.getText(i)), RAG_CONTENT_FIELD));
+            doc.add(new KnnVectorField(CONTENT_EMBEDDING, vector, VectorSimilarityFunction.COSINE));
+            doc.add(new StringField(HAS_EMBEDDING_FRAG, "1", Field.Store.YES));
+            doc.add(new StringField(EMBEDDING_MODEL, fragments.getModel(), Field.Store.NO));
+            docs.add(doc);
+        }
+        return docs;
+    }
+
+    private static class ConcatIterator implements Iterator<Document> {
+
+        private final Iterator<Document> first, second;
+
+        private ConcatIterator(Iterator<Document> first, Iterator<Document> second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return first.hasNext() || second.hasNext();
+        }
+
+        @Override
+        public Document next() {
+            return first.hasNext() ? first.next() : second.next();
+        }
     }
 
     private Metadata getMetadata(IItem evidence) {

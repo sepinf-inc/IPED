@@ -7,6 +7,7 @@ import org.apache.lucene.index.IndexReader;
 
 import iped.data.IIPEDSource;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.index.IndexTask;
 
 public class LoadIndexFields {
 
@@ -17,6 +18,7 @@ public class LoadIndexFields {
             IndexReader leafReader = source.getReader();
             leafReader.leaves().forEach(ctx -> ctx.reader().getFieldInfos().forEach(info -> {
                 if (!IndexItem.CONTENT.equals(info.name) && !info.name.startsWith(IndexItem.GEO_SSDV_PREFIX)
+                        && !IndexTask.RAG_FRAGMENT_FIELDS.contains(info.name)
                         && (!info.name.startsWith(SimilarFacesSearch.FACE_FEATURES)
                                 || info.name.equals(SimilarFacesSearch.FACE_FEATURES))) {
                     names.add(info.name);

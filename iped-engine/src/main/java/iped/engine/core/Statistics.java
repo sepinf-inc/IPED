@@ -57,6 +57,26 @@ public class Statistics {
 
     private static final float IO_ERROR_RATE_TO_WARN = 0.05f;
 
+    /**
+     * Values of keys ending in password, apiKey, secret or token (e.g. llmApiKey, authToken, but
+     * not maxTokens), as key=value or key:value.
+     */
+    private static final java.util.regex.Pattern SECRET_VALUE = java.util.regex.Pattern.compile(
+            "(?i)(\\w*(?:password|passwd|apikey|api_key|secret|token)\\s*[:=]\\s*)[^;,\\s}]+");
+
+    /** Value of the -p/-password command line option (passwords of encrypted evidences). */
+    private static final java.util.regex.Pattern PASSWORD_OPTION = java.util.regex.Pattern
+            .compile("((?:^|\\s)-(?:p|password)\\s+)\\S+");
+
+    /** Masks secrets before configurations and command lines are logged: logs go with the case. */
+    static String maskSecrets(String text) {
+        if (text == null) {
+            return null;
+        }
+        String masked = SECRET_VALUE.matcher(text).replaceAll("$1***");
+        return PASSWORD_OPTION.matcher(masked).replaceAll("$1***");
+    }
+
     private HashMap<HashValue, Integer> ignoredMap = new HashMap<>();
 
     ICaseData caseData;
@@ -65,6 +85,7 @@ public class Statistics {
     // EstatÃ­sticas
     Date start = new Date();
     int splits = 0;
+    int ragFragments = 0;
     int timeouts = 0;
     int processed = 0;
     int activeProcessed = 0;
@@ -143,6 +164,14 @@ public class Statistics {
 
     synchronized public int getSplits() {
         return splits;
+    }
+
+    synchronized public int getRagFragments() {
+        return ragFragments;
+    }
+
+    synchronized public void addRagFragments(int count) {
+        ragFragments += count;
     }
 
     synchronized public void incSplits() {
@@ -319,9 +348,9 @@ public class Statistics {
         LOGGER.info("Carved Ignored (corrupted): {}", carvedIgnored); //$NON-NLS-1$
         LOGGER.info("Ignored Items: {}", ignored); //$NON-NLS-1$
 
-        int indexed = (numDocs - getSplits() - previousIndexedFiles) / 2;
+        // RAG fragment documents are extra children of their items
+        int indexed = (numDocs - getSplits() - getRagFragments() - previousIndexedFiles) / 2;
         LOGGER.info("Total Indexed: {}", indexed); //$NON-NLS-1$
-
         LOGGER.info("Discovered volume: {} bytes", caseData.getDiscoveredVolume());
         LOGGER.info("Processed  volume: {} bytes", getVolume());
 
@@ -397,13 +426,13 @@ public class Statistics {
                 continue;
             }
             String configString = config.getConfiguration().toString().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
-            LOGGER.info(config.getClass().getSimpleName() + ": " + configString);
+            LOGGER.info(config.getClass().getSimpleName() + ": " + maskSecrets(configString));
         }
 
         String configString = enabledTasks.getConfiguration().toString();
-        LOGGER.info(Configuration.CONFIG_FILE + ": " + configString);
+        LOGGER.info(Configuration.CONFIG_FILE + ": " + maskSecrets(configString));
 
-        LOGGER.info("Java Command: {}", System.getProperty("sun.java.command"));
+        LOGGER.info("Java Command: {}", maskSecrets(System.getProperty("sun.java.command")));
 
         int minMemPerThread = 200;
         if (maxMemory / localConfig.getNumThreads() < minMemPerThread) {

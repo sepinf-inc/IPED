@@ -205,4 +205,24 @@ public class ExtraProperties {
     public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_BODY,
             Message.MESSAGE_CC, Message.MESSAGE_BCC, Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT,
             MESSAGE_ATTACHMENT_COUNT.getName());
+
+    /**
+     * Extra attribute set to {@code "true"} on a parent evidence item when at least
+     * one of its text fragments has had an embedding generated and stored in the
+     * RAG vector index. Allows filtering/searching for embeddable items in the UI.
+     */
+    public static final String HAS_EMBEDDING = "hasEmbedding"; //$NON-NLS-1$
+
+    /**
+     * Extra attribute set to {@code "true"} when at least one text fragment with
+     * useful content of an item selected for RAG could not be embedded. Those
+     * fragments are not retrievable by the RAG assistant.
+     */
+    public static final String EMBEDDING_FAILED = "embeddingFailed"; //$NON-NLS-1$
+
+    /**
+     * Extra attribute set to {@code "true"} when the item text exceeded the RAG
+     * per-item limit: text beyond it is indexed for regular search but not embedded.
+     */
+    public static final String EMBEDDING_TRUNCATED = "embeddingTruncated"; //$NON-NLS-1$
 }
