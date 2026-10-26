@@ -1,6 +1,7 @@
 package iped.parsers.emule.data;
 
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 public class ED2KURLCollectionFile implements ECollectionFile {
     private String name;
@@ -21,7 +22,7 @@ public class ED2KURLCollectionFile implements ECollectionFile {
     public String getName() {
         String result;
         try {
-            result = URLDecoder.decode(name);// removes any URL escape character from file name
+            result = URLDecoder.decode(name, StandardCharsets.UTF_8);// removes any URL escape character from file name
             return result;
         } catch (Exception e) {
             e.printStackTrace();

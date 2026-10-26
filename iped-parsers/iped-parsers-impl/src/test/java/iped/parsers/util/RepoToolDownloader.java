@@ -1,5 +1,6 @@
 package iped.parsers.util;
 
+import java.net.URI;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -28,7 +29,7 @@ public class RepoToolDownloader {
      */
     public static void unzipFromUrl(String repoPath, String outputDir) throws IOException {
 
-        URL url = new URL(MVN_REPO_URL + repoPath.replaceAll("^/+", ""));
+        URL url = URI.create(MVN_REPO_URL + repoPath.replaceAll("^/+", "")).toURL();
         downloadZipFromUrl(url, outputDir);
 
         try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(outputDir + ZIP_FILE_NAME))) {

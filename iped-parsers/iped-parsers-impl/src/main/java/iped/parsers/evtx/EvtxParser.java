@@ -1,5 +1,6 @@
 package iped.parsers.evtx;
 
+import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -188,7 +189,7 @@ public class EvtxParser extends AbstractParser {
                 totalRecordCount.val += groupRecordCount;
 
                 if (extractor.shouldParseEmbedded(recordMetadata)) {
-                    ByteArrayInputStream chatStream = new ByteArrayInputStream(content.toString().getBytes());
+                    ByteArrayInputStream chatStream = new ByteArrayInputStream(content.toString().getBytes(StandardCharsets.UTF_8));
                     extractor.parseEmbedded(chatStream, handler, recordMetadata, false);
                 }
             } catch (SAXException | IOException e) {

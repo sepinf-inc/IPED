@@ -1,5 +1,6 @@
 package iped.io;
 
+import java.net.URI;
 import java.net.URL;
 import java.security.ProtectionDomain;
 
@@ -22,7 +23,7 @@ public class URLUtil {
         if (url != null && "file".equalsIgnoreCase(url.getProtocol()) && url.getPath() != null
                 && url.getPath().startsWith("//")) {
             try {
-                URL newUrl = new URL("file://" + url.getPath());
+                URL newUrl = URI.create("file://" + url.getPath()).toURL();
                 if (newUrl != null) {
                     url = newUrl;
                 }

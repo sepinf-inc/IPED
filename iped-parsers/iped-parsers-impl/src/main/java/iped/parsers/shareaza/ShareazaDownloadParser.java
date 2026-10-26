@@ -134,7 +134,7 @@ public class ShareazaDownloadParser extends AbstractParser {
             byte[] magicBytes = new byte[3];
             buffer.get(magicBytes);
 
-            String magic = new String(magicBytes);
+            String magic = new String(magicBytes, StandardCharsets.ISO_8859_1);
             int version = buffer.getInt();
 
             addLine(xhtml, "Magic:                   " + magic);

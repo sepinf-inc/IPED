@@ -104,8 +104,9 @@ public class SimilarFacesSearch {
                         Arrays.fill(distsPerFace, minDistSquared + 1);
                         try {
                             boolean hasVal = similarityFeaturesValues.advanceExact(luceneId);
-                            while (hasVal && (ordinal = similarityFeaturesValues
-                                    .nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                            for (int ordIdx = 0, ordCnt = hasVal ? similarityFeaturesValues.docValueCount()
+                                    : 0; ordIdx < ordCnt; ordIdx++) {
+                                ordinal = similarityFeaturesValues.nextOrd();
                                 BytesRef bytesRef = similarityFeaturesValues.lookupOrd(ordinal);
                                 float[] currentFeatures = convToFloatVec(bytesRef.bytes);
                                 int faceIdx = -1;

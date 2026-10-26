@@ -1,5 +1,6 @@
 package iped.parsers.registry.model;
 
+import iped.utils.CharsetUtil;
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -33,7 +34,7 @@ public class KeyValue extends CellContent {
     public String getValueName() {
         byte buffer[] = Arrays.copyOfRange(data, 2, 4);
         int nameLength = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8;
-        return new String(Arrays.copyOfRange(data, 20, 20 + nameLength));
+        return new String(Arrays.copyOfRange(data, 20, 20 + nameLength), CharsetUtil.NATIVE);
     }
 
     public int getValueDatatype() {
@@ -148,7 +149,7 @@ public class KeyValue extends CellContent {
                 result = new String(buffer, "UTF-16LE");
             }
         } catch (UnsupportedEncodingException e) {
-            result = new String(buffer);
+            result = new String(buffer, CharsetUtil.NATIVE);
         }
         return result;
     }
@@ -204,7 +205,7 @@ public class KeyValue extends CellContent {
                         result = new String(buffer, "UTF-16LE");
                     }
                 } catch (UnsupportedEncodingException e) {
-                    result = new String(buffer);
+                    result = new String(buffer, CharsetUtil.NATIVE);
                 }
                 break;
             case REG_MULTI_SZ:
@@ -235,14 +236,14 @@ public class KeyValue extends CellContent {
                             do {
                                 int j = i;
                                 j = ArrayUtils.indexOf(buffer, (byte) '\0', j + 1);
-                                result += new String(Arrays.copyOfRange(buffer, i, j + 1));
+                                result += new String(Arrays.copyOfRange(buffer, i, j + 1), CharsetUtil.NATIVE);
                                 result += "\n";
                                 i = j + 3;
                             } while (i < buffer.length);
                         }
                     }
                 } catch (UnsupportedEncodingException e) {
-                    result = new String(buffer);
+                    result = new String(buffer, CharsetUtil.NATIVE);
                 }
                 break;
             case REG_DWORD:

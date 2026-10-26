@@ -6,9 +6,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.search.Query;
 
 import iped.app.ui.App;
@@ -83,10 +84,11 @@ public class AIFiltersLoader {
                 Map<String, Integer> values = new HashMap<>();
                 LuceneSearchResult result = ipedSearcher.luceneSearch();
                 int[] ids = result.getLuceneIds();
-                IndexSearcher indexSearcher = source.getSearcher();
                 String property = node.getProperty().replaceAll("\\\\", "");
+                StoredFields storedFields = source.storedFields();
+                Set<String> fieldsToLoad = Collections.singleton(property);
                 for (int id : ids) {
-                    Document doc = indexSearcher.doc(id);
+                    Document doc = storedFields.document(id, fieldsToLoad);
                     String[] val = doc.getValues(property);
                     for (String v : val) {
                         Integer cnt = values.get(v);

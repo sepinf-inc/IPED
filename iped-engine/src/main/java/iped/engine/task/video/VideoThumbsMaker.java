@@ -1,5 +1,6 @@
 package iped.engine.task.video;
 
+import iped.utils.CharsetUtil;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -88,7 +89,7 @@ public class VideoThumbsMaker {
         List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] { mplayer, "-demuxer", "lavf", "-nosound", "-noautosub", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 "-noconsolecontrols", "-vo", "null", "-ao", "null", "-frames", "0", "-identify", in.getPath() })); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
-        File subTmp = new File(tmp, prefix + Thread.currentThread().getId() + "_" + System.currentTimeMillis()); //$NON-NLS-1$
+        File subTmp = new File(tmp, prefix + Thread.currentThread().threadId() + "_" + System.currentTimeMillis()); //$NON-NLS-1$
         subTmp.mkdir();
         subTmp.deleteOnExit();
 
@@ -728,7 +729,7 @@ public class VideoThumbsMaker {
         public void run() {
             BufferedReader br = null;
             try {
-                br = new BufferedReader(new InputStreamReader(is), 4096);
+                br = new BufferedReader(new InputStreamReader(is, CharsetUtil.NATIVE), 4096);
                 String line = null;
                 while ((line = br.readLine()) != null) {
                     counter++;

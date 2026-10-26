@@ -373,7 +373,7 @@ public class RemoteTranscriptionService {
                             logger.info(prefix + "Accepted connection.");
 
                             byte[] bytes = bis.readNBytes(MESSAGES.VERSION_1_2.toString().length());
-                            protocol = new String(bytes);
+                            protocol = new String(bytes, StandardCharsets.UTF_8);
                             synchronized (beaconQueue) {
                                 opc = new OpenConnectons(client, bis, writer, this);
                                 beaconQueue.add(opc);
@@ -386,7 +386,7 @@ public class RemoteTranscriptionService {
 
                             // read the audio_size message
                             bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
-                            String cmd = new String(bytes);
+                            String cmd = new String(bytes, StandardCharsets.UTF_8);
 
                             if (!MESSAGES.AUDIO_SIZE.toString().equals(cmd)) {
                                 error = true;

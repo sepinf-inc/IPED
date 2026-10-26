@@ -1,5 +1,6 @@
 package iped.engine.sleuthkit;
 
+import iped.utils.CharsetUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -255,7 +256,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
                 try {
                     int r = 0;
                     while ((r = is.read(b)) != -1) {
-                        String msg = new String(b, 0, r).trim();
+                        String msg = new String(b, 0, r, CharsetUtil.NATIVE).trim();
                         if (!msg.isEmpty())
                             logger.info("SleuthkitServer " + id + ": " + msg); //$NON-NLS-1$ //$NON-NLS-2$
                     }

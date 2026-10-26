@@ -16,6 +16,8 @@
  */
 package iped.parsers.fork;
 
+import java.net.URISyntaxException;
+import java.net.URI;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +44,8 @@ class MemoryURLStreamHandlerFactory implements URLStreamHandlerFactory {
 
     public static class MemoryURLStreamHandler extends URLStreamHandler {
 
+        private static final MemoryURLStreamHandler HANDLER = new MemoryURLStreamHandler();
+
         private static final AtomicInteger counter = new AtomicInteger();
 
         private static final List<MemoryURLStreamRecord> records = new LinkedList<MemoryURLStreamRecord>();
@@ -49,7 +53,7 @@ class MemoryURLStreamHandlerFactory implements URLStreamHandlerFactory {
         public static URL createURL(byte[] data) {
             try {
                 int i = counter.incrementAndGet();
-                URL url = new URL("tika-in-memory", "localhost", "/" + i);
+                URL url = URL.of(new URI("tika-in-memory", "localhost", "/" + i, null), HANDLER);
 
                 MemoryURLStreamRecord record = new MemoryURLStreamRecord();
                 record.url = new WeakReference<URL>(url);
@@ -57,7 +61,7 @@ class MemoryURLStreamHandlerFactory implements URLStreamHandlerFactory {
                 records.add(record);
 
                 return url;
-            } catch (MalformedURLException e) {
+            } catch (MalformedURLException | URISyntaxException e) {
                 throw new RuntimeException(e);
             }
         }

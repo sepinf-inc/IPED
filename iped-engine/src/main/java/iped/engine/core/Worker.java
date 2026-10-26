@@ -18,6 +18,7 @@
  */
 package iped.engine.core;
 
+import iped.parsers.python.PythonParser;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -136,6 +137,8 @@ public class Worker extends Thread {
         for (AbstractTask task : tasks) {
             task.finish();
         }
+        // only this thread can close its Python interpreter
+        PythonParser.closeJep();
     }
 
     public void finish() throws Exception {
@@ -321,6 +324,12 @@ public class Worker extends Thread {
             if (task != null)
                 task.interrupted();
             LOGGER.info("{} interrupted on {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength()); //$NON-NLS-1$
+        }
+        try {
+            // no-op if finishTasks() already did it
+            PythonParser.closeJep();
+        } catch (Throwable t) {
+            LOGGER.warn("Error closing Python interpreter of " + getName(), t); //$NON-NLS-1$
         }
     }
 

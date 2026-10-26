@@ -67,8 +67,8 @@ public class EventTimestampCache implements Runnable {
 
                     int doc = values.nextDoc();
                     while (doc != DocIdSetIterator.NO_MORE_DOCS) {
-                        int ord = (int) values.nextOrd();
-                        while (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                        for (int ordIdx = 0, ordCnt = values.docValueCount(); ordIdx < ordCnt; ordIdx++) {
+                            int ord = (int) values.nextOrd();
                             if (emptyValueOrd == null || ord != emptyValueOrd) {
                                 for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
                                     Date date = null;
@@ -83,7 +83,6 @@ public class EventTimestampCache implements Runnable {
                                     }
                                 }
                             }
-                            ord = (int) values.nextOrd();
                         }
                         doc = values.nextDoc();
                     }

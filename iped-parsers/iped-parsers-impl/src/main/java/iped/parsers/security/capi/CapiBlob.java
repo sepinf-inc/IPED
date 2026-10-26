@@ -1,5 +1,6 @@
 package iped.parsers.security.capi;
 
+import iped.utils.CharsetUtil;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +51,7 @@ public class CapiBlob {
 
         byte[] str = new byte[this.nameLen];
         dis.read(str);
-        this.name = new String(str);
+        this.name = new String(str, CharsetUtil.NATIVE);
         this.hash = new byte[this.hashLen];
         dis.read(this.hash);
 
@@ -113,7 +114,7 @@ public class CapiBlob {
         db.descriptionLen = toInt(inteiro);
         byte[] str = new byte[db.descriptionLen];
         dis.read(str);
-        db.description = new String(str);
+        db.description = new String(str, CharsetUtil.NATIVE);
 
         dis.read(inteiro);
         db.algCrypt = toInt(inteiro);

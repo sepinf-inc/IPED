@@ -237,7 +237,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
         if (docId != lastDocRead) {
             try {
-                doc = app.appCase.getSearcher().doc(docId);
+                doc = app.appCase.storedFields().document(docId);
             } catch (IOException e) {
                 e.printStackTrace();
                 return Messages.getString("ResultTableModel.Error"); //$NON-NLS-1$

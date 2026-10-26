@@ -111,7 +111,7 @@ public class QueryBuilder {
             if (query instanceof BooleanQuery) {
                 for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
                     if (!clause.isProhibited()) {
-                        result.addAll(getQueryStrings(clause.getQuery()));
+                        result.addAll(getQueryStrings(clause.query()));
                     }
                 }
             } else if (query instanceof BoostQuery) {
@@ -227,7 +227,7 @@ public class QueryBuilder {
         } else if (query instanceof BooleanQuery) {
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
             for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
-                builder.add(rewriteQuery(clause.getQuery(), expandCategories), clause.getOccur());
+                builder.add(rewriteQuery(clause.query(), expandCategories), clause.occur());
             }
             builder.setMinimumNumberShouldMatch(((BooleanQuery) query).getMinimumNumberShouldMatch());
             return builder.build();
@@ -422,9 +422,9 @@ public class QueryBuilder {
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
             boolean allNegative = true;
             for (BooleanClause clause : ((BooleanQuery) q).clauses()) {
-                Query subQ = handleNegativeQueries(clause.getQuery(), analyzer);
-                builder.add(subQ, clause.getOccur());
-                if(clause.getOccur() != Occur.MUST_NOT) {
+                Query subQ = handleNegativeQueries(clause.query(), analyzer);
+                builder.add(subQ, clause.occur());
+                if(clause.occur() != Occur.MUST_NOT) {
                     allNegative = false;
                 }
             }

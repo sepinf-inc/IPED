@@ -20,8 +20,14 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <!-- source/target instead of release: javac release option only sees the standard platform API,
+             not the JavaFX modules bundled in the JDK (Liberica jdk+fx) that IPED compiles against -->
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <!-- JNI/JNA/Unsafe users (sleuthkit, sqlite, jep, javacpp, neo4j, lucene...): avoid JEP 472/498 warnings.
+             Same native/unsafe flags as iped.utils.JvmFlags. @{argLine} keeps agents set by other plugins (JaCoCo). -->
+        <iped.jvm.flags>--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow</iped.jvm.flags>
+        <argLine></argLine>
         <resources.dir>${basedir}/resources</resources.dir>
         <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>
         <lib.dir>${release.dir}/lib</lib.dir>
@@ -34,11 +40,11 @@
         <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit b673cf4 can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
         <tika.core.version>2.4.0-p1</tika.core.version>
         <pdfbox.version>2.0.27</pdfbox.version>
-        <lucene.version>9.2.0</lucene.version>
+        <lucene.version>10.5.1</lucene.version>
         <sleuthkit.version>4.15.0.p1</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>
-        <slf4j.version>1.7.25</slf4j.version>
-        <log4j.version>2.17.1</log4j.version>
+        <slf4j.version>2.0.17</slf4j.version>
+        <log4j.version>2.26.1</log4j.version>
         <junit.version>4.13.2</junit.version>
         <hamcrest.version>3.0</hamcrest.version>
         <icepdf.version>7.0.0</icepdf.version>
@@ -48,6 +54,14 @@
         <telegram.version>1.0.15</telegram.version>
         <twelvemonkeys.version>3.15.0</twelvemonkeys.version>
         <bencode.version>1.4.1</bencode.version>
+        <!-- aligned with neo4j, which fails with mixed versions -->
+        <jackson.version>2.22.3</jackson.version>
+        <netty.version>4.2.19.Final</netty.version>
+        <jersey.version>2.48</jersey.version>
+        <!-- last JAXB versions with the javax.xml.bind package -->
+        <jaxb.api.version>2.3.3</jaxb.api.version>
+        <jaxb.runtime.version>2.3.9</jaxb.runtime.version>
+        <gson.version>2.13.1</gson.version>
     </properties>
 
     <repositories>
@@ -73,6 +87,47 @@
         </repository>
     </repositories>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jersey</groupId>
+                <artifactId>jersey-bom</artifactId>
+                <version>${jersey.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jaxb.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${jaxb.runtime.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -91,7 +146,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
+            <artifactId>log4j-slf4j2-impl</artifactId>
             <version>${log4j.version}</version>
         </dependency>
         <dependency>
@@ -125,19 +180,105 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <!-- single place for plugin versions, modules must not override them -->
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.16.0</version>
+                    <configuration>
+                        <showDeprecation>true</showDeprecation>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.6</version>
+                    <configuration>
+                        <argLine>@{argLine} ${iped.jvm.flags}</argLine>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.11.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.4.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.12.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.22.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>3.6.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.15</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.0</version>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
-                <configuration>
-                    <forceJavacCompilerUse>false</forceJavacCompilerUse>
-                </configuration>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.6.3</version>
+                <executions>
+                    <execution>
+                        <id>enforce-build-environment</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[${maven.compiler.target},)</version>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>[3.9.0,)</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -147,12 +288,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>2.5</version>
+                <version>3.6.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.8</version>
+                <version>3.9.0</version>
                 <configuration>
                     <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
                 </configuration>
@@ -160,7 +301,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.13</version>
+                <version>3.6.0</version>
                 <configuration>
                     <configLocation>${resources.dir}/checkstyle/asap-checker.xml</configLocation>
                 </configuration>
@@ -168,7 +309,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.1</version>
+                <version>3.12.0</version>
                 <configuration>
                     <failOnError>false</failOnError>
                 </configuration>

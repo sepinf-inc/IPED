@@ -186,7 +186,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                         try {
 
                             int luceneId = app.getIPEDSource().getLuceneId(item);
-                            Document doc = app.getIPEDSource().getSearcher().doc(luceneId);
+                            Document doc = app.getIPEDSource().storedFields().document(luceneId);
 
                             String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
 
@@ -396,7 +396,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                             lastResultBitmap[item.getSourceId()].add(item.getId());
 
                             int luceneId = app.getIPEDSource().getLuceneId(item);
-                            Document doc = app.getIPEDSource().getSearcher().doc(luceneId);
+                            Document doc = app.getIPEDSource().storedFields().document(luceneId);
 
                             String lat;
                             String longit;

@@ -172,12 +172,20 @@
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/bmp</mime>
             <mime>image/gif</mime>
-            <mime>image/png</mime>
             <mime>image/vnd.wap.wbmp</mime>
             <mime>image/x-jbig2</mime>
             <params>
                 <param name="parserName" type="string">ImageParser</param>
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.ImageParser</param>
+            </params>
+        </parser>
+
+        <parser class="iped.parsers.misc.MultipleParser">
+            <mime>image/png</mime>
+            <params>
+                <param name="parserName" type="string">ImageParser</param>
+                <!-- PngImageParser wraps Tika ImageParser, recovering metadata from damaged PNGs (#1522) -->
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;iped.parsers.image.PngImageParser</param>
             </params>
         </parser>
 

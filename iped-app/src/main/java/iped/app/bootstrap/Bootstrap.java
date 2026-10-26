@@ -1,5 +1,8 @@
 package iped.app.bootstrap;
 
+import iped.utils.JvmFlags;
+import iped.utils.CharsetUtil;
+import java.io.OutputStreamWriter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -76,7 +79,7 @@ public class Bootstrap {
         List<String> heapArgs = new ArrayList<>();
         List<String> finalArgs = new ArrayList<>();
         boolean XmxDefined = false;
-        long physicalMemory = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
+        long totalMemSize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalMemorySize();
         for (String arg : args) {
             if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
                 if (arg.charAt(3) == 'x') {
@@ -106,9 +109,9 @@ public class Bootstrap {
                         break;
                 }
                 long memSize = parmSize;
-                if (memSize > physicalMemory) {
-                    memSize = physicalMemory;
-                    System.out.println("-Xms/-Xmx parameter value greater than physical memory. It was adjusted to the physical memory: " + memSize / (1024 * 1024) + "M");
+                if (memSize > totalMemSize) {
+                    memSize = totalMemSize;
+                    System.out.println("-Xms/-Xmx parameter value greater than memory size. It was adjusted to the memory: " + memSize / (1024 * 1024) + "M");
                 }
                 heapArgs.add(arg.substring(0, 4) + memSize / (1024 * 1024) + "M");
             } else {
@@ -118,7 +121,7 @@ public class Bootstrap {
 
         if (!XmxDefined) {
             // if -Xmx is not specified, set it, up to 32500MB
-            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32500L * 1024 * 1024);
+            long memSize = Math.min((long) (totalMemSize * getRAMToHeapFactor()), 32500L * 1024 * 1024);
             heapArgs.add("-Xmx" + (memSize / (1024 * 1024)) + "M");
         }
 
@@ -229,17 +232,12 @@ public class Bootstrap {
     }
     
     private static List<String> getCustomJVMArgs(){
-        return Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
+        List<String> args = new ArrayList<>(Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
                 "-XX:+HeapDumpOnOutOfMemoryError",
-                "--add-opens=java.base/java.util=ALL-UNNAMED",
-                "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-                "--add-opens=java.base/java.lang=ALL-UNNAMED",
-                "--add-opens=java.base/java.math=ALL-UNNAMED",
-                "--add-opens=java.base/java.net=ALL-UNNAMED",
-                "--add-opens=java.base/java.io=ALL-UNNAMED",
-                "--add-opens=java.base/java.nio=ALL-UNNAMED",
-                "--add-opens=java.base/java.text=ALL-UNNAMED",
-                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED");
+                // WebKitNetworkGuard needs the URLConnection based loader, see #1522
+                "-Dcom.sun.webkit.useHTTP2Loader=false"));
+        args.addAll(JvmFlags.all());
+        return args;
     }
 
     private static List<String> getCurrentJVMArgs() {
@@ -294,8 +292,8 @@ public class Bootstrap {
         Thread t = new Thread() {
             public void run() {
                 try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                    PrintWriter writer = new PrintWriter(os, true);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is, CharsetUtil.NATIVE));
+                    PrintWriter writer = new PrintWriter(new OutputStreamWriter(os, CharsetUtil.NATIVE), true);
                     String line = null;
                     while ((line = reader.readLine()) != null) {
                         if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
