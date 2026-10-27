@@ -221,7 +221,8 @@ public class UfedMessageParser extends AbstractParser {
     private void extractAttachments(InstantMessage message, ContentHandler handler, EmbeddedDocumentExtractor extractor,
             boolean onlyUnreferenced) throws SAXException, IOException {
 
-        for (Attachment attach : message.getAttachments()) {
+        // own + forwarded embedded attachments, without duplicates
+        for (Attachment attach : message.getAllAttachments()) {
             if (onlyUnreferenced && attach.getUnreferencedContent() == null) {
                 continue;
             }

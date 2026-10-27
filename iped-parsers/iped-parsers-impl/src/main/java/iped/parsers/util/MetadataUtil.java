@@ -256,6 +256,7 @@ public class MetadataUtil {
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
         generalKeys.add(ExtraProperties.PARENT_VIEW_POSITION);
+        generalKeys.add(ExtraProperties.MOD_TO_INTERNAL_TIME_DIFF);
 
         return generalKeys;
     }

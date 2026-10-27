@@ -33,8 +33,6 @@ import iped.utils.IOUtil;
 
 public class Util {
 
-    private static final String imageThumbsDir = "../../../../iped/thumbs/"; //$NON-NLS-1$
-    private static final String videoThumbsDir = "../../../../iped/view/"; //$NON-NLS-1$
     private static final int MAX_PREVIEW_SIZE = 128;
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 
@@ -261,6 +259,10 @@ public class Util {
             return Collections.emptyList();
         List<IItemReader> items = searcher.search(query);
         return items;
+    }
+
+    public static IItemReader getFirstItem(String query, IItemSearcher searcher) {
+        return searcher == null ? null : searcher.searchFirst(query);
     }
 
     public static String getExportPath(IItemReader item) {

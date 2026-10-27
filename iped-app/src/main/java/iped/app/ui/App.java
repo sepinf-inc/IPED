@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -282,8 +282,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
-    final static String FILTRO_TODOS = Messages.getString("App.NoFilter"); //$NON-NLS-1$
-    final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
+    final static String FILTER_NO_FILTER = "[" + Messages.getString("App.NoFilter") + "]";
+    final static String FILTER_CHECKED = "[" + Messages.getString("App.Checked") + "]";
     public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
 
     static int MAX_HITS = 10000;
@@ -356,7 +356,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public MenuClass getContextMenu() {
         IItemId id = resultTableListener.getSelectedItemId();
-        IItem item = id == null ? null : appCase.getItemByItemId(id); 
+        IItem item = id == null ? null : appCase.getItemByItemId(id);
         return new MenuClass(item);
     }
 
@@ -500,6 +500,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.setTitle(Version.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         this.setSize(new Dimension(800, 600));
         this.setExtendedState(Frame.MAXIMIZED_BOTH);
+        this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         this.addWindowListener(this);
         this.setIconImages(IconUtil.getIconImages("search", "/iped/app/icon"));
         this.setVisible(true);
@@ -542,7 +543,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterComboBox = new JComboBox<String>();
         filterComboBox.setMaximumSize(new Dimension(100, 50));
         filterComboBox.setMaximumRowCount(30);
-        filterComboBox.addItem(App.FILTRO_TODOS);
+        filterComboBox.addItem(App.FILTER_NO_FILTER);
         filterComboBox.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
         filterManager = new FilterManager(filterComboBox);
 
@@ -1024,7 +1025,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
         butFaceSearch.setEnabled(false);
-        
+
         galleryTabDock.addSeparator();
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
@@ -1526,6 +1527,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowClosing(WindowEvent e) {
+        // Check if BFAC upload is in progress
+        if (!iped.bfac.BfacDialog.confirmApplicationClose(this)) {
+            return; // User cancelled, don't close
+        }
+
         // Hide the window immediately so the user sees instant close feedback.
         // This avoids further UI interaction while shutdown is running.
         setVisible(false);

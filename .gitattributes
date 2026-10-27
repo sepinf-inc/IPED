@@ -67,6 +67,8 @@
 
 # Text files where line endings should be preserved
 *.patch         -text
+# Unmodified copy of https://github.com/EricZimmerman/JumpList/blob/master/JumpList/Resources/AppIDs.txt
+/iped-app/resources/config/conf/AppIDs.txt -text
 
 #
 # Exclude files from exporting

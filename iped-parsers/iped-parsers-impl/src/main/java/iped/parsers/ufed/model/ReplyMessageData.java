@@ -12,8 +12,8 @@ public class ReplyMessageData extends BaseModel {
         super("ReplyMessageData");
     }
 
-    public String getLabel() { return (String) getField("Label"); }
-    public String getOriginalMessageID() { return (String) getField("OriginalMessageID"); }
+    public String getLabel() { return getFieldAsString("Label"); }
+    public String getOriginalMessageID() { return getFieldAsString("OriginalMessageID"); }
 
     public InstantMessage getInstantMessage() {
         return instantMessage;

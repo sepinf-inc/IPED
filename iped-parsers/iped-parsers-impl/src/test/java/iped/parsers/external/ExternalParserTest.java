@@ -30,6 +30,7 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.util.ExternalParserConfigGenerator;
 import iped.parsers.util.RepoToolDownloader;
+import iped.parsers.util.ToXMLContentHandler;
 
 
 public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
@@ -183,6 +184,31 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             assertTrue(hts.contains("0x92d8a64c"));
             assertTrue(hts.contains("Jun 08, 2022 12:09:38.412736500 UTC"));
             assertTrue(hts.toLowerCase().contains("users\\felipe costa\\appdata\\local\\microsoft\\teams\\current\\teams.exe"));
+        }
+    }
+
+    @Test
+    public void testPreFetchPreviewKeepsLineBreaks() throws IOException, TikaException, SAXException, TransformerException {
+
+        ToXMLContentHandler handler = new ToXMLContentHandler();
+        ParseContext context = new ParseContext();
+        Metadata metadata = new Metadata();
+        String fileName = "test_prefetch.pf";
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
+            assumeNotNull(prefetchParser);
+            prefetchParser.parse(stream, handler, metadata, context);
+            String hts = handler.toString();
+
+            int start = hts.indexOf("<pre>");
+            int end = hts.indexOf("</pre>");
+            assertTrue(start != -1);
+            assertTrue(end > start);
+
+            String body = hts.substring(start + "<pre>".length(), end);
+            assertTrue(body.contains("TEAMS.EXE"));
+            assertTrue(body.split("\n", -1).length > 5);
         }
     }
 

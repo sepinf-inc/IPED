@@ -45,6 +45,7 @@ public class UfedModelHandler extends DefaultHandler {
     protected final StringBuilder elementValueBuilder = new StringBuilder();
     private JumpTarget currentJumpTarget;
     private boolean inRelatedModels = false; // Flag for <RelatedModels> section
+    private boolean inMultiField = false; // Flag for <multiField> (e.g. InstantMessage "Labels" since PA 10.10)
 
     private XMLReader xmlReader;
     private ContentHandler parentHandler;
@@ -91,6 +92,11 @@ public class UfedModelHandler extends DefaultHandler {
             fieldNameStack.push(attributes.getValue("name"));
             fieldTypeStack.push(attributes.getValue("type")); // Store the field's type
 
+        } else if ("multiField".equalsIgnoreCase(qName)) {
+            fieldNameStack.push(attributes.getValue("name"));
+            fieldTypeStack.push(attributes.getValue("type"));
+            inMultiField = true;
+
         } else if ("targetid".equalsIgnoreCase(qName)) {
             currentJumpTarget = new JumpTarget();
             currentJumpTarget.setIsModel("true".equalsIgnoreCase(attributes.getValue("ismodel")));
@@ -131,12 +137,24 @@ public class UfedModelHandler extends DefaultHandler {
             if (!fieldTypeStack.isEmpty()) {
                 fieldTypeStack.pop();
             }
+        } else if ("multiField".equalsIgnoreCase(qName)) {
+            if (!fieldNameStack.isEmpty()) {
+                fieldNameStack.pop();
+            }
+            if (!fieldTypeStack.isEmpty()) {
+                fieldTypeStack.pop();
+            }
+            inMultiField = false;
         } else if ("value".equalsIgnoreCase(qName)) {
             if (!modelStack.isEmpty() && !fieldNameStack.isEmpty()) {
                 String stringValue = elementValueBuilder.toString().trim();
                 String fieldType = fieldTypeStack.peek();
                 Object parsedValue = parseValue(stringValue, fieldType);
-                if (parsedValue != null) {
+                if (inMultiField) {
+                    if (parsedValue != null && !(parsedValue instanceof String && ((String) parsedValue).isEmpty())) {
+                        modelStack.peek().addFieldValue(fieldNameStack.peek(), parsedValue);
+                    }
+                } else if (parsedValue != null) {
                     modelStack.peek().setField(fieldNameStack.peek(), parsedValue);
                 }
             }

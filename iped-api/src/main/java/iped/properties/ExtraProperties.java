@@ -180,6 +180,8 @@ public class ExtraProperties {
 
     public static final String EXTRACTED_FILE = "extractedFile";
 
+    public static final String MOD_TO_INTERNAL_TIME_DIFF = "modToInternalTimeDiff";
+
     public static final String FACE_COUNT = "face_count";
 
     public static final String FACE_LOCATIONS = "face_locations";

@@ -417,7 +417,14 @@ public class Manager {
             mergeScheduler.setMaxMergesAndThreads(8, 4);
         }
         conf.setMergeScheduler(mergeScheduler);
-        conf.setRAMBufferSizeMB(64);
+        /*
+         * Scale the RAM buffer with the heap: fewer flushes and small-segment
+         * merges on large cases. 64MB (the old fixed value) stays as the floor
+         * so memory-constrained machines keep the previous behavior; above
+         * 512MB Lucene gains little.
+         */
+        long heapMB = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        conf.setRAMBufferSizeMB(Math.min(Math.max(64, heapMB / 32), 512));
         TieredMergePolicy tieredPolicy = new TieredMergePolicy();
         /*
          * Seta tamanho máximo dos subíndices. Padrão é 5GB. Poucos subíndices grandes

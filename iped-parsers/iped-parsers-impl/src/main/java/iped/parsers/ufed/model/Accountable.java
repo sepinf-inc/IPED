@@ -24,9 +24,9 @@ public abstract class  Accountable extends BaseModel {
     }
 
     // Specific field getters
-    public String getName() { return (String) getField("Name"); }
-    public String getSource() { return (String) getField("Source"); }
-    public String getAccount() { return (String) getField("Account"); }
+    public String getName() { return getFieldAsString("Name"); }
+    public String getSource() { return getFieldAsString("Source"); }
+    public String getAccount() { return getFieldAsString("Account"); }
 
     public Optional<List<ContactEntry>> getUserID() {
         return Optional.ofNullable(contactEntries.get("UserID"));
