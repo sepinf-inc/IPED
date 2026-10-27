@@ -130,6 +130,12 @@ public class SignalAttachmentTest extends AbstractPkgTest {
             }
 
             @Override
+            public IItemReader searchFirst(String luceneQuery) {
+                List<IItemReader> result = search(luceneQuery);
+                return result.isEmpty() ? null : result.get(0);
+            }
+
+            @Override
             public String escapeQuery(String string) {
                 return string;
             }
