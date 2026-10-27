@@ -85,6 +85,7 @@ public class LNKShortcutParser extends AbstractParser {
     public static final String LNK_TARGET_REF_STRATEGY_MFT = "MFT";
     public static final String LNK_TARGET_REF_STRATEGY_RELATIVEPATH = "RelativePath";
     public static final String LNK_TARGET_REF_STRATEGY_FULLLOCALPATH = "FullLocalPath";
+    public static final String LNK_TARGET_REF_STRATEGY_CREATEDDATE = "CreatedDate";
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -243,7 +244,17 @@ public class LNKShortcutParser extends AbstractParser {
             }
         }
 
-        // Strategy 2: Relative path lookup
+        // Strategy 2: Created date based lookup
+        {
+            IItemReader item = lookupUsingCreatedDate(searcher, lnkObj, lnkItem);
+            IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, item);
+            if (result != null) {
+                metadata.set(LNK_METADATA_TARGET_REF_STRATEGY, LNK_TARGET_REF_STRATEGY_CREATEDDATE);
+                return result;
+            }
+        }
+
+        // Strategy 3: Relative path lookup
         {
             IItemReader item = lookupUsingRelativePath(searcher, lnkObj, lnkItem);
             IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, item);
@@ -253,7 +264,7 @@ public class LNKShortcutParser extends AbstractParser {
             }
         }
 
-        // Strategy 3: Full local path lookup
+        // Strategy 4: Full local path lookup
         {
             IItemReader item = lookupUsingFullLocalPath(searcher, lnkObj, lnkItem, fullLocalPath);
             IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, item);
@@ -267,6 +278,37 @@ public class LNKShortcutParser extends AbstractParser {
     }
 
     /**
+     * Attempts to find the file targeted by the LNK object ({@code lnkObj}) within
+     * the case. Identification primarily relies on the created date match
+     * {@code lnkObj}.
+     * 
+     * <br/>
+     * A file is considered the target if its created date matches that from the
+     * {@code lnkObj}. A false positive with same created date is likely difficult.
+     *
+     * @param lnkObj
+     *            The LNK object parsed from lnk file.
+     * @param lnkItem
+     *            The LNK item to be added to the case.
+     * @return The corresponding target files, or {@code null} if preconditions are
+     *         not met.
+     */
+    private IItemReader lookupUsingCreatedDate(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem) {
+
+        if (lnkItem == null || !lnkObj.hasTargetIDList() || lnkObj.getShellTargetIDList().isEmpty()) {
+            return null;
+        }
+
+        if (lnkObj.getCreateDate() == null) {
+            return null;
+        }
+        String query = BasicProps.CREATED + ":\"" + DateUtil.dateToString(lnkObj.getCreateDate()) + "\"";
+        return selectBestItem(searcher, query, lnkObj, LNK_TARGET_REF_STRATEGY_MFT, item -> true);
+
+    }
+
+
+    /**
      * Looks up items using a relative path specified in a LNK shortcut object.
      * 
      * <br/>
@@ -277,10 +319,12 @@ public class LNKShortcutParser extends AbstractParser {
      * In the end it is checked if results path exactly matches with the constructed
      * absolute path.
      *
-     * @param lnkObj  The LNK object parsed from lnk file.
-     * @param lnkItem The LNK item to be added to the case.
-     * @return The best matching target file, or {@code null} if no match is found or preconditions are
-     *         not met.
+     * @param lnkObj
+     *            The LNK object parsed from lnk file.
+     * @param lnkItem
+     *            The LNK item to be added to the case.
+     * @return The best matching target file, or {@code null} if no match is found
+     *         or preconditions are not met.
      */
     private IItemReader lookupUsingRelativePath(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem) {
 
@@ -291,8 +335,7 @@ public class LNKShortcutParser extends AbstractParser {
         String lnkRelativePath = lnkObj.getRelativePath().replace('\\', '/');
         String fullPathInCase = Paths.get(lnkItem.getPath(), "..", lnkRelativePath).normalize().toString();
         String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(fullPathInCase) + "\"";
-        return selectBestItem(searcher, query, lnkObj, LNK_TARGET_REF_STRATEGY_RELATIVEPATH,
-                item -> item.getPath().equals(fullPathInCase));
+        return selectBestItem(searcher, query, lnkObj, LNK_TARGET_REF_STRATEGY_RELATIVEPATH, item -> item.getPath().equals(fullPathInCase));
     }
 
     /**
@@ -307,10 +350,12 @@ public class LNKShortcutParser extends AbstractParser {
      * the candidate target file (useful to find files that might have originated
      * from different volumes).
      *
-     * @param lnkObj  The LNK object parsed from lnk file.
-     * @param lnkItem The LNK item to be added to the case.
-     * @return The best matching target file, or {@code null} if no match is found or preconditions are
-     *         not met.
+     * @param lnkObj
+     *            The LNK object parsed from lnk file.
+     * @param lnkItem
+     *            The LNK item to be added to the case.
+     * @return The best matching target file, or {@code null} if no match is found
+     *         or preconditions are not met.
      */
     private IItemReader lookupUsingMFT(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem) {
 
@@ -348,15 +393,13 @@ public class LNKShortcutParser extends AbstractParser {
         String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(fullLocalPath) + "\"";
         int fullLocalPathParts = StringUtils.countMatches(fullLocalPathFinal, '/');
         return selectBestItem(searcher, query, lnkObj, LNK_TARGET_REF_STRATEGY_FULLLOCALPATH,
-                item -> item.getPath().endsWith(fullLocalPathFinal)
-                        && hasExpectedRoot(searcher, item, fullLocalPathParts));
+                item -> item.getPath().endsWith(fullLocalPathFinal) && hasExpectedRoot(searcher, item, fullLocalPathParts));
     }
 
     private boolean hasExpectedRoot(IItemSearcher searcher, IItemReader candidate, int depth) {
         IItemReader current = candidate;
         for (int hop = 0; hop < depth; hop++) {
-            Iterator<IItemReader> parents = searcher
-                    .searchIterable(BasicProps.ID + ":" + current.getParentId()).iterator();
+            Iterator<IItemReader> parents = searcher.searchIterable(BasicProps.ID + ":" + current.getParentId()).iterator();
             if (!parents.hasNext()) {
                 return false;
             }
@@ -401,8 +444,7 @@ public class LNKShortcutParser extends AbstractParser {
         return item;
     }
 
-    private IItemReader selectBestItem(IItemSearcher searcher, String query, LNKShortcut lnkObj,
-            String strategy, Predicate<IItemReader> accepts) {
+    private IItemReader selectBestItem(IItemSearcher searcher, String query, LNKShortcut lnkObj, String strategy, Predicate<IItemReader> accepts) {
         logger.debug("LNK_STREAMING_REFERENCE_FIX_V1 phase=BEGIN strategy={}", strategy);
         IItemReader best = null;
         int bestScore = Integer.MIN_VALUE;
@@ -422,11 +464,9 @@ public class LNKShortcutParser extends AbstractParser {
             }
         }
         if (accepted > 1) {
-            logger.warn("More than one file referenced to the link. Candidates accepted: {}. Selected path: {}",
-                    accepted, best.getPath());
+            logger.warn("More than one file referenced to the link. Candidates accepted: {}. Selected path: {}", accepted, best.getPath());
         }
-        logger.debug("LNK_STREAMING_REFERENCE_FIX_V1 phase=END strategy={} scanned={} accepted={} selectedId={}",
-                strategy, scanned, accepted, best == null ? null : Integer.valueOf(best.getId()));
+        logger.debug("LNK_STREAMING_REFERENCE_FIX_V1 phase=END strategy={} scanned={} accepted={} selectedId={}", strategy, scanned, accepted, best == null ? null : Integer.valueOf(best.getId()));
         return best;
     }
 
