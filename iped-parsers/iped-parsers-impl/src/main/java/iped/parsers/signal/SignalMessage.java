@@ -1,6 +1,8 @@
 package iped.parsers.signal;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class SignalMessage {
 
@@ -9,6 +11,8 @@ public class SignalMessage {
 
     }
 
+    // _id in the message table; 0 for calls read from the call table only
+    private long id;
     // Resolved from the full recipient table, so senders who are no longer group
     // members are still identified.
     private SignalContact sender;
@@ -32,6 +36,51 @@ public class SignalMessage {
     private boolean viewOnce;
     // What a group update or other event row records, null for plain messages
     private String systemDetail;
+    private List<SignalAttachment> attachments = new ArrayList<>();
+    private List<SignalReaction> reactions = new ArrayList<>();
+    // The message this one replies to: its date_sent, author and a copy of its text,
+    // kept by Signal even when the original is gone (quoteMissing)
+    private long quoteId;
+    private long quoteAuthorId;
+    private SignalContact quoteAuthor;
+    private String quoteBody;
+    private boolean quoteMissing;
+    // The quoted message in this conversation, when the database still has it
+    private SignalMessage quotedMessage;
+
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
+
+    public List<SignalAttachment> getAttachments() { return attachments; }
+
+    public List<SignalReaction> getReactions() { return reactions; }
+
+    public long getQuoteId() { return quoteId; }
+    public void setQuoteId(long quoteId) { this.quoteId = quoteId; }
+
+    public long getQuoteAuthorId() { return quoteAuthorId; }
+    public void setQuoteAuthorId(long quoteAuthorId) { this.quoteAuthorId = quoteAuthorId; }
+
+    public SignalContact getQuoteAuthor() { return quoteAuthor; }
+    public void setQuoteAuthor(SignalContact quoteAuthor) { this.quoteAuthor = quoteAuthor; }
+
+    public String getQuoteBody() { return quoteBody; }
+    public void setQuoteBody(String quoteBody) { this.quoteBody = quoteBody; }
+
+    public SignalMessage getQuotedMessage() { return quotedMessage; }
+    public void setQuotedMessage(SignalMessage quotedMessage) { this.quotedMessage = quotedMessage; }
+
+    public boolean isQuoteMissing() { return quoteMissing; }
+    public void setQuoteMissing(boolean quoteMissing) { this.quoteMissing = quoteMissing; }
+
+    /**
+     * Whether the message is a reply, by the rule of Signal's MessageTable: a quote id,
+     * an author, and quoted text or a quoted attachment.
+     */
+    public boolean isReply() {
+        return quoteId != 0 && quoteAuthorId > 0
+                && ((quoteBody != null && !quoteBody.isEmpty()) || attachments.stream().anyMatch(SignalAttachment::isQuote));
+    }
 
     public SignalContact getSender() { return sender; }
     public void setSender(SignalContact sender) { this.sender = sender; }

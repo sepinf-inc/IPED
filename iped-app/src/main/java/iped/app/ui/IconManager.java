@@ -305,8 +305,12 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-signal", icon);
             mimeIconMap.put("application/x-signal-db", icon);
+            mimeIconMap.put("application/x-signal-db-encrypted", icon);
+            mimeIconMap.put("application/x-signal-db-f", icon);
+            mimeIconMap.put("application/x-signal-db-encrypted-f", icon);
             mimeIconMap.put("application/x-signal-chat", icon);
             mimeIconMap.put("message/x-signal-message", icon);
+            mimeIconMap.put("message/x-signal-attachment", icon);
         }
 
         icon = availableIconsMap.get("snapchat");

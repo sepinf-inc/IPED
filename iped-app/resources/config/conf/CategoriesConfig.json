@@ -91,7 +91,7 @@
         {"name": "Jabber", "mimes":["application/x-jabber-chat"]},
         {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
-        {"name": "Signal", "mimes":["application/x-signal-db", "application/x-signal-chat", "application/x-ufed-chat-preview-signal"]},
+        {"name": "Signal", "mimes":["application/x-signal-db", "application/x-signal-db-encrypted", "application/x-signal-chat", "application/x-ufed-chat-preview-signal"]},
         {"name": "Snapchat", "mimes":["application/x-ufed-chat-preview-snapchat"]},
         {"name": "TikTok", "mimes":["application/x-ufed-chat-preview-tiktok"]},
         {"name": "Viber", "mimes":["application/x-ufed-chat-preview-viber"]},

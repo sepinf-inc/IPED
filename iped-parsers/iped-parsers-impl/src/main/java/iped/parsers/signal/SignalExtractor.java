@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +60,32 @@ public class SignalExtractor {
     // the message; remote_deleted is no longer written, only kept for older rows.
     private static final String COL_DELETED_BY = "deleted_by";
     private static final String COL_VIEW_ONCE = "view_once";
+    private static final String COL_QUOTE_ID = "quote_id";
+    private static final String COL_QUOTE_AUTHOR = "quote_author";
+    private static final String COL_QUOTE_BODY = "quote_body";
+    private static final String COL_QUOTE_MISSING = "quote_missing";
+
+    private static final String SELECT_REACTIONS =
+            "SELECT message_id, author_id, emoji, date_sent FROM reaction ORDER BY message_id, date_sent, _id";
+
+    // Attachments live in the attachment table since Signal 7.x (migration V215); before
+    // that the same rows were in part, with mid, ct and _data for the renamed columns.
+    // Every column is resolved per database, so a missing one reads as NULL.
+    private static final String[][] ATTACHMENT_COLUMNS = {
+            { "_id", "_id" },
+            { "message_id", "mid" },
+            { "content_type", "ct" },
+            { "data_file", "_data" },
+            { "data_size", "data_size" },
+            { "data_random", "data_random" },
+            { "data_hash_start", "data_hash_start" },
+            { "data_hash_end", "data_hash_end" },
+            { "file_name", "file_name" },
+            { "caption", "caption" },
+            { "voice_note", "voice_note" },
+            { "quote", "quote" },
+            { "sticker_id", "sticker_id" },
+            { "display_order", "display_order" } };
 
     private static final String SELECT_GROUP_TITLE =
             "SELECT title FROM groups WHERE recipient_id = ?";
@@ -114,6 +141,8 @@ public class SignalExtractor {
     private final String itemPath;
     private List<String> optionalMessageColumns;
     private Map<Long, SignalContact> recipients;
+    private Map<Long, List<SignalAttachment>> attachments;
+    private Map<Long, List<SignalReaction>> reactions;
 
     public SignalExtractor(Connection connection, String itemPath) {
         this.connection = connection;
@@ -533,13 +562,101 @@ public class SignalExtractor {
         return calls;
     }
 
+    /** Every attachment row, in the order Signal shows them within each message. */
+    public List<SignalAttachment> extractAttachments() {
+        List<SignalAttachment> all = new ArrayList<>();
+        for (List<SignalAttachment> list : attachments().values())
+            all.addAll(list);
+        return all;
+    }
+
+    /** Attachments by message id, loaded once per database. */
+    private Map<Long, List<SignalAttachment>> attachments() {
+        if (attachments == null)
+            attachments = loadAttachments();
+        return attachments;
+    }
+
+    private Map<Long, List<SignalAttachment>> loadAttachments() {
+        // In message order, so that attachments are extracted in a stable order
+        Map<Long, List<SignalAttachment>> map = new LinkedHashMap<>();
+        String table = hasTable("attachment") ? "attachment" : hasTable("part") ? "part" : null;
+        if (table == null)
+            return map;
+
+        StringBuilder sql = new StringBuilder("SELECT ");
+        for (int i = 0; i < ATTACHMENT_COLUMNS.length; i++) {
+            String[] names = ATTACHMENT_COLUMNS[i];
+            String column = hasColumn(table, names[0]) ? names[0] : hasColumn(table, names[1]) ? names[1] : null;
+            if (i > 0)
+                sql.append(", ");
+            sql.append(column != null ? column : "NULL").append(" AS ").append(names[0]);
+        }
+        sql.append(" FROM ").append(table).append(" ORDER BY message_id, display_order, _id");
+
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery(sql.toString())) {
+            while (rs.next()) {
+                long messageId = rs.getLong("message_id");
+                if (rs.wasNull())
+                    continue;
+                SignalAttachment a = new SignalAttachment();
+                a.setId(rs.getLong("_id"));
+                a.setMessageId(messageId);
+                a.setContentType(rs.getString("content_type"));
+                a.setDataFile(rs.getString("data_file"));
+                a.setDataSize(rs.getLong("data_size"));
+                a.setDataRandom(rs.getBytes("data_random"));
+                a.setDataHashStart(rs.getString("data_hash_start"));
+                a.setDataHashEnd(rs.getString("data_hash_end"));
+                a.setFileName(rs.getString("file_name"));
+                a.setCaption(rs.getString("caption"));
+                a.setVoiceNote(rs.getInt("voice_note") != 0);
+                a.setQuote(rs.getInt("quote") != 0);
+                // -1 when the attachment is not a sticker
+                long stickerId = rs.getLong("sticker_id");
+                a.setSticker(!rs.wasNull() && stickerId >= 0);
+                if (a.getStoredFileName() == null)
+                    a.setState(SignalAttachment.State.NO_FILE);
+                map.computeIfAbsent(messageId, k -> new ArrayList<>()).add(a);
+            }
+        } catch (SQLException e) {
+            LOGGER.warn("Error loading Signal attachments from {}: {}", itemPath, e.getMessage());
+        }
+        return map;
+    }
+
+    /** Reactions by message id, loaded once per database. */
+    private Map<Long, List<SignalReaction>> reactions(Map<Long, SignalContact> recipients) {
+        if (reactions != null)
+            return reactions;
+        reactions = new HashMap<>();
+        if (!hasTable("reaction"))
+            return reactions;
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery(SELECT_REACTIONS)) {
+            while (rs.next()) {
+                SignalReaction r = new SignalReaction();
+                r.setAuthor(recipients.get(rs.getLong("author_id")));
+                r.setEmoji(rs.getString("emoji"));
+                long dateSent = rs.getLong("date_sent");
+                if (dateSent > 0)
+                    r.setDateSent(new Date(dateSent));
+                reactions.computeIfAbsent(rs.getLong("message_id"), k -> new ArrayList<>()).add(r);
+            }
+        } catch (SQLException e) {
+            LOGGER.warn("Error loading Signal reactions from {}: {}", itemPath, e.getMessage());
+        }
+        return reactions;
+    }
+
     /** The optional columns this database actually has, resolved once. */
     private List<String> optionalMessageColumns() {
         if (optionalMessageColumns == null) {
             optionalMessageColumns = new ArrayList<>();
             for (String column : new String[] { COL_LATEST_REVISION, COL_REMOTE_DELETED,
                     COL_STORY_TYPE, COL_PARENT_STORY, COL_SCHEDULED_DATE, COL_DELETED_BY,
-                    COL_VIEW_ONCE }) {
+                    COL_VIEW_ONCE, COL_QUOTE_ID, COL_QUOTE_AUTHOR, COL_QUOTE_BODY, COL_QUOTE_MISSING }) {
                 if (hasColumn("message", column))
                     optionalMessageColumns.add(column);
             }
@@ -556,6 +673,8 @@ public class SignalExtractor {
             sql.append(", ").append(column);
         sql.append(SELECT_MESSAGES_TAIL);
 
+        // A quote names the original by its date_sent and author, as Signal finds it
+        Map<String, SignalMessage> byDateAndAuthor = new HashMap<>();
         try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
             st.setLong(1, threadId);
             try (ResultSet rs = st.executeQuery()) {
@@ -576,7 +695,10 @@ public class SignalExtractor {
                         continue;
 
                     SignalMessage m = new SignalMessage();
+                    m.setId(messageId);
                     m.setSender(recipients.get(rs.getLong("from_recipient_id")));
+                    m.getAttachments().addAll(attachments().getOrDefault(messageId, List.of()));
+                    m.getReactions().addAll(reactions(recipients).getOrDefault(messageId, List.of()));
 
                     long dateSentMs = rs.getLong("date_sent");
                     if (dateSentMs > 0)
@@ -608,6 +730,15 @@ public class SignalExtractor {
                     }
                     if (optional.contains(COL_VIEW_ONCE))
                         m.setViewOnce(rs.getInt(COL_VIEW_ONCE) != 0);
+                    if (optional.contains(COL_QUOTE_ID) && optional.contains(COL_QUOTE_AUTHOR)) {
+                        m.setQuoteId(rs.getLong(COL_QUOTE_ID));
+                        m.setQuoteAuthorId(rs.getLong(COL_QUOTE_AUTHOR));
+                        m.setQuoteAuthor(recipients.get(m.getQuoteAuthorId()));
+                        if (optional.contains(COL_QUOTE_BODY))
+                            m.setQuoteBody(rs.getString(COL_QUOTE_BODY));
+                        if (optional.contains(COL_QUOTE_MISSING))
+                            m.setQuoteMissing(rs.getInt(COL_QUOTE_MISSING) != 0);
+                    }
                     // Composed with "send later" and never sent: Signal keeps it out of the
                     // conversation, and its date is a future one
                     if (optional.contains(COL_SCHEDULED_DATE)) {
@@ -625,12 +756,24 @@ public class SignalExtractor {
                     m.setFromMe(msgType == SignalMessage.MessageType.OUTGOING
                             || msgType == SignalMessage.MessageType.CALL_OUTGOING);
 
+                    // Should revisions of an edited message share a date_sent, the latest
+                    // revision is preferred
+                    if (dateSentMs > 0) {
+                        String key = dateSentMs + ":" + rs.getLong("from_recipient_id");
+                        if (m.isEarlierRevision())
+                            byDateAndAuthor.putIfAbsent(key, m);
+                        else
+                            byDateAndAuthor.put(key, m);
+                    }
                     messages.add(m);
                 }
             }
         } catch (SQLException e) {
             LOGGER.warn("Error loading Signal messages for thread {}: {}", threadId, e.getMessage());
         }
+        for (SignalMessage m : messages)
+            if (m.isReply())
+                m.setQuotedMessage(byDateAndAuthor.get(m.getQuoteId() + ":" + m.getQuoteAuthorId()));
         return messages;
     }
 

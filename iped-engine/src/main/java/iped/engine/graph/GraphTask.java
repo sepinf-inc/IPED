@@ -251,6 +251,7 @@ public class GraphTask extends AbstractTask {
                 || SkypeParser.ATTACHMENT_MIME_TYPE.toString().equals(mediaType)
                 || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType)
                 || SignalParser.SIGNAL_MESSAGE.toString().equals(mediaType)
+                || SignalParser.SIGNAL_ATTACHMENT.toString().equals(mediaType)
                 || DiscordParser.MSG_MIME_TYPE.equals(mediaType)
                 || DiscordParser.ATTACH_MIME_TYPE.equals(mediaType)
                 || MediaTypes.UFED_MESSAGE_MIME.toString().equals(mediaType)) {

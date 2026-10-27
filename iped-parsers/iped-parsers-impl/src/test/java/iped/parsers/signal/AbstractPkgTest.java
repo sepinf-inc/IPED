@@ -2,9 +2,12 @@ package iped.parsers.signal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -75,6 +78,11 @@ public abstract class AbstractPkgTest extends TestCase {
         protected List<String> messageDates     = new ArrayList<>();
         protected List<String> userAccountTypes = new ArrayList<>();
         protected List<String> groupIds         = new ArrayList<>();
+        protected List<String> linkedItems      = new ArrayList<>();
+        protected List<String> sharedHashes     = new ArrayList<>();
+        protected List<String> chatHtml         = new ArrayList<>();
+        // Decrypted attachments, by item name
+        protected Map<String, byte[]> decoded   = new LinkedHashMap<>();
 
         @Override
         public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -120,6 +128,19 @@ public abstract class AbstractPkgTest extends TestCase {
             String gid = metadata.get(ExtraProperties.GROUP_ID);
             if (gid != null)
                 groupIds.add(gid);
+
+            String[] linked = metadata.getValues(ExtraProperties.LINKED_ITEMS);
+            if (linked != null)
+                for (String l : linked) linkedItems.add(l);
+
+            String[] shared = metadata.getValues(ExtraProperties.SHARED_HASHES);
+            if (shared != null)
+                for (String h : shared) sharedHashes.add(h);
+
+            if ("application/x-signal-chat".equals(ct))
+                chatHtml.add(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
+            else if (ct == null && Boolean.parseBoolean(metadata.get(ExtraProperties.DECODED_DATA)))
+                decoded.put(metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY), stream.readAllBytes());
         }
     }
 }

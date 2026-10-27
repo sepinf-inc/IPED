@@ -98,4 +98,28 @@ public class SignalExtractorSchemaTest extends TestCase {
         assertFalse("Database without the message table should be rejected",
                 new SignalExtractor(connection, "test.db").isValidSignalDatabase());
     }
+
+    public void testAttachmentsFromLegacyPartTable() throws Exception {
+        // Before migration V215 attachments were in part, with mid, ct and _data for
+        // message_id, content_type and data_file
+        createSchema("from_recipient_id");
+        try (Statement st = connection.createStatement()) {
+            st.executeUpdate("CREATE TABLE part (_id INTEGER PRIMARY KEY, mid INTEGER, ct TEXT, _data TEXT, "
+                    + "data_size INTEGER, data_random BLOB, file_name TEXT, voice_note INTEGER DEFAULT 0, "
+                    + "quote INTEGER DEFAULT 0, caption TEXT, sticker_id INTEGER DEFAULT -1)");
+            st.executeUpdate("INSERT INTO recipient (_id, e164) VALUES (7, '+5511900000007')");
+            st.executeUpdate("INSERT INTO thread (_id, recipient_id, date) VALUES (1, 7, 1700000000000)");
+            st.executeUpdate("INSERT INTO message (_id, thread_id, from_recipient_id, date_sent, "
+                    + "date_received, body, type) VALUES (1, 1, 7, 1700000000000, 1700000000000, NULL, 20)");
+            st.executeUpdate("INSERT INTO part (_id, mid, ct, _data, data_size, file_name, sticker_id) VALUES "
+                    + "(1, 1, 'image/webp', '/data/user/0/org.thoughtcrime.securesms/app_parts/part9.mms', 10, NULL, 3)");
+        }
+
+        List<SignalChat> chats = new SignalExtractor(connection, "test.db").extractChats();
+        List<SignalAttachment> attachments = chats.get(0).getMessages().get(0).getAttachments();
+        assertEquals(1, attachments.size());
+        assertEquals("image/webp", attachments.get(0).getContentType());
+        assertEquals("part9.mms", attachments.get(0).getStoredFileName());
+        assertEquals("Sticker", attachments.get(0).getLabel());
+    }
 }

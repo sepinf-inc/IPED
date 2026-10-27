@@ -594,27 +594,39 @@ public class SignalParserTest extends AbstractPkgTest {
 
     // ── Encrypted / unreadable databases ─────────────────────────────────────
 
-    public void testEncryptedDatabaseIsSkipped() throws Exception {
-        // signal.db is SQLCipher-encrypted by default and is matched by file name, so
-        // its content is not a readable SQLite database. Such items must be skipped
-        // quietly instead of raising a parsing error for every Signal install in a case.
+    public void testUnreadableDatabaseIsFlaggedAsEncrypted() throws Exception {
+        // signal.db is SQLCipher-encrypted on the device. With no key in the case it must
+        // be flagged as encrypted, instead of looking like a case with no Signal data.
         SignalParser parser = new SignalParser();
         ContentHandler handler = new BodyContentHandler(-1);
         Metadata metadata = new Metadata();
-        metadata.set(StandardParser.INDEXER_CONTENT_TYPE, SignalParser.SIGNAL_DB.toString());
+        metadata.set(StandardParser.INDEXER_CONTENT_TYPE, SignalParser.SIGNAL_DB_ENCRYPTED.toString());
 
-        byte[] encrypted = new byte[1024];
+        byte[] encrypted = new byte[8192];
         new java.util.Random(42).nextBytes(encrypted);
 
-        parser.parse(new java.io.ByteArrayInputStream(encrypted), handler, metadata, signalContext);
-
+        try {
+            parser.parse(new java.io.ByteArrayInputStream(encrypted), handler, metadata, signalContext);
+            fail("An unreadable database must be reported as encrypted");
+        } catch (org.apache.tika.exception.EncryptedDocumentException e) {
+            // expected
+        }
         assertTrue("No documents should be extracted from an unreadable database",
                 signalTracker.contentTypes.isEmpty());
     }
 
+    public void testZeroedFileIsNotFlaggedAsEncrypted() throws Exception {
+        // A deleted signal.db overwritten with zeros carries nothing, encrypted or not
+        Metadata metadata = new Metadata();
+        metadata.set(StandardParser.INDEXER_CONTENT_TYPE, SignalParser.SIGNAL_DB_ENCRYPTED.toString());
+        new SignalParser().parse(new java.io.ByteArrayInputStream(new byte[8192]), new BodyContentHandler(-1),
+                metadata, signalContext);
+        assertTrue(signalTracker.contentTypes.isEmpty());
+    }
+
     public void testUnsupportedDatabaseFallsBackToSqlite() throws Exception {
-        // signal.db is matched by file name alone, so an older Signal database or an
-        // unrelated file lands here. It must still reach the generic SQLite parser,
+        // An older Signal database, or another database that happens to have Signal's
+        // tables, lands here. It must still reach the generic SQLite parser,
         // which is what the examiner would have got before this parser existed.
         java.io.File db = java.io.File.createTempFile("not_signal", ".db");
         db.deleteOnExit();

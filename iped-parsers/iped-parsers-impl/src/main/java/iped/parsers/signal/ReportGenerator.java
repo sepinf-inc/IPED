@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +16,8 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.data.IItemReader;
+import iped.parsers.util.Util;
 import iped.utils.IOUtil;
 
 public class ReportGenerator {
@@ -22,6 +26,7 @@ public class ReportGenerator {
 
     private static final String TEMPLATE;
     private static final String CSS;
+    private static final String JS;
 
     // Single-pass substitution prevents user data containing ${placeholder}
     // from being re-processed by subsequent replace() calls (template injection).
@@ -30,6 +35,7 @@ public class ReportGenerator {
     static {
         TEMPLATE = readResource("/iped/parsers/signal/signal-html-template.txt");
         CSS      = readResource("/iped/parsers/signal/css/signal.css");
+        JS       = readResource("/iped/parsers/signal/js/signal.js");
     }
 
     private static final ThreadLocal<SimpleDateFormat> DATE_FMT = ThreadLocal.withInitial(() -> {
@@ -124,7 +130,7 @@ public class ReportGenerator {
                 case "css":        return Matcher.quoteReplacement(CSS);
                 case "title":      return Matcher.quoteReplacement(escapedTitle);
                 case "messages":   return Matcher.quoteReplacement(messagesBlock);
-                case "javascript": return "";
+                case "javascript": return Matcher.quoteReplacement(JS);
                 default:           return Matcher.quoteReplacement(mr.group(0));
             }
         });
@@ -155,7 +161,8 @@ public class ReportGenerator {
         String timeHtml = "<div class=\"time\">" + formatTime(timeDate) + "</div>";
 
         StringBuilder sb = new StringBuilder(256);
-        sb.append("<div class=\"linha ").append(dirClass).append("\">");
+        // The anchor a reply jumps to
+        sb.append("<div class=\"linha ").append(dirClass).append("\" id=\"m").append(m.getId()).append("\">");
         sb.append("<div class=\"").append(bubbleClass).append("\">");
 
         if (incoming && chat.isGroupChat()) {
@@ -165,9 +172,59 @@ public class ReportGenerator {
             }
         }
 
+        // The thumbnail of quoted media goes inside the quote
+        boolean reply = m.isReply();
+        if (reply)
+            sb.append(renderQuote(m));
         sb.append(bodyHtml);
+        for (SignalAttachment a : m.getAttachments())
+            if (!reply || !a.isQuote())
+                sb.append(renderAttachment(a));
+        if (!m.getReactions().isEmpty())
+            sb.append(renderReactions(m.getReactions()));
         sb.append(timeHtml);
         sb.append("</div></div>\n");
+        return sb.toString();
+    }
+
+    private static String displayName(SignalContact contact) {
+        return contact != null ? contact.getDisplayName() : "Unknown";
+    }
+
+    /** The message replied to: its author and Signal's copy of its text, linked when still in the conversation. */
+    private String renderQuote(SignalMessage m) {
+        StringBuilder sb = new StringBuilder(256);
+        SignalMessage original = m.getQuotedMessage();
+        sb.append("<div class=\"quote\"");
+        // signal.js unlinks it when the original is in another fragment of the conversation
+        if (original != null)
+            sb.append(" data-target=\"m").append(original.getId()).append("\" onclick=\"goToMessage('m")
+                    .append(original.getId()).append("')\"");
+        sb.append(">");
+        sb.append("<div class=\"quote-author\">").append(escapeHtml(displayName(m.getQuoteAuthor()))).append("</div>");
+        if (m.getQuoteBody() != null && !m.getQuoteBody().isEmpty())
+            sb.append("<div class=\"body\">").append(escapeHtml(m.getQuoteBody())).append("</div>");
+        for (SignalAttachment a : m.getAttachments())
+            if (a.isQuote())
+                sb.append(renderAttachment(a));
+        // Signal's quote_missing tells only what it knew when the reply arrived
+        if (original == null)
+            sb.append("<div class=\"attachment-meta\">original message not found in the database</div>");
+        sb.append("</div>");
+        return sb.toString();
+    }
+
+    private String renderReactions(List<SignalReaction> reactions) {
+        StringBuilder sb = new StringBuilder(128);
+        sb.append("<div class=\"reactions\">");
+        for (SignalReaction r : reactions) {
+            String author = displayName(r.getAuthor());
+            sb.append("<span class=\"reaction\" title=\"").append(escapeHtml(author));
+            if (r.getDateSent() != null)
+                sb.append(" ").append(formatTime(r.getDateSent()));
+            sb.append("\">").append(escapeHtml(r.getEmoji())).append(" ").append(escapeHtml(author)).append("</span>");
+        }
+        sb.append("</div>");
         return sb.toString();
     }
 
@@ -203,9 +260,73 @@ public class ReportGenerator {
         else if (m.isScheduled())
             prefix = "<span class=\"revision-label\">[Scheduled, never sent]</span> ";
         if (m.getBody() == null) {
+            // The attachments below are the content
+            if (!m.getAttachments().isEmpty())
+                return prefix.isEmpty() ? "" : "<div class=\"body\">" + prefix + "</div>";
             return "<div class=\"body attachment-label\">" + prefix + "[Empty message]</div>";
         }
         return "<div class=\"body\">" + prefix + escapeHtml(m.getBody()) + "</div>";
+    }
+
+    private String renderAttachment(SignalAttachment a) {
+        StringBuilder sb = new StringBuilder(256);
+        sb.append("<div class=\"attachment\">");
+        String label = escapeHtml((a.isQuote() ? "Quoted: " : "") + a.getLabel());
+        IItemReader item = a.getItem();
+        String hash = item != null ? item.getHash() : null;
+        if (hash != null) {
+            // Hashes are hex, so they need no escaping inside the quotes
+            String query = "'hash:" + hash + "'";
+            sb.append("<input class=\"check\" type=\"checkbox\" onclick=\"app.check(").append(query)
+                    .append(",this.checked)\" name=\"").append(hash).append("\"/>");
+            sb.append("<a onclick=\"app.open(").append(query).append(")\"");
+            if (item.getMediaType() != null)
+                sb.append(" href=\"").append(escapeHtml(Util.getReportHref(item))).append("\"");
+            sb.append(">");
+            byte[] thumb = a.getState() == SignalAttachment.State.DECRYPTED ? item.getThumb() : null;
+            if (thumb != null && thumb.length > 0)
+                sb.append("<img class=\"thumb\" src=\"data:image/jpg;base64,")
+                        .append(Base64.getEncoder().encodeToString(thumb)).append("\" title=\"").append(label)
+                        .append("\"/>");
+            else
+                sb.append("&#128206; ").append(label);
+            sb.append("</a>");
+        } else {
+            sb.append("<span class=\"attachment-label\">&#128206; ").append(label).append("</span>");
+        }
+
+        StringBuilder meta = new StringBuilder();
+        if (a.getContentType() != null)
+            meta.append(a.getContentType());
+        if (a.getDataSize() > 0)
+            meta.append(meta.length() > 0 ? ", " : "").append(formatSize(a.getDataSize()));
+        String note = stateNote(a.getState());
+        if (note != null)
+            meta.append(meta.length() > 0 ? " - " : "").append(note);
+        if (meta.length() > 0)
+            sb.append("<div class=\"attachment-meta\">").append(escapeHtml(meta.toString())).append("</div>");
+        if (a.getCaption() != null && !a.getCaption().isBlank())
+            sb.append("<div class=\"body\">").append(escapeHtml(a.getCaption())).append("</div>");
+        sb.append("</div>");
+        return sb.toString();
+    }
+
+    private static String stateNote(SignalAttachment.State state) {
+        switch (state) {
+            case ENCRYPTED: return "encrypted file, the Signal attachment key was not found in the case";
+            case NOT_DECRYPTED: return "encrypted file, could not be decrypted with the Signal keys found in the case";
+            case MISSING:   return "file not found in the case";
+            case NO_FILE:   return "no file on the device (not downloaded, or removed)";
+            default:        return null;
+        }
+    }
+
+    private static String formatSize(long bytes) {
+        if (bytes < 1024)
+            return bytes + " B";
+        if (bytes < 1024 * 1024)
+            return (bytes / 1024) + " KB";
+        return String.format(Locale.ROOT, "%.1f MB", bytes / (1024.0 * 1024));
     }
 
     private String renderSystemMessage(SignalMessage m) {
@@ -213,7 +334,8 @@ public class ReportGenerator {
         // group updates, profile changes and merges, which would be shown as a blob
         String text = m.getSystemDetail() != null ? escapeHtml(m.getSystemDetail())
                 : m.getBody() != null ? escapeHtml(m.getBody()) : "System message";
-        return "<div class=\"systemmessage\"><span>" + text + "</span></div>\n";
+        // Also an anchor: a reply can quote an event row
+        return "<div class=\"systemmessage\" id=\"m" + m.getId() + "\"><span>" + text + "</span></div>\n";
     }
 
     private String renderDateSeparator(Date date) {
