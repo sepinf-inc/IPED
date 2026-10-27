@@ -334,7 +334,7 @@ public class LNKShortcutParser extends AbstractParser {
 
         String lnkRelativePath = lnkObj.getRelativePath().replace('\\', '/');
         String fullPathInCase = Paths.get(lnkItem.getPath(), "..", lnkRelativePath).normalize().toString();
-        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(fullPathInCase) + "\"";
+        String query = "path.keyword:\"" + searcher.escapeQuery(fullPathInCase) + "\"";
         return selectBestItem(searcher, query, lnkObj, LNK_TARGET_REF_STRATEGY_RELATIVEPATH, item -> item.getPath().equals(fullPathInCase));
     }
 
@@ -390,7 +390,7 @@ public class LNKShortcutParser extends AbstractParser {
         fullLocalPath = fullLocalPath.replace('\\', '/');
         fullLocalPath = "/" + StringUtils.substringAfter(fullLocalPath, ":/");
         final String fullLocalPathFinal = fullLocalPath;
-        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(fullLocalPath) + "\"";
+        String query = "path.keyword:\"" + searcher.escapeQuery(fullLocalPath) + "\"";
         int fullLocalPathParts = StringUtils.countMatches(fullLocalPathFinal, '/');
         return selectBestItem(searcher, query, lnkObj, LNK_TARGET_REF_STRATEGY_FULLLOCALPATH,
                 item -> item.getPath().endsWith(fullLocalPathFinal) && hasExpectedRoot(searcher, item, fullLocalPathParts));
