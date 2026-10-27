@@ -82,7 +82,6 @@ import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
 import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewInputStreamFactory;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
-import iped.engine.task.ImageThumbTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
 import iped.engine.task.ThumbTask;
 import iped.engine.task.similarity.ImageSimilarityTask;
@@ -125,6 +124,9 @@ public class IndexItem extends BasicProps {
     public static final char EVENT_IDX_SEPARATOR = ';';
     public static final char EVENT_IDX_SEPARATOR2 = ',';
     public static final String EVENT_SEPARATOR = " | ";
+
+    public static final String EXACT_QUERY_KEYWORD_SUFIX = ".keyword";
+    public static final String PATH_KEYWORD = PATH + EXACT_QUERY_KEYWORD_SUFIX;
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
 
@@ -385,11 +387,15 @@ public class IndexItem extends BasicProps {
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }
+
         doc.add(new Field(PATH, value, storedTokenizedNoNormsField));
         if (value.length() > MAX_DOCVALUE_SIZE) {
             value = value.substring(0, MAX_DOCVALUE_SIZE);
         }
         doc.add(new SortedDocValuesField(PATH, new BytesRef(normalize(value))));
+
+        // New exact-match field
+        doc.add(new StringField(PATH_KEYWORD, value, Field.Store.NO));
 
         for (String val : evidence.getCategorySet()) {
             doc.add(new Field(CATEGORY, val, storedTokenizedNoNormsField));
