@@ -56,6 +56,7 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.CHANGED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.TIMESTAMP, new KeywordAnalyzer());
+        analyzerPerField.put(IndexItem.PATH_KEYWORD, new KeywordAnalyzer());
 
         IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer();
