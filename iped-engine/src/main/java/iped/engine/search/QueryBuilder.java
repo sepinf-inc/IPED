@@ -393,7 +393,7 @@ public class QueryBuilder {
             IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
             // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
             if (analyzer != spaceAnalyzer && indexConfig.isConvertCharsToAscii()) {
-                texto = IndexItem.normalize(texto, false);
+                texto = normalizeQueryPreservingExactFields(texto);
             }
 
             try {
@@ -480,4 +480,113 @@ public class QueryBuilder {
 
         return pointsConfigMap;
     }
+    
+
+    /**
+     * Normalizes a Lucene query by converting non-ASCII characters to their ASCII
+     * equivalents, while preserving the original values of exact-match fields.
+     * <p>
+     * Fields such as {@code path.keyword} require their values to remain unchanged
+     * because they are indexed without tokenization or character normalization.
+     * Applying ASCII folding to these values could prevent exact matches against
+     * paths containing accented characters or other Unicode characters.
+     * <p>
+     * This method identifies explicit {@code path.keyword:} clauses and excludes
+     * their values from normalization. All other portions of the query are
+     * normalized using {@link IndexItem#normalize(String, boolean)}.
+     * <p>
+     * Both quoted and unquoted field values are supported. Quoted values may
+     * contain whitespace and escaped characters. Field names appearing inside
+     * quoted strings are ignored.
+     * <p>
+     * Example:
+     * 
+     * <pre>
+     * Input:  name:relatório AND path.keyword:"/João/ação.pdf"
+     * Output: name:relatorio AND path.keyword:"/João/ação.pdf"
+     * </pre>
+     * <p>
+     * Note: This method does not implement a complete Lucene query parser. In
+     * particular, grouped field expressions such as
+     * {@code path.keyword:("/João" OR "/José")} are not fully supported.
+     *
+     * @param query
+     *            the original Lucene query string
+     * @return the normalized query with exact-match field values preserved
+     */
+    private static String normalizeQueryPreservingExactFields(String query) {
+        final String exactField = IndexItem.PATH_KEYWORD + ":";
+
+        StringBuilder result = new StringBuilder(query.length());
+        int segmentStart = 0;
+        int i = 0;
+        boolean inQuotes = false;
+
+        while (i < query.length()) {
+            char c = query.charAt(i);
+
+            // Respect escaped characters in the original query
+            if (c == '\\' && i + 1 < query.length()) {
+                i += 2;
+                continue;
+            }
+
+            if (c == '"') {
+                inQuotes = !inQuotes;
+                i++;
+                continue;
+            }
+
+            // Only recognize field names outside quoted strings
+            boolean fieldBoundary = i == 0 || !Character.isLetterOrDigit(query.charAt(i - 1)) && query.charAt(i - 1) != '_' && query.charAt(i - 1) != '.';
+
+            if (!inQuotes && fieldBoundary && query.startsWith(exactField, i)) {
+
+                // Normalize everything before the exact field
+                result.append(IndexItem.normalize(query.substring(segmentStart, i), false));
+
+                int start = i;
+                i += exactField.length();
+
+                if (i < query.length() && query.charAt(i) == '"') {
+                    // Quoted exact value
+                    i++;
+                    while (i < query.length()) {
+                        char ch = query.charAt(i++);
+
+                        if (ch == '\\' && i < query.length()) {
+                            i++;
+                        } else if (ch == '"') {
+                            break;
+                        }
+                    }
+                } else {
+                    // Unquoted exact value
+                    while (i < query.length()) {
+                        char ch = query.charAt(i);
+
+                        if (ch == '\\' && i + 1 < query.length()) {
+                            i += 2;
+                        } else if (Character.isWhitespace(ch) || ch == ')' || ch == '(' || ch == '^') {
+                            break;
+                        } else {
+                            i++;
+                        }
+                    }
+                }
+
+                // Copy exact field and its value without normalization
+                result.append(query, start, i);
+                segmentStart = i;
+                continue;
+            }
+
+            i++;
+        }
+
+        // Normalize any remaining query text
+        result.append(IndexItem.normalize(query.substring(segmentStart), false));
+
+        return result.toString();
+    }    
 }
