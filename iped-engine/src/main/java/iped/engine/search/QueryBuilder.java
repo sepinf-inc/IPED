@@ -543,7 +543,7 @@ public class QueryBuilder {
             if (!inQuotes && fieldBoundary && query.startsWith(exactField, i)) {
 
                 // Normalize everything before the exact field
-                result.append(IndexItem.normalize(query.substring(segmentStart, i), false));
+                result.append(normalizeSegmentPreservingWhitespace(query.substring(segmentStart, i)));
 
                 int start = i;
                 i += exactField.length();
@@ -585,8 +585,27 @@ public class QueryBuilder {
         }
 
         // Normalize any remaining query text
-        result.append(IndexItem.normalize(query.substring(segmentStart), false));
+        result.append(normalizeSegmentPreservingWhitespace(query.substring(segmentStart)));
 
         return result.toString();
-    }    
+    }
+
+    private static String normalizeSegmentPreservingWhitespace(String segment) {
+        int start = 0;
+        int end = segment.length();
+
+        while (start < end && Character.isWhitespace(segment.charAt(start))) {
+            start++;
+        }
+
+        while (end > start && Character.isWhitespace(segment.charAt(end - 1))) {
+            end--;
+        }
+
+        if (start == end) {
+            return segment;
+        }
+
+        return segment.substring(0, start) + IndexItem.normalize(segment.substring(start, end), false) + segment.substring(end);
+    }
 }
