@@ -1,0 +1,166 @@
+########################################################################
+# RAG and AI Assistant Settings
+########################################################################
+
+# Enabled by enableRAG in IPEDConfig.txt.
+# During processing, the text of the selected items is cut into fragments, turned into vectors by an
+# embedding model and stored in the case index. During analysis, the AI Assistant tab retrieves the
+# fragments most related to a question and asks an LLM to answer from them, citing the items used.
+#
+# This file is copied to the case (iped/conf/RAGConfig.txt). Sections 2 and 3 only take effect when
+# processing; sections 4 and 5 can be changed in the case copy, without reprocessing.
+
+
+########################################################################
+# 1. Embedding service (processing and analysis)
+# Embeds the fragments when processing and the questions during analysis. The model is recorded in
+# the index: a case must be analysed with the model it was processed with, or the assistant is disabled.
+########################################################################
+
+# Options: local, remote
+# - local  : Ollama, also when it runs on another machine of the network.
+# - remote : OpenAI-compatible embeddings API (it uses llmApiKey).
+embeddingProvider = local
+
+# Ollama: bge-m3 (1024 dims), nomic-embed-text (768), mxbai-embed-large (1024)
+# OpenAI: text-embedding-3-small (1536), text-embedding-3-large (3072)
+embeddingModel = bge-m3
+
+# Ollama: http://localhost:11434/api/embeddings or http://<gpu-host>:11434/api/embeddings
+# OpenAI: https://api.openai.com/v1/embeddings
+# With a dedicated GPU, Ollama's OLLAMA_NUM_PARALLEL (e.g. 4) lets it embed several requests at once.
+embeddingEndpoint = http://localhost:11434/api/embeddings
+
+# Vector dimensions. Detected automatically; set it only for a remote model that is not detected.
+# embeddingDimensions = 1024
+
+
+########################################################################
+# 2. Items to embed (processing)
+# A category in the lists below includes its subcategories. Individual chat messages and history or
+# log entries are never embedded: the chat or report that gathers them is.
+########################################################################
+
+# Options: whitelist, blacklist
+# - whitelist : only items of the whitelisted categories or MIME types are embedded.
+# - blacklist : all items with text are embedded, except those of the blacklisted categories.
+embeddingFilterMode = whitelist
+
+# Used with whitelist: textual evidence, parsed reports, OCR results and audio transcriptions.
+embeddingCategoryWhitelist = ^(Documents|Spreadsheets|Presentations|Emails|Appointments|Email Attachments|Chats|SMS Messages|MMS Messages|Notes|Calls|Contacts|User Accounts|Passwords|Autofill|User Dictionaries|Calendar|Searches|Locations|Notifications|Wireless Networks|IP Connections|Applications Usage|Device Information|Registry Full Reports|Registry Custom Reports|Event Transcript|User Activities|Web Bookmarks|Mozilla Firefox Saved Session|TorTCFragment|GDrive File Entries|Internal Revenue of Brazil|Open Financial Exchange|Credit Cards|Financial Accounts|Transfers of Funds|Social Media Activities|File Downloads|File Uploads|Recordings|Extraction Summary|Scanned Documents|Audios|Internet History)$
+
+# Used with whitelist: MIME types embedded whatever their category.
+embeddingMimeTypeWhitelist = ^(text/csv|text/tab-separated-values)$
+
+# Used with blacklist: system noise, binaries and non-textual metadata.
+embeddingCategoryBlacklist = ^(Multimedia|Texts in System Folders|Temporary Internet Texts|Images in System Folders|Other files|XML Files|Georeferenced Files|OLE files|Links|Apple Artifacts|Databases|Compressed Archives|Programs and Libraries|Unallocated|File Slacks|Image Disks|Main Registry Files|Other Registry Files|USN Journal|Cell Towers|SIM Data|Power Events|Mobile Cards|Activities Sensor|Device Connectivity|Device Events|Networks Usage|Recognized Devices|Journeys|Fuzzy Data)$
+
+# Used in both modes: MIME types never embedded. Besides unclassified binary data, the browser databases:
+# their history, downloads and searches are embedded as the reports IPED builds from them.
+embeddingMimeTypeBlacklist = ^(application/octet-stream|application/x-sqlite3|application/x-chrome-sqlite|application/x-firefox-places|application/x-safari-sqlite|application/x-safari-plist|application/x-edge-web-cache)$
+
+# Used in both modes: HTML pages whose path contains one of these parts (case-insensitive) are not
+# embedded. They are browser caches and pages of system or program folders (help pages, .pak archives
+# of Chrome/Electron), not user documents. They stay in the regular index.
+embeddingHtmlPathBlacklist = Temporary Internet|/Microsoft/Windows/INetCache|/Microsoft/Windows/INetCookies|Chrome/User Data/|Mozilla/Firefox/Profiles|Apple Computer/Safari|/Library/Safari|/Library/Caches/|/Library/Cookies/|/Library/Preferences/com[.]apple[.]Safari|chromium/Default/Cache|cache/mozilla/firefox|/Library/Application Support/Firefox/|/Cookies/|/vol_vol[0-9]*/Windows/|/Windows[.]old|Program Files|Arquivos de Programas|System Volume Information
+
+
+########################################################################
+# 3. Fragments and embedding requests (processing)
+# The fragments are stored apart from the regular index: textSplitSize in IndexTaskConfig.txt and the
+# regular searches are not affected.
+########################################################################
+
+# Size of each fragment, in characters. Recommended: 3000 to 5000.
+chunkSize = 3500
+
+# Characters repeated between consecutive fragments, so text cut at a boundary is not lost.
+# Recommended: 10% to 15% of chunkSize.
+chunkOverlap = 350
+
+# Maximum characters per embedding request; fragments of several items are sent together. At least chunkSize.
+# Measured with bge-m3 on an RTX A4000 (OLLAMA_NUM_PARALLEL = 4): 14000 to 28000 was stable with up to
+# 16 workers; 42000 slowed down with 16 workers and 84000 was unstable.
+maxBatchChars = 28000
+
+# Maximum characters of one item that are embedded (about 1150 fragments). The rest of the text is still
+# in the regular index, and the item gets embeddingTruncated = true. 0 disables the limit (not recommended:
+# huge texts, such as large CSV or log files, may exhaust memory).
+maxEmbeddingCharsPerItem = 4000000
+
+# Stops processing at startup if the embedding service or model is unavailable, instead of processing the
+# case without embeddings. Items whose fragments fail during processing get embeddingFailed = true.
+abortIfEmbeddingUnavailable = true
+
+
+########################################################################
+# 4. Retrieval (analysis)
+########################################################################
+
+# Fragments sent to the LLM with each question.
+# With a local model they must fit llmContextWindow: 1 token is about 2.7 characters of Portuguese text,
+# so 5 fragments of 3500 characters take about 6500 tokens. Fragments that do not fit are left out, with
+# a warning. Cloud models have much larger windows: 15 to 20 can be used.
+maxRetrievedChunks = 5
+
+# Minimum vector score of a fragment (0.0 to 1.0); weaker vector matches are discarded before the fusion.
+# Lucene scores as (1 + cosine) / 2: 0.70 = cosine 0.40. Calibrated with questions of known answer: up to
+# 0.70 no relevant fragment was lost. It does not detect questions without answer in the case.
+chunkSimilarityThreshold = 0.70
+
+# Weight of the vector search in the fusion with the keyword (BM25) search, which gets 1.0 minus this value.
+# Keyword search finds names, numbers and exact terms; vector search finds paraphrases and other languages.
+# Below 0.5, a fragment found only by the vector search cannot outrank the keyword results.
+vectorSearchWeight = 0.5
+
+# Initial minimum cosine (0.0 to 1.0) of "Find Similar Documents (AI)"; it can be changed in the slider of
+# the active filter (right click). Documents of the same kind are often 0.5 to 0.7 apart, so lower values
+# return most of a case. Use about 0.85 to find near duplicates.
+semanticSimilarityMinScore = 0.70
+
+
+########################################################################
+# 5. AI Assistant LLM (analysis)
+########################################################################
+
+# Shows the AI Assistant tab. When false, "Find Similar Documents (AI)" is still available.
+enableLLMQueries = true
+
+# Diagnosis of the assistant: under each answer, a link shows the fragments retrieved and the full prompt
+# sent to the LLM. When false, the link is hidden and they are not kept in memory.
+debugMode = false
+
+# Options: local, remote, gemini, claude
+# - local  : Ollama, also when it runs on another machine of the network (it sets the context window).
+# - remote : OpenAI or an OpenAI-compatible API (vLLM, LM Studio, Azure).
+# - gemini : Google Gemini API.
+# - claude : Anthropic Claude API.
+# WARNING: with remote, gemini or claude (and with a remote embeddingProvider), the questions and the
+# evidence text retrieved from the case are sent to that service. Use them only when authorized, and
+# check the service terms: free tiers (e.g. Google AI Studio free keys) may use the data sent to them.
+llmProvider = local
+
+# Ollama: qwen3:8b, qwen3:4b, gemma3:4b, llama3.1:8b
+# Other providers: a model name of the service, e.g. gpt-4o-mini, gemini-2.5-flash, claude-sonnet-4-6
+llmModel = qwen3:8b
+
+# Ollama: http://localhost:11434/v1 or http://<gpu-host>:11434/v1
+# OpenAI: https://api.openai.com/v1 (or the /v1 address of a compatible server)
+# Gemini and Claude: leave empty to use the official endpoint.
+llmEndpoint = http://localhost:11434/v1
+
+# API key of remote, gemini or claude (and of a remote embeddingProvider). Leave empty for Ollama.
+# This file is copied to the case, so anyone who receives the case can read a key written here. Prefer
+# the IPED_RAG_API_KEY environment variable on the processing and analysis machines; it takes precedence
+# over this value. Keys are masked in the logs.
+llmApiKey =
+
+# Context window of local models, in tokens (num_ctx of Ollama). Ignored by the other providers.
+# Part of it is reserved for the answer (up to 2560 tokens, model reasoning included).
+# It must fit in the GPU memory, otherwise Ollama moves part of the model to the CPU and answers get
+# much slower. Measured with 8B models (qwen3:8b):
+# - 16 GB (RTX A4000, 4060 Ti 16GB, 4080): 12288 (about 12.2 GB); 16384 needs about 25 GB.
+# - 8 GB (RTX 3060, 4060): 9216 with 4B models.
+# - 6 GB (RTX 2060, 3050): 4096 with 4B models, chunkSize = 3000 and maxRetrievedChunks = 4.
+# - 24 GB (RTX 3090, 4090): 16384, with up to 10 fragments.
+llmContextWindow = 12288
