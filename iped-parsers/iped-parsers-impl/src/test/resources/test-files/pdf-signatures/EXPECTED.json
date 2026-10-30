@@ -1,0 +1,2607 @@
+{
+ "agreement_rule": "field agreed iff V1 (pyHanko) == V2 (PDFBox 2.0.27 + BC 1.70) after normalisation; otherwise both values recorded, no choice made; V3 (openssl cms -verify -noverify) recorded, not used as tie-break",
+ "cases": {
+  "A01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "PAdES B-B (ETSI.CAdES.detached), RSA-2048/SHA-256, all dictionary fields set",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 9331
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/A01_pades_bb_single.pdf",
+   "sha256": "44df3b716168dc881beefb87af6fe6960874f3dcf21aa58a1d2c4e99b074582b",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,8692,639": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8692,
+       639
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1001"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "77382817ea280a2ed4ba9b4872d63f735c88931d43d034325324ede9d9e1cbfe"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "57c20efa92a3803c928ef951c668ebc80834676f83ea00c7bd8386ea7e2f27cf"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "A02": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "adbe.pkcs7.detached; CMS signingTime attribute present and equal to /M",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 9472
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/A02_pkcs7_detached_single.pdf",
+   "sha256": "fba0e61f85c874316a87507c26a9717a5a9b0f4cefecb4ce3feb092ffcce4394",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1455,8833,639": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1455,
+       8833,
+       639
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1001"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "77382817ea280a2ed4ba9b4872d63f735c88931d43d034325324ede9d9e1cbfe"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "57c20efa92a3803c928ef951c668ebc80834676f83ea00c7bd8386ea7e2f27cf"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": "2026-01-15T11:00:00Z"
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T11:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "adbe.pkcs7.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "B01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "PAdES B-T: RFC 3161 token from a LOCAL test TSA (genTime fixed)",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 17318
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/B01_pades_bt.pdf",
+   "sha256": "e7ff58127ca59caa51a9483531d88164ae83696e0cc8cbc20a99a0a40ff5605b",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,16678,640": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       16678,
+       640
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1001"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "77382817ea280a2ed4ba9b4872d63f735c88931d43d034325324ede9d9e1cbfe"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "57c20efa92a3803c928ef951c668ebc80834676f83ea00c7bd8386ea7e2f27cf"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T12:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": "2026-01-15T12:00:05Z"
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": "c3ac3990c26829a3e26f59247bbce035216be34407ce4072ecdd2d8ac632c7d5"
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": true
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": true
+     }
+    }
+   }
+  },
+  "C01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "Two successive signatures (Alice, then Bob incrementally)",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 17609
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 2
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 2
+    }
+   },
+   "file": "pdf/C01_two_signatures.pdf",
+   "sha256": "373513dc725ebcd232d09ba10c155d43c083cea990aa2e52219d3e8243ede05d",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,8692,639": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8692,
+       639
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1001"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "77382817ea280a2ed4ba9b4872d63f735c88931d43d034325324ede9d9e1cbfe"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "57c20efa92a3803c928ef951c668ebc80834676f83ea00c7bd8386ea7e2f27cf"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": false
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-16T09:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    },
+    "Signature2": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,9847,16985,624": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       9847,
+       16985,
+       624
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1002"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "aa79b7267cb4a64b19d24c7c718c4de9ee4d673a53b03c3d6b186e565df5f99d"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Bob Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "1bd23818e0400df20261f5903d2894b989dac186675f108730c98c8a9bdcd149"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature2"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-16T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Bob Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "D01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "A01 followed by an incremental update that adds visible page text",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 10016
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/D01_incremental_after_signing.pdf",
+   "sha256": "59abc20b423183f7e1778fc65289c63364f49e32faa21ea0d24224eeb0c795be",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,8692,639": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8692,
+       639
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1001"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "77382817ea280a2ed4ba9b4872d63f735c88931d43d034325324ede9d9e1cbfe"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "57c20efa92a3803c928ef951c668ebc80834676f83ea00c7bd8386ea7e2f27cf"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": false
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "E01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "A01 with bytes appended after %%EOF (no new revision)",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 9439
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/E01_trailing_bytes.pdf",
+   "sha256": "0bc41a8b088b2b6b8606b813052e547c53c6f1dc390f5088a7017b8a0863befe",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,8692,639": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8692,
+       639
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1001"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "77382817ea280a2ed4ba9b4872d63f735c88931d43d034325324ede9d9e1cbfe"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "57c20efa92a3803c928ef951c668ebc80834676f83ea00c7bd8386ea7e2f27cf"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": false
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "E02": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "Crafted /ByteRange: gap excludes 24 bytes beyond /Contents; CMS signed over those ranges",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 9331
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/E02_byterange_gap_wider.pdf",
+   "sha256": "bef7ce062cb17930044300d5db9102a267b07da8b4b1a1afcf8b560235b9bb82",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "FAILED: IOException"
+     },
+     "_v3_openssl": {
+      "0,1548,8716,615": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8716,
+       615
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1001"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "77382817ea280a2ed4ba9b4872d63f735c88931d43d034325324ede9d9e1cbfe"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "57c20efa92a3803c928ef951c668ebc80834676f83ea00c7bd8386ea7e2f27cf"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": false
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "F01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "A01 with one byte of the signed page content changed",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 9331
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/F01_signed_content_byte_flipped.pdf",
+   "sha256": "1435b827132e26fbe093e9ae3f03b2ec0716478302e55fef3f7b21dcec72071e",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": false,
+      "bc_signerinfo_verify_error": "CMSSignerDigestMismatchException",
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,8692,639": {
+       "note": "CMS Verification failure",
+       "openssl_verify_ok": false
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8692,
+       639
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1001"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "77382817ea280a2ed4ba9b4872d63f735c88931d43d034325324ede9d9e1cbfe"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "57c20efa92a3803c928ef951c668ebc80834676f83ea00c7bd8386ea7e2f27cf"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": false
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": false
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "G01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "A01 with one hex digit of the RSA signature value inside /Contents changed",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 9331
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/G01_contents_sigvalue_flipped.pdf",
+   "sha256": "064a3bded17943474c8c52c5b5fe418147c00193fb69cb59819621e07d5f7441",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": false,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,8692,639": {
+       "note": "CMS Verification failure",
+       "openssl_verify_ok": false
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8692,
+       639
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1001"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "77382817ea280a2ed4ba9b4872d63f735c88931d43d034325324ede9d9e1cbfe"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "57c20efa92a3803c928ef951c668ebc80834676f83ea00c7bd8386ea7e2f27cf"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": false
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": false
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "G02": {
+   "_v1_errors": {
+    "signatures_error": "ValueError: Error parsing asn1crypto.cms.ContentInfo - tag should have been 16, but 17 was found"
+   },
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "A01 with the first CMS DER byte changed 0x30->0x31 (CMS unparsable)",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 9331
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/G02_contents_der_broken.pdf",
+   "sha256": "645d067d5884d74e15a629a382107c4e93c2d7156eac713ea95dd9ba956b3c50",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "error": "CMSException",
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,8692,639": {
+       "note": "Error reading SMIME Content Info",
+       "openssl_verify_ok": false
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8692,
+       639
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": null
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": null
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": null
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": null
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": null
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": null
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": null
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": null
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": false
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": false
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": null
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": null
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "FAILED"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Alice Example (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": null
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": null
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": null
+     }
+    }
+   }
+  },
+  "H01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "Signer certificate valid 2020-01-01..2021-01-01, /M = 2026-01-15",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 9336
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/H01_expired_cert.pdf",
+   "sha256": "a3b504e6aa174e0195795d912ccd12f494f80c76c89f53bc8277af1bbf0d7b95",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,8696,640": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8696,
+       640
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2021-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2020-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1003"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "4cd53a9d65b72ced9728f6b567e8e22fbcab6c1be6c41c26933d869afd595315"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Expired Signer (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "5db537402462588cdc5cce3b6809146e8c70010c36e8887957a8cb58b652370d"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": false
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Expired Signer (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "I01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "Signer CN and /Name with non-ASCII characters; non-ASCII /Reason",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 9520
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/I01_non_ascii_signer.pdf",
+   "sha256": "2b72bd11c594b039734b96e9ee37ae644e2dab157a348d51ef5a050bdf595759",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1548,8732,788": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1548,
+       8732,
+       788
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1004"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "6065c274d6ef6ccad6136699ca2c669eebb1c5abee22bebdcc4a06e241232c3c"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "José Ñandú Łukasz Øre 测试"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "569f41dada69f3942d881aaf3e2f60cc7e7d240d75796dde195685a781d679f7"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.1"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "São Paulo / Zürich"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "José Ñandú Łukasz Øre 测试"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Conformità – verificação – Prüfung"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.113549.1.1.11"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  },
+  "J01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "Plain unsigned PDF",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 889
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 0
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 0
+    }
+   },
+   "file": "pdf/J01_unsigned.pdf",
+   "sha256": "60e0c5ff5d95c9180d807a907232fddefa818aa2939f2933a5c2380cd1c846cc",
+   "signatures": {}
+  },
+  "K01": {
+   "_v1_errors": {
+    "error": "PdfReadError"
+   },
+   "_v2_errors": {},
+   "all_fields_agreed": false,
+   "description": "A01 truncated to half its length",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 4665
+    },
+    "loads": {
+     "status": "disagreement",
+     "v1": false,
+     "v2": true
+    },
+    "signature_count": {
+     "status": "disagreement",
+     "v1": null,
+     "v2": 0
+    },
+    "signature_field_count": {
+     "status": "disagreement",
+     "v1": null,
+     "v2": 1
+    }
+   },
+   "file": "pdf/K01_truncated.pdf",
+   "sha256": "ff5b04d830a80a9e521190a963a3c7e0a028406662e9e27fa14c5ba1daa61db0",
+   "signatures": {}
+  },
+  "K02": {
+   "_v1_errors": {
+    "error": "PdfReadError"
+   },
+   "_v2_errors": {
+    "error": "IOException"
+   },
+   "all_fields_agreed": true,
+   "description": "%PDF-1.7 header followed by 4096 seeded random bytes",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 4105
+    },
+    "loads": {
+     "status": "agreed",
+     "value": false
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": null
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": null
+    }
+   },
+   "file": "pdf/K02_not_a_pdf.pdf",
+   "sha256": "d9b5e4cedf99cccc42ab5b89f029eca3cf28d9e6d55c9ee931895ac195e3babd",
+   "signatures": {}
+  },
+  "L01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "Unsigned (empty) signature field, no /V",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 1720
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 0
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/L01_empty_signature_field.pdf",
+   "sha256": "0a0f642f8702d3c9393d1feefe36f2bc31c553bffec2e8ca13cdb9cb8bde2bf6",
+   "signatures": {}
+  },
+  "M01": {
+   "_v1_errors": {},
+   "_v2_errors": {},
+   "all_fields_agreed": true,
+   "description": "PAdES B-B with ECDSA P-256 and SHA-384",
+   "document": {
+    "file_size": {
+     "status": "agreed",
+     "value": 8946
+    },
+    "loads": {
+     "status": "agreed",
+     "value": true
+    },
+    "signature_count": {
+     "status": "agreed",
+     "value": 1
+    },
+    "signature_field_count": {
+     "status": "agreed",
+     "value": 1
+    }
+   },
+   "file": "pdf/M01_ecdsa_p256_sha384.pdf",
+   "sha256": "40355a71de41c08ceb366ed235892708259bcfcdaefe995970e9c15d21c22775",
+   "signatures": {
+    "Signature1": {
+     "_v2_only": {
+      "bc_signerinfo_verify": true,
+      "bc_signerinfo_verify_error": null,
+      "pdfbox_getContents_bytes": "OK"
+     },
+     "_v3_openssl": {
+      "0,1731,7739,1207": {
+       "note": "",
+       "openssl_verify_ok": true
+      }
+     },
+     "byte_range": {
+      "status": "agreed",
+      "value": [
+       0,
+       1731,
+       7739,
+       1207
+      ]
+     },
+     "cert_issuer_cn": {
+      "status": "agreed",
+      "value": "Synthetic Test Root CA"
+     },
+     "cert_issuer_der_sha256": {
+      "status": "agreed",
+      "value": "f4a634cfc0e027eb6ab0996f4f9f45f872f4150e917076f497791ed0c6927d52"
+     },
+     "cert_not_after": {
+      "status": "agreed",
+      "value": "2030-01-01T00:00:00Z"
+     },
+     "cert_not_before": {
+      "status": "agreed",
+      "value": "2025-01-01T00:00:00Z"
+     },
+     "cert_serial_hex": {
+      "status": "agreed",
+      "value": "1006"
+     },
+     "cert_sha256_fingerprint": {
+      "status": "agreed",
+      "value": "6f7dba9c83a3a2a31dc1866f368c4586625135c643fcd53a5d920bb4c5c9013e"
+     },
+     "cert_subject_cn": {
+      "status": "agreed",
+      "value": "Carol ECDSA (TEST)"
+     },
+     "cert_subject_der_sha256": {
+      "status": "agreed",
+      "value": "180df9437db5e25f932029c3a6db363679d2b5b95b800bb97780c4a14009ccf1"
+     },
+     "cert_valid_at_m": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_parsed": {
+      "status": "agreed",
+      "value": true
+     },
+     "cms_signing_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "contact_info": {
+      "status": "agreed",
+      "value": "test@example.invalid"
+     },
+     "covers_whole_file": {
+      "status": "agreed",
+      "value": true
+     },
+     "crypto_ok": {
+      "status": "agreed",
+      "value": true
+     },
+     "digest_algorithm": {
+      "status": "agreed",
+      "value": "2.16.840.1.101.3.4.2.2"
+     },
+     "digest_match": {
+      "status": "agreed",
+      "value": true
+     },
+     "extraction_status": {
+      "status": "agreed",
+      "value": "OK"
+     },
+     "field_name": {
+      "status": "agreed",
+      "value": "Signature1"
+     },
+     "filter": {
+      "status": "agreed",
+      "value": "Adobe.PPKLite"
+     },
+     "gap_is_contents_only": {
+      "status": "agreed",
+      "value": true
+     },
+     "location": {
+      "status": "agreed",
+      "value": "Nowhere (test)"
+     },
+     "m": {
+      "status": "agreed",
+      "value": "2026-01-15T10:00:00Z"
+     },
+     "name": {
+      "status": "agreed",
+      "value": "Carol ECDSA (TEST)"
+     },
+     "reason": {
+      "status": "agreed",
+      "value": "Synthetic test signature"
+     },
+     "signature_algorithm": {
+      "status": "agreed",
+      "value": "1.2.840.10045.4.3.3"
+     },
+     "signature_valid": {
+      "status": "agreed",
+      "value": true
+     },
+     "subfilter": {
+      "status": "agreed",
+      "value": "ETSI.CAdES.detached"
+     },
+     "ts_gen_time": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_alg": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_hex": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_imprint_matches_signature": {
+      "status": "agreed",
+      "value": null
+     },
+     "ts_present": {
+      "status": "agreed",
+      "value": false
+     }
+    }
+   }
+  }
+ },
+ "corpus": "iped_3016_corpus",
+ "license": "CC0-1.0",
+ "prereg_sha256": "2b77a733c2a3bd2bfdaaf86abec6736618591a1d4c7961ba24185736af31ea47",
+ "versions": {
+  "asn1crypto": "1.5.1",
+  "cryptography": "50.0.2",
+  "jars_sha256": {
+   "bcpkix-jdk15on-1.70.jar": "e5b9cb821df57f70b0593358e89c0e8d7266515da9d088af6c646f63d433c07c",
+   "bcprov-jdk15on-1.70.jar": "8f3c20e3e2d565d26f33e8d4857a37d0d7f8ac39b62a7026496fcab1bdac30d4",
+   "bcutil-jdk15on-1.70.jar": "52dc5551b0257666526c5095424567fed7dc7b00d2b1ba7bd52298411112b1d0",
+   "commons-logging-1.2.jar": "daddea1ea0be0f56978ab3006b8ac92834afeefbd9b7e4e6316fca57df0fa636",
+   "fontbox-2.0.27.jar": "dc7429868aaf3d313c524b9aab846a405e89ca4927f35762ca4d1a60bce1d7f4",
+   "pdfbox-2.0.27.jar": "a25ad2a0be6b0bf9eb0e972abd09c34c0e797a3ce2a980d5ff035ff4cf078037"
+  },
+  "java": "openjdk version \"17.0.20.1\" 2026-08-18",
+  "openssl": "OpenSSL 3.0.22 25 Aug 2026 (Library: OpenSSL 3.0.22 25 Aug 2026)",
+  "pyHanko": "0.37.0",
+  "pyhanko-certvalidator": "0.32.1",
+  "python": "3.11.2"
+ }
+}

@@ -373,7 +373,14 @@
         <parser class="iped.parsers.misc.GenericOLEParser"></parser>
         <parser class="iped.parsers.misc.OFXParser"></parser>
         <parser class="iped.parsers.misc.OFCParser"></parser>
-        <parser class="iped.parsers.misc.PDFTextParser"></parser>
+        <parser class="iped.parsers.misc.PDFTextParser">
+            <params>
+                <!-- extracts signer, certificate, signing time and a cryptographic status (no chain or revocation check) of digital signatures -->
+                <param name="extractSignatures" type="bool">true</param>
+                <!-- also extracts each signature as a .p7s subitem with its own fields -->
+                <param name="extractSignatureFiles" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.video.FLVParserWrapper"></parser>
         <parser class="iped.parsers.video.EmptyVideoParser"></parser>
         <parser class="iped.parsers.standard.RawStringParser">
