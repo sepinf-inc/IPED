@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -25,10 +26,16 @@ import org.apache.pdfbox.pdmodel.interactive.digitalsignature.ExternalSigningSup
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDSignatureField;
+import org.bouncycastle.asn1.ASN1Encoding;
+import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.asn1.cms.Attribute;
 import org.bouncycastle.asn1.cms.AttributeTable;
+import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
+import org.bouncycastle.asn1.cms.ContentInfo;
+import org.bouncycastle.asn1.cms.SignedData;
+import org.bouncycastle.asn1.cms.SignerInfo;
 import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -38,6 +45,7 @@ import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
@@ -270,7 +278,7 @@ public class PdfSignatureExtractorTest extends TestCase {
         assertEquals(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED.getName(), s.subFilter);
         assertEquals(Instant.parse("2024-01-15T10:30:00Z"), instant(s.signDate));
         assertEquals("2.16.840.1.101.3.4.2.1", s.digestAlgorithmOid);
-        assertEquals(testCert, s.signerCertificate);
+        assertEquals(new JcaX509CertificateHolder(testCert), s.signerCertificate);
         assertTrue(s.byteRangeValid);
         assertTrue(s.gapIsContentsOnly);
         assertTrue(s.coversWholeDocument);
@@ -287,7 +295,7 @@ public class PdfSignatureExtractorTest extends TestCase {
         assertEquals(1, sigs.size());
         assertEquals(Status.INVALID, sigs.get(0).status);
         assertEquals("message digest does not match /ByteRange content", sigs.get(0).statusDetail);
-        assertEquals(testCert, sigs.get(0).signerCertificate);
+        assertEquals(new JcaX509CertificateHolder(testCert), sigs.get(0).signerCertificate);
     }
 
     private static byte[] createSha1SubFilterPdf() throws Exception {
@@ -303,7 +311,7 @@ public class PdfSignatureExtractorTest extends TestCase {
         assertEquals("adbe.pkcs7.sha1", s.subFilter);
         assertEquals(Status.VALID, s.status);
         assertNull(s.statusDetail);
-        assertEquals(testCert, s.signerCertificate);
+        assertEquals(new JcaX509CertificateHolder(testCert), s.signerCertificate);
     }
 
     @Test
@@ -463,7 +471,7 @@ public class PdfSignatureExtractorTest extends TestCase {
         assertNull(s.statusDetail);
         assertEquals(TSA_TIME, s.timestampGenTime);
         assertEquals(Boolean.TRUE, s.timestampImprintMatches);
-        assertEquals(tsaCert, s.signerCertificate);
+        assertEquals(new JcaX509CertificateHolder(tsaCert), s.signerCertificate);
         assertTrue(s.coversWholeDocument);
 
         Metadata parent = new Metadata();
@@ -632,7 +640,7 @@ public class PdfSignatureExtractorTest extends TestCase {
         String expected = "José Ñandú Łukasz Øre 测试";
         assertEquals(Status.VALID, s.status);
         assertEquals(expected, s.name);
-        assertTrue(s.signerCertificate.getSubjectX500Principal().getName().contains(expected));
+        assertTrue(s.signerCertificate.getSubject().toString().contains(expected));
     }
 
     @Test
@@ -676,5 +684,66 @@ public class PdfSignatureExtractorTest extends TestCase {
         // no int overflow
         assertFalse(PdfSignatureExtractor.isByteRangeValid(
                 new int[] { 0, 100, Integer.MAX_VALUE, Integer.MAX_VALUE }, len));
+    }
+
+    /** a detached CMS whose unsigned attributes hold something that is not an Attribute */
+    private static byte[] cmsWithMalformedUnsignedAttribute(byte[] signedBytes) throws Exception {
+        SignedData sd = SignedData.getInstance(detachedCms(signedBytes).toASN1Structure().getContent());
+        SignerInfo si = SignerInfo.getInstance(sd.getSignerInfos().getObjectAt(0));
+        SignerInfo malformed = new SignerInfo(si.getSID(), si.getDigestAlgorithm(), si.getAuthenticatedAttributes(),
+                si.getDigestEncryptionAlgorithm(), si.getEncryptedDigest(), new DERSet(new ASN1Integer(1)));
+        SignedData changed = new SignedData(sd.getDigestAlgorithms(), sd.getEncapContentInfo(), sd.getCertificates(),
+                sd.getCRLs(), new DERSet(malformed));
+        return new ContentInfo(CMSObjectIdentifiers.signedData, changed).getEncoded(ASN1Encoding.DER);
+    }
+
+    @Test
+    public void testMalformedUnsignedAttributeKeepsOtherFields() throws Exception {
+        SignatureInfo s = extractBytes(
+                createPdf(signatureDictionary(), PdfSignatureExtractorTest::cmsWithMalformedUnsignedAttribute)).get(0);
+        // BouncyCastle reads the unsigned attributes when verifying, so the status stays
+        // unknown, but the fields read before are kept
+        assertEquals(Status.UNKNOWN, s.status);
+        assertEquals("verification error: IllegalArgumentException", s.statusDetail);
+        assertNull(s.timestampImprintMatches);
+        assertEquals(Instant.parse("2024-01-15T10:30:00Z"), instant(s.signDate));
+        assertEquals("2.16.840.1.101.3.4.2.1", s.digestAlgorithmOid);
+        assertEquals(new JcaX509CertificateHolder(testCert), s.signerCertificate);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testDeeplyNestedContentsDoNotStopExtraction() throws Exception {
+        // indefinite-length SEQUENCEs nested 4000 times, within the default /Contents size
+        byte[] nested = new byte[8000];
+        for (int i = 0; i < nested.length; i += 2) {
+            nested[i] = 0x30;
+            nested[i + 1] = (byte) 0x80;
+        }
+        File file = Files.createTempFile("iped-test-nested-", ".pdf").toFile();
+        try {
+            Files.write(file.toPath(), createPdf(signatureDictionary(), bytes -> nested));
+            // BouncyCastle 1.70 parses nested ASN.1 recursively: a small stack makes it
+            // overflow whatever the JVM default
+            AtomicReference<Object> result = new AtomicReference<>();
+            Thread thread = new Thread(null, () -> {
+                try {
+                    List<SignatureInfo> sigs = extract(file);
+                    PdfSignatureExtractor.cmsBytes(sigs.get(0));
+                    result.set(sigs);
+                } catch (Throwable t) {
+                    result.set(t);
+                }
+            }, "small-stack", 256 * 1024);
+            thread.start();
+            thread.join();
+            assertTrue(String.valueOf(result.get()), result.get() instanceof List);
+            List<SignatureInfo> sigs = (List<SignatureInfo>) result.get();
+            assertEquals(1, sigs.size());
+            assertEquals(Status.UNKNOWN, sigs.get(0).status);
+            assertTrue(sigs.get(0).statusDetail, sigs.get(0).statusDetail.contains("StackOverflowError"));
+        } finally {
+            file.delete();
+        }
     }
 }

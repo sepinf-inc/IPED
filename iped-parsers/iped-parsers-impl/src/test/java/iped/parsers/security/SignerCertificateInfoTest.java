@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -23,7 +22,7 @@ import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.PolicyInformation;
 import org.bouncycastle.asn1.x509.qualified.QCStatement;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.Test;
@@ -66,7 +65,7 @@ public class SignerCertificateInfoTest extends TestCase {
         return "01011980" + cpf + "00000000000" + "000000000000000" + "SSPDF";
     }
 
-    private static X509Certificate cert(String subject, GeneralName[] altNames, Extension... extensions)
+    private static X509CertificateHolder cert(String subject, GeneralName[] altNames, Extension... extensions)
             throws Exception {
         X500Name name = new X500Name(subject);
         JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(new X500Name("CN=Synthetic Test CA, O=IPED Test"),
@@ -77,8 +76,7 @@ public class SignerCertificateInfoTest extends TestCase {
         for (Extension ext : extensions) {
             builder.addExtension(ext);
         }
-        return new JcaX509CertificateConverter()
-                .getCertificate(builder.build(new JcaContentSignerBuilder("SHA256WithRSA").build(keyPair.getPrivate())));
+        return builder.build(new JcaContentSignerBuilder("SHA256WithRSA").build(keyPair.getPrivate()));
     }
 
     private static Extension policies(String... oids) throws Exception {
@@ -89,7 +87,7 @@ public class SignerCertificateInfoTest extends TestCase {
 
     @Test
     public void testIcpBrasilPessoaFisica() throws Exception {
-        X509Certificate cert = cert("CN=FULANO DE TESTE:" + CPF + ", OU=Synthetic, O=ICP-Brasil, C=BR",
+        X509CertificateHolder cert = cert("CN=FULANO DE TESTE:" + CPF + ", OU=Synthetic, O=ICP-Brasil, C=BR",
                 new GeneralName[] { otherName(SignerCertificateInfo.OID_ICP_PESSOA_FISICA, octets(pessoaFisica(CPF))),
                         new GeneralName(GeneralName.rfc822Name, "fulano@example.invalid") },
                 policies("2.16.76.1.2.3.99"));
@@ -104,7 +102,7 @@ public class SignerCertificateInfoTest extends TestCase {
 
     @Test
     public void testIcpBrasilPessoaJuridica() throws Exception {
-        X509Certificate cert = cert("CN=EMPRESA TESTE LTDA:" + CNPJ + ", O=ICP-Brasil, C=BR",
+        X509CertificateHolder cert = cert("CN=EMPRESA TESTE LTDA:" + CNPJ + ", O=ICP-Brasil, C=BR",
                 new GeneralName[] { otherName(SignerCertificateInfo.OID_ICP_CNPJ, new DERPrintableString(CNPJ)),
                         otherName(SignerCertificateInfo.OID_ICP_RESPONSAVEL_NOME, new DERPrintableString("RESPONSAVEL TESTE")),
                         otherName(SignerCertificateInfo.OID_ICP_RESPONSAVEL_DADOS, octets(pessoaFisica(CPF_RESPONSIBLE))) });
@@ -136,7 +134,7 @@ public class SignerCertificateInfoTest extends TestCase {
 
     @Test
     public void testUndefinedFieldsFilledWithZerosAreIgnored() throws Exception {
-        X509Certificate cert = cert("CN=FULANO DE TESTE, C=BR", new GeneralName[] {
+        X509CertificateHolder cert = cert("CN=FULANO DE TESTE, C=BR", new GeneralName[] {
                 otherName(SignerCertificateInfo.OID_ICP_PESSOA_FISICA, octets(pessoaFisica("00000000000"))) });
         SignerCertificateInfo info = new SignerCertificateInfo(cert);
         assertTrue(info.getCpfs().isEmpty());
@@ -148,7 +146,7 @@ public class SignerCertificateInfoTest extends TestCase {
         DERSequence statements = new DERSequence(new ASN1Encodable[] {
                 new QCStatement(new ASN1ObjectIdentifier("0.4.0.1862.1.1")),
                 new QCStatement(new ASN1ObjectIdentifier("0.4.0.1862.1.4")) });
-        X509Certificate cert = cert("CN=Erika Mustermann (TEST), O=Example GmbH, E=erika@example.invalid, C=DE", null,
+        X509CertificateHolder cert = cert("CN=Erika Mustermann (TEST), O=Example GmbH, E=erika@example.invalid, C=DE", null,
                 new Extension(Extension.qCStatements, false, statements.getEncoded()));
         SignerCertificateInfo info = new SignerCertificateInfo(cert);
         assertEquals("Erika Mustermann (TEST)", info.getName());
@@ -163,7 +161,7 @@ public class SignerCertificateInfoTest extends TestCase {
 
     @Test
     public void testSignerMetadata() throws Exception {
-        X509Certificate cert = cert("CN=FULANO DE TESTE:" + CPF + ", C=BR", new GeneralName[] {
+        X509CertificateHolder cert = cert("CN=FULANO DE TESTE:" + CPF + ", C=BR", new GeneralName[] {
                 otherName(SignerCertificateInfo.OID_ICP_PESSOA_FISICA, octets(pessoaFisica(CPF))) });
         Metadata metadata = new Metadata();
         SignatureMetadata.addSigner(metadata, cert);

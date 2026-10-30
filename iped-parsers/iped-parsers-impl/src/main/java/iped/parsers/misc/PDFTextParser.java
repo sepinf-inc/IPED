@@ -366,7 +366,8 @@ public class PDFTextParser extends PDFParser {
         } catch (InvalidPasswordException e) {
             // encrypted with a user password: already reported by the PDF parsing
             LOGGER.debug("Encrypted PDF, signatures not extracted", e);
-        } catch (Exception e) {
+        } catch (Exception | StackOverflowError e) {
+            // StackOverflowError: deeply nested ASN.1 in /Contents, it must not skip OCR and thumbnail
             String path = itemInfo != null ? itemInfo.getPath() : null;
             LOGGER.warn("Error extracting PDF signatures from '{}' ({} bytes)\t{}", path, //$NON-NLS-1$
                     pdf != null ? pdf.length() : null, e.toString());

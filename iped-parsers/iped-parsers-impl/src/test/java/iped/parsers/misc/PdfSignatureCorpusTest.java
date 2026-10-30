@@ -18,6 +18,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
@@ -203,7 +204,8 @@ public class PdfSignatureCorpusTest extends TestCase {
             }
         }
 
-        X509Certificate cert = info.signerCertificate;
+        X509Certificate cert = info.signerCertificate == null ? null
+                : new JcaX509CertificateConverter().getCertificate(info.signerCertificate);
         if (cert == null) {
             for (String k : new String[] { "cert_subject_cn", "cert_issuer_cn", "cert_serial_hex", "cert_not_before",
                     "cert_not_after", "cert_sha256_fingerprint", "cert_subject_der_sha256", "cert_issuer_der_sha256",

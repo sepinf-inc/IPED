@@ -1,8 +1,6 @@
 package iped.parsers.security;
 
 import java.nio.charset.StandardCharsets;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -10,14 +8,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.security.auth.x500.X500Principal;
-
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1String;
-import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -27,6 +22,7 @@ import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.OtherName;
 import org.bouncycastle.asn1.x509.PolicyInformation;
 import org.bouncycastle.asn1.x509.qualified.QCStatement;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -75,32 +71,36 @@ public class SignerCertificateInfo {
     private final List<String> certificatePolicies = new ArrayList<>();
     private final List<String> qcStatements = new ArrayList<>();
 
-    public SignerCertificateInfo(X509Certificate cert) {
+    public SignerCertificateInfo(X509CertificateHolder cert) {
         // BouncyCastle style, as for the timestamp authority: it names attributes like
         // emailAddress (E=) that the RFC 2253 format of X500Principal writes as OID=#hex
-        this.subjectDN = readableName(cert.getSubjectX500Principal());
-        this.issuerDN = readableName(cert.getIssuerX500Principal());
+        this.subjectDN = readableName(cert.getSubject());
+        this.issuerDN = readableName(cert.getIssuer());
         try {
-            X509CertificateHolder holder = new X509CertificateHolder(cert.getEncoded());
-            readSubject(holder.getSubject());
-            Extensions extensions = holder.getExtensions();
+            readSubject(cert.getSubject());
+            Extensions extensions = cert.getExtensions();
             if (extensions != null) {
                 readAlternativeNames(extensions);
                 readPolicies(extensions);
                 readQcStatements(extensions);
             }
-        } catch (CertificateEncodingException | java.io.IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
             LOGGER.debug("Error reading signer certificate fields", e);
         }
     }
 
-    private static String readableName(X500Principal principal) {
+    private static String readableName(X500Name name) {
+        // a name BouncyCastle cannot read must not stop reading the other signatures
         try {
-            return X500Name.getInstance(BCStyle.INSTANCE, principal.getEncoded()).toString();
+            return X500Name.getInstance(BCStyle.INSTANCE, name).toString();
         } catch (RuntimeException e) {
-            // a name BouncyCastle cannot read must not stop reading the other signatures
             LOGGER.debug("Error formatting distinguished name", e);
-            return principal.getName();
+        }
+        try {
+            return name.toString();
+        } catch (RuntimeException e) {
+            LOGGER.debug("Error reading distinguished name", e);
+            return null;
         }
     }
 
@@ -149,10 +149,9 @@ public class SignerCertificateInfo {
                 if (gn.getTagNo() == GeneralName.rfc822Name) {
                     emails.add(((ASN1String) gn.getName()).getString());
                 } else if (gn.getTagNo() == GeneralName.otherName) {
-                    ASN1Sequence otherName = ASN1Sequence.getInstance(gn.getName());
-                    String oid = ASN1ObjectIdentifier.getInstance(otherName.getObjectAt(0)).getId();
-                    String value = otherNameValue(ASN1TaggedObject.getInstance(otherName.getObjectAt(1)).getObject());
-                    readIcpBrasilOtherName(oid, value, sanCpfs, sanCnpjs);
+                    OtherName otherName = OtherName.getInstance(gn.getName());
+                    readIcpBrasilOtherName(otherName.getTypeID().getId(), otherNameValue(otherName.getValue()),
+                            sanCpfs, sanCnpjs);
                 }
             } catch (RuntimeException e) {
                 LOGGER.debug("Error reading subject alternative name", e);

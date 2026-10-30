@@ -1,10 +1,10 @@
 package iped.parsers.security;
 
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
+import java.io.IOException;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.metadata.Metadata;
+import org.bouncycastle.cert.X509CertificateHolder;
 
 import iped.parsers.util.MetadataUtil;
 import iped.utils.DateUtil;
@@ -104,7 +104,7 @@ public class SignatureMetadata {
     }
 
     /** Adds the identity and certificate indicators of one signer. */
-    public static void addSigner(Metadata metadata, X509Certificate cert) {
+    public static void addSigner(Metadata metadata, X509CertificateHolder cert) {
         SignerCertificateInfo info = new SignerCertificateInfo(cert);
         addIfNotEmpty(metadata, SIGNER_SUBJECT_DN, info.getSubjectDN());
         addIfNotEmpty(metadata, SIGNER_NAME, info.getName());
@@ -121,16 +121,16 @@ public class SignatureMetadata {
     }
 
     /** Adds serial number and validity of the signer certificate. */
-    public static void addCertificateDetails(Metadata metadata, X509Certificate cert) {
+    public static void addCertificateDetails(Metadata metadata, X509CertificateHolder cert) {
         addIfNotEmpty(metadata, SIGNER_CERT_SERIAL, cert.getSerialNumber().toString(16));
         addIfNotEmpty(metadata, SIGNER_CERT_NOT_BEFORE, DateUtil.dateToString(cert.getNotBefore()));
         addIfNotEmpty(metadata, SIGNER_CERT_NOT_AFTER, DateUtil.dateToString(cert.getNotAfter()));
     }
 
-    private static String sha256(X509Certificate cert) {
+    private static String sha256(X509CertificateHolder cert) {
         try {
             return DigestUtils.sha256Hex(cert.getEncoded());
-        } catch (CertificateEncodingException e) {
+        } catch (IOException e) {
             return null;
         }
     }

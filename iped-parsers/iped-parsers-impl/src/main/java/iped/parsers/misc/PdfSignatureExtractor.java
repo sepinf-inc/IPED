@@ -10,8 +10,6 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.PublicKey;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -50,7 +48,6 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignerDigestMismatchException;
@@ -129,7 +126,7 @@ public class PdfSignatureExtractor {
         public Status status = Status.UNKNOWN;
         /** short reason for an invalid or unknown status */
         public String statusDetail;
-        public X509Certificate signerCertificate;
+        public X509CertificateHolder signerCertificate;
         public String digestAlgorithmOid;
         public String signatureAlgorithmOid;
         /** raw CMS bytes from /Contents, including any zero padding */
@@ -211,7 +208,8 @@ public class PdfSignatureExtractor {
                 if (info.contents == null || cmsBytes(info).length == 0) {
                     continue;
                 }
-            } catch (Exception e) {
+            } catch (Exception | StackOverflowError e) {
+                // StackOverflowError: BouncyCastle parses deeply nested ASN.1 recursively
                 info.status = Status.UNKNOWN;
                 info.statusDetail = "extraction error: " + e;
                 LOGGER.debug("Error extracting PDF signature", e);
@@ -350,7 +348,7 @@ public class PdfSignatureExtractor {
                 return -1;
             }
             return data.length - in.available();
-        } catch (IOException | RuntimeException e) {
+        } catch (IOException | RuntimeException | StackOverflowError e) {
             return -1;
         }
     }
@@ -626,15 +624,14 @@ public class PdfSignatureExtractor {
             return Status.UNKNOWN;
         }
 
-        JcaX509CertificateConverter converter = new JcaX509CertificateConverter().setProvider(BC_PROVIDER);
-        X509Certificate firstCert = null;
+        X509CertificateHolder firstCert = null;
         Status result = Status.UNKNOWN;
-        for (X509CertificateHolder holder : holders) {
-            X509Certificate cert;
+        for (X509CertificateHolder cert : holders) {
+            PublicKey key;
             try {
-                cert = converter.getCertificate(holder);
+                key = publicKey(cert);
             } catch (Exception e) {
-                LOGGER.debug("Error converting signer certificate", e);
+                LOGGER.debug("Error reading signer certificate public key", e);
                 continue;
             }
             if (firstCert == null) {
@@ -644,7 +641,7 @@ public class PdfSignatureExtractor {
                 // verifier built from the public key only: building it from the certificate
                 // makes BouncyCastle also reject certificates not valid at the CMS signing
                 // time, which is a different question from the signature check
-                if (signer.verify(verifier(cert.getPublicKey()))) {
+                if (signer.verify(verifier(key))) {
                     if (reported) {
                         info.signerCertificate = cert;
                     }
@@ -685,15 +682,16 @@ public class PdfSignatureExtractor {
      * message imprint is compared with the digest of the signature value.
      */
     private static void readSignatureTimestamp(SignerInformation signer, SignatureInfo info) {
-        AttributeTable unsigned = signer.getUnsignedAttributes();
-        if (unsigned == null) {
-            return;
-        }
-        Attribute attribute = unsigned.get(PKCSObjectIdentifiers.id_aa_signatureTimeStampToken);
-        if (attribute == null || attribute.getAttrValues().size() == 0) {
-            return;
-        }
+        // a malformed unsigned attribute only loses the timestamp, not the other fields
         try {
+            AttributeTable unsigned = signer.getUnsignedAttributes();
+            if (unsigned == null) {
+                return;
+            }
+            Attribute attribute = unsigned.get(PKCSObjectIdentifiers.id_aa_signatureTimeStampToken);
+            if (attribute == null || attribute.getAttrValues().size() == 0) {
+                return;
+            }
             TimeStampToken token = new TimeStampToken(ContentInfo.getInstance(attribute.getAttrValues().getObjectAt(0)));
             readTokenInfo(token, info);
             byte[] digest = digest(info.timestampDigestAlgorithmOid, out -> out.write(signer.getSignature()));
@@ -740,15 +738,17 @@ public class PdfSignatureExtractor {
                 info.statusDetail = "timestamp authority certificate not found in token";
                 return;
             }
+            X509CertificateHolder tsaCert = holders.iterator().next();
+            PublicKey key;
             try {
-                info.signerCertificate = new JcaX509CertificateConverter().setProvider(BC_PROVIDER)
-                        .getCertificate(holders.iterator().next());
-            } catch (CertificateException e) {
+                key = publicKey(tsaCert);
+            } catch (IOException e) {
                 info.statusDetail = "timestamp authority certificate unreadable";
-                LOGGER.debug("Error converting timestamp authority certificate", e);
+                LOGGER.debug("Error reading timestamp authority public key", e);
                 return;
             }
-            if (signer.verify(verifier(info.signerCertificate.getPublicKey()))) {
+            info.signerCertificate = tsaCert;
+            if (signer.verify(verifier(key))) {
                 info.status = Status.VALID;
             } else {
                 info.status = Status.INVALID;
@@ -791,6 +791,14 @@ public class PdfSignatureExtractor {
     /** with the BouncyCastle provider, whether or not the JVM registered it */
     private static SignerInformationVerifier verifier(PublicKey key) throws OperatorCreationException {
         return new JcaSimpleSignerInfoVerifierBuilder().setProvider(BC_PROVIDER).build(key);
+    }
+
+    private static PublicKey publicKey(X509CertificateHolder cert) throws IOException {
+        PublicKey key = BouncyCastleProvider.getPublicKey(cert.getSubjectPublicKeyInfo());
+        if (key == null) {
+            throw new IOException("unsupported public key algorithm");
+        }
+        return key;
     }
 
     private static byte[] digest(String algorithmOid, ContentWriter content) throws Exception {
