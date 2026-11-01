@@ -9,9 +9,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
+
 import java.util.List;
-import java.util.Map;
+
 import java.util.function.Predicate;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
-import iped.data.IHashValue;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.core.Statistics;
@@ -34,6 +33,7 @@ import iped.engine.core.Worker;
 import iped.engine.data.CaseData;
 import iped.engine.data.Item;
 import iped.engine.task.index.IndexItem;
+import iped.engine.util.HashIndex;
 import iped.utils.HashValue;
 import sun.reflect.ReflectionFactory;
 
@@ -75,7 +75,7 @@ public class DuplicateTaskTest {
 
     private DuplicateTask createDuplicateTask(boolean ignoreDuplicates, CaseData caseData) throws Exception {
         if (caseData.getCaseObject(DuplicateTask.HASH_MAP) == null) {
-            caseData.putCaseObject(DuplicateTask.HASH_MAP, new HashMap<IHashValue, IHashValue>());
+            caseData.putCaseObject(DuplicateTask.HASH_MAP, new HashIndex());
         }
         return createDuplicateTask(ignoreDuplicates, caseData, null);
     }
@@ -122,9 +122,9 @@ public class DuplicateTaskTest {
         assertEquals("true", item.getTempAttribute(DuplicateTask.class.getName() + "_EXECUTED"));
 
         @SuppressWarnings("unchecked")
-        Map<IHashValue, IHashValue> map = (Map<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
+        HashIndex map = (HashIndex) caseData.getCaseObject(DuplicateTask.HASH_MAP);
         assertNotNull(map);
-        assertTrue(map.containsKey(new HashValue(HASH_1)));
+        assertTrue(map.contains(new HashValue(HASH_1)));
     }
 
     @Test
@@ -243,8 +243,8 @@ public class DuplicateTaskTest {
         assertEquals("true", itemEmpty.getTempAttribute(DuplicateTask.class.getName() + "_EXECUTED"));
 
         @SuppressWarnings("unchecked")
-        Map<IHashValue, IHashValue> map = (Map<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
-        assertTrue(map.isEmpty());
+        HashIndex map = (HashIndex) caseData.getCaseObject(DuplicateTask.HASH_MAP);
+        assertEquals(0, map.size());
     }
 
     @Test
@@ -295,12 +295,12 @@ public class DuplicateTaskTest {
         task.process(item);
 
         @SuppressWarnings("unchecked")
-        Map<IHashValue, IHashValue> map = (Map<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
+        HashIndex map = (HashIndex) caseData.getCaseObject(DuplicateTask.HASH_MAP);
         assertEquals(1, map.size());
 
         task.finish();
 
-        assertTrue(map.isEmpty());
+        assertEquals(0, map.size());
     }
 
     @Test
@@ -344,11 +344,11 @@ public class DuplicateTaskTest {
             DuplicateTask task = createDuplicateTask(true, caseData, worker);
 
             @SuppressWarnings("unchecked")
-            Map<IHashValue, IHashValue> map = (Map<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
+            HashIndex map = (HashIndex) caseData.getCaseObject(DuplicateTask.HASH_MAP);
             assertNotNull(map);
             assertEquals(2, map.size());
-            assertTrue(map.containsKey(new HashValue(HASH_1)));
-            assertTrue(map.containsKey(new HashValue(HASH_2)));
+            assertTrue(map.contains(new HashValue(HASH_1)));
+            assertTrue(map.contains(new HashValue(HASH_2)));
 
             // Item with HASH_1 was pre-loaded from index, so its very first process call detects duplicate
             Item item = new Item();
