@@ -16,6 +16,14 @@ jobs:
         java-version: 11
         java-package: jdk+fx
 
+    - name: Cache Maven repository
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          maven-${{ runner.os }}-
+
     - name: Load libagdb from cache
       id: libagdb
       uses: actions/cache@v4
@@ -52,7 +60,7 @@ jobs:
 
 
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn -B -ntp package --file pom.xml
     - shell: bash
       run:
         cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
@@ -74,6 +82,14 @@ jobs:
       with:
         java-version: 14
         jdkFile: ./bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz
+
+    - name: Cache Maven repository
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          maven-${{ runner.os }}-
 
     - name: Load libagdb from cache
       id: libagdb
@@ -110,4 +126,4 @@ jobs:
           sudo apt-get install gsfonts
 
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn -B -ntp package --file pom.xml
