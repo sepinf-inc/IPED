@@ -18,10 +18,15 @@ jobs:
         java-package: jdk+fx
         cache-jdk: true
 
-    - name: Cache Maven repository
-      uses: actions/cache@v5
+    - name: Restore Maven repository
+      # Restore and save are split so a partial repository is cached even when
+      # the build fails (e.g. HTTP 429 from iped-maven), see #3047
+      id: m2
+      uses: actions/cache/restore@v5
       with:
-        path: ~/.m2/repository
+        path: |
+          ~/.m2/repository
+          !~/.m2/repository/**/*.lastUpdated
         key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           maven-${{ runner.os }}-
@@ -62,7 +67,18 @@ jobs:
 
 
     - name: Build with Maven
+      id: build
       run: mvn -B -ntp package --file pom.xml
+
+    - name: Save Maven repository
+      # full key on success; on failure a partial key, restored next time through restore-keys
+      if: always() && steps.m2.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: |
+          ~/.m2/repository
+          !~/.m2/repository/**/*.lastUpdated
+        key: ${{ steps.build.outcome == 'success' && steps.m2.outputs.cache-primary-key || format('{0}-partial-{1}-{2}-{3}', steps.m2.outputs.cache-primary-key, github.job, github.run_id, github.run_attempt) }}
     - shell: bash
       run:
         cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
@@ -86,10 +102,15 @@ jobs:
         java-package: jdk+fx
         cache-jdk: true
 
-    - name: Cache Maven repository
-      uses: actions/cache@v5
+    - name: Restore Maven repository
+      # Restore and save are split so a partial repository is cached even when
+      # the build fails (e.g. HTTP 429 from iped-maven), see #3047
+      id: m2
+      uses: actions/cache/restore@v5
       with:
-        path: ~/.m2/repository
+        path: |
+          ~/.m2/repository
+          !~/.m2/repository/**/*.lastUpdated
         key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           maven-${{ runner.os }}-
@@ -129,4 +150,15 @@ jobs:
           sudo apt-get install gsfonts
 
     - name: Build with Maven
+      id: build
       run: mvn -B -ntp package --file pom.xml
+
+    - name: Save Maven repository
+      # full key on success; on failure a partial key, restored next time through restore-keys
+      if: always() && steps.m2.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: |
+          ~/.m2/repository
+          !~/.m2/repository/**/*.lastUpdated
+        key: ${{ steps.build.outcome == 'success' && steps.m2.outputs.cache-primary-key || format('{0}-partial-{1}-{2}-{3}', steps.m2.outputs.cache-primary-key, github.job, github.run_id, github.run_attempt) }}
