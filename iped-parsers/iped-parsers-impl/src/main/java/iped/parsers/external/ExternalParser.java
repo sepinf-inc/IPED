@@ -405,7 +405,7 @@ public class ExternalParser extends AbstractParser {
         }
         try (Reader reader = new InputStreamReader(stream, charset)) {
             xhtml.startDocument();
-            xhtml.startElement("p");
+            xhtml.startElement("pre");
             char[] buffer = new char[1024];
             int line = 1;
             StringBuilder carry = unescapeOutput ? new StringBuilder(2) : null;
@@ -446,7 +446,7 @@ public class ExternalParser extends AbstractParser {
             if (carry != null && carry.length() > 0) {
                 xhtml.characters(carry.toString());
             }
-            xhtml.endElement("p");
+            xhtml.endElement("pre");
             xhtml.endDocument();
         }
     }

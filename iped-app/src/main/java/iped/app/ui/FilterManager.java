@@ -164,8 +164,8 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         Object prevSelected = comboFilter.getSelectedItem();
 
         comboFilter.removeAllItems();
-        comboFilter.addItem(App.FILTRO_TODOS);
-        comboFilter.addItem(App.FILTRO_SELECTED);
+        comboFilter.addItem(App.FILTER_NO_FILTER);
+        comboFilter.addItem(App.FILTER_CHECKED);
 
         List<String> filternames = filters.keySet().stream().map(i -> (String) i).collect(Collectors.toList());
         Collections.sort(filternames, new FilterComparator());
@@ -182,7 +182,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         }
 
         if (prevSelected != null) {
-            if (prevSelected == App.FILTRO_TODOS || prevSelected == App.FILTRO_SELECTED || filters.containsKey(prevSelected)) {
+            if (prevSelected == App.FILTER_NO_FILTER || prevSelected == App.FILTER_CHECKED || filters.containsKey(prevSelected)) {
                 comboFilter.setSelectedItem(prevSelected);
             } else {
                 comboFilter.setSelectedIndex(1);
@@ -455,8 +455,8 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer {
     @Override
     public List<IFilter> getDefinedFilters() {
         List<IFilter> result = new ArrayList<IFilter>();
-        if (comboFilter.getSelectedIndex() != -1 && !App.FILTRO_TODOS.equals(comboFilter.getSelectedItem())) {
-            if (!App.FILTRO_SELECTED.equals(comboFilter.getSelectedItem())) {
+        if (comboFilter.getSelectedIndex() != -1 && !App.FILTER_NO_FILTER.equals(comboFilter.getSelectedItem())) {
+            if (!App.FILTER_CHECKED.equals(comboFilter.getSelectedItem())) {
                 result.add(new IQueryFilter() {
                     String filterName = (String) comboFilter.getSelectedItem();
                     String filterExpression = fm.getFilterExpression((String) comboFilter.getSelectedItem());
@@ -494,13 +494,14 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer {
         }
 
         public String toString() {
-            return App.FILTRO_SELECTED;
+            return App.FILTER_CHECKED;
         }
     }
 
+
     @Override
     public IFilter getFilter() {
-        if (App.FILTRO_SELECTED.equals(comboFilter.getSelectedItem())) {
+        if (App.FILTER_CHECKED.equals(comboFilter.getSelectedItem())) {
             return new CheckedFilter();
         }
         return null;
@@ -513,7 +514,8 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer {
 
     @Override
     public Query getQuery() {
-        if (comboFilter.getSelectedIndex() == -1 || App.FILTRO_TODOS.equals(comboFilter.getSelectedItem()) || App.FILTRO_SELECTED.equals(comboFilter.getSelectedItem())) {
+        if (comboFilter.getSelectedIndex() == -1 || App.FILTER_NO_FILTER.equals(comboFilter.getSelectedItem())
+                || App.FILTER_CHECKED.equals(comboFilter.getSelectedItem())) {
             return null;
         }
 
@@ -530,7 +532,7 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer {
 
     @Override
     public boolean hasFilters() {
-        return comboFilter.getSelectedIndex() != -1 && !App.FILTRO_TODOS.equals(comboFilter.getSelectedItem());
+        return comboFilter.getSelectedIndex() != -1 && !App.FILTER_NO_FILTER.equals(comboFilter.getSelectedItem());
     }
 
     @Override
