@@ -79,6 +79,7 @@
        <mime-type>application/x-prefetch</mime-type>
      </mime-types>
      <output-charset>ISO-8859-1</output-charset>
+     <unescapeOutput>true</unescapeOutput>
   </parser>
   
   <parser>
