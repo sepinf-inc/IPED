@@ -11,10 +11,12 @@ jobs:
     steps:
     - uses: actions/checkout@v7
     - name: Set up JDK 11
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v6
       with:
+        distribution: liberica
         java-version: 11
         java-package: jdk+fx
+        cache-jdk: true
 
     - name: Cache Maven repository
       uses: actions/cache@v5
@@ -76,12 +78,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
-    - run: curl -O "https://download.bell-sw.com/java/14.0.2+13/bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz"
     - name: Set up JDK 14
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v6
       with:
+        distribution: liberica
         java-version: 14
-        jdkFile: ./bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz
+        java-package: jdk+fx
+        cache-jdk: true
 
     - name: Cache Maven repository
       uses: actions/cache@v5
