@@ -25,18 +25,19 @@
 #       - TinyViT-5M-21k_fp32.onnx    - converted from TinyViT-5M-21k.pth (precision 0.94, recall 0.96, speed 21)
 #       - pytorch_S_v3_1_fp32.onnx	  - converted from pytorch_S_v3_1.pth to ONNX FP32 (precision 0.96, recall 0.97, speed 5)
 #
+#  NEW MODELS - Recommended! (version 3.2, improved precision)
+#       - MobileNetV4_v3_2.onnx     - converted from mobilenetv4_hybrid_medium.e500_r224_in1k to ONNX, 224x224 (precision 0,960, recall 0,928, speed 63)
+#    	- pytorch_S_v3_2.pth      	- based on timm/tf_efficientnetv2_s.in21k_ft_in1k, image size 384x384 (precision 0.979, recall 0.983, 220 images/s GPU RTX 5070, 29 images/s Nvidia P620, speed 5)
+#       - pytorch_EVA02_L_v3_2.pth  - eva02_large_patch14_448.mim_m38m_ft_in22k_in1k, image size 448x448  (precision 0.996, recall 0.995, 40 images/s GPU RTX 5070)
+#
 
 # Defines the model file to be used, must be in the iped/models directory.
 # Set this property to the value auto, to use defaults according to available hardware:
-# VRAM          MODEL FILE                      BATCH_SIZE
-# 0GB (CPU)     onnx_B0_tensorflow_v3_1.onnx/   1
-#               MobileNetV4_v3_1.onnx/          1
-#               pytorch_B0_v3_1_2_fp32.onnx     1
-# 2 GB          pytorch_S_v3_1.pth              4
-# 4 GB          pytorch_EVA02_B_v3_1.pth        5
-# 8 GB          pytorch_EVA02_L_v3_1_1.pth      5
-# 12 GB	        pytorch_EVA02_L_v3_1_1.pth      10
-# 16 GB         pytorch_EVA02_L_v3_1_1.pth      20
+# VRAM          MODEL FILE                  BATCH_SIZE
+# 0GB (CPU)     MobileNetV4_v3_2.onnx           1
+# 2 GB          pytorch_S_v3_2.pth             10
+# 6 GB          pytorch_EVA02_L_v3_2.pth        4
+# 12 GB         pytorch_EVA02_L_v3_2.pth       16
 ModelFile = auto
 
 # Batch size to be used. When using the large models this value should  be reduced to avoid GPU memory exaustion

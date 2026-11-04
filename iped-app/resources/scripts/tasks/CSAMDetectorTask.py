@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "1.6" # Auto configurations - batch size according to memory and model
+__version__ = "1.7" # New models - version 3_2
 
 import traceback
 import io
@@ -50,11 +50,16 @@ CSAM_IMG_SIZE = 224
 
 # --- Global GPU Optimization Variables ---
 AMP_ENABLED = False
-AMP_DTYPE = None  # Will be set to torch.float16 or torch.float32
+AMP_DTYPE = None  # Will be set to torch.bfloat16, torch.float16 or torch.float32
 
 # ImageNet normalization constants (used by PyTorch-style ONNX; set up during initialization)
 IMG_MEAN_PYTORCH = None
 IMG_STD_PYTORCH = None
+
+# PyTorch normalization and interpolation globals (defaults to legacy ImageNet / Bilinear)
+PYTORCH_MEAN = [0.485, 0.456, 0.406]
+PYTORCH_STD = [0.229, 0.224, 0.225]
+PYTORCH_INTERP = None
 
 # --- Global Control Variables ---
 MOTOR_IA = None
@@ -69,6 +74,7 @@ IS_IPED_422 = False
 ONNX_MODEL_TYPE = None
 ONNX_INPUT_NAME = None
 ONNX_OUTPUT_NAME = None
+ONNX_INTERP = None
 
 # Configurable parameters defaults
 CSAM_MODELFILE = 'tensorflow_B0_v3_1.keras'
@@ -118,6 +124,7 @@ AI_CLASSIFICATION_SKIP_DUPLICATE = "duplicate"
 def carregar_e_configurar_modelo():
     """Central function that loads the correct model (TF, PyTorch) or checks metadata (TFLite, ONNX)."""
     global MODELO_CARREGADO, DEVICE, CACHE, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, ONNX_INPUT_NAME, ONNX_OUTPUT_NAME, AMP_ENABLED, AMP_DTYPE
+    global PYTORCH_MEAN, PYTORCH_STD, PYTORCH_INTERP, IMG_MEAN_PYTORCH, IMG_STD_PYTORCH, ONNX_INTERP
     
     MODELO_CARREGADO = caseData.getCaseObject('csam_model_unificado')
     
@@ -157,6 +164,20 @@ def carregar_e_configurar_modelo():
                 # 2. Get metadata from inside the checkpoint
                 num_classes_saved = checkpoint.get('num_classes', NUM_CLASSES)
                 img_size_saved = checkpoint.get('img_size')
+                saved_mean = checkpoint.get('mean')
+                saved_std = checkpoint.get('std')
+                saved_interp = str(checkpoint.get('interpolation', 'bicubic')).lower()
+
+                if saved_mean is not None and saved_std is not None:
+                    PYTORCH_MEAN = [float(x) for x in saved_mean]
+                    PYTORCH_STD = [float(x) for x in saved_std]
+                    PYTORCH_INTERP = transforms.InterpolationMode.BICUBIC if saved_interp == 'bicubic' else transforms.InterpolationMode.BILINEAR
+                    logger.info(f"CSAMDetector: Checkpoint normalization detected (mean={PYTORCH_MEAN}, std={PYTORCH_STD}, {saved_interp.upper()}).")
+                else:
+                    PYTORCH_MEAN = [0.485, 0.456, 0.406]
+                    PYTORCH_STD = [0.229, 0.224, 0.225]
+                    PYTORCH_INTERP = transforms.InterpolationMode.BILINEAR
+                    logger.info("CSAMDetector: Legacy ImageNet normalization detected (BILINEAR).")
 
                 # 3. Use the saved metadata to configure the model
                 if img_size_saved:
@@ -175,6 +196,14 @@ def carregar_e_configurar_modelo():
                     'S': 'tf_efficientnetv2_s.in21k_ft_in1k',
                     'M': 'tf_efficientnetv2_m.in21k_ft_in1k',
                     'L': 'tf_efficientnetv2_l.in21k_ft_in1k',
+                    'EB0_RA4': 'efficientnet_b0.ra4_e3600_r224_in1k',
+                    'EB1_RA4': 'efficientnet_b1.ra4_e3600_r240_in1k',
+                    'MNV4': 'mobilenetv4_conv_medium.e500_r224_in1k',
+                    'MNV4_CONV': 'mobilenetv4_conv_medium.e500_r224_in1k',
+                    'MNV4_HYBRID': 'mobilenetv4_hybrid_medium.e500_r224_in1k',
+                    'EFFV2_S': 'tf_efficientnetv2_s.in21k_ft_in1k',
+                    'EVA02_L': 'eva02_large_patch14_448.mim_m38m_ft_in22k_in1k',
+                    'EVA02_B': 'eva02_base_patch14_448.mim_in22k_ft_in22k_in1k',
                                        
                     # TinyViT - Tiny Vision Transformer
                     'TinyViT-5M': 'tiny_vit_5m_224.dist_in22k',
@@ -186,7 +215,7 @@ def carregar_e_configurar_modelo():
                 if model_name_to_load in model_map:
                     model_timm_name = model_map[model_name_to_load]
                 else:
-                    model_timm_name = timm_name # Assumes it is already the technical name
+                    model_timm_name = model_name_to_load # Assumes it is already the technical name
                 
                 logger.info(f"CSAMDetector: Building model architecture: {model_timm_name}")
 
@@ -200,7 +229,7 @@ def carregar_e_configurar_modelo():
                     # Tries to load as an old checkpoint (just for safety)
                     MODELO_CARREGADO.load_state_dict(checkpoint)
                 
-                MODELO_CARREGADO.to(DEVICE)
+                MODELO_CARREGADO.to(device=DEVICE, dtype=torch.float32)
                 MODELO_CARREGADO.eval()
                 
                 log_mode = "FP32 (CPU/Legacy Fallback)"
@@ -208,8 +237,15 @@ def carregar_e_configurar_modelo():
             
                 if DEVICE.type == 'cuda':
                     major, minor = torch.cuda.get_device_capability(DEVICE)
-                    # Compute Capability >= 7.0 (RTX series) supports FP16 Tensor Cores
-                    if major >= 7:
+                    # Compute Capability >= 8.0 (Ampere, Ada, Blackwell) supports BF16 and TF32
+                    if major >= 8 and torch.cuda.is_bf16_supported():
+                        AMP_ENABLED = True
+                        AMP_DTYPE = torch.bfloat16
+                        torch.backends.cuda.matmul.allow_tf32 = True
+                        torch.backends.cudnn.allow_tf32 = True
+                        log_mode = f"BF16 Mixed Precision + TF32 (Compute Capability {major}.{minor})"
+                    # Compute Capability 7.x (Volta, Turing) supports FP16 Tensor Cores
+                    elif major >= 7:
                         AMP_ENABLED = True
                         AMP_DTYPE = torch.float16
                         log_mode = f"FP16 Mixed Precision (Compute Capability {major}.{minor})"
@@ -279,7 +315,21 @@ def carregar_e_configurar_modelo():
                 if input_shape[1] == 3 and isinstance(input_shape[2], int) and isinstance(input_shape[3], int):
                     CSAM_IMG_SIZE = input_shape[2] 
                     ONNX_MODEL_TYPE = 'pytorch' # Defines the global type
-                    logger.info(f"CSAMDetector: ONNX (PyTorch-style, Channels-First) detected. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
+                    custom_meta = MODELO_CARREGADO.get_modelmeta().custom_metadata_map
+                    if custom_meta and 'mean' in custom_meta and 'std' in custom_meta:
+                        import json
+                        mean_list = json.loads(custom_meta['mean'])
+                        std_list = json.loads(custom_meta['std'])
+                        interp_str = custom_meta.get('interpolation', 'bicubic').lower()
+                        IMG_MEAN_PYTORCH = np.array(mean_list, dtype=np.float32).reshape(1, 1, 3)
+                        IMG_STD_PYTORCH = np.array(std_list, dtype=np.float32).reshape(1, 1, 3)
+                        ONNX_INTERP = Image.BICUBIC if interp_str == 'bicubic' else Image.BILINEAR
+                        logger.info(f"CSAMDetector: ONNX (PyTorch-style) with metadata detected. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}, mean={mean_list}, std={std_list}, interp={interp_str.upper()}")
+                    else:
+                        IMG_MEAN_PYTORCH = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(1, 1, 3)
+                        IMG_STD_PYTORCH = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(1, 1, 3)
+                        ONNX_INTERP = Image.BILINEAR
+                        logger.info(f"CSAMDetector: ONNX (PyTorch-style, Channels-First) detected. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
                 
                 # TensorFlow: [batch, height, width, 3]
                 elif input_shape[3] == 3 and isinstance(input_shape[1], int) and isinstance(input_shape[2], int):
@@ -318,12 +368,15 @@ def detect_best_config():
 
     # Priority lists
     gpu_files = [
+        "pytorch_EVA02_L_v3_2.pth",
         "pytorch_EVA02_L_v3_1_1.pth",
         "pytorch_EVA02_B_v3_1.pth",
+        "pytorch_S_v3_2.pth",
         "pytorch_S_v3_1.pth"
     ]
     
     cpu_files = [
+        "MobileNetV4_v3_2.onnx",
         "onnx_B0_tensorflow_v3_1.onnx",
         "MobileNetV4_v3_1.onnx",
         "pytorch_B0_v3_1_2_fp32.onnx"
@@ -382,30 +435,30 @@ def get_dynamic_batch(model_name, vram_gb):
 
     # Logic for EVA02 L (Large)
     if "eva02_l" in model_name:
-        if vram_gb < 6: return 0 # up to 6 GB
-        if vram_gb < 8: return 4 # up to 8 GB
-        if vram_gb < 12: return 10 # up to 12 GB
-        if vram_gb < 16: return 20 # up to 16 GB
-        if vram_gb < 24: return 20 # up to 24 GB
-        return 32 # 24GB+ extrapolation
+        if vram_gb < 5: return 0
+        if vram_gb < 8: return 4
+        if vram_gb < 12: return 10
+        if vram_gb < 16: return 20
+        if vram_gb < 24: return 20
+        return 32 # 32GB+ extrapolation
         
     # Logic for EVA02 B (Base)
     elif "eva02_b" in model_name:
-        if vram_gb < 4: return 0 # up to 4 GB
-        if vram_gb < 6: return 4 # up to 6 GB
-        if vram_gb < 8: return 8 # up to 8 GB
-        if vram_gb < 12: return 20 # up to 12 GB
-        if vram_gb < 16: return 32 # up to 16 GB
-        if vram_gb < 24: return 64  # up to 24 GB
+        if vram_gb < 4: return 0
+        if vram_gb < 8: return 4
+        if vram_gb < 12: return 8
+        if vram_gb < 16: return 20
+        if vram_gb < 24: return 32
+        if vram_gb < 32: return 64
         return 128 # 32GB+ extrapolation
         
     # Logic for PyTorch S (Small)
     elif "_s_" in model_name or "pytorch_s" in model_name:
-        if vram_gb < 2: return 4 # up to 2 GB
-        if vram_gb < 4: return 10 # up to 4 GB
-        if vram_gb < 8: return 32 # up to 8 GB
-        if vram_gb < 12: return 64 # up to 12 GB
-        if vram_gb < 24: return 128 # up to 24 GB
+        if vram_gb < 2: return 10  # Specifically 1GB to 2GB range
+        if vram_gb < 4: return 16
+        if vram_gb < 8: return 32
+        if vram_gb < 12: return 64
+        if vram_gb < 24: return 128
         return 128 # 24GB+ extrapolation
         
     return 1 # Default for unknown models
@@ -450,7 +503,7 @@ def processar_imagem(item):
 # Processes images from a path or byte array and returns the ready tensor
 def get_tensor_from_path_or_bytes(file_path, file_bytes=None):
     """Loads and preprocesses the image to the correct format (tensor)."""
-    global CSAM_IMG_SIZE, ONNX_MODEL_TYPE
+    global CSAM_IMG_SIZE, ONNX_MODEL_TYPE, PYTORCH_MEAN, PYTORCH_STD, PYTORCH_INTERP, ONNX_INTERP
 
     if(file_path is None):
         file_path = io.BytesIO(file_bytes)
@@ -465,13 +518,14 @@ def get_tensor_from_path_or_bytes(file_path, file_bytes=None):
 
     elif MOTOR_IA == 'pytorch':
         image = Image.open(file_path).convert('RGB')
+        interp = PYTORCH_INTERP if PYTORCH_INTERP is not None else transforms.InterpolationMode.BILINEAR
         transform = transforms.Compose([
-            transforms.Resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE)), transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+            transforms.Resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE), interpolation=interp), transforms.ToTensor(),
+            transforms.Normalize(mean=PYTORCH_MEAN, std=PYTORCH_STD)])
         return transform(image)  
 
     elif MOTOR_IA == 'onnx':
-        image_resample = Image.BILINEAR
+        image_resample = ONNX_INTERP if ONNX_INTERP is not None else Image.BILINEAR
         if ONNX_MODEL_TYPE == 'tensorflow':
             image_resample = Image.NEAREST
             
@@ -561,12 +615,12 @@ def get_scores_from_prediction(scores):
     porn_idx = CLASS_NAMES.index('porn')
     other_idx = CLASS_NAMES.index('other')
     
-    csam_score_formatado = int(scores[csam_idx]*100)
-    porn_score_formatado = int(scores[porn_idx]*100)
-    other_score_formatado = int(scores[other_idx]*100)
+    csam_score_formatado = int(float(scores[csam_idx])*100)
+    porn_score_formatado = int(float(scores[porn_idx])*100)
+    other_score_formatado = int(float(scores[other_idx])*100)
     
-    category_index = np.argmax(scores)
-    csam_category = CLASS_NAMES[category_index]
+    category_index = int(np.argmax(scores))
+    csam_category = str(CLASS_NAMES[category_index])
 
 
     results =  { 
@@ -1102,8 +1156,8 @@ class CSAMDetectorTask:
                     with torch.amp.autocast(device_type=DEVICE.type, dtype=AMP_DTYPE, enabled=AMP_ENABLED):
                         outputs = MODELO_CARREGADO(torch.stack(tensores).to(DEVICE))
                     
-                    # Ensure conversion back to float32 before softmax for stability
-                    return torch.nn.functional.softmax(outputs, dim=1).cpu().numpy()
+                    # Ensure conversion back to float32 before softmax for stability and JEP compatibility
+                    return torch.nn.functional.softmax(outputs.float(), dim=1).cpu().numpy().astype(np.float32)
             
             elif MOTOR_IA == 'tflite':                
                 interpreter = self.modelo_tflite
@@ -1266,7 +1320,7 @@ class CSAMDetectorTask:
         total_other_score_sum = 0.0
 
         for i, frame_vector in enumerate(frame_predictions):
-            frame_vector = list(frame_vector) 
+            frame_vector = frame_vector.tolist() if hasattr(frame_vector, 'tolist') else [float(x) for x in frame_vector]
             
             csam_score = frame_vector[csam_idx]
             porn_score = frame_vector[porn_idx]
