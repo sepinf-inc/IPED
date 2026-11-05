@@ -73,6 +73,7 @@ public class SignatureTask extends AbstractTask {
                         setInputStreamFactory(tis, evidence);
 
                         type = getDetector().detect(tis, metadata).getBaseType();
+                        type = refineSpeexType(getDetector(), tis, type);
 
                     } catch (IOException e) {
                         LOGGER.warn("{} Error detecting signature: {} ({} bytes)\t\t{}", //$NON-NLS-1$
@@ -125,6 +126,22 @@ public class SignatureTask extends AbstractTask {
             }
         }
         evidence.setMediaType(MediaTypes.getMediaTypeRegistry().normalize(type));
+    }
+
+    static MediaType refineSpeexType(Detector detector, TikaInputStream stream,
+            MediaType type) throws IOException {
+        if (!MediaType.audio("speex").equals(type)) {
+            return type;
+        }
+        byte[] header = new byte[4];
+        if (stream.peek(header) == 4 && header[0] == 'O' && header[1] == 'g'
+                && header[2] == 'g' && header[3] == 'S') {
+            return type;
+        }
+        // SPX is also used for non-audio files. Without an Ogg header, do not
+        // let the filename alone select the Speex parser.
+        Metadata contentMetadata = new Metadata();
+        return detector.detect(stream, contentMetadata).getBaseType();
     }
 
     private void setInputStreamFactory(TikaInputStream tis, IItem item) {
