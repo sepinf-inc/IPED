@@ -16,7 +16,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import java.util.TimeZone;
 
 import javax.swing.UIManager;
 
@@ -32,6 +31,7 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.DateUtil;
+import iped.utils.DisplayTimeZone;
 import iped.utils.EmojiUtil;
 import iped.utils.LocalizedFormat;
 import iped.utils.SimpleHTMLEncoder;
@@ -74,7 +74,6 @@ public abstract class MetadataViewer extends AbstractViewer {
     public MetadataViewer() {
         super(new GridLayout());
 
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         jfxPanel = new JFXPanel();
         for (int i = 0; i < 3; i++)
@@ -248,6 +247,8 @@ public abstract class MetadataViewer extends AbstractViewer {
             return;
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.Metadata") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        sb.append("<tr><th colspan=2>Display timezone: " + DisplayTimeZone.getZoneId()
+                + ". Other text dates are not automatically converted.</th></tr>");
         Arrays.sort(metas, comparator);
         for (String meta : metas) {
             if (MetadataUtil.ignorePreviewMetas.contains(meta))
@@ -263,7 +264,7 @@ public abstract class MetadataViewer extends AbstractViewer {
                 } else {
                     try {
                         Date date = DateUtil.stringToDate(val);
-                        val = dateFormat.format(date);
+                        val = DisplayTimeZone.format(date, dateFormat);
                     } catch (Exception e) {
                     }
                 }
@@ -287,7 +288,7 @@ public abstract class MetadataViewer extends AbstractViewer {
                         for (int i = 0; i < vals.length; i++) {
                             try {
                                 Date date = DateUtil.stringToDate(vals[i]);
-                                vals[i] = dateFormat.format(date);
+                                vals[i] = DisplayTimeZone.format(date, dateFormat);
                             } catch (Exception e) {
                             }
                         }
@@ -304,6 +305,7 @@ public abstract class MetadataViewer extends AbstractViewer {
     private void fillBasicProps(StringBuilder sb, IItemReader item) {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        sb.append("<tr><th colspan=2>Display timezone: " + DisplayTimeZone.getZoneId() + "</th></tr>");
         fillProp(sb, BasicProps.NAME, item.getName());
         fillProp(sb, BasicProps.LENGTH, item.getLength());
         fillProp(sb, BasicProps.EXT, item.getExt());
@@ -381,7 +383,7 @@ public abstract class MetadataViewer extends AbstractViewer {
     }
 
     private String formatDate(Date date) {
-        return date == null ? null : dateFormat.format(date);
+        return DisplayTimeZone.format(date, dateFormat);
     }
 
     private String format(Object value) {

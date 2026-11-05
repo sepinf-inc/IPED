@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.TimeZone;
 
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
@@ -37,6 +36,7 @@ import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.utils.DateUtil;
+import iped.utils.DisplayTimeZone;
 
 public class CopyProperties extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
@@ -79,7 +79,6 @@ public class CopyProperties extends SwingWorker<Boolean, Integer> implements Pro
         int progress = 0;
         App app = App.get();
         SimpleDateFormat df = new SimpleDateFormat(Messages.getString("CopyProperties.CSVDateFormat")); //$NON-NLS-1$
-        df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
         for (Integer docId : uniqueIds) {
             this.firePropertyChange("progress", progress, ++progress); //$NON-NLS-1$
             try {
@@ -101,7 +100,7 @@ public class CopyProperties extends SwingWorker<Boolean, Integer> implements Pro
                             val = val.replace("" + CategoryTokenizer.SEPARATOR, " | "); //$NON-NLS-1$ //$NON-NLS-2$
 
                     if (values.length > 0 && !values[0].isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED) || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.CHANGED))) {
-                        values[0] = df.format(DateUtil.stringToDate(values[0]));
+                        values[0] = DisplayTimeZone.format(DateUtil.stringToDate(values[0]), df);
                     }
                     String value = ""; //$NON-NLS-1$
                     for (int i = 0; i < values.length; i++) {
