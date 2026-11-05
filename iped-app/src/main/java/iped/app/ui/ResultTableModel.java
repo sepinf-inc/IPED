@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
@@ -50,6 +49,7 @@ import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
 import iped.search.IMultiSearchResult;
 import iped.utils.DateUtil;
+import iped.utils.DisplayTimeZone;
 import iped.utils.LocalizedFormat;
 import iped.viewers.ATextViewer;
 import iped.viewers.components.HitsTableModel;
@@ -128,8 +128,6 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     public ResultTableModel() {
         super();
-        df.setTimeZone(TimeZone.getTimeZone("UTC")); //$NON-NLS-1$
-        fatAccessedDf.setTimeZone(TimeZone.getTimeZone("UTC")); //$NON-NLS-1$
         collator.setStrength(Collator.PRIMARY);
     }
 
@@ -330,9 +328,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     Date date = DateUtil.stringToDate(value);
                     if (field.equals(IndexItem.ACCESSED)) {
                         if (doc.get(SleuthkitReader.IN_FAT_FS) != null)
-                            return fatAccessedDf.format(date);
+                            return DisplayTimeZone.format(date, fatAccessedDf);
                     }
-                    return df.format(date);
+                    return DisplayTimeZone.format(date, df);
 
                 } catch (Exception e) {
                     // e.printStackTrace();

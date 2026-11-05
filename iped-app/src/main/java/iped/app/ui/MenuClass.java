@@ -21,16 +21,21 @@ package iped.app.ui;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
 import iped.app.ui.themes.Theme;
+import iped.utils.DisplayTimeZone;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItem;
 import iped.engine.config.BFACClientConfig;
@@ -215,6 +220,36 @@ public class MenuClass extends JPopupMenu {
         toggleTimelineView = new JMenuItem(Messages.getString("App.ToggleTimelineView")); //$NON-NLS-1$
         toggleTimelineView.addActionListener(menuListener);
         this.add(toggleTimelineView);
+
+        JMenuItem displayTimeZone = new JMenuItem("Zona horaria de visualización...");
+        displayTimeZone.addActionListener(e -> {
+            List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
+            Collections.sort(ids);
+            ids.remove("UTC");
+            ids.add(0, "UTC");
+            String systemOption = "Sistema (" + ZoneId.systemDefault().getId() + ")";
+            ids.add(0, systemOption);
+            String currentChoice = DisplayTimeZone.isSystemDefault()
+                    ? systemOption : DisplayTimeZone.getZoneId().getId();
+            String chosen = (String) JOptionPane.showInputDialog(App.get(),
+                    "Seleccione la zona horaria para mostrar fechas.\n"
+                    + "La evidencia y los valores indexados no se modifican.",
+                    "Zona horaria de visualización", JOptionPane.QUESTION_MESSAGE,
+                    null, ids.toArray(new String[0]), currentChoice);
+            if (chosen != null) {
+                try {
+                    if (systemOption.equals(chosen)) {
+                        DisplayTimeZone.useSystemDefault();
+                    } else {
+                        DisplayTimeZone.setZoneId(chosen);
+                    }
+                } catch (RuntimeException ex) {
+                    JOptionPane.showMessageDialog(App.get(), ex.getMessage(),
+                            "Error guardando zona horaria", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        this.add(displayTimeZone);
 
         JMenu layoutAppearance = new JMenu(Messages.getString("MenuClass.LayoutAppearance")); //$NON-NLS-1$
         this.add(layoutAppearance);

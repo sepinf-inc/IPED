@@ -30,6 +30,7 @@ import iped.app.timelinegraph.ChartTimePeriodConstraint;
 import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.ui.Messages;
+import iped.utils.DisplayTimeZone;
 import iped.jfextensions.model.Minute;
 
 public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionListener {
@@ -239,7 +240,11 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
                 ipedChartsPanel.refreshChart();
             }
         } else {
-            ipedChartsPanel.setTimeZone(((JTimezoneMenuItem) e.getSource()).getTimezone());
+            try {
+                DisplayTimeZone.setZoneId(((JTimezoneMenuItem) e.getSource()).getTimezone().toZoneId().getId());
+            } catch (RuntimeException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error guardando zona horaria", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
