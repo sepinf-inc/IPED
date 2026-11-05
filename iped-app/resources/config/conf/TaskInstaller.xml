@@ -17,6 +17,7 @@
     <task script="RefineCategoryTask.js"></task>
     
     <!--tasks that ignore items should be after SetCategoryTask, so category of ignored items will be included in CSV properties file-->
+    <task script="IgnoreFilesByExtTask.js"></task>
     <task class="iped.engine.task.HashDBLookupTask"></task>
     <task class="iped.engine.task.DuplicateTask"></task>
     
