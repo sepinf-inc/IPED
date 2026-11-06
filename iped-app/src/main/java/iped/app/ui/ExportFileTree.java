@@ -52,6 +52,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
+import iped.utils.IOUtil;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;
 
@@ -206,7 +207,7 @@ public class ExportFileTree extends CancelableWorker {
 
                 try (InputStream in = item.getBufferedInputStream()) {
                     dst = getNonExistingFile(dst);
-                    Files.copy(in, dst.toPath());
+                    IOUtil.copyInputStreamToPath(in, dst.toPath());
                 }
             }
 
