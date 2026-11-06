@@ -30,9 +30,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -325,6 +330,19 @@ public class IOUtil {
         int len;
         while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {
             out.write(buf, 0, len);
+        }
+    }
+
+    public static void copyInputStreamToPath(InputStream in, Path out) throws IOException {
+        try (ReadableByteChannel srcChannel = Channels.newChannel(in);
+                FileChannel destChannel = FileChannel.open(out, StandardOpenOption.CREATE, StandardOpenOption.WRITE,
+                        StandardOpenOption.TRUNCATE_EXISTING)) {
+            ByteBuffer buffer = ByteBuffer.allocateDirect(1 << 20);
+            while (srcChannel.read(buffer) != -1 && !Thread.currentThread().isInterrupted()) {
+                buffer.flip();
+                destChannel.write(buffer);
+                buffer.clear();
+            }
         }
     }
 

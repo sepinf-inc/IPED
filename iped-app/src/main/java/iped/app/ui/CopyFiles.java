@@ -95,14 +95,11 @@ public class CopyFiles extends SwingWorker<Boolean, Integer> implements Property
                     dst = new File(subdir, Util.concat(dstName, num++));
                 }
 
-                BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
-
                 LOGGER.info("Exporting file " + e.getPath()); //$NON-NLS-1$
 
-                IOUtil.copyInputToOutputStream(in, out);
+                IOUtil.copyInputStreamToPath(in, dst.toPath());
 
                 in.close();
-                out.close();
 
                 if (e.getModDate() != null)
                     dst.setLastModified(e.getModDate().getTime());
