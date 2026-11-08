@@ -148,7 +148,8 @@ public class ExportFileTask extends AbstractTask {
 
     private static ArrayList<IHashValue> noContentHashes = new ArrayList<>();
 
-    public static int subDirCounter = 0, itensExtracted = 0;
+    public static int subDirCounter = 0;
+    private static final AtomicInteger itensExtracted = new AtomicInteger();
     private static File subDir;
 
     private static boolean computeHash = false;
@@ -178,12 +179,12 @@ public class ExportFileTask extends AbstractTask {
         lastInstance = this;
     }
 
-    public static synchronized void incItensExtracted() {
-        itensExtracted++;
+    public static void incItensExtracted() {
+        itensExtracted.incrementAndGet();
     }
 
     public static int getItensExtracted() {
-        return itensExtracted;
+        return itensExtracted.get();
     }
 
     private static void setExtractLocation(ICaseData caseData, File output) {
@@ -870,7 +871,7 @@ public class ExportFileTask extends AbstractTask {
             computeHash = true;
         }
 
-        itensExtracted = 0;
+        itensExtracted.set(0);
         subDirCounter = 0;
 
         hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);

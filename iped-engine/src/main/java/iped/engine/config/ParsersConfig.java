@@ -18,10 +18,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,9 +30,6 @@ import iped.configuration.Configurable;
 
 public class ParsersConfig implements Configurable<String> {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
     private static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
@@ -67,44 +60,83 @@ public class ParsersConfig implements Configurable<String> {
             DocumentBuilder db;
             try {
                 db = dbf.newDocumentBuilder();
-                Document doc = db.parse(new InputSource(new StringReader(parserConfigXml)));
-                Document changedDoc = db.parse(resource.toFile());
+                Document currDoc = db.parse(new InputSource(new StringReader(parserConfigXml)));
+                Document newDoc = db.parse(resource.toFile());
 
-                Element root = changedDoc.getDocumentElement();
-                NodeList rootNl = root.getElementsByTagName("parsers").item(0).getChildNodes();
-                for (int i = 0; i < rootNl.getLength(); i++) {
-                    Node child = rootNl.item(i);
-                    if (child instanceof Element) {
-                        Element element = (Element) child;
-                        if (element.getTagName().equals("parser")) {
-                            String className = element.getAttribute("class");
-                            XPath xPath = XPathFactory.newInstance().newXPath();
-                            String expression = "/properties/parsers/parser[@class='" + className + "']";
-                            NodeList nlParser = (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-
-                            expression = "/properties/parsers";
-                            NodeList nlParsers = (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-                            Node newnode = doc.importNode(element, true);
-                            for (int j = 0; j < nlParsers.getLength(); j++) {
-                                for (int k = 0; k < nlParser.getLength(); k++) {
-                                    nlParsers.item(j).removeChild(nlParser.item(k));
+                Node currParsersNode = currDoc.getDocumentElement().getElementsByTagName("parsers").item(0);
+                NodeList currParsers = currParsersNode.getChildNodes();
+                NodeList newElements = newDoc.getDocumentElement().getElementsByTagName("parsers");
+                if (newElements != null && newElements.getLength() > 0) {
+                    NodeList newParsers = newElements.item(0).getChildNodes();
+                    for (int i = 0; i < newParsers.getLength(); i++) {
+                        Node newParser = newParsers.item(i);
+                        if (newParser instanceof Element) {
+                            Element newElement = (Element) newParser;
+                            if (newElement.getTagName().equals("parser")) {
+                                if (!mergeParserNode(newParser, currParsers)) {
+                                    Node newNode = currDoc.importNode(newElement, true);
+                                    currParsersNode.appendChild(newNode);
                                 }
-                                nlParsers.item(j).appendChild(newnode);
                             }
                         }
                     }
                 }
-
                 TransformerFactory tf = TransformerFactory.newInstance();
                 Transformer transformer = tf.newTransformer();
                 transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
                 StringWriter writer = new StringWriter();
-                transformer.transform(new DOMSource(doc), new StreamResult(writer));
+                transformer.transform(new DOMSource(currDoc), new StreamResult(writer));
                 parserConfigXml = writer.getBuffer().toString();
-            } catch (ParserConfigurationException | SAXException | XPathExpressionException | TransformerException e) {
+            } catch (ParserConfigurationException | SAXException | TransformerException e) {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private static boolean mergeParserNode(Node nodeNew, NodeList nodes) {
+        String newKey = buildParserKey(nodeNew);
+        if (newKey == null) {
+            return false;
+        }
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node currNode = nodes.item(i);
+            String currKey = buildParserKey(currNode);
+            if (newKey.equals(currKey)) {
+                Document doc = currNode.getOwnerDocument();
+                Node importedNode = doc.importNode(nodeNew, true);
+                currNode.getParentNode().replaceChild(importedNode, currNode);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String buildParserKey(Node parserNode) {
+        if (parserNode.getNodeType() != Node.ELEMENT_NODE) {
+            return null;
+        }
+        Element parserElement = (Element) parserNode;
+        String className = parserElement.getAttribute("class");
+        String parserName = "";
+        NodeList children = parserElement.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node child = children.item(i);
+            if (child.getNodeType() == Node.ELEMENT_NODE && child.getNodeName().equals("params")) {
+                NodeList params = child.getChildNodes();
+                for (int j = 0; j < params.getLength(); j++) {
+                    Node param = params.item(j);
+                    if (param.getNodeType() == Node.ELEMENT_NODE && param.getNodeName().equals("param")) {
+                        Element paramElement = (Element) param;
+                        if ("parserName".equals(paramElement.getAttribute("name"))) {
+                            parserName = paramElement.getTextContent().trim();
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        return className + (parserName.isEmpty() ? "" : ":" + parserName);
     }
 
     @Override

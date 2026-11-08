@@ -43,15 +43,23 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     }
 
     @Override
+    public void processConfig(Path resource) throws IOException {
+        UTF8Properties loaded = new UTF8Properties();
+        loaded.load(resource.toFile());
+        if (resource.endsWith(CONFIG_FILE) && loaded.containsKey("enableOCR")) { //$NON-NLS-1$
+            throw new IOException("Deprecated enableOCR entry in " + resource
+                    + ". Remove enableOCR from OCRConfig.txt and configure it in IPEDConfig.txt.");
+        }
+        properties.putAll(loaded);
+        processProperties(properties);
+    }
+
+    @Override
     public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("enableOCR"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
-            if (Boolean.valueOf(value.trim())) {
-                enableOCR = true;
-            } else if (enableOCR == null) {
-                enableOCR = false;
-            }
+            enableOCR = Boolean.valueOf(value.trim());
         } else if (enableOCR == null) {
             enableOCR = false;
         }
