@@ -322,6 +322,9 @@ def processImages(itemList, imageList):
     try:
         if semaphore is not None:
             semaphore.acquire()
+        # one thread per call on cpu, as parallelism already comes from the workers
+        if device.type == 'cpu':
+            torch.set_num_threads(1)
         with torch.no_grad():
             inputs = processor(images=imageList, return_tensors='pt').to(device)
             images = normalize(model.get_image_features(**inputs))
