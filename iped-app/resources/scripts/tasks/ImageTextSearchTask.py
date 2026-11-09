@@ -1,7 +1,7 @@
 '''
 # Finds images by text descriptions, using a local multilingual image-text model (SigLIP 2, https://huggingface.co/google/siglip2-base-patch16-256).
 # ImageTextSearchTask.py
-# Requirements: python with transformers, torch, pillow and numpy (the same modules used by AgeEstimationTask).
+# Requirements: python with torch, pillow, numpy and a version of transformers with SigLIP 2 support (newer than the one AgeEstimationTask needs).
 # Implementation notes:
 #  - Image thumbnails are used, so 'enableImageThumbs' must be enabled.
 #  - Categories are defined by text descriptions in conf/ImageTextSearchConfig.txt, each one with its own threshold.
@@ -9,7 +9,7 @@
 #    + 'ai:imageSearch:labels' stores the categories whose score reached their threshold
 #    + 'ai:imageSearch:score:<category>' stores the score of each category (model probability, range: 0-100)
 '''
-import io, os, time
+import io, os, shutil, time
 from java.lang import System
 
 # configuration properties
@@ -106,7 +106,7 @@ class ImageTextSearchTask:
             global np
             import numpy as np
 
-        except ModuleNotFoundError as e:
+        except ImportError as e:
             logger.error(f"ImageTextSearchTask could not be initialized and was disabled: '{module_name}' module could not be imported: {e}")
             ImageTextSearchTask.enabled = False
             return
@@ -143,10 +143,18 @@ class ImageTextSearchTask:
                 device = torch.device('cpu')
             logger.info('ImageTextSearchTask: Device to use is ' + str(device))
 
-        loadModel()
-        loadCategories(extraProps)
+        try:
+            loadModel()
+            loadCategories(extraProps)
+        except Exception as e:
+            logger.error('ImageTextSearchTask could not load the model and was disabled. It needs a version of transformers with SigLIP 2 support and, on the first run, internet access to download the model: ' + str(e))
+            ImageTextSearchTask.enabled = False
+            return
 
-        if torch.cuda.is_available():
+        if not ImageTextSearchTask.enabled:
+            return
+
+        if device.type == 'cuda':
             createSemaphore()
 
     def finish(self):
@@ -209,7 +217,12 @@ class ImageTextSearchTask:
             self.itemList.append(item)
 
         if self.isToProcessBatch(item):
-            processImages(self.itemList, self.imageList)
+            try:
+                processImages(self.itemList, self.imageList)
+            except Exception as e:
+                # items without scores must still go on to the next tasks
+                imagesFailed += len(self.itemList)
+                logger.warn('ImageTextSearchTask: Could not run the model on a batch of ' + str(len(self.itemList)) + ' images: ' + str(e))
             self.nextTaskList.extend(self.itemList)
             self.itemList.clear()
             self.imageList.clear()
@@ -237,9 +250,12 @@ def loadModel():
         logger.info('ImageTextSearchTask: Downloading model ' + modelName + ' to ' + model_path)
         model = AutoModel.from_pretrained(modelName)
         processor = AutoProcessor.from_pretrained(modelName)
-        os.makedirs(model_path, exist_ok=True)
-        model.save_pretrained(model_path)
-        processor.save_pretrained(model_path)
+        # renamed only when complete, so an interrupted download is not taken for a usable model
+        tmp_path = model_path + '.tmp'
+        model.save_pretrained(tmp_path)
+        processor.save_pretrained(tmp_path)
+        shutil.rmtree(model_path, ignore_errors=True)
+        os.replace(tmp_path, model_path)
     else:
         model = AutoModel.from_pretrained(model_path)
         processor = AutoProcessor.from_pretrained(model_path)
@@ -266,8 +282,10 @@ def loadCategories(extraProps):
         parts = [p.strip() for p in extraProps.getProperty(key).split(';')]
         try:
             threshold = float(parts[0])
+            if not 0 <= threshold <= 100:
+                raise ValueError()
         except ValueError:
-            logger.warn('ImageTextSearchTask: Invalid threshold in ' + key + ', category ignored')
+            logger.warn('ImageTextSearchTask: Invalid threshold in ' + key + ' (must be a number from 0 to 100), category ignored')
             continue
         texts = [p for p in parts[1:] if p]
         if not texts:
@@ -276,6 +294,11 @@ def loadCategories(extraProps):
         names.append(key[len(categoryPrefix):])
         thresholds.append(threshold)
         descriptions.append(texts)
+
+    if not names:
+        logger.error('ImageTextSearchTask: No valid category in ' + configFile + '. ImageTextSearch has been disabled.')
+        ImageTextSearchTask.enabled = False
+        return
 
     model, processor = loadModel()
     vectors = []
@@ -289,7 +312,7 @@ def loadCategories(extraProps):
 
     caseData.putCaseObject('image_text_search_names', names)
     caseData.putCaseObject('image_text_search_thresholds', thresholds)
-    caseData.putCaseObject('image_text_search_vectors', torch.stack(vectors) if vectors else None)
+    caseData.putCaseObject('image_text_search_vectors', torch.stack(vectors))
     logger.info('ImageTextSearchTask: Categories loaded: ' + ', '.join(names))
 
 def normalize(features):
@@ -314,26 +337,27 @@ Run the model on a batch of images and store the scores
 def processImages(itemList, imageList):
     global predictTime, imagesProcessed
     vectors = caseData.getCaseObject('image_text_search_vectors')
-    if vectors is None:
-        return
     model, processor = loadModel()
+    inputs = processor(images=imageList, return_tensors='pt').to(device)
 
-    t = time.time()
+    if semaphore is not None:
+        semaphore.acquire()
+    # one thread per call on cpu, as parallelism already comes from the workers
+    previousThreads = torch.get_num_threads()
+    if device.type == 'cpu':
+        torch.set_num_threads(1)
     try:
-        if semaphore is not None:
-            semaphore.acquire()
-        # one thread per call on cpu, as parallelism already comes from the workers
-        if device.type == 'cpu':
-            torch.set_num_threads(1)
+        t = time.time()
         with torch.no_grad():
-            inputs = processor(images=imageList, return_tensors='pt').to(device)
             images = normalize(model.get_image_features(**inputs))
             logits = images @ vectors.T * model.logit_scale.exp() + model.logit_bias
             probs = torch.sigmoid(logits).cpu().numpy()
+        predictTime += time.time() - t
     finally:
+        if device.type == 'cpu':
+            torch.set_num_threads(previousThreads)
         if semaphore is not None:
             semaphore.release()
-    predictTime += time.time() - t
 
     for i, item in enumerate(itemList):
         scores = [float(p) * 100 for p in probs[i]]
