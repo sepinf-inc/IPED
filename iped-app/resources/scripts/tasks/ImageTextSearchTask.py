@@ -2,6 +2,7 @@
 # Finds images by text descriptions, using a local multilingual image-text model (SigLIP 2, https://huggingface.co/google/siglip2-base-patch16-256).
 # ImageTextSearchTask.py
 # Requirements: python with torch, pillow, numpy and a version of transformers with SigLIP 2 support (newer than the one AgeEstimationTask needs).
+# With the python embedded in the Windows release, install 'numpy<2': its jep was built with NumPy 1.x and logs an error on every call with NumPy 2.
 # Implementation notes:
 #  - Image thumbnails are used, so 'enableImageThumbs' must be enabled.
 #  - Categories are defined by text descriptions in conf/ImageTextSearchConfig.txt, each one with its own threshold.
