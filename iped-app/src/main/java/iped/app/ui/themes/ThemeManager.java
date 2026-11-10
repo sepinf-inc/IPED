@@ -58,6 +58,7 @@ public class ThemeManager {
         if (nimbusFound) {
             themes.add(new LightTheme());
             themes.add(new DarkTheme());
+            themes.add(new DraculaTheme());
 
             Theme selTheme = loadThemeOption();
             if (selTheme == null)
