@@ -9,12 +9,12 @@
 
     <artifactId>iped-app</artifactId>
     <packaging>jar</packaging>
-    
+
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
     </properties>
-    
+
     <dependencies>
         <dependency>
             <groupId>iped</groupId>
@@ -24,6 +24,11 @@
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-geo</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-bfac</artifactId>
             <version>${project.version}</version>
         </dependency>
       	<dependency>
@@ -53,7 +58,7 @@
 	  		<version>5d6b903557dac49a925a7a62d5c6592bd07482c5</version>
 	  	</dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -94,7 +99,7 @@
                         <goals>
                             <goal>analyze</goal>
                         </goals>
-                    </execution>                                        
+                    </execution>
                     <execution>
                         <id>unpack-jre</id>
                         <phase>package</phase>
@@ -571,7 +576,7 @@
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
-                    </execution>                    
+                    </execution>
                     <execution>
                         <id>copy-dependencies</id>
                         <phase>package</phase>
@@ -632,7 +637,7 @@
                             <finalName>iped</finalName>
                             <outputDirectory>${release.dir}</outputDirectory>
                             <forceCreation>true</forceCreation>
-                            <archive>                                
+                            <archive>
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
@@ -641,7 +646,7 @@
                                 </manifest>
                                 <manifestEntries>
                                     <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
-                                </manifestEntries>  
+                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
@@ -676,7 +681,7 @@
                             <finalName>iped-search-app</finalName>
                             <outputDirectory>${lib.dir}</outputDirectory>
                             <forceCreation>true</forceCreation>
-                            <archive>                                
+                            <archive>
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
@@ -684,7 +689,7 @@
                                 </manifest>
                                 <manifestEntries>
                                     <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
-                                </manifestEntries>                                
+                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
@@ -729,7 +734,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -859,5 +864,5 @@
                 </configuration>
             </plugin>
         </plugins>
-    </build>    
+    </build>
 </project>
