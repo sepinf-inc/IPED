@@ -1,0 +1,36 @@
+########################################
+# ImageTextSearch Task configuration
+########################################
+
+# Maximum number of images per model run.
+# When using GPU (see 'device' property below) adjust this value to avoid GPU memory exaustion.
+batchSize = 50
+
+# Device to use for model runs ('cpu' or 'gpu').
+# For 'gpu', see GPU setup on IPED's user manual, for instance: <https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules>
+device = cpu
+
+# Categories searched in each image, one per line:
+# category.<name> = <threshold> ; <description> ; <description> ...
+# Each image gets a score from 0 to 100 for each category, the probability given by the model that the
+# image matches the descriptions. Images with a score equal or above the threshold get the category name
+# in the 'ai:imageSearch:labels' attribute, shown in the AI filters panel. The scores are stored in
+# 'ai:imageSearch:score:<name>' and can be used to sort the images.
+# Descriptions can be written in many languages. Describing the category in more than one language
+# usually works better than in a single one, because the vectors of all descriptions are averaged.
+# Scores are low and differ a lot between categories, so each one needs its own threshold. The ones
+# below were chosen for a precision of about 80% on a test set of 4,700 images (photos from a phone and
+# from Open Images); expect lower precision in cases where these objects are rare. Knife and Cannabis
+# use lower thresholds, set after looking at the flagged images: most extra hits are swords and other
+# blades for Knife, and for Cannabis plants the test labels had missed. Objects that take a small part
+# of the image are often missed. The thresholds assume the default thumbnails (imgThumbSize = 256,
+# compression = 60, extractThumb = false in ImageThumbsConfig.txt); other settings change the scores.
+category.Firearm = 3.0 ; arma de fogo ; a firearm
+category.Handgun = 4.0 ; uma pistola ou revólver ; a handgun
+category.Knife = 1.6 ; uma faca ; a knife
+category.Banknotes = 0.29 ; notas de dinheiro ; banknotes, paper money
+category.Ammunition = 0.59 ; munição, balas de arma ; ammunition, bullets
+category.IdDocument = 1.1 ; documento de identidade ou passaporte ; an identity document or passport
+category.Cannabis = 1.0 ; maconha ; cannabis, marijuana
+category.Syringe = 1.6 ; uma seringa ; a syringe
+category.Cigarette = 1.3 ; um cigarro ; a cigarette

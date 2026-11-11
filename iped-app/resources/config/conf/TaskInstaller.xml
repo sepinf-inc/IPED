@@ -43,6 +43,7 @@
     <task script="NSFWNudityDetectTask.py"></task>
     <task script="FaceRecognitionTask.py"></task>
     <task script="AgeEstimationTask.py"></task>
+    <task script="ImageTextSearchTask.py"></task>
     <task script="SearchHardwareWallets.py"></task>
 	<task script="CSAMDetectorTask.py"></task>
     <task script="RefineMetadataTask.js"></task>    
