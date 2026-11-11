@@ -854,8 +854,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     }
 
     private static void setupOCROptions(OCRConfig ocrConfig) {
-        if (ocrConfig.isOCREnabled()) {
-            System.setProperty(OCRParser.ENABLE_PROP, "true");
+        boolean enabled = ocrConfig.isOCREnabled();
+        System.setProperty(OCRParser.ENABLE_PROP, Boolean.toString(enabled));
+        if (enabled) {
             System.setProperty(OCRParser.LANGUAGE_PROP, ocrConfig.getOcrLanguage());
             System.setProperty(OCRParser.SKIP_KNOWN_FILES_PROP, String.valueOf(ocrConfig.isSkipKnownFiles()));
             System.setProperty(OCRParser.MIN_SIZE_PROP, ocrConfig.getMinFileSize2OCR());
