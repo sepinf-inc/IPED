@@ -1,6 +1,8 @@
 package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
+import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
+import static iped.parsers.whatsapp.Message.MessageType.AI_RESPONSE;
 import static iped.parsers.whatsapp.Message.MessageType.AI_THIRD_PARTY;
 import static iped.parsers.whatsapp.Message.MessageType.ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -13,6 +15,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_DEVICE;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_TO;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_DELETED;
 import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHAT_STARTED_FROM_AD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
@@ -35,6 +38,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ADMIN_APPROVAL_OFF;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
@@ -99,7 +103,9 @@ import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -109,12 +115,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import iped.parsers.sqlite.SQLite3DBParser;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -147,7 +160,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     WAContact remote = contacts.getContact(contactId);
                     Chat c = new Chat(remote);
                     c.setId(rs.getLong("id"));
-                    c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
+                    c.setSubject(ChatUtil.getUTF8String(rs, "subject")); //$NON-NLS-1$
                     if (contactId.endsWith(WAContact.waGroupSuffix)) {
                         c.setGroupChat(true);
                     } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
@@ -163,6 +176,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 extractCalls(conn, idToChat);
 
                 for (Chat c : list) {
+                    cleanCalls(c.getMessages());
                     Message.sort(c.getMessages());
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
@@ -175,6 +189,36 @@ public abstract class ExtractorAndroidNew extends Extractor {
         }
 
         return list;
+    }
+
+    private void cleanCalls(List<Message> l) {
+        Set<Long> callTimes = new HashSet<Long>();
+        boolean hasCallMessage = false;
+        for (Message m : l) {
+            MessageType type = m.getMessageType();
+            if (type == MISSED_VIDEO_CALL || type == MISSED_VOICE_CALL || type == REFUSED_VIDEO_CALL
+                    || type == REFUSED_VOICE_CALL || type == UNAVAILABLE_VIDEO_CALL || type == UNAVAILABLE_VOICE_CALL
+                    || type == UNKNOWN_VIDEO_CALL || type == UNKNOWN_VOICE_CALL || type == VIDEO_CALL
+                    || type == VOICE_CALL) {
+                callTimes.add(m.getTimeStamp().getTime());
+            }
+            if (type == CALL_MESSAGE) {
+                hasCallMessage = true;
+            }
+        }
+        if (hasCallMessage) {
+            List<Message> aux = new ArrayList<Message>(l.size());
+            for (Message m : l) {
+                if (m.getMessageType() == CALL_MESSAGE && callTimes.contains(m.getTimeStamp().getTime())) {
+                    continue;
+                }
+                aux.add(m);
+            }
+            if (aux.size() < l.size()) {
+                l.clear();
+                l.addAll(aux);
+            }
+        }
     }
 
     private void updateContactsDirectoryMapping() throws SQLException {
@@ -211,6 +255,57 @@ public abstract class ExtractorAndroidNew extends Extractor {
         return isUnblocked;
     }
 
+    private boolean extractAIResponse(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_AI_RESPONSE)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                byte[] b = rs.getBytes("ai_rich_response_core_blob");
+                if (b != null && b.length > 2) {
+                    try {
+                        String s = fixCesu8(b, 2);
+                        JSONObject root = new JSONObject(s);
+                        JSONArray subMessages = root.optJSONArray("subMessages");
+                        if (subMessages != null && !subMessages.isEmpty()) {
+                            JSONObject firstMsg = subMessages.optJSONObject(0);
+                            if (firstMsg != null) {
+                                String text = firstMsg.optString("messageText", null);
+                                if (text != null) {
+                                    m.setData(text);
+                                    return true;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static String fixCesu8(byte[] bytes, int offset) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream(bytes.length - offset);
+        int i = offset;
+        while (i < bytes.length) {
+            if (i + 5 < bytes.length && (bytes[i] & 0xFF) == 0xED && (bytes[i + 1] & 0xF0) == 0xA0
+                    && (bytes[i + 3] & 0xFF) == 0xED && (bytes[i + 4] & 0xF0) == 0xB0) {
+                int high = (((bytes[i] & 0x0F) << 12) | ((bytes[i + 1] & 0x3F) << 6) | (bytes[i + 2] & 0x3F));
+                int low = (((bytes[i + 3] & 0x0F) << 12) | ((bytes[i + 4] & 0x3F) << 6) | (bytes[i + 5] & 0x3F));
+                int codePoint = 0x10000 + ((high - 0xD800) << 10) + (low - 0xDC00);
+                out.write(0xF0 | (codePoint >> 18));
+                out.write(0x80 | ((codePoint >> 12) & 0x3F));
+                out.write(0x80 | ((codePoint >> 6) & 0x3F));
+                out.write(0x80 | (codePoint & 0x3F));
+                i += 6;
+            } else {
+                out.write(bytes[i]);
+                i++;
+            }
+        }
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
+    }
+
     private void extractAddOns(Connection conn, Message m, boolean hasReactionTable) throws SQLException {
         String query = hasReactionTable ? SELECT_ADD_ONS_REACTIONS : SELECT_ADD_ONS;
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -236,10 +331,13 @@ public abstract class ExtractorAndroidNew extends Extractor {
     }
 
     private void extractCalls(Connection conn, Map<Long, Chat> idToChat) throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_CALLS)) {
+        try (PreparedStatement stmt = conn.prepareStatement(getSelectCallsQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                long chatId = rs.getLong("groupChatId");
+                long chatId = rs.getLong("msgChatId");
+                if (chatId == 0) {
+                    chatId = rs.getLong("groupChatId");
+                }
                 if (chatId == 0) {
                     chatId = rs.getLong("chatId");
                 }
@@ -417,6 +515,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
         boolean hasRevokedTable = SQLite3DBParser.containsTable("message_revoked", conn);
         boolean hasOrderTable = SQLite3DBParser.containsTable("message_order", conn);
         boolean hasProductTable = SQLite3DBParser.containsTable("message_product", conn);
+        boolean hasAIResponse = SQLite3DBParser.containsTable("ai_rich_response_message_core_info", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -454,14 +553,14 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 }
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
-                m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
+                m.setData(ChatUtil.getUTF8String(rs, "text_data")); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
                 if (caption == null || caption.isBlank()) {
                     caption = m.getData();
                 }
                 m.setFromMe(rs.getInt("fromMe") == 1 && type != 7); //$NON-NLS-1$
                 m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
-                m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
+                m.setUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
                 m.setMediaMime(rs.getString("mediaMime")); //$NON-NLS-1$
                 m.setMediaName(rs.getString("mediaName")); //$NON-NLS-1$
                 m.setMediaCaption(caption); // $NON-NLS-1$
@@ -479,9 +578,15 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     continue;
                 }
                 
+                if (m.getMessageType() == AI_RESPONSE) {
+                    if (hasAIResponse && extractAIResponse(conn, m)) {
+                        m.setMessageType(TEXT_MESSAGE);
+                    }
+                }
+
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
-                    m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
+                    m.setVcards(Arrays.asList(new String[] { ChatUtil.getUTF8String(rs, "vcard") }));
                 }
                 byte[] thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$
                 if (thumbData == null) {
@@ -531,6 +636,8 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 m.setGroupInviteName(rs.getString("groupInviteName"));
                 m.setSortId(rs.getLong("sortId"));
                 m.setUiElements(rs.getString("uiElem"));
+                m.setTitle(rs.getString("textTitle"));
+                m.setDescription(rs.getString("textDesc"));
 
                 if (hasTemplateTables && m.getMessageType() == TEMPLATE_MESSAGE) {
                     extractTemplateInfo(conn, m);
@@ -694,14 +801,14 @@ public abstract class ExtractorAndroidNew extends Extractor {
 
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 m.setRemoteResource(rs.getString("remoteResource")); // $NON-NLS-1$
-                m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
+                m.setData(ChatUtil.getUTF8String(rs, "text_data")); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
                 if (caption == null || caption.isBlank()) {
                     caption = m.getData();
                 }
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
                 m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
-                m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
+                m.setUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
                 m.setMediaMime(rs.getString("mediaMime")); //$NON-NLS-1$
                 m.setMediaName(rs.getString("mediaName")); //$NON-NLS-1$
                 m.setMediaHash(rs.getString("mediaHash"), true); //$NON-NLS-1$
@@ -711,10 +818,13 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1, -1, m.getMediaMime()));
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
-                    m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
+                    m.setVcards(Arrays.asList(new String[] { ChatUtil.getUTF8String(rs, "vcard") }));
                 }
 
-                byte[] thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$
+                byte[] thumbData = rs.getBytes("thumbData");
+                if (thumbData == null) {
+                    thumbData = rs.getBytes("textThumb");
+                }
 
                 if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
                     m.setMessageType(UNBLOCKED_CONTACT);
@@ -943,6 +1053,9 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     case 132:
                         result = CHANNEL_CREATED;
                         break;
+                    case 133:
+                        result = CHANNEL_DELETED;
+                        break;
                     case 134:
                         result = CHANNEL_ADDED_PRIVACY;
                         break;
@@ -952,11 +1065,17 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     case 142:
                         result = OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
                         break;
+                    case 147:
+                        result = AI_RECEIVE_MESSAGES;
+                        break;
                     case 155:
                         result = AI_THIRD_PARTY;
                         break;
                     case 158:
                         result = CHAT_STARTED_FROM_AD;
+                        break;
+                    case 188:
+                        result = GROUP_CHANGED_ALL_MEMBERS_CAN_INVITE;
                         break;
                     default:
                         break;
@@ -1038,6 +1157,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
             case 26:
             case 27:
             case 28:
+            case 62:
                 result = TEMPLATE_MESSAGE;
                 break;
             case 32:
@@ -1057,6 +1177,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 result = ORDER_MESSAGE;
                 break;
             case 45:
+            case 54:
             case 55:
             case 57:
                 result = UI_ELEMENTS;
@@ -1099,9 +1220,14 @@ public abstract class ExtractorAndroidNew extends Extractor {
             case 99:
                 result = MESSAGE_ASSOCIATION;
                 break;
+            case 110:
+                // AI bot chat response
+                result = AI_RESPONSE;
+                break;
             case 112:
                 result = ADVANCED_PRIVACY_ON;
                 break;
+            case 87:
             case 116:
                 // Nothing is shown in the app itself
                 result = IGNORE_MESSAGE;
@@ -1116,6 +1242,8 @@ public abstract class ExtractorAndroidNew extends Extractor {
             + " sort_timestamp FROM chat c, jid j WHERE c.jid_row_id = j._id ORDER BY c.sort_timestamp DESC";
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
+
+    private static final String SELECT_AI_RESPONSE = "SELECT ai_rich_response_core_blob FROM ai_rich_response_message_core_info WHERE message_row_id=?";
 
     private static final String SELECT_ADD_ONS_REACTIONS = "SELECT message_add_on_type as type, timestamp, status,"
             + " jid.raw_string as remoteResource, jid2.raw_string as remoteResource2, from_me as fromMe, r.reaction as reaction"
@@ -1203,6 +1331,15 @@ public abstract class ExtractorAndroidNew extends Extractor {
             editTableJoin = " left join message_edit_info mei on m._id=mei.message_row_id";
         }
 
+        String titleCol = "null";
+        String descCol = "null";
+        String textTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_text", conn)) {
+            descCol = "message_text.description";
+            titleCol = "message_text.page_title";
+            textTableJoin = " left join message_text on m._id=message_text.message_row_id";
+        }
+
         return "select m._id AS id,m.chat_row_id as chatId, chatJid.raw_string as remoteId,"
                 + " jid.raw_string as remoteResource, status, mv.vcard, m.text_data,"
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
@@ -1217,7 +1354,9 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 + " " + grpInvCol + " as groupInviteName,"
                 + " " + sortCol + " as sortId,"
                 + " " + uiElemCol + " as uiElem,"
-                + " " + editCol + " as editTimestamp"
+                + " " + editCol + " as editTimestamp,"
+                + " " + titleCol + " as textTitle,"
+                + " " + descCol + " as textDesc"
                 + " from message m"
                 + " left join chat on m.chat_row_id=chat._id"
                 + " left join jid chatJid on chatJid._id=chat.jid_row_id"
@@ -1232,6 +1371,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 + grpInvTableJoin
                 + uiElemTableJoin
                 + editTableJoin
+                + textTableJoin
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
     }
 
@@ -1239,18 +1379,29 @@ public abstract class ExtractorAndroidNew extends Extractor {
         String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_quoted_media", "media_caption")
                 ? "mm.media_caption"
                 : "null";
-        String editCol = "null as edit_row_id,";
+
+        String editCol = "null";
         String editTableJoin = "";
         if (SQLite3DBParser.containsTable("message_edit_info", conn)) {
-            editCol = "mei.message_row_id as edit_row_id,";
+            editCol = "mei.message_row_id";
             editTableJoin = " left join message_edit_info mei on mei.original_key_id=mq.key_id";
-        }                
+        }
+
+        String textThumbCol = "null";
+        String textTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_quoted_text", conn)) {
+            textThumbCol = "mqt.thumbnail";
+            textTableJoin = " left join message_quoted_text mqt on mqt.message_row_id=mq.message_row_id";
+        }
+
         return "select mq.message_row_id as id,mq.chat_row_id as chatId, chatJid.raw_string as remoteId,"
                 + " jid.raw_string as remoteResource, mv.vcard, mq.text_data, mq.parent_message_chat_row_id,"
                 + " mq.from_me as fromMe, mq.timestamp as timestamp, message_url as mediaUrl,"
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName,"
                 + " mq.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
-                + " as mediaCaption, mm.file_hash as mediaHash, mm.thumbnail as thumbData, " + editCol
+                + " as mediaCaption, mm.file_hash as mediaHash, mm.thumbnail as thumbData, " 
+                + " " + editCol + " as edit_row_id,"
+                + " " + textThumbCol + " as textThumb,"
                 + " mq.key_id as uuid"
                 + " from message_quoted mq"
                 + " left join chat on mq.chat_row_id=chat._id"
@@ -1259,6 +1410,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 + " left join jid on jid._id=mq.sender_jid_row_id"
                 + " left join message_quoted_location ml on mq.message_row_id=ml.message_row_id"
                 + " left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id"
+                + textTableJoin
                 + editTableJoin;
     }
 
@@ -1269,15 +1421,27 @@ public abstract class ExtractorAndroidNew extends Extractor {
         return "select is_blocked as isBlocked from message_system_block_contact where message_row_id=?";
     }
 
-    private static final String SELECT_CALLS = "select log._id as id, log.call_id, log.video_call, log.duration,"
+    private static String getSelectCallsQuery(Connection conn) throws SQLException {
+        String messageChatIdCol = "0";
+        String messageTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_call_log", conn)) {
+            messageChatIdCol = "msg.chat_row_id";
+            messageTableJoin = " left join message_call_log mcl on mcl.call_log_row_id = log._id"
+                             + " left join message msg on mcl.message_row_id = msg._id";
+        }
+
+        return "select log._id as id, log.call_id, log.video_call, log.duration,"
             + " log.timestamp, log.call_result, log.from_me,"
             + " jid.raw_string as remoteId,"
             + " chat1._id as chatId,"
-            + " chat2._id as groupChatId"
+            + " chat2._id as groupChatId,"
+            + " " + messageChatIdCol + " as msgChatId"
             + " from call_log log"
             + " left join jid on jid._id = log.jid_row_id"
             + " left join chat chat1 on chat1.jid_row_id = log.jid_row_id"
-            + " left join chat chat2 on chat2.jid_row_id = log.group_jid_row_id";
+            + " left join chat chat2 on chat2.jid_row_id = log.group_jid_row_id"
+            + messageTableJoin;
+    }
 
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
             + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$

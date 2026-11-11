@@ -104,6 +104,7 @@ import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
@@ -226,7 +227,7 @@ public abstract class ExtractorIOS extends Extractor {
                                 contactId = identifier;
                             }
                         }
-                        String subject = Util.getUTF8String(rs, "subject");
+                        String subject = ChatUtil.getUTF8String(rs, "subject");
                         WAContact remote = contacts.getContact(contactId);
                         if (StringUtils.isNotBlank(subject) && remote.getId().equals(remote.getName())) {
                             remote.setWaName(subject);
@@ -1810,7 +1811,7 @@ public abstract class ExtractorIOS extends Extractor {
                     try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_PUSH_NAMES)) {
                         while (rs.next()) {
                             String jid = rs.getString("jid");
-                            if (jid != null && !jid.isBlank() && !contacts.hasContact(Util.getNameFromId(jid))) {
+                            if (jid != null && !jid.isBlank() && !contacts.hasContact(ChatUtil.getNameFromId(jid))) {
                                 String name = rs.getString("pushname");
                                 if (name != null && !name.isBlank() && !jid.startsWith(name)) {
                                     WAContact c = contacts.getContact(jid);

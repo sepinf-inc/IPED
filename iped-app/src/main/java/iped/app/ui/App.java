@@ -284,6 +284,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     final static String FILTER_NO_FILTER = "[" + Messages.getString("App.NoFilter") + "]";
     final static String FILTER_CHECKED = "[" + Messages.getString("App.Checked") + "]";
+    final static String FILTER_CHATS_CHECKED_MESSAGES = "[" + Messages.getString("App.ChatsWithSelectedMessages") + "]";
     public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
 
     static int MAX_HITS = 10000;
@@ -301,6 +302,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private IPEDSource lastSelectedSource;
 
     public int lastSelectedDoc = -1;
+    private int lastValidSelectedDoc = -1;
 
     private StandardParser autoDetectParser;
 
@@ -332,10 +334,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public void setLastSelectedDoc(int lastSelectedDoc) {
         this.lastSelectedDoc = lastSelectedDoc;
+        if (lastSelectedDoc >= 0) {
+            lastValidSelectedDoc = lastSelectedDoc;
+        }
     }
 
     public int getLastSelectedDoc() {
         return this.lastSelectedDoc;
+    }
+
+    public int getLastValidSelectedDoc() {
+        return lastValidSelectedDoc;
     }
 
     public void setHighlightTerms(Set<String> terms) {

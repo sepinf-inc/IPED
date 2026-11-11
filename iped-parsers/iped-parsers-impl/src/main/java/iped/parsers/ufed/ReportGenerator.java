@@ -38,8 +38,8 @@ import iped.parsers.ufed.model.Party;
 import iped.parsers.ufed.reference.ReferencedAccountable;
 import iped.parsers.ufed.reference.ReferencedFile;
 import iped.parsers.ufed.reference.ReferencedLocation;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.util.Messages;
-import iped.parsers.whatsapp.Util;
 import iped.properties.BasicProps;
 import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
@@ -212,8 +212,8 @@ public class ReportGenerator {
         boolean printModal = (chat.getMessages().size() - currentMsg) > MIN_MESSAGES_TO_SHOW_MODAL;
         printMessageFileHeader(out, title, title, firstPhotoData, source, printModal);
         if (currentMsg > 0) {
-            out.println("<div class=\"linha\"><div class=\"date\">"
-                    + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>");
+            out.println("<div class=\"line\"><div class=\"date\">"
+                    + Messages.getString("ChatReport.ChatContinuation") + "</div></div>");
         }
 
         String lastDate = null;
@@ -221,15 +221,15 @@ public class ReportGenerator {
             InstantMessage m = chat.getMessages().get(currentMsg);
             String thisDate = m.getTimeStamp() != null ? dateFormat.format(m.getTimeStamp()) : Messages.getString("ReportGenerator.UnknownDate");
             if (lastDate == null || !lastDate.equals(thisDate)) {
-                out.println("<div class=\"linha\"><div class=\"date\">"
+                out.println("<div class=\"line\"><div class=\"date\">"
                         + thisDate + "</div></div>");
                 lastDate = thisDate;
             }
             printMessage(out, m, chat.isGroup(), chat.isDeleted());
 
             if (currentMsg++ != chat.getMessages().size() - 1 && bout.size() >= minChatSplitSize) {
-                out.println("<div class=\"linha\"><div class=\"date\">"
-                        + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>");
+                out.println("<div class=\"line\"><div class=\"date\">"
+                        + Messages.getString("ChatReport.ChatContinues") + "</div></div>");
                 break;
             }
         }
@@ -246,7 +246,7 @@ public class ReportGenerator {
 
         boolean isOutgoing = message.isFromPhoneOwner();
 
-        out.println("<div id=\"" + message.getAnchorId() + "\" class=\"linha\">");
+        out.println("<div id=\"" + message.getAnchorId() + "\" class=\"line\">");
         String name = null;
         if (message.isSystemMessage()) {
             out.println("<div class=\"systemmessage\"><div>");
@@ -473,7 +473,7 @@ public class ReportGenerator {
 
                 // render child porn sets
                 if (!attachment.getReferencedFile().getChildPornSets().isEmpty()) {
-                    out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
+                    out.print("<p><i>" + Messages.getString("ChatReport.FoundInPedoHashDB") + " "
                             + format(attachment.getReferencedFile().getChildPornSets().toString()) + "</i></p>");
                 }
             }
@@ -673,12 +673,12 @@ public class ReportGenerator {
             String source, boolean printModal) {
 
         String topbarClass = " class=\"other\"";
-        String backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/other-chat-back.jpg") + ")\"";
+        String backImage = " style=\"background-image:url(" + ChatUtil.getImageResourceAsEmbedded("img/other-chat-back.jpg") + ")\"";
         String icon = "message";
         if (source != null) {
             if (source.equals(Chat.SOURCE_TELEGRAM)) {
                 topbarClass = " class=\"telegram\"";
-                backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg") + ")\"";
+                backImage = " style=\"background-image:url(" + ChatUtil.getImageResourceAsEmbedded("img/telegramwallpaper.jpg") + ")\"";
                 icon = "telegram";
             } else if (source.contains(Chat.SOURCE_WHATSAPP)) {
                 topbarClass = "";
@@ -694,8 +694,8 @@ public class ReportGenerator {
                 + "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
                 + "<meta name=\"viewport\" content=\"width=device-width\" />\n"
                 + "<meta charset=\"UTF-8\" />\n"
-                + "<link rel=\"icon\" href=\"" + Util.getImageResourceAsEmbedded("img/" + icon + ".png") + "\">\n"
-                + "<style>\n" + Util.readResourceAsString("css/whatsapp.css")
+                + "<link rel=\"icon\" href=\"" + ChatUtil.getImageResourceAsEmbedded("img/" + icon + ".png") + "\">\n"
+                + "<style>\n" + ChatUtil.readResourceAsString("css/chat.css")
                 + "\n</style>\n" + "<style>.check {vertical-align: top;}</style>" + "</head>\n"
                 + "<body"+ backImage +">");
        if (printModal) {
@@ -708,11 +708,12 @@ public class ReportGenerator {
                 + " &nbsp; ");
 
         if (avatar != null) {
-            out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar)
+            out.println("<img src=\"data:image/jpg;base64," + ChatUtil.encodeBase64(avatar)
                     + "\" width=\"72\" height=\"72\"/>");
         }
 
         out.println(format(chatName) + "</span>\n"
+                + ChatUtil.getNavControls()
                 + "</div>\n"
                 + "<div id=\"conversation\">");
     }
@@ -720,7 +721,7 @@ public class ReportGenerator {
         out.println("	<br /><br /><br />\n"
                 + "</div>\n"
                 + "<div id=\"lastmsg\">&nbsp;</div>\n"
-                + "<script type=\"text/javascript\">\n" + Util.readResourceAsString("js/whatsapp.js") + "\n</script>\n"
+                + "<script type=\"text/javascript\">\n" + ChatUtil.readResourceAsString("js/chat.js") + "\n</script>\n"
                 + "</body>\n"
                 + "</html>");
     }

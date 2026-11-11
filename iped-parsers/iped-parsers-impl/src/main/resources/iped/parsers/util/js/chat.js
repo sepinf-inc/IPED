@@ -144,13 +144,126 @@ if (navigator.userAgent.search("JavaFX") < 0) {
     }
 }
 
-const topHeight = document.getElementById('topbar').offsetHeight;
-document.getElementById('conversation').style.paddingTop = `${topHeight}px`;
+document.addEventListener("DOMContentLoaded", () => {
+    const conversation = document.getElementById("conversation");
+    const navControls = document.getElementById("nav-controls");
+    const navCounter = document.getElementById("nav-counter");
+    const btnPrev = document.getElementById("btn-prev");
+    const btnNext = document.getElementById("btn-next");
+    const btnClear = document.getElementById("btn-clear");
+    let selectedIndex = 0;
 
+    function scrollToLine(element) {
+        if (!element) return;
+        const topbar = document.getElementById("topbar");
+        const topbarHeight = topbar ? topbar.offsetHeight : 84;
+        const elementTop = element.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo(0, elementTop - topbarHeight - 8);
+    }
+
+	function updateNavigation(targetLine = null) {
+	    const spinner = document.getElementById("topbar-spinner");
+	    const navContent = document.getElementById("nav-content");
+
+	    if (isLoading) {
+	        if (spinner) spinner.style.display = "block";
+	        if (navContent) navContent.style.display = "none";
+	        return;
+	    }
+	    if (spinner) {
+	        spinner.style.display = "none";
+	    }
+
+	    const selectedLines = Array.from(document.querySelectorAll("#conversation .line.sel"));
+	    const total = selectedLines.length;
+
+	    if (total === 0) {
+	        if (navContent) navContent.style.display = "none";
+	        selectedIndex = 0;
+	        return;
+	    }
+
+	    if (navContent) navContent.style.display = "flex";
+
+	    if (targetLine && selectedLines.includes(targetLine)) {
+	        selectedIndex = selectedLines.indexOf(targetLine);
+	    } else if (selectedIndex >= total) {
+	        selectedIndex = total - 1;
+	    } else if (selectedIndex < 0) {
+	        selectedIndex = 0;
+	    }
+
+	    document.getElementById("nav-counter").textContent = `${selectedIndex + 1} / ${total}`;
+	}
+
+    window.updateNavigation = updateNavigation;
+
+    if (conversation) {
+        conversation.addEventListener("click", (event) => {
+            if (event.target.closest("a, input, button, audio, video, .check")) {
+                return;
+            }			
+            const line = event.target.closest(".line");
+            if (line) {
+				if (line.id) {
+                    const isSel = line.classList.toggle("sel");
+                    if (window.msgApp) {
+                        window.msgApp.selectMessage(line.id, isSel);
+                    }
+                    updateNavigation(line);
+				}
+            }
+        });
+    }
+    if (btnPrev) {
+        btnPrev.addEventListener("click", () => {
+            const selectedLines = Array.from(document.querySelectorAll("#conversation .line.sel"));
+            if (selectedLines.length === 0) return;
+            selectedIndex = (selectedIndex - 1 + selectedLines.length) % selectedLines.length;
+            updateNavigation();
+            scrollToLine(selectedLines[selectedIndex]);
+        });
+    }
+    if (btnNext) {
+        btnNext.addEventListener("click", () => {
+            const selectedLines = Array.from(document.querySelectorAll("#conversation .line.sel"));
+            if (selectedLines.length === 0) return;
+            selectedIndex = (selectedIndex + 1) % selectedLines.length;
+            updateNavigation();
+            scrollToLine(selectedLines[selectedIndex]);
+        });
+    }
+    if (btnClear) {
+        btnClear.addEventListener("click", () => {
+            const selectedLines = document.querySelectorAll("#conversation .line.sel");
+            selectedLines.forEach(line => {
+                line.classList.remove("sel");
+                if (window.msgApp && line.id) {
+                    window.msgApp.selectMessage(line.id, false);
+                }
+            });
+            updateNavigation();
+        });
+    }
+});
+
+let isLoading = true;
 window.addEventListener('load', () => {
+	isLoading = false;
+
+    const spinner = document.getElementById('topbar-spinner');
+    if (spinner) {
+        spinner.style.display = 'none';
+    }
+
     const modal = document.getElementById('loading-modal');
     if (modal) {
         modal.classList.add('fade-out');
         setTimeout(() => modal.remove(), 300);
     }
+
+    updateNavigation();
 });
+
+const topHeight = document.getElementById('topbar').offsetHeight;
+document.getElementById('conversation').style.paddingTop = `${topHeight}px`;
