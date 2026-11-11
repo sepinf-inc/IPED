@@ -710,6 +710,11 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
+            public IItemReader searchFirst(String luceneQuery) {
+                return null;
+            }
+
+            @Override
             public String escapeQuery(String string) {
                 return string;
             }
