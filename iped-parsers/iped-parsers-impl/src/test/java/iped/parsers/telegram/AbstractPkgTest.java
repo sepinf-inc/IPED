@@ -52,6 +52,11 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
+            public IItemReader searchFirst(String luceneQuery) {
+                return null;
+            }
+            
+            @Override
             public String escapeQuery(String string) {
                 return string;
             }

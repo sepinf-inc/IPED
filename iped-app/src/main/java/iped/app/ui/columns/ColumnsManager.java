@@ -156,11 +156,11 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
         autoManageCols = analysisConfig.isAutoManageCols();
 
-        moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
-
-        updateDinamicFields();
-
-        loadSavedCols();
+        if (App.get().appCase != null) {
+            moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+            updateDinamicFields();
+            loadSavedCols();
+        }
     }
 
     public void saveColumnsState() {
