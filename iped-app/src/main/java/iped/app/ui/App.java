@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -356,7 +356,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public MenuClass getContextMenu() {
         IItemId id = resultTableListener.getSelectedItemId();
-        IItem item = id == null ? null : appCase.getItemByItemId(id); 
+        IItem item = id == null ? null : appCase.getItemByItemId(id);
         return new MenuClass(item);
     }
 
@@ -448,7 +448,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 ColumnsManagerUI.getInstance().dispose();
             }
 
-            appCase.close();
+            if (appCase != null) {
+                appCase.close();
+            }
 
             if (processingFinished) {
                 if (processingManager != null)
@@ -500,6 +502,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.setTitle(Version.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         this.setSize(new Dimension(800, 600));
         this.setExtendedState(Frame.MAXIMIZED_BOTH);
+        this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         this.addWindowListener(this);
         this.setIconImages(IconUtil.getIconImages("search", "/iped/app/icon"));
         this.setVisible(true);
@@ -1024,7 +1027,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
         butFaceSearch.setEnabled(false);
-        
+
         galleryTabDock.addSeparator();
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
@@ -1267,15 +1270,24 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
                 bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, aiFiltersTabDock, graphDock,
                 referencesDock, referencedByDock, filtersTabDock));
-        docks.addAll(viewerDocks);
-        docks.addAll(rsTabDock);
-        rsTabDock.clear();
+        // Closing the processing preview may precede viewer initialization.
+        if (viewerDocks != null) {
+            docks.addAll(viewerDocks);
+        }
+        if (rsTabDock != null) {
+            docks.addAll(rsTabDock);
+            rsTabDock.clear();
+        }
 
         for (DefaultSingleCDockable dockable : docks) {
             if (dockable != null) {
-                Component c = dockable.getContentPane().getComponent(0);
-                dockable.remove(c);
-                dockingControl.removeDockable(dockable);
+                Container content = dockable.getContentPane();
+                if (content.getComponentCount() > 0) {
+                    dockable.remove(content.getComponent(0));
+                }
+                if (dockingControl != null) {
+                    dockingControl.removeDockable(dockable);
+                }
             }
         }
     }
@@ -1526,6 +1538,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowClosing(WindowEvent e) {
+        // Check if BFAC upload is in progress
+        if (!iped.bfac.BfacDialog.confirmApplicationClose(this)) {
+            return; // User cancelled, don't close
+        }
+
         // Hide the window immediately so the user sees instant close feedback.
         // This avoids further UI interaction while shutdown is running.
         setVisible(false);
