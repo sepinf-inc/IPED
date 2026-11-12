@@ -585,6 +585,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         topPanel.add(exportToZip);
         exportToZip.setVisible(false);
         topPanel.add(checkBox);
+        topPanel.add(new JLabel(" TZ: "));
+        topPanel.add(new DisplayTimeZoneSelector());
         topPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
         resultsModel = new ResultTableModel();
@@ -870,6 +872,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         setupKeyboardShortcuts();
 
+        DisplayTimeZoneUI.install();
         LOGGER.info("UI created"); //$NON-NLS-1$
     }
 

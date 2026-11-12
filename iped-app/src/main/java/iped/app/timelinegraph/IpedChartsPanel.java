@@ -28,6 +28,8 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.time.ZoneId;
+import java.util.function.Consumer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -93,6 +95,7 @@ import iped.app.timelinegraph.popups.LegendItemPopupMenu;
 import iped.app.timelinegraph.swingworkers.CheckWorker;
 import iped.app.timelinegraph.swingworkers.HighlightWorker;
 import iped.app.ui.App;
+import iped.utils.DisplayTimeZone;
 import iped.app.ui.columns.ColumnsManager;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
@@ -160,7 +163,15 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     boolean applyFilters = false;
     private XYBarPainter barPainter;
     private boolean internalUpdate;
-    private TimeZone timeZone = TimeZone.getDefault();
+    private TimeZone timeZone = DisplayTimeZone.getTimeZone();
+    private final Consumer<ZoneId> displayTimeZoneListener = zone ->
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                if (chartPanel != null) {
+                    setTimeZone(TimeZone.getTimeZone(zone));
+                } else {
+                    timeZone = TimeZone.getTimeZone(zone);
+                }
+            });
     private Locale locale = Locale.getDefault();
     private Range firstRange;
 
@@ -274,11 +285,25 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     }
 
     @Override
+    public void addNotify() {
+        super.addNotify();
+        DisplayTimeZone.addListener(displayTimeZoneListener);
+    }
+
+    @Override
+    public void removeNotify() {
+        DisplayTimeZone.removeListener(displayTimeZoneListener);
+        super.removeNotify();
+    }
+
+    @Override
     public void init(JTable resultsTable, IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsTable = resultsTable;
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
         this.isUpdated = false;
+        timeZone = DisplayTimeZone.getTimeZone();
+        domainAxis.setTimeZone(timeZone);
 
         fgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
         bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
