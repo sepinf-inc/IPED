@@ -18,9 +18,9 @@ public abstract class CCustomCheckBox extends CCheckBox {
         setDisabledIcon(disabled);
         setDisabledPressedIcon(disabled);
 
-        setSelectedIcon(new SelectedHighlightIcon(icon, 80));
-        setSelectedHoverIcon(new SelectedHighlightIcon(icon, 100));
-        setSelectedPressedIcon(new SelectedHighlightIcon(icon, 120));
+        setSelectedIcon(new SelectedHighlightIcon(icon, 100));
+        setSelectedHoverIcon(new SelectedHighlightIcon(icon, 130));
+        setSelectedPressedIcon(new SelectedHighlightIcon(icon, 160));
 
         setDisabledSelectedHoverIcon(disabled);
         setDisabledSelectedPressedIcon(disabled);
