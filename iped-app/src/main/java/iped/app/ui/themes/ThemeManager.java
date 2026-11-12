@@ -63,7 +63,7 @@ public class ThemeManager {
             Theme selTheme = loadThemeOption();
             if (selTheme == null)
                 selTheme = themes.get(0);
-            setTheme(selTheme);
+            setTheme(selTheme, false);
         } else {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
@@ -77,7 +77,7 @@ public class ThemeManager {
         return currentTheme;
     }
 
-    public synchronized void setTheme(Theme newTheme) {
+    public synchronized void setTheme(Theme newTheme, boolean save) {
         if (newTheme == null || newTheme.equals(currentTheme))
             return;
         if (currentTheme != null)
@@ -114,7 +114,9 @@ public class ThemeManager {
             }
         });
 
-        saveThemeOption();
+        if (save) {
+            saveThemeOption();
+        }
     }
 
     private void updateUI(Window window) {
