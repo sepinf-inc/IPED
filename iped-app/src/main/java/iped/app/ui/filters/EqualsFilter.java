@@ -43,7 +43,8 @@ public class EqualsFilter extends ValueFilter {
         } else if (docValuesSet != null) {
             if (docValuesSet.advanceExact(doc)) {
                 long ord;
-                while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                for (int ordIdx = 0, ordCnt = docValuesSet.docValueCount(); ordIdx < ordCnt; ordIdx++) {
+                    ord = docValuesSet.nextOrd();
                     if (ord == refOrd) {
                         return true;
                     }

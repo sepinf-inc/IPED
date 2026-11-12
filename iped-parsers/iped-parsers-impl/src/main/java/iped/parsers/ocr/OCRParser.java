@@ -18,6 +18,7 @@
  */
 package iped.parsers.ocr;
 
+import iped.utils.CharsetUtil;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -679,7 +680,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         new Thread() {
             @Override
             public void run() {
-                Reader reader = new InputStreamReader(stream);
+                Reader reader = new InputStreamReader(stream, CharsetUtil.NATIVE);
                 StringBuilder out = new StringBuilder();
                 char[] buffer = new char[1024];
                 try {

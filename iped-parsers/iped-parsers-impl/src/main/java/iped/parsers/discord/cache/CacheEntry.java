@@ -1,5 +1,6 @@
 package iped.parsers.discord.cache;
 
+import iped.utils.CharsetUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -191,10 +192,10 @@ public class CacheEntry {
 
                 if (longKeyAddress > 0) {
                     try (InputStream is = longKeyAddressCacheAddress.getInputStream(dataFiles, externalFiles, null)) {
-                        key = new String(is.readNBytes(keyDataSize));
+                        key = new String(is.readNBytes(keyDataSize), CharsetUtil.NATIVE);
                     }
                 } else {
-                    key = new String(keyData);
+                    key = new String(keyData, CharsetUtil.NATIVE);
                 }
             }
 
@@ -312,7 +313,7 @@ public class CacheEntry {
         
         byte[] data = is.readNBytes(length);
         
-        return new String(data);
+        return new String(data, CharsetUtil.NATIVE);
     }
 
     @Override

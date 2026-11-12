@@ -132,7 +132,7 @@ public class P2PBookmarker {
             SearchResult p2pItems = searcher.search();
             for (int i = 0; i < p2pItems.getLength(); i++) {
                 int luceneId = ipedSrc.getLuceneId(p2pItems.getId(i));
-                Document doc = ipedSrc.getReader().document(luceneId);
+                Document doc = ipedSrc.storedFields().document(luceneId);
                 String mediaType = doc.get(IndexItem.CONTENTTYPE);
                 P2PProgram program = lookupProgram(mediaType, p2pPrograms);
                 if (program == null) {

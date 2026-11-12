@@ -101,10 +101,7 @@ public abstract class WAContactsExtractorAndroid extends WAContactsExtractor {
         public boolean validateRecord(SqliteRow row) {
             try {
                 String jid = row.getTextValue("jid"); //$NON-NLS-1$
-                if (jid == null || jid.isBlank()) {
-                    return false;
-                }
-                return true;
+                return WAContact.isValidJid(jid);
                 
             } catch (Exception e) {
             }

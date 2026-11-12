@@ -2,8 +2,8 @@ package iped.engine.task.regex;
 
 import java.io.IOException;
 
-import org.opensearch.common.xcontent.ToXContentFragment;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.ToXContentFragment;
+import org.opensearch.core.xcontent.XContentBuilder;
 
 public class RegexHits implements ToXContentFragment {
 

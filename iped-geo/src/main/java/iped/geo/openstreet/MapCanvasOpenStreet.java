@@ -47,6 +47,8 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     String url;
     String lastGoogleApiKey = null;
+    /** if the current page loads Google Maps scripts, only added in Google mode */
+    volatile boolean googleScriptsLoaded = false;
     private boolean htmlloaded;
     private Semaphore sem;
     private String themeScript = MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;;
@@ -231,6 +233,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         }
     }
 
+    private static boolean isGoogleUrl(String url) {
+        return url != null && url.contains("googleapis");
+    }
+
     public String getMainHtml() throws IOException {
         if(this.url == null) {
             setUrl(JMapOptionsPane.getSavedTilesSourceURL());
@@ -253,9 +259,16 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         html = html.replace("{{leafletgeometryutil}}", leafletgeometryutil);
         html = html.replace("{{leafletarrowheads}}", leafletarrowheads);
 
-        String apikey = JMapOptionsPane.getGoogleAPIKey();
-        html = html.replace("{{googlemaps_scripts}}", "<script id=\"mapsapi\" src=\"https://maps.googleapis.com/maps/api/js?key=" + apikey + "\" async defer></script>\n"
-                + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js\"></script>");
+        // Google scripts are only loaded in Google mode, so other tile servers don't
+        // make requests to Google (they are blocked by WebKitNetworkGuard)
+        googleScriptsLoaded = isGoogleUrl(url);
+        if (googleScriptsLoaded) {
+            String apikey = JMapOptionsPane.getGoogleAPIKey();
+            html = html.replace("{{googlemaps_scripts}}", "<script id=\"mapsapi\" src=\"https://maps.googleapis.com/maps/api/js?key=" + apikey + "\" async defer></script>\n"
+                    + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js\"></script>");
+        } else {
+            html = html.replace("{{googlemaps_scripts}}", "");
+        }
 
         html = html.replace("{{tilelayer_script}}", "setTileServerUrl('" + url + "');");
 
@@ -544,6 +557,9 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         setUrl(url);
         if (url.contains("googleapis") && url.contains("key") && !url.substring(url.indexOf("key=")).equals(lastGoogleApiKey)) {
             lastGoogleApiKey = url.substring(url.indexOf("key="));
+            return true;
+        } else if (isGoogleUrl(url) && !googleScriptsLoaded) {
+            // current page has no Google scripts, reload it
             return true;
         } else {
             if (isLoaded()) {

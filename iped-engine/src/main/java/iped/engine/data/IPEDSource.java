@@ -47,12 +47,14 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Bits;
+import org.apache.lucene.util.CloseableThreadLocal;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -116,6 +118,11 @@ public class IPEDSource implements IIPEDSource {
     Analyzer analyzer;
 
     private ExecutorService searchExecutorService;
+
+    private record ReaderStoredFields(IndexReader reader, StoredFields storedFields) {
+    }
+
+    private final CloseableThreadLocal<ReaderStoredFields> storedFieldsPerThread = new CloseableThreadLocal<>();
 
     protected ArrayList<String> leafCategories = new ArrayList<String>();
     protected Category categoryTree;
@@ -554,6 +561,7 @@ public class IPEDSource implements IIPEDSource {
     public void close() {
         try {
             IOUtil.closeQuietly(reader);
+            storedFieldsPerThread.close();
 
             if (searchExecutorService != null)
                 searchExecutorService.shutdown();
@@ -568,7 +576,7 @@ public class IPEDSource implements IIPEDSource {
 
     public IItem getItemByLuceneID(int docID) {
         try {
-            Document doc = searcher.doc(docID);
+            Document doc = storedFields().document(docID);
             IItem item = IndexItem.getItem(doc, this, false);
             return item;
 
@@ -738,7 +746,7 @@ public class IPEDSource implements IIPEDSource {
     public String getItemProperty(int id, String propertyName) {
         String propertyValue = null;
         try {
-            Document doc = searcher.doc(getLuceneId(id));
+            Document doc = storedFields().document(getLuceneId(id));
             propertyValue = doc.get(propertyName);
         } catch (IOException e) {
             e.printStackTrace();
@@ -781,7 +789,7 @@ public class IPEDSource implements IIPEDSource {
     public int getParentId(int id) {
         try {
             Set<String> field = Collections.singleton(BasicProps.PARENTID);
-            Document doc = searcher.doc(getLuceneId(id), field);
+            Document doc = storedFields().document(getLuceneId(id), field);
             String parent = doc.get(BasicProps.PARENTID);
             if (parent != null && !parent.isEmpty()) {
                 return Integer.valueOf(parent);
@@ -834,6 +842,18 @@ public class IPEDSource implements IIPEDSource {
 
     public IndexSearcher getSearcher() {
         return searcher;
+    }
+
+    @Override
+    public StoredFields storedFields() throws IOException {
+        IndexReader currentReader = reader;
+        ReaderStoredFields cached = storedFieldsPerThread.get();
+        // reader changes on reopen()
+        if (cached == null || cached.reader() != currentReader) {
+            cached = new ReaderStoredFields(currentReader, currentReader.storedFields());
+            storedFieldsPerThread.set(cached);
+        }
+        return cached.storedFields();
     }
 
     public IBookmarks getBookmarks() {

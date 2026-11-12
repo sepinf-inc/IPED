@@ -1,6 +1,11 @@
 package iped.parsers.whatsapp;
 
+import java.util.regex.Pattern;
+
 public class WAContact {
+
+    // e.g. 5561999999999@s.whatsapp.net, 120363000000000000@g.us, status@broadcast
+    private static final Pattern JID_PATTERN = Pattern.compile("[\\w.:-]+@[a-z]+(\\.[a-z]+)*");
 
     public static final String waSuffix = "@s.whatsapp.net";
     public static final String waStatusBroadcast = "status@broadcast";
@@ -30,6 +35,14 @@ public class WAContact {
     private String avatarPath;
     
     private boolean deleted = false;
+
+    /**
+     * Checks if the id is a well formed JID, used to discard partially overwritten
+     * records recovered from deleted space.
+     */
+    public static boolean isValidJid(String id) {
+        return id != null && JID_PATTERN.matcher(id).matches();
+    }
 
     public WAContact(String id) {
         updateId(id);

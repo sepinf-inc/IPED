@@ -64,7 +64,7 @@ public class IpedLegendTitle extends LegendTitle {
         }
         // target = trimPadding(target);
         Object val = container.draw(gPane, target, params);
-        Object[] o = legendList.getSelectedValues();
+        Object[] o = legendList.getSelectedValuesList().toArray();
         legendListModel.clear();
         polupatesLegendListModel(legendListModel, container);
         list: for (int i = 0; i < legendList.getModel().getSize(); i++) {

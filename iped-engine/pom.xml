@@ -167,7 +167,8 @@
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-high-level-client</artifactId>
-            <version>2.1.0</version>
+            <!-- 3.9.0 is built on the same lucene version -->
+            <version>3.9.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -195,7 +196,8 @@
         <dependency>
     		<groupId>com.github.luben</groupId>
     		<artifactId>zstd-jni</artifactId>
-    		<version>1.3.3-3</version>
+    		<!-- commons-compress 1.27 needs 1.5.x (BufferPool), same as neo4j -->
+    		<version>1.5.7-22</version>
 		</dependency>
         <dependency>
             <groupId>com.mchange</groupId>
@@ -247,23 +249,34 @@
         <dependency>
         	<groupId>org.glassfish.jersey.containers</groupId>
         	<artifactId>jersey-container-grizzly2-servlet</artifactId>
-        	<version>2.30.1</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
-            <version>2.30.1</version>
         </dependency>
         <dependency>
     		<groupId>io.swagger</groupId>
     		<artifactId>swagger-jersey2-jaxrs</artifactId>
     		<version>1.6.10</version>
+            <exclusions>
+                <!-- same javax.xml.bind API as jakarta.xml.bind-api 2.3, see root pom -->
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>jaxb-api</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
 		<dependency>
   			<groupId>org.glassfish.jersey.media</groupId>
   			<artifactId>jersey-media-json-jackson</artifactId>
-  			<version>2.28</version>
   			<scope>runtime</scope>
+            <exclusions>
+                <!-- same javax.xml.bind API as jakarta.xml.bind-api 2.3, see root pom -->
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>jaxb-api</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
 		<dependency>
             <groupId>com.googlecode.libphonenumber</groupId>
@@ -273,15 +286,17 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j</artifactId>
-            <version>4.4.4</version>
+            <version>2026.10.1</version>
             <exclusions>
+                <!-- slf4j provider routing to neo4j logging, conflicts with log4j-slf4j2-impl -->
                 <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-nop</artifactId>
+                    <groupId>org.neo4j</groupId>
+                    <artifactId>neo4j-slf4j-provider</artifactId>
                 </exclusion>
+                <!-- sends usage data to udc.neo4j.com, see also GraphServiceImpl -->
                 <exclusion>
-                    <groupId>javax.xml.bind</groupId>
-                    <artifactId>jaxb-api</artifactId>
+                    <groupId>org.neo4j</groupId>
+                    <artifactId>neo4j-udc</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -294,17 +309,6 @@
 			<artifactId>bcpkix-jdk15on</artifactId>
 			<version>1.70</version>
 		</dependency>
-		<dependency>
-            <groupId>de.ruedigermoeller</groupId>
-            <artifactId>fst</artifactId>
-            <version>2.57</version>
-            <exclusions>
-        		<exclusion>
-          			<groupId>com.fasterxml.jackson.core</groupId>
-    				<artifactId>jackson-core</artifactId>
-        		</exclusion>
-        	</exclusions>
-        </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
@@ -330,7 +334,7 @@
         <dependency>
             <groupId>org.openjdk.nashorn</groupId>
             <artifactId>nashorn-core</artifactId>
-            <version>15.4</version>
+            <version>15.7</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>

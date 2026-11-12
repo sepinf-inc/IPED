@@ -673,7 +673,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 }
 
                 long ord, prevOrd = -1;
-                while (adv && (ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                for (int ordIdx = 0, ordCnt = adv ? timeStampValues.docValueCount() : 0; ordIdx < ordCnt; ordIdx++) {
+                    ord = timeStampValues.nextOrd();
                     if (prevOrd != ord) {
                         Date d = domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
                         if (min == null || d.before(min)) {

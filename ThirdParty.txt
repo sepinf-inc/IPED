@@ -1,10 +1,10 @@
 The following libraries or softwares are used and distributed by IPED, but they have their own distribution licenses (in licenses folder), detailed below:
 
-Apache Lucene 4.9.0
+Apache Lucene 10.5.1
 - Site: https://lucene.apache.org/core/
 - License: Apache License, Version 2.0
 
-Apache Tika 1.15
+Apache Tika 2.4.0
 - Site: https://tika.apache.org/
 - License: Apache License, Version 2.0
 
@@ -90,6 +90,14 @@ Rifiuti2
 - Site: https://github.com/abelcheung/rifiuti2
 - License: BSD 3 clause
 
+ANTLR 4 Runtime
+- Site: https://www.antlr.org/
+- License: BSD 3 clause
+
+Launch4j (launcher of iped.exe and IPED-SearchApp.exe)
+- Site: https://launch4j.sourceforge.net/
+- License: MIT
+
 --------------------------------------------
 
 Eclipse SWT
@@ -99,6 +107,20 @@ Eclipse SWT
 The Sleuthkit
 - Site: https://www.sleuthkit.org/
 - License: IBM Public License, Common Public License
+
+Eclipse Jersey, Grizzly and HK2
+- Site: https://eclipse-ee4j.github.io/jersey/
+- License: Eclipse Public License 2.0
+
+--------------------------------------------
+
+Neo4j Community Edition
+- Site: https://github.com/neo4j/neo4j
+- License: GNU GPL v3
+
+BellSoft Liberica JRE (bundled Java runtime)
+- Site: https://bell-sw.com/libericajdk/
+- License: GNU GPL v2 with Classpath Exception
 
 --------------------------------------------
 

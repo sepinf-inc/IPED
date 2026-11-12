@@ -117,7 +117,7 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
                 }
 
                 int luceneId = app.getIPEDSource().getLuceneId(item);
-                doc = app.getIPEDSource().getSearcher().doc(luceneId);
+                doc = app.getIPEDSource().storedFields().document(luceneId);
 
                 String lat;
                 String longit;

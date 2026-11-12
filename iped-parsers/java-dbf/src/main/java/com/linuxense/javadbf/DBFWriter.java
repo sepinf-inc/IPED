@@ -12,6 +12,7 @@
  */
 package com.linuxense.javadbf;
 
+import java.nio.charset.StandardCharsets;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -291,14 +292,14 @@ public class DBFWriter extends DBFBase {
 
                         GregorianCalendar calendar = new GregorianCalendar();
                         calendar.setTime((Date) objectArray[j]);
-                        dataOutput.write(String.valueOf(calendar.get(Calendar.YEAR)).getBytes());
+                        dataOutput.write(String.valueOf(calendar.get(Calendar.YEAR)).getBytes(StandardCharsets.US_ASCII));
                         dataOutput.write(Utils.textPadding(String.valueOf(calendar.get(Calendar.MONTH) + 1),
                                 this.characterSetName, 2, Utils.ALIGN_RIGHT, (byte) '0'));
                         dataOutput.write(Utils.textPadding(String.valueOf(calendar.get(Calendar.DAY_OF_MONTH)),
                                 this.characterSetName, 2, Utils.ALIGN_RIGHT, (byte) '0'));
                     } else {
 
-                        dataOutput.write("        ".getBytes());
+                        dataOutput.write("        ".getBytes(StandardCharsets.US_ASCII));
                     }
 
                     break;

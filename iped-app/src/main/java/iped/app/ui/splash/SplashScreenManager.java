@@ -23,12 +23,12 @@ public class SplashScreenManager {
      * may be adjusted in the future, if a larger number of classes are loaded
      * during startup process.
      */
-    private static int maxProgress = 2300;
+    private static int maxProgress = 10500;
 
     /**
      * Expected initial progress (roughly).
      */
-    private static int minProgress = 0;
+    private static int minProgress = 3500;
 
     public void start() {
         SplashScreen sc = null;
@@ -134,11 +134,7 @@ public class SplashScreenManager {
                         }
 
                         // Estimate the progress based on the number of loaded classes
-                        int progress = 0;
-
-                        // This causes illegal reflective access message on Console
-                        // progress += StartUpControl.getCurrentProcessSize();
-                        progress += server.getProgress();
+                        int progress = StartUpControl.getCurrentProcessSize() + server.getProgress();
 
                         // Also increment a bit as time goes by
                         progress += (System.currentTimeMillis() - startTime) / 100;
@@ -172,7 +168,9 @@ public class SplashScreenManager {
                         if (userHome != null && userHome.exists() && userHome.isDirectory()) {
 
                             // Check if the is a JRE in user home
-                            File userJrePath = new File(userHome, AppMain.HOME_JRE_FOLDER);
+                            // the running JRE is the bundled one or its copy in user home
+                            File userJrePath = new File(userHome,
+                                    AppMain.getHomeJreFolder(System.getProperty("java.version")));
                             if (userJrePath.exists()) {
 
                                 // Warn the user about possibly corrupted JRE

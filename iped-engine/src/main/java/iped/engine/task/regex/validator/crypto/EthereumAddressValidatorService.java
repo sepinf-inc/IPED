@@ -1,5 +1,6 @@
 package iped.engine.task.regex.validator.crypto;
 
+import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.security.MessageDigest;
 import java.security.Security;
@@ -47,7 +48,7 @@ public class EthereumAddressValidatorService extends BasicAbstractRegexValidator
 
         synchronized (digest) {
             digest.reset();
-            digest.update(addr.toLowerCase().getBytes());
+            digest.update(addr.toLowerCase().getBytes(StandardCharsets.US_ASCII));
             keccak = digest.digest();
         }
 

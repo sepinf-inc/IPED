@@ -1,5 +1,6 @@
 package iped.parsers.registry.keys;
 
+import iped.utils.CharsetUtil;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -164,7 +165,7 @@ public class AresKeyParser extends HtmlKeyParser {
             buffer[i] += b;
         }
 
-        return new String(buffer);
+        return new String(buffer, CharsetUtil.NATIVE);
     }
 
 }

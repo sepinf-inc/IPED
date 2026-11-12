@@ -1,5 +1,6 @@
 package iped.app.config;
 
+import iped.utils.CharsetUtil;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -72,7 +73,7 @@ public class LogConfiguration {
             out = System.out;
             err = System.err;
             FileOutputStream fos = new FileOutputStream(logFile, true);
-            log = new PrintStream(new FilterOutputStream(fos, out, "IPED")); //$NON-NLS-1$
+            log = new PrintStream(new FilterOutputStream(fos, out, "IPED"), false, CharsetUtil.NATIVE); //$NON-NLS-1$
             System.setOut(log);
             System.setErr(log);
 

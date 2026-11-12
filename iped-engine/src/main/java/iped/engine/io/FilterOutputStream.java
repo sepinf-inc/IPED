@@ -1,5 +1,6 @@
 package iped.engine.io;
 
+import iped.utils.CharsetUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -16,7 +17,7 @@ public class FilterOutputStream extends OutputStream {
 
     @Override
     public void write(byte[] buf, int off, int len) throws IOException {
-        String msg = new String(buf, off, len);
+        String msg = new String(buf, off, len, CharsetUtil.NATIVE);
         if (msg.startsWith(redirectPrefix)) {
             redirectStream.write(buf, off, len);
         } else {

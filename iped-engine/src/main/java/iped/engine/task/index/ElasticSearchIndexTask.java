@@ -13,28 +13,27 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.opensearch.action.ActionListener;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.util.Timeout;
 import org.opensearch.action.DocWriteRequest.OpType;
 import org.opensearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.opensearch.action.bulk.BulkItemResponse;
 import org.opensearch.action.bulk.BulkRequest;
 import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.index.IndexRequest;
-import org.opensearch.action.support.master.AcknowledgedResponse;
+import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
 import org.opensearch.client.Cancellable;
 import org.opensearch.client.RequestOptions;
-import org.opensearch.client.Requests;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
-import org.opensearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.client.indices.CreateIndexRequest;
 import org.opensearch.client.indices.CreateIndexResponse;
@@ -43,8 +42,10 @@ import org.opensearch.client.indices.PutMappingRequest;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.common.settings.Settings.Builder;
 import org.opensearch.common.unit.TimeValue;
-import org.opensearch.common.xcontent.XContentBuilder;
 import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.core.action.ActionListener;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.transport.client.Requests;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,29 +152,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
 
         RestClientBuilder clientBuilder = RestClient
-                .builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort(), elasticConfig.getProtocol()))
-                .setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
-                    @Override
-                    public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
-                        return requestConfigBuilder.setConnectTimeout(elasticConfig.getConnect_timeout())
-                                .setSocketTimeout(elasticConfig.getTimeout_millis());
-                    }
-                });
+                .builder(new HttpHost(elasticConfig.getProtocol(), elasticConfig.getHost(), elasticConfig.getPort()))
+                .setRequestConfigCallback(this::customizeRequestConfig);
 
-        if (user != null && password != null) {
-            CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(user, password));
-            clientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
-                @Override
-                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-                    var custombuilder=httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                    // disable validation if configured
-                    if (!elasticConfig.getValidateSSL()) {
-                        custombuilder.setSSLContext(SSLFix.getUnsecureSSLContext()).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-                    }
-                    return custombuilder;
-                }
-            });
+        boolean hasCredentials = user != null && password != null;
+        if (hasCredentials || !elasticConfig.getValidateSSL()) {
+            clientBuilder.setHttpClientConfigCallback(httpClientBuilder -> customizeHttpClient(httpClientBuilder, hasCredentials));
         }
 
         client = new RestHighLevelClient(clientBuilder);
@@ -215,6 +199,35 @@ public class ElasticSearchIndexTask extends AbstractTask {
             } else
                 cmdLineFields.put(pair[0], pair[1]);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
+        // RestClientBuilder sets its own default here, which takes precedence over
+        // the connection manager ConnectionConfig, so it must be overridden here too
+        return requestConfigBuilder.setConnectTimeout(Timeout.ofMilliseconds(elasticConfig.getConnect_timeout()))
+                .setResponseTimeout(Timeout.ofMilliseconds(elasticConfig.getTimeout_millis()));
+    }
+
+    private HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder, boolean hasCredentials) {
+        if (hasCredentials) {
+            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(new AuthScope(null, -1),
+                    new UsernamePasswordCredentials(user, password.toCharArray()));
+            httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+        }
+        // disable validation if configured
+        if (!elasticConfig.getValidateSSL()) {
+            httpClientBuilder.setConnectionManager(PoolingAsyncClientConnectionManagerBuilder.create()
+                    .setMaxConnPerRoute(RestClientBuilder.DEFAULT_MAX_CONN_PER_ROUTE)
+                    .setMaxConnTotal(RestClientBuilder.DEFAULT_MAX_CONN_TOTAL)
+                    .setTlsStrategy(ClientTlsStrategyBuilder.create()
+                            .setSslContext(SSLFix.getUnsecureSSLContext())
+                            .setHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                            .buildAsync())
+                    .build());
+        }
+        return httpClientBuilder;
     }
 
     private boolean indexExists(String indexName) throws IOException {

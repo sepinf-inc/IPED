@@ -1,5 +1,6 @@
 package iped.parsers.evtx.template;
 
+import iped.utils.CharsetUtil;
 import java.math.BigInteger;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -92,7 +93,7 @@ public class TemplateData {
                     case 0x02:
                         strb = new byte[vd.size];
                         bb.get(strb);
-                        tds.add(new String(strb));
+                        tds.add(new String(strb, CharsetUtil.NATIVE));
                         break;
                     case 0x03:
                         short v = bb.get();

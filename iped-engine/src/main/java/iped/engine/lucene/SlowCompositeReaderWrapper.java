@@ -22,13 +22,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.index.BinaryDocValues;
+import org.apache.lucene.index.ByteVectorValues;
 import org.apache.lucene.index.CompositeReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocValues;
+import org.apache.lucene.index.DocValuesSkipper;
 import org.apache.lucene.index.DocValuesType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
-import org.apache.lucene.index.Fields;
+import org.apache.lucene.index.FloatVectorValues;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafMetaData;
 import org.apache.lucene.index.LeafReader;
@@ -44,13 +46,11 @@ import org.apache.lucene.index.PointValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
-import org.apache.lucene.index.StoredFieldVisitor;
+import org.apache.lucene.index.StoredFields;
+import org.apache.lucene.index.TermVectors;
 import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.VectorValues;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.TotalHits;
-import org.apache.lucene.search.TotalHits.Relation;
+import org.apache.lucene.search.AcceptDocs;
+import org.apache.lucene.search.KnnCollector;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.FixedBitSet;
 import org.apache.lucene.util.Version;
@@ -105,19 +105,21 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
     in = reader;
     in.registerParentReader(this);
     if (reader.leaves().isEmpty()) {
-      metaData = new LeafMetaData(Version.LATEST.major, Version.LATEST, null);
+      metaData = new LeafMetaData(Version.LATEST.major, Version.LATEST, null, false);
     } else {
       Version minVersion = Version.LATEST;
+      boolean hasBlocks = false;
       for (LeafReaderContext leafReaderContext : reader.leaves()) {
-        Version leafVersion = leafReaderContext.reader().getMetaData().getMinVersion();
+        LeafMetaData leafMetaData = leafReaderContext.reader().getMetaData();
+        hasBlocks |= leafMetaData.hasBlocks();
+        Version leafVersion = leafMetaData.minVersion();
         if (leafVersion == null) {
           minVersion = null;
-          break;
-        } else if (minVersion.onOrAfter(leafVersion)) {
+        } else if (minVersion != null && minVersion.onOrAfter(leafVersion)) {
           minVersion = leafVersion;
         }
       }
-      metaData = new LeafMetaData(reader.leaves().get(0).reader().getMetaData().getCreatedVersionMajor(), minVersion, null);
+      metaData = new LeafMetaData(reader.leaves().get(0).reader().getMetaData().createdVersionMajor(), minVersion, null, hasBlocks);
     }
     try {
         fieldInfos = FieldInfos.getMergedFieldInfos(in);
@@ -281,9 +283,16 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
   }
   
   @Override
-  public Fields getTermVectors(int docID) throws IOException {
+  public DocValuesSkipper getDocValuesSkipper(String field) throws IOException {
     ensureOpen();
-    return in.getTermVectors(docID);
+    // skip indexes are per segment and can't be merged, null means "no skipper"
+    return null;
+  }
+
+  @Override
+  public TermVectors termVectors() throws IOException {
+    ensureOpen();
+    return in.termVectors();
   }
 
   @Override
@@ -299,9 +308,9 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
   }
 
   @Override
-  public void document(int docID, StoredFieldVisitor visitor) throws IOException {
+  public StoredFields storedFields() throws IOException {
     ensureOpen();
-    in.document(docID, visitor);
+    return in.storedFields();
   }
 
   @Override
@@ -340,42 +349,70 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
     return metaData;
   }
 
-    @Override
-    public VectorValues getVectorValues(String field) throws IOException {
-        // TODO implement this method properly when we start to index feature vectors
-        // using Lucene
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
+  @Override
+  public FloatVectorValues getFloatVectorValues(String field) throws IOException {
+    // vector values are per segment, IPED searches them through searchNearestVectors()
+    throw new UnsupportedOperationException("Not implemented yet.");
+  }
 
-    @Override
-    public TopDocs searchNearestVectors(String field, float[] target, int k, Bits acceptDocs, int visitedLimit) throws IOException {
-        ensureOpen();
-        int size = in.leaves().size();
-        TopDocs[] docsPerLeaf = new TopDocs[size];
-        for (int i = 0; i < size; i++) {
-            LeafReaderContext context = in.leaves().get(i);
-            final LeafReader reader = context.reader();
-            final FieldInfo fieldInfo = reader.getFieldInfos().fieldInfo(field);
-            if (fieldInfo == null || !fieldInfo.hasVectorValues()) {
-                docsPerLeaf[i] = new TopDocs(new TotalHits(0, Relation.EQUAL_TO), new ScoreDoc[0]);
-                continue;
-            }
+  @Override
+  public ByteVectorValues getByteVectorValues(String field) throws IOException {
+    throw new UnsupportedOperationException("Not implemented yet.");
+  }
 
-            FixedBitSet leafBits = null;
-            if (acceptDocs != null) {
-                leafBits = new FixedBitSet(reader.maxDoc());
-                for (int j = 0; j < leafBits.length(); j++) {
-                    if (acceptDocs.get(context.docBase + j)) {
-                        leafBits.set(j);
-                    }
-                }
-            }
+  @Override
+  public void searchNearestVectors(String field, float[] target, KnnCollector knnCollector, AcceptDocs acceptDocs)
+      throws IOException {
+    searchNearestVectors(field, knnCollector, acceptDocs, (r, c, a) -> r.searchNearestVectors(field, target, c, a));
+  }
 
-            docsPerLeaf[i] = reader.searchNearestVectors(field, target, k, leafBits, visitedLimit);
-            for (ScoreDoc doc : docsPerLeaf[i].scoreDocs) {
-                doc.doc += context.docBase;
-            }
+  @Override
+  public void searchNearestVectors(String field, byte[] target, KnnCollector knnCollector, AcceptDocs acceptDocs)
+      throws IOException {
+    searchNearestVectors(field, knnCollector, acceptDocs, (r, c, a) -> r.searchNearestVectors(field, target, c, a));
+  }
+
+  @FunctionalInterface
+  private interface LeafVectorSearch {
+    void search(LeafReader reader, KnnCollector collector, AcceptDocs acceptDocs) throws IOException;
+  }
+
+  /**
+   * Searches each leaf, feeding the caller's collector with doc ids rebased to
+   * this reader, so k and the visit limit stay global.
+   */
+  private void searchNearestVectors(String field, KnnCollector knnCollector, AcceptDocs acceptDocs,
+      LeafVectorSearch leafSearch) throws IOException {
+    ensureOpen();
+    Bits acceptBits = acceptDocs == null ? null : acceptDocs.bits();
+    for (LeafReaderContext context : in.leaves()) {
+      if (knnCollector.earlyTerminated()) {
+        break;
+      }
+      final LeafReader reader = context.reader();
+      final FieldInfo fieldInfo = reader.getFieldInfos().fieldInfo(field);
+      if (fieldInfo == null || fieldInfo.getVectorDimension() == 0) {
+        continue;
+      }
+      final int docBase = context.docBase;
+      final int leafMaxDoc = reader.maxDoc();
+      Bits leafBits = reader.getLiveDocs();
+      if (acceptBits != null) {
+        FixedBitSet bits = new FixedBitSet(leafMaxDoc);
+        for (int j = 0; j < leafMaxDoc; j++) {
+          if (acceptBits.get(docBase + j)) {
+            bits.set(j);
+          }
         }
-        return TopDocs.merge(k, docsPerLeaf);
+        leafBits = bits;
+      }
+      KnnCollector rebased = new KnnCollector.Decorator(knnCollector) {
+        @Override
+        public boolean collect(int docId, float similarity) {
+          return collector.collect(docBase + docId, similarity);
+        }
+      };
+      leafSearch.search(reader, rebased, AcceptDocs.fromLiveDocs(leafBits, leafMaxDoc));
     }
+  }
 }

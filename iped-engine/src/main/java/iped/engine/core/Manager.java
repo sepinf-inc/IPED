@@ -18,11 +18,11 @@
  */
 package iped.engine.core;
 
+import iped.utils.CharsetUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -760,7 +760,7 @@ public class Manager {
             UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("Manager.FilteringKeywords")); //$NON-NLS-1$
             ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", //$NON-NLS-1$
-                    Charset.defaultCharset().name());
+                    CharsetUtil.NATIVE.name());
 
             if (palavras.size() != 0) {
                 IPEDSource ipedCase = new IPEDSource(output.getParentFile());
@@ -812,7 +812,7 @@ public class Manager {
 
             boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
             for (int docID : result.getLuceneIds()) {
-                String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
+                String parentIds = ipedCase.storedFields().document(docID).get(IndexItem.PARENTIDs);
                 if (!parentIds.trim().isEmpty()) {
                     for (String parentId : parentIds.trim().split(" ")) { //$NON-NLS-1$
                         doNotDelete[Integer.parseInt(parentId)] = true;

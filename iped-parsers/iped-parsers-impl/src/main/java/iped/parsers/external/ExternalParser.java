@@ -286,11 +286,9 @@ public class ExternalParser extends AbstractParser {
         // Execute
         Process process = null;
         try {
-            if (cmd.length == 1) {
-                process = Runtime.getRuntime().exec(cmd[0], null, workDir);
-            } else {
-                process = Runtime.getRuntime().exec(cmd, null, workDir);
-            }
+            // cmd was already split above; splitting it again (as the former exec(String)
+            // call did for single element commands) broke paths with spaces
+            process = Runtime.getRuntime().exec(cmd, null, workDir);
         } catch (Exception e) {
             e.printStackTrace();
         }

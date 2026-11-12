@@ -1,5 +1,7 @@
 package iped.engine.task.transcript;
 
+import java.nio.charset.StandardCharsets;
+import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +37,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static final String PING = "ping";
 
     protected static final int MAX_TRANSCRIPTIONS = 100000;
-    protected static final byte[] NEW_LINE = "\n".getBytes();
+    protected static final byte[] NEW_LINE = "\n".getBytes(StandardCharsets.US_ASCII);
 
     protected static volatile Integer numProcesses;
 
@@ -150,7 +152,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         logInputStream(process.getErrorStream());
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), CharsetUtil.NATIVE));
 
         String line = reader.readLine();
 
@@ -197,7 +199,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 int read = 0;
                 try {
                     while ((read = is.read(buf)) != -1) {
-                        logger.log(logLevel, new String(buf, 0, read).trim());
+                        logger.log(logLevel, new String(buf, 0, read, CharsetUtil.NATIVE).trim());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

@@ -1,5 +1,6 @@
 package iped.app.ui.themes;
 
+import java.nio.charset.StandardCharsets;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -152,7 +153,7 @@ public class ThemeManager {
         File file = getSelectedThemeFile();
         if (file != null && file.getParentFile() != null && !file.getParentFile().exists())
             file.getParentFile().mkdirs();
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
             out.write(currentTheme.getClass().getName());
         } catch (IOException e) {
             e.printStackTrace();

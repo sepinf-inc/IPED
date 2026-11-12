@@ -1,5 +1,6 @@
 package iped.engine.task;
 
+import java.nio.charset.StandardCharsets;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -483,8 +484,8 @@ public class DocThumbTask extends ThumbTask {
             File cfgIn = new File(loOutDir, "user/registrymodifications.xcu");
             File cfgOut = new File(loOutDir, "user/registrymodifications.tmp");
             if (cfgIn.exists()) {
-                try (BufferedReader in = new BufferedReader(new FileReader(cfgIn));
-                        BufferedWriter out = new BufferedWriter(new FileWriter(cfgOut))) {
+                try (BufferedReader in = new BufferedReader(new FileReader(cfgIn, StandardCharsets.UTF_8));
+                        BufferedWriter out = new BufferedWriter(new FileWriter(cfgOut, StandardCharsets.UTF_8))) {
                     String line = null;
                     int cnt = 0;
                     while ((line = in.readLine()) != null) {

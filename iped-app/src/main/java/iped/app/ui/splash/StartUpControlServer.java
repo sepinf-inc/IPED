@@ -1,5 +1,6 @@
 package iped.app.ui.splash;
 
+import java.nio.charset.StandardCharsets;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -42,7 +43,7 @@ public class StartUpControlServer {
                 }
 
                 // Read file
-                try (BufferedReader in = new BufferedReader(new FileReader(startUpFile))) {
+                try (BufferedReader in = new BufferedReader(new FileReader(startUpFile, StandardCharsets.UTF_8))) {
                     while (true) {
                         String line = in.readLine();
                         if (line != null) {

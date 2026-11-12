@@ -1,5 +1,6 @@
 package iped.viewers;
 
+import java.nio.charset.StandardCharsets;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -298,7 +299,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 @Override
                 void fireReadError() {
                     try {
-                        this.setData(new SeekableFileInputStream(new SeekableInMemoryByteChannel("READ ERROR!".getBytes())));
+                        this.setData(new SeekableFileInputStream(new SeekableInMemoryByteChannel("READ ERROR!".getBytes(StandardCharsets.US_ASCII))));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

@@ -1,12 +1,13 @@
 package iped.engine.webapi;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -148,10 +149,10 @@ public class Sources {
         if ((new File(urlToAskSources)).exists()) {
             in = new FileInputStream(urlToAskSources);
         } else {
-            in = (new URL(urlToAskSources)).openConnection().getInputStream();
+            in = URI.create(urlToAskSources).toURL().openConnection().getInputStream();
         }
         try {
-            result = (JSONArray) JSONValue.parseWithException(new InputStreamReader(in));
+            result = (JSONArray) JSONValue.parseWithException(new InputStreamReader(in, StandardCharsets.UTF_8));
         } finally {
             in.close();
         }
