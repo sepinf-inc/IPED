@@ -587,7 +587,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         topPanel.add(exportToZip);
         exportToZip.setVisible(false);
         topPanel.add(checkBox);
-        topPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        topPanel.setBorder(BorderFactory.createEmptyBorder(2, 4, 0, 6));
 
         resultsModel = new ResultTableModel();
         resultsTable = new JTable(resultsModel);
