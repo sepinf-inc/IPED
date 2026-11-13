@@ -268,6 +268,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         } else if ("update".equals(evt.getPropertyName())) {
             update();
 
+        } else if ("output".equals(evt.getPropertyName())) {
+            String outDir = (String) evt.getNewValue();
+            setTitle(Version.APP_NAME + " - [" + outDir + "]");
+
         } else if ("decodingDir".equals(evt.getPropertyName())) { //$NON-NLS-1$
             decodingDir = (String) evt.getNewValue();
 
