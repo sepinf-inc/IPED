@@ -26,6 +26,7 @@ import iped.parsers.browsers.firefox.FirefoxSqliteParser;
 import iped.parsers.browsers.safari.SafariSqliteParser;
 import iped.parsers.eventtranscript.EventTranscriptParser;
 import iped.parsers.gdrive.GDriveMainParser;
+import iped.parsers.signal.SignalParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.threema.ThreemaParser;
@@ -265,6 +266,13 @@ public class SQLiteContainerDetector implements Detector {
             }
         }
         
+        // Signal for Android, once decrypted: signal.db itself is SQLCipher-encrypted and
+        // is matched by file name. msl_payload (message send log) is Signal's own.
+        if (tableNames.contains("recipient") && tableNames.contains("thread") && tableNames.contains("message")
+                && tableNames.contains("msl_payload")) {
+            return SignalParser.SIGNAL_DB;
+        }
+
         if (tableNames.contains("ZCONVERSATION") && tableNames.contains("ZMESSAGE") && tableNames.contains("ZCONTACT") && tableNames.contains("ZFILEDATA") && tableNames.contains("ZIMAGEDATA")) {
             return ThreemaParser.CHAT_STORAGE;
         }
