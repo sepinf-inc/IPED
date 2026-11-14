@@ -18,6 +18,34 @@ Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthk
 
 If you are new to the tool, please refer to the [Beginner's Start Guide](https://github.com/lfcnassif/IPED/wiki/Beginner's-Start-Guide).
 
+## Configuración y Ejecución Rápida en Windows (SHA256.US)
+
+Este repositorio incluye asistentes automatizados para escanear el entorno, instalar dependencias faltantes, configurar y ejecutar IPED en cualquier computadora con Windows:
+
+### 1. Asistente de Escaneo, Instalación y Configuración (`configurar_iped.bat`)
+Al ejecutar **`configurar_iped.bat`**, el asistente realizará automáticamente:
+1. **Escaneo de Sistema y Requisitos**: Verifica que el sistema operativo sea de 64 bits, detecta la presencia de **Microsoft Visual C++ 2015-2022 (x64)** y **Java OpenJDK de 64 bits**.
+2. **Instalación Desatendida**: Si falta algún componente, solicita permisos de administrador e instala automáticamente las dependencias oficiales requeridas sin pasos manuales complejos.
+3. **Diagnóstico de Hardware**: Detecta la memoria RAM total y los núcleos lógicos del procesador para calcular los parámetros óptimos de rendimiento.
+4. **Cuestionario Interactivo**: Te guiará paso a paso para configurar:
+   - **Idioma / Locale**: Español (`es-AR`), Inglés (`en`), Portugués (`pt-BR`), etc.
+   - **Perfil Forense**: Forense completo (`forensic`), modo rápido (`fastmode`), triaje (`triage`), protección infantil (`pedo`), etc.
+   - **Memoria RAM Java (`-Xmx`)**: Asignación recomendada (75% de la RAM física), moderada o personalizada.
+   - **Hilos de Procesamiento (`numThreads`)**: Optimizado para la cantidad de núcleos disponibles.
+   - **Optimización SSD**: Activa `indexTempOnSSD` y `outputOnSSD` para acelerar la indexación hasta 2x en discos sólidos.
+5. **Ahorro de Recursos (OCR Desactivado por Defecto)**: Activa por defecto la opción que **desactiva el OCR** (`enableOCR = false`), permitiendo ahorrar hasta un 70% de consumo de CPU/RAM y acelerar hasta 5 veces el procesamiento. El usuario puede activarlo si su caso pericial específico lo requiere.
+6. **Generación Automática**: Guarda los ajustes en `LocalConfig.txt`, ajusta `IPEDConfig.txt` y compila el lanzador optimizado `ejecutar_iped.bat`.
+
+### 2. Procesamiento de Evidencias (`ejecutar_iped.bat`)
+Para procesar evidencias digitales:
+* **Modo Interactivo (Doble Clic)**: Ejecuta `ejecutar_iped.bat`, arrastra la imagen o evidencia forense (DD, RAW, E01, Ex01, VHD, VMDK, UFDR, AD1, etc.) e indica la carpeta de destino del caso.
+* **Modo Línea de Comandos**:
+  ```cmd
+  ejecutar_iped.bat -d "D:\evidencias\disco.E01" -o "E:\Casos\Caso_001"
+  ```
+
+---
+
 ## Building
 
 To build from source, you need git, maven and Java JDK 11 + JavaFX (e.g. Liberica OpenJDK 11 Full JDK) installed. Set JAVA_HOME environment var to your java 11 installation folder, then run:
