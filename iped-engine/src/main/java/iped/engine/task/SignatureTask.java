@@ -37,7 +37,7 @@ import iped.utils.IOUtil;
 import iped.utils.SimpleInputStreamFactory;
 
 /**
- * Análise de assinatura utilizando biblioteca Apache Tika.
+ * Signature analysis using the Apache Tika library.
  */
 public class SignatureTask extends AbstractTask {
 
@@ -101,8 +101,8 @@ public class SignatureTask extends AbstractTask {
                                 Thread.currentThread().getName(), evidence.getPath(), evidence.getLength(),
                                 e.toString());
                     } finally {
-                        // Fecha handle p/ renomear subitem p/ hash posteriormente. Demais itens são
-                        // fechados via evidence.dispose()
+                        // Close handle to rename subitem to hash later. Other items are
+                        // closed via evidence.dispose()
                         if (evidence.isSubItem()) {
                             IOUtil.closeQuietly(tis);
                         }
@@ -117,7 +117,7 @@ public class SignatureTask extends AbstractTask {
 
                 String ext = evidence.getExt() != null ? evidence.getExt().toLowerCase() : "";
 
-                // Caso seja item office07 cifrado e tenha extensão específica, refina o tipo
+                // If it is an encrypted Office 2007 item and has a specific extension, refine the type
                 if (type != null && type.toString().equals("application/x-tika-ooxml-protected") //$NON-NLS-1$
                         && (ext.equals("docx") || ext.equals("xlsx") || ext.equals("pptx"))) { //$NON-NLS-1$
                     type = MediaType.application("x-tika-ooxml-protected-" + ext); //$NON-NLS-1$
@@ -156,7 +156,6 @@ public class SignatureTask extends AbstractTask {
                 return item.getSeekableInputStream();
             }
         });
-
     }
 
     private boolean hasVHDFooter(IItem item) {
@@ -202,8 +201,6 @@ public class SignatureTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-
     }
 
     private static Set<MediaType> loadMagicOnlyTypes() {
