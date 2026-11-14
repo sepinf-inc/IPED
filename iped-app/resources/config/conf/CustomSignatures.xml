@@ -1703,4 +1703,7 @@
     	<sub-class-of type="application/x-lnk"/>
     </mime-type>
 
+    <!-- Enable "magic-only" to force signature detection, ignoring pre-defined extension based detection -->
+    <mime-type type="audio/speex" magic-only="true"/>
+
 </mime-info>
