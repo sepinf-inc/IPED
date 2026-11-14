@@ -71,6 +71,19 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <!-- Repositories used only by a few iped-engine dependencies (Azure Speech SDK and Vosk).
+             Keep them last: Maven tries repositories in declaration order, and when declared in
+             iped-engine/pom.xml they were checked (404) before central for every dependency. -->
+        <repository>
+            <id>maven-cognitiveservices-speech</id>
+            <name>Microsoft Cognitive Services Speech Maven Repository</name>
+            <url>https://csspeechstorage.blob.core.windows.net/maven/</url>
+        </repository>
+        <repository>
+            <id>maven-vosk</id>
+            <name>Alphaceph Vosk Java Maven Repo</name>
+            <url>https://alphacephei.com/maven/</url>
+        </repository>
     </repositories>
 
     <dependencies>
