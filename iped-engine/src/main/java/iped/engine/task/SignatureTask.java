@@ -130,8 +130,8 @@ public class SignatureTask extends AbstractTask {
                     int i = 0;
                     while (MediaType.OCTET_STREAM.equals(type) && i < HFS_ATTR_SUFFIX.length) {
                         String suffix = HFS_ATTR_SUFFIX[i++];
-                        if (evidence.getName().endsWith(suffix)) {
-                            name = name.substring(0, evidence.getName().lastIndexOf(suffix));
+                        if (name.endsWith(suffix)) {
+                            name = name.substring(0, name.lastIndexOf(suffix));
                             metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, name);
                             type = getDetector().detect(null, metadata).getBaseType();
                         }
