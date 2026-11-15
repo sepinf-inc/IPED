@@ -66,9 +66,12 @@ public class ImageThumbTask extends ThumbTask {
     private static final AtomicBoolean extConvPropInit = new AtomicBoolean(false);
 
     private int compression;
-    private int thumbSize;
     private int maxViewImageSize;
     private Set<String> mimesToCreateView;
+
+    public int getThumbSize() {
+        return imgThumbConfig.getThumbSize();
+    }
 
     public ImageThumbTaskConfig getImageThumbConfig() {
         return imgThumbConfig;
@@ -108,7 +111,6 @@ public class ImageThumbTask extends ThumbTask {
         }
 
         externalImageConverter = new ExternalImageConverter(executor);
-        thumbSize = imgThumbConfig.getThumbSize();
         compression = imgThumbConfig.getCompression();
         maxViewImageSize = imgThumbConfig.getMaxViewImageSize();
         mimesToCreateView = imgThumbConfig.getMimesToCreateView();
@@ -116,7 +118,7 @@ public class ImageThumbTask extends ThumbTask {
         synchronized (logInit) {
             if (isEnabled() && !logInit.get()) {
                 logInit.set(true);
-                logger.info("Thumb Size: " + thumbSize); //$NON-NLS-1$
+                logger.info("Thumb Size: " + getThumbSize()); //$NON-NLS-1$
                 logger.info("Extract Thumb: " + imgThumbConfig.isExtractThumb()); //$NON-NLS-1$
             }
         }
@@ -315,7 +317,7 @@ public class ImageThumbTask extends ThumbTask {
             if (img == null) {
                 long t = System.currentTimeMillis();
                 BooleanWrapper renderException = new BooleanWrapper();
-                img = ImageUtil.getSubSampledImage(evidence, thumbSize * samplingRatio, renderException,
+                img = ImageUtil.getSubSampledImage(evidence, getThumbSize() * samplingRatio, renderException,
                         MediaTypes.getMimeTypeString(evidence));
                 if (img != null && renderException.value) {
                     evidence.setExtraAttribute("thumbException", "true");
@@ -357,7 +359,7 @@ public class ImageThumbTask extends ThumbTask {
                 if (img == null) {
                     // No view was created through external conversion
                     try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                        img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
+                        img = externalImageConverter.getImage(stream, getThumbSize(), false, evidence.getLength(), true);
                     } catch (TimeoutException e) {
                         stats.incTimeouts();
                         evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
@@ -373,9 +375,9 @@ public class ImageThumbTask extends ThumbTask {
             }
 
             if (img != null) {
-                if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
+                if (img.getWidth() > getThumbSize() || img.getHeight() > getThumbSize()) {
                     long t = System.currentTimeMillis();
-                    img = ImageUtil.resizeImage(img, thumbSize, thumbSize);
+                    img = ImageUtil.resizeImage(img, getThumbSize(), getThumbSize());
                     performanceStats[12]++;
                     performanceStats[13] += System.currentTimeMillis() - t;
                 }

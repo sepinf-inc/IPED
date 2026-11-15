@@ -279,8 +279,8 @@ public class UfedEmailParser extends AbstractParser {
                         byte[] attachData = null;
                         String contentType = null;
                         if (a.getReferencedFile() != null) {
-                            try {
-                                attachData = IOUtils.toByteArray(a.getReferencedFile().getItem().getBufferedInputStream());
+                            try (InputStream is = a.getReferencedFile().getItem().getSeekableInputStream()) {
+                                attachData = IOUtils.toByteArray(is);
                                 contentType = StringUtils.firstNonBlank(a.getContentType(), a.getReferencedFile().getItem().getMediaType().toString());
                             } catch (IOException e) {
                                 logger.warn("Error reading attachment referenced file: " + a, e);

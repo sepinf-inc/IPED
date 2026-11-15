@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -32,10 +33,30 @@ public class LogConfiguration {
             logFile = new File(logPath);
         } else {
             logFile = iped.getLogFile();
-            if (logFile == null)
-                logFile = new File(rootPath, "log/IPED-" + df.format(new Date()) + ".log"); //$NON-NLS-1$ //$NON-NLS-2$
+            if (logFile == null) {
+                String name = "IPED-" + df.format(new Date()) + ".log";
+                logFile = new File(rootPath + "/log", name);
+                logFile.getParentFile().mkdirs();
+                if (!canCreateFile(logFile.getParentFile())) {
+                    logFile = new File(System.getProperty("java.io.tmpdir"), name);
+                }
+            }
         }
         iped.setLogFile(logFile);
+    }
+
+    private static boolean canCreateFile(File dir) {
+        try {
+            // #3028: Do not use File.createTempFile() here, before setting "java.io.tmpdir".
+            File test = new File(dir, "write-test-" + new Random().nextLong() + ".txt");
+            test.deleteOnExit();
+            if (test.createNewFile()) {
+                test.delete();
+                return true;
+            }
+        } catch (IOException e) {
+        }
+        return false;
     }
 
     public File getLogFile() {
@@ -83,6 +104,7 @@ public class LogConfiguration {
     public void configureLogParameters(boolean noLog) throws MalformedURLException {
 
         System.setProperty("logFileDate", df.format(new Date())); //$NON-NLS-1$
+        System.setProperty("iped.logUser", getSanitizedUserName()); //$NON-NLS-1$
         File configFile = null;
         if (noLog)
             configFile = new File(rootPath, "conf/Log4j2ConfigurationConsoleOnly.xml"); //$NON-NLS-1$
@@ -109,6 +131,10 @@ public class LogConfiguration {
             }
         }
 
+    }
+
+    private String getSanitizedUserName() {
+        return System.getProperty("user.name", "unknown_user").replaceAll("[\\t\\r\\n]", " "); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     public PrintStream getSystemOut() {

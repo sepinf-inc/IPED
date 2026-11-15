@@ -271,7 +271,7 @@ public class VideoThumbTask extends ThumbTask {
 
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();
-        configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig.getSize(), videoConfig.getColumns(), videoConfig.getRows(), 2));
+        configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig, 2));
 
     }
 
@@ -598,7 +598,7 @@ public class VideoThumbTask extends ThumbTask {
             newItem.setChangeDate(item.getChangeDate());
 
             // replicate 'hashDb:*' item's extra attributes to subitem
-            Map<String, Object> hashDbAttrs = ((Item) item).getExtraAttributesStartWith(HashDBLookupTask.ATTRIBUTES_PREFIX);
+            Map<String, Object> hashDbAttrs = ((Item) item).getExtraAttributesStartWith(ExtraProperties.HASHDB_PREFIX);
             for (String key : hashDbAttrs.keySet()) {
                 newItem.setExtraAttribute(key, hashDbAttrs.get(key));
             }

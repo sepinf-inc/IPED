@@ -36,6 +36,7 @@ import javax.net.ssl.SSLContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -60,11 +61,14 @@ import iped.configuration.Configurable;
 import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.config.RemoteImageClassifierConfig;
+import iped.engine.config.VideoThumbsConfig;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.util.MetadataUtil;
+import iped.properties.ExtraProperties;
 import iped.utils.ImageUtil;
 
 /**
@@ -92,6 +96,9 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private boolean skipHashDBFiles;   
     private boolean validateSSL;
     private double labelingThreshold;
+    private int thumbSize = 0;
+
+    private RequestConfig requestConfig;
 
     // Labeling classes name in priority order
     private static final List<String> classesName = new ArrayList<>();
@@ -249,6 +256,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
+        // Disable task during report generation
+        if (caseData.isIpedReport()) {
+            enabled = false;
+        }
+
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
 
         if (!isEnabled()) {
@@ -266,8 +278,13 @@ public class RemoteImageClassifierTask extends AbstractTask {
         validateSSL = config.isValidateSSL();
         labelingThreshold = config.getLabelingThreshold();
         
+        requestConfig = RequestConfig.custom().setConnectTimeout(config.getConnectTimeout())
+                .setSocketTimeout(config.getSocketTimeout())
+                .build();
+
         try (CloseableHttpClient client = getClient()) {
             HttpGet get = new HttpGet(urlVersion);
+            get.setConfig(requestConfig);
 
             client.execute(get, response -> {
                 int statusCode = response.getStatusLine().getStatusCode();
@@ -277,9 +294,12 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         JsonNode jsonResponse = objectMapper.readTree(responseStream);
                         String protocol_version = jsonResponse.get("protocol_version").asText();
                         String model_version = jsonResponse.get("model_version").asText();
+                        JsonNode thumb_size = jsonResponse.get("thumbnail_size");
+                        if (thumb_size != null) {
+                            thumbSize = thumb_size.asInt();
+                        }
                         logger.info(
-                                "RemoteImageClassifierTask: Connected to remote image classifier at '{}' - protocol_version: {} model_version: {}",
-                                urlVersion, protocol_version, model_version);
+                                "RemoteImageClassifierTask: Connected to remote image classifier at '{}' - protocol_version: {} model_version: {} thumbnail_size: {}", urlVersion, protocol_version, model_version, thumbSize);
                         if (!protocol_version.startsWith("v1")) {
                             throw new RuntimeException("Incompatible protocol version: " + protocol_version);
                         }
@@ -298,6 +318,13 @@ public class RemoteImageClassifierTask extends AbstractTask {
             // Disable task in case of failure to connect to remote image classifier 
             enabled = false;
             logger.error("Task disabled. Failed to connect to remote image classifier at '" + urlVersion + "': " + e.getMessage());
+        }
+
+        if (isEnabled() && thumbSize != 0) {
+            ImageThumbTaskConfig imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
+            VideoThumbsConfig videoConfig = configurationManager.findObject(VideoThumbsConfig.class);
+            imgThumbConfig.setThumbSize(thumbSize);
+            videoConfig.setSize(thumbSize);
         }
 
         if (zip == null) {
@@ -381,10 +408,37 @@ public class RemoteImageClassifierTask extends AbstractTask {
         }
     }
 
+    private void logServerWarnings(JsonNode warnings) {
+        if (warnings == null || !warnings.isArray()) {
+            return;
+        }
+
+        for (JsonNode warning : warnings) {
+            JsonNode filename = warning.get("filename");
+            JsonNode error = warning.get("error");
+            String name = filename.asText();
+            IItem evidence = getEvidenceByServerFilename(name);
+            if (evidence != null) {
+                logger.warn("ClassificationWarn::ServerWarning: filename: {} path: {} - {}", name, evidence.getPath(), error.asText());
+            } else {
+                logger.warn("ClassificationWarn::ServerWarning: filename: {} path: <not found> - {}", name, error.asText());
+            }
+        }
+    }
+
+    private IItem getEvidenceByServerFilename(String name) {
+        IItem evidence = queue.get(name);
+        if (evidence == null && name.split("_").length == 2) {
+            evidence = queue.get(name.split("_")[1]);
+        }
+        return evidence;
+    }
+
     private void processResult(InputStream responseStream) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonResponse = objectMapper.readTree(responseStream);
         logger.debug("Server Response: {}", jsonResponse.toPrettyString());
+        logServerWarnings(jsonResponse.get("warnings"));
         
         // Queue to store 'name' of failed evidences
         Set<String> queueFail = new HashSet<>();
@@ -509,6 +563,17 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     classifications.put(evidence.getHashValue(), classes.toString());
                 }
             }
+
+            // Mark evidences sent in the batch but not returned by the server.
+            // This happens when the server skips invalid images and returns a partial or empty result list.
+            for (String name : queue.keySet()) {
+                if (!results.containsKey(name) && !queueFail.contains(name)) {
+                    IItem evidence = queue.get(name);
+                    classificationFail.incrementAndGet();
+                    evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS);
+                    logger.warn("ClassificationFail::NoResults: Missing classification result for filename: {}", name);
+                }
+            }
         } else {
             // 'results' array is missing in JSON response
             // Server malformed response
@@ -566,6 +631,10 @@ public class RemoteImageClassifierTask extends AbstractTask {
             return statusCode;
         }
 
+        public String getResponseBody() {
+            return responseBody;
+        }
+
         @Override
         public String toString() {
             String str = String.format("%s HTTP Status Code: %d", getMessage(), statusCode);
@@ -582,6 +651,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
         try (CloseableHttpClient client = getClient()) {
             HttpPost post = new HttpPost(urlZip);
+            post.setConfig(requestConfig);
 
             HttpEntity entity = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                     .addBinaryBody("file", zipFile, ContentType.APPLICATION_OCTET_STREAM, zipFile.getName()).build();
@@ -633,6 +703,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 // Abort if HTTP response status code is different from SC_SERVICE_UNAVAILABLE and SC_GATEWAY_TIMEOUT
                 if (e instanceof HttpResponseStatusException) {
                     HttpResponseStatusException eHTTP = (HttpResponseStatusException) e;
+                    if (isNoValidImagesResponse(eHTTP)) {
+                        markBatchAsFailNoResults();
+                        logger.warn("ClassificationWarn::NoValidImages: Server did not find valid images in ZIP file #{} (files: {})", currentBatch, zip.getFileCount());
+                        break;
+                    }
                     if (eHTTP.getStatusCode() != HttpStatus.SC_SERVICE_UNAVAILABLE && eHTTP.getStatusCode() != HttpStatus.SC_GATEWAY_TIMEOUT) {
                         if (!abortNow.getAndSet(true)) {
                             logger.error("ClassificationFail::HttpStatusNotOK: {}", e.getMessage());
@@ -683,6 +758,21 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 // Wait time before retrying
                 Thread.sleep(WAIT_BEFORE_RETRY);
             }
+        }
+    }
+
+    private boolean isNoValidImagesResponse(HttpResponseStatusException e) {
+        String responseBody = e.getResponseBody();
+        return e.getStatusCode() == HttpStatus.SC_BAD_REQUEST && responseBody != null
+                && responseBody.contains("Nenhuma imagem") && responseBody.contains("ZIP");
+    }
+
+    private void markBatchAsFailNoResults() {
+        for (Map.Entry<String, IItem> entry : queue.entrySet()) {
+            IItem evidence = entry.getValue();
+            classificationFail.incrementAndGet();
+            evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS);
+            logger.warn("ClassificationFail::NoResults: No valid image in server response for filename: {} path: {}", entry.getKey(), evidence.getPath());
         }
     }
 
@@ -753,7 +843,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         }
 
         // Skip classification of images/videos with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
-        if (skipHashDBFiles && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
+        if (skipHashDBFiles && evidence.getExtraAttribute(ExtraProperties.HASHDB_STATUS) != null) {
             // Add skip classification info
             evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_HASHDB);
             skipHashDBFilesCount.incrementAndGet();

@@ -29,6 +29,7 @@ import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
+import iped.utils.IOUtil;
 
 public class CacheIndexParser extends AbstractParser {
 
@@ -97,7 +98,7 @@ public class CacheIndexParser extends AbstractParser {
 
                     Map<String, String> httpResponse = ce.getHttpResponse();
                     String requestUrl = ce.getRequestURL();
-
+                    InputStream is = null;
                     try {
 
                         String contentEncoding = httpResponse.get("content-encoding");
@@ -107,12 +108,11 @@ public class CacheIndexParser extends AbstractParser {
                         if (contentEncoding != null) {
                             contentEncoding = contentEncoding.trim();
                         }
-                        InputStream is;
+
                         try {
                             is = ce.getResponseDataSize() > 0 ? ce.getResponseDataStream(contentEncoding) : new ByteArrayInputStream(new byte[] {});
                         } catch (InputStreamNotAvailable e) {
                             LOGGER.warn("Input Stream for entry not found:" + requestUrl + " in item " + item.getPath());
-
                             is = new ByteArrayInputStream(new byte[] {});
                         }
 
@@ -140,6 +140,8 @@ public class CacheIndexParser extends AbstractParser {
                         }
                         exception.addSuppressed(ex);
                         continue;
+                    } finally {
+                        IOUtil.closeQuietly(is);
                     }
                 }
 

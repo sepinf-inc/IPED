@@ -18,6 +18,7 @@
  */
 package iped.app.processing;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -201,12 +202,16 @@ public class Main {
             if (manager == null || !manager.isSearchAppOpen())
                 logConfiguration.closeConsoleLogFile();
 
-            // The case is still open after closing processing, so reconfigure PreviewRepository readOnly
-            if (App.get().appCase != null) {
-                try {
-                    PreviewRepositoryManager.configureReadOnly(output.getCanonicalFile());
-                } catch (IOException e) {
-                    LOGGER.error("PreviewRepository error. Close the case and open it again.", e);
+            if (!cmdLineParams.isNogui() && !GraphicsEnvironment.isHeadless()) {
+
+                // The case is still open after closing processing, so reconfigure
+                // PreviewRepository readOnly
+                if (App.get().appCase != null) {
+                    try {
+                        PreviewRepositoryManager.configureReadOnly(output.getCanonicalFile());
+                    } catch (IOException e) {
+                        LOGGER.error("PreviewRepository error. Close the case and open it again.", e);
+                    }
                 }
             }
         }
