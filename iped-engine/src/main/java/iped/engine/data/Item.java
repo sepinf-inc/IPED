@@ -278,7 +278,7 @@ public class Item implements IItem {
         parentTmpFile = null;
         try {
             if (inputStreamFactory != null) {
-                inputStreamFactory.close();
+                inputStreamFactory.dispose();
             }
         } catch (IOException e) {
             LOGGER.warn("Error closing inputStreamFactory of " + getPath(), e);

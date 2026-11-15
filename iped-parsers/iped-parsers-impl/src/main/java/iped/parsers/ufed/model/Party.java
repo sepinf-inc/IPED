@@ -25,8 +25,8 @@ public class Party extends BaseModel {
     }
 
     // Specific field getters
-    public String getIdentifier() { return (String) getField("Identifier"); }
-    public String getName() { return (String) getField("Name"); }
+    public String getIdentifier() { return getFieldAsString("Identifier"); }
+    public String getName() { return getFieldAsString("Name"); }
     public Date getDateDelivered() { return (Date) getField("DateDelivered"); }
     public Date getDateRead() { return (Date) getField("DateRead"); }
     public Date getDatePlayed() { return (Date) getField("DatePlayed"); }
