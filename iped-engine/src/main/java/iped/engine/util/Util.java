@@ -303,11 +303,18 @@ public class Util {
     }
 
     public static String concatStrings(List<String> strings) {
+        return concatStrings(strings, false);
+    }
+
+    public static String concatStrings(List<String> strings, boolean escape) {
         if (strings == null) {
             return null;
         }
         if (strings.isEmpty()) {
             return "";
+        }
+        if (escape) {
+            strings.replaceAll(s -> s.replace("|", "||"));
         }
         if (strings.size() == 1) {
             return strings.get(0);

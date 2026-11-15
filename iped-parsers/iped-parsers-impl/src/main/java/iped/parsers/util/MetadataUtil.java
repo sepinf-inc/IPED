@@ -256,6 +256,7 @@ public class MetadataUtil {
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
         generalKeys.add(ExtraProperties.PARENT_VIEW_POSITION);
+        generalKeys.add(ExtraProperties.MOD_TO_INTERNAL_TIME_DIFF);
 
         return generalKeys;
     }
@@ -398,11 +399,12 @@ public class MetadataUtil {
         if (!prefixVideoMetadata(metadata)) {
             if (!prefixAudioMetadata(metadata)) {
                 if (!prefixImageMetadata(metadata)) {
-                    prefixPDFMetadata(metadata);
+                    if (!prefixPDFMetadata(metadata)) {
+                        prefixDocMetadata(metadata);
+                    }
                 }
             }
         }
-        prefixDocMetadata(metadata);
         prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
         renameKeys(metadata);

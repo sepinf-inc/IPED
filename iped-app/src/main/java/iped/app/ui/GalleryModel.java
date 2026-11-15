@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import iped.app.ui.controls.ErrorIcon;
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewKey;
 import iped.engine.preview.PreviewRepositoryManager;
@@ -76,7 +77,6 @@ public class GalleryModel extends AbstractTableModel {
     private static final double blurIntensity = 0.02d;
 
     private int colCount = defaultColCount;
-    private int thumbSize;
     private int galleryThreads = 1;
     private boolean logRendering = false;
     private ImageThumbTask imgThumbTask;
@@ -158,6 +158,13 @@ public class GalleryModel extends AbstractTableModel {
         return GalleryCellRenderer.class;
     }
 
+    private int getThumbSize() {
+        if (imgThumbTask != null) {
+            return imgThumbTask.getThumbSize();
+        }
+        return ImageThumbTaskConfig.DEFAULT_THUMB_SIZE;
+    }
+
     @Override
     public Object getValueAt(final int row, final int col) {
 
@@ -165,7 +172,6 @@ public class GalleryModel extends AbstractTableModel {
             try {
                 imgThumbTask = new ImageThumbTask();
                 imgThumbTask.init(ConfigurationManager.get());
-                thumbSize = imgThumbTask.getImageThumbConfig().getThumbSize();
                 galleryThreads = Math.min(imgThumbTask.getImageThumbConfig().getGalleryThreads(), MAX_TSK_POOL_SIZE);
                 logRendering = imgThumbTask.getImageThumbConfig().isLogGalleryRendering();
 
@@ -267,14 +273,14 @@ public class GalleryModel extends AbstractTableModel {
                         }
 
                         if (image == null && stream != null) {
-                            image = ImageUtil.getSubSampledImage(stream, thumbSize);
+                            image = ImageUtil.getSubSampledImage(stream, getThumbSize());
                             stream.reset();
                         }
 
                         if (image == null && stream != null) {
                             String sizeStr = doc.get(IndexItem.LENGTH);
                             Long size = sizeStr == null ? null : Long.parseLong(sizeStr);
-                            image = externalImageConverter.getImage(stream, thumbSize, false, size);
+                            image = externalImageConverter.getImage(stream, getThumbSize(), false, size);
                         }
                     }
 
@@ -283,12 +289,12 @@ public class GalleryModel extends AbstractTableModel {
                             value.icon = errorIcon;
                     } else {
                         // Resize image only if it is too large (> 2x the desired thumbSize)
-                        if (image.getWidth() > thumbSize * 2 || image.getHeight() > thumbSize * 2) {
-                            image = ImageUtil.resizeImage(image, thumbSize, thumbSize);
+                        if (image.getWidth() > getThumbSize() * 2 || image.getHeight() > getThumbSize() * 2) {
+                            image = ImageUtil.resizeImage(image, getThumbSize(), getThumbSize());
                         }
 
                         if (blurFilter) {
-                            image = ImageUtil.blur(image, thumbSize, blurIntensity);
+                            image = ImageUtil.blur(image, getThumbSize(), blurIntensity);
                         }
                         if (grayFilter) {
                             image = ImageUtil.grayscale(image);

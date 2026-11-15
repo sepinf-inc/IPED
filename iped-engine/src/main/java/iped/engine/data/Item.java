@@ -53,6 +53,7 @@ import iped.utils.ByteArrayImageInputStream;
 import iped.utils.EmptyInputStream;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
+import iped.utils.ImageUtil;
 import iped.utils.LimitedSeekableInputStream;
 import iped.utils.SeekableByteChannelImpl;
 import iped.utils.SeekableFileInputStream;
@@ -275,6 +276,13 @@ public class Item implements IItem {
         tmpFile = null;
         tis = null;
         parentTmpFile = null;
+        try {
+            if (inputStreamFactory != null) {
+                inputStreamFactory.dispose();
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Error closing inputStreamFactory of " + getPath(), e);
+        }
         try {
             if (textCache != null && clearTextCache) {
                 textCache.close();
@@ -688,10 +696,15 @@ public class Item implements IItem {
             while (offset < data.length && (i = is.read(data, offset, data.length - offset)) != -1) {
                 offset += i;
             }
-            return true;
+            if (offset == data.length) {
+                return true;
+            }
+            LOGGER.warn("Not enough data read ({} / {}) from item {}", offset, data.length, getPath());
         } catch (IOException e) {
-            // ignore
+            LOGGER.warn("Error reading item " + getPath(), e);
         }
+        // Array "data" was not filled -> must be discarded.
+        data = null;
         return false;
     }
 
@@ -753,29 +766,29 @@ public class Item implements IItem {
      * @throws IOException
      */
     public TikaInputStream getTikaStream() throws IOException {
-
-        File file = null;
-        if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
-            tis = TikaInputStream.get(file.toPath());
+        if (data != null) {
+            tis = TikaInputStream.get(data);
         } else {
-            if (tmpFile == null && tis != null && tis.hasFile()) {
-                tmpFile = tis.getFile();
-            }
-            // reset tis, it may have been set (and consumed) by a previous call of this
-            // method
-            tis = null;
-            if (tmpFile != null) {
-                try {
-                    tis = TikaInputStream.get(tmpFile.toPath());
-                } catch (IOException fnfe) {
-                    tmpFile = null;
+            File file = null;
+            if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
+                tis = TikaInputStream.get(file.toPath());
+            } else {
+                if (tmpFile == null && tis != null && tis.hasFile()) {
+                    tmpFile = tis.getFile();
                 }
-            }
-            if (tis == null && data != null) {
-                tis = TikaInputStream.get(data);
-            }
-            if (tis == null) {
-                tis = TikaInputStream.get(getBufferedInputStream());
+                // reset tis, it may have been set (and consumed) by a previous call of this
+                // method
+                tis = null;
+                if (tmpFile != null) {
+                    try {
+                        tis = TikaInputStream.get(tmpFile.toPath());
+                    } catch (IOException fnfe) {
+                        tmpFile = null;
+                    }
+                }
+                if (tis == null) {
+                    tis = TikaInputStream.get(getBufferedInputStream());
+                }
             }
         }
         addTmpResource(tis);
@@ -1358,7 +1371,13 @@ public class Item implements IItem {
     }
 
     public void setThumb(byte[] thumb) {
-        this.thumb = thumb;
+        if (ImageUtil.isImageValid(thumb)) {
+            this.thumb = thumb;
+        } else {
+            // Reject the invalid image data
+            // zero size thumb means thumb error
+            this.thumb = new byte[0];
+        }
     }
 
     public ISeekableInputStreamFactory getInputStreamFactory() {

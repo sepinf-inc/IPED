@@ -60,7 +60,7 @@ public class PhotoDNALookup extends AbstractTask {
     private static HashDBDataSource hashDBDataSource;
     
     // Magic number used as the first bytes of cache file
-    private static final int magic = 0x20250826;
+    private static final int magic = 0x20260126;
 
     private PhotoDNALookupConfig pdnaLookupConfig;
 

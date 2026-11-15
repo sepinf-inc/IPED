@@ -302,7 +302,7 @@ public abstract class AbstractTask {
     }
 
     /**
-     * Indica se itens ignorados (hash:status = ignore), devem ser processados pela
+     * Indica se itens ignorados (hashDb:status = known), devem ser processados pela
      * tarefa ou não. O valor padrão é false, assim itens ignorados não são
      * processados pelas tarefas seguintes. Tarefas específicas podem sobrescrever
      * esse comportamento.

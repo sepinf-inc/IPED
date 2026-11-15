@@ -27,6 +27,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.PhotoDNAConfig;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.parsers.util.MetadataUtil;
+import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
 
@@ -86,7 +87,7 @@ public class PhotoDNATask extends AbstractTask {
         if (!evidence.isToAddToCase())
             return;
 
-        if (pdnaConfig.isSkipHashDBFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null)
+        if (pdnaConfig.isSkipHashDBFiles() && evidence.getExtraAttribute(ExtraProperties.HASHDB_STATUS) != null)
             return;
 
         if (evidence.getLength() != null && evidence.getLength() < pdnaConfig.getMinFileSize())

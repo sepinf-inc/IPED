@@ -3,7 +3,7 @@
 ##########################################
 
 # URL of the service/central node used by the RemoteImageClassifier implementation
-url = 10.61.86.148:30603
+url = 10.61.86.148:30603/new
 
 # Maximum number of thumbs to be included in the zip file to send to the server
 batchSize = 50
@@ -22,3 +22,9 @@ skipHashDBFiles = true
 
 # Validate server SSL certificate
 validateSSL = false
+
+# Timeout to get a connection in milliseconds 
+connectTimeout = 30000
+
+# Timeout waiting for results from service in milliseconds
+socketTimeout =  180000
