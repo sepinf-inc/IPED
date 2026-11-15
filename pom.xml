@@ -59,7 +59,7 @@
         </repository>
         <repository>
         	<id>mvn-repo</id>
-        	<url>https://gitlab.com/iped-project/iped-maven/raw/master</url>
+        	<url>https://gitlab.com/api/v4/projects/16064308/packages/maven</url>
         	<releases>
             	<enabled>true</enabled>
         	</releases>
