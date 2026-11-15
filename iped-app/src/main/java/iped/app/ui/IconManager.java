@@ -193,7 +193,7 @@ public class IconManager {
 
         QualityIcon icon = availableIconsMap.get("emule");
         if (icon != null) {
-            mimeIconMap.put("application/x-emule", icon);
+            mimeIconMap.put("application/x-emule-known-met", icon);
             mimeIconMap.put("application/x-emule-part-met", icon);
             mimeIconMap.put("application/x-emule-searches", icon);
             mimeIconMap.put("application/x-emule-preferences-ini", icon);

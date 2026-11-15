@@ -70,15 +70,13 @@ public class KnownMetCarveTask extends BaseCarveTask {
     private static final AtomicInteger numCarvedItems = new AtomicInteger();
 
     /**
-     * Media type dos arquivos recuperados.
+     * Media type of known.met files.
      */
-
-    private static final MediaType eMuleMediaType = MediaType.application("x-emule"); //$NON-NLS-1$
+    private static final MediaType eMuleKnownMetMediaType = MediaType.application("x-emule-known-met");
 
     /**
      * Media type dos arquivos part.met recuperados.
      */
-
     private static final MediaType eMulePartMetMediaType = MediaType.application("x-emule-part-met"); //$NON-NLS-1$
 
     /**
@@ -186,7 +184,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                             }
                                             if (valid) {
                                                 addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met",
-                                                        eMuleMediaType);
+                                                        eMuleKnownMetMediaType);
                                                 numCarvedItems.incrementAndGet();
                                             }
                                         }

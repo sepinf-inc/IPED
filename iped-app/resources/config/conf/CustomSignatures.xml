@@ -861,7 +861,7 @@
     <mime-type type="application/x-p2p">
     </mime-type>
 
-    <mime-type type="application/x-emule">
+    <mime-type type="application/x-emule-known-met">
         <sub-class-of type="application/x-p2p"/>
         <glob pattern="known*.met"/>
     </mime-type>
