@@ -145,38 +145,31 @@ public class KnownMetCarveTask extends BaseCarveTask {
         return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
     }
 
-    /**
-     * Inicializa tarefa, realizando controle de alocação de apenas uma thread
-     * principal.
-     */
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
                 taskEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
                 if (taskEnabled) {
-                    logger.info("Task enabled."); //$NON-NLS-1$
+                    logger.info("Task enabled.");
                 } else {
-                    logger.info("Task disabled."); //$NON-NLS-1$
+                    logger.info("Task disabled.");
                 }
                 init.set(true);
             }
         }
     }
 
-    /**
-     * Finaliza a tarefa.
-     */
     @Override
     public void finish() throws Exception {
         synchronized (finished) {
             if (taskEnabled && !finished.get()) {
                 finished.set(true);
-                logger.info("Known Met Carved Items: " + numKnownMetItems.get()); //$NON-NLS-1$
-                logger.info("Part Met Carved Items: " + numPartMetItems.get()); //$NON-NLS-1$
-                logger.info("Preferences Dat Carved Items: " + numPreferencesDatItems.get()); //$NON-NLS-1$
-                logger.info("Total carved eMule artifacts: " + //$NON-NLS-1$
-                    (numKnownMetItems.get() + numPartMetItems.get() + numPreferencesDatItems.get()));
+                logger.info("Known Met Carved Items: " + numKnownMetItems.get());
+                logger.info("Part Met Carved Items: " + numPartMetItems.get());
+                logger.info("Preferences Dat Carved Items: " + numPreferencesDatItems.get());
+                logger.info("Total carved eMule artifacts: "
+                        + (numKnownMetItems.get() + numPartMetItems.get() + numPreferencesDatItems.get()));
             }
         }
     }
@@ -315,7 +308,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                         KnownMetEntry entry = new KnownMetEntry();
                         int len = KnownMetDecoder.parseEntry(entry, 1, buf2, true);
                         if (len > 0) {
-                            addCarvedFile(evidence, offset, len + 1, "Carved-" + offset + "-part.met", //$NON-NLS-1$ //$NON-NLS-2$
+                            addCarvedFile(evidence, offset, len + 1, "Carved-" + offset + "-part.met",
                                     eMulePartMetMediaType);
                             numPartMetItems.incrementAndGet();
                             return true;
@@ -337,8 +330,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
     private boolean checkPreferencesDat(BufferedInputStream is, IItem evidence, int pos, long offset,
                                         WindowBuffer window) throws Exception {
         if (matchesPreferencesDatQuick(window, pos) && matchesPreferencesDatSignature(window, pos)) {
-            addCarvedFile(evidence, offset, PREFERENCES_DAT_SIGNATURE_LENGTH,
-                    "Carved-" + offset + "-preferences.dat", //$NON-NLS-1$ //$NON-NLS-2$
+            addCarvedFile(evidence, offset, PREFERENCES_DAT_SIGNATURE_LENGTH, "Carved-" + offset + "-preferences.dat",
                     eMulePreferencesDatMediaType);
             numPreferencesDatItems.incrementAndGet();
             return true;
@@ -504,10 +496,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
             table[pattern[i] & 0xFF] = pattern.length - 1 - i;
         }
         return table;
-    }
-
-    private static boolean isSectorAligned(long offset) {
-        return (offset & (SECTOR_SIZE - 1)) == 0;
     }
 
     private static boolean isAcceptedType(MediaType mediaType) {
