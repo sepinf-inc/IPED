@@ -259,12 +259,12 @@ public class LinkExtractor implements Closeable {
     }
 
     public static final String sql_ios = "SELECT ZMEDIAURL as url, ZVCARDNAME as hash, ZVCARDSTRING as tipo, null as data, ZMESSAGE as _id, ZMEDIAKEY as mediaKey from ZWAMEDIAITEM "
-            + "where url like '%whatsapp%.enc' AND mediaKey is not null and hash is not NULL AND hash in (?) AND length(mediaKey)=76 group by url";
+            + "where url like '%whatsapp%.enc%' AND mediaKey is not null and hash is not NULL AND hash in (?) AND length(mediaKey)=76 group by url";
 
     public static final String sql_android_old = "SELECT m.media_url as url,m.media_hash as hash ,m.media_mime_type as tipo,m.thumb_image as data, m._id, null as mediaKey FROM messages m "
-            + "where m.media_url like '%whatsapp%.enc' and m.media_hash is not null and m.media_hash in (?) group by url";
+            + "where m.media_url like '%whatsapp%.enc%' and m.media_hash is not null and m.media_hash in (?) group by url";
 
     public static final String sql_android = "SELECT message_url as url,file_hash as hash ,mime_type as tipo,null as data, message_row_id as _id, media_key as mediaKey FROM  message_media  "
-            + "where message_url like '%whatsapp%.enc' and file_hash is not null and file_hash in (?) group by url";
+            + "where message_url like '%whatsapp%.enc%' and file_hash is not null and file_hash in (?) group by url";
 
 }
