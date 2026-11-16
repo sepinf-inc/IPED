@@ -18,6 +18,8 @@ public interface IItemSearcher extends Closeable {
 
     List<IItemReader> search(String luceneQuery);
 
+    IItemReader searchFirst(String luceneQuery);
+
     Iterable<IItemReader> searchIterable(String luceneQuery);
 
     String escapeQuery(String string);

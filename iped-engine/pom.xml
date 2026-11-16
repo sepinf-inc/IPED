@@ -15,19 +15,6 @@
         <javacpp.ffmpeg.version>8.0.1-1.5.13</javacpp.ffmpeg.version>
     </properties>
 
-    <repositories>
-	    <repository>
-	      <id>maven-cognitiveservices-speech</id>
-	      <name>Microsoft Cognitive Services Speech Maven Repository</name>
-	      <url>https://csspeechstorage.blob.core.windows.net/maven/</url>
-	    </repository>
-	    <repository>
-	      <id>maven-vosk</id>
-	      <name>Alphaceph Vosk Java Maven Repo</name>
-	      <url>https://alphacephei.com/maven/</url>
-	    </repository>
-    </repositories>
-    
     <dependencies>
 		<dependency>
 		    <groupId>org.apache.httpcomponents</groupId>

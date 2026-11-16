@@ -17,16 +17,22 @@ import iped.properties.MediaTypes;
 
 public class JumpListTask extends AbstractTask {
 
-    public static final MediaType AUTOMATIC_DESTINATIONS_MIME = MediaType.application("x-customdestinations");
-    public static final MediaType CUSTOM_DESTINATIONS_MIME = MediaType.application("x-automaticdestinations");
+    public static final MediaType AUTOMATIC_DESTINATIONS_MIME = MediaType.application("x-automaticdestinations");
+    public static final MediaType CUSTOM_DESTINATIONS_MIME = MediaType.application("x-customdestinations");
 
-    public static final MediaType AUTOMATIC_DESTINATIONS_ENTRY_MIME = MediaType.application("x-customdestinations-entry");
-    public static final MediaType CUSTOM_DESTINATIONS_ENTRY_MIME = MediaType.application("x-automaticdestinations-entry");
+    public static final MediaType AUTOMATIC_DESTINATIONS_ENTRY_MIME = MediaType.application("x-automaticdestinations-entry");
+    public static final MediaType CUSTOM_DESTINATIONS_ENTRY_MIME = MediaType.application("x-customdestinations-entry");
 
     private static final String AUTOMATIC_DESTINATIONS_SUFIX = ".automaticDestinations-ms";
     private static final String CUSTOM_DESTINATIONS_SUFIX = ".customDestinations-ms";
 
+    // the AppID is a 64-bit hash written in hexadecimal
+    private static final String APP_ID_VALID_CHARS = "0123456789abcdef";
+    private static final int APP_ID_MAX_LENGTH = 16;
+
     public static final String JUMPLIST_META_PREFIX = "jumpList:";
+    public static final String JUMPLIST_APP_ID = JUMPLIST_META_PREFIX + "appID";
+    public static final String JUMPLIST_APP_NAME = JUMPLIST_META_PREFIX + "appName";
     public static final String JUMPLIST_PROGRAM_APP_IDS = JUMPLIST_META_PREFIX + "ids";
 
     private static final MediaType EXE_MIME = MediaType.application("x-msdownload");
@@ -54,12 +60,35 @@ public class JumpListTask extends AbstractTask {
         processExecutables(evidence);
     }
 
+    /**
+     * Extracts the AppID from the name of a jump list file, e.g.
+     * "5d696d521de238c3.automaticDestinations-ms" returns "5d696d521de238c3".
+     *
+     * @return the normalized AppID (see {@link AppIDsConfig#normalize(String)}) or
+     *         null if it is not a jump list file name or if its AppID is not a
+     *         hexadecimal number.
+     */
+    static String getAppIDFromFileName(String fileName) {
+
+        if (!StringUtils.endsWithAny(fileName, AUTOMATIC_DESTINATIONS_SUFIX, CUSTOM_DESTINATIONS_SUFIX)) {
+            return null;
+        }
+        String appID = StringUtils.removeEnd(fileName, AUTOMATIC_DESTINATIONS_SUFIX);
+        appID = StringUtils.removeEnd(appID, CUSTOM_DESTINATIONS_SUFIX);
+        appID = AppIDsConfig.normalize(appID);
+
+        if (appID.isEmpty() || appID.length() > APP_ID_MAX_LENGTH || !StringUtils.containsOnly(appID, APP_ID_VALID_CHARS)) {
+            return null;
+        }
+        return appID;
+    }
+
     private void processAutomaticDestinationsEntry(IItem evidence) {
 
         if (evidence.getMediaType().equals(AUTOMATIC_DESTINATIONS_ENTRY_MIME)
                 || evidence.getMediaType().equals(CUSTOM_DESTINATIONS_ENTRY_MIME)) {
 
-            if (evidence.getMetadata().get(JUMPLIST_META_PREFIX + "appID") != null) {
+            if (evidence.getMetadata().get(JUMPLIST_APP_ID) != null) {
                 return;
             }
 
@@ -69,16 +98,14 @@ public class JumpListTask extends AbstractTask {
 
             String parentName = StringUtils.substringAfterLast(parentPath, "/");
 
-            if (StringUtils.endsWithAny(parentName, AUTOMATIC_DESTINATIONS_SUFIX, CUSTOM_DESTINATIONS_SUFIX)) {
+            String appID = getAppIDFromFileName(parentName);
+            if (appID != null) {
 
-                String appID = StringUtils.removeEnd(parentName, AUTOMATIC_DESTINATIONS_SUFIX);
-                appID = StringUtils.removeEnd(appID, CUSTOM_DESTINATIONS_SUFIX);
-                appID = appID.toLowerCase();
-                evidence.getMetadata().set(JUMPLIST_META_PREFIX + "appID", appID);
+                evidence.getMetadata().set(JUMPLIST_APP_ID, appID);
 
                 String appName = jumpListAppIDsConfig.getConfiguration().get(appID);
                 if (appName != null) {
-                    evidence.getMetadata().set(JUMPLIST_META_PREFIX + "appName", appName);
+                    evidence.getMetadata().set(JUMPLIST_APP_NAME, appName);
                 }
 
                 String linkQuery = QueryBuilder.escape(JUMPLIST_PROGRAM_APP_IDS) + ":" + appID;
@@ -91,10 +118,13 @@ public class JumpListTask extends AbstractTask {
 
         if (MediaTypes.isInstanceOf(evidence.getMediaType(), EXE_MIME) && !evidence.isCarved() && !evidence.isDeleted() && !evidence.isSubItem()) {
 
-            List<String> appIDs = AppIDCalculator.calculateAppIDs(evidence.getPath());
-
             if (evidence.getMetadata().get(JUMPLIST_PROGRAM_APP_IDS) == null) {
+
+                List<String> appIDs = AppIDCalculator.calculateAppIDs(evidence.getPath());
+
                 for (String appID : appIDs) {
+
+                    appID = AppIDsConfig.normalize(appID);
 
                     // add appID
                     evidence.getMetadata().add(JUMPLIST_PROGRAM_APP_IDS, appID);
