@@ -408,10 +408,37 @@ public class RemoteImageClassifierTask extends AbstractTask {
         }
     }
 
+    private void logServerWarnings(JsonNode warnings) {
+        if (warnings == null || !warnings.isArray()) {
+            return;
+        }
+
+        for (JsonNode warning : warnings) {
+            JsonNode filename = warning.get("filename");
+            JsonNode error = warning.get("error");
+            String name = filename.asText();
+            IItem evidence = getEvidenceByServerFilename(name);
+            if (evidence != null) {
+                logger.warn("ClassificationWarn::ServerWarning: filename: {} path: {} - {}", name, evidence.getPath(), error.asText());
+            } else {
+                logger.warn("ClassificationWarn::ServerWarning: filename: {} path: <not found> - {}", name, error.asText());
+            }
+        }
+    }
+
+    private IItem getEvidenceByServerFilename(String name) {
+        IItem evidence = queue.get(name);
+        if (evidence == null && name.split("_").length == 2) {
+            evidence = queue.get(name.split("_")[1]);
+        }
+        return evidence;
+    }
+
     private void processResult(InputStream responseStream) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonResponse = objectMapper.readTree(responseStream);
         logger.debug("Server Response: {}", jsonResponse.toPrettyString());
+        logServerWarnings(jsonResponse.get("warnings"));
         
         // Queue to store 'name' of failed evidences
         Set<String> queueFail = new HashSet<>();
@@ -536,6 +563,17 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     classifications.put(evidence.getHashValue(), classes.toString());
                 }
             }
+
+            // Mark evidences sent in the batch but not returned by the server.
+            // This happens when the server skips invalid images and returns a partial or empty result list.
+            for (String name : queue.keySet()) {
+                if (!results.containsKey(name) && !queueFail.contains(name)) {
+                    IItem evidence = queue.get(name);
+                    classificationFail.incrementAndGet();
+                    evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS);
+                    logger.warn("ClassificationFail::NoResults: Missing classification result for filename: {}", name);
+                }
+            }
         } else {
             // 'results' array is missing in JSON response
             // Server malformed response
@@ -591,6 +629,10 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
         public int getStatusCode() {
             return statusCode;
+        }
+
+        public String getResponseBody() {
+            return responseBody;
         }
 
         @Override
@@ -661,6 +703,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 // Abort if HTTP response status code is different from SC_SERVICE_UNAVAILABLE and SC_GATEWAY_TIMEOUT
                 if (e instanceof HttpResponseStatusException) {
                     HttpResponseStatusException eHTTP = (HttpResponseStatusException) e;
+                    if (isNoValidImagesResponse(eHTTP)) {
+                        markBatchAsFailNoResults();
+                        logger.warn("ClassificationWarn::NoValidImages: Server did not find valid images in ZIP file #{} (files: {})", currentBatch, zip.getFileCount());
+                        break;
+                    }
                     if (eHTTP.getStatusCode() != HttpStatus.SC_SERVICE_UNAVAILABLE && eHTTP.getStatusCode() != HttpStatus.SC_GATEWAY_TIMEOUT) {
                         if (!abortNow.getAndSet(true)) {
                             logger.error("ClassificationFail::HttpStatusNotOK: {}", e.getMessage());
@@ -711,6 +758,21 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 // Wait time before retrying
                 Thread.sleep(WAIT_BEFORE_RETRY);
             }
+        }
+    }
+
+    private boolean isNoValidImagesResponse(HttpResponseStatusException e) {
+        String responseBody = e.getResponseBody();
+        return e.getStatusCode() == HttpStatus.SC_BAD_REQUEST && responseBody != null
+                && responseBody.contains("Nenhuma imagem") && responseBody.contains("ZIP");
+    }
+
+    private void markBatchAsFailNoResults() {
+        for (Map.Entry<String, IItem> entry : queue.entrySet()) {
+            IItem evidence = entry.getValue();
+            classificationFail.incrementAndGet();
+            evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS);
+            logger.warn("ClassificationFail::NoResults: No valid image in server response for filename: {} path: {}", entry.getKey(), evidence.getPath());
         }
     }
 

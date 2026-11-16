@@ -13,9 +13,9 @@ public class ContactEntry extends BaseModel {
         super(modelType);
     }
 
-    public String getCategory() { return (String) getField("Category"); }
-    public String getValue() { return (String) getField("Value"); }
-    public String getDomain() { return (String) getField("Domain"); }
+    public String getCategory() { return getFieldAsString("Category"); }
+    public String getValue() { return getFieldAsString("Value"); }
+    public String getDomain() { return getFieldAsString("Domain"); }
 
     @Override
     public String toString() {
