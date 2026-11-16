@@ -71,8 +71,10 @@ jobs:
       run: mvn -B -ntp package --file pom.xml
 
     - name: Save Maven repository
-      # full key on success; on failure a partial key, restored next time through restore-keys
-      if: always() && steps.m2.outputs.cache-hit != 'true'
+      # Only pushes to master save the cache: branches and pull requests restore master's cache
+      # but never save their own, so they do not use up the repository's cache quota.
+      # Full key on success; on failure a partial key, restored next time through restore-keys.
+      if: always() && steps.m2.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: actions/cache/save@v5
       with:
         path: |
@@ -154,8 +156,10 @@ jobs:
       run: mvn -B -ntp package --file pom.xml
 
     - name: Save Maven repository
-      # full key on success; on failure a partial key, restored next time through restore-keys
-      if: always() && steps.m2.outputs.cache-hit != 'true'
+      # Only pushes to master save the cache: branches and pull requests restore master's cache
+      # but never save their own, so they do not use up the repository's cache quota.
+      # Full key on success; on failure a partial key, restored next time through restore-keys.
+      if: always() && steps.m2.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: actions/cache/save@v5
       with:
         path: |
