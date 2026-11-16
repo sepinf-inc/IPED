@@ -13,7 +13,7 @@ public class MessageLabel extends BaseModel {
         super("MessageLabel");
     }
 
-    public String getLabel() { return (String) getField("Label"); }
+    public String getLabel() { return getFieldAsString("Label"); }
 
     @Override
     public String toString() {

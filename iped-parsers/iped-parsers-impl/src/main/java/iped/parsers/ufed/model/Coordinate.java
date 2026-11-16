@@ -18,8 +18,8 @@ public class Coordinate extends BaseModel {
         super("Coordinate");
     }
 
-    public String getLongitude() { return (String) getField("Longitude"); }
-    public String getLatitude() { return (String) getField("Latitude"); }
+    public String getLongitude() { return getFieldAsString("Longitude"); }
+    public String getLatitude() { return getFieldAsString("Latitude"); }
 
     public ReferencedLocation getReferencedLocation() {
         return referencedLocation;
