@@ -54,24 +54,26 @@ jobs:
         path: libagdb
         key: libagdb-ubuntu-26.04-667a782
 
+    - name: Install External Tools
+      # libparse-win32registry-perl: perl module Parse::Win32Registry, used by RegRipper
+      run: |
+        sudo apt-get -qq update && sudo apt-get -qq install -y \
+          libscca-utils rifiuti2 libevtx-utils libevt-utils \
+          libmsiecf-utils pff-tools libesedb-utils \
+          tesseract-ocr tesseract-ocr-por \
+          imagemagick fonts-urw-base35 \
+          libparse-win32registry-perl
+
     - name: Compile libagdb
       # libagdb (agdbinfo) needs to be built from source
       if: steps.libagdb.outputs.cache-hit != 'true'
       run: |
-        sudo apt-get update
-        sudo apt-get install -y git autoconf automake autopoint libtool pkg-config
+        sudo apt-get -qq install -y git autoconf automake autopoint libtool pkg-config
         git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
         ./synclibs.sh && ./autogen.sh && ./configure
 
-    - name: Install External Tools
-      run: |
-        sudo apt-get update && sudo apt-get install -y \
-          libscca-utils rifiuti2 libevtx-utils libevt-utils \
-          libmsiecf-utils pff-tools libesedb-utils \
-          tesseract-ocr tesseract-ocr-por \
-          imagemagick fonts-urw-base35
-        sudo perl -MCPAN -e 'install Parse::Win32Registry'
-        cd libagdb/ && sudo make install && sudo ldconfig /usr/local/lib
+    - name: Install libagdb
+      run: cd libagdb/ && sudo make install && sudo ldconfig /usr/local/lib
 
     - name: Create Python venv with jep (tests only)
       # jep is compiled against JAVA_HOME, so this must run after setup-java.
@@ -79,7 +81,7 @@ jobs:
       # The venv activate script also sets what the embedded interpreter and the
       # ci-jep surefire profile (iped-parsers-impl) need.
       run: |
-        sudo apt-get install -y python3-venv python3-dev
+        sudo apt-get -qq install -y python3-venv python3-dev
         JEP_VERSION=$(python3 - <<'PY'
         import xml.etree.ElementTree as ET
         ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
@@ -135,10 +137,13 @@ jobs:
         key: ${{ steps.build.outcome == 'success' && steps.m2.outputs.cache-primary-key || format('{0}-partial-{1}-{2}-{3}', steps.m2.outputs.cache-primary-key, github.job, github.run_id, github.run_attempt) }}
 
     - name: Package snapshot
-      run: cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
+      # pigz: gzip on all cores. No -v: listing every file made up 40% of the job log.
+      run: cd target && mv release iped-snapshot-$GITHUB_SHA && tar -I pigz -cf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
 
     - name: Upload snapshot
       uses: actions/upload-artifact@v7
       with:
         name: iped-snapshot-${{ github.sha }}
         path: iped-snapshot.tar.gz
+        # already a .tar.gz: do not compress it again
+        compression-level: 0
