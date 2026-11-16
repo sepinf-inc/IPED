@@ -132,6 +132,8 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
                     parser.setOutputHtml(Boolean.valueOf(getString(child)));
                 } else if (child.getTagName().equals(LINES_TO_IGNORE)) {
                     parser.setLinesToIgnore(Integer.valueOf(getString(child)));
+                } else if (child.getTagName().equals(UNESCAPE_OUTPUT)) {
+                    parser.setUnescapeOutput(Boolean.valueOf(getString(child).trim()));
                 }
             }
         }
