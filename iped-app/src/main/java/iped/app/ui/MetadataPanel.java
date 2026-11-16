@@ -127,19 +127,19 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         sort.setPreferredSize(new Dimension(30, 15));
         sort.addChangeListener(this);
 
-        update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 16));
+        update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 18));
         update.setToolTipText(Messages.getString("MetadataPanel.Update"));
-        update.setPreferredSize(new Dimension(20, 20));
+        update.setPreferredSize(new Dimension(22, 20));
         update.addActionListener(this);
 
-        copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 16));
+        copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 18));
         copyResultToClipboard.setToolTipText(Messages.getString("MetadataPanel.CopyClipboard"));
-        copyResultToClipboard.setPreferredSize(new Dimension(20, 20));
+        copyResultToClipboard.setPreferredSize(new Dimension(22, 20));
         copyResultToClipboard.addActionListener(this);
 
-        reset.setIcon(IconUtil.getIcon("clear", RES_PATH, 16));
+        reset.setIcon(IconUtil.getIcon("clear", RES_PATH, 18));
         reset.setToolTipText(Messages.getString("MetadataPanel.Clear"));
-        reset.setPreferredSize(new Dimension(20, 20));
+        reset.setPreferredSize(new Dimension(22, 20));
         reset.addActionListener(this);
 
         list.setFixedCellHeight(18);
