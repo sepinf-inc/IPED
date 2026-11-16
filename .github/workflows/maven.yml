@@ -17,7 +17,22 @@ jobs:
         distribution: liberica
         java-version: '25'
         java-package: jdk+fx
-        cache: maven
+        cache-jdk: true
+        # like the Maven repository below, only pushes to master save the JDK cache
+        cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
+
+    - name: Restore Maven repository
+      # Restore and save are split so a partial repository is cached even when
+      # the build fails (e.g. a remote repository is unavailable), see #3047
+      id: m2
+      uses: actions/cache/restore@v6
+      with:
+        path: |
+          ~/.m2/repository
+          !~/.m2/repository/**/*.lastUpdated
+        key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          maven-${{ runner.os }}-
 
     - name: Load libagdb from cache
       id: libagdb
@@ -84,9 +99,22 @@ jobs:
         tesseract --version | head -1
 
     - name: Build with Maven
+      id: build
       run: |
         source "$RUNNER_TEMP/venv/bin/activate"
         mvn -B -ntp package --file pom.xml
+
+    - name: Save Maven repository
+      # Only pushes to master save the cache: branches and pull requests restore master's cache
+      # but never save their own, so they do not use up the repository's cache quota.
+      # Full key on success; on failure a partial key, restored next time through restore-keys.
+      if: always() && steps.m2.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+      uses: actions/cache/save@v6
+      with:
+        path: |
+          ~/.m2/repository
+          !~/.m2/repository/**/*.lastUpdated
+        key: ${{ steps.build.outcome == 'success' && steps.m2.outputs.cache-primary-key || format('{0}-partial-{1}-{2}-{3}', steps.m2.outputs.cache-primary-key, github.job, github.run_id, github.run_attempt) }}
 
     - name: Package snapshot
       run: cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
