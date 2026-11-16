@@ -11,12 +11,20 @@ import java.util.List;
 public final class JvmFlags {
 
     /**
+     * JavaFX modules that load native libraries. They come from the Java runtime
+     * (JDK/JRE with JavaFX bundled), so they are named modules, not covered by
+     * ALL-UNNAMED.
+     */
+    private static final List<String> JAVAFX_NATIVE_MODULES = List.of( //
+            "javafx.graphics", "javafx.web", "javafx.media");
+
+    /**
      * Native access (JEP 472) for JNI/JNA users: sleuthkit, sqlite, jep,
-     * javacpp... and sun.misc.Unsafe memory access (JEP 498) for neo4j, lucene,
-     * kryo...
+     * javacpp... and for JavaFX, and sun.misc.Unsafe memory access (JEP 498) for
+     * neo4j, lucene, kryo...
      */
     public static final List<String> NATIVE_AND_UNSAFE = List.of( //
-            "--enable-native-access=ALL-UNNAMED",
+            nativeAccess(),
             "--sun-misc-unsafe-memory-access=allow");
 
     /**
@@ -41,6 +49,20 @@ public final class JvmFlags {
     public static final String VECTOR_MODULE = "jdk.incubator.vector";
 
     private JvmFlags() {
+    }
+
+    /**
+     * Native access for the code in the classpath and for the JavaFX modules this
+     * Java runtime has: the JVM warns about modules it does not know.
+     */
+    private static String nativeAccess() {
+        StringBuilder flag = new StringBuilder("--enable-native-access=ALL-UNNAMED");
+        for (String module : JAVAFX_NATIVE_MODULES) {
+            if (ModuleFinder.ofSystem().find(module).isPresent()) {
+                flag.append(',').append(module);
+            }
+        }
+        return flag.toString();
     }
 
     /**

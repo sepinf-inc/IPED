@@ -27,7 +27,7 @@
         <!-- JNI/JNA/Unsafe users (sleuthkit, sqlite, jep, javacpp, neo4j, lucene...): avoid JEP 472/498 warnings.
              add-modules: Vector API used by Lucene's vectorized code.
              Same flags as iped.utils.JvmFlags. @{argLine} keeps agents set by other plugins (JaCoCo). -->
-        <iped.jvm.flags>--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow --add-modules=jdk.incubator.vector</iped.jvm.flags>
+        <iped.jvm.flags>--enable-native-access=ALL-UNNAMED,javafx.graphics,javafx.web,javafx.media --sun-misc-unsafe-memory-access=allow --add-modules=jdk.incubator.vector</iped.jvm.flags>
         <argLine></argLine>
         <resources.dir>${basedir}/resources</resources.dir>
         <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>
