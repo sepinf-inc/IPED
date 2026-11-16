@@ -8,6 +8,11 @@ jobs:
 
     runs-on: ubuntu-26.04
 
+    env:
+      # Latest Maven 3 release. The runner image has an older one, and the Maven repository
+      # cache saved by one Maven version is not fully reused by another.
+      MAVEN_VERSION: 3.10.1
+
     steps:
     - uses: actions/checkout@v7
 
@@ -20,6 +25,14 @@ jobs:
         cache-jdk: true
         # like the Maven repository below, only pushes to master save the JDK cache
         cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
+
+    - name: Set up Maven
+      run: |
+        url="https://repo1.maven.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+        curl -fsSL --retry 3 -o "$RUNNER_TEMP/maven.tar.gz" "$url"
+        echo "$(curl -fsSL --retry 3 "$url.sha512")  $RUNNER_TEMP/maven.tar.gz" | sha512sum -c -
+        tar -xzf "$RUNNER_TEMP/maven.tar.gz" -C "$RUNNER_TEMP"
+        echo "$RUNNER_TEMP/apache-maven-$MAVEN_VERSION/bin" >> "$GITHUB_PATH"
 
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
@@ -102,7 +115,12 @@ jobs:
       id: build
       run: |
         source "$RUNNER_TEMP/venv/bin/activate"
-        mvn -B -ntp package --file pom.xml
+        # --fail-at-end: keep building the modules that do not depend on a failed one.
+        # requestTimeout: give up on a remote repository that stops answering after 1 minute
+        # (default 30 minutes; both names are set, as the property was renamed in Maven Resolver 2).
+        mvn -B -ntp --fail-at-end \
+          -Daether.connector.requestTimeout=60000 -Daether.transport.http.requestTimeout=60000 \
+          package --file pom.xml
 
     - name: Save Maven repository
       # Only pushes to master save the cache: branches and pull requests restore master's cache
