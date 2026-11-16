@@ -15,7 +15,7 @@ public class ForwardedMessageData extends BaseModel {
         super("ForwardedMessageData");
     }
 
-    public String getLabel() { return (String) getField("Label"); }
+    public String getLabel() { return getFieldAsString("Label"); }
     public Date getTimeCreated() { return (Date) getField("TimeCreated"); }
 
     public Party getOriginalSender() {
