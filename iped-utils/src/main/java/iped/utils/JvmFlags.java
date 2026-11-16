@@ -1,5 +1,6 @@
 package iped.utils;
 
+import java.lang.module.ModuleFinder;
 import java.util.List;
 
 /**
@@ -33,13 +34,32 @@ public final class JvmFlags {
             "--add-opens=java.base/java.text=ALL-UNNAMED",
             "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED");
 
+    /**
+     * Incubator module with the Vector API, used by Lucene for its vectorized
+     * (SIMD) code. Without it Lucene falls back to slower scalar code.
+     */
+    public static final String VECTOR_MODULE = "jdk.incubator.vector";
+
     private JvmFlags() {
+    }
+
+    /**
+     * Flag that enables the Vector API, or no flag if this Java runtime does not
+     * have the module (e.g. a reduced JRE): the JVM refuses to start when asked
+     * to add a module it does not have.
+     */
+    public static List<String> vectorApi() {
+        if (ModuleFinder.ofSystem().find(VECTOR_MODULE).isPresent()) {
+            return List.of("--add-modules=" + VECTOR_MODULE);
+        }
+        return List.of();
     }
 
     /** All the flags above. */
     public static List<String> all() {
         List<String> flags = new java.util.ArrayList<>(NATIVE_AND_UNSAFE);
         flags.addAll(ADD_OPENS);
+        flags.addAll(vectorApi());
         return flags;
     }
 }
