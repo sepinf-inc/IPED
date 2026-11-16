@@ -20,7 +20,7 @@ jobs:
 
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
-      # the build fails (e.g. HTTP 429 from iped-maven), see #3047
+      # the build fails (e.g. a remote repository is unavailable), see #3047
       id: m2
       uses: actions/cache/restore@v5
       with:
@@ -104,7 +104,7 @@ jobs:
 
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
-      # the build fails (e.g. HTTP 429 from iped-maven), see #3047
+      # the build fails (e.g. a remote repository is unavailable), see #3047
       id: m2
       uses: actions/cache/restore@v5
       with:
