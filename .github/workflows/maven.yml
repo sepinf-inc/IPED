@@ -17,6 +17,8 @@ jobs:
         java-version: 11
         java-package: jdk+fx
         cache-jdk: true
+        # like the Maven repository below, only pushes to master save the JDK cache
+        cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
 
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
@@ -103,6 +105,8 @@ jobs:
         java-version: 14
         java-package: jdk+fx
         cache-jdk: true
+        # like the Maven repository below, only pushes to master save the JDK cache
+        cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
 
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
