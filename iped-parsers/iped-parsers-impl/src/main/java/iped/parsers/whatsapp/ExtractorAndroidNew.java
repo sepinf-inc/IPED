@@ -765,12 +765,13 @@ public abstract class ExtractorAndroidNew extends Extractor {
                         continue;
                     }
                     Message active = activeByUuid.get(m.getUuid());
-                    if (active != null && Objects.equals(active.getData(), m.getData())
-                            && active.getMessageType() == m.getMessageType()) {
+                    if (active != null && active.getMessageType() == m.getMessageType()
+                            && active.isFromMe() == m.isFromMe()
+                            && Objects.equals(active.getTimeStamp(), m.getTimeStamp())
+                            && Objects.equals(active.getEditTimeStamp(), m.getEditTimeStamp())) {
                         // same message still active: old copy of the record (e.g. left behind by a
-                        // status update), not a deleted message. If the content or type differs
-                        // (e.g. edited or deleted for everyone), the recovered record holds the
-                        // previous content and is kept.
+                        // status update), not a deleted message. If the type or time or edit time
+                        // differs, the recovered record holds the previous content and is kept.
                         continue;
                     }
                     knownMessages.add(wrapper);
