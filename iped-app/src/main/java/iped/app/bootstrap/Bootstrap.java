@@ -29,9 +29,11 @@ import iped.app.ui.splash.SplashScreenManager;
 import iped.app.ui.splash.StartUpControl;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.LocalConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.util.Util;
 import iped.utils.IOUtil;
+import iped.utils.UTF8Properties;
 import iped.viewers.util.LibreOfficeFinder;
 import iped.viewers.util.UNOLibFinder;
 
@@ -169,6 +171,7 @@ public class Bootstrap {
             cmd.addAll(getCurrentJVMArgs());
             cmd.addAll(getCustomJVMArgs());
             cmd.addAll(getSystemProperties());
+            cmd.addAll(getTempDirArgs());
             if (SystemUtils.IS_OS_WINDOWS) {
                 cmd.add("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"); // fix for #1719
             }
@@ -262,11 +265,37 @@ public class Bootstrap {
         return args;
     }
 
+    /**
+     * Creates the temp folder of the child process and returns the JVM arguments
+     * that make it its java.io.tmpdir. It must be given in the command line:
+     * since Java 21 the JVM reads java.io.tmpdir only at startup, changing it
+     * later does not change where File.createTempFile() creates its files.
+     */
+    private static List<String> getTempDirArgs() throws IOException {
+        UTF8Properties localConfig = new UTF8Properties();
+        File localConfigFile = new File(Configuration.getInstance().appRoot, LocalConfig.CONFIG_FILE);
+        if (localConfigFile.exists()) {
+            localConfig.load(localConfigFile);
+        }
+        File ipedTemp = LocalConfig.createIpedTemp(LocalConfig.getConfiguredTemp(localConfig, null));
+        if (!ipedTemp.isDirectory()) {
+            return new ArrayList<>();
+        }
+        // cleaned when the child process ends, even if it never reports its temp folder
+        subProcessTempFolder = ipedTemp;
+        return Arrays.asList( //
+                "-Djava.io.tmpdir=" + ipedTemp.getAbsolutePath(), //
+                "-D" + LocalConfig.SYS_PROP_IPED_TEMP + "=" + ipedTemp.getAbsolutePath(), //
+                "-Djava.io.basetmpdir=" + System.getProperty("java.io.basetmpdir"));
+    }
+
     private static List<String> getSystemProperties() {
         List<String> props = new ArrayList<>();
         for (Entry<Object, Object> e : System.getProperties().entrySet()) {
             String key = e.getKey().toString();
-            if (!key.equals("java.class.path") && !key.equals("sun.boot.library.path")) {
+            // java.io.tmpdir and java.io.basetmpdir are set by getTempDirArgs()
+            if (!key.equals("java.class.path") && !key.equals("sun.boot.library.path")
+                    && !key.equals("java.io.tmpdir") && !key.equals("java.io.basetmpdir")) {
                 props.add("-D" + key + "=" + e.getValue().toString().replace("\"", "\\\""));
             }
         }
