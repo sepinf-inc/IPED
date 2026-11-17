@@ -9,14 +9,14 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "1.3" # Treats invalid dimensions in images/videos
+__version__ = "1.6" # Auto configurations - batch size according to memory and model
 
 import traceback
 import io
 import os
 import time
 import sys
-from java.lang import System
+from java.lang import System, RuntimeException
 from iped.properties import ExtraProperties
 from java.awt import Color
 from javax.imageio import ImageIO
@@ -47,6 +47,10 @@ CSAMDETECTOR_CATEGORY = 'ai:csamDetector:label'
 IPED_GPU_GLOBAL_SEMAPHORE_STRING = 'IPED_GPU_GLOBAL_SEMAPHORE'
 MODEL_SEMAPHORE = None
 CSAM_IMG_SIZE = 224
+
+# --- Global GPU Optimization Variables ---
+AMP_ENABLED = False
+AMP_DTYPE = None  # Will be set to torch.float16 or torch.float32
 
 # ImageNet normalization constants (used by PyTorch-style ONNX; set up during initialization)
 IMG_MEAN_PYTORCH = None
@@ -113,7 +117,7 @@ AI_CLASSIFICATION_SKIP_DUPLICATE = "duplicate"
 
 def carregar_e_configurar_modelo():
     """Central function that loads the correct model (TF, PyTorch) or checks metadata (TFLite, ONNX)."""
-    global MODELO_CARREGADO, DEVICE, CACHE, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, ONNX_INPUT_NAME, ONNX_OUTPUT_NAME
+    global MODELO_CARREGADO, DEVICE, CACHE, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, ONNX_INPUT_NAME, ONNX_OUTPUT_NAME, AMP_ENABLED, AMP_DTYPE
     
     MODELO_CARREGADO = caseData.getCaseObject('csam_model_unificado')
     
@@ -199,7 +203,22 @@ def carregar_e_configurar_modelo():
                 MODELO_CARREGADO.to(DEVICE)
                 MODELO_CARREGADO.eval()
                 
-                logger.info(f"CSAMDetector: PyTorch model ({model_name_key}, {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}) loaded on {DEVICE}.")
+                log_mode = "FP32 (CPU/Legacy Fallback)"
+                AMP_DTYPE = torch.float32 # Default
+            
+                if DEVICE.type == 'cuda':
+                    major, minor = torch.cuda.get_device_capability(DEVICE)
+                    # Compute Capability >= 7.0 (RTX series) supports FP16 Tensor Cores
+                    if major >= 7:
+                        AMP_ENABLED = True
+                        AMP_DTYPE = torch.float16
+                        log_mode = f"FP16 Mixed Precision (Compute Capability {major}.{minor})"
+                    else:
+                        # Legacy GPUs like P620 (CC 6.1) stay in FP32 for stability
+                        AMP_ENABLED = False
+                        log_mode = f"FP32 Standard Precision (Legacy GPU CC {major}.{minor})"                       
+                
+                logger.info(f"CSAMDetector: PyTorch model ({model_name_key}, {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}) loaded on {DEVICE}, {log_mode}.")
             
             except Exception as e:
                 logger.error(f"CSAMDetector: FATAL ERROR loading PyTorch model: {e}")
@@ -279,7 +298,118 @@ def carregar_e_configurar_modelo():
         caseData.putCaseObject('csam_model_unificado', MODELO_CARREGADO)
         
     return MODELO_CARREGADO
+    
+def detect_best_config():
+    """
+    Detects VRAM and selects the best available model. Logs if the 
+    hardware was capable of a better model than the one found on disk.
+    """
+    vram_gb = 0
+    try:
+        import torch
+        if torch.cuda.is_available():
+            vram_bytes = torch.cuda.get_device_properties(0).total_memory
+            vram_gb = vram_bytes / (1024**3)
+            logger.info(f"CSAMDetector: Hardware detected with {vram_gb:.2f} GB VRAM.")
+        else:
+            logger.info("CSAMDetector: GPU not detected. Using CPU fallbacks.")
+    except Exception:
+        vram_gb = 0
 
+    # Priority lists
+    gpu_files = [
+        "pytorch_EVA02_L_v3_1_1.pth",
+        "pytorch_EVA02_B_v3_1.pth",
+        "pytorch_S_v3_1.pth"
+    ]
+    
+    cpu_files = [
+        "onnx_B0_tensorflow_v3_1.onnx",
+        "MobileNetV4_v3_1.onnx",
+        "pytorch_B0_v3_1_2_fp32.onnx"
+    ]
+
+    models_dir = System.getProperty('iped.root') + '/models/'
+    best_hardware_support = None
+    selected_model = None
+    selected_batch = 1
+
+    # 1. Search for best compatible GPU model
+    for filename in gpu_files:
+        batch = get_dynamic_batch(filename, vram_gb)
+        
+        # Track the best model the hardware could actually run
+        if batch > 0 and best_hardware_support is None:
+            best_hardware_support = filename
+            
+        # Check if the file exists for the capable hardware
+        if batch > 0 and os.path.exists(os.path.join(models_dir, filename)):
+            selected_model = filename
+            selected_batch = batch
+            break
+
+    # 2. Check if selected model is inferior to what VRAM allows
+    if selected_model and best_hardware_support and selected_model != best_hardware_support:
+        logger.warn(f"CSAMDetector: Hardware supports {best_hardware_support}, but it was not found. Using {selected_model} instead.")
+    elif not selected_model and best_hardware_support:
+        logger.warn(f"CSAMDetector: GPU supports {best_hardware_support}, but no compatible GPU model files were found.")
+
+    # 3. If no GPU model selected, try CPU fallbacks
+    if selected_model is None:
+        for filename in cpu_files:
+            if os.path.exists(os.path.join(models_dir, filename)):
+                selected_model = filename
+                selected_batch = 1
+                break
+
+    # Final absolute fallback
+    if selected_model is None:
+        selected_model = "onnx_B0_tensorflow_v3_1.onnx"
+        selected_batch = 1
+
+    return selected_model, selected_batch
+    
+def get_dynamic_batch(model_name, vram_gb):
+    """
+    Calculates batch_size based on VRAM. Returns 0 if the hardware 
+    is insufficient for the specific model, forcing a fallback.
+    """
+    model_name = model_name.lower()
+    
+    # Critical Threshold: If VRAM is below 1GB, force fallback to CPU models
+    if vram_gb < 1.0:
+        return 0
+
+    # Logic for EVA02 L (Large)
+    if "eva02_l" in model_name:
+        if vram_gb < 6: return 0 # up to 6 GB
+        if vram_gb < 8: return 4 # up to 8 GB
+        if vram_gb < 12: return 10 # up to 12 GB
+        if vram_gb < 16: return 20 # up to 16 GB
+        if vram_gb < 24: return 20 # up to 24 GB
+        return 32 # 24GB+ extrapolation
+        
+    # Logic for EVA02 B (Base)
+    elif "eva02_b" in model_name:
+        if vram_gb < 4: return 0 # up to 4 GB
+        if vram_gb < 6: return 4 # up to 6 GB
+        if vram_gb < 8: return 8 # up to 8 GB
+        if vram_gb < 12: return 20 # up to 12 GB
+        if vram_gb < 16: return 32 # up to 16 GB
+        if vram_gb < 24: return 64  # up to 24 GB
+        return 128 # 32GB+ extrapolation
+        
+    # Logic for PyTorch S (Small)
+    elif "_s_" in model_name or "pytorch_s" in model_name:
+        if vram_gb < 2: return 4 # up to 2 GB
+        if vram_gb < 4: return 10 # up to 4 GB
+        if vram_gb < 8: return 32 # up to 8 GB
+        if vram_gb < 12: return 64 # up to 12 GB
+        if vram_gb < 24: return 128 # up to 24 GB
+        return 128 # 24GB+ extrapolation
+        
+    return 1 # Default for unknown models
+    
 # Processes the images as an array of BufferedImage objects
 def processFrameTensors(frames_from_video):
     tensors = []
@@ -543,7 +673,20 @@ class CSAMDetectorTask:
             )
             CSAMDetectorTask.enabled = False
             return  
-           
+        
+        if CSAM_MODELFILE.lower() == "auto":
+            # Attempt to retrieve the already detected configuration from the case global object
+            auto_config = caseData.getCaseObject('csam_auto_config_cached')
+            
+            if auto_config is None:
+                # FIRST TIME: Detect, log, and save to caseData
+                CSAM_MODELFILE, CSAM_BATCH_SIZE = detect_best_config()
+                caseData.putCaseObject('csam_auto_config_cached', (CSAM_MODELFILE, CSAM_BATCH_SIZE))
+                logger.info(f"CSAMDetector: Auto-config selected: Model={CSAM_MODELFILE}, BatchSize={CSAM_BATCH_SIZE}")
+            else:
+                # SUBSEQUENT THREADS: Simply retrieve the values silently
+                CSAM_MODELFILE, CSAM_BATCH_SIZE = auto_config
+        
         try:
             model_name_lower = CSAM_MODELFILE.lower()           
             
@@ -954,7 +1097,12 @@ class CSAMDetectorTask:
             
             elif MOTOR_IA == 'pytorch':
                 with torch.no_grad():
-                    outputs = MODELO_CARREGADO(torch.stack(tensores).to(DEVICE))
+                    # If amp_enabled is False or device_dtype is float32, 
+                    # autocast handles it gracefully without performance loss on older hardware.
+                    with torch.amp.autocast(device_type=DEVICE.type, dtype=AMP_DTYPE, enabled=AMP_ENABLED):
+                        outputs = MODELO_CARREGADO(torch.stack(tensores).to(DEVICE))
+                    
+                    # Ensure conversion back to float32 before softmax for stability
                     return torch.nn.functional.softmax(outputs, dim=1).cpu().numpy()
             
             elif MOTOR_IA == 'tflite':                
@@ -1006,6 +1154,20 @@ class CSAMDetectorTask:
                 elif ONNX_MODEL_TYPE == 'tensorflow':
                     return stacked_outputs # Returns direct probabilities
 
+        except Exception as e:
+            error_msg = str(e).lower()
+            # Identify fatal errors that invalidate the GPU context or memory
+            is_cuda_fatal = "cuda error" in error_msg or "illegal memory access" in error_msg
+            is_oom = "out of memory" in error_msg
+
+            if is_cuda_fatal or is_oom:
+                msg_fatal = f"CSAMDetector: FATAL GPU ERROR: {e}. Interrupting IPED to ensure analyst intervention."
+                logger.error(msg_fatal)
+                # Throw the Java exception that forces the IPED engine to stop the task
+                self.worker.exception = RuntimeException(error_msg)
+            
+            raise e
+            
         finally:
             if MODEL_SEMAPHORE is not None:
                 MODEL_SEMAPHORE.release()

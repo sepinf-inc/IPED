@@ -445,6 +445,13 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 if (remoteResource == null || remoteResource.isEmpty() || (!c.isGroupOrChannelChat() && !c.isBroadcast())) {
                     remoteResource = c.getRemote().getFullId();
                 }
+                if (remoteResource != null && remoteResource.endsWith(WAContact.lidSuffix)) {
+                    WAContact contact = contacts.getContact(remoteResource);
+                    String id = contact.getFullId();
+                    if (!remoteResource.equals(id)) {
+                        remoteResource = id;
+                    }
+                }
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$

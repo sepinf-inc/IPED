@@ -18,6 +18,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -276,6 +277,7 @@ public class ReportGenerator {
             printQuote(out, message);
         }
 
+        List<Attachment> ownAttachments = message.getAttachments();
         if (message.isForwardedMessage()) {
             String forwardedFrom = "";
             Party originalSender = message.findForwardedMessageOriginalSender(chat);
@@ -288,11 +290,16 @@ public class ReportGenerator {
 
             InstantMessage forwardedMessage = message.findForwardedMessage(chat);
             if (forwardedMessage != null) {
-                printMessageContent(out, forwardedMessage);
+                if (message.getForwardedEmbeddedMessage().isPresent()) {
+                    printMessageContent(out, forwardedMessage, message.getForwardedEmbeddedAttachments());
+                    ownAttachments = message.getOwnAttachmentsNotForwarded();
+                } else {
+                    printMessageContent(out, forwardedMessage, forwardedMessage.getAttachments());
+                }
             }
         }
 
-        printMessageContent(out, message);
+        printMessageContent(out, message, ownAttachments);
 
         if (message.isSystemMessage()) {
             out.print("</div>");
@@ -357,14 +364,14 @@ public class ReportGenerator {
         out.println("</div></div>");
     }
 
-    private void printMessageContent(PrintWriter out, InstantMessage message) {
+    private void printMessageContent(PrintWriter out, InstantMessage message, List<Attachment> attachments) {
 
         out.println(formatLocation(message));
         out.println(formatSharedContacts(message));
 
         String body = message.getBody();
 
-        for (Attachment attachment : message.getAttachments()) {
+        for (Attachment attachment : attachments) {
 
             boolean startedLink = false;
             byte[] thumb = null;
@@ -509,7 +516,16 @@ public class ReportGenerator {
             return;
         }
 
-        String body = quotedMessage.getBody();
+        // a quoted forwarded message may keep its content only in the forwarded (embedded) message
+        InstantMessage quotedContent = quotedMessage;
+        if (quotedMessage.isForwardedMessage() && quotedMessage.getAttachments().isEmpty() && isBlank(quotedMessage.getBody())) {
+            InstantMessage forwardedMessage = quotedMessage.findForwardedMessage(chat);
+            if (forwardedMessage != null) {
+                quotedContent = forwardedMessage;
+            }
+        }
+
+        String body = quotedContent.getBody();
         String quoteClick = "onclick=\"goToAnchorId('" + quotedMessage.getAnchorId() + "');\"";
         String quoteUser = null;
         if (quotedMessage.getFrom().isPresent()) {
@@ -526,7 +542,7 @@ public class ReportGenerator {
         StringBuilder msgStr = new StringBuilder();
         StringBuilder attachStr = new StringBuilder();
 
-        for (Attachment attach : quotedMessage.getAttachments()) {
+        for (Attachment attach : quotedContent.getAttachments()) {
 
             byte[] quoteThumb = null;
             String quoteDuration = "";
@@ -581,8 +597,8 @@ public class ReportGenerator {
             msgStr.append(formatTitleAndUrl(attach, body));
         }
 
-        msgStr.append(formatLocation(quotedMessage));
-        msgStr.append(formatSharedContacts(quotedMessage));
+        msgStr.append(formatLocation(quotedContent));
+        msgStr.append(formatSharedContacts(quotedContent));
 
         if (isNotBlank(body)) {
             if (msgStr.length() > 0) {

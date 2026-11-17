@@ -7,3 +7,4 @@ nbactions.xml
 /.idea/
 CLAUDE.md
 /models/
+.sdkmanrc

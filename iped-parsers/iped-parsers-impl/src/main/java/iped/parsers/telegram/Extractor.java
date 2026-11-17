@@ -27,6 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,6 +43,8 @@ import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
+import iped.parsers.util.LRUCache;
+import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 
@@ -53,6 +56,7 @@ public class Extractor {
 
     private Connection conn;
     private IItemSearcher searcher;
+    private  ResultSet msgsResultSet = null;
 
     private File databaseFile;
 
@@ -64,6 +68,7 @@ public class Extractor {
     private DecoderTelegramInterface androidDecoder = null;
 
     private Contact userAccount = null;
+    private LRUCache<String, IItemReader> loadDocumentCache = new LRUCache<String, IItemReader>(1024);
 
     public Extractor() {
     }
@@ -168,7 +173,7 @@ public class Extractor {
                         androidDecoder.setDecoderData(dados, DecoderTelegramInterface.USER);
                         androidDecoder.getUserData(cont);
                         if (cont.getAvatar() == null && !androidDecoder.getPhotoData().isEmpty()) {
-                            searchAvatarFileName(cont, androidDecoder.getPhotoData());
+                            searchAvatar(cont, androidDecoder.getPhotoData());
                         }
                     }
                     cg = new Chat(chatId, cont, cont.getFullname());
@@ -180,7 +185,7 @@ public class Extractor {
                     Contact cont = getContact(chatId);
                     androidDecoder.getChatData(cont);
 
-                    searchAvatarFileName(cont, androidDecoder.getPhotoData());
+                    searchAvatar(cont, androidDecoder.getPhotoData());
 
                     ChatGroup group = new ChatGroup(chatId, cont, chatName);
 
@@ -205,8 +210,41 @@ public class Extractor {
                 }
             }
         }
+        l.sort((c1, c2) -> {
+            if (c1.getId() > c2.getId()) {
+                return 1;
+            } else if (c1.getId() < c2.getId()) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+
         chatList = l;
         return l;
+    }
+
+    protected int getChatById(long chatId) throws Exception {
+
+        // binary search in the chatList, since it is sorted by id using the library
+        // Collections.binarySearch, we need to create a dummy Chat object with the
+        // chatId to search for
+        if (chatList != null) {
+            int index = Collections.binarySearch(chatList, new Chat(chatId, null, null), (c1, c2) -> {
+                if (c1.getId() > c2.getId()) {
+                    return 1;
+                } else if (c1.getId() < c2.getId()) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            });
+
+            return index;
+
+        }
+
+        return -1;
     }
 
     protected ArrayList<Chat> extractChatListIOS() throws SQLException {
@@ -244,66 +282,126 @@ public class Extractor {
         return l;
     }
 
-    protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
-        ArrayList<Message> msgs = new ArrayList<Message>();
-        String SQL = getAndroidExtractMessagesSQL();
-        try (PreparedStatement stmt = conn.prepareStatement(SQL)) {
-            stmt.setLong(1, chat.getId());
-            ResultSet rs = stmt.executeQuery();
-            ChatGroup cg = null;
-            if (chat.isGroupOrChannel()) {
-                cg = (ChatGroup) chat;
-            }
-            if (rs != null) {
-                while (rs.next()) {
-                    byte[] data = rs.getBytes("data");
-                    long mid = rs.getLong("mid");
-                    Message message = new Message(mid, chat);
-                    androidDecoder.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
-                    androidDecoder.getMessageData(message);
-                    long fromid = androidDecoder.getRemetenteId();
-                    if (fromid != 0) {
-                        message.setFrom(getContact(fromid));
-                    }
-                    setFrom(message, chat);
-
-                    if (cg != null && message.getFrom().getId() != 0) {
-                        cg.addMember(message.getFrom().getId());
-                    }
-
-                    if (message.getMediaMime() != null) {
-                        if (message.getMediaMime().startsWith("image")) {
-                            List<PhotoData> list = androidDecoder.getPhotoData();
-                            loadImage(message, list);
-                        } else if (message.getMediaMime().startsWith("link")) {
-                            loadLink(message, androidDecoder.getPhotoData());
-                        } else if (message.getMediaMime().length() > 0) {
-                            loadDocument(message, androidDecoder.getDocumentNames(),
-                                    androidDecoder.getDocumentSize());
-                        }
-
-                    }
-                    if (message.getType() != null) {
-                        String type = message.getType();
-                        String msg_decoded;
-
-                        if (type.contains(":")) {
-                            String[] aux = type.split(":");
-                            msg_decoded = MapTypeMSG.decodeMsg(aux[0]) + ":" + aux[1];
-                        } else {
-                            msg_decoded = MapTypeMSG.decodeMsg(type);
-                        }
-                        message.setType(msg_decoded);
-                    }
-
-                    msgs.add(message);
-                }
-            }
+    protected Chat extractMessages() throws Exception {
+        boolean first = false;
+        if (this.msgsResultSet == null) {
+            String SQL = getAndroidExtractMessagesSQL();
+            this.msgsResultSet = conn.prepareStatement(SQL).executeQuery();
+            first = true;
         }
 
-        Collections.sort(msgs, MSG_TIME_COMPARATOR);
+        ArrayList<MessageMultiMedia> msgs = new ArrayList<>();
 
-        return msgs;
+        Chat chat = null;
+
+        ChatGroup cg = null;
+        
+        if (first && !msgsResultSet.next()) {
+            return null;
+        }
+        
+        if (msgsResultSet.isAfterLast()) {
+            return null;
+        }
+        
+
+        do {
+            byte[] data = msgsResultSet.getBytes("data");
+            long mid = data == null ? msgsResultSet.getLong("mdmid") : msgsResultSet.getLong("mid");
+            if (chat == null) {
+                long chatId = msgsResultSet.getLong("uid");
+                int index = getChatById(chatId);
+                if (index >= 0) {
+                    chat = chatList.get(index);
+                }
+                if (chat == null) {
+                    logger.warn("Chat with id {} not found in chat list, creating a new one",
+                            chatId);
+                    Contact c = getContact(chatId);
+                    chat = new Chat(chatId, c, c.getFullname());
+                    chat.setDeleted(true);
+                    // add to sorted chat list
+                    chatList.add(-index - 1, chat);
+                }
+                if (chat.isGroupOrChannel()) {
+                    cg = (ChatGroup) chat;
+                }
+            }
+            if (chat.getId() != msgsResultSet.getLong("uid")) {
+                // the current chat ended, we should break the loop and return the chat with the
+                // messages extracted so far, since the query is ordered by chat id
+                break;
+            }
+            Message message = new Message(mid, chat);
+            if (data == null) {
+                data = msgsResultSet.getBytes("mediaData");
+                logger.debug("Message with mid {} has no data, trying to decode media data", mid);
+                message.setDeleted(true);
+                message.setRecoveryString(Messages.getString("TelegramReport.RecoveredMessage"));
+            }
+            // if has media data use it to decode the message
+            if (msgsResultSet.getBytes("mediaData") != null) {
+                data = msgsResultSet.getBytes("mediaData");
+                logger.debug("Message with mid {} has media data", mid);
+            }
+
+
+            androidDecoder.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
+            androidDecoder.getMessageData(message);
+            long fromid = androidDecoder.getRemetenteId();
+            if (fromid != 0) {
+                message.setFrom(getContact(fromid));
+            }
+            setFrom(message, chat);
+
+            if (cg != null && message.getFrom().getId() != 0) {
+                cg.addMember(message.getFrom().getId());
+            }
+
+            if (message.getMediaMime() != null) {
+                if (message.getMediaMime().startsWith("image")) {
+                    List<PhotoData> list = androidDecoder.getPhotoData();
+                    loadImage(message, list);
+                } else if (message.getMediaMime().startsWith("link")) {
+                    loadLink(message, androidDecoder.getPhotoData());
+                } else if (message.getMediaMime().length() > 0) {
+                    loadDocument(message, androidDecoder.getDocumentNames(), androidDecoder.getDocumentSize());
+                }
+
+            }
+            if (message.getType() != null) {
+                String type = message.getType();
+                String msg_decoded;
+
+                if (type.contains(":")) {
+                    String[] aux = type.split(":");
+                    msg_decoded = MapTypeMSG.decodeMsg(aux[0]) + ":" + aux[1];
+                } else {
+                    msg_decoded = MapTypeMSG.decodeMsg(type);
+                }
+                message.setType(msg_decoded);
+            }
+            if (msgs.size() > 0 && msgs.get(msgs.size() - 1).getId() == message.getId()) {
+                logger.debug("Message with mid {} is part of a media group, adding to the last MessageMultiMedia", mid);
+                MessageMultiMedia last = msgs.get(msgs.size() - 1);
+                last.setMessage(message);
+
+            } else {
+                MessageMultiMedia mmm = new MessageMultiMedia(message.getId(), chat);
+                mmm.setFrom(message.getFrom());
+                mmm.setFromMe(message.isFromMe());
+                mmm.setDeleted(message.isDeleted());
+                mmm.setMessage(message);
+                msgs.add(mmm);
+            }
+
+
+
+        } while (msgsResultSet.next());
+
+        Collections.sort(msgs, MSG_TIME_COMPARATOR);
+        chat.setMessages(msgs);
+        return chat;
     }
 
     public void extractMediaIOS() throws SQLException {
@@ -344,13 +442,16 @@ public class Extractor {
 
     }
 
-    protected ArrayList<Message> extractMessagesIOS(Chat chat) throws SQLException {
-        ArrayList<Message> msgs = new ArrayList<Message>();
+    protected ArrayList<MessageMultiMedia> extractMessagesIOS(Chat chat) throws SQLException {
+        ArrayList<MessageMultiMedia> msgs = new ArrayList<MessageMultiMedia>();
         if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
-                ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-                buffer.putLong(chat.getId());
-                stmt.setBytes(1, buffer.array());
+                byte[] bytesChatId = ByteBuffer.allocate(Long.BYTES).putLong(chat.getId()).array();
+                byte[] bytesMin = Arrays.copyOf(bytesChatId, 20);
+                byte[] bytesMax = Arrays.copyOf(bytesChatId, 20);
+                Arrays.fill(bytesMax, 8, 20, (byte) 0xFF);
+                stmt.setBytes(1, bytesMin);
+                stmt.setBytes(2, bytesMax);
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
                     ChatGroup cg = null;
@@ -378,11 +479,21 @@ public class Extractor {
                             cg.addMember(message.getFrom().getId());
                         }
     
-                        if (message.getNames() != null && !message.getNames().isEmpty()) {
-                            for (PhotoData f : message.getNames()) {
-                                ArrayList<String> name = new ArrayList<>();
+                        List<PhotoData> l = message.getNames();
+                        if (l != null && !l.isEmpty()) {
+                            if (l.size() > 1) {
+                                Collections.sort(l, new Comparator<PhotoData>() {
+                                    public int compare(PhotoData a, PhotoData b) {
+                                        return Long.compare(b.getSize(), a.getSize());
+                                    }
+                                });
+                            }
+                            for (PhotoData f : l) {
+                                List<String> name = new ArrayList<>(1);
                                 name.add(f.getName());
-                                loadDocument(message, name, f.getSize());
+                                if (loadDocument(message, name, f.getSize())) {
+                                    break;
+                                }
                             }
                             if (message.getMediaMime() == null && message.getType() == null) {
                                 message.setMediaMime("attach");
@@ -390,7 +501,12 @@ public class Extractor {
                         }
     
                         message.setFrom(getContact(message.getFrom().getId()));
-                        msgs.add(message);
+                        MessageMultiMedia mmm = new MessageMultiMedia(message.getId(), chat);
+                        mmm.setFrom(message.getFrom());
+                        mmm.setFromMe(message.isFromMe());
+                        mmm.setDeleted(message.isDeleted());
+                        mmm.setMessage(message);
+                        msgs.add(mmm);
                     }
                 }
             }
@@ -399,29 +515,50 @@ public class Extractor {
         return msgs;
     }
 
-    private void loadDocument(Message message, List<String> names, long size) {
+    private boolean loadDocument(Message message, List<String> names, long size) {
+        boolean found = false;
         for (String name : names) {
             String query = getQuery(name, size);
-            IItemReader item = getFileFromQuery(query);
-            if (item != null) {
-                if (message.getMediaMime() == null) {
-                    message.setMediaMime(item.getMediaType().toString());
+            IItemReader item = null;
+            if (loadDocumentCache.containsKey(query)) {
+                item = loadDocumentCache.get(query);
+            } else {
+                if (size <= 0) {
+                    List<IItemReader> items = getItemsFromQuery(query);
+                    for (IItemReader a : items) {
+                        if (a.getThumb() != null) {
+                            if (item == null || a.getLength() > item.getLength()) {
+                                item = a;
+                            }
+                        }
+                    }
+                } else {
+                    item = getItemFromQuery(query);
                 }
-                logger.debug("Document mediaType: {}", message.getMediaMime());
-                message.setMediaHash(item.getHash());
+                loadDocumentCache.put(query, item);
+            }
+            if (item != null) {
+                if (size != -1) {
+                    if (message.getMediaMime() == null) {
+                        message.setMediaMime(item.getMediaType().toString());
+                    }
+                    message.setMediaHash(item.getHash());
+                    message.setMediaExtension(item.getType());
+                    message.setMediaItem(item);
+                    message.setMediaComment(query);
+                }
                 message.setThumb(item.getThumb());
-                message.setMediaExtension(item.getType());
-                message.setMediaItem(item);
-                message.setMediaComment(query);
+                found = true;
                 break;
             }
         }
+        return found;
     }
 
     private void loadLink(Message message, List<PhotoData> list) {
         for (PhotoData p : list) {
             String query = getQuery(p.getName(), p.getSize());
-            IItemReader r = getFileFromQuery(query);
+            IItemReader r = getItemFromQuery(query);
             if (r != null) {
                 message.setLinkImage(r.getThumb());
                 message.setMediaHash(r.getHash());
@@ -436,7 +573,7 @@ public class Extractor {
     private void loadImage(Message message, List<PhotoData> list) {
         for (PhotoData p : list) {
             String query = getQuery(p.getName(), p.getSize());
-            IItemReader r = getFileFromQuery(query);
+            IItemReader r = getItemFromQuery(query);
             if (r != null) {
                 message.setThumb(r.getThumb());
                 message.setMediaHash(r.getHash());
@@ -450,21 +587,25 @@ public class Extractor {
 
     private String getQuery(String name, long size) {
         if (searcher != null) {
-            name = searcher.escapeQuery(name);
+            name = searcher.escapeQuery(name.toLowerCase());
         }
-        String query = BasicProps.NAME + ":\"" + name + "\"";
-        query += size > 0 ? " && " + BasicProps.LENGTH + ":" + size : "";
+        String query = BasicProps.NAME + ":\"" + name + "\" && " + BasicProps.LENGTH + ":";
+        if (size > 0) {
+            query += size;
+        } else {
+            query += "[100 TO *]";
+        }
         return query;
     }
 
-    private IItemReader getFileFromQuery(String query) {
-        List<IItemReader> result = iped.parsers.util.Util.getItems(query, searcher);
-        if (result != null && !result.isEmpty()) {
-            return result.get(0);
-        }
-        return null;
+    private IItemReader getItemFromQuery(String query) {
+        return iped.parsers.util.Util.getFirstItem(query, searcher);
     }
 
+    private List<IItemReader> getItemsFromQuery(String query) {
+        return iped.parsers.util.Util.getItems(query, searcher);
+    }
+    
     protected void extractContacts() throws Exception {
 
         if (conn != null) {
@@ -496,7 +637,7 @@ public class Extractor {
                         if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
                             try {
                                 if (cont.getPhone() != null)
-                                    searchAvatarFileName(cont, cont.getPhotos());
+                                    searchAvatar(cont, cont.getPhotos());
                             } catch (IOException e) {
                                 // TODO: handle exception
                                 e.printStackTrace();
@@ -515,29 +656,19 @@ public class Extractor {
                 ResultSet rs = stmt.executeQuery();
                 if (rs == null)
                     return;
-                //int nphones = 0;
-                while (rs.next()) {
 
+                while (rs.next()) {
                     long id = rs.getLong("key");
-                    
                     if (id != 0) {
-                        Contact cont = getContact(id);
-                        if (cont.getName() == null) {
+                        Contact c = getContact(id);
+                        if (c.getName() == null) {
                             PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
-                            p.readContact(cont);
-    
+                            p.readContact(c);
                         }
-    
-                        //if (cont.getPhone() != null) {
-                        //   nphones++;
-                        //}
-                        // List<PhotoData> photo = d.getPhotoData();
-                        if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
+                        if (c.getAvatar() == null && c.getPhotos() != null && !c.getPhotos().isEmpty()) {
                             try {
-                                if (cont.getPhone() != null)
-                                    searchAvatarFileName(cont, cont.getPhotos());
+                                searchAvatar(c, c.getPhotos());
                             } catch (IOException e) {
-                                // TODO: handle exception
                                 e.printStackTrace();
                             }
                         }
@@ -545,31 +676,32 @@ public class Extractor {
                 }
             }
         }
-
     }
 
-    protected void searchAvatarFileName(Contact contact, List<PhotoData> photos) throws IOException {
-        if (photos == null || searcher == null)
+    protected void searchAvatar(Contact contact, List<PhotoData> photos) throws IOException {
+        if (photos == null || photos.isEmpty() || searcher == null) {
             return;
-        List<IItemReader> result = null;
-        String name = null;
+        }
         for (PhotoData photo : photos) {
-            if (photo.getName() != null) {
-                name = photo.getName() + ".jpg";
-
-                if (searcher != null) {
-                    String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"  -" + BasicProps.LENGTH
-                            + ":0";
-                    result = iped.parsers.util.Util.getItems(query, searcher);
-                }
-                if (result != null && !result.isEmpty()) {
-                    break;
+            String name = photo.getName();
+            if (name != null && !name.isBlank()) {
+                String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name.toLowerCase()) + "\" && "
+                        + BasicProps.LENGTH + ":[100 TO 10000000]";
+                List<IItemReader> items = iped.parsers.util.Util.getItems(query, searcher);
+                if (items != null) {
+                    IItemReader best = null;
+                    for (IItemReader item : items) {
+                        if (item.getThumb() != null) {
+                            if (best == null || item.getLength() > best.getLength()) {
+                                best = item;
+                            }
+                        }
+                    }
+                    if (best != null) {
+                        contact.setAvatar(best.getThumb());
+                    }
                 }
             }
-        }
-        if (result != null && !result.isEmpty()) {
-            File f = result.get(0).getTempFile().getAbsoluteFile();
-            contact.setAvatar(FileUtils.readFileToByteArray(f));
         }
     }
 
@@ -589,8 +721,8 @@ public class Extractor {
         return userAccount;
     }
 
-    private static final Comparator<Message> MSG_TIME_COMPARATOR = new Comparator<Message>() {
-        public int compare(Message o1, Message o2) {
+    private static final Comparator<MessageMultiMedia> MSG_TIME_COMPARATOR = new Comparator<MessageMultiMedia>() {
+        public int compare(MessageMultiMedia o1, MessageMultiMedia o2) {
             boolean o1Empty = o1 == null || o1.getTimeStamp() == null;
             boolean o2Empty = o2 == null || o2.getTimeStamp() == null;
             if (o1Empty && o2Empty) {
@@ -626,8 +758,14 @@ public class Extractor {
     }
 
     private String getAndroidExtractMessagesSQL() throws SQLException {
-        return "SELECT m.*,md.data as mediaData FROM " + findTableVersion("messages", 5) + " m left join "
-                + findTableVersion("media", 5) + " md on (md.mid=m.mid and  m.uid=md.uid) where m.uid=? order by date";
+        String tmessage = findTableVersion("messages", 5);
+        String tmedia = findTableVersion("media", 5);
+
+        return "SELECT * FROM (SELECT m.uid, m.mid, m.data, md.data as mediaData, md.mid as mdmid " + "FROM " + tmessage
+                + " m  LEFT JOIN " + tmedia + " md ON (md.mid=m.mid AND m.uid=md.uid)" + "UNION ALL "
+                + "SELECT md.uid,m.mid as mid, m.data as data, md.data as mediaData, md.mid as mdmid " + "FROM "
+                + tmessage + " m " + "RIGHT JOIN " + tmedia + " md ON (md.mid=m.mid AND m.uid=md.uid) "
+                + "WHERE m.mid IS NULL) ORDER BY uid,IFNULL(mid,mdmid)";
     }
 
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
@@ -652,7 +790,7 @@ public class Extractor {
 
     private static final String EXTRACT_MEDIAS_SQL_IOS = "SELECT key,value from t6 ";
 
-    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and "
+    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key, t7.value FROM t7 where t7.key between ? and ? and "
             + "substr(t7.value,1,1)=x'00'";
 
     private static final String EXTRACT_CONTACTS_SQL = "SELECT * FROM users";

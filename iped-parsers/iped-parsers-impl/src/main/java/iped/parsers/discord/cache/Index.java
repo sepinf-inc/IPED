@@ -1,5 +1,6 @@
 package iped.parsers.discord.cache;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -231,14 +232,19 @@ public class Index {
                     try (InputStream naIS = na.getInputStream(dataFiles, externalFiles, null)) {
                         ce = new CacheEntry(naIS, dataFiles, externalFiles);
                         lst.add(ce);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    } catch (EOFException e) {
+                        logger.warn("Entry in cache truncated or invalid.");
                         break;// avoid potential infinite loop
+                    } catch (Exception e) {
+                        e.printStackTrace(); 
+                        break;
                     }
                 }
             } catch (InputStreamNotAvailable e) {
                 continue;
-            } catch (IOException e) {
+            } catch (EOFException e) {
+                logger.warn("Entry in cache truncated or invalid.");
+            } catch (Exception e) {
                 logger.warn("Exception reading CacheEntry of Discord Index " + path, e);
             }
         }
@@ -257,22 +263,28 @@ public class Index {
     }
 
     public static long readUnsignedInt(InputStream is) throws IOException {
-        byte[] b = new byte[4];
-        is.read(b);
+        byte[] b = is.readNBytes(4);
+        if (b.length < 4) {
+            throw new IOException("End of InputStream reached.");
+        }
         ByteBuffer bb = ByteBuffer.wrap(b);
         bb.order(ByteOrder.LITTLE_ENDIAN);
         return Integer.toUnsignedLong(bb.getInt());
     }
 
     public static long read8bytes(InputStream is) throws IOException {
-        byte b[] = new byte[8];
-        is.read(b);
+        byte b[] = is.readNBytes(8);
+        if (b.length < 8) {
+            throw new IOException("End of InputStream reached.");
+        }
         return ByteBuffer.wrap(b).getLong() & 0xffffffffffffffffL;
     }
 
     public static Date readDate(InputStream is) throws IOException {
-        byte[] buf = new byte[8];
-        is.read(buf);
+        byte buf[] = is.readNBytes(8);
+        if (buf.length < 8) {
+            throw new IOException("End of InputStream reached.");
+        }
         long timestamp = new LittleEndianByteArrayInputStream(buf).readLong();
         return Filetime.filetimeToDate(timestamp * 10);
     }
