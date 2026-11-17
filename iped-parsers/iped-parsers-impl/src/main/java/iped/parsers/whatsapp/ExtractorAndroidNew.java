@@ -796,11 +796,15 @@ public abstract class ExtractorAndroidNew extends Extractor {
         if (account != null)
             m.setLocalResource(account.getId());
 
-        // the rowid (_id) of a deleted record is usually overwritten by the freeblock header
-        long id = row.getIntValue("_id");
-        m.setId(id > 0 ? id : 0);
+        // The rowid (_id) of a deleted record is usually overwritten by the freeblock
+        // header. It is not used, as a wrong value could be the id of another message.
+        m.setId(0);
 
         int type = (int) getIntOrDefault(row, "message_type", 0);
+        if (type == 7) {
+            // system message: its meaning is in other tables, which are not recovered
+            return null;
+        }
         int status = (int) getIntOrDefault(row, "status", 0);
         String text = row.getTextValue("text_data");
 
@@ -822,7 +826,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
         m.setStatus(status);
         m.setData(text);
         m.setMediaCaption(text);
-        m.setFromMe(row.getIntValue("from_me") == 1 && type != 7);
+        m.setFromMe(row.getIntValue("from_me") == 1);
         m.setTimeStamp(new Date(row.getIntValue("timestamp")));
         m.setMessageType(decodeMessageType(type, status, null, text, 0, 0, 0, null));
         if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED || m.getMessageType() == IGNORE_MESSAGE) {

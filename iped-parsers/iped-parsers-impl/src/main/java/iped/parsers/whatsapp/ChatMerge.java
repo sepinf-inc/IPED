@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import iped.parsers.whatsapp.Message.MessageType;
+
 public class ChatMerge {
 
     List<Chat> main;
@@ -97,13 +99,20 @@ public class ChatMerge {
         // The backup record is complete (rowid, media, quotes...), so it replaces the
         // carved record at the same position.
         //
-        // 3. Recovered messages are not inserted one by one, as each insertion shifts
+        // 3. Carved records often lose their sort key (the column comes after the text)
+        // and are then sorted by time, so they are not found by step 2. They are
+        // looked up by message key instead and removed when the backup message is
+        // recovered by step 1.
+        //
+        // 4. Recovered messages are not inserted one by one, as each insertion shifts
         // the rest of the list. They are appended to main, which is then sorted once.
         // As main and the appended messages are normally already sorted, TimSort just
         // merges them, in about linear time.
 
         int tot_rec = 0;
         Map<Long, List<Integer>> carvedCopies = indexCarvedMessages(main);
+        Map<String, List<Integer>> carvedByKey = indexCarvedMessagesByKey(main);
+        Set<Integer> replacedCarved = new HashSet<>();
         Set<Long> recoveredSortIds = new HashSet<>();
         List<Message> recovered = new ArrayList<>();
         for (Message m : backup) {
@@ -111,12 +120,20 @@ public class ChatMerge {
                 // step 1
                 if (recoveredSortIds.add(m.getSortId())) {
                     recovered.add(m);
+                    if (!m.isDeleted() && hasUuid(m) && carvedByKey.containsKey(m.getUuid())) {
+                        // step 3
+                        for (int pos : carvedByKey.get(m.getUuid())) {
+                            if (replaces(m, main.get(pos))) {
+                                replacedCarved.add(pos);
+                            }
+                        }
+                    }
                 }
             } else if (!m.isDeleted() && carvedCopies.containsKey(m.getSortId())) {
                 // step 2: look for a carved record of the same message to replace
                 for (Iterator<Integer> it = carvedCopies.get(m.getSortId()).iterator(); it.hasNext();) {
                     int pos = it.next();
-                    if (sameMessage(main.get(pos), m)) {
+                    if (!replacedCarved.contains(pos) && replaces(m, main.get(pos))) {
                         it.remove();
                         main.set(pos, m);
                         m.setRecoveredFrom(dbname);
@@ -126,8 +143,15 @@ public class ChatMerge {
                 }
             }
         }
+        if (!replacedCarved.isEmpty()) {
+            List<Integer> positions = new ArrayList<>(replacedCarved);
+            positions.sort(Collections.reverseOrder());
+            for (int pos : positions) {
+                main.remove(pos);
+            }
+        }
         if (!recovered.isEmpty()) {
-            // step 3
+            // step 4
             recovered.forEach(m -> m.setRecoveredFrom(dbname));
             main.addAll(recovered);
             Collections.sort(main);
@@ -153,6 +177,37 @@ public class ChatMerge {
             }
         }
         return carved;
+    }
+
+    /**
+     * Positions of the messages carved from deleted space by message key.
+     */
+    private static Map<String, List<Integer>> indexCarvedMessagesByKey(List<Message> messages) {
+        Map<String, List<Integer>> carved = new HashMap<>();
+        for (int i = 0; i < messages.size(); i++) {
+            Message m = messages.get(i);
+            if (m.isDeleted() && hasUuid(m)) {
+                carved.computeIfAbsent(m.getUuid(), k -> new ArrayList<>()).add(i);
+            }
+        }
+        return carved;
+    }
+
+    /**
+     * Tells if the backup message should take the place of the carved record: both
+     * are the same message and the backup one is not just the placeholder of a
+     * message deleted for everyone. Current WhatsApp versions give that placeholder
+     * a new message key, but if a version keeps the key, the placeholder must not
+     * replace the content recovered from deleted space.
+     */
+    private static boolean replaces(Message fromBackup, Message carved) {
+        return sameMessage(carved, fromBackup) && !(isRevoked(fromBackup) && !isRevoked(carved));
+    }
+
+    private static boolean isRevoked(Message m) {
+        MessageType type = m.getMessageType();
+        return type == MessageType.DELETED_MESSAGE || type == MessageType.DELETED_BY_SENDER
+                || type == MessageType.DELETED_BY_ADMIN;
     }
 
     /**

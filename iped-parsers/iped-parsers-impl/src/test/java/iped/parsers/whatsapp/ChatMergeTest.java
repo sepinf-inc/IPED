@@ -19,7 +19,8 @@ import junit.framework.TestCase;
  * <li>a message deleted for everyone is replaced by a placeholder row with the
  * same sort key, a new message key and another message type;</li>
  * <li>a record carved from deleted space has the columns of the message table
- * only: it may be truncated, has no edit timestamp and may have lost its key.</li>
+ * only: it may be truncated, has no edit timestamp and may have lost its key or
+ * its sort key (which comes after the text), being then sorted by time.</li>
  * </ul>
  */
 public class ChatMergeTest extends TestCase {
@@ -41,6 +42,13 @@ public class ChatMergeTest extends TestCase {
     private static Message carved(long sortId, String key, String text) {
         Message m = active(sortId, key, text);
         m.setDeleted(true);
+        return m;
+    }
+
+    /** Carved record that lost its sort key. */
+    private static Message carvedWithoutSortKey(long sortIdOfMessage, String key, String text) {
+        Message m = carved(sortIdOfMessage, key, text);
+        m.setSortId(0);
         return m;
     }
 
@@ -110,6 +118,60 @@ public class ChatMergeTest extends TestCase {
 
         List<Message> messages = merge(main, backup, 1);
         assertEquals(Arrays.asList(fromBackup), messages);
+    }
+
+    /**
+     * Same, with a carved record that lost its sort key: it is not found by sort
+     * key, so it is matched by message key.
+     */
+    @Test
+    public void testBackupMessageReplacesCarvedCopyWithoutSortKey() {
+        Message other = active(1000, "KEY1", "active message");
+        Message later = active(3000, "KEY3", "later message");
+        List<Chat> main = chatList(other, later, carvedWithoutSortKey(2000, "KEY2", "Guarda esto por"));
+
+        Message fromBackup = active(2000, "KEY2", "Guarda esto por si acaso");
+        List<Chat> backup = chatList(active(1000, "KEY1", "active message"), fromBackup,
+                active(3000, "KEY3", "later message"));
+
+        List<Message> messages = merge(main, backup, 1);
+        assertEquals(Arrays.asList(other, fromBackup, later), messages);
+        assertEquals(BACKUP, fromBackup.getRecoveredFrom());
+    }
+
+    /**
+     * A carved record without sort key and without message key can not be matched:
+     * it is kept, and the backup message is recovered too.
+     */
+    @Test
+    public void testCarvedCopyWithoutSortKeyAndMessageKeyIsKept() {
+        Message carved = carvedWithoutSortKey(2000, null, "Guarda esto por");
+        List<Chat> main = chatList(carved);
+
+        Message fromBackup = active(2000, "KEY2", "Guarda esto por si acaso");
+        List<Chat> backup = chatList(fromBackup);
+
+        List<Message> messages = merge(main, backup, 1);
+        assertEquals(2, messages.size());
+        assertTrue(messages.contains(carved));
+        assertTrue(messages.contains(fromBackup));
+    }
+
+    /**
+     * Not how current WhatsApp versions work, as the placeholder of a message
+     * deleted for everyone gets a new key. If a version keeps the key, the
+     * placeholder in the backup must not replace the recovered content.
+     */
+    @Test
+    public void testRevokedPlaceholderWithSameKeyDoesNotReplaceCarvedContent() {
+        Message carved = carved(2000, "KEY2", "Guarda esto por si acaso");
+        List<Chat> main = chatList(carved);
+
+        List<Chat> backup = chatList(revoked(2000, "KEY2"));
+
+        List<Message> messages = merge(main, backup, 0);
+        assertEquals(Arrays.asList(carved), messages);
+        assertNull(carved.getRecoveredFrom());
     }
 
     /**
