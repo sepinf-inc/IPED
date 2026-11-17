@@ -41,7 +41,7 @@
         <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit b673cf4 can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
         <tika.core.version>2.4.0-p1</tika.core.version>
         <pdfbox.version>2.0.27</pdfbox.version>
-        <lucene.version>10.5.1</lucene.version>
+        <lucene.version>10.6.0</lucene.version>
         <sleuthkit.version>4.15.0.p2</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>
         <slf4j.version>2.0.17</slf4j.version>
@@ -123,6 +123,27 @@
                 <version>${jersey.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- lucene modules used only by opensearch, kept in the same version of the others -->
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-grouping</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-spatial-extras</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-spatial3d</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-suggest</artifactId>
+                <version>${lucene.version}</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>

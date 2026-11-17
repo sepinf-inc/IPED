@@ -1,6 +1,6 @@
 The following libraries or softwares are used and distributed by IPED, but they have their own distribution licenses (in licenses folder), detailed below:
 
-Apache Lucene 10.5.1
+Apache Lucene 10.6.0
 - Site: https://lucene.apache.org/core/
 - License: Apache License, Version 2.0
 

@@ -154,7 +154,7 @@
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-high-level-client</artifactId>
-            <!-- 3.9.0 is built on the same lucene version -->
+            <!-- built on a previous lucene version, see the lucene modules managed in the parent pom -->
             <version>3.9.0</version>
             <exclusions>
                 <exclusion>
