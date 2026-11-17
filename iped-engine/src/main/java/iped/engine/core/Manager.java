@@ -56,6 +56,7 @@ import iped.engine.CmdLineArgs;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.HtmlReportTaskConfig;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.SplashScreenConfig;
@@ -69,11 +70,13 @@ import iped.engine.graph.GraphFileWriter;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.GraphTask;
+import iped.engine.graph.GraphTaskConfig;
 import iped.engine.io.ParsingReader;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
 import iped.engine.lucene.CustomIndexDeletionPolicy;
 import iped.engine.lucene.analysis.AppAnalyzer;
+import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IndexerSimilarity;
@@ -246,6 +249,8 @@ public class Manager {
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
 
+        applyReportTypeArgs();
+
         prepareOutputFolder();
 
         if ((args.isContinue() || args.isRestart())) {
@@ -325,6 +330,23 @@ public class Manager {
         status.addSuccessfulEvidences(args);
         status.save();
 
+        if (isHtmlReportOnly()) {
+            deletePortableCaseFiles(output);
+        }
+
+    }
+
+    public boolean isHtmlReportOnly() {
+        return caseData.isIpedReport() && args.isNoPortableCase();
+    }
+
+    private void applyReportTypeArgs() {
+        if (caseData.isIpedReport() && (args.isNoHtmlReport() || args.isNoPortableCase())) {
+            ConfigurationManager.get().findObject(HtmlReportTaskConfig.class).setEnabled(!args.isNoHtmlReport());
+        }
+        if (isHtmlReportOnly()) {
+            ConfigurationManager.get().findObject(GraphTaskConfig.class).setEnabled(false);
+        }
     }
 
     private void closeItemProducers() {
@@ -867,33 +889,9 @@ public class Manager {
         }
 
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
-            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "scripts"), new File(output, "scripts"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped.localization.Messages.BUNDLES_FOLDER),
-                    new File(output, iped.localization.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
-
-            // Copy tools. For now, skip copying mplayer
-            File source = new File(Configuration.getInstance().appRoot, "tools");
-            for (File file : source.listFiles()) {
-                if (!file.getName().equals("mplayer")) {
-                    File dest = new File(output, "tools/" + file.getName());
-                    if (file.isDirectory()) {
-                        IOUtil.copyDirectory(file, dest); // $NON-NLS-1$ //$NON-NLS-2$
-                    } else {
-                        dest.getParentFile().mkdirs();
-                        IOUtil.copyFile(file, dest);
-                    }
-                }
+            if (!isHtmlReportOnly()) {
+                copyAppFiles();
             }
-
-            if (!analysisConfig.isEmbedLibreOffice()) {
-                new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
-            }
-
-            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "help"), new File(output, "help")); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
-                    new File(output, "htmlreport")); //$NON-NLS-1$
 
             // copy default configs
             File defaultProfile = new File(Configuration.getInstance().appRoot);
@@ -915,17 +913,6 @@ public class Manager {
                     IOUtil.copyDirectory(caseProfile, new File(output, Configuration.CASE_PROFILE_DIR));
                 }
             }
-
-            File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
-            if (binDir.exists())
-                IOUtil.copyDirectory(binDir, output.getParentFile()); // $NON-NLS-1$
-            else {
-                // Copy only IPED Windows executable (#1698)
-                File exe = new File(new File(Configuration.getInstance().appRoot).getParentFile(), appWinExeFileName);
-                if (exe.exists()) {
-                    IOUtil.copyFile(exe, new File(output.getParentFile(), exe.getName()));
-                }
-            }
         }
 
         if (palavrasChave != null) {
@@ -939,6 +926,59 @@ public class Manager {
             }
         }
 
+    }
+
+    private void copyAppFiles() throws IOException {
+        IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
+        IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "scripts"), new File(output, "scripts"), true); //$NON-NLS-1$ //$NON-NLS-2$
+        IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
+        IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped.localization.Messages.BUNDLES_FOLDER),
+                new File(output, iped.localization.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
+
+        // Copy tools. For now, skip copying mplayer
+        File source = new File(Configuration.getInstance().appRoot, "tools");
+        for (File file : source.listFiles()) {
+            if (!file.getName().equals("mplayer")) {
+                File dest = new File(output, "tools/" + file.getName());
+                if (file.isDirectory()) {
+                    IOUtil.copyDirectory(file, dest); // $NON-NLS-1$ //$NON-NLS-2$
+                } else {
+                    dest.getParentFile().mkdirs();
+                    IOUtil.copyFile(file, dest);
+                }
+            }
+        }
+
+        if (!analysisConfig.isEmbedLibreOffice()) {
+            new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
+        }
+
+        IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "help"), new File(output, "help")); //$NON-NLS-1$ //$NON-NLS-2$
+        IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
+                new File(output, "htmlreport")); //$NON-NLS-1$
+
+        File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
+        if (binDir.exists())
+            IOUtil.copyDirectory(binDir, output.getParentFile()); // $NON-NLS-1$
+        else {
+            // Copy only IPED Windows executable (#1698)
+            File exe = new File(new File(Configuration.getInstance().appRoot).getParentFile(), appWinExeFileName);
+            if (exe.exists()) {
+                IOUtil.copyFile(exe, new File(output.getParentFile(), exe.getName()));
+            }
+        }
+    }
+
+    static void deletePortableCaseFiles(File output) {
+        File[] files = output.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File file : files) {
+            if (!file.getName().equals(PreviewConstants.VIEW_FOLDER_NAME)) {
+                IOUtil.deleteDirectory(file);
+            }
+        }
     }
 
     // See https://github.com/sepinf-inc/IPED/issues/1142

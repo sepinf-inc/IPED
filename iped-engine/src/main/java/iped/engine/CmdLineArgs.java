@@ -46,6 +46,10 @@ public interface CmdLineArgs {
 
     boolean isNoLinkedItems();
 
+    boolean isNoHtmlReport();
+
+    boolean isNoPortableCase();
+
     boolean isPortable();
     
     String getSplashMessage();

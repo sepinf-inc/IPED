@@ -119,6 +119,14 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = noLinkedItemsOption, description = "do not export automatically to report items linked to chats")
     private boolean noLinkedItems = false;
 
+    public static final String noHtmlReportOption = "--nohtmlreport";
+    @Parameter(names = noHtmlReportOption, description = "do not create the HTML report when creating a report from bookmarks")
+    private boolean noHtmlReport;
+
+    public static final String noPortableCaseOption = "--noportablecase";
+    @Parameter(names = noPortableCaseOption, description = "create just the HTML report, without the portable case, when creating a report from bookmarks")
+    private boolean noPortableCase;
+
     @Parameter(names = "--portable", description = "use relative references to forensic images, so case can be moved to other machines if the images are on the same volume")
     private boolean portable;
 
@@ -241,6 +249,16 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Override
     public boolean isNoLinkedItems() {
         return noLinkedItems;
+    }
+
+    @Override
+    public boolean isNoHtmlReport() {
+        return noHtmlReport;
+    }
+
+    @Override
+    public boolean isNoPortableCase() {
+        return noPortableCase;
     }
 
     @Override
@@ -386,6 +404,15 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         }
     }
 
+    void checkReportTypeArgs() {
+        if (noHtmlReport && noPortableCase) {
+            throw new ParameterException("You cannot use " + noHtmlReportOption + " with " + noPortableCaseOption + "."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        }
+        if (noPortableCase && appendIndex) {
+            throw new ParameterException("You cannot use " + noPortableCaseOption + " with --append."); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+    }
+
     private void printUsageAndExit(JCommander jc) {
         System.out.println(Version.APP_NAME);
         jc.usage();
@@ -449,6 +476,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             }
             file = file.getParentFile();
         }
+
+        checkReportTypeArgs();
 
         if ((appendIndex || isContinue || restart) && !(new File(outputDir, "iped").exists())) {
             throw new IPEDException(
