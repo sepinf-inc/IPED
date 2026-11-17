@@ -22,6 +22,7 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.opensearch.action.ActionListener;
+import org.opensearch.OpenSearchStatusException;
 import org.opensearch.action.DocWriteRequest.OpType;
 import org.opensearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.opensearch.action.bulk.BulkItemResponse;
@@ -45,6 +46,7 @@ import org.opensearch.common.settings.Settings.Builder;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.common.xcontent.XContentBuilder;
 import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.rest.RestStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,6 +129,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
+        synchronized (ElasticSearchIndexTask.class) {
+            initConfiguredClient(configurationManager);
+        }
+    }
+
+    private void initConfiguredClient(ConfigurationManager configurationManager) throws Exception {
 
         taskInstances.add(this);
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
@@ -197,6 +205,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
             }
         } else if (!indexExists(indexName)) {
             throw new IPEDException("ElasticSearch index does not exist: " + indexName);
+        } else {
+            updateFaceMappings(client, indexName);
         }
 
     }
@@ -297,6 +307,30 @@ public class ElasticSearchIndexTask extends AbstractTask {
         face.put(field != null ? field : "face_encoding_unknown", encoding);
         face.put(ExtraProperties.FACE_MODEL, model != null ? model : tag != null ? tag : "unknown");
         return face;
+    }
+
+    static PutMappingRequest faceMappingUpdate(String index) {
+        return new PutMappingRequest(index).source(Map.of("properties",
+                Map.of("faces", Map.of("type", "nested", "properties", faceMappings()))));
+    }
+
+    static void updateFaceMappings(RestHighLevelClient targetClient, String index) throws IOException {
+        AcknowledgedResponse response;
+        try {
+            response = targetClient.indices().putMapping(faceMappingUpdate(index), RequestOptions.DEFAULT);
+        } catch (OpenSearchStatusException error) {
+            if (error.status() == RestStatus.BAD_REQUEST) {
+                throw new IOException("Cannot update face recognition mappings in existing ElasticSearch index '" + index
+                        + "'. Its face vector schema may be incompatible (including an experimental 512-dimensional "
+                        + "face_encoding field). Reindex into a new index; vector dimensions and field types cannot "
+                        + "be changed in place.", error);
+            }
+            throw error;
+        }
+        if (!response.isAcknowledged()) {
+            throw new IOException("Face recognition mapping update was not acknowledged for ElasticSearch index '"
+                    + index + "'; append/continue processing was aborted.");
+        }
     }
 
     private void createFieldMappings(String indexName) throws IOException {

@@ -7,6 +7,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Arrays;
 import java.io.File;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.net.httpserver.HttpServer;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.KnnVectorField;
@@ -20,6 +28,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.junit.Test;
+import org.apache.http.HttpHost;
+import org.opensearch.client.RestClient;
+import org.opensearch.client.RestHighLevelClient;
 
 import iped.engine.search.FaceRecognitionModels;
 import iped.engine.search.SimilarFacesSearch;
@@ -175,6 +186,81 @@ public class FaceRecognitionIndexTest {
             assertEquals(model, face.get(ExtraProperties.FACE_MODEL));
         }
         assertTrue(ElasticSearchIndexTask.faceEncoding(new float[512], null).containsKey("face_encoding_unknown"));
+    }
+
+    @Test
+    public void existingElasticIndexReceivesOnlyFaceMappingUpdate() throws Exception {
+        AtomicReference<String> request = new AtomicReference<>();
+        HttpServer server = mappingServer(200, "{\"acknowledged\":true}", request);
+        try (RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(
+                new HttpHost("127.0.0.1", server.getAddress().getPort(), "http")))) {
+            ElasticSearchIndexTask.updateFaceMappings(client, "existing-case");
+            JsonNode properties = new ObjectMapper().readTree(request.get()).path("properties");
+            assertEquals(1, properties.size());
+            JsonNode faces = properties.path("faces");
+            assertEquals("nested", faces.path("type").asText());
+            JsonNode fields = faces.path("properties");
+            assertEquals(128, fields.path("face_encoding").path("dimension").asInt());
+            assertEquals("l2", fields.path("face_encoding").path("method").path("space_type").asText());
+            for (String model : FaceRecognitionModels.MODERN_MODELS) {
+                JsonNode field = fields.path("face_encoding_" + model);
+                assertEquals("knn_vector", field.path("type").asText());
+                assertEquals(512, field.path("dimension").asInt());
+                assertEquals("cosinesimil", field.path("method").path("space_type").asText());
+            }
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    public void incompatibleExistingElasticMappingRequiresReindexing() throws Exception {
+        HttpServer server = mappingServer(400,
+                "{\"error\":{\"type\":\"illegal_argument_exception\",\"reason\":\"cannot change vector dimensions\"},\"status\":400}",
+                new AtomicReference<>());
+        try (RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(
+                new HttpHost("127.0.0.1", server.getAddress().getPort(), "http")))) {
+            IOException error = assertThrows(IOException.class,
+                    () -> ElasticSearchIndexTask.updateFaceMappings(client, "existing-case"));
+            assertTrue(error.getMessage().contains("Reindex into a new index"));
+            assertNotNull(error.getCause());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    public void unacknowledgedElasticMappingAbortsAppend() throws Exception {
+        HttpServer server = mappingServer(200, "{\"acknowledged\":false}", new AtomicReference<>());
+        try (RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(
+                new HttpHost("127.0.0.1", server.getAddress().getPort(), "http")))) {
+            IOException error = assertThrows(IOException.class,
+                    () -> ElasticSearchIndexTask.updateFaceMappings(client, "existing-case"));
+            assertTrue(error.getMessage().contains("append/continue processing was aborted"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    private static HttpServer mappingServer(int status, String response, AtomicReference<String> request) throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/existing-case/_mapping", exchange -> {
+            if (!"PUT".equals(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(405, -1);
+                exchange.close();
+                return;
+            }
+            request.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(status, bytes.length);
+            try (java.io.OutputStream output = exchange.getResponseBody()) {
+                output.write(bytes);
+            }
+            exchange.close();
+        });
+        server.start();
+        return server;
     }
 
     private static KnnVector vector(int dimensions) {
