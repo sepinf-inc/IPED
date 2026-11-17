@@ -75,23 +75,26 @@ public class GeofileParser extends AbstractParser {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
             List<Object> featureList = FeatureListFactoryRegister.getFeatureList(mimeType).parseFeatureList(file);
 
-            int cont = 1;
-            int virtualId = 0;
-            for (Iterator<Object> iterator = featureList.iterator(); iterator.hasNext();) {
-                Object o = iterator.next();
-                if (o instanceof SimpleFeature) {
-                    SimpleFeature feature = (SimpleFeature) o;
-                    String name = feature.getName().getLocalPart();
-                    if (name == null)
-                        name = "marcador";
-                    featureParser(feature, -1, name + cont, handler, metadata, extractor);
-                    cont++;
-                }
-                if (o instanceof Folder) {
-                    Folder folder = (Folder) o;
+            if (featureList != null && !featureList.isEmpty()) {// no supported features found in KML
+                int cont = 1;
+                int virtualId = 0;
+                for (Iterator<Object> iterator = featureList.iterator(); iterator.hasNext();) {
+                    Object o = iterator.next();
+                    if (o instanceof SimpleFeature) {
+                        SimpleFeature feature = (SimpleFeature) o;
+                        String name = feature.getName().getLocalPart();
+                        if (name == null)
+                            name = "marcador";
+                        featureParser(feature, -1, name + cont, handler, metadata, extractor);
+                        cont++;
+                    }
+                    if (o instanceof Folder) {
+                        Folder folder = (Folder) o;
 
-                    virtualId = folderParser(folder, -1, handler, metadata, extractor, virtualId);
-                    virtualId = recursiveFolderParse(virtualId, folder, handler, metadata, extractor, context, virtualId);
+                        virtualId = folderParser(folder, -1, handler, metadata, extractor, virtualId);
+                        virtualId = recursiveFolderParse(virtualId, folder, handler, metadata, extractor, context,
+                                virtualId);
+                    }
                 }
             }
         } catch (Throwable e) {
@@ -201,31 +204,36 @@ public class GeofileParser extends AbstractParser {
                 Double lat = null;
                 Double alt = null;
                 Geometry g = (Geometry) feature.getDefaultGeometry();
-                Point p = null;
-                if (g instanceof Point) {
-                    p = (Point) g;
-                } else {
-                    p = g.getCentroid();
-                    FeatureJSON fjson = new FeatureJSON();
-                    StringWriter writer = new StringWriter();
+                if (g != null) {// empty placemark tags returns null
+                    Point p = null;
+                    if (g instanceof Point) {
+                        p = (Point) g;
+                    } else {
+                        p = g.getCentroid();
+                        FeatureJSON fjson = new FeatureJSON();
+                        StringWriter writer = new StringWriter();
 
-                    feature.setAttribute("description", StringEscapeUtils.escapeJavaScript(feature.getAttribute("description").toString()));
-                    fjson.writeFeature(feature, writer);
+                        feature.setAttribute("description",
+                                StringEscapeUtils.escapeJavaScript(feature.getAttribute("description").toString()));
+                        fjson.writeFeature(feature, writer);
 
-                    String str = writer.toString();
-                    kmeta.set(FEATURE_STRING, str);
-                }
-                Coordinate[] coords = p.getCoordinates();
-                lon = coords[0].x;
-                lat = coords[0].y;
-                alt = coords[0].z;
+                        String str = writer.toString();
+                        kmeta.set(FEATURE_STRING, str);
+                    }
+                    Coordinate[] coords = p.getCoordinates();
+                    if (coords != null && coords.length > 0) {
+                        lon = coords[0].x;
+                        lat = coords[0].y;
+                        alt = coords[0].z;
+                    }
 
-                if (lat != null && lat != 0.0 && lon != null && lon != 0.0) {
-                    kmeta.set(ExtraProperties.LOCATIONS, lat + ";" + lon);
-                }
+                    if (lat != null && lat != 0.0 && lon != null && lon != 0.0) {
+                        kmeta.set(ExtraProperties.LOCATIONS, lat + ";" + lon);
+                    }
 
-                if (alt != null) {
-                    kmeta.set(Metadata.ALTITUDE, alt);
+                    if (alt != null) {
+                        kmeta.set(Metadata.ALTITUDE, alt);
+                    }
                 }
 
                 extractor.parseEmbedded(featureStream, handler, kmeta, false);
@@ -239,9 +247,11 @@ public class GeofileParser extends AbstractParser {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8"));
         Object o = feat.getDefaultGeometryProperty().getValue();
-        out.println(o.toString());
-        out.println(feat.toString());
-        out.flush();
+        if (o != null) {
+            out.println(o.toString());
+            out.println(feat.toString());
+            out.flush();
+        }
         return bout.toByteArray();
     }
 }
