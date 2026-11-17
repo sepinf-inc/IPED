@@ -3,7 +3,6 @@ package iped.engine.task.regex.validator.crypto;
 import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.security.MessageDigest;
-import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
 

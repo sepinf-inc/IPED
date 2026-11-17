@@ -322,6 +322,9 @@
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
                 <param name="recoverDeletedRecords" type="bool">true</param>
+                <!--Also recover deleted records from backups (msgstore-yyyy-mm-dd.db, msgstore.db.crypt*).
+                    It needs several times the size of each database in memory.-->
+                <param name="recoverDeletedRecordsFromBackups" type="bool">false</param>
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
