@@ -50,8 +50,10 @@ public abstract class Extractor {
             // error level, so it is shown in the console while processing (warn is not)
             logger.error("Recovering deleted WhatsApp records from {} ({} MB) may need about {} MB of memory, but only {} MB are available. "
                     + "If the processing fails with OutOfMemoryError, give IPED more memory (e.g. add -Xmx32G to its command line, after iped.jar or iped.exe) "
-                    + "or disable this recovery (set recoverDeletedRecords to false for WhatsAppParser in conf/ParserConfig.xml).",
-                    itemPath, databaseFile.length() >> 20, needed >> 20, available >> 20);
+                    + "or disable this recovery (set {} to false for WhatsAppParser in conf/ParserConfig.xml).",
+                    itemPath, databaseFile.length() >> 20, needed >> 20, available >> 20,
+                    // a backup is only carved if the option for backups is enabled
+                    WhatsAppParser.isBackupDatabase(itemPath) ? "recoverDeletedRecordsFromBackups" : "recoverDeletedRecords");
         }
     }
 
