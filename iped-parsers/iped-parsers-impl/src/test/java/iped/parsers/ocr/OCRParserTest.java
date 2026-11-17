@@ -4,12 +4,18 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -146,6 +152,63 @@ public class OCRParserTest {
         // System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "true");
         // FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
         // assertPDFParsing();
+    }
+
+    private static void addTextPage(PDDocument doc, PDRectangle size, String text) throws IOException {
+        PDPage page = new PDPage(size);
+        doc.addPage(page);
+        try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA_BOLD, 36);
+            cs.newLineAtOffset(40, size.getHeight() - 60);
+            cs.showText(text);
+            cs.endText();
+        }
+    }
+
+    @Test
+    public void testOCRParserPDFSkipsPageRejectedByTesseract()
+            throws IOException, SAXException, TikaException, SQLException {
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        ParseContext context = new ParseContext();
+        ItemInfo itemInfo = new ItemInfo(0, testName.getMethodName(), null, null, testName.getMethodName(), false);
+        context.set(ItemInfo.class, itemInfo);
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "application/pdf");
+        context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
+        System.setProperty(OCRParser.LANGUAGE_PROP, "eng");
+
+        // page 2 is 14400pt wide (PDF max): at 250 dpi it renders 50000px wide,
+        // above the 32767px limit, so tesseract exits with "Image too large"
+        File pdf = File.createTempFile("iped-ocr-huge-page", ".pdf");
+        try (PDDocument doc = new PDDocument()) {
+            addTextPage(doc, PDRectangle.LETTER, "FIRST PAGE TEXT");
+            addTextPage(doc, new PDRectangle(14400, 100), "HUGE PAGE TEXT");
+            addTextPage(doc, PDRectangle.LETTER, "THIRD PAGE TEXT");
+            doc.save(pdf);
+        }
+        // generated pdf is smaller than the default ocr.minFileSize
+        System.setProperty(OCRParser.MIN_SIZE_PROP, "0");
+
+        String hts = "";
+        try (OCRParser parser = new OCRParser();
+            InputStream stream = new FileInputStream(pdf)) {
+            assumeTrue(parser.isEnabled());
+
+            parser.parse(stream, handler, metadata, context);
+            hts = handler.toString();
+
+            assertTrue(hts.contains("FIRST PAGE TEXT"));
+            assertTrue(hts.contains("THIRD PAGE TEXT"));
+
+        } catch (Throwable e) {
+            System.out.println(hts);
+            throw e;
+        } finally {
+            System.clearProperty(OCRParser.MIN_SIZE_PROP);
+            pdf.delete();
+            FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
+        }
     }
 
     

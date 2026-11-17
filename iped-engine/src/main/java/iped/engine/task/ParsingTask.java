@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -669,7 +670,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             // set the subItem openContainer with the object passed in the inputStrem of the call parseEmbedded()
             // it will be used in the parser of the the subitem
             if (inputStream instanceof TikaInputStream) {
-                subItem.setOpenContainer(TikaInputStream.cast(inputStream).getOpenContainer());
+                subItem.setOpenContainer(getEmbeddedOpenContainer(TikaInputStream.cast(inputStream)));
             }
 
             if ("".equals(metadata.get(BasicProps.LENGTH))) {
@@ -856,8 +857,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     }
 
     private static void setupOCROptions(OCRConfig ocrConfig) {
-        if (ocrConfig.isOCREnabled()) {
-            System.setProperty(OCRParser.ENABLE_PROP, "true");
+        boolean enabled = ocrConfig.isOCREnabled();
+        System.setProperty(OCRParser.ENABLE_PROP, Boolean.toString(enabled));
+        if (enabled) {
             System.setProperty(OCRParser.LANGUAGE_PROP, ocrConfig.getOcrLanguage());
             System.setProperty(OCRParser.SKIP_KNOWN_FILES_PROP, String.valueOf(ocrConfig.isSkipKnownFiles()));
             System.setProperty(OCRParser.MIN_SIZE_PROP, ocrConfig.getMinFileSize2OCR());
@@ -887,4 +889,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             dest.putAll(timesPerParser);
         }
     }
+
+    static Object getEmbeddedOpenContainer(TikaInputStream stream) {
+        Object container = stream.getOpenContainer();
+        // The extraction stream owns POIFS and may close it before the queued child
+        // is parsed. Let OfficeParser reopen the extracted bytes instead.
+        return container instanceof POIFSFileSystem ? null : container;
+    }
+
 }

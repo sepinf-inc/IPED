@@ -46,6 +46,7 @@ public class ExternalImageConverter implements Closeable {
     private static final String IM_TEMP_PATH = "MAGICK_TEMPORARY_PATH"; //$NON-NLS-1$
     private static final String GM_TEMP_PATH = "MAGICK_TMPDIR"; //$NON-NLS-1$
     private static final String MAGICK_AREA_LIMIT = "MAGICK_AREA_LIMIT"; //$NON-NLS-1$
+    private static final String MAGICK_CONFIGURE_PATH = "MAGICK_CONFIGURE_PATH"; //$NON-NLS-1$
     private static final String DENSITY = "DENSITY"; //$NON-NLS-1$
     private static final String INPUT = "INPUT"; //$NON-NLS-1$
 
@@ -206,13 +207,32 @@ public class ExternalImageConverter implements Closeable {
         }
     }
 
+    /**
+     * Sets up the environment of a magick {@link ProcessBuilder}.
+     *
+     * ImageMagick "installed-mode" Windows builds locate their configuration files
+     * (delegates.xml, policy.xml, colors.xml, ...) through the Windows registry (written by the
+     * installer) or through the MAGICK_CONFIGURE_PATH environment variable. IPED ships a portable
+     * binary and installs no registry keys, so without this variable magick probes and fails to
+     * find its config on every launch (~0.5s per process), and that startup cost serializes across
+     * the many concurrent magick processes IPED spawns (one per worker), causing thousands of
+     * thumbnail timeouts on high-core machines (see sepinf-inc/IPED#2905). Pointing it at the
+     * bundled tools/imagemagick folder fixes it. On Linux toolPath is empty and the
+     * system-installed magick finds its own config, so this is a no-op there.
+     */
+    private void setProcessEnvironment(ProcessBuilder pb) {
+        pb.environment().put(useGM ? GM_TEMP_PATH : IM_TEMP_PATH, tmpDir.getAbsolutePath());
+        pb.environment().put(MAGICK_AREA_LIMIT, magickAreaLimit);
+        if (!useGM && !toolPath.isEmpty())
+            pb.environment().put(MAGICK_CONFIGURE_PATH, toolPath);
+    }
+
     public Dimension getDimension(InputStream in) {
         if (!enabled)
             return null;
 
         ProcessBuilder pb = new ProcessBuilder();
-        pb.environment().put(MAGICK_AREA_LIMIT, magickAreaLimit);
-        pb.environment().put(MAGICK_AREA_LIMIT, magickAreaLimit);
+        setProcessEnvironment(pb);
 
         String[] cmd = { CMD[0], "identify", "-ping", "-format", "%w %h", "-" };
         try {
@@ -244,8 +264,7 @@ public class ExternalImageConverter implements Closeable {
             return null;
 
         ProcessBuilder pb = new ProcessBuilder();
-        pb.environment().put(useGM ? GM_TEMP_PATH : IM_TEMP_PATH, tmpDir.getAbsolutePath());
-        pb.environment().put(MAGICK_AREA_LIMIT, magickAreaLimit);
+        setProcessEnvironment(pb);
 
         pb.command(getCmd(maxDim, highRes, objIn));
         Process p = null;
