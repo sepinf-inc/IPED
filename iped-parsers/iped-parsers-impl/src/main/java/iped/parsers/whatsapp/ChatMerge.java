@@ -93,9 +93,9 @@ public class ChatMerge {
         //
         // 2. If the sort key is found in main, the message is already there and the
         // backup message is ignored. The exception is when main has that message only
-        // as a record carved from deleted space by SQLiteUndelete (same content, see
-        // sameContent()). The backup record is complete (rowid, media, quotes...), so
-        // it replaces the carved record at the same position.
+        // as a record carved from deleted space by SQLiteUndelete (see sameMessage()).
+        // The backup record is complete (rowid, media, quotes...), so it replaces the
+        // carved record at the same position.
         //
         // 3. Recovered messages are not inserted one by one, as each insertion shifts
         // the rest of the list. They are appended to main, which is then sorted once.
@@ -113,10 +113,10 @@ public class ChatMerge {
                     recovered.add(m);
                 }
             } else if (!m.isDeleted() && carvedCopies.containsKey(m.getSortId())) {
-                // step 2: look for a carved record with the same content to replace
+                // step 2: look for a carved record of the same message to replace
                 for (Iterator<Integer> it = carvedCopies.get(m.getSortId()).iterator(); it.hasNext();) {
                     int pos = it.next();
-                    if (sameContent(main.get(pos), m)) {
+                    if (sameMessage(main.get(pos), m)) {
                         it.remove();
                         main.set(pos, m);
                         m.setRecoveredFrom(dbname);
@@ -149,19 +149,36 @@ public class ChatMerge {
         for (Message m : messages) {
             List<Integer> positions = carved.get(m.getSortId());
             if (positions != null && !m.isDeleted()) {
-                positions.removeIf(pos -> sameContent(messages.get(pos), m));
+                positions.removeIf(pos -> sameMessage(messages.get(pos), m));
             }
         }
         return carved;
     }
 
     /**
-     * Compares by content, as message keys are not available for every database
-     * version. The media hash is not used, because carved records have no media.
+     * Tells if both are the same version of the same message. The text is not
+     * compared, because carved records may be truncated, nor the media hash,
+     * because they have no media.
+     * <p>
+     * An edited or revoked message keeps its sort key but gets a new message key,
+     * so the previous version carved from the main DB has the same sort key as the
+     * current one and a different message key. When both messages have a key, it
+     * identifies the version. Otherwise (key missing in a carved record or in older
+     * database versions) sender, type and times are compared.
      */
-    private static boolean sameContent(Message m1, Message m2) {
-        return m1.isFromMe() == m2.isFromMe() && m1.getMessageType() == m2.getMessageType()
-                && Objects.equals(m1.getTimeStamp(), m2.getTimeStamp()) && Objects.equals(m1.getData(), m2.getData());
+    private static boolean sameMessage(Message m1, Message m2) {
+        if (m1.isFromMe() != m2.isFromMe()) {
+            return false;
+        }
+        if (hasUuid(m1) && hasUuid(m2)) {
+            return m1.getUuid().equals(m2.getUuid());
+        }
+        return m1.getMessageType() == m2.getMessageType() && Objects.equals(m1.getTimeStamp(), m2.getTimeStamp())
+                && Objects.equals(m1.getEditTimeStamp(), m2.getEditTimeStamp());
+    }
+
+    private static boolean hasUuid(Message m) {
+        return m.getUuid() != null && !m.getUuid().isEmpty();
     }
 
     private int findChatByContact(List<Chat> l, Chat key) {
