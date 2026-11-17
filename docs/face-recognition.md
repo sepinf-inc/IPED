@@ -19,6 +19,15 @@ Each environment installs exactly one ONNX Runtime package. The GPU environment
 includes pinned CUDA/cuDNN runtime libraries; a compatible NVIDIA driver is still
 required. ONNX Runtime loads these libraries before creating model sessions.
 
+The GPU environment pins cuDNN 9.10.2.21 to retain documented Pascal support
+(including the Quadro P620's compute capability 6.1). Newer cuDNN versions dropped
+that architecture. This is a software-compatibility choice, not a claim of testing
+on a P620. See NVIDIA's [GPU list](https://developer.nvidia.com/cuda/gpus/legacy)
+and [cuDNN support matrix](https://docs.nvidia.com/deeplearning/cudnn/backend/v9.10.2/reference/support-matrix.html).
+Start with `numFaceRecognitionProcesses = 1` on a 2GB card. Systems with only ASPEED
+graphics should use the CPU environment. The local laptop's CPU timings do not
+predict the performance of unspecified workstation/server CPUs.
+
 Set `pythonPath` in the release's `conf/FaceRecognitionConfig.txt` to the absolute
 Python executable printed above. On Windows, shell activation does not replace the
 bundled Python selected by IPED. The bundled dlib Python does not supply this
@@ -36,6 +45,12 @@ executionProvider = auto
 - `cpu`: requests only `CPUExecutionProvider`, even with the GPU package installed.
 - `cuda`: requires CUDA to load for both detection and recognition; provider failure
   is an error rather than a valid GPU measurement.
+
+Automatic mode retries a failed CUDA initialization on CPU. If a CUDA inference
+fails, both models switch to CPU and retry the same image once; the process then
+stays on CPU. Runtime errors are not cached as unreadable images. Explicit CUDA
+mode remains strict. CUDA uses FP32 (`use_tf32=0`), reducing landmark/alignment and
+embedding differences between CPU and GPU.
 
 Check setup before processing (replace the script location with its release path):
 
@@ -138,3 +153,18 @@ python iped-app/src/test/python/compare_face_providers.py --images /private/phot
 This compares detections and normalized embeddings for 16 deterministic samples
 under CPU and CUDA. It checks numerical agreement, not identity recognition
 accuracy, and retains only aggregate results and content hashes.
+
+For a limited-memory resource proxy on the available GPU:
+
+```shell
+python iped-app/src/test/python/benchmark_face_memory_proxy.py --images /private/photos --model-dir /path/to/models/insightface/models/auraface --arena-mib 1536 --gpu-budget-mib 2048 --output target/face-memory-proxy.json
+```
+
+The two sessions share a constrained allocation arena; total GPU usage is also
+observed. Arena limits do not cap every allocation. This cannot emulate Pascal's
+instructions, speed, or a physically smaller card's residency/paging behavior.
+The [ORT memory-limit documentation](https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#gpu_mem_limit)
+describes this distinction. To test real automatic recovery, use
+`probe_face_fallback.py` with `--arena-mib 32` (initialization OOM) or `512`
+(inference OOM in the recorded setup); provide the same image/model/output options
+and adjust `--expected-corpus-images` and `--expected-faces` for another corpus.

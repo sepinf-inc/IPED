@@ -13,6 +13,7 @@
 # Each process loads ~370MB of models; actual RAM/VRAM use is higher.
 # executionProvider controls GPU selection; multiple processes also overlap image I/O.
 # Set to 1 if GPU memory is limited.
+# Start with 1 process on a 2GB GPU such as the Quadro P620 and validate on that device.
 #numFaceRecognitionProcesses = 4
 
 # Max width or height used to resize images before face detection. This dramatically reduces
@@ -30,6 +31,8 @@ insightFaceModel = auraface
 
 # Execution provider: 'auto' prefers CUDA and logs CPU fallback; 'cpu' forces CPU;
 # 'cuda' requires CUDA for both detection and recognition and fails if unavailable.
+# If CUDA initialization or inference fails in 'auto', both models switch to CPU
+# and the same image is retried once. Later images stay on CPU in that process.
 executionProvider = auto
 
 # Detection input size. Larger values detect smaller faces but are slower.
