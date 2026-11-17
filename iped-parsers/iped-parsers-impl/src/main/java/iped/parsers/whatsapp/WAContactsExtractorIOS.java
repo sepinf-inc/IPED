@@ -113,7 +113,10 @@ public abstract class WAContactsExtractorIOS extends WAContactsExtractor {
         public boolean validateRecord(SqliteRow row) {
             try {
                 String jid = row.getTextValue("ZWHATSAPPID"); //$NON-NLS-1$
-                return WAContact.isValidJid(jid);
+                if (jid == null || jid.isBlank()) {
+                    return false;
+                }
+                return true;
                 
             } catch (Exception e) {
             }
