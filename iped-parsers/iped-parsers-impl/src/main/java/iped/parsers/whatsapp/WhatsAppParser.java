@@ -176,6 +176,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private int downloadConnectionTimeout = 500;
     private int downloadReadTimeout = 500;
     private boolean recoverDeletedRecords = true;
+    private boolean recoverDeletedRecordsFromBackups = false;
     private int minChatSplitSize = 6000000;
 
     @Override
@@ -224,6 +225,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Field
     public void setRecoverDeletedRecords(boolean recoverDeletedRecords) {
         this.recoverDeletedRecords = recoverDeletedRecords;
+    }
+
+    @Field
+    public void setRecoverDeletedRecordsFromBackups(boolean recoverDeletedRecordsFromBackups) {
+        this.recoverDeletedRecordsFromBackups = recoverDeletedRecordsFromBackups;
     }
 
     @Field
@@ -415,7 +421,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 File tempDbFile = tis.getFile();
                 extFactory.setConnectionParams(tis, metadata, context, this);
                 Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account,
-                        recoverDeletedRecords);
+                        shouldRecoverDeletedRecords(filePath));
                 List<Chat> chatList = waExtractor.getChatList();
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
 
@@ -571,6 +577,27 @@ public class WhatsAppParser extends SQLite3DBParser {
         metadata.set(StandardParser.INDEXER_CONTENT_TYPE, extFactory.getType2().toString());
     }
 
+    /**
+     * Recovering deleted records needs several times the size of the database in
+     * memory, and a device usually has several backups of its main database, so
+     * backups are only carved if recoverDeletedRecordsFromBackups is enabled.
+     */
+    private boolean shouldRecoverDeletedRecords(String dbPath) {
+        return recoverDeletedRecords && (recoverDeletedRecordsFromBackups || !isBackupDatabase(dbPath));
+    }
+
+    /**
+     * Tells by its path if a database is a backup, e.g. msgstore-2023-10-03.1.db or
+     * a database decrypted from msgstore.db.crypt15.
+     */
+    static boolean isBackupDatabase(String dbPath) {
+        if (dbPath == null) {
+            return false;
+        }
+        String name = dbPath.substring(Math.max(dbPath.lastIndexOf('/'), dbPath.lastIndexOf('>')) + 1);
+        return MSGSTORE_BKP.matcher(name).find() || dbPath.contains(MSGSTORE_CRYPTO);
+    }
+
     private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
         String type = wcontext.getItem().getMediaType().toString();
         // this is not used for IOS
@@ -598,7 +625,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             extFactory.setConnectionParams(tis, metadata, context, this);
             Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempFile, contacts, account,
-                    recoverDeletedRecords);
+                    shouldRecoverDeletedRecords(filePath));
             return waExtractor.getChatList();
         }
     }
@@ -1448,7 +1475,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 new_db = false;
             }
             if (new_db) {
-                return new ExtractorAndroidNew(itemPath, file, directory, account) {
+                return new ExtractorAndroidNew(itemPath, file, directory, account, recoverDeletedRecords) {
                     @Override
                     protected Connection getConnection() throws SQLException {
                         return ExtractorAndroidFactory.this.getConnection();
