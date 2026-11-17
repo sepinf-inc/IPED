@@ -38,7 +38,7 @@ import iped.exception.IPEDException;
 
 public class RemoteTranscriptionTask extends AbstractTranscriptTask {
 
-    private static Logger logger = LogManager.getLogger(Wav2Vec2TranscriptTask.class);
+    private static Logger logger = LogManager.getLogger(RemoteTranscriptionTask.class);
 
     private static final int MAX_CONNECT_ERRORS = 60;
 
