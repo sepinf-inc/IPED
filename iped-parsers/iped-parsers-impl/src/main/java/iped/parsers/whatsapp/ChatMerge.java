@@ -195,19 +195,21 @@ public class ChatMerge {
 
     /**
      * Tells if the backup message should take the place of the carved record: both
-     * are the same message and the backup one is not just the placeholder of a
-     * message deleted for everyone. Current WhatsApp versions give that placeholder
-     * a new message key, but if a version keeps the key, the placeholder must not
-     * replace the content recovered from deleted space.
+     * are the same message and the backup one is not just a placeholder without
+     * the content of the message, i.e. a message deleted for everyone or a system
+     * message. Current WhatsApp versions give the placeholder of a message deleted
+     * for everyone a new message key, but if the key is kept, as seen when a
+     * message becomes a system message, the placeholder must not replace the
+     * content recovered from deleted space.
      */
     private static boolean replaces(Message fromBackup, Message carved) {
-        return sameMessage(carved, fromBackup) && !(isRevoked(fromBackup) && !isRevoked(carved));
+        return sameMessage(carved, fromBackup) && !(isPlaceholder(fromBackup) && !isPlaceholder(carved));
     }
 
-    private static boolean isRevoked(Message m) {
+    private static boolean isPlaceholder(Message m) {
         MessageType type = m.getMessageType();
         return type == MessageType.DELETED_MESSAGE || type == MessageType.DELETED_BY_SENDER
-                || type == MessageType.DELETED_BY_ADMIN;
+                || type == MessageType.DELETED_BY_ADMIN || m.isSystemMessage();
     }
 
     /**

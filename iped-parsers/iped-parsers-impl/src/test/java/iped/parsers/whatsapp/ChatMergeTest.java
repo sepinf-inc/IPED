@@ -175,6 +175,25 @@ public class ChatMergeTest extends TestCase {
     }
 
     /**
+     * A message that became a system message keeps its key (seen in real
+     * databases). The system message in the backup has no content, so it must not
+     * replace the recovered content.
+     */
+    @Test
+    public void testSystemMessageWithSameKeyDoesNotReplaceCarvedContent() {
+        Message carved = carved(2000, "KEY2", "Guarda esto por si acaso");
+        List<Chat> main = chatList(carved);
+
+        Message system = active(2000, "KEY2", null);
+        system.setMessageType(MessageType.EPHEMERAL_CHANGED);
+        List<Chat> backup = chatList(system);
+
+        List<Message> messages = merge(main, backup, 0);
+        assertEquals(Arrays.asList(carved), messages);
+        assertNull(carved.getRecoveredFrom());
+    }
+
+    /**
      * Edited message deleted after the backup. The carved record already has the
      * new key, but carved records never have an edit timestamp.
      */
