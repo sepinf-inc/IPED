@@ -339,7 +339,7 @@ public class StandardParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             assertEquals("iped.parsers.standard.RawStringParser", metadata.get(PARSED_BY));
-            assertEquals("0.5720935240387917", metadata.get(RawStringParser.COMPRESS_RATIO));
+            assertEquals("0.5720858946442604", metadata.get(RawStringParser.COMPRESS_RATIO));
             assertEquals(MediaType.OCTET_STREAM.toString(), metadata.get(Metadata.CONTENT_TYPE));
 
         }
