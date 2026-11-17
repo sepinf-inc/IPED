@@ -716,6 +716,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
      */
     private Map<Long, List<SqliteRow>> recoverDeletedMessages() {
         try {
+            warnIfLowMemoryToRecoverDeletedRecords();
             SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
             undelete.addTableToRecover("message");
             undelete.addRecordValidator("message", new WAAndroidNewMessageValidator());
