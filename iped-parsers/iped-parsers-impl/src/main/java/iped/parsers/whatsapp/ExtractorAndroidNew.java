@@ -768,11 +768,12 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     Message active = activeByUuid.get(m.getUuid());
                     if (active != null && active.getMessageType() == m.getMessageType()
                             && active.isFromMe() == m.isFromMe()
-                            && Objects.equals(active.getTimeStamp(), m.getTimeStamp())
-                            && Objects.equals(active.getEditTimeStamp(), m.getEditTimeStamp())) {
+                            && Objects.equals(active.getTimeStamp(), m.getTimeStamp())) {
                         // same message still active: old copy of the record (e.g. left behind by a
-                        // status update), not a deleted message. If the type or time or edit time
-                        // differs, the recovered record holds the previous content and is kept.
+                        // status update), not a deleted message, even if its content is truncated.
+                        // The edit time is not compared: a recovered record never has it, and an
+                        // edit changes the message key, so the content before the edit is in a
+                        // record with another key, which is kept.
                         continue;
                     }
                     knownMessages.add(wrapper);
