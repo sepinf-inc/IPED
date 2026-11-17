@@ -69,6 +69,7 @@ import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.SimilarFacesSearch;
+import iped.engine.search.FaceRecognitionModels;
 import iped.engine.task.EmbeddedDiskProcessTask;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
@@ -690,6 +691,8 @@ public class IPEDReader extends DataSourceReader {
             for (IndexableField f : doc.getFields()) {
                 if (BasicProps.SET.contains(f.name()))
                     continue;
+                if (FaceRecognitionModels.isStorageField(f.name()))
+                    continue;
                 Class<?> c = IndexItem.getMetadataTypes().get(f.name());
                 if (Item.getAllExtraAttributes().contains(f.name())) {
                     if (multiValuedFields.contains(f.name()))
@@ -715,6 +718,8 @@ public class IPEDReader extends DataSourceReader {
                     }
                 }
             }
+
+            IndexItem.restoreFaceEncodings(doc, evidence);
 
             // restore "face_encodings" to KnnVector
             @SuppressWarnings("unchecked")

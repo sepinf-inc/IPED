@@ -104,6 +104,8 @@ public class SimilarFacesSearch {
         LeafReader leafReader = ipedCase.getLeafReader();
         boolean legacy = FaceRecognitionModels.DLIB.equals(refModel);
         float distanceLimit = legacy ? minDist * minDist : minDist;
+        String featureField = FaceRecognitionModels.storageField(refModel,
+                legacy ? FaceRecognitionModels.LEGACY_DIMENSIONS : FaceRecognitionModels.MODERN_DIMENSIONS);
         int numThreads = Runtime.getRuntime().availableProcessors();
         Thread[] threads = new Thread[numThreads];
         int len = result.getLength();
@@ -115,7 +117,7 @@ public class SimilarFacesSearch {
                     SortedSetDocValues similarityFeaturesValues = null;
                     SortedDocValues modelValues = null;
                     try {
-                        similarityFeaturesValues = leafReader.getSortedSetDocValues(FACE_FEATURES);
+                        similarityFeaturesValues = leafReader.getSortedSetDocValues(featureField);
                         modelValues = leafReader.getSortedDocValues(ExtraProperties.FACE_MODEL);
                     } catch (IOException e) {
                         e.printStackTrace();

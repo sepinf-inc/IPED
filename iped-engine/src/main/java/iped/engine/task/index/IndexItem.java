@@ -508,17 +508,38 @@ public class IndexItem extends BasicProps {
     static void addFaceVector(Document doc, KnnVector vector, String model) {
         float[] floats = convDoubleToFloatArray(vector.getArray());
         byte[] bytes = convFloatArrayToByteArray(floats);
-        // Keep the stored representation and doc values compatible with existing cases.
-        doc.add(new SortedSetDocValuesField(ExtraProperties.FACE_ENCODINGS, new BytesRef(bytes)));
-        doc.add(new StoredField(ExtraProperties.FACE_ENCODINGS, bytes));
+        // Lucene requires a field's vector schema to remain unchanged even for stored/docvalue-only fields.
+        // Preserve the original dlib field; namespace every representation of modern embeddings together.
+        String storageKey = FaceRecognitionModels.storageField(model, floats.length);
         String vectorKey = FaceRecognitionModels.vectorField(model, floats.length);
         if (vectorKey != null) {
             String key = vectorKey;
             int suffix = 0;
             while (doc.getField(key) != null) {
-                key = vectorKey + "_" + (++suffix);
+                key = vectorKey + (ExtraProperties.FACE_ENCODINGS.equals(vectorKey) ? "" : "_") + (++suffix);
             }
             doc.add(new KnnVectorField(key, floats));
+        }
+        doc.add(new SortedSetDocValuesField(storageKey, new BytesRef(bytes)));
+        doc.add(new StoredField(storageKey, bytes));
+    }
+
+    /** Restore physical model fields to the logical item attribute used by UI and case import/export. */
+    public static void restoreFaceEncodings(Document doc, IItem item) {
+        List<byte[]> encodings = new ArrayList<>();
+        for (IndexableField field : doc.getFields()) {
+            if (field.fieldType().stored() && FaceRecognitionModels.isStorageField(field.name())
+                    && field.binaryValue() != null) {
+                BytesRef bytes = field.binaryValue();
+                encodings.add(Arrays.copyOfRange(bytes.bytes, bytes.offset, bytes.offset + bytes.length));
+            }
+        }
+        if (!encodings.isEmpty()) {
+            item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, encodings);
+        }
+        String model = doc.get(ExtraProperties.FACE_MODEL);
+        if (model != null) {
+            item.setExtraAttribute(ExtraProperties.FACE_MODEL, model);
         }
     }
 
@@ -1007,6 +1028,8 @@ public class IndexItem extends BasicProps {
             for (IndexableField f : doc.getFields()) {
                 if (BasicProps.SET.contains(f.name()))
                     continue;
+                if (FaceRecognitionModels.isStorageField(f.name()))
+                    continue;
                 Class<?> c = typesMap.get(f.name());
                 if (Item.getAllExtraAttributes().contains(f.name())) {
                     if (multiValuedFields.contains(f.name()))
@@ -1032,6 +1055,8 @@ public class IndexItem extends BasicProps {
                     }
                 }
             }
+
+            restoreFaceEncodings(doc, evidence);
 
             if (viewItem || (!IOUtil.hasFile(evidence) && evidence.getIdInDataSource() == null)) {
 
