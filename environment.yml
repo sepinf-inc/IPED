@@ -1,0 +1,20 @@
+name: iped-face
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - numpy==1.26.4
+      - opencv-python==4.11.0.86
+      - pillow==11.3.0
+      - onnxruntime-gpu[cuda,cudnn]==1.22.0
+      - nvidia-cuda-runtime-cu12==12.9.79
+      - nvidia-cuda-nvrtc-cu12==12.9.86
+      - nvidia-cublas-cu12==12.9.2.10
+      # cuDNN 9.11+ removes Pascal (e.g. Quadro P620) support.
+      - nvidia-cudnn-cu12==9.10.2.21
+      - nvidia-cufft-cu12==11.4.1.4
+      - nvidia-curand-cu12==10.3.10.19
+      - nvidia-nvjitlink-cu12==12.9.86
+      - psutil==7.0.0

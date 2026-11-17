@@ -59,7 +59,6 @@ public class SimilarFacesFilterActions {
 
     private static ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private static int minScore = 50;
     private static int mode = 0;
 
     public static void clear() {
@@ -167,10 +166,23 @@ public class SimilarFacesFilterActions {
         }
 
         if (newSimilarFacesRefItem != null) {
-            SimilarFacesOptionsDialog opt = new SimilarFacesOptionsDialog(app, newSimilarFacesRefItem, minScore, mode);
+            try {
+                SimilarFacesSearch.validateReference(newSimilarFacesRefItem);
+                if (external) {
+                    SimilarFacesSearch.validateCaseCompatibility(app.appCase.getLeafReader(), newSimilarFacesRefItem);
+                }
+            } catch (IllegalArgumentException | IOException e) {
+                JOptionPane.showMessageDialog(App.get(), e.getMessage(),
+                        Messages.getString("FaceSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            int initialMinScore = SimilarFacesSearch.getMinScore(newSimilarFacesRefItem);
+            SimilarFacesOptionsDialog opt = new SimilarFacesOptionsDialog(app, newSimilarFacesRefItem, initialMinScore, mode);
             opt.setVisible(true);
             if (opt.isOk()) {
-                SimilarFacesSearch.setMinScore(minScore = opt.getMinScore());
+                if (opt.getMinScore() != initialMinScore) {
+                    SimilarFacesSearch.setMinScore(opt.getMinScore());
+                }
                 SimilarFacesSearch.setMode(mode = opt.getMode());
                 SimilarFacesSearch.setSelectedIdxs(opt.getSelectedIdxs());
             } else {

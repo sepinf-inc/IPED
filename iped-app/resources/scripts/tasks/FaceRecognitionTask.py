@@ -1,6 +1,6 @@
-﻿'''
-# Python face recognition feature based on Face Recognition Project (https://pypi.org/project/face-recognition/)
-# FaceRecognitionTask.py - By Rui Sant'Ana Junior and Luis Nassif
+'''
+# Python face recognition feature based on RetinaFace-R50 (MIT) + AuraFace-v1 (Apache 2.0)
+# FaceRecognitionTask.py - Originally by Rui Sant'Ana Junior and Luis Nassif, updated for ONNX-based detection + recognition
 # Requirements: See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 '''
@@ -11,15 +11,21 @@ import subprocess
 import threading, queue
 import traceback
 import platform
+import math
+import ast
 
 # configuration properties
 enableProp = 'enableFaceRecognition'
 configFile = 'FaceRecognitionConfig.txt'
 numFaceRecognitionProcessesProp = 'numFaceRecognitionProcesses'
 maxResolutionProp = 'maxResolution'
-faceDetectionModelProp = 'faceDetectionModel'
-upSamplingProp = 'upSampling'
+insightFaceModelProp = 'insightFaceModel'
+detSizeProp = 'detSize'
+minDetScoreProp = 'minDetScore'
 minSizeProp = 'minSize'
+modelDirProp = 'modelDir'
+pythonPathProp = 'pythonPath'
+executionProviderProp = 'executionProvider'
 
 # External process script
 processScript = 'FaceRecognitionProcess.py'
@@ -29,60 +35,178 @@ maxProcesses = None
 numCreatedProcs = 0
 numCreatedProcsLock = threading.Lock()
 
-from java.lang import System
+# Initialized task instances sharing the subprocess pool
+activeInstances = 0
+
+from java.lang import Runtime, System
 ipedRoot = System.getProperty('iped.root')
 
 bin = 'python' if platform.system().lower() == 'windows' else 'python3'
 
-detection_model = 'hog'
+model_name = 'auraface'
 max_size = 1024
-up_sampling = 1
+det_size = 640
+min_det_score = 0.5
 min_size = 48
+model_dir = None
+execution_provider = 'auto'
 
-firstInstance = True
+# Protocol strings (must match FaceRecognitionProcess.py)
+terminate = 'terminate_process'
+imgError = 'image_error'
+ping = 'ping'
+video = 'video'
+
 processQueue = None
 cache = {}
 
 timeLock = threading.Lock()
 initLock = threading.Lock()
-detectTime = 0
-featureTime = 0
+responseTime = 0
 
 def createProcessQueue():
     global processQueue, maxProcesses
     if processQueue is None:
         if maxProcesses is None:
-            maxProcesses = int(max(1, numThreads / 2))
+            numThreads = Runtime.getRuntime().availableProcessors()
+            # Default to min(4, numThreads/2). Each process loads ~300MB model.
+            # With GPU (auto-detected by onnxruntime), even 1 process is fast;
+            # multiple processes help on CPU-only machines.
+            maxProcesses = int(max(1, min(4, numThreads / 2)))
         processQueue = queue.Queue(maxProcesses)
 
 def log_stderr(proc):
-    for line in iter(proc.stderr.readline, b''):
-        if proc.poll() is not None:
-            break
+    for line in iter(proc.stderr.readline, ''):
         line = line.strip()
         if line:
             logger.info("[FaceRecognitionTask] Process-" + str(proc.pid) + " stderr: " + line)
     proc.stderr.close()
 
+
+def stopExternalProcess(proc, graceful=False):
+    """Reap a worker even when its protocol or pipes are broken."""
+    try:
+        if proc.poll() is None:
+            if graceful:
+                try:
+                    print(terminate, file=proc.stdin, flush=True)
+                    proc.wait(timeout=2)
+                except Exception:
+                    proc.kill()
+            else:
+                proc.kill()
+        proc.wait(timeout=5)
+    except Exception as exc:
+        logger.warn('[FaceRecognitionTask] Error stopping subprocess: ' + str(exc))
+    finally:
+        for stream in (proc.stdin, proc.stdout):
+            try:
+                stream.close()
+            except Exception:
+                pass
+
+
+def discardExternalProcess(proc):
+    global numCreatedProcs
+    stopExternalProcess(proc)
+    with numCreatedProcsLock:
+        numCreatedProcs -= 1
+
+
+def acquireExternalProcess():
+    """Reserve a slot or wait, rechecking slots freed by failed workers."""
+    global numCreatedProcs
+    deadline = time.monotonic() + 300
+    while True:
+        try:
+            return processQueue.get_nowait()
+        except queue.Empty:
+            pass
+        with numCreatedProcsLock:
+            create = numCreatedProcs < maxProcesses
+            if create:
+                numCreatedProcs += 1
+        if create:
+            try:
+                return createExternalProcess()
+            except Exception:
+                with numCreatedProcsLock:
+                    numCreatedProcs -= 1
+                raise
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise RuntimeError('Timed out waiting for face recognition subprocess after 5 min')
+        try:
+            return processQueue.get(timeout=min(1, remaining))
+        except queue.Empty:
+            continue
+
+
+def checkDependencies():
+    command = [bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript),
+               '--check-dependencies', '--model', model_name,
+               '--execution-provider', execution_provider]
+    try:
+        # This is a noninteractive probe; never inherit the JVM launcher's input pipe.
+        result = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, universal_newlines=True,
+                                env=buildSubprocessEnv(), timeout=60)
+        if result.returncode != 0:
+            raise RuntimeError((result.stderr or result.stdout or
+                                'dependency check exited with status ' + str(result.returncode)).strip())
+    except Exception as exc:
+        raise RuntimeError("Face recognition Python setup failed for '" + str(bin) +
+                           "'. Configure pythonPath to the intended conda/virtual environment "
+                           "and install its face recognition dependencies. " + str(exc)) from exc
+
+# Build subprocess environment: inherit current env but prepend conda/venv Library\bin and Scripts
+# so that CUDA/cuDNN DLLs next to the configured python executable are found by onnxruntime.
+def buildSubprocessEnv():
+    env = os.environ.copy()
+    if bin and bin != 'python' and bin != 'python3':
+        python_dir = os.path.dirname(os.path.abspath(bin))
+        extra_paths = [
+            python_dir,
+            os.path.join(python_dir, 'Scripts'),
+            os.path.join(python_dir, 'Library', 'bin'),
+            os.path.join(python_dir, 'Library', 'mingw-w64', 'bin'),
+        ]
+        existing = env.get('PATH', '')
+        env['PATH'] = os.pathsep.join(p for p in extra_paths if os.path.isdir(p)) + os.pathsep + existing
+    return env
+
 # Start external process, check if it is alive and ping to test communication
 def createExternalProcess():
     proc = None
+    env = buildSubprocessEnv()
+    logger.info("[FaceRecognitionTask] Starting subprocess: " + str(bin))
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript), str(max_size), detection_model, str(up_sampling)], 
-                                    stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        
-        if pingExternalProcess(proc):
+            args_list = [bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript),
+                         str(max_size), model_name, str(det_size), str(min_det_score),
+                         model_dir or '', execution_provider]
+            try:
+                proc = subprocess.Popen(args_list,
+                                        stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
+                                        env=env)
+            except Exception as e:
+                logger.error("[FaceRecognitionTask] Failed to launch subprocess (attempt " + str(i+1) + "): " + str(e))
+                logger.error("[FaceRecognitionTask] Command: " + str(args_list))
+                proc = None
+                continue
+
+            # Start logging stderr immediately so model-download/import errors are visible
             from threading import Thread
             t = Thread(target=log_stderr, args=(proc,))
             t.daemon = True
             t.start()
+
+        if pingExternalProcess(proc):
             return proc
         else:
-            proc.kill()
+            stopExternalProcess(proc)
             proc = None
-            
-    raise Exception("Error creating external face recognition process!")
+
+    raise Exception("Error creating external face recognition process! Check that '" + str(bin) + "' has the required dependencies (onnxruntime, opencv-python, numpy, pillow).")
 
 def pingExternalProcess(proc):
     try:
@@ -94,150 +218,135 @@ def pingExternalProcess(proc):
         traceback.print_exc()
     return False
 
+
+def readResponse(proc):
+    """Validate the complete response before publishing any item attributes."""
+    line = proc.stdout.readline().strip()
+    if line == imgError:
+        return None
+    count = int(line)
+    if count < 0 or count > 100000:
+        raise ValueError('Invalid face count: ' + line)
+    locations = []
+    for _ in range(count):
+        location = ast.literal_eval(proc.stdout.readline())
+        if (not isinstance(location, (list, tuple)) or len(location) != 4 or
+                any(type(value) is not int for value in location) or
+                location[2] <= location[0] or location[1] <= location[3]):
+            raise ValueError('Invalid face bounding box')
+        locations.append(list(location))
+    encodings = []
+    for _ in range(count):
+        encoding = [float(value) for value in proc.stdout.readline().split()]
+        if len(encoding) != 512 or not all(math.isfinite(value) for value in encoding):
+            raise ValueError('Invalid face embedding: expected 512 finite values')
+        normSquared = sum(value * value for value in encoding)
+        if abs(normSquared - 1) > 0.001:
+            raise ValueError('Invalid face embedding: expected unit L2 norm')
+        encodings.append(encoding)
+    return locations, encodings
+
 class FaceRecognitionTask:
 
     enabled = None
     videoSubitems = False
-    
+
     def isEnabled(self):
         return False if FaceRecognitionTask.enabled is None else FaceRecognitionTask.enabled
-    
+
     def getConfigurables(self):
         from iped.engine.config import DefaultTaskPropertiesConfig
         return [DefaultTaskPropertiesConfig(enableProp, configFile)]
-    
-    # This method is executed before starting the processing of items.
+
+    # Initialize shared configuration once for each processing/GUI lifecycle.
     def init(self, configuration):
-        # check if face recognition task is enabled
-        taskConfig = configuration.getTaskConfigurable(configFile)
-        if FaceRecognitionTask.enabled is None:
-            FaceRecognitionTask.enabled = taskConfig.isEnabled()
-        
-        # Check if required face recognition modules are properly installed
-        # This lock avoids multiple error messages from multiple threads
-        initLock.acquire()
-        try:
+        global activeInstances, maxProcesses, bin, max_size, model_name
+        global det_size, min_det_score, min_size, model_dir, execution_provider
+        global processQueue, numCreatedProcs, responseTime
+        with initLock:
+            if getattr(self, '_initialized', False):
+                return
+            taskConfig = configuration.getTaskConfigurable(configFile)
+            if activeInstances == 0:
+                FaceRecognitionTask.enabled = taskConfig.isEnabled()
             if not FaceRecognitionTask.enabled:
                 return
-            
-            # default help and error messages
-            msg_see_manual = 'See FaceRecognition task setup information at <https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition>.'
-            msg_task_init_error = 'FaceRecognition task could not be initialized and was disabled'
+            if activeInstances == 0:
+                extraProps = taskConfig.getConfiguration()
 
-            # chek if 'face_recognition' module is installed
-            module_name = 'face_recognition'
-            import face_recognition
+                def propertyValue(name, default):
+                    value = extraProps.getProperty(name)
+                    return default if value is None or not str(value).strip() else str(value).strip()
 
-            # chek if 'opencv-python' module is installed
-            module_name = 'opencv-python'
-            import cv2
+                numThreads = Runtime.getRuntime().availableProcessors()
+                maxProcesses = int(propertyValue(numFaceRecognitionProcessesProp,
+                                                max(1, min(4, numThreads // 2))))
+                max_size = int(propertyValue(maxResolutionProp, 1024))
+                model_name = propertyValue(insightFaceModelProp, 'auraface')
+                det_size = int(propertyValue(detSizeProp, 640))
+                min_det_score = float(propertyValue(minDetScoreProp, 0.5))
+                min_size = int(propertyValue(minSizeProp, 48))
+                execution_provider = propertyValue(executionProviderProp, 'auto')
+                if model_name not in ('auraface', 'buffalo_l', 'buffalo_s'):
+                    raise ValueError('Unsupported insightFaceModel: ' + model_name)
+                if execution_provider not in ('auto', 'cpu', 'cuda'):
+                    raise ValueError('executionProvider must be auto, cpu or cuda')
+                if maxProcesses < 1 or max_size < 1 or det_size < 1 or min_size < 1:
+                    raise ValueError('Face recognition process count and image sizes must be positive')
+                if not math.isfinite(min_det_score) or not 0 <= min_det_score <= 1:
+                    raise ValueError('minDetScore must be between 0 and 1')
+                defaultPython = (os.path.join(ipedRoot, 'python', 'python')
+                                 if platform.system().lower() == 'windows' else 'python3')
+                bin = propertyValue(pythonPathProp, defaultPython)
+                model_dir = propertyValue(modelDirProp, os.path.join(ipedRoot, 'models', 'insightface'))
+                checkDependencies()
+                from iped.engine.config import VideoThumbsConfig
+                videoConfig = configuration.findObject(VideoThumbsConfig)
+                FaceRecognitionTask.videoSubitems = videoConfig.getVideoThumbsSubitems()
+                processQueue = None
+                numCreatedProcs = 0
+                cache.clear()
+                responseTime = 0
+                createProcessQueue()
+            activeInstances += 1
+            self._initialized = True
 
-            # chek if 'numpy' module is installed
-            module_name = 'numpy'
-            global np
-            import numpy as np
-            
-            # check if numpy version is supported (<2.x)
-            np_version_unsupported_min = '2'
-            np_version = np.__version__
-            if np_version >= np_version_unsupported_min:
-                # numpy version is not supported
-                msg = msg_task_init_error + f': \'{module_name}\' module version is {np_version} (must be <{np_version_unsupported_min}.x).'
-                logger.error(msg + ' ' + msg_see_manual)
-                FaceRecognitionTask.enabled = False
-                return
-
-        except ModuleNotFoundError:
-            # required module not installed
-            msg = msg_task_init_error + f': \'{module_name}\' module is missing.'
-            logger.error(msg + ' ' + msg_see_manual)
-            FaceRecognitionTask.enabled = False
-            return
-        finally:
-            initLock.release()
-        
-        from iped.engine.config import VideoThumbsConfig
-        videoConfig = configuration.findObject(VideoThumbsConfig);
-        FaceRecognitionTask.videoSubitems = videoConfig.getVideoThumbsSubitems();
-        
-        global fp, terminate, imgError, ping
-        import FaceRecognitionProcess as fp
-        terminate = fp.terminate
-        imgError = fp.imgError
-        ping = fp.ping
-        
-        # check if was called from gui the first time
-        global maxProcesses, firstInstance
-        # load configuration properties
-        extraProps = taskConfig.getConfiguration()
-        numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
-        if firstInstance and numProcs is not None:
-            maxProcesses = int(numProcs)
-        firstInstance = False
-        
-        # configure embedded python path on windows
-        if platform.system().lower() == 'windows':
-            global bin
-            bin = os.path.join(ipedRoot, 'python', 'pythonw')
-        
-        numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
-        if maxProcesses is None and numProcs is not None:
-            maxProcesses = int(numProcs)
-        maxResolution = extraProps.getProperty(maxResolutionProp)
-        global max_size, detection_model, up_sampling, min_size
-        if maxResolution is not None:
-            max_size = int(maxResolution)
-        faceDetectionModel = extraProps.getProperty(faceDetectionModelProp)
-        if faceDetectionModel is not None:
-            detection_model = faceDetectionModel
-        upSampling = extraProps.getProperty(upSamplingProp)
-        if upSampling is not None:
-            up_sampling = int(upSampling)
-        minSize = extraProps.getProperty(minSizeProp)
-        if minSize is not None:
-            min_size = int(minSize)
-        
-        createProcessQueue()
-        return
-            
-    # It is executed after processing all items in case.
+    # The last initialized instance owns shutdown, including a single GUI instance.
     def finish(self):
-        #terminate subprocess
-        if not processQueue.empty():
-            proc = processQueue.get(block=True)
-            if proc.poll() is None:
+        global activeInstances, processQueue, numCreatedProcs, maxProcesses
+        global responseTime
+        with initLock:
+            if not getattr(self, '_initialized', False):
+                return
+            self._initialized = False
+            activeInstances -= 1
+            if activeInstances:
+                return
+            while processQueue is not None:
                 try:
-                    print(terminate, file=proc.stdin, flush=True)
-                    proc.wait(2)
-                except:
-                    proc.kill()
-                with numCreatedProcsLock:
-                    global numCreatedProcs
-                    numCreatedProcs -= 1
-        
-        with timeLock:
-            global detectTime, featureTime
-            if detectTime + featureTime >= 0:
-                logger.info('[FaceRecognitionTask] Time(s) to detect faces: ' + str(detectTime / maxProcesses))
-                logger.info('[FaceRecognitionTask] Time(s) to get face features: ' + str(featureTime / maxProcesses))
-                detectTime = -1
-                featureTime = -1
-    
-    # Needed because tuples cause ClassNotFoundException on java side later
-    def convertTuplesToList(self, tuples):
-        result = []
-        for i in tuples:
-            result.append(list(i))
-        return result
-    
+                    proc = processQueue.get_nowait()
+                except queue.Empty:
+                    break
+                stopExternalProcess(proc, graceful=True)
+            with numCreatedProcsLock:
+                numCreatedProcs = 0
+            with timeLock:
+                logger.info('[FaceRecognitionTask] Accumulated subprocess response time(s): ' + str(responseTime))
+                responseTime = 0
+            processQueue = None
+            maxProcesses = None
+            cache.clear()
+            FaceRecognitionTask.enabled = None
+            FaceRecognitionTask.videoSubitems = False
+
     def cacheResults(self, hash, locations, encodings, count):
         cache[hash + '_locations'] = locations
         cache[hash + '_encodings'] = encodings
         cache[hash + '_count'] = count
-    
+
     # This function is executed on all case items
     def process(self, item):
-    
+
         hash = item.getHash()
         # Only image type items are processed
         if hash is None or not item.getExtraAttribute('hasThumb'):
@@ -266,6 +375,7 @@ class FaceRecognitionTask:
         if face_count is not None:
             if face_count >= 0:
                 item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
+                item.setExtraAttribute(ExtraProperties.FACE_MODEL, model_name)
                 if face_locations is not None and face_encodings is not None:
                     if len(face_locations) > 0 and len(face_encodings) > 0:
                         item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
@@ -301,86 +411,42 @@ class FaceRecognitionTask:
         else:
             return
 
-        # creates process in parallel
-        numCreatedProcsLock.acquire()
-        global numCreatedProcs
-        if numCreatedProcs < maxProcesses:
-            numCreatedProcs += 1
-            numCreatedProcsLock.release()
-            proc = createExternalProcess()
-            processQueue.put(proc, block=True)
-        else:
-            numCreatedProcsLock.release()
-        
+        proc = None
         try:
-            proc = processQueue.get(block=True)
+            proc = acquireExternalProcess()
             if not pingExternalProcess(proc):
-                proc.kill()
-                proc = createExternalProcess()
-            
+                discardExternalProcess(proc)
+                proc = None
+                proc = acquireExternalProcess()
+
             print(img_path, file=proc.stdin, flush=True)
-            if not isVideo:
-                print(str(tiff_orient), file=proc.stdin, flush=True)
-            else:
-                print(fp.video, file=proc.stdin, flush=True)
-                    
+            print(video if isVideo else str(tiff_orient), file=proc.stdin, flush=True)
             t1 = time.time()
-            
-            line = proc.stdout.readline().strip()
-
-            if not line:
-                time.sleep(3)
-                status = str(proc.poll())
-                logger.warn("[FaceRecognitionTask] Unexpected error from external process while processing {} ({} bytes) exit status=" + status, item.getPath(), item.getLength())
-                proc.kill()
-                proc = createExternalProcess()
-                return
-
-            if line == imgError:
-                logger.info("[FaceRecognitionTask] Error loading image {} ({} bytes)", item.getPath(), item.getLength())
+            response = readResponse(proc)
+            if response is None:
+                logger.info('[FaceRecognitionTask] Error loading image ' + str(item.getPath()))
                 self.cacheResults(hash, [], [], -1)
                 return
-                
-            num_faces = int(line)
-            
-            t2 = time.time()
+            face_locations, face_encodings = response
+            face_encodings = list(map(javaConverter.toKnnVector, face_encodings))
+            face_count = len(face_locations)
             with timeLock:
-                global detectTime
-                detectTime += t2 - t1
-            
-            if num_faces == 0:
-                item.setExtraAttribute(ExtraProperties.FACE_COUNT, 0)
-                self.cacheResults(hash, [], [], 0)
-                return
-            
-            face_locations = []
-            for i in range(num_faces):
-                line = proc.stdout.readline()
-                face_locations.append(eval(line))
-            
-            face_encodings = []
-            for i in range(num_faces):
-                encodings_list = []
-                for j in range(128):
-                    line = proc.stdout.readline()
-                    encodings_list.append(float(line))
-                np_array = np.array(encodings_list)
-                face_encodings.append(np_array)
-            
-            t3 = time.time()
-            with timeLock:
-                global featureTime
-                featureTime += t3 - t2
-        
+                global responseTime
+                responseTime += time.time() - t1
+        except Exception as exc:
+            if proc is not None:
+                discardExternalProcess(proc)
+                proc = None
+            logger.error('[FaceRecognitionTask] Face recognition failed for ' +
+                         str(item.getPath()) + ': ' + str(exc))
+            return
         finally:
-            processQueue.put(proc, block=True)
-        
-        face_locations = self.convertTuplesToList(face_locations)
-        face_encodings = list(map(javaConverter.toKnnVector, face_encodings))
-        face_count = len(face_locations)
+            if proc is not None:
+                processQueue.put(proc)
 
-        item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
-        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
+        if face_count:
+            item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
+            item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
         item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
-        
+        item.setExtraAttribute(ExtraProperties.FACE_MODEL, model_name)
         self.cacheResults(hash, face_locations, face_encodings, face_count)

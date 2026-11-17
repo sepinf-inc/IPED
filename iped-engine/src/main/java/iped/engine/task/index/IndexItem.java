@@ -81,6 +81,7 @@ import iped.engine.data.Item;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
 import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewInputStreamFactory;
+import iped.engine.search.FaceRecognitionModels;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
 import iped.engine.task.ThumbTask;
@@ -473,12 +474,20 @@ public class IndexItem extends BasicProps {
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
             if (entry.getValue() instanceof Collection) {
                 for (Object val : (Collection<?>) entry.getValue()) {
+                    if (ExtraProperties.FACE_ENCODINGS.equals(entry.getKey()) && val instanceof KnnVector) {
+                        addFaceVector(doc, (KnnVector) val, (String) evidence.getExtraAttribute(ExtraProperties.FACE_MODEL));
+                        continue;
+                    }
                     if (typesMap.get(entry.getKey()) == null) {
                         MetadataUtil.setMetadataType(entry.getKey(), val.getClass());
                     }
                     addExtraAttributeToDoc(doc, entry.getKey(), val, true, timeEventSet);
                 }
             } else {
+                if (ExtraProperties.FACE_ENCODINGS.equals(entry.getKey()) && entry.getValue() instanceof KnnVector) {
+                    addFaceVector(doc, (KnnVector) entry.getValue(), (String) evidence.getExtraAttribute(ExtraProperties.FACE_MODEL));
+                    continue;
+                }
                 if (typesMap.get(entry.getKey()) == null) {
                     MetadataUtil.setMetadataType(entry.getKey(), entry.getValue().getClass());
                 }
@@ -494,6 +503,44 @@ public class IndexItem extends BasicProps {
         storeTimeStamps(doc, timeEventSet);
 
         return doc;
+    }
+
+    static void addFaceVector(Document doc, KnnVector vector, String model) {
+        float[] floats = convDoubleToFloatArray(vector.getArray());
+        byte[] bytes = convFloatArrayToByteArray(floats);
+        // Lucene requires a field's vector schema to remain unchanged even for stored/docvalue-only fields.
+        // Preserve the original dlib field; namespace every representation of modern embeddings together.
+        String storageKey = FaceRecognitionModels.storageField(model, floats.length);
+        String vectorKey = FaceRecognitionModels.vectorField(model, floats.length);
+        if (vectorKey != null) {
+            String key = vectorKey;
+            int suffix = 0;
+            while (doc.getField(key) != null) {
+                key = vectorKey + (ExtraProperties.FACE_ENCODINGS.equals(vectorKey) ? "" : "_") + (++suffix);
+            }
+            doc.add(new KnnVectorField(key, floats));
+        }
+        doc.add(new SortedSetDocValuesField(storageKey, new BytesRef(bytes)));
+        doc.add(new StoredField(storageKey, bytes));
+    }
+
+    /** Restore physical model fields to the logical item attribute used by UI and case import/export. */
+    public static void restoreFaceEncodings(Document doc, IItem item) {
+        List<byte[]> encodings = new ArrayList<>();
+        for (IndexableField field : doc.getFields()) {
+            if (field.fieldType().stored() && FaceRecognitionModels.isStorageField(field.name())
+                    && field.binaryValue() != null) {
+                BytesRef bytes = field.binaryValue();
+                encodings.add(Arrays.copyOfRange(bytes.bytes, bytes.offset, bytes.offset + bytes.length));
+            }
+        }
+        if (!encodings.isEmpty()) {
+            item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, encodings);
+        }
+        String model = doc.get(ExtraProperties.FACE_MODEL);
+        if (model != null) {
+            item.setExtraAttribute(ExtraProperties.FACE_MODEL, model);
+        }
     }
 
     private static void storeTimeStamps(Document doc, Set<TimeStampEvent> timeEventSet) {
@@ -981,6 +1028,8 @@ public class IndexItem extends BasicProps {
             for (IndexableField f : doc.getFields()) {
                 if (BasicProps.SET.contains(f.name()))
                     continue;
+                if (FaceRecognitionModels.isStorageField(f.name()))
+                    continue;
                 Class<?> c = typesMap.get(f.name());
                 if (Item.getAllExtraAttributes().contains(f.name())) {
                     if (multiValuedFields.contains(f.name()))
@@ -1006,6 +1055,8 @@ public class IndexItem extends BasicProps {
                     }
                 }
             }
+
+            restoreFaceEncodings(doc, evidence);
 
             if (viewItem || (!IOUtil.hasFile(evidence) && evidence.getIdInDataSource() == null)) {
 

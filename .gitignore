@@ -5,4 +5,9 @@ nbactions.xml
 /.project
 .pydevproject
 /.idea/
+CLAUDE.md
+/models/
 .sdkmanrc
+__pycache__/
+*.py[cod]
+.pytest_cache/

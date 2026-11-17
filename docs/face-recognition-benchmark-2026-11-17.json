@@ -1,0 +1,1673 @@
+{
+  "baseline_sweep": {
+    "head_sha": "327a4e0780e393aaa0f16fa6e9b9c3ac94adbdeb",
+    "image_count": 377,
+    "versions": {
+      "python": "3.10.22 | packaged by conda-forge | (main, Oct  6 2026, 22:57:13) [MSC v.1944 64 bit (AMD64)]",
+      "numpy": "1.26.4",
+      "opencv": "4.11.0",
+      "pillow": "11.3.0",
+      "onnxruntime": "1.22.0"
+    },
+    "manifest_sha256": "065a838f5e7faf59a4e49093cc97559d3ee1b68189a27ab35a2c71a14bed4fb9",
+    "source_sha256": {
+      "iped-app/resources/scripts/tasks/FaceRecognitionProcess.py": "4ff814e3a4176713360ed00eb1a384987d5b803b53af20d6d9804ad7c4c6400e",
+      "iped-app/resources/scripts/tasks/FaceRecognitionModelConfig.py": "fc65c0fbcedf3765770b7f69fc6a37dc2531a7472df18c426679bc8d8e06ae3a"
+    },
+    "orientation_counts": {
+      "1": 229,
+      "6": 119,
+      "8": 29
+    },
+    "settings": {
+      "max_resolution": 1024,
+      "det_size": 640,
+      "min_det_score": 0.5,
+      "repeats": 3,
+      "warmup_images_per_worker": 1
+    },
+    "memory_note": "RSS summed across workers; VRAM is system-wide, not attributable to these processes.",
+    "results": [
+      {
+        "configuration": "dlib_hog_cpu",
+        "workers": 1,
+        "status": "ok",
+        "startup_seconds": 1.1688895999686792,
+        "runs": [
+          {
+            "wall_seconds": 170.81764910009224,
+            "milliseconds_per_image": 453.0972124670882,
+            "images_per_second": 2.2070318962128628,
+            "no_face_images": 152,
+            "counts_sha256": "e2d4d1d84d03189dfc2331e9ad8585118ebf8a8503374d5def1ebe2c48749a26",
+            "faces": 437,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 170.13972069998272,
+            "milliseconds_per_image": 451.2989938991584,
+            "images_per_second": 2.2158259014941377,
+            "no_face_images": 152,
+            "counts_sha256": "e2d4d1d84d03189dfc2331e9ad8585118ebf8a8503374d5def1ebe2c48749a26",
+            "faces": 437,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 171.39081969996914,
+            "milliseconds_per_image": 454.6175588858598,
+            "images_per_second": 2.1996510703429926,
+            "no_face_images": 152,
+            "counts_sha256": "e2d4d1d84d03189dfc2331e9ad8585118ebf8a8503374d5def1ebe2c48749a26",
+            "faces": 437,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 170.81764910009224,
+        "median_milliseconds_per_image": 453.0972124670882,
+        "peak_process_rss_mb": 397.5859375,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ]
+        ]
+      },
+      {
+        "configuration": "dlib_hog_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.13507230009418,
+        "runs": [
+          {
+            "wall_seconds": 53.43330739997327,
+            "milliseconds_per_image": 141.73291087526067,
+            "images_per_second": 7.055524322647274,
+            "no_face_images": 152,
+            "counts_sha256": "e2d4d1d84d03189dfc2331e9ad8585118ebf8a8503374d5def1ebe2c48749a26",
+            "faces": 437,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 51.97473060002085,
+            "milliseconds_per_image": 137.86400689660704,
+            "images_per_second": 7.253524850398143,
+            "no_face_images": 152,
+            "counts_sha256": "e2d4d1d84d03189dfc2331e9ad8585118ebf8a8503374d5def1ebe2c48749a26",
+            "faces": 437,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 54.44800539989956,
+            "milliseconds_per_image": 144.42441750636488,
+            "images_per_second": 6.924036927176316,
+            "no_face_images": 152,
+            "counts_sha256": "e2d4d1d84d03189dfc2331e9ad8585118ebf8a8503374d5def1ebe2c48749a26",
+            "faces": 437,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 53.43330739997327,
+        "median_milliseconds_per_image": 141.73291087526067,
+        "peak_process_rss_mb": 1236.9375,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ],
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ],
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ],
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ]
+        ]
+      },
+      {
+        "configuration": "auraface_cpu",
+        "workers": 1,
+        "status": "ok",
+        "startup_seconds": 1.6970201999647543,
+        "runs": [
+          {
+            "wall_seconds": 333.8709153000964,
+            "milliseconds_per_image": 885.5992448278419,
+            "images_per_second": 1.1291789213239418,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 330.3461257999297,
+            "milliseconds_per_image": 876.2496705568427,
+            "images_per_second": 1.1412272478967278,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 337.14830409991555,
+            "milliseconds_per_image": 894.2925838194046,
+            "images_per_second": 1.1182022730515477,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 333.8709153000964,
+        "median_milliseconds_per_image": 885.5992448278419,
+        "peak_process_rss_mb": 900.73828125,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ]
+        ]
+      },
+      {
+        "configuration": "auraface_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.883630800060928,
+        "runs": [
+          {
+            "wall_seconds": 126.69562809995841,
+            "milliseconds_per_image": 336.0626740051947,
+            "images_per_second": 2.975635431575904,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 131.78978450002614,
+            "milliseconds_per_image": 349.57502519900834,
+            "images_per_second": 2.8606162566410847,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 133.28487430000678,
+            "milliseconds_per_image": 353.54078063662274,
+            "images_per_second": 2.828528007997535,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 131.78978450002614,
+        "median_milliseconds_per_image": 349.57502519900834,
+        "peak_process_rss_mb": 3283.140625,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ]
+        ]
+      },
+      {
+        "configuration": "auraface_cuda",
+        "workers": 1,
+        "status": "ok",
+        "startup_seconds": 2.1367861999897286,
+        "runs": [
+          {
+            "wall_seconds": 64.42856449994724,
+            "milliseconds_per_image": 170.89804907147808,
+            "images_per_second": 5.851441870946989,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 64.69154450006317,
+            "milliseconds_per_image": 171.59560875348322,
+            "images_per_second": 5.827654957281656,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 65.4750571999466,
+            "milliseconds_per_image": 173.6738917770467,
+            "images_per_second": 5.757917841121144,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 64.69154450006317,
+        "median_milliseconds_per_image": 171.59560875348322,
+        "peak_process_rss_mb": 1219.93359375,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 1697.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ]
+        ]
+      },
+      {
+        "configuration": "auraface_cuda",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.955205700010993,
+        "runs": [
+          {
+            "wall_seconds": 22.415234999964014,
+            "milliseconds_per_image": 59.456856763830274,
+            "images_per_second": 16.818918026092756,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 22.211291800020263,
+            "milliseconds_per_image": 58.91589336875401,
+            "images_per_second": 16.973348664018545,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 24.34750580007676,
+            "milliseconds_per_image": 64.58224350152987,
+            "images_per_second": 15.484132259609583,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 22.415234999964014,
+        "median_milliseconds_per_image": 59.456856763830274,
+        "peak_process_rss_mb": 4677.16796875,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 5761.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ]
+        ]
+      }
+    ],
+    "baseline_sha": "8978445ae72fc263ab68748d3e991c946db394e0"
+  },
+  "final_cuda": {
+    "head_sha": "7cf3d24cd5c1958c4dce40941c2bb20edf7a2a72",
+    "image_count": 377,
+    "versions": {
+      "python": "3.10.22 | packaged by conda-forge | (main, Oct  6 2026, 22:57:13) [MSC v.1944 64 bit (AMD64)]",
+      "numpy": "1.26.4",
+      "opencv": "4.11.0",
+      "pillow": "11.3.0",
+      "onnxruntime": "1.22.0"
+    },
+    "manifest_sha256": "065a838f5e7faf59a4e49093cc97559d3ee1b68189a27ab35a2c71a14bed4fb9",
+    "source_sha256": {
+      "iped-app/resources/scripts/tasks/FaceRecognitionProcess.py": "41f6dbd1f642b27d2d6961f0d3c3335123d004e60077850d86bd7f172ed9cec8",
+      "iped-app/resources/scripts/tasks/FaceRecognitionModelConfig.py": "6c17fe83fbda758bb792cef6629d46c3b9fabbe872fb172b4736c9345182a7bf"
+    },
+    "orientation_counts": {
+      "1": 229,
+      "6": 119,
+      "8": 29
+    },
+    "settings": {
+      "max_resolution": 1024,
+      "det_size": 640,
+      "min_det_score": 0.5,
+      "repeats": 3,
+      "configuration_timeout_seconds": 1200.0,
+      "warmup_images_per_worker": 1
+    },
+    "memory_note": "RSS summed across workers; VRAM is system-wide, not attributable to these processes.",
+    "results": [
+      {
+        "configuration": "auraface_cuda",
+        "workers": 1,
+        "status": "ok",
+        "startup_seconds": 1.806050300016068,
+        "runs": [
+          {
+            "wall_seconds": 65.24065129994415,
+            "milliseconds_per_image": 173.05212546404283,
+            "images_per_second": 5.778605708069054,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 67.62669459998142,
+            "milliseconds_per_image": 179.38115278509662,
+            "images_per_second": 5.5747216721147215,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 67.2166877000127,
+            "milliseconds_per_image": 178.29360132629364,
+            "images_per_second": 5.608726238974265,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 67.2166877000127,
+        "median_milliseconds_per_image": 178.29360132629364,
+        "peak_process_rss_mb": 1192.01171875,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 1697.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ]
+        ]
+      },
+      {
+        "configuration": "auraface_cuda",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.769946899963543,
+        "runs": [
+          {
+            "wall_seconds": 24.918952999985777,
+            "milliseconds_per_image": 66.09801856760153,
+            "images_per_second": 15.129046553449303,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 26.253931600018404,
+            "milliseconds_per_image": 69.63907586211778,
+            "images_per_second": 14.359754026316413,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          },
+          {
+            "wall_seconds": 26.879729000036605,
+            "milliseconds_per_image": 71.29901591521646,
+            "images_per_second": 14.02543902133413,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 26.253931600018404,
+        "median_milliseconds_per_image": 69.63907586211778,
+        "peak_process_rss_mb": 4484.27734375,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 5245.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CUDAExecutionProvider', 'CPUExecutionProvider'], rec=['CUDAExecutionProvider', 'CPUExecutionProvider']"
+          ]
+        ]
+      }
+    ],
+    "resolved_worker_source_commit": "3d558a4d949bc869859b3781cb3ccbc60b837ea6",
+    "source_commit_note": "Working-tree fingerprints match this commit, allowing Git newline normalization."
+  },
+  "final_cpu_revalidation": {
+    "head_sha": "3d558a4d949bc869859b3781cb3ccbc60b837ea6",
+    "image_count": 377,
+    "versions": {
+      "python": "3.10.22 | packaged by conda-forge | (main, Oct  6 2026, 22:57:13) [MSC v.1944 64 bit (AMD64)]",
+      "numpy": "1.26.4",
+      "opencv": "4.11.0",
+      "pillow": "11.3.0",
+      "onnxruntime": "1.22.0"
+    },
+    "manifest_sha256": "065a838f5e7faf59a4e49093cc97559d3ee1b68189a27ab35a2c71a14bed4fb9",
+    "source_sha256": {
+      "iped-app/resources/scripts/tasks/FaceRecognitionProcess.py": "41f6dbd1f642b27d2d6961f0d3c3335123d004e60077850d86bd7f172ed9cec8",
+      "iped-app/resources/scripts/tasks/FaceRecognitionModelConfig.py": "6c17fe83fbda758bb792cef6629d46c3b9fabbe872fb172b4736c9345182a7bf"
+    },
+    "orientation_counts": {
+      "1": 229,
+      "6": 119,
+      "8": 29
+    },
+    "settings": {
+      "max_resolution": 1024,
+      "det_size": 640,
+      "min_det_score": 0.5,
+      "repeats": 1,
+      "configuration_timeout_seconds": 600.0,
+      "warmup_images_per_worker": 1
+    },
+    "memory_note": "RSS summed across workers; VRAM is system-wide, not attributable to these processes.",
+    "results": [
+      {
+        "configuration": "auraface_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 6.293144199997187,
+        "runs": [
+          {
+            "wall_seconds": 210.12641359993722,
+            "milliseconds_per_image": 557.3644923075258,
+            "images_per_second": 1.7941580667615442,
+            "no_face_images": 65,
+            "counts_sha256": "28dd9aa0fdc91000a5114afd1c69406051e4f86289092973714e77f4805b4886",
+            "faces": 1383,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 210.12641359993722,
+        "median_milliseconds_per_image": 557.3644923075258,
+        "peak_process_rss_mb": 3109.97265625,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ]
+        ]
+      }
+    ]
+  },
+  "hog_2048_single_pass": {
+    "head_sha": "327a4e0780e393aaa0f16fa6e9b9c3ac94adbdeb",
+    "image_count": 377,
+    "versions": {
+      "python": "3.10.22 | packaged by conda-forge | (main, Oct  6 2026, 22:57:13) [MSC v.1944 64 bit (AMD64)]",
+      "numpy": "1.26.4",
+      "opencv": "4.11.0",
+      "pillow": "11.3.0",
+      "onnxruntime": "1.22.0"
+    },
+    "manifest_sha256": "065a838f5e7faf59a4e49093cc97559d3ee1b68189a27ab35a2c71a14bed4fb9",
+    "source_sha256": {
+      "iped-app/resources/scripts/tasks/FaceRecognitionProcess.py": "4ff814e3a4176713360ed00eb1a384987d5b803b53af20d6d9804ad7c4c6400e",
+      "iped-app/resources/scripts/tasks/FaceRecognitionModelConfig.py": "fc65c0fbcedf3765770b7f69fc6a37dc2531a7472df18c426679bc8d8e06ae3a"
+    },
+    "orientation_counts": {
+      "1": 229,
+      "6": 119,
+      "8": 29
+    },
+    "settings": {
+      "max_resolution": 2048,
+      "det_size": 640,
+      "min_det_score": 0.5,
+      "repeats": 1,
+      "configuration_timeout_seconds": 600.0,
+      "warmup_images_per_worker": 1
+    },
+    "memory_note": "RSS summed across workers; VRAM is system-wide, not attributable to these processes.",
+    "results": [
+      {
+        "configuration": "dlib_hog_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.596556999953464,
+        "runs": [
+          {
+            "wall_seconds": 113.37060500006191,
+            "milliseconds_per_image": 300.71778514605285,
+            "images_per_second": 3.3253769793307013,
+            "no_face_images": 105,
+            "counts_sha256": "b9761fd5b42fe77da957b7a1f774c55881435cdaf0eb39151ffb39531c94b242",
+            "faces": 786,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 113.37060500006191,
+        "median_milliseconds_per_image": 300.71778514605285,
+        "peak_process_rss_mb": 1324.0078125,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ],
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ],
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ],
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ]
+        ]
+      }
+    ],
+    "baseline_sha": "8978445ae72fc263ab68748d3e991c946db394e0"
+  },
+  "cnn_bounded_attempts": {
+    "head_sha": "327a4e0780e393aaa0f16fa6e9b9c3ac94adbdeb",
+    "image_count": 377,
+    "versions": {
+      "python": "3.10.22 | packaged by conda-forge | (main, Oct  6 2026, 22:57:13) [MSC v.1944 64 bit (AMD64)]",
+      "numpy": "1.26.4",
+      "opencv": "4.11.0",
+      "pillow": "11.3.0",
+      "onnxruntime": "1.22.0"
+    },
+    "manifest_sha256": "065a838f5e7faf59a4e49093cc97559d3ee1b68189a27ab35a2c71a14bed4fb9",
+    "source_sha256": {
+      "iped-app/resources/scripts/tasks/FaceRecognitionProcess.py": "4ff814e3a4176713360ed00eb1a384987d5b803b53af20d6d9804ad7c4c6400e",
+      "iped-app/resources/scripts/tasks/FaceRecognitionModelConfig.py": "fc65c0fbcedf3765770b7f69fc6a37dc2531a7472df18c426679bc8d8e06ae3a"
+    },
+    "orientation_counts": {
+      "1": 229,
+      "6": 119,
+      "8": 29
+    },
+    "settings": {
+      "max_resolution": 1024,
+      "det_size": 640,
+      "min_det_score": 0.5,
+      "repeats": 1,
+      "configuration_timeout_seconds": 600.0,
+      "warmup_images_per_worker": 1
+    },
+    "memory_note": "RSS summed across workers; VRAM is system-wide, not attributable to these processes.",
+    "results": [
+      {
+        "configuration": "dlib_cnn_cpu",
+        "workers": 1,
+        "status": "failed",
+        "startup_seconds": 1.2715168000431731,
+        "error": "TimeoutError: Worker response timed out",
+        "peak_process_rss_mb": 957.98046875,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ]
+        ]
+      },
+      {
+        "configuration": "dlib_cnn_cpu",
+        "workers": 4,
+        "status": "failed",
+        "startup_seconds": 4.747489100089297,
+        "error": "TimeoutError: Worker response timed out",
+        "peak_process_rss_mb": 3041.6953125,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ],
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ],
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ],
+          [
+            "dlib=19.24.8 DLIB_USE_CUDA=False"
+          ]
+        ]
+      }
+    ],
+    "baseline_sha": "8978445ae72fc263ab68748d3e991c946db394e0"
+  },
+  "cpu_code_ab": {
+    "purpose": "interleaved_cpu_code_regression_diagnostic_not_gpu_comparison",
+    "old_ref": "327a4e078",
+    "new_head": "3d558a4d949bc869859b3781cb3ccbc60b837ea6",
+    "image_count": 32,
+    "corpus_count": 377,
+    "manifest_sha256": "a7946d5add5b4e848d3b2a2827dafb5fd62697b8678e56bd21b135bc13ae2640",
+    "workers": 4,
+    "settings": {
+      "intra_op_num_threads": 2,
+      "inter_op_num_threads": 1,
+      "max_resolution": 1024,
+      "det_size": 640,
+      "min_det_score": 0.5,
+      "warmup_images_per_worker": 1
+    },
+    "versions": {
+      "onnxruntime-gpu": "1.22.0",
+      "numpy": "1.26.4",
+      "opencv-python": "4.11.0.86",
+      "pillow": "11.3.0",
+      "nvidia-cudnn-cu12": "9.10.2.21"
+    },
+    "results": [
+      {
+        "sequence": 1,
+        "worker_code": "old",
+        "before": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "after": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "configuration": "auraface_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.697610300034285,
+        "runs": [
+          {
+            "wall_seconds": 12.677832299959846,
+            "milliseconds_per_image": 396.1822593737452,
+            "images_per_second": 2.524090810074949,
+            "no_face_images": 6,
+            "counts_sha256": "a97884e462ba9758b00b31ac2edd5e256fa01954f2136a6a32de583ec282b17e",
+            "faces": 97,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 12.677832299959846,
+        "median_milliseconds_per_image": 396.1822593737452,
+        "peak_process_rss_mb": 2652.8125,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ]
+        ]
+      },
+      {
+        "sequence": 2,
+        "worker_code": "new",
+        "before": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "after": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "configuration": "auraface_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.731836699997075,
+        "runs": [
+          {
+            "wall_seconds": 13.352929399930872,
+            "milliseconds_per_image": 417.27904374783975,
+            "images_per_second": 2.39647788448321,
+            "no_face_images": 6,
+            "counts_sha256": "a97884e462ba9758b00b31ac2edd5e256fa01954f2136a6a32de583ec282b17e",
+            "faces": 97,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 13.352929399930872,
+        "median_milliseconds_per_image": 417.27904374783975,
+        "peak_process_rss_mb": 2649.66015625,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ]
+        ]
+      },
+      {
+        "sequence": 3,
+        "worker_code": "new",
+        "before": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "after": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "configuration": "auraface_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.780122100026347,
+        "runs": [
+          {
+            "wall_seconds": 14.306493600015529,
+            "milliseconds_per_image": 447.07792500048527,
+            "images_per_second": 2.2367465358503544,
+            "no_face_images": 6,
+            "counts_sha256": "a97884e462ba9758b00b31ac2edd5e256fa01954f2136a6a32de583ec282b17e",
+            "faces": 97,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 14.306493600015529,
+        "median_milliseconds_per_image": 447.07792500048527,
+        "peak_process_rss_mb": 2632.26953125,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ]
+        ]
+      },
+      {
+        "sequence": 4,
+        "worker_code": "old",
+        "before": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "after": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "configuration": "auraface_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.9502319999737665,
+        "runs": [
+          {
+            "wall_seconds": 15.661550699966028,
+            "milliseconds_per_image": 489.4234593739384,
+            "images_per_second": 2.043220407291432,
+            "no_face_images": 6,
+            "counts_sha256": "a97884e462ba9758b00b31ac2edd5e256fa01954f2136a6a32de583ec282b17e",
+            "faces": 97,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 15.661550699966028,
+        "median_milliseconds_per_image": 489.4234593739384,
+        "peak_process_rss_mb": 2609.359375,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ]
+        ]
+      },
+      {
+        "sequence": 5,
+        "worker_code": "old",
+        "before": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "after": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "configuration": "auraface_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 6.219033799949102,
+        "runs": [
+          {
+            "wall_seconds": 16.333949199994095,
+            "milliseconds_per_image": 510.43591249981546,
+            "images_per_second": 1.9591098030359717,
+            "no_face_images": 6,
+            "counts_sha256": "a97884e462ba9758b00b31ac2edd5e256fa01954f2136a6a32de583ec282b17e",
+            "faces": 97,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 16.333949199994095,
+        "median_milliseconds_per_image": 510.43591249981546,
+        "peak_process_rss_mb": 2655.03515625,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ]
+        ]
+      },
+      {
+        "sequence": 6,
+        "worker_code": "new",
+        "before": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "after": {
+          "cpu_frequency_mhz": 2300.0,
+          "power_plugged": true,
+          "battery_percent": 65
+        },
+        "configuration": "auraface_cpu",
+        "workers": 4,
+        "status": "ok",
+        "startup_seconds": 5.945223200018518,
+        "runs": [
+          {
+            "wall_seconds": 16.077715799910948,
+            "milliseconds_per_image": 502.4286187472171,
+            "images_per_second": 1.9903324824399025,
+            "no_face_images": 6,
+            "counts_sha256": "a97884e462ba9758b00b31ac2edd5e256fa01954f2136a6a32de583ec282b17e",
+            "faces": 97,
+            "image_errors": 0,
+            "invalid_boxes": 0,
+            "invalid_embeddings": 0
+          }
+        ],
+        "median_wall_seconds": 16.077715799910948,
+        "median_milliseconds_per_image": 502.4286187472171,
+        "peak_process_rss_mb": 2645.390625,
+        "system_vram_baseline_mb": 0.0,
+        "peak_system_vram_mb": 0.0,
+        "provider_evidence": [
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ],
+          [
+            "Providers: det=['CPUExecutionProvider'], rec=['CPUExecutionProvider']"
+          ]
+        ]
+      }
+    ],
+    "source_sha256": {
+      "old": "bd2939ce610e57112d2ccad51194657da9a6028e8005daa3ffab08111a0fcc61",
+      "new": "41f6dbd1f642b27d2d6961f0d3c3335123d004e60077850d86bd7f172ed9cec8"
+    },
+    "summary": {
+      "old": {
+        "median_wall_seconds": 15.661550699966028,
+        "runs": 3
+      },
+      "new": {
+        "median_wall_seconds": 14.306493600015529,
+        "runs": 3
+      },
+      "new_to_old_median_ratio": 0.9134787400104998
+    },
+    "all_counts_match": true,
+    "pairs": [
+      {
+        "pair": 1,
+        "old_seconds": 12.677832299959846,
+        "new_seconds": 13.352929399930872,
+        "new_to_old_ratio": 1.0532501995607848
+      },
+      {
+        "pair": 2,
+        "old_seconds": 15.661550699966028,
+        "new_seconds": 14.306493600015529,
+        "new_to_old_ratio": 0.9134787400104998
+      },
+      {
+        "pair": 3,
+        "old_seconds": 16.333949199994095,
+        "new_seconds": 16.077715799910948,
+        "new_to_old_ratio": 0.9843128323134959
+      }
+    ],
+    "old_code_matches_original_benchmark_after_crlf_conversion": true,
+    "interpretation": "No 60 percent code regression reproduced. Both revisions slowed with run order. Thermal or host scheduling effects are plausible, not proven by temperature measurements."
+  },
+  "numerical_consistency": {
+    "purpose": "numerical_provider_consistency_not_identity_accuracy",
+    "corpus_images": 377,
+    "selected_images": 16,
+    "corpus_manifest_sha256": "065a838f5e7faf59a4e49093cc97559d3ee1b68189a27ab35a2c71a14bed4fb9",
+    "sample_manifest_sha256": "d0c13b924dd39ae38d83312e9432ae8210745c934e71ea21ef8cbd04f19a93cf",
+    "versions": {
+      "python": "3.10.22",
+      "onnxruntime": "1.22.0",
+      "numpy": "1.26.4",
+      "opencv-python": "4.11.0.86",
+      "pillow": "11.3.0",
+      "nvidia-cuda-runtime-cu12": "12.9.79",
+      "nvidia-cuda-nvrtc-cu12": "12.9.86",
+      "nvidia-cufft-cu12": "11.4.1.4",
+      "nvidia-curand-cu12": "10.3.10.19",
+      "nvidia-cudnn-cu12": "9.10.2.21",
+      "nvidia-cublas-cu12": "12.9.2.10"
+    },
+    "settings": {
+      "max_resolution": 1024,
+      "det_size": 640,
+      "min_det_score": 0.5,
+      "minimum_pair_iou": 0.99,
+      "maximum_embedding_cosine_distance": 0.0001
+    },
+    "model_sha256": {
+      "retinaface-resnet50.onnx": "40f825cf7dd0a88b26fb61db9a3aaedc2cad35162091113f4017b3c26a4f792d",
+      "glintr100.onnx": "a7933ea5330113b01c9b60351d8f4c33003f145d8470ac5f0e52ee2effe25c60"
+    },
+    "status": "passed",
+    "images_compared": 16,
+    "images_with_faces": 14,
+    "images_with_matching_face_sets": 16,
+    "cpu_faces": 62,
+    "cuda_faces": 62,
+    "matched_faces": 62,
+    "minimum_box_iou": 1.0,
+    "maximum_embedding_cosine_distance": 2.6198017373690874e-05,
+    "failures": {}
+  },
+  "tf32_diagnostic": {
+    "purpose": "TF32_and_detector_alignment_isolation_not_identity_accuracy",
+    "images": 16,
+    "sample_manifest_sha256": "d0c13b924dd39ae38d83312e9432ae8210745c934e71ea21ef8cbd04f19a93cf",
+    "versions": {
+      "python": "3.10.22",
+      "onnxruntime": "1.22.0",
+      "numpy": "1.26.4",
+      "opencv-python": "4.11.0.86",
+      "pillow": "11.3.0",
+      "nvidia-cuda-runtime-cu12": "12.9.79",
+      "nvidia-cuda-nvrtc-cu12": "12.9.86",
+      "nvidia-cufft-cu12": "11.4.1.4",
+      "nvidia-curand-cu12": "10.3.10.19",
+      "nvidia-cudnn-cu12": "9.28.1.4",
+      "nvidia-cublas-cu12": "12.9.2.10"
+    },
+    "modes": {
+      "1": {
+        "full_pipeline_cosine_distance": {
+          "count": 62,
+          "maximum": 0.0010435120063694292,
+          "mean": 0.00016999549952368033,
+          "p95": 0.0004003229256111792,
+          "above_1e-4": 36
+        },
+        "max_landmark_coordinate_delta_per_face": {
+          "count": 62,
+          "maximum": 0.06085205078125,
+          "mean": 0.006073859430128528,
+          "p95": 0.018343353271484366,
+          "above_1e-4": 62
+        },
+        "mean_aligned_pixel_delta_per_face": {
+          "count": 62,
+          "maximum": 0.29150722789115646,
+          "mean": 0.04503031051130129,
+          "p95": 0.10888605442176864,
+          "above_1e-4": 62
+        },
+        "minimum_box_iou": 0.9984856133266027,
+        "cpu_faces": 62,
+        "cuda_faces": 62,
+        "cuda_full_pipeline_seconds": 3.316319299978204,
+        "session_tf32_options": [
+          "1",
+          "1"
+        ],
+        "same_CPU_aligned_pixels_recognizer_cosine_distance": {
+          "count": 62,
+          "maximum": 3.92467722765133e-07,
+          "mean": 2.20847955305135e-07,
+          "p95": 3.6174677952027774e-07,
+          "above_1e-4": 0
+        }
+      },
+      "0": {
+        "full_pipeline_cosine_distance": {
+          "count": 62,
+          "maximum": 2.6197435920916057e-05,
+          "mean": 1.407501905166038e-06,
+          "p95": 1.0230018140627826e-05,
+          "above_1e-4": 0
+        },
+        "max_landmark_coordinate_delta_per_face": {
+          "count": 62,
+          "maximum": 0.0001220703125,
+          "mean": 2.2149855090725807e-05,
+          "p95": 6.103515625e-05,
+          "above_1e-4": 1
+        },
+        "mean_aligned_pixel_delta_per_face": {
+          "count": 62,
+          "maximum": 0.0021258503401360546,
+          "mean": 0.00021772822032038624,
+          "p95": 0.0011360012755102034,
+          "above_1e-4": 20
+        },
+        "minimum_box_iou": 1.0,
+        "cpu_faces": 62,
+        "cuda_faces": 62,
+        "cuda_full_pipeline_seconds": 3.225873399991542,
+        "session_tf32_options": [
+          "0",
+          "0"
+        ],
+        "same_CPU_aligned_pixels_recognizer_cosine_distance": {
+          "count": 62,
+          "maximum": 4.276357046251178e-12,
+          "mean": 2.0796751417747364e-12,
+          "p95": 3.995442865445397e-12,
+          "above_1e-4": 0
+        }
+      }
+    },
+    "cpu_full_pipeline_seconds": 16.65540480008349
+  },
+  "cuda_kernel_proof": {
+    "requested_provider": "cuda",
+    "input": "synthetic_blank",
+    "versions": {
+      "onnxruntime": "1.22.0",
+      "numpy": "1.26.4",
+      "opencv-python": "4.11.0.86",
+      "pillow": "11.3.0",
+      "nvidia-cuda-runtime-cu12": "12.9.79",
+      "nvidia-cuda-nvrtc-cu12": "12.9.86",
+      "nvidia-cufft-cu12": "11.4.1.4",
+      "nvidia-curand-cu12": "10.3.10.19",
+      "nvidia-cudnn-cu12": "9.10.2.21",
+      "nvidia-cublas-cu12": "12.9.2.10"
+    },
+    "models": {
+      "detection": {
+        "effective_provider": "cuda",
+        "loaded_providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "kernel_events_by_provider": {
+          "CUDAExecutionProvider": 195,
+          "CPUExecutionProvider": 14
+        },
+        "kernel_operations_by_provider": {
+          "CUDAExecutionProvider": {
+            "Conv": 82,
+            "Relu": 52,
+            "MaxPool": 1,
+            "Add": 18,
+            "LeakyRelu": 11,
+            "Concat": 6,
+            "Transpose": 9,
+            "Reshape": 9,
+            "Shape": 4,
+            "Resize": 2,
+            "Softmax": 1
+          },
+          "CPUExecutionProvider": {
+            "Slice": 2,
+            "Gather": 4,
+            "Unsqueeze": 4,
+            "Concat": 4
+          }
+        },
+        "model_sha256": "40f825cf7dd0a88b26fb61db9a3aaedc2cad35162091113f4017b3c26a4f792d",
+        "synthetic_samples": 1
+      },
+      "recognition": {
+        "effective_provider": "cuda",
+        "loaded_providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "kernel_events_by_provider": {
+          "CUDAExecutionProvider": 255
+        },
+        "kernel_operations_by_provider": {
+          "CUDAExecutionProvider": {
+            "Conv": 103,
+            "PRelu": 50,
+            "BatchNormalization": 51,
+            "Add": 49,
+            "Flatten": 1,
+            "Gemm": 1
+          }
+        },
+        "model_sha256": "a7933ea5330113b01c9b60351d8f4c33003f145d8470ac5f0e52ee2effe25c60",
+        "synthetic_samples": 1
+      }
+    }
+  },
+  "no_cuda_auto_proof": {
+    "requested_provider": "auto",
+    "input": "synthetic_blank",
+    "versions": {
+      "onnxruntime": "1.22.0",
+      "numpy": "1.26.4",
+      "opencv-python": "4.11.0.86",
+      "pillow": "11.3.0"
+    },
+    "models": {
+      "detection": {
+        "effective_provider": "cpu",
+        "loaded_providers": [
+          "CPUExecutionProvider"
+        ],
+        "kernel_events_by_provider": {
+          "CPUExecutionProvider": 139
+        },
+        "kernel_operations_by_provider": {
+          "CPUExecutionProvider": {
+            "Conv": 82,
+            "MaxPool": 1,
+            "Concat": 10,
+            "Relu": 3,
+            "ReorderOutput": 13,
+            "Reshape": 9,
+            "Shape": 4,
+            "Slice": 2,
+            "Gather": 4,
+            "Unsqueeze": 4,
+            "Resize": 2,
+            "Add": 2,
+            "ReorderInput": 2,
+            "Softmax": 1
+          }
+        },
+        "model_sha256": "40f825cf7dd0a88b26fb61db9a3aaedc2cad35162091113f4017b3c26a4f792d",
+        "synthetic_samples": 1
+      },
+      "recognition": {
+        "effective_provider": "cpu",
+        "loaded_providers": [
+          "CPUExecutionProvider"
+        ],
+        "kernel_events_by_provider": {
+          "CPUExecutionProvider": 308
+        },
+        "kernel_operations_by_provider": {
+          "CPUExecutionProvider": {
+            "Conv": 152,
+            "ReorderOutput": 51,
+            "PRelu": 50,
+            "BatchNormalization": 2,
+            "ReorderInput": 51,
+            "Flatten": 1,
+            "Gemm": 1
+          }
+        },
+        "model_sha256": "a7933ea5330113b01c9b60351d8f4c33003f145d8470ac5f0e52ee2effe25c60",
+        "synthetic_samples": 1
+      }
+    }
+  },
+  "memory_proxy": {
+    "purpose": "shared_arena_memory_proxy_not_hardware_emulation",
+    "workers": 1,
+    "versions": {
+      "python": "3.10.22",
+      "onnxruntime": "1.22.0",
+      "numpy": "1.26.4",
+      "opencv-python": "4.11.0.86",
+      "pillow": "11.3.0",
+      "nvidia-cuda-runtime-cu12": "12.9.79",
+      "nvidia-cuda-nvrtc-cu12": "12.9.86",
+      "nvidia-cufft-cu12": "11.4.1.4",
+      "nvidia-curand-cu12": "10.3.10.19",
+      "nvidia-cudnn-cu12": "9.10.2.21",
+      "nvidia-cublas-cu12": "12.9.2.10"
+    },
+    "status": "completed",
+    "image_count": 377,
+    "images_processed": 377,
+    "faces": 1383,
+    "no_face_images": 65,
+    "manifest_sha256": "065a838f5e7faf59a4e49093cc97559d3ee1b68189a27ab35a2c71a14bed4fb9",
+    "model_sha256": {
+      "retinaface-resnet50.onnx": "40f825cf7dd0a88b26fb61db9a3aaedc2cad35162091113f4017b3c26a4f792d",
+      "glintr100.onnx": "a7933ea5330113b01c9b60351d8f4c33003f145d8470ac5f0e52ee2effe25c60"
+    },
+    "settings": {
+      "shared_arena_mib": 1536.0,
+      "observed_gpu_budget_mib": 2048.0,
+      "session.use_env_allocators": "1",
+      "arena_extend_strategy": "kSameAsRequested",
+      "max_resolution": 1024,
+      "det_size": 640,
+      "min_det_score": 0.5,
+      "sample_interval_ms": 100,
+      "recognition_batching": "unchanged_production"
+    },
+    "limitations": [
+      "Arena constraint is not a hard limit on total GPU allocations.",
+      "System-wide sampled GPU memory includes other programs and may miss short peaks.",
+      "RTX 4070 results do not establish P620/Pascal compatibility or performance.",
+      "WDDM residency/paging cannot emulate a physically smaller graphics card.",
+      "An observed peak above the budget invalidates the requested memory proxy.",
+      "Profiling of initial face-bearing images adds overhead; this is not a throughput comparison."
+    ],
+    "startup_seconds": 0.9539625000907108,
+    "provider_proof": {
+      "detection": {
+        "loaded_providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "use_tf32": "0",
+        "kernel_events_by_provider": {
+          "CUDAExecutionProvider": 195,
+          "CPUExecutionProvider": 14
+        }
+      },
+      "recognition": {
+        "loaded_providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "use_tf32": "0",
+        "kernel_events_by_provider": {
+          "CUDAExecutionProvider": 255
+        }
+      }
+    },
+    "processing_seconds": 69.61546399991494,
+    "system_gpu_baseline_mib": 0.0,
+    "hardware": {
+      "gpu_name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+      "driver_version": "596.08",
+      "gpu_total_mib": 8188.0
+    },
+    "peak_system_gpu_mib": 1175.0,
+    "peak_process_rss_mib": 1185.55078125,
+    "gpu_memory_samples": 641,
+    "observed_budget_status": "within_observed_budget",
+    "both_models_executed_cuda": true,
+    "proxy_passed": true
+  },
+  "auto_initialization_oom": {
+    "purpose": "real_allocation_failure_and_cpu_recovery_not_hardware_emulation",
+    "status": "passed",
+    "workers": 1,
+    "model_id": "auraface",
+    "corpus_images": 377,
+    "selected_images": 16,
+    "images_processed": 16,
+    "expected_cpu_faces": 62,
+    "faces": 62,
+    "corpus_manifest_sha256": "065a838f5e7faf59a4e49093cc97559d3ee1b68189a27ab35a2c71a14bed4fb9",
+    "sample_manifest_sha256": "d0c13b924dd39ae38d83312e9432ae8210745c934e71ea21ef8cbd04f19a93cf",
+    "versions": {
+      "python": "3.10.22",
+      "onnxruntime": "1.22.0",
+      "numpy": "1.26.4",
+      "opencv-python": "4.11.0.86",
+      "pillow": "11.3.0",
+      "nvidia-cuda-runtime-cu12": "12.9.79",
+      "nvidia-cuda-nvrtc-cu12": "12.9.86",
+      "nvidia-cufft-cu12": "11.4.1.4",
+      "nvidia-curand-cu12": "10.3.10.19",
+      "nvidia-cudnn-cu12": "9.10.2.21",
+      "nvidia-cublas-cu12": "12.9.2.10"
+    },
+    "settings": {
+      "shared_arena_mib": 32.0,
+      "session.use_env_allocators": "1",
+      "use_tf32": "0",
+      "max_resolution": 1024,
+      "det_size": 640,
+      "min_det_score": 0.5
+    },
+    "model_sha256": {
+      "retinaface-resnet50.onnx": "40f825cf7dd0a88b26fb61db9a3aaedc2cad35162091113f4017b3c26a4f792d",
+      "glintr100.onnx": "a7933ea5330113b01c9b60351d8f4c33003f145d8470ac5f0e52ee2effe25c60"
+    },
+    "source_sha256": "41f6dbd1f642b27d2d6961f0d3c3335123d004e60077850d86bd7f172ed9cec8",
+    "limitations": [
+      "The arena is not a hard whole-device memory limit.",
+      "This does not establish P620 compatibility or performance.",
+      "Sampled GPU memory is system-wide and may miss brief peaks."
+    ],
+    "providers_after_initialization": [
+      [
+        "CPUExecutionProvider"
+      ],
+      [
+        "CPUExecutionProvider"
+      ]
+    ],
+    "providers_after_processing": [
+      [
+        "CPUExecutionProvider"
+      ],
+      [
+        "CPUExecutionProvider"
+      ]
+    ],
+    "cpu_persistent_after_fallback": true,
+    "observed_allocation_failure": true,
+    "fallback_phase": "initialization",
+    "fallback_count": 1,
+    "counts_sha256": "82097a26b7be1fee96f9096382544789fd5ade179c388af9c07b6057041ca229",
+    "failure_events": [
+      {
+        "phase": "initialization",
+        "failure": "allocation_failure",
+        "error_type": "RuntimeException"
+      }
+    ],
+    "initialization_attempts": [
+      [
+        "CUDAExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      [
+        "CPUExecutionProvider"
+      ]
+    ],
+    "system_gpu_baseline_mib": 0.0,
+    "peak_system_gpu_mib": 159.0,
+    "peak_process_rss_mib": 1067.31640625,
+    "hardware": {
+      "gpu_name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+      "driver_version": "596.08",
+      "gpu_total_mib": 8188.0
+    }
+  },
+  "auto_inference_oom": {
+    "purpose": "real_allocation_failure_and_cpu_recovery_not_hardware_emulation",
+    "status": "passed",
+    "workers": 1,
+    "model_id": "auraface",
+    "corpus_images": 377,
+    "selected_images": 16,
+    "images_processed": 16,
+    "expected_cpu_faces": 62,
+    "faces": 62,
+    "corpus_manifest_sha256": "065a838f5e7faf59a4e49093cc97559d3ee1b68189a27ab35a2c71a14bed4fb9",
+    "sample_manifest_sha256": "d0c13b924dd39ae38d83312e9432ae8210745c934e71ea21ef8cbd04f19a93cf",
+    "versions": {
+      "python": "3.10.22",
+      "onnxruntime": "1.22.0",
+      "numpy": "1.26.4",
+      "opencv-python": "4.11.0.86",
+      "pillow": "11.3.0",
+      "nvidia-cuda-runtime-cu12": "12.9.79",
+      "nvidia-cuda-nvrtc-cu12": "12.9.86",
+      "nvidia-cufft-cu12": "11.4.1.4",
+      "nvidia-curand-cu12": "10.3.10.19",
+      "nvidia-cudnn-cu12": "9.10.2.21",
+      "nvidia-cublas-cu12": "12.9.2.10"
+    },
+    "settings": {
+      "shared_arena_mib": 512.0,
+      "session.use_env_allocators": "1",
+      "use_tf32": "0",
+      "max_resolution": 1024,
+      "det_size": 640,
+      "min_det_score": 0.5
+    },
+    "model_sha256": {
+      "retinaface-resnet50.onnx": "40f825cf7dd0a88b26fb61db9a3aaedc2cad35162091113f4017b3c26a4f792d",
+      "glintr100.onnx": "a7933ea5330113b01c9b60351d8f4c33003f145d8470ac5f0e52ee2effe25c60"
+    },
+    "source_sha256": "41f6dbd1f642b27d2d6961f0d3c3335123d004e60077850d86bd7f172ed9cec8",
+    "limitations": [
+      "The arena is not a hard whole-device memory limit.",
+      "This does not establish P620 compatibility or performance.",
+      "Sampled GPU memory is system-wide and may miss brief peaks."
+    ],
+    "providers_after_initialization": [
+      [
+        "CUDAExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      [
+        "CUDAExecutionProvider",
+        "CPUExecutionProvider"
+      ]
+    ],
+    "providers_after_processing": [
+      [
+        "CPUExecutionProvider"
+      ],
+      [
+        "CPUExecutionProvider"
+      ]
+    ],
+    "cpu_persistent_after_fallback": true,
+    "observed_allocation_failure": true,
+    "fallback_phase": "inference",
+    "fallback_count": 1,
+    "counts_sha256": "82097a26b7be1fee96f9096382544789fd5ade179c388af9c07b6057041ca229",
+    "failure_events": [
+      {
+        "phase": "inference",
+        "failure": "allocation_failure",
+        "error_type": "RuntimeException"
+      }
+    ],
+    "initialization_attempts": [
+      [
+        "CUDAExecutionProvider",
+        "CPUExecutionProvider"
+      ]
+    ],
+    "system_gpu_baseline_mib": 0.0,
+    "peak_system_gpu_mib": 719.0,
+    "peak_process_rss_mib": 1293.4609375,
+    "hardware": {
+      "gpu_name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+      "driver_version": "596.08",
+      "gpu_total_mib": 8188.0
+    }
+  },
+  "date": "2026-11-17",
+  "hardware": {
+    "cpu": "Intel Core Ultra 9 185H",
+    "physical_cores": 16,
+    "logical_processors": 22,
+    "nominal_ram_gib": 32,
+    "gpu": "NVIDIA GeForce RTX 4070 Laptop GPU",
+    "gpu_memory_mib": 8188,
+    "driver": "596.08",
+    "os": "Windows 11",
+    "power": "AC"
+  },
+  "method_notes": [
+    "Wall time includes image decoding/preprocessing/inference/IPC, excluding startup, downloads and Java indexing/search.",
+    "One warmup per worker. All 377 originals included; undefined EXIF 0 treated as 1.",
+    "CPU reference timing preceded CUDA-only precision/runtime refinements; source fingerprints retained.",
+    "Final CUDA uses cuDNN 9.10.2.21 and use_tf32=0.",
+    "Photos, filenames, individual image hashes, boxes and vectors are omitted from publication.",
+    "Worker RSS and sampled system-wide GPU memory are in MiB; JVM memory is excluded."
+  ],
+  "dlib_build": {
+    "version": "19.24.8",
+    "conda_build": "cpu_py310h6715ef7_0",
+    "DLIB_USE_CUDA": false,
+    "USE_AVX_INSTRUCTIONS": true,
+    "face_recognition": "1.3.0",
+    "face_recognition_models": "0.3.0"
+  },
+  "validation": {
+    "python_tests_passed": 92,
+    "java_tests_passed": 15,
+    "reactor_modules": 17,
+    "java_version": 11,
+    "application_cli_exit_code": 0,
+    "application_photos": 3,
+    "application_parallel_workers": 2,
+    "persisted_face_records": 3,
+    "persisted_embeddings": 33,
+    "embedding_dimensions": 512,
+    "persisted_norm_range": [
+      0.99999994,
+      1.00000008
+    ],
+    "application_workers_reaped": true,
+    "live_opensearch_tested": false,
+    "opensearch_http_protocol_stub_tested": true,
+    "interactive_gui_tested": false,
+    "local_jep_note": "Cached bundled Jep Python needed NumPy 1.26.4 restored for other IPED tasks. Model inference uses the dedicated Conda environment."
+  }
+}

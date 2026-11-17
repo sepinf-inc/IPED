@@ -16,6 +16,9 @@ public class LoadIndexFields {
         for (IIPEDSource source : sources) {
             IndexReader leafReader = source.getReader();
             leafReader.leaves().forEach(ctx -> ctx.reader().getFieldInfos().forEach(info -> {
+                if (FaceRecognitionModels.isStorageField(info.name)) {
+                    names.add(SimilarFacesSearch.FACE_FEATURES);
+                }
                 if (!IndexItem.CONTENT.equals(info.name) && !info.name.startsWith(IndexItem.GEO_SSDV_PREFIX)
                         && (!info.name.startsWith(SimilarFacesSearch.FACE_FEATURES)
                                 || info.name.equals(SimilarFacesSearch.FACE_FEATURES))) {
