@@ -49,6 +49,7 @@ import org.xml.sax.SAXException;
 import iped.data.IItemReader;
 import iped.parsers.python.PythonParser;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.PhoneParsingConfig;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -99,7 +100,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
     /** Possible values of the {@link #WHATSAPP_METADATA_DECRYPTION_STATUS} metadata. */
     private enum DecryptionStatus {
-        decrypted, keyNotFound, failed;
+        decrypted, alreadyDecrypted, keyNotFound, failed;
     }
 
     private static final String PY_MODULE = "wa_decrypt";
@@ -197,6 +198,14 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
             metadata.set(StandardParser.ENCRYPTED_DOCUMENT, Boolean.toString(true));
 
+            if (isDecryptedByUfed(item, searcher)) {
+                // UFED already decrypted it and the UFDR includes the decrypted file, which
+                // is processed as any other item, so decrypting again would duplicate it
+                logger.info("Skipping {}, it was already decrypted by UFED", item.getPath());
+                metadata.set(WHATSAPP_METADATA_DECRYPTION_STATUS, DecryptionStatus.alreadyDecrypted.toString());
+                return;
+            }
+
             List<IItemReader> keys = getKeyCandidates(item, searcher);
             if (keys.isEmpty()) {
                 throw decryptionFailed(metadata, DecryptionStatus.keyNotFound,
@@ -240,6 +249,27 @@ public class WhatsAppCryptoParser extends AbstractParser {
         } finally {
             xhtml.endDocument();
         }
+    }
+
+    /**
+     * Tells if the given encrypted file from an UFDR was already decrypted by UFED.
+     * UFED exports the decrypted content below the path of the encrypted file, e.g.
+     * ".../msgstore.db.crypt14/msgstore.db", so the UFDR reader creates a folder
+     * with the same path of the encrypted file to hold it. The folder is searched
+     * for instead of the decrypted file because the latter may not be indexed yet,
+     * decrypted databases wait in a later processing queue.
+     */
+    private static boolean isDecryptedByUfed(IItemReader item, IItemSearcher searcher) {
+        if (!PhoneParsingConfig.isFromUfdrDatasourceReader(item) || StringUtils.isBlank(item.getName())) {
+            return false;
+        }
+        String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(item.getName()) + "\" AND " + BasicProps.ISDIR + ":true";
+        for (IItemReader folder : iped.parsers.util.Util.getItems(query, searcher)) {
+            if (item.getPath().equals(folder.getPath())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
