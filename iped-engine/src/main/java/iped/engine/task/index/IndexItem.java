@@ -81,6 +81,7 @@ import iped.engine.data.Item;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
 import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewInputStreamFactory;
+import iped.engine.search.FaceRecognitionModels;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
 import iped.engine.task.ThumbTask;
@@ -473,12 +474,20 @@ public class IndexItem extends BasicProps {
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
             if (entry.getValue() instanceof Collection) {
                 for (Object val : (Collection<?>) entry.getValue()) {
+                    if (ExtraProperties.FACE_ENCODINGS.equals(entry.getKey()) && val instanceof KnnVector) {
+                        addFaceVector(doc, (KnnVector) val, (String) evidence.getExtraAttribute(ExtraProperties.FACE_MODEL));
+                        continue;
+                    }
                     if (typesMap.get(entry.getKey()) == null) {
                         MetadataUtil.setMetadataType(entry.getKey(), val.getClass());
                     }
                     addExtraAttributeToDoc(doc, entry.getKey(), val, true, timeEventSet);
                 }
             } else {
+                if (ExtraProperties.FACE_ENCODINGS.equals(entry.getKey()) && entry.getValue() instanceof KnnVector) {
+                    addFaceVector(doc, (KnnVector) entry.getValue(), (String) evidence.getExtraAttribute(ExtraProperties.FACE_MODEL));
+                    continue;
+                }
                 if (typesMap.get(entry.getKey()) == null) {
                     MetadataUtil.setMetadataType(entry.getKey(), entry.getValue().getClass());
                 }
@@ -494,6 +503,23 @@ public class IndexItem extends BasicProps {
         storeTimeStamps(doc, timeEventSet);
 
         return doc;
+    }
+
+    static void addFaceVector(Document doc, KnnVector vector, String model) {
+        float[] floats = convDoubleToFloatArray(vector.getArray());
+        byte[] bytes = convFloatArrayToByteArray(floats);
+        // Keep the stored representation and doc values compatible with existing cases.
+        doc.add(new SortedSetDocValuesField(ExtraProperties.FACE_ENCODINGS, new BytesRef(bytes)));
+        doc.add(new StoredField(ExtraProperties.FACE_ENCODINGS, bytes));
+        String vectorKey = FaceRecognitionModels.vectorField(model, floats.length);
+        if (vectorKey != null) {
+            String key = vectorKey;
+            int suffix = 0;
+            while (doc.getField(key) != null) {
+                key = vectorKey + "_" + (++suffix);
+            }
+            doc.add(new KnnVectorField(key, floats));
+        }
     }
 
     private static void storeTimeStamps(Document doc, Set<TimeStampEvent> timeEventSet) {

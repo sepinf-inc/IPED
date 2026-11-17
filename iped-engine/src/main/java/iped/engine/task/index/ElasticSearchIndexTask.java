@@ -55,6 +55,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ElasticSearchTaskConfig;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.io.FragmentingReader;
+import iped.engine.search.FaceRecognitionModels;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
 import iped.engine.task.index.IndexItem.KnnVector;
@@ -87,7 +88,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
 
-    public static final int FACE_SIZE = 512;
+    public static final int FACE_SIZE = 128;
 
     private static boolean isEnabled = false;
 
@@ -273,6 +274,31 @@ public class ElasticSearchIndexTask extends AbstractTask {
         return sb.toString();
     }
 
+    static Map<String, Object> faceMappings() {
+        Map<String, Object> mappings = new HashMap<>();
+        mappings.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method",
+                Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+        for (String model : FaceRecognitionModels.MODERN_MODELS) {
+            mappings.put(FaceRecognitionModels.elasticVectorField(model, FaceRecognitionModels.MODERN_DIMENSIONS),
+                    Map.of("type", "knn_vector", "dimension", FaceRecognitionModels.MODERN_DIMENSIONS, "method",
+                            Map.of("name", "hnsw", "space_type", "cosinesimil", "engine", "nmslib")));
+        }
+        // Preserve unidentified imported embeddings without indexing them in a known model's space.
+        mappings.put("face_encoding_unknown", Collections.singletonMap("type", "float"));
+        mappings.put(ExtraProperties.FACE_MODEL, Collections.singletonMap("type", "keyword"));
+        mappings.put("face_location", Collections.singletonMap("type", "short"));
+        return mappings;
+    }
+
+    static Map<String, Object> faceEncoding(float[] encoding, String tag) {
+        Map<String, Object> face = new HashMap<>();
+        String model = FaceRecognitionModels.resolve(tag, encoding.length);
+        String field = FaceRecognitionModels.elasticVectorField(tag, encoding.length);
+        face.put(field != null ? field : "face_encoding_unknown", encoding);
+        face.put(ExtraProperties.FACE_MODEL, model != null ? model : tag != null ? tag : "unknown");
+        return face;
+    }
+
     private void createFieldMappings(String indexName) throws IOException {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(BasicProps.EVIDENCE_UUID, Collections.singletonMap("type", "keyword")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -285,11 +311,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                         Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
 
         // mapping faces as nested field
-        var faces_mapping = new HashMap<String, Object>();
-        faces_mapping.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method",
-                Map.of("name", "hnsw", "space_type", "cosinesimil", "engine", "nmslib")));
-        faces_mapping.put("face_location", Collections.singletonMap("type", "short"));
-        properties.put("faces", Map.of("type", "nested", "properties", faces_mapping));
+        properties.put("faces", Map.of("type", "nested", "properties", faceMappings()));
 
         Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
 
@@ -602,8 +624,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
             for (int i = 0; i < face_encodings.size(); i++) {
                 float encoding[] = IndexItem.convDoubleToFloatArray(face_encodings.get(i).getArray());
                 int location[] = convArrayListLongToInt(face_locations.get(i));
-                Map<String, Object> map = new HashMap<>();
-                map.put("face_encoding", encoding);
+                String model = (String) extraAttributes.get(ExtraProperties.FACE_MODEL);
+                Map<String, Object> map = faceEncoding(encoding, model);
                 map.put("face_location", location);
                 faces.add(map);
             }

@@ -188,6 +188,8 @@ public class ExtraProperties {
 
     public static final String FACE_ENCODINGS = "face_encodings";
 
+    public static final String FACE_MODEL = "face_model";
+
     public static final String FACE_AGE_LABELS = "faceAge:labels";
 
     public static final String HASHDB_PREFIX = "hashDb:";

@@ -6,9 +6,97 @@
 '''
 import sys
 stdout = sys.stdout
-sys.stdout = sys.stderr
+if __name__ == '__main__':
+    sys.stdout = sys.stderr
 
 import os
+import math
+from contextlib import redirect_stdout
+from FaceRecognitionModelConfig import (
+    AURAFACE_REC_URL, AURAFACE_REC_FILE, AURAFACE_SUBDIR,
+    RETINAFACE_R50_URL, RETINAFACE_R50_FILE,
+    SUPPORTED_MODELS, EXECUTION_PROVIDERS, download_file,
+)
+
+_dll_directory_handles = []
+_dll_search_paths = set()
+
+
+def expose_nvidia_dll_directories():
+    """Make cuDNN's lazily loaded component DLLs discoverable on Windows."""
+    if os.name != 'nt':
+        return
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.find_spec('nvidia')
+    if spec is None:
+        return
+    for root in spec.submodule_search_locations or []:
+        for directory in Path(root).glob('*/bin'):
+            path = str(directory.resolve())
+            if path in _dll_search_paths:
+                continue
+            # cuDNN also uses LoadLibrary at inference time; ORT preload_dlls
+            # alone does not preload every component in newer cuDNN releases.
+            if hasattr(os, 'add_dll_directory'):
+                _dll_directory_handles.append(os.add_dll_directory(path))
+            os.environ['PATH'] = path + os.pathsep + os.environ.get('PATH', '')
+            _dll_search_paths.add(path)
+
+
+def preload_runtime_dlls(runtime, execution_provider):
+    if execution_provider != 'cpu':
+        expose_nvidia_dll_directories()
+    if execution_provider != 'cpu' and hasattr(runtime, 'preload_dlls'):
+        # ORT's diagnostic prints must not enter the subprocess response stream.
+        with redirect_stdout(sys.stderr):
+            runtime.preload_dlls()
+
+
+def requested_providers(runtime, execution_provider):
+    if execution_provider not in EXECUTION_PROVIDERS:
+        raise ValueError('executionProvider must be auto, cpu or cuda')
+    available = runtime.get_available_providers()
+    if execution_provider == 'cpu':
+        return ['CPUExecutionProvider']
+    if 'CUDAExecutionProvider' in available:
+        return ['CUDAExecutionProvider', 'CPUExecutionProvider']
+    if execution_provider == 'cuda':
+        raise RuntimeError('CUDA execution requested, but CUDAExecutionProvider is unavailable; install onnxruntime-gpu and its CUDA/cuDNN dependencies')
+    print('CUDA unavailable; using CPUExecutionProvider.', file=sys.stderr, flush=True)
+    return ['CPUExecutionProvider']
+
+
+def check_dependencies(model_name, execution_provider):
+    import importlib
+    if model_name not in SUPPORTED_MODELS:
+        raise ValueError('Unsupported face model: ' + model_name)
+    for module in ('numpy', 'cv2', 'PIL', 'onnxruntime'):
+        importlib.import_module(module)
+    if model_name != 'auraface':
+        importlib.import_module('insightface.app')
+    runtime = importlib.import_module('onnxruntime')
+    preload_runtime_dlls(runtime, execution_provider)
+    requested_providers(runtime, execution_provider)
+
+
+if __name__ == '__main__' and '--check-dependencies' in sys.argv:
+    import argparse
+    parser = argparse.ArgumentParser(description='Check face worker dependencies without loading models.')
+    parser.add_argument('--check-dependencies', action='store_true')
+    parser.add_argument('--model', choices=SUPPORTED_MODELS, default='auraface')
+    parser.add_argument('--execution-provider', choices=EXECUTION_PROVIDERS, default='auto')
+    args = parser.parse_args()
+    try:
+        check_dependencies(args.model, args.execution_provider)
+    except Exception as error:
+        package = 'onnxruntime' if args.execution_provider == 'cpu' else 'onnxruntime-gpu'
+        extra = ' insightface' if args.model != 'auraface' else ''
+        print('Face recognition dependencies unavailable: ' + str(error), file=sys.stderr)
+        print('Install into this Python: python -m pip install numpy opencv-python pillow ' + package + extra, file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
+
 import onnxruntime
 import cv2
 import PIL
@@ -35,10 +123,6 @@ ARCFACE_REF = np.array([
     [70.7299, 92.2041],   # right mouth corner
 ], dtype=np.float32)
 
-from FaceRecognitionModelConfig import (
-    AURAFACE_REC_URL, AURAFACE_REC_FILE, AURAFACE_SUBDIR,
-    RETINAFACE_R50_URL, RETINAFACE_R50_FILE,
-)
 RETINAFACE_MIN_SIZES = [[16, 32], [64, 128], [256, 512]]
 RETINAFACE_STEPS = [8, 16, 32]
 RETINAFACE_VARIANCE = [0.1, 0.2]
@@ -129,8 +213,8 @@ def detect_faces_retinaface(session, input_name, img_bgr, det_size, score_thresh
 
     # Letterbox resize to det_size x det_size
     scale_ratio = min(det_size / orig_w, det_size / orig_h)
-    new_w = int(orig_w * scale_ratio)
-    new_h = int(orig_h * scale_ratio)
+    new_w = max(1, int(orig_w * scale_ratio))
+    new_h = max(1, int(orig_h * scale_ratio))
     resized = cv2.resize(img_bgr, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
 
     # Pad to det_size x det_size
@@ -219,56 +303,26 @@ def load_and_preprocess(img_path, code, max_size):
     scale = 1
     is_video = (code == video)
 
-    # OpenCV IMREAD_COLOR auto-applies EXIF rotation (OpenCV 4.5.2+),
-    # avoiding coordinate mismatch on portrait images.
-    img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+    # The caller supplies the orientation for originals and 1 for an already
+    # oriented preview. Ignore embedded EXIF so that it cannot rotate twice.
+    img = cv2.imread(img_path, cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
     if img is not None:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     else:
         # PIL fallback for formats OpenCV can't handle
-        pil_img = PIL.Image.open(img_path)
-        pil_img = convertToRGB(pil_img)
-        img = np.array(pil_img)
-        img = rotateImg(img, tiff_orient)
+        with PIL.Image.open(img_path) as pil_img:
+            img = np.array(convertToRGB(pil_img))
+
+    img = np.ascontiguousarray(rotateImg(img, tiff_orient))
 
     if not is_video:
         h, w = img.shape[:2]
         if max(w, h) > max_size:
             scale = max_size / max(w, h)
-            new_w, new_h = int(w * scale), int(h * scale)
+            new_w, new_h = max(1, int(w * scale)), max(1, int(h * scale))
             img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
 
     return img, scale
-
-
-def download_file(url, dest_path, label=None):
-    """Download a file if it doesn't already exist. Safe for concurrent processes."""
-    if os.path.exists(dest_path):
-        return dest_path
-    import urllib.request
-    import tempfile
-    if label:
-        sys.stderr.write(f"Downloading {label}...\n")
-        sys.stderr.flush()
-    # Download to a temp file, then atomic rename to avoid races between processes
-    dest_dir = os.path.dirname(dest_path)
-    fd, tmp_path = tempfile.mkstemp(dir=dest_dir, suffix='.tmp')
-    os.close(fd)
-    try:
-        urllib.request.urlretrieve(url, tmp_path)
-        # On Windows, os.rename fails if dest exists; another process may have finished first
-        try:
-            os.rename(tmp_path, dest_path)
-        except OSError:
-            os.remove(tmp_path)
-    except Exception:
-        os.remove(tmp_path)
-        raise
-    if os.path.exists(dest_path):
-        size_mb = os.path.getsize(dest_path) / (1024 * 1024)
-        sys.stderr.write(f"  Saved to {dest_path} ({size_mb:.1f} MB)\n")
-        sys.stderr.flush()
-    return dest_path
 
 
 def align_face_5pt(img_rgb, landmarks_5pt):
@@ -292,10 +346,38 @@ def get_auraface_embeddings_batch(session, input_name, aligned_faces_rgb):
 
     embeddings = session.run(None, {input_name: batch})[0]  # (N, 512)
 
+    embeddings = np.asarray(embeddings, dtype=np.float32)
+    if embeddings.shape != (len(aligned_faces_rgb), 512) or not np.isfinite(embeddings).all():
+        raise ValueError('Recognition model must return one finite 512-dimensional embedding per face')
     norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-    norms = np.maximum(norms, 1e-10)
+    if not np.isfinite(norms).all() or np.any(norms <= 1e-10):
+        raise ValueError('Recognition model returned an invalid embedding norm')
     embeddings = embeddings / norms
     return list(embeddings)
+
+
+def write_response(locations, embeddings):
+    """Validate the complete response before writing any protocol bytes."""
+    if len(locations) != len(embeddings):
+        raise ValueError('Face locations and embeddings must have equal lengths')
+    lines = [str(len(locations))]
+    for location in locations:
+        if len(location) != 4:
+            raise ValueError('Face locations must contain four coordinates')
+        # NumPy 2 scalar repr includes np.int32(...), which Java cannot parse.
+        coordinates = tuple(int(value) for value in location)
+        if coordinates[2] <= coordinates[0] or coordinates[1] <= coordinates[3]:
+            raise ValueError('Face location must have positive width and height')
+        lines.append(str(coordinates))
+    for embedding in embeddings:
+        vector = np.asarray(embedding, dtype=np.float32)
+        if vector.shape != (512,) or not np.isfinite(vector).all():
+            raise ValueError('Face embedding must contain 512 finite values')
+        norm = float(np.linalg.norm(vector))
+        if not math.isclose(norm, 1.0, rel_tol=1e-4, abs_tol=1e-4):
+            raise ValueError('Face embedding must be L2-normalized')
+        lines.append(' '.join(f'{float(value):.8g}' for value in vector))
+    print('\n'.join(lines), file=stdout, flush=True)
 
 
 def rescale_bbox(x1, y1, x2, y2, scale):
@@ -316,7 +398,7 @@ def process_one_image_auraface(img_path, code, det_session, det_input_name, det_
     faces = detect_faces_retinaface(det_session, det_input_name, img_bgr, det_size, min_det_score)
 
     if not faces:
-        print('0', file=stdout, flush=True)
+        write_response([], [])
         return
 
     aligned_faces = []
@@ -332,17 +414,12 @@ def process_one_image_auraface(img_path, code, det_session, det_input_name, det_
         locations.append((y1, x2, y2, x1))
 
     if not aligned_faces:
-        print('0', file=stdout, flush=True)
+        write_response([], [])
         return
 
     embeddings = get_auraface_embeddings_batch(rec_session, rec_input_name, aligned_faces)
 
-    num_faces = len(embeddings)
-    print(str(num_faces), file=stdout, flush=True)
-    for location in locations:
-        print(str(location), file=stdout, flush=True)
-    for embedding in embeddings:
-        print(' '.join(f'{float(v):.8g}' for v in embedding), file=stdout, flush=True)
+    write_response(locations, embeddings)
 
 
 def process_one_image_insightface(img_path, code, app, max_size, min_det_score):
@@ -357,21 +434,40 @@ def process_one_image_insightface(img_path, code, app, max_size, min_det_score):
     faces = app.get(img_bgr)
     faces = [f for f in faces if f.det_score >= min_det_score]
 
-    num_faces = len(faces)
-    print(str(num_faces), file=stdout, flush=True)
-    if num_faces == 0:
-        return
-
+    locations = []
+    embeddings = []
     for face in faces:
         x1, y1, x2, y2 = face.bbox.astype(int)
         if scale != 1:
             x1, y1, x2, y2 = rescale_bbox(x1, y1, x2, y2, scale)
         location = (y1, x2, y2, x1)
-        print(str(location), file=stdout, flush=True)
+        locations.append(location)
+        embeddings.append(face.normed_embedding)
+    write_response(locations, embeddings)
 
-    for face in faces:
-        embedding = face.normed_embedding
-        print(' '.join(f'{float(v):.8g}' for v in embedding), file=stdout, flush=True)
+
+def validate_options(max_size, model_name, det_size, min_det_score, execution_provider):
+    if model_name not in SUPPORTED_MODELS:
+        raise ValueError('Unsupported face model: ' + model_name)
+    if max_size <= 0 or det_size <= 0:
+        raise ValueError('maxResolution and detSize must be positive')
+    if not math.isfinite(min_det_score) or not 0 <= min_det_score <= 1:
+        raise ValueError('minDetScore must be finite and between 0 and 1')
+    if execution_provider not in EXECUTION_PROVIDERS:
+        raise ValueError('executionProvider must be auto, cpu or cuda')
+
+
+def verify_session_provider(session, execution_provider, label):
+    active = session.get_providers()
+    print(f'{label} providers: {active}', file=sys.stderr, flush=True)
+    if execution_provider == 'cuda':
+        if 'CUDAExecutionProvider' not in active:
+            raise RuntimeError(label + ': CUDA provider failed to load; check CUDA/cuDNN dependencies')
+        session.disable_fallback()
+    elif execution_provider == 'cpu' and active != ['CPUExecutionProvider']:
+        raise RuntimeError(label + ': explicit CPU mode loaded an unexpected provider')
+    elif execution_provider == 'auto' and 'CUDAExecutionProvider' not in active:
+        print(label + ': automatic CPU fallback is active.', file=sys.stderr, flush=True)
 
 
 '''
@@ -385,6 +481,10 @@ def main():
     det_size = int(sys.argv[3])
     min_det_score = float(sys.argv[4])
     model_dir = sys.argv[5] if len(sys.argv) > 5 else None
+    execution_provider = sys.argv[6] if len(sys.argv) > 6 else 'auto'
+    validate_options(max_size, model_name, det_size, min_det_score, execution_provider)
+    preload_runtime_dlls(onnxruntime, execution_provider)
+    providers = requested_providers(onnxruntime, execution_provider)
 
     use_auraface = (model_name == 'auraface')
 
@@ -409,9 +509,6 @@ def main():
         sess_opts.intra_op_num_threads = 2
         sess_opts.inter_op_num_threads = 1
 
-        # Prefer GPU; ONNX Runtime silently falls back to CPU if CUDA is unavailable
-        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
-
         det_session = onnxruntime.InferenceSession(
             det_path, sess_options=sess_opts, providers=providers)
         det_input_name = det_session.get_inputs()[0].name
@@ -419,6 +516,9 @@ def main():
         rec_session = onnxruntime.InferenceSession(
             rec_path, sess_options=sess_opts, providers=providers)
         rec_input_name = rec_session.get_inputs()[0].name
+
+        verify_session_provider(det_session, execution_provider, 'RetinaFace')
+        verify_session_provider(rec_session, execution_provider, 'AuraFace')
 
         det_providers = det_session.get_providers()
         rec_providers = rec_session.get_providers()
@@ -435,8 +535,11 @@ def main():
         kwargs = {}
         if model_dir:
             kwargs['root'] = model_dir
-        app = FaceAnalysis(name=model_name, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'], **kwargs)
-        app.prepare(ctx_id=0, det_size=(det_size, det_size))
+        app = FaceAnalysis(name=model_name, providers=providers,
+                           allowed_modules=['detection', 'recognition'], **kwargs)
+        app.prepare(ctx_id=-1 if execution_provider == 'cpu' else 0, det_size=(det_size, det_size))
+        for name, model in app.models.items():
+            verify_session_provider(model.session, execution_provider, 'InsightFace ' + name)
         providers_used = [m.session.get_providers() for m in app.models.values()]
         sys.stderr.write(f"InsightFace mode: {model_name}\n")
         sys.stderr.write(f"InsightFace providers: {providers_used}\n")
@@ -445,12 +548,22 @@ def main():
         def process_fn(img_path, code):
             process_one_image_insightface(img_path, code, app, max_size, min_det_score)
 
+    def process_safely(img_path, code):
+        try:
+            process_fn(img_path, code)
+        except Exception as error:
+            print('Face processing failed: ' + str(error), file=sys.stderr, flush=True)
+            print(imgError, file=stdout, flush=True)
+
     while True:
         global processed_files
         if processed_files >= max_files:
             break
 
-        line = input()
+        try:
+            line = input()
+        except EOFError:
+            break
         if line == terminate:
             break
         if line == ping:
@@ -462,13 +575,13 @@ def main():
             for _ in range(n):
                 img_path = input()
                 code = input()
-                process_fn(img_path, code)
+                process_safely(img_path, code)
                 processed_files += 1
             continue
 
         processed_files += 1
         code = input()
-        process_fn(line, code)
+        process_safely(line, code)
 
     return
 

@@ -1,0 +1,12 @@
+name: iped-face-cpu
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - numpy==1.26.4
+      - opencv-python==4.11.0.86
+      - pillow==11.3.0
+      - onnxruntime==1.22.0
+      - psutil==7.0.0

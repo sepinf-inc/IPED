@@ -12,7 +12,7 @@ Options:
     --model MODEL   Model name to download (default: auraface).
                     Options:
                       auraface  - RetinaFace-R50 (MIT) + AuraFace-v1 (Apache 2.0, ~365MB)
-                      buffalo_l - InsightFace (non-commercial, ~300MB) — more accurate
+                      buffalo_l - InsightFace (non-commercial, ~300MB)
                       buffalo_s - InsightFace (non-commercial, smaller/faster)
     --dest DIR      Destination directory for model files.
                     Default: ../../../models/insightface (relative to this script).
@@ -24,33 +24,21 @@ and used automatically by FaceRecognitionProcess.py.
 import argparse
 import os
 import sys
-import urllib.request
 
 from FaceRecognitionModelConfig import (
     AURAFACE_REC_URL, AURAFACE_REC_FILE, AURAFACE_SUBDIR,
     RETINAFACE_R50_URL, RETINAFACE_R50_FILE,
+    SUPPORTED_MODELS, download_file,
 )
-
-
-def _download_file(url, fpath, label):
-    """Download a file if it doesn't already exist."""
-    fname = os.path.basename(fpath)
-    if os.path.exists(fpath):
-        print(f'  {fname} already exists, skipping.')
-    else:
-        print(f'  Downloading {label}...')
-        urllib.request.urlretrieve(url, fpath)
-        size_mb = os.path.getsize(fpath) / (1024 * 1024)
-        print(f'  Saved {fname} ({size_mb:.1f} MB)')
 
 
 def download_auraface(dest):
     """Download AuraFace-v1 models: RetinaFace-R50 (~104 MB) + AuraFace recognition (~261 MB)."""
     model_dir = os.path.join(dest, 'models', AURAFACE_SUBDIR)
     os.makedirs(model_dir, exist_ok=True)
-    _download_file(RETINAFACE_R50_URL, os.path.join(model_dir, RETINAFACE_R50_FILE),
+    download_file(RETINAFACE_R50_URL, os.path.join(model_dir, RETINAFACE_R50_FILE),
                    'RetinaFace-R50 detection model (~104 MB)')
-    _download_file(AURAFACE_REC_URL, os.path.join(model_dir, AURAFACE_REC_FILE),
+    download_file(AURAFACE_REC_URL, os.path.join(model_dir, AURAFACE_REC_FILE),
                    'AuraFace-v1 recognition model (~261 MB)')
     return model_dir
 
@@ -74,7 +62,7 @@ def main():
     default_dest = os.path.normpath(os.path.join(script_dir, '..', '..', '..', 'models', 'insightface'))
 
     parser = argparse.ArgumentParser(description='Download face recognition models for IPED offline use.')
-    parser.add_argument('--model', default='auraface',
+    parser.add_argument('--model', choices=SUPPORTED_MODELS, default='auraface',
                         help='Model name to download (default: auraface)')
     parser.add_argument('--dest', default=default_dest,
                         help=f'Destination directory (default: {default_dest})')
