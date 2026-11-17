@@ -1,6 +1,13 @@
 name: Java CI
 
-on: [push, pull_request]
+on:
+  # Pull requests are built by the pull_request event, which tests the merge with the target
+  # branch, so pushes only trigger a build on master: one build per commit instead of two.
+  push:
+    branches: [master]
+  pull_request:
+  # manual run on any branch (Actions tab > Java CI > Run workflow), e.g. before opening a PR
+  workflow_dispatch:
 
 jobs:
 
