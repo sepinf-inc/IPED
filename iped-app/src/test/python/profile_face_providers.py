@@ -44,11 +44,18 @@ def profile_model(path, label, provider, directory):
     events = json.loads(pathlib.Path(profile_path).read_text(encoding='utf-8'))
     providers = Counter(event['args']['provider'] for event in events
                         if event.get('cat') == 'Node' and event.get('args', {}).get('provider'))
+    operations = {}
+    for event in events:
+        details = event.get('args', {})
+        if event.get('cat') == 'Node' and details.get('provider'):
+            counts = operations.setdefault(details['provider'], Counter())
+            counts[details.get('op_name', 'unknown')] += 1
     if provider == 'cuda' and not providers.get('CUDAExecutionProvider'):
         raise RuntimeError(label + ': no CUDA kernel execution was recorded')
     if provider == 'cpu' and (not providers.get('CPUExecutionProvider') or set(providers) != {'CPUExecutionProvider'}):
         raise RuntimeError(label + ': profiling did not confirm CPU-only kernel execution')
     return {'loaded_providers': session.get_providers(), 'kernel_events_by_provider': dict(providers),
+            'kernel_operations_by_provider': {provider: dict(counts) for provider, counts in operations.items()},
             'model_sha256': digest, 'synthetic_samples': 1}
 
 
@@ -58,7 +65,7 @@ def main():
     parser.add_argument('--execution-provider', choices=('cpu', 'cuda'), required=True)
     parser.add_argument('--output', required=True, help='Summary JSON destination under the repository target directory')
     args = parser.parse_args()
-    target = pathlib.Path(__file__).resolve().parents[5] / 'target'
+    target = pathlib.Path(__file__).resolve().parents[4] / 'target'
     output = pathlib.Path(args.output).resolve()
     if target.resolve() not in output.parents:
         parser.error('--output must be inside the repository target directory')

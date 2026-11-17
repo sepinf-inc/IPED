@@ -147,7 +147,8 @@ def checkDependencies():
                '--check-dependencies', '--model', model_name,
                '--execution-provider', execution_provider]
     try:
-        result = subprocess.run(command, capture_output=True, universal_newlines=True,
+        # This is a noninteractive probe; never inherit the JVM launcher's input pipe.
+        result = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, universal_newlines=True,
                                 env=buildSubprocessEnv(), timeout=60)
         if result.returncode != 0:
             raise RuntimeError((result.stderr or result.stdout or

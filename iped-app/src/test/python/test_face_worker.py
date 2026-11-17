@@ -157,6 +157,29 @@ class DownloadTests(unittest.TestCase):
                     self.download(path)
             self.assertEqual(list(path.parent.iterdir()), [])
 
+    def test_concurrent_verified_winner_survives_windows_sharing_violation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'model.onnx'
+            def publish_winner_then_deny_replace(temporary, destination):
+                pathlib.Path(destination).write_bytes(self.payload)
+                raise PermissionError('Windows reader denies delete sharing')
+            with patch('urllib.request.urlretrieve', side_effect=self.retrieve), \
+                    patch('os.replace', side_effect=publish_winner_then_deny_replace):
+                self.assertEqual(self.download(path), str(path))
+            self.assertEqual(path.read_bytes(), self.payload)
+            self.assertEqual(list(path.parent.iterdir()), [path])
+
+    def test_permission_error_with_corrupt_target_still_propagates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'model.onnx'
+            path.write_bytes(b'corrupt')
+            with patch('urllib.request.urlretrieve', side_effect=self.retrieve), \
+                    patch('os.replace', side_effect=PermissionError('denied')):
+                with self.assertRaises(PermissionError):
+                    self.download(path)
+            self.assertEqual(path.read_bytes(), b'corrupt')
+            self.assertEqual(list(path.parent.iterdir()), [path])
+
     def test_parallel_downloads_publish_only_verified_bytes(self):
         barrier = threading.Barrier(2)
         with tempfile.TemporaryDirectory() as directory:

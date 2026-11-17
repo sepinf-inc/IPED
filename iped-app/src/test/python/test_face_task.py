@@ -240,6 +240,7 @@ def test_dependency_check_command_timeout_and_actionable_failure(task_module, mo
     command = run.call_args.args[0]
     assert command[-4:] == ['--model', 'auraface', '--execution-provider', 'cpu']
     assert run.call_args.kwargs['timeout'] == 60
+    assert run.call_args.kwargs['stdin'] == subprocess.DEVNULL
     run.return_value = types.SimpleNamespace(returncode=1, stdout='', stderr='missing onnxruntime')
     with pytest.raises(RuntimeError, match='pythonPath.*missing onnxruntime'):
         check()

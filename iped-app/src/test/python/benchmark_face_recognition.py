@@ -319,8 +319,13 @@ def main():
     parser.add_argument("--dlib-python", help="Optional separate historical dlib environment")
     parser.add_argument("--baseline-ref", default="origin/master")
     parser.add_argument("--include-cnn", action="store_true")
+    parser.add_argument("--dlib-detectors", nargs="+", choices=("hog", "cnn"),
+                        help="Select historical detectors (default hog, or hog+cnn with --include-cnn)")
+    parser.add_argument("--skip-auraface", action="store_true", help="Run only the selected historical detectors")
     parser.add_argument("--timeout", type=float, default=1800, help="Maximum seconds per configuration, all repeats")
     args = parser.parse_args()
+    if args.skip_auraface and not args.dlib_python:
+        parser.error('--skip-auraface requires --dlib-python')
     if args.repeats < 1 or min(args.workers) < 1:
         parser.error("Use positive worker counts and repetitions")
     if args.max_resolution < 1 or args.det_size < 1 or not math.isfinite(args.timeout) or args.timeout <= 0:
@@ -358,6 +363,7 @@ def main():
                                      for code in sorted({i[1] for i in images})},
               "settings": {"max_resolution": args.max_resolution, "det_size": args.det_size,
                            "min_det_score": args.min_det_score, "repeats": args.repeats,
+                           "configuration_timeout_seconds": args.timeout,
                            "warmup_images_per_worker": 1},
               "memory_note": "RSS summed across workers; VRAM is system-wide, not attributable to these processes.",
               "results": []}
@@ -373,11 +379,11 @@ def main():
             baseline = Path(temp) / "FaceRecognitionProcess.py"
             baseline.write_bytes(subprocess.check_output(
                 ["git", "show", report["baseline_sha"] + ":" + SCRIPT_PATH], cwd=ROOT))
-            for detector in (["hog", "cnn"] if args.include_cnn else ["hog"]):
+            for detector in (args.dlib_detectors or (["hog", "cnn"] if args.include_cnn else ["hog"])):
                 for workers in args.workers:
                     report["results"].append(benchmark(args, images, "cpu", workers, baseline, detector))
                     save()
-        for provider in args.providers:
+        for provider in ([] if args.skip_auraface else args.providers):
             for workers in args.workers:
                 report["results"].append(benchmark(args, images, provider, workers))
                 save()

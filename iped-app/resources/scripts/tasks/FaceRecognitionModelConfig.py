@@ -71,8 +71,10 @@ def download_file(url, dest_path, label=None, expected_size=None, expected_sha25
             raise ValueError('Downloaded model failed size/SHA-256 verification: ' + dest_path)
         try:
             os.replace(temporary, dest_path)
-        except FileExistsError:
-            # A concurrent worker can finish first on Windows.
+        except (FileExistsError, PermissionError):
+            # A concurrent worker can finish first on Windows. Another reader
+            # may hold its verified file without delete sharing, preventing a
+            # replacement even though the desired bytes are already present.
             if not valid_model_file(dest_path, expected_size, expected_sha256):
                 raise
         return dest_path

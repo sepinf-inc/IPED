@@ -80,8 +80,11 @@ scoring, and stored-reference searches. New AuraFace query embeddings cannot mat
 those old dlib vectors. Untagged experimental 512-dimensional vectors require
 reprocessing, since their model cannot be inferred reliably.
 
-Lucene keeps the original stored/doc-value encoding fields and separates KNN fields
-by model and dimension. Elasticsearch retains the legacy 128-dimensional
+Lucene retains the original legacy fields. Modern stored values, doc values, and
+KNN vectors use model-specific fields such as `face_encodings_auraface_512`, so
+modern records can be appended to a legacy index without changing its 128-value
+vector schema. Item loading restores the logical `face_encodings` attribute for
+the UI and exports. Elasticsearch retains the legacy 128-dimensional
 `faces.face_encoding` field and adds separate modern model fields. An experimental
 index created by an earlier revision of this PR with a 512-dimensional legacy field
 must be rebuilt; Elasticsearch cannot change an existing vector field's dimension.
@@ -104,6 +107,9 @@ requires a CPU-only dlib build. Add `--include-cnn` to test its CNN detector too
 Unavailable or timed-out configurations are reported as failures, never as partial
 successful timing results. `--max-resolution 2048` provides the requested comparison
 with a larger legacy scan limit; keep these results separate from defaults.
+Use `--dlib-detectors cnn --skip-auraface` for an isolated CNN comparison, and
+`--timeout` to bound expensive configurations. The budget includes startup and
+warmup; a timeout is not a completed processing-time measurement.
 
 Memory is the sum of worker RSS. GPU memory is explicitly labeled **system-wide**,
 including any unrelated programs; it is not attributed to CPU inference. The image
@@ -122,3 +128,13 @@ The tests exercise provider selection/fallback, complete protocol validation,
 NumPy scalar serialization, all eight orientations, downloads, worker disposal,
 configuration validation, and cache/model metadata. Java tests cover legacy and
 modern scoring, mixed-vector indexes, model isolation, and Elasticsearch export.
+
+For numerical provider consistency, run:
+
+```shell
+python iped-app/src/test/python/compare_face_providers.py --images /private/photos --model-dir /path/to/models/insightface/models/auraface --output target/face-provider-consistency.json
+```
+
+This compares detections and normalized embeddings for 16 deterministic samples
+under CPU and CUDA. It checks numerical agreement, not identity recognition
+accuracy, and retains only aggregate results and content hashes.
