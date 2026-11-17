@@ -224,14 +224,14 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
      * MapCanvasOpenStreet.
      */
     private static final Pattern LEAFLET_FILES = Pattern
-            .compile("https://unpkg\\.com/leaflet(\\.markercluster)?@[^/]+/dist/", Pattern.CASE_INSENSITIVE); //$NON-NLS-1$
+            .compile("https://unpkg\\.com/leaflet(\\.markercluster)?@[^/]+/dist/", Pattern.CASE_INSENSITIVE);
     private static final Pattern GOOGLE_MAPS_FILES = Pattern.compile(
-            "https://(unpkg\\.com/leaflet\\.gridlayer\\.googlemutant@[^/]+/|([a-z0-9-]+\\.)*(googleapis|gstatic|google|ggpht)\\.com/)", //$NON-NLS-1$
+            "https://(unpkg\\.com/leaflet\\.gridlayer\\.googlemutant@[^/]+/|([a-z0-9-]+\\.)*(googleapis|gstatic|google|ggpht)\\.com/)",
             Pattern.CASE_INSENSITIVE);
 
     private static void allowMapNetworkAccess(String tilesSourceURL) {
         WebKitNetworkGuard.allow(LEAFLET_FILES);
-        if (tilesSourceURL.contains("googleapis")) { //$NON-NLS-1$
+        if (tilesSourceURL.contains("googleapis")) {
             // Google Maps JS API loads resources from several Google domains
             WebKitNetworkGuard.allow(GOOGLE_MAPS_FILES);
         } else {

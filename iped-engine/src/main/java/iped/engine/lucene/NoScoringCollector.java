@@ -81,7 +81,7 @@ public class NoScoringCollector implements CollectorManager<Collector, Void> {
         @Override
         public void collect(int doc) throws IOException {
             if (canceled)
-                throw new InterruptedIOException("Search canceled!"); //$NON-NLS-1$
+                throw new InterruptedIOException("Search canceled!");
             leafBits.set(doc);
             leafHits++;
         }

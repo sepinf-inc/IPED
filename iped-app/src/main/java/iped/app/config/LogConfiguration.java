@@ -73,7 +73,7 @@ public class LogConfiguration {
             out = System.out;
             err = System.err;
             FileOutputStream fos = new FileOutputStream(logFile, true);
-            log = new PrintStream(new FilterOutputStream(fos, out, "IPED"), false, CharsetUtil.NATIVE); //$NON-NLS-1$
+            log = new PrintStream(new FilterOutputStream(fos, out, "IPED"), false, CharsetUtil.NATIVE);
             System.setOut(log);
             System.setErr(log);
 

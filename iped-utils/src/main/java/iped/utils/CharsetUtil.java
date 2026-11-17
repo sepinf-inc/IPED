@@ -21,7 +21,7 @@ public final class CharsetUtil {
     }
 
     private static Charset nativeCharset() {
-        String name = System.getProperty("native.encoding"); //$NON-NLS-1$
+        String name = System.getProperty("native.encoding");
         if (name != null) {
             try {
                 return Charset.forName(name);

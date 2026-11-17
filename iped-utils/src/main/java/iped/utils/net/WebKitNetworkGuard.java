@@ -45,11 +45,11 @@ public class WebKitNetworkGuard extends ProxySelector {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebKitNetworkGuard.class);
 
-    static final String WEBKIT_NETWORK_PACKAGE = "com.sun.webkit.network."; //$NON-NLS-1$
-    static final String URL_LOADER = WEBKIT_NETWORK_PACKAGE + "URLLoader"; //$NON-NLS-1$
+    static final String WEBKIT_NETWORK_PACKAGE = "com.sun.webkit.network.";
+    static final String URL_LOADER = WEBKIT_NETWORK_PACKAGE + "URLLoader";
 
     /** Must be set before the first WebView is created, read once by JavaFX. */
-    public static final String USE_HTTP2_LOADER_PROP = "com.sun.webkit.useHTTP2Loader"; //$NON-NLS-1$
+    public static final String USE_HTTP2_LOADER_PROP = "com.sun.webkit.useHTTP2Loader";
 
     private static final StackWalker WALKER = StackWalker.getInstance();
 
@@ -74,7 +74,7 @@ public class WebKitNetworkGuard extends ProxySelector {
      * first WebView is created. Safe to call more than once.
      */
     public static synchronized void install() {
-        System.setProperty(USE_HTTP2_LOADER_PROP, "false"); //$NON-NLS-1$
+        System.setProperty(USE_HTTP2_LOADER_PROP, "false");
         ProxySelector current = ProxySelector.getDefault();
         if (!(current instanceof WebKitNetworkGuard)) {
             ProxySelector.setDefault(new WebKitNetworkGuard(current, WebKitNetworkGuard::findWebKitCaller));
@@ -84,7 +84,7 @@ public class WebKitNetworkGuard extends ProxySelector {
     /** Allows WebKit requests to URLs matching this pattern (from the start). */
     public static void allow(Pattern urlPattern) {
         if (urlPattern != null) {
-            allowed.putIfAbsent(urlPattern.flags() + ":" + urlPattern.pattern(), urlPattern); //$NON-NLS-1$
+            allowed.putIfAbsent(urlPattern.flags() + ":" + urlPattern.pattern(), urlPattern);
         }
     }
 
@@ -106,10 +106,10 @@ public class WebKitNetworkGuard extends ProxySelector {
             return null;
         }
         StringBuilder regex = new StringBuilder();
-        Matcher m = Pattern.compile("\\$?\\{[^}]*\\}").matcher(template); //$NON-NLS-1$
+        Matcher m = Pattern.compile("\\$?\\{[^}]*\\}").matcher(template);
         int last = 0;
         while (m.find()) {
-            regex.append(Pattern.quote(template.substring(last, m.start()))).append("[^/?#@:]*"); //$NON-NLS-1$
+            regex.append(Pattern.quote(template.substring(last, m.start()))).append("[^/?#@:]*");
             last = m.end();
         }
         regex.append(Pattern.quote(template.substring(last)));
@@ -173,9 +173,9 @@ public class WebKitNetworkGuard extends ProxySelector {
         if (caller != null) {
             // only the HTTP loader is allowed, and only for registered URLs
             if (!caller.startsWith(URL_LOADER) || !isAllowedFromUrlLoader(uri)) {
-                LOGGER.debug("Blocked network access from WebView content: {} ({})", uri, caller); //$NON-NLS-1$
+                LOGGER.debug("Blocked network access from WebView content: {} ({})", uri, caller);
                 // HttpURLConnection reports it as IOException before connecting
-                throw new IllegalArgumentException("Network access blocked for WebView content: " + uri); //$NON-NLS-1$
+                throw new IllegalArgumentException("Network access blocked for WebView content: " + uri);
             }
         }
         return delegate != null ? delegate.select(uri) : List.of(Proxy.NO_PROXY);

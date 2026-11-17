@@ -329,7 +329,7 @@ public class Worker extends Thread {
             // no-op if finishTasks() already did it
             PythonParser.closeJep();
         } catch (Throwable t) {
-            LOGGER.warn("Error closing Python interpreter of " + getName(), t); //$NON-NLS-1$
+            LOGGER.warn("Error closing Python interpreter of " + getName(), t);
         }
     }
 

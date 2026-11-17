@@ -32,8 +32,8 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
      * does not change where File.createTempFile() and Files.createTempFile()
      * create their files.
      */
-    public static final String SYS_PROP_IPED_TEMP = "iped.tempdir"; //$NON-NLS-1$
-    private static final String SYS_PROP_BASE_TMPDIR = "java.io.basetmpdir"; //$NON-NLS-1$
+    public static final String SYS_PROP_IPED_TEMP = "iped.tempdir";
+    private static final String SYS_PROP_BASE_TMPDIR = "java.io.basetmpdir";
 
     public static final String NUM_THREADS = "numThreads";
 
@@ -141,7 +141,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         File dir = new File(value.trim()).getAbsoluteFile();
         if (!dir.exists() && !dir.mkdirs()) {
             if (logger != null)
-                logger.info("Fail to create temp directory" + dir.getAbsolutePath()); //$NON-NLS-1$
+                logger.info("Fail to create temp directory" + dir.getAbsolutePath());
             return null;
         }
         return dir;
@@ -153,13 +153,13 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
      */
     public static File createIpedTemp(File configuredTemp) {
         if (System.getProperty(SYS_PROP_BASE_TMPDIR) == null) {
-            System.setProperty(SYS_PROP_BASE_TMPDIR, System.getProperty("java.io.tmpdir")); //$NON-NLS-1$
+            System.setProperty(SYS_PROP_BASE_TMPDIR, System.getProperty("java.io.tmpdir"));
         }
         File systemTemp = new File(System.getProperty(SYS_PROP_BASE_TMPDIR));
         Random rand = new Random();
-        File dir = new File(configuredTemp != null ? configuredTemp : systemTemp, "iped-temp" + rand.nextLong()); //$NON-NLS-1$
+        File dir = new File(configuredTemp != null ? configuredTemp : systemTemp, "iped-temp" + rand.nextLong());
         if (!dir.mkdirs()) {
-            dir = new File(systemTemp, "iped-temp" + rand.nextLong()); //$NON-NLS-1$
+            dir = new File(systemTemp, "iped-temp" + rand.nextLong());
             dir.mkdirs();
         }
         return dir;

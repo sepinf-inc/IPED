@@ -240,7 +240,7 @@ public class AppMain {
         try (PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8)) {
             e.printStackTrace(ps);
         }
-        JOptionPane.showMessageDialog(null, "Error: " + new String(baos.toByteArray(), StandardCharsets.UTF_8), // $NON-NLS-1$
+        JOptionPane.showMessageDialog(null, "Error: " + new String(baos.toByteArray(), StandardCharsets.UTF_8),
                 Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
     }
 
