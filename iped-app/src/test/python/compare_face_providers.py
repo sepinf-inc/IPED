@@ -88,8 +88,9 @@ def create_sessions(model_dir, provider):
         options = ort.SessionOptions()
         options.intra_op_num_threads = 2
         options.inter_op_num_threads = 1
-        session = ort.InferenceSession(str(path), sess_options=options,
-                                       providers=worker.requested_providers(ort, provider))
+        selected_providers = worker.requested_providers(ort, provider)
+        session = ort.InferenceSession(str(path), sess_options=options, providers=selected_providers,
+                                       provider_options=worker.session_provider_options(selected_providers))
         worker.verify_session_provider(session, provider, label)
         sessions.append(session)
     return sessions

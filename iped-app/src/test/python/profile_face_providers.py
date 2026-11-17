@@ -27,8 +27,9 @@ def profile_model(path, label, provider, directory):
     options.inter_op_num_threads = 1
     options.enable_profiling = True
     options.profile_file_prefix = str(pathlib.Path(directory) / label)
-    session = ort.InferenceSession(str(path), sess_options=options,
-                                   providers=worker.requested_providers(ort, provider))
+    selected_providers = worker.requested_providers(ort, provider)
+    session = ort.InferenceSession(str(path), sess_options=options, providers=selected_providers,
+                                   provider_options=worker.session_provider_options(selected_providers))
     worker.verify_session_provider(session, provider, label)
     input_name = session.get_inputs()[0].name
     try:
@@ -50,11 +51,12 @@ def profile_model(path, label, provider, directory):
         if event.get('cat') == 'Node' and details.get('provider'):
             counts = operations.setdefault(details['provider'], Counter())
             counts[details.get('op_name', 'unknown')] += 1
-    if provider == 'cuda' and not providers.get('CUDAExecutionProvider'):
+    effective = ('cuda' if 'CUDAExecutionProvider' in session.get_providers() else 'cpu')
+    if (provider == 'cuda' or effective == 'cuda') and not providers.get('CUDAExecutionProvider'):
         raise RuntimeError(label + ': no CUDA kernel execution was recorded')
-    if provider == 'cpu' and (not providers.get('CPUExecutionProvider') or set(providers) != {'CPUExecutionProvider'}):
+    if (provider == 'cpu' or effective == 'cpu') and (not providers.get('CPUExecutionProvider') or set(providers) != {'CPUExecutionProvider'}):
         raise RuntimeError(label + ': profiling did not confirm CPU-only kernel execution')
-    return {'loaded_providers': session.get_providers(), 'kernel_events_by_provider': dict(providers),
+    return {'effective_provider': effective, 'loaded_providers': session.get_providers(), 'kernel_events_by_provider': dict(providers),
             'kernel_operations_by_provider': {provider: dict(counts) for provider, counts in operations.items()},
             'model_sha256': digest, 'synthetic_samples': 1}
 
@@ -62,7 +64,7 @@ def profile_model(path, label, provider, directory):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model-dir', required=True, help='Directory containing the two pinned AuraFace ONNX files')
-    parser.add_argument('--execution-provider', choices=('cpu', 'cuda'), required=True)
+    parser.add_argument('--execution-provider', choices=('cpu', 'cuda', 'auto'), required=True)
     parser.add_argument('--output', required=True, help='Summary JSON destination under the repository target directory')
     args = parser.parse_args()
     target = pathlib.Path(__file__).resolve().parents[4] / 'target'

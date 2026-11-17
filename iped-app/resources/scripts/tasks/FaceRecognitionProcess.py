@@ -67,6 +67,11 @@ def requested_providers(runtime, execution_provider):
     return ['CPUExecutionProvider']
 
 
+def session_provider_options(providers):
+    """Keep float32 detector landmarks consistent across CPU and CUDA execution."""
+    return [{'use_tf32': '0'} if provider == 'CUDAExecutionProvider' else {} for provider in providers]
+
+
 def check_dependencies(model_name, execution_provider):
     import importlib
     if model_name not in SUPPORTED_MODELS:
@@ -98,6 +103,7 @@ if __name__ == '__main__' and '--check-dependencies' in sys.argv:
     sys.exit(0)
 
 import onnxruntime
+from onnxruntime.capi import _pybind_state as ort_state
 import cv2
 import PIL
 import PIL.ImageFile
@@ -463,11 +469,81 @@ def verify_session_provider(session, execution_provider, label):
     if execution_provider == 'cuda':
         if 'CUDAExecutionProvider' not in active:
             raise RuntimeError(label + ': CUDA provider failed to load; check CUDA/cuDNN dependencies')
-        session.disable_fallback()
     elif execution_provider == 'cpu' and active != ['CPUExecutionProvider']:
         raise RuntimeError(label + ': explicit CPU mode loaded an unexpected provider')
     elif execution_provider == 'auto' and 'CUDAExecutionProvider' not in active:
         print(label + ': automatic CPU fallback is active.', file=sys.stderr, flush=True)
+    # We control runtime fallback so it also retries the current image and keeps
+    # the detector and recognizer on the same effective execution provider.
+    session.disable_fallback()
+
+
+ORT_RUNTIME_ERRORS = (ort_state.Fail, ort_state.RuntimeException, ort_state.EPFail)
+
+
+class CudaInferenceError(RuntimeError):
+    """An ORT execution failure from a session with an active CUDA provider."""
+
+
+class GuardedSession:
+    def __init__(self, session):
+        self.session = session
+
+    def __getattr__(self, name):
+        return getattr(self.session, name)
+
+    def run(self, *args, **kwargs):
+        try:
+            return self.session.run(*args, **kwargs)
+        except ORT_RUNTIME_ERRORS as error:
+            if 'CUDAExecutionProvider' in self.session.get_providers():
+                raise CudaInferenceError('CUDA inference failed: ' + str(error)) from error
+            raise
+
+
+def switch_sessions_to_cpu(sessions):
+    for label, session in sessions:
+        session.set_providers(['CPUExecutionProvider'])
+        verify_session_provider(session, 'cpu', label)
+
+
+class ProcessingPipeline:
+    def __init__(self, process, sessions, execution_provider):
+        self.process_image = process
+        self.sessions = sessions
+        self.execution_provider = execution_provider
+
+    def process(self, img_path, code):
+        try:
+            self.process_image(img_path, code)
+        except CudaInferenceError as error:
+            if self.execution_provider != 'auto':
+                raise RuntimeError(str(error) + '; explicit CUDA mode cannot fall back. '
+                                   'Use executionProvider=cpu or fix the GPU environment.') from error
+            print(str(error) + '; switching this worker to CPU and retrying the image once.',
+                  file=sys.stderr, flush=True)
+            switch_sessions_to_cpu(self.sessions)
+            # A retry failure propagates: it is a runtime failure, not an unreadable image.
+            self.process_image(img_path, code)
+
+
+def initialize_pipeline(factory, execution_provider, providers):
+    """Create the complete pipeline, with one fresh CPU retry for auto CUDA failures."""
+    try:
+        process, sessions = factory(providers)
+    except ORT_RUNTIME_ERRORS as error:
+        if execution_provider != 'auto' or 'CUDAExecutionProvider' not in providers:
+            raise
+        print('CUDA initialization failed: ' + str(error) + '; initializing both models on CPU.',
+              file=sys.stderr, flush=True)
+        process, sessions = factory(['CPUExecutionProvider'])
+    for label, session in sessions:
+        verify_session_provider(session, execution_provider, label)
+    cuda_sessions = ['CUDAExecutionProvider' in session.get_providers() for _, session in sessions]
+    if execution_provider == 'auto' and any(cuda_sessions) and not all(cuda_sessions):
+        print('Mixed CUDA/CPU initialization; switching both models to CPU.', file=sys.stderr, flush=True)
+        switch_sessions_to_cpu(sessions)
+    return ProcessingPipeline(process, sessions, execution_provider)
 
 
 '''
@@ -509,51 +585,60 @@ def main():
         sess_opts.intra_op_num_threads = 2
         sess_opts.inter_op_num_threads = 1
 
-        det_session = onnxruntime.InferenceSession(
-            det_path, sess_options=sess_opts, providers=providers)
-        det_input_name = det_session.get_inputs()[0].name
+        def factory(selected_providers):
+            det_session = GuardedSession(onnxruntime.InferenceSession(
+                det_path, sess_options=sess_opts, providers=selected_providers,
+                provider_options=session_provider_options(selected_providers)))
+            rec_session = GuardedSession(onnxruntime.InferenceSession(
+                rec_path, sess_options=sess_opts, providers=selected_providers,
+                provider_options=session_provider_options(selected_providers)))
+            det_input_name = det_session.get_inputs()[0].name
+            rec_input_name = rec_session.get_inputs()[0].name
 
-        rec_session = onnxruntime.InferenceSession(
-            rec_path, sess_options=sess_opts, providers=providers)
-        rec_input_name = rec_session.get_inputs()[0].name
-
-        verify_session_provider(det_session, execution_provider, 'RetinaFace')
-        verify_session_provider(rec_session, execution_provider, 'AuraFace')
-
-        det_providers = det_session.get_providers()
-        rec_providers = rec_session.get_providers()
-        sys.stderr.write(f"AuraFace mode: RetinaFace-R50 (MIT) + AuraFace (Apache 2.0)\n")
-        sys.stderr.write(f"Providers: det={det_providers}, rec={rec_providers}\n")
-        sys.stderr.flush()
-
-        def process_fn(img_path, code):
-            process_one_image_auraface(img_path, code, det_session, det_input_name, det_size,
-                                       rec_session, rec_input_name, max_size, min_det_score)
+            def process_image(img_path, code):
+                process_one_image_auraface(img_path, code, det_session, det_input_name, det_size,
+                                           rec_session, rec_input_name, max_size, min_det_score)
+            return process_image, [('RetinaFace', det_session), ('AuraFace', rec_session)]
     else:
         # InsightFace mode (buffalo_l, buffalo_s, etc.)
         from insightface.app import FaceAnalysis
         kwargs = {}
         if model_dir:
             kwargs['root'] = model_dir
-        app = FaceAnalysis(name=model_name, providers=providers,
-                           allowed_modules=['detection', 'recognition'], **kwargs)
-        app.prepare(ctx_id=-1 if execution_provider == 'cpu' else 0, det_size=(det_size, det_size))
-        for name, model in app.models.items():
-            verify_session_provider(model.session, execution_provider, 'InsightFace ' + name)
-        providers_used = [m.session.get_providers() for m in app.models.values()]
-        sys.stderr.write(f"InsightFace mode: {model_name}\n")
-        sys.stderr.write(f"InsightFace providers: {providers_used}\n")
-        sys.stderr.flush()
 
-        def process_fn(img_path, code):
-            process_one_image_insightface(img_path, code, app, max_size, min_det_score)
+        def factory(selected_providers):
+            app = FaceAnalysis(name=model_name, providers=selected_providers,
+                               provider_options=session_provider_options(selected_providers),
+                               allowed_modules=['detection', 'recognition'], **kwargs)
+            app.prepare(ctx_id=-1 if selected_providers == ['CPUExecutionProvider'] else 0,
+                        det_size=(det_size, det_size))
+            sessions = []
+            for name, model in app.models.items():
+                model.session = GuardedSession(model.session)
+                sessions.append(('InsightFace ' + name, model.session))
+
+            def process_image(img_path, code):
+                process_one_image_insightface(img_path, code, app, max_size, min_det_score)
+            return process_image, sessions
+
+    pipeline = initialize_pipeline(factory, execution_provider, providers)
+    if use_auraface:
+        det_providers = pipeline.sessions[0][1].get_providers()
+        rec_providers = pipeline.sessions[1][1].get_providers()
+        sys.stderr.write('AuraFace mode: RetinaFace-R50 (MIT) + AuraFace (Apache 2.0)\n')
+        sys.stderr.write(f'Providers: det={det_providers}, rec={rec_providers}\n')
+    else:
+        providers_used = [session.get_providers() for _, session in pipeline.sessions]
+        sys.stderr.write(f'InsightFace mode: {model_name}\n')
+        sys.stderr.write(f'InsightFace providers: {providers_used}\n')
+    sys.stderr.flush()
 
     def process_safely(img_path, code):
         try:
-            process_fn(img_path, code)
+            pipeline.process(img_path, code)
         except Exception as error:
             print('Face processing failed: ' + str(error), file=sys.stderr, flush=True)
-            print(imgError, file=stdout, flush=True)
+            raise
 
     while True:
         global processed_files
@@ -585,7 +670,21 @@ def main():
 
     return
 
-if __name__ == "__main__":
-    main()
-    # Force exit to avoid ONNX Runtime GPU session hanging on cleanup
+def run_worker():
+    try:
+        main()
+    except Exception:
+        import traceback
+        try:
+            traceback.print_exc(file=sys.stderr)
+            sys.stderr.flush()
+        finally:
+            # A failed CUDA context can also hang during interpreter cleanup.
+            # Exit immediately so the task observes EOF and discards this worker.
+            os._exit(1)
+    # Force exit to avoid ONNX Runtime GPU session hanging on cleanup.
     os._exit(0)
+
+
+if __name__ == "__main__":
+    run_worker()
