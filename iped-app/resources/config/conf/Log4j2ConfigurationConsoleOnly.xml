@@ -18,7 +18,7 @@
         <Logger name="org.mp4parser" level="off"/>
         <Logger name="com.googlecode.mp4parser" level="off"/>
         <Logger name="com.webcohesion.ofx4j" level="off"/>
-        <Logger name="net.sf.ofx4j" level="off"/>        
+        <Logger name="net.sf.ofx4j" level="off"/>
         <Root level="info">
             <AppenderRef ref="Console"/>
         </Root>
