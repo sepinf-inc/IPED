@@ -30,6 +30,13 @@ def worker_script(tmp_path, provider):
     return script
 
 
+def test_undefined_exif_orientation_is_not_a_rotation(benchmark_module):
+    image = types.SimpleNamespace(getexif=lambda: {274: 0})
+    assert benchmark_module.image_orientation(image) == '1'
+    image = types.SimpleNamespace(getexif=lambda: {274: 6})
+    assert benchmark_module.image_orientation(image) == '6'
+
+
 def test_cpu_worker_requires_cpu_evidence(benchmark_module, tmp_path):
     script = worker_script(tmp_path, 'CPUExecutionProvider')
     worker = benchmark_module.Worker(sys.executable, script, ['cpu'], time.monotonic() + 10)

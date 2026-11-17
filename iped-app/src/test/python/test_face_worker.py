@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / 'resources/scripts/tasks'))
 import FaceRecognitionModelConfig as models
 import FaceRecognitionProcess as worker
 import numpy as np

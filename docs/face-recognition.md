@@ -52,8 +52,8 @@ Prove execution with both real models (the model directory here contains the two
 ONNX files directly):
 
 ```shell
-python iped-app/resources/scripts/tasks/tests/profile_face_providers.py --model-dir /path/to/models/insightface/models/auraface --execution-provider cpu --output target/face-provider-cpu.json
-python iped-app/resources/scripts/tasks/tests/profile_face_providers.py --model-dir /path/to/models/insightface/models/auraface --execution-provider cuda --output target/face-provider-cuda.json
+python iped-app/src/test/python/profile_face_providers.py --model-dir /path/to/models/insightface/models/auraface --execution-provider cpu --output target/face-provider-cpu.json
+python iped-app/src/test/python/profile_face_providers.py --model-dir /path/to/models/insightface/models/auraface --execution-provider cuda --output target/face-provider-cuda.json
 ```
 
 Both commands use a synthetic blank, retain no face data, and fail if the expected
@@ -115,8 +115,7 @@ identities and is not established by these timing runs.
 
 ```shell
 python -m pip install pytest==8.4.2
-python -m pytest iped-app/resources/scripts/tasks/tests -q
-python -m pytest iped-app/src/test/python/test_benchmark_face_recognition.py -q
+python -m pytest iped-app/src/test/python -q
 ```
 
 The tests exercise provider selection/fallback, complete protocol validation,

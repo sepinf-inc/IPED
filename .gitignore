@@ -8,3 +8,6 @@ nbactions.xml
 CLAUDE.md
 /models/
 .sdkmanrc
+__pycache__/
+*.py[cod]
+.pytest_cache/

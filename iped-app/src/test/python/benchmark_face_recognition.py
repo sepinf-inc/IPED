@@ -28,6 +28,17 @@ ROOT = Path(__file__).resolve().parents[4]
 SCRIPT_PATH = "iped-app/resources/scripts/tasks/FaceRecognitionProcess.py"
 
 
+def image_orientation(image):
+    # EXIF 0 is undefined, and occurs in the original corpus. It carries no
+    # rotation, just like missing orientation. Reject other malformed values.
+    value = str(image.getexif().get(274, 1))
+    if value == '0':
+        return '1'
+    if value not in {str(v) for v in range(1, 9)}:
+        raise ValueError('Invalid EXIF orientation')
+    return value
+
+
 class Worker:
     def __init__(self, python, script, arguments, deadline, dlib=False):
         # The baseline is the unmodified upstream script. This wrapper only
@@ -327,11 +338,9 @@ def main():
             continue
         try:
             with Image.open(path) as image:
-                orientation = str(image.getexif().get(274, 1))
+                orientation = image_orientation(image)
         except (OSError, ValueError):
             parser.error('A supported image has unreadable metadata; fix the corpus before benchmarking')
-        if orientation not in {str(value) for value in range(1, 9)}:
-            parser.error('An image has an invalid EXIF orientation')
         images.append((path.resolve(), orientation))
         hashes.append(hashlib.sha256(path.read_bytes()).hexdigest())
     if not images:

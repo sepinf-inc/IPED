@@ -24,7 +24,7 @@ def task_module(monkeypatch):
     monkeypatch.setitem(sys.modules, 'java.lang', java_lang)
     monkeypatch.setitem(sys.modules, 'iped.engine.config', config_module)
     monkeypatch.setitem(sys.modules, 'iped.properties', properties)
-    path = Path(__file__).parents[1] / 'FaceRecognitionTask.py'
+    path = Path(__file__).resolve().parents[3] / 'resources/scripts/tasks/FaceRecognitionTask.py'
     spec = importlib.util.spec_from_file_location('face_task_under_test', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -226,7 +226,7 @@ def test_disabled_then_enabled_lifecycle_reads_current_configuration(task_module
 def test_dependency_check_command_timeout_and_actionable_failure(task_module, monkeypatch):
     module = task_module
     # Restore the real function, which the standard fixture stubs for lifecycle tests.
-    source = Path(__file__).parents[1] / 'FaceRecognitionTask.py'
+    source = Path(__file__).resolve().parents[3] / 'resources/scripts/tasks/FaceRecognitionTask.py'
     namespace = {}
     import ast
     tree = ast.parse(source.read_text(encoding='utf-8'))
