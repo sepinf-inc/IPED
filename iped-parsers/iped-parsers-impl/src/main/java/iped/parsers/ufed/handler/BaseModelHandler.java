@@ -7,6 +7,7 @@ import static iped.properties.ExtraProperties.UFED_JUMP_TARGETS;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -43,15 +44,15 @@ public class BaseModelHandler<T extends BaseModel> {
     // if set to true, the item will be linked on addLinkedItems even if the item id is already set in jumpTargets
     private boolean skipJumpTargetsCheckOnAddLinkedItems = false;
 
-    private static final HashSet<String> ignoreAttrs = new HashSet<>(Arrays.asList( //
+    public static final Set<String> ignoreAttrs = Set.of( //
             "type", //
             "path", //
             "size", //
             "deleted", //
-            "deleted_state" //
-    ));
+            "dedup_hash" //
+    );
 
-    public static final HashSet<String> ignoreFields = new HashSet<>(Arrays.asList( //
+    public static final Set<String> ignoreFields = Set.of( //
             "Tags", //
             "CreationTime", //
             "ModifyTime", //
@@ -61,7 +62,7 @@ public class BaseModelHandler<T extends BaseModel> {
             "CoreFileSystemFileSystemNodeLastAccessTime", //
             "CoreFileSystemFileSystemNodeDeletedTime", //
             "UserMapping" //
-    ));
+    );
 
     public BaseModelHandler(T model, IItemReader item) {
         this.model = model;
@@ -179,6 +180,13 @@ public class BaseModelHandler<T extends BaseModel> {
         }
     }
 
+    /**
+     * Model fields not written by fillCommonMetadata(), because they are handled by the specific handler.
+     */
+    protected Set<String> getIgnoredFields() {
+        return Collections.emptySet();
+    }
+
     protected final void fillCommonMetadata(Metadata metadata) {
 
         // title
@@ -203,7 +211,7 @@ public class BaseModelHandler<T extends BaseModel> {
 
         // add fields
         model.getFields().forEach((key, value) -> {
-            fillFieldMetadata(key, value, metadata, Collections.emptySet());
+            fillFieldMetadata(key, value, metadata, getIgnoredFields());
         });
 
         // add additional info
@@ -239,7 +247,14 @@ public class BaseModelHandler<T extends BaseModel> {
             key = model.getModelType() + key;
         }
 
-        if (value instanceof Date) {
+        if (value instanceof Collection) {
+            // multi-valued field (<multiField>)
+            for (Object v : (Collection<?>) value) {
+                if (v != null) {
+                    fillFieldMetadata(key, v, metadata, fieldsToIgnore);
+                }
+            }
+        } else if (value instanceof Date) {
             metadata.add(UFED_META_PREFIX + key, DateUtils.formatDate((Date) value));
         } else {
             metadata.add(UFED_META_PREFIX + key, value.toString());

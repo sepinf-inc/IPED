@@ -38,6 +38,7 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
+import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.preview.PreviewInputStreamFactory;
@@ -278,7 +279,7 @@ public class Item implements IItem {
         parentTmpFile = null;
         try {
             if (inputStreamFactory != null) {
-                inputStreamFactory.close();
+                inputStreamFactory.dispose();
             }
         } catch (IOException e) {
             LOGGER.warn("Error closing inputStreamFactory of " + getPath(), e);
@@ -652,11 +653,13 @@ public class Item implements IItem {
 
         SeekableInputStream stream = null;
 
-        if (inputStreamFactory != null && idInDataSource != null) {
+        boolean isMetadataStream = inputStreamFactory instanceof MetadataInputStreamFactory;
+
+        if (inputStreamFactory != null && (idInDataSource != null || isMetadataStream)) {
             stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
         }
 
-        if (stream != null && startOffset != -1 && !(inputStreamFactory instanceof PreviewInputStreamFactory)) {
+        if (stream != null && startOffset != -1 && !isMetadataStream && !(inputStreamFactory instanceof PreviewInputStreamFactory)) {
             stream = new LimitedSeekableInputStream(stream, startOffset, length);
         }
 

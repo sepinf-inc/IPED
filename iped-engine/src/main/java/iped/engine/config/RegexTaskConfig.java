@@ -88,7 +88,7 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<iped.
                 .replace("\\n", "\n") //$NON-NLS-1$ //$NON-NLS-2$
                 .replace("\\f", "\f") //$NON-NLS-1$ //$NON-NLS-2$
                 .replace("\\s", "[ \t\r\n\f]") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\S", "[^ \t\r\n\f") //$NON-NLS-1$ //$NON-NLS-2$
+                .replace("\\S", "[^ \t\r\n\f]") //$NON-NLS-1$ //$NON-NLS-2$
                 .replace("\\d", "[0-9]") //$NON-NLS-1$ //$NON-NLS-2$
                 .replace("\\D", "[^0-9]")
                 .replace("\\w", "[0-9a-zA-Z_]") //$NON-NLS-1$ //$NON-NLS-2$
