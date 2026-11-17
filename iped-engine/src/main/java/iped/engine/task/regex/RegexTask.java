@@ -60,7 +60,12 @@ public class RegexTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(RegexTask.class);
 
-    private static final File cacheFile = new File(System.getProperty("user.home"), ".iped/regexAutomata.cache");
+    /**
+     * Not regexAutomata.cache, the file of IPED 4.3.x and older: it has another
+     * format, and those versions fail to start if they find this one in its place.
+     * Both may be used in the same computer.
+     */
+    private static final File cacheFile = new File(System.getProperty("user.home"), ".iped/regexAutomata-v2.cache");
 
     private static List<Regex> regexList;
 
@@ -261,8 +266,8 @@ public class RegexTask extends AbstractTask {
             regexFull = (Regex) deserialize(full);
             return true;
         } catch (Exception e) {
-            // Stale or incompatible cache (e.g., the previous FST format): treat as a
-            // cache miss so it is rebuilt from the current configuration.
+            // Stale or incompatible cache: treat as a cache miss so it is rebuilt from
+            // the current configuration.
             logger.warn("Could not load regex cache ({}); it will be rebuilt.", e.toString());
             regexList = null;
             regexFull = null;
