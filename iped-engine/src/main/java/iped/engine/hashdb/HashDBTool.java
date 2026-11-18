@@ -1052,7 +1052,7 @@ public class HashDBTool {
             int cnt = 0;
             long len = file.length();
             while (jp.nextToken() != JsonToken.END_OBJECT) {
-                if (!checkDataModel(jp.getCurrentName(), jp.nextTextValue(), FileType.PROJECT_VIC)) {
+                if (!checkDataModel(jp.currentName(), jp.nextTextValue(), FileType.PROJECT_VIC)) {
                     jp.close();
                     raf.close();
                     throw new RuntimeException("Error: Unknown ProjectVic JSON data model!");
@@ -1208,7 +1208,7 @@ public class HashDBTool {
             int cnt = 0;
             long len = file.length();
             while (jp.nextToken() != JsonToken.END_OBJECT) {
-                if (!checkDataModel(jp.getCurrentName(), jp.nextTextValue(), FileType.NIST_CAID)) {
+                if (!checkDataModel(jp.currentName(), jp.nextTextValue(), FileType.NIST_CAID)) {
                     jp.close();
                     raf.close();
                     throw new RuntimeException("Error: Unknown NIST CAID JSON data model!");
@@ -1573,7 +1573,7 @@ public class HashDBTool {
             if (jp.nextToken() != JsonToken.START_OBJECT)
                 return false;
             if (jp.nextToken() != JsonToken.END_OBJECT) {
-                return checkDataModel(jp.getCurrentName(), jp.nextTextValue(), type);
+                return checkDataModel(jp.currentName(), jp.nextTextValue(), type);
             }
         } catch (Exception e) {
             return false;
