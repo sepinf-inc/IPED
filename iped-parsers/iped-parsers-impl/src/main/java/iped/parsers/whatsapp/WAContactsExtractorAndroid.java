@@ -16,6 +16,7 @@ import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
+import iped.parsers.util.ChatUtil;
 
 public abstract class WAContactsExtractorAndroid extends WAContactsExtractor {
     
@@ -83,7 +84,7 @@ public abstract class WAContactsExtractorAndroid extends WAContactsExtractor {
                 var jid = row.getTextValue("jid");
 
                 // Only recover contact if it does not exist already
-                if (!directory.hasContact(Util.getNameFromId(jid))) {
+                if (!directory.hasContact(ChatUtil.getNameFromId(jid))) {
                     WAContact c = directory.getContact(jid);
                     c.setDisplayName(nullToEmpty(row.getTextValue("display_name")));
                     c.setWaName(nullToEmpty(row.getTextValue("wa_name")));
