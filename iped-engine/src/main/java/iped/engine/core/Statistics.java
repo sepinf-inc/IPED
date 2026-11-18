@@ -10,6 +10,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JOptionPane;
@@ -34,6 +35,7 @@ import iped.engine.config.PluginConfig;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
 import iped.engine.task.ExportFileTask;
+import iped.engine.task.ParsingTask;
 import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
@@ -233,23 +235,73 @@ public class Statistics {
         int carvedIgnored = getCorruptCarveIgnored();
         int ignored = getIgnored();
 
+        // Processing times per task
         long totalTime = 0;
         Worker[] workers = manager.getWorkers();
         long[] taskTimes = new long[workers[0].tasks.size()];
         for (Worker worker : workers) {
             for (int i = 0; i < taskTimes.length; i++) {
-                taskTimes[i] += worker.tasks.get(i).getTaskTime();
-                totalTime += worker.tasks.get(i).getTaskTime();
+                long t = worker.tasks.get(i).getTaskTime();
+                taskTimes[i] += t;
+                totalTime += t;
             }
         }
         LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         totalTime = totalTime / (1000000 * localConfig.getNumThreads());
+        LOGGER.info("Processing Times per Task:");
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%-30s", "TASK"));
+        sb.append(String.format(" %7s", "TIME(s)"));
+        sb.append(String.format(" %6s", "PCT(%)"));
+        LOGGER.info(sb.toString());
+        sb.setLength(0);
+        sb.append(String.format("%-30s", "").replace(' ', '='));
+        sb.append(" ").append(String.format("%7s", "").replace(' ', '='));
+        sb.append(" ").append(String.format("%6s", "").replace(' ', '='));
+        LOGGER.info(sb.toString());
+        sb.setLength(0);
         for (int i = 0; i < taskTimes.length; i++) {
             long sec = taskTimes[i] / (1000000 * localConfig.getNumThreads());
-            LOGGER.info(workers[0].tasks.get(i).getName() + ":\tProcessing Time:\t" + sec + "s (" //$NON-NLS-1$ //$NON-NLS-2$
-                    + Math.round((100f * sec) / totalTime) + "%)"); //$NON-NLS-1$
+            sb.append(String.format("%-30s", workers[0].tasks.get(i).getName()));
+            sb.append(String.format(" %7d", sec));
+            sb.append(String.format(" %6d", Math.round((100f * sec) / totalTime)));
+            LOGGER.info(sb.toString());
+            sb.setLength(0);
         }
 
+        // Processing times per parser
+        TreeMap<String, Long> timesPerParser = new TreeMap<String, Long>();
+        ParsingTask.copyTimesPerParser(timesPerParser);
+        if (!timesPerParser.isEmpty()) {
+            totalTime = 0;
+            for (long parserTime : timesPerParser.values()) {
+                totalTime += parserTime;
+            }
+            if (totalTime < 1)
+                totalTime = 1;
+            sb = new StringBuilder();
+            LOGGER.info("Processing Times per Parser:");
+            sb.append(String.format("%-30s", "PARSER"));
+            sb.append(String.format(" %7s", "TIME(s)"));
+            sb.append(String.format(" %6s", "PCT(%)"));
+            LOGGER.info(sb.toString());
+            sb.setLength(0);
+            sb.append(String.format("%-30s", "").replace(' ', '='));
+            sb.append(" ").append(String.format("%7s", "").replace(' ', '='));
+            sb.append(" ").append(String.format("%6s", "").replace(' ', '='));
+            LOGGER.info(sb.toString());
+            sb.setLength(0);
+            for (String parserName : timesPerParser.keySet()) {
+                long time = timesPerParser.get(parserName);
+                long sec = time / (1000000 * workers.length);
+                sb.append(String.format("%-30s", parserName));
+                sb.append(String.format(" %7d", sec));
+                sb.append(String.format(" %6d", Math.round(100.0 * time / totalTime)));
+                LOGGER.info(sb.toString());
+                sb.setLength(0);
+            }
+        }
+        
         int numDocs;
         try (IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(indexDir))) {
             numDocs = reader.numDocs();

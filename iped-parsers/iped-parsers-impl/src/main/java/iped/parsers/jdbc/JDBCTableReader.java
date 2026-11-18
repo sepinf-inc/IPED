@@ -27,7 +27,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.text.html.HTMLEditorKit.Parser;
@@ -159,7 +159,7 @@ public class JDBCTableReader {
     }
 
     public List<String> getHeaders() throws IOException {
-        List<String> headers = new LinkedList<String>();
+        List<String> headers = new ArrayList<String>();
         // lazy initialization
         if (results == null) {
             results = getTableData();

@@ -3,7 +3,7 @@
 # Increases up to 3x the processing speed of compressed E01 images, APFS containers or images in network.
 robustImageReading = true
 
-# Number of auxiliary image reading processes. 'auto' uses 1/4 of the number of logical CPU cores.
+# Number of auxiliary image reading processes. 'auto' uses 1/6 (rounded up) of the number of logical CPU cores.
 # You can decrease the value if it uses too much RAM. Increasing the value is not efficient, because often
 # IO devices can not handle many reading requests simultaneously.
 numImageReaders = auto

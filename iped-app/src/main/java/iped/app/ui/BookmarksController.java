@@ -3,34 +3,36 @@ package iped.app.ui;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import iped.data.IMultiBookmarks;
 import iped.engine.data.Bookmarks;
 import iped.utils.LocalizedFormat;
+import iped.viewers.bookmarks.IBookmarksController;
 
-public class BookmarksController {
+public class BookmarksController implements IBookmarksController {
 
     public static final String HISTORY_DIV = Messages.getString("BookmarksController.HistoryDelimiter"); //$NON-NLS-1$
 
-    private static BookmarksController instance;
-
     private static JFileChooser fileChooser;
-    private static SearchStateFilter filter;
 
     private boolean multiSetting = false;
 
     private boolean updatingHistory = false;
 
     private BookmarksController() {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                fileChooser = new JFileChooser();
-                fileChooser.setCurrentDirectory(App.get().appCase.getCaseDir());
-                filter = new SearchStateFilter();
-            }
-        });
+    }
+
+    private static void setupFileChooser() {
+        if (fileChooser == null) {
+            fileChooser = new JFileChooser();
+            fileChooser.setCurrentDirectory(App.get().appCase.getCaseDir());
+            fileChooser.setFileFilter(new SearchStateFilter());
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        }
     }
 
     public boolean isUpdatingHistory() {
@@ -38,9 +40,13 @@ public class BookmarksController {
     }
 
     public static BookmarksController get() {
-        if (instance == null)
-            instance = new BookmarksController();
-        return instance;
+        IBookmarksController ibc = IBookmarksController.get();
+        if ((ibc == null) || !(ibc instanceof BookmarksController)) {
+            ibc = new BookmarksController();
+            IBookmarksController.registerBookmarksController(ibc);
+        }
+
+        return (BookmarksController) ibc;
     }
 
     public void setMultiSetting(boolean value) {
@@ -51,17 +57,27 @@ public class BookmarksController {
         return this.multiSetting;
     }
 
-    public void addToRecentSearches(String texto) {
+    public void addToRecentSearches(String text) {
 
-        if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty()
-                && !App.get().appCase.getMultiBookmarks().getTypedWords().contains(texto)
-                && !App.get().appCase.getKeywords().contains(texto)) {
+        if (!text.equals(HISTORY_DIV) && !text.trim().isEmpty() && !App.get().appCase.getKeywords().contains(text)) {
+            JComboBox<String> queryComboBox = App.get().queryComboBox;
+            IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
+            
+            if (multiBookmarks.getTypedWords().isEmpty()) {
+                queryComboBox.addItem(HISTORY_DIV);
+            }
+            multiBookmarks.addToTypedWords(text);
+            
+            // Remove if already present
+            queryComboBox.removeItem(text);
 
-            if (App.get().appCase.getMultiBookmarks().getTypedWords().size() == 0)
-                App.get().queryComboBox.addItem(HISTORY_DIV);
-
-            App.get().queryComboBox.addItem(texto);
-            App.get().appCase.getMultiBookmarks().addToTypedWords(texto);
+            // Insert at the top, right after HISTORY_DIV
+            for (int i = 0; i < queryComboBox.getItemCount(); i++) {
+                if (queryComboBox.getItemAt(i).equals(HISTORY_DIV)) {
+                    queryComboBox.insertItemAt(text, i + 1);
+                    break;
+                }
+            }
         }
     }
 
@@ -80,9 +96,8 @@ public class BookmarksController {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                App.get().checkBox.setText(
-                        LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalChecked()) + " / " //$NON-NLS-1$
-                                + LocalizedFormat.format(App.get().appCase.getTotalItems()));
+                App.get().checkBox.setText(LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalChecked()) + " / " //$NON-NLS-1$
+                        + LocalizedFormat.format(App.get().appCase.getTotalItems()));
                 App.get().checkBox.setSelected(App.get().appCase.getMultiBookmarks().getTotalChecked() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
                 App.get().repaintAllTableViews();
@@ -93,8 +108,7 @@ public class BookmarksController {
     }
 
     public void askAndLoadState() {
-        fileChooser.setFileFilter(filter);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        setupFileChooser();
         if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             try {
@@ -122,16 +136,16 @@ public class BookmarksController {
         if (App.get().appCase.getMultiBookmarks().getTypedWords().size() != 0)
             App.get().queryComboBox.addItem(HISTORY_DIV);
 
+        int insPos = App.get().queryComboBox.getItemCount(); 
         for (String text : App.get().appCase.getMultiBookmarks().getTypedWords()) {
-            App.get().queryComboBox.addItem(text);
+            App.get().queryComboBox.insertItemAt(text, insPos);
         }
         App.get().queryComboBox.setSelectedItem(prevText);
         updatingHistory = false;
     }
 
     public void askAndSaveState() {
-        fileChooser.setFileFilter(filter);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        setupFileChooser();
         if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             if (!file.getName().endsWith(Bookmarks.EXT))

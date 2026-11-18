@@ -26,7 +26,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -77,7 +77,7 @@ public class SQLite3DBParser extends AbstractDBParser {
         }
         TemporaryResources tmp = new TemporaryResources();
         try {
-            final File dbFile;
+            final File tempDB;
             File tikaFile = TikaInputStream.get(stream, tmp).getFile();
             if (!IOUtil.isTemporaryFile(tikaFile)) {
                 File tempFile = Files.createTempFile("sqlite_tmp", ".db").toFile();
@@ -85,19 +85,19 @@ public class SQLite3DBParser extends AbstractDBParser {
                     tempFile.delete();
                 });
                 IOUtil.copyFile(tikaFile, tempFile);
-                dbFile = tempFile;
+                tempDB = tempFile;
             } else {
-                dbFile = tikaFile;
+                tempDB = tikaFile;
             }
 
-            exportWalLog(dbFile, context, tmp);
-            exportRollbackJournal(dbFile, context, tmp);
+            exportWalLog(tempDB, context, tmp);
+            exportRollbackJournal(tempDB, context, tmp);
 
             SQLiteConfig config = new SQLiteConfig();
             // don't set this: see #1186
             // config.setReadOnly(true);
 
-            String connectionString = getConnectionString(dbFile);
+            String connectionString = getConnectionString(tempDB);
             connection = config.createConnection(connectionString);
 
             connection = new DelegatingConnection(connection) {
@@ -106,12 +106,13 @@ public class SQLite3DBParser extends AbstractDBParser {
                     super.close();
                     try {
                         tmp.close();
-                        String absPath = dbFile.getAbsolutePath();
+                        String absPath = tempDB.getAbsolutePath();
                         Files.deleteIfExists(Paths.get(absPath + "-wal"));
                         Files.deleteIfExists(Paths.get(absPath + "-shm"));
                         Files.deleteIfExists(Paths.get(absPath + "-journal"));
-                    } catch (IOException e) {
-                        throw new SQLException(e);
+                    } catch (Exception e) {
+                        // don't propagate temp files deleting errors
+                        e.printStackTrace();
                     }
                 }
             };
@@ -122,11 +123,11 @@ public class SQLite3DBParser extends AbstractDBParser {
         return connection;
     }
 
-    public static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
+    private static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
         return exportRelatedFile(dbFile, "-wal", context, tmp);
     }
     
-    public static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
+    private static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
         return exportRelatedFile(dbFile, "-journal", context, tmp);
     }
     
@@ -136,33 +137,30 @@ public class SQLite3DBParser extends AbstractDBParser {
             IItemReader parsingItem = context.get(IItemReader.class);
             if (parsingItem != null) {
                 String parsingFilePath = parsingItem.getPath();
+                String relatedFileName = parsingItem.getName() + suffix;
                 String relatedFileQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parsingFilePath + suffix) + "\"";
                 List<IItemReader> items = searcher.search(relatedFileQuery);
                 if (items.size() > 0) {
                     IItemReader relatedItem = null;
-                    // pick the journal/wal with same deleted status
-                    for (IItemReader i : items) {
-                        if (i.isDeleted() == parsingItem.isDeleted()) {
-                            relatedItem = i;
-                            break;
+                    // Pick the journal/wal, prioritizing the same deleted status.
+                    for (IItemReader item : items) {
+                        if (item.isDir() || !relatedFileName.equalsIgnoreCase(item.getName())) {
+                            // Ignore folders or items with name that doesn't match SQLite name (see #1791)
+                            continue;
+                        }
+                        if (relatedItem == null || item.isDeleted() == parsingItem.isDeleted()) {
+                            relatedItem = item;
                         }
                     }
-                    // fallback to first item found
-                    if (relatedItem == null) {
-                        relatedItem = items.get(0);
+                    if (relatedItem != null) {
+                        File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
+                        try (InputStream in = relatedItem.getBufferedInputStream()) {
+                            Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        return relatedFileTemp;
                     }
-                    File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
-                    try (InputStream in = relatedItem.getBufferedInputStream()) {
-                        Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    if (null != tmp) {
-                        tmp.addResource(()-> {
-                            relatedFileTemp.delete();
-                        });
-                    }
-                    return relatedFileTemp;
                 }
             }
         }
@@ -187,7 +185,7 @@ public class SQLite3DBParser extends AbstractDBParser {
     @Override
     protected List<String> getTableNames(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<String> tableNames = new LinkedList<String>();
+        List<String> tableNames = new ArrayList<String>();
 
         Statement st = null;
         try {

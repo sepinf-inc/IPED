@@ -13,23 +13,22 @@ import iped.engine.util.Util;
 
 public abstract class ThumbTask extends AbstractTask {
 
-    public static final String thumbsFolder = "thumbs"; //$NON-NLS-1$
-    public static final String HAS_THUMB = "hasThumb"; //$NON-NLS-1$
+    public static final String THUMBS_FOLDER_NAME = "thumbs";
+    public static final String HAS_THUMB = "hasThumb";
+
+    public static final String THUMB_EXT = "jpg";
 
     private static final String SELECT_THUMB = "SELECT thumb FROM thumbs WHERE id=?;"; //$NON-NLS-1$
     private static final String INSERT_THUMB = "INSERT INTO thumbs(id, thumb) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET thumb=? WHERE thumb IS NULL;"; //$NON-NLS-1$
 
     protected File getThumbFile(IItem evidence) throws Exception {
-        File thumbFile = null;
-
-        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
-                .findObject(HtmlReportTaskConfig.class);
-        boolean storeThumbsInDb = !caseData.containsReport() || !htmlReportConfig.isEnabled();
-        if (storeThumbsInDb) {
-            return null;
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get().findObject(HtmlReportTaskConfig.class);
+        boolean storeThumbsInDisk = caseData.containsReport() && htmlReportConfig.isEnabled();
+        if (storeThumbsInDisk) {
+            File reportSubFolder = HTMLReportTask.getReportSubFolder();
+            return Util.getFileFromHash(new File(reportSubFolder, THUMBS_FOLDER_NAME), evidence.getHash(), THUMB_EXT);
         }
-        thumbFile = Util.getFileFromHash(new File(output, thumbsFolder), evidence.getHash(), "jpg"); //$NON-NLS-1$
-        return thumbFile;
+        return null; // it will be stored in DB
     }
 
     protected boolean hasThumb(IItem evidence, File thumbFile) throws Exception {
@@ -45,11 +44,7 @@ public abstract class ThumbTask extends AbstractTask {
                     byte[] thumb = rs.getBytes(1);
                     if (thumb != null) {
                         evidence.setThumb(thumb);
-                        if (thumb.length > 0) {
-                            evidence.setExtraAttribute(HAS_THUMB, true);
-                        } else {
-                            evidence.setExtraAttribute(HAS_THUMB, false);
-                        }
+                        evidence.setExtraAttribute(HAS_THUMB, thumb.length > 0);
                         rs.close();
                         ps.close();
                         return true;
@@ -62,11 +57,7 @@ public abstract class ThumbTask extends AbstractTask {
             // if exists, do not need to compute again
             if (thumbFile.exists()) {
                 evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
-                if (thumbFile.length() != 0) {
-                    evidence.setExtraAttribute(HAS_THUMB, true);
-                } else {
-                    evidence.setExtraAttribute(HAS_THUMB, false);
-                }
+                evidence.setExtraAttribute(HAS_THUMB, thumbFile.length() != 0);
                 return true;
             }
         }
@@ -92,7 +83,7 @@ public abstract class ThumbTask extends AbstractTask {
                 if (!thumbFile.getParentFile().exists()) {
                     thumbFile.getParentFile().mkdirs();
                 }
-                tmp = File.createTempFile("iped", ".tmp", new File(output, thumbsFolder)); //$NON-NLS-1$ //$NON-NLS-2$
+                tmp = File.createTempFile("thumb", ".tmp", thumbFile.getParentFile());
                 Files.write(tmp.toPath(), evidence.getThumb());
             }
 
@@ -110,11 +101,8 @@ public abstract class ThumbTask extends AbstractTask {
     }
 
     protected boolean updateHasThumb(IItem evidence) {
-        if (evidence.getThumb() != null && evidence.getThumb().length > 0) {
-            evidence.setExtraAttribute(HAS_THUMB, true);
-            return true;
-        } 
-        evidence.setExtraAttribute(HAS_THUMB, false);
-        return false;
+        boolean hasThumb = evidence.getThumb() != null && evidence.getThumb().length > 0;
+        evidence.setExtraAttribute(HAS_THUMB, hasThumb);
+        return hasThumb;
     }
 }

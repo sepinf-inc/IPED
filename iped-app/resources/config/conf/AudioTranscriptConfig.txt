@@ -9,14 +9,23 @@
 # you should download it from https://alphacephei.com/vosk/models and put in 'models/vosk/[lang]' folder.
 implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 
-# Uses a local/remote wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
-# The local impl is AT LEAST 1 order of magnitude slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
-# The remote impl is useful if you have a central server/cluster with many GPUs to be shared among processing nodes.
-# For both the local or remote options, please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
-# If you use the local implementation, you must set 'huggingFaceModel' param below.
-# If you use the remote implementation, you must set 'wav2vec2Service' param below.
+# Uses a local wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
+# This is up to 10x slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
+# Please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
+# If you enable this, you must set 'huggingFaceModel' param below.
 #implementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
-#implementationClass = iped.engine.task.transcript.RemoteWav2Vec2TranscriptTask
+
+# Uses a local Whisper implementation for transcription. Accuracy is better than wav2vec2 depending on the model.
+# This is up to 4x slower than wav2vec2 depending on compared models. Using a high end GPU is strongly recommended!
+# Please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#whisper
+# If you enable this, you must set 'whisperModel' param below.
+#implementationClass = iped.engine.task.transcript.WhisperTranscriptTask
+
+# Uses a remote service for transcription.
+# The remote service is useful if you have a central server/cluster with many GPUs to be shared among processing nodes.
+# Please check steps on https://github.com/sepinf-inc/IPED/wiki/User-Manual#remote-transcription
+# If you enable this, you must set 'remoteServiceAddress' param below.
+#implementationClass = iped.engine.task.transcript.RemoteTranscriptionTask
 
 # If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
 # You MUST include Microsoft client-sdk.jar into plugins folder.
@@ -42,10 +51,10 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 language = auto
 
 # Command to convert audios to wav before transcription. Do not change $INPUT or $OUTPUT params.
-convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le,channels=1 -ao pcm:fast:file=$OUTPUT $INPUT
+convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le,resample=16000,channels=1 -ao pcm:fast:file=$OUTPUT $INPUT
 
 # Mime types or supertypes to process. If you want to add videos use ; as separator and update 'convertCommand'.
-mimesToProcess = audio/3gpp; audio/3gpp2; audio/vnd.3gpp.iufp; audio/x-aac; audio/x-aiff; audio/amr; audio/amr-wb; audio/amr-wb+; audio/mp4; audio/ogg; audio/vorbis; audio/x-oggflac; audio/x-oggpcm; audio/opus; audio/speex; audio/qcelp; audio/vnd.wave; audio/x-caf; audio/x-ms-wma; audio/x-opus+ogg
+mimesToProcess = audio/3gpp; audio/3gpp2; audio/vnd.3gpp.iufp; audio/x-aac; audio/x-aiff; audio/amr; audio/amr-wb; audio/amr-wb+; audio/mp4; audio/ogg; audio/vorbis; audio/x-oggflac; audio/x-oggpcm; audio/opus; audio/speex; audio/qcelp; audio/vnd.wave; audio/x-caf; audio/x-ms-wma; audio/x-opus+ogg; audio/ilbc
 
 # Skip known audios found in the hash lookup database.
 skipKnownFiles = true
@@ -91,11 +100,36 @@ minWordScore = 0.5
 # huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-french
 
 #########################################
-# RemoteWav2Vec2TranscriptTask options
+# Local WhisperTranscriptTask options
 #########################################
 
-# IP:PORT of the service/central node used by the RemoteWav2Vec2TranscriptTask implementation.
-# wav2vec2Service = 127.0.0.1:11111
+# Possible values: tiny, base, small, medium, large-v3, dwhoelz/whisper-large-pt-cv11-ct2
+# large-v3 is much better than medium, but 2x slower and uses 2x more memory.
+# If you know the language you want to transcribe, please set the 'language' option above.
+# 'language = auto' uses the 'locale' set on LocalConfig.txt
+# 'language = detect' uses auto detection, but it can cause mistakes
+whisperModel = medium
+
+# Which device to use: 'cpu' or 'gpu'. For 'gpu', please see the official faster-whisper documentation
+# for the installation requirements: https://github.com/SYSTRAN/faster-whisper?tab=readme-ov-file#gpu  
+device = cpu
+
+# Compute type precision. This affects accuracy, speed and memory usage.
+# Possible values: float32 (better), float16 (recommended for GPU), int8 (faster)
+precision = int8
+
+# Batch size (number of parallel transcriptions). If you have a GPU with enough memory,
+# increasing this value to e.g. 16 can speed up transcribing long audios up to 10x.
+# Test what is the better value for your GPU before hitting OOM.
+# This works just if you are using whisperx library instead of faster_whisper
+batchSize = 1
+
+#########################################
+# RemoteTranscriptionTask options
+#########################################
+
+# IP:PORT of the service/central node used by the RemoteTranscriptionTask implementation.
+# remoteServiceAddress = 127.0.0.1:11111
 
 #########################################
 # MicrosoftTranscriptTask options

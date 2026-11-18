@@ -4,23 +4,24 @@ import iped.utils.UTF8Properties;
 
 public class PhotoDNALookupConfig extends AbstractTaskPropertiesConfig {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
-    public static final String CONFIG_FILE = "PhotoDNALookupConfig.txt";
+    private static final String CONFIG_FILE = "PhotoDNALookupConfig.txt";
 
-    public static final String ENABLE_PHOTO_DNA = "enablePhotoDNALookup";
+    private static final String ENABLE_PHOTO_DNA = "enablePhotoDNALookup";
 
-    public static final String STATUS_HASH_DB_FILTER = "statusHashDBFilter";
+    private static final String STATUS_HASH_DB_FILTER = "statusHashDBFilter";
 
-    public static final String MAX_SIMILARITY_DISTANCE = "maxSimilarityDistance";
+    private static final String MAX_SIMILARITY_DISTANCE = "maxSimilarityDistance";
 
-    public static final String TEST_ROTATED_FLIPPED = "searchRotatedAndFlipped";
+    private static final String TEST_ROTATED_FLIPPED = "searchRotatedAndFlipped";
 
+    private static final String MIN_ENTROPY = "minEntropy";
+    
     private int maxDistance = 40000;
 
+    private double minEntropy = 0.7;
+    
     private boolean rotateAndFlip = true;
 
     private String statusHashDBFilter = "";
@@ -35,6 +36,10 @@ public class PhotoDNALookupConfig extends AbstractTaskPropertiesConfig {
 
     public String getStatusHashDBFilter() {
         return statusHashDBFilter;
+    }
+
+    public double getMinEntropy() {
+        return minEntropy;
     }
 
     @Override
@@ -62,6 +67,8 @@ public class PhotoDNALookupConfig extends AbstractTaskPropertiesConfig {
         if (value != null && !value.trim().isEmpty())
             rotateAndFlip = Boolean.valueOf(value.trim());
 
+        value = properties.getProperty(MIN_ENTROPY);
+        if (value != null && !value.trim().isEmpty())
+            minEntropy = Double.parseDouble(value.trim());
     }
-
 }

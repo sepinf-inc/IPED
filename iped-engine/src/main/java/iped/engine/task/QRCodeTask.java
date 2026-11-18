@@ -27,7 +27,7 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
-import iped.engine.task.die.DIETask;
+import iped.parsers.util.MetadataUtil;
 
 public class QRCodeTask extends AbstractTask {
 
@@ -121,7 +121,7 @@ public class QRCodeTask extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
         if (!taskEnabled || !evidence.isToAddToCase() || evidence.getHash() == null
-                || !DIETask.isImageType(evidence.getMediaType())) {
+                || !MetadataUtil.isImageType(evidence.getMediaType())) {
             return;
         }
         BufferedImage img = null;

@@ -19,134 +19,45 @@
 package iped.app.ui;
 
 import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
-import iped.engine.search.IPEDSearcher;
-import iped.engine.search.LuceneSearchResult;
-import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
-import iped.search.IIPEDSearcher;
-import iped.search.IMultiSearchResult;
 
-public class DuplicatesTableModel extends AbstractTableModel
-        implements MouseListener, ListSelectionListener, SearchResultTableModel {
+public class DuplicatesTableModel extends BaseTableModel {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
 
-    LuceneSearchResult results = new LuceneSearchResult(0);
-    int selectedIndex = -1;
-
-    @Override
-    public int getColumnCount() {
-        return 3;
-    }
-
-    @Override
-    public int getRowCount() {
-        return results.getLength();
-    }
-
-    @Override
-    public String getColumnName(int col) {
-        if (col == 2)
-            return IndexItem.PATH;
-
-        return ""; //$NON-NLS-1$
-    }
-
-    @Override
-    public boolean isCellEditable(int row, int col) {
-        if (col == 1) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public Class<?> getColumnClass(int c) {
-        if (c == 1) {
-            return Boolean.class;
-        } else {
-            return String.class;
-        }
-    }
-
-    @Override
-    public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
-                App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        BookmarksController.get().updateUISelection();
+    public DuplicatesTableModel() {
+        sortResultsBy = BasicProps.PATH;
     }
 
     @Override
     public Object getValueAt(int row, int col) {
-        if (col == 0) {
-            return row + 1;
-
-        } else if (col == 1) {
-            return App.get().appCase.getMultiBookmarks()
-                    .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
-
-        } else {
+        if (col == 3) {
             try {
                 Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
                 return doc.get(IndexItem.PATH);
-
             } catch (Exception e) {
-                // e.printStackTrace();
             }
-            return ""; //$NON-NLS-1$
+            return "";
         }
+        return super.getValueAt(row, col);
     }
 
     @Override
-    public void mouseClicked(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mousePressed(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent evt) {
-        if (evt.getClickCount() == 2 && selectedIndex != -1) {
-            int docId = results.getLuceneIds()[selectedIndex];
-            ExternalFileOpen.open(docId);
-        }
-    }
-
-    @Override
-    public void valueChanged(ListSelectionEvent evt) {
-        ListSelectionModel lsm = (ListSelectionModel) evt.getSource();
-
-        if (lsm.getMinSelectionIndex() == -1 || selectedIndex == lsm.getMinSelectionIndex()) {
-            selectedIndex = lsm.getMinSelectionIndex();
-            return;
-        }
-
-        selectedIndex = lsm.getMinSelectionIndex();
+    public void valueChanged(ListSelectionModel lsm) {
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
         FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
@@ -155,48 +66,28 @@ public class DuplicatesTableModel extends AbstractTableModel
         App.get().parentItemModel.fireTableDataChanged();
     }
 
-    public void listDuplicates(Document doc) {
+    @Override
+    public void onListItemsResultsComplete() {
+        App.get().duplicateDock.setTitleText(results.getLength() + Messages.getString("DuplicatesTableModel.Duplicates"));
+    }
 
+    @Override
+    public Query createQuery(Document doc) {
         String hash = doc.get(IndexItem.HASH);
-        if (hash == null || hash.trim().isEmpty())
-            return;
-
-        String textQuery = IndexItem.HASH + ":" + hash;
+        if (StringUtils.isBlank(hash)) {
+            return null;
+        }
 
         String id = doc.get(IndexItem.ID);
         String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
 
-        textQuery += " && NOT (" + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$
-        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+        queryBuilder.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.MUST);
+        queryBuilder.add(new BooleanClause(new BooleanQuery.Builder()
+                .add(IntPoint.newExactQuery(IndexItem.ID, Integer.parseInt(id)), Occur.MUST)
+                .add(new TermQuery(new Term(IndexItem.EVIDENCE_UUID, sourceUUID)), Occur.MUST)
+                .build(), Occur.MUST_NOT));
 
-        try {
-            IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.PATH);
-            results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-
-            final int duplicates = results.getLength();
-
-            if (duplicates > 0) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        App.get().duplicateDock
-                                .setTitleText(duplicates + Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
-                    }
-                });
-            }
-
-        } catch (Exception e) {
-            results = new LuceneSearchResult(0);
-            e.printStackTrace();
-        }
-
-        fireTableDataChanged();
-
+        return queryBuilder.build();
     }
-
-    @Override
-    public IMultiSearchResult getSearchResult() {
-        return MultiSearchResult.get(App.get().appCase, results);
-    }
-
 }

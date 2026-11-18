@@ -88,13 +88,14 @@ public class DocThumbTask extends ThumbTask {
             if (!init.get()) {
                 docThumbsConfig = configurationManager.findObject(DocThumbTaskConfig.class);
                 if (docThumbsConfig.isEnabled()) {
+                    checkDependency(HashTask.class);
                     logger.info("Thumb Size: " + docThumbsConfig.getThumbSize());
                     logger.info("LibreOffice Conversion: " + (docThumbsConfig.isLoEnabled() ? "enabled" : "disabled"));
                     if (docThumbsConfig.isLoEnabled()) {
                         URL url = URLUtil.getURL(this.getClass());
                         File jarDir = new File(url.toURI()).getParentFile();
                         LibreOfficeFinder loFinder = new LibreOfficeFinder(jarDir);
-                        loPath = loFinder.getLOPath();
+                        loPath = loFinder.getLOPath(true);
                         logger.info("LibreOffice Path: " + loPath);
                     }
 

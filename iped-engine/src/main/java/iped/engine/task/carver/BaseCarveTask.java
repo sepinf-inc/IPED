@@ -166,7 +166,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         // optimization to not create more temp files
         if (parentItem.hasTmpFile()) {
             try {
-                carvedItem.setParentTmpFile(parentItem.getTempFile());
+                carvedItem.setParentTmpFile(parentItem.getTempFile(), (Item) parentItem);
                 carvedItem.setParentOffset(offset);
             } catch (IOException e) {
                 // ignore

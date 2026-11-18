@@ -8,21 +8,30 @@ import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import iped.data.IItemId;
+import iped.engine.data.ItemIdSet;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.search.MultiSearchResult;
 import iped.engine.util.Util;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;
 
 public class KeywordListImporter extends CancelableWorker {
 
+    private static String PREFIX = Messages.getString("KeywordListImporter.BookmarkPrefix");
+
     ProgressDialog progress;
     ArrayList<String> keywords, result = new ArrayList<String>(), errors = new ArrayList<String>();
+    boolean addBookMarkList = false;
+    boolean addBookMarkWords = false;
+    String fileName = "";
 
-    public KeywordListImporter(File file) {
-
+    public KeywordListImporter(File file, boolean addBookMarkList, boolean addBookMarkWords) {
+        this.addBookMarkList = addBookMarkList;
+        this.addBookMarkWords = addBookMarkWords;
         try {
             keywords = Util.loadKeywords(file.getAbsolutePath(), Charset.defaultCharset().displayName());
-
+            fileName = file.getName().trim();
             progress = new ProgressDialog(App.get(), this, false);
             progress.setMaximum(keywords.size());
 
@@ -34,6 +43,8 @@ public class KeywordListImporter extends CancelableWorker {
     @Override
     protected Object doInBackground() {
 
+        String singleBookmarkName = PREFIX + " " + fileName;
+
         int i = 0;
         for (String keyword : keywords) {
             if (this.isCancelled()) {
@@ -42,9 +53,33 @@ public class KeywordListImporter extends CancelableWorker {
 
             try {
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, keyword);
-                if (task.multiSearch().getLength() > 0) {
+                MultiSearchResult searchResults = task.multiSearch();
+                if (searchResults.getLength() > 0) {
                     result.add(keyword);
+
+                    if (addBookMarkList || addBookMarkWords) {
+
+                        ItemIdSet uniqueSelectedIds = new ItemIdSet();
+
+                        for (IItemId item : searchResults.getIterator()) {
+                            uniqueSelectedIds.add(item);
+                        }
+
+                        if (addBookMarkList) {
+                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, singleBookmarkName);
+                        }
+                        if (addBookMarkWords) {
+                            String bookmarkName = PREFIX + " " + keyword;
+                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, bookmarkName);
+                            App.get().appCase.getMultiBookmarks().setBookmarkComment(bookmarkName, bookmarkName);
+                        }
+                        uniqueSelectedIds.clear();
+                        uniqueSelectedIds = null;
+                    }
+
                 }
+                searchResults = null;
+                task = null;
 
                 final int j = ++i;
                 SwingUtilities.invokeLater(new Runnable() {
@@ -60,6 +95,10 @@ public class KeywordListImporter extends CancelableWorker {
 
         }
 
+        if (addBookMarkList && !result.isEmpty()) {
+            App.get().appCase.getMultiBookmarks().setBookmarkComment(singleBookmarkName, PREFIX + " " + result.toString());
+        }
+
         return null;
     }
 
@@ -73,7 +112,8 @@ public class KeywordListImporter extends CancelableWorker {
 
         App.get().appCase.getMultiBookmarks().saveState();
 
-        BookmarksController.get().updateUIHistory();
+        BookmarksController.get().updateUIandHistory();
+        BookmarksManager.get().updateList();
 
         if (errors.size() > 0) {
             StringBuilder errorTerms = new StringBuilder();

@@ -1,6 +1,7 @@
 package iped.engine.task;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +24,7 @@ import iped.engine.config.SignatureConfig;
 import iped.io.SeekableInputStream;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
+import iped.utils.SimpleInputStreamFactory;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.
@@ -67,6 +69,9 @@ public class SignatureTask extends AbstractTask {
                     TikaInputStream tis = null;
                     try {
                         tis = evidence.getTikaStream();
+                        // See https://github.com/sepinf-inc/IPED/issues/2356
+                        setInputStreamFactory(tis, evidence);
+
                         type = getDetector().detect(tis, metadata).getBaseType();
 
                     } catch (IOException e) {
@@ -88,10 +93,12 @@ public class SignatureTask extends AbstractTask {
                     }
                 }
 
+                String ext = evidence.getExt() != null ? evidence.getExt().toLowerCase() : "";
+
                 // Caso seja item office07 cifrado e tenha extensão específica, refina o tipo
                 if (type != null && type.toString().equals("application/x-tika-ooxml-protected") //$NON-NLS-1$
-                        && "docx xlsx pptx".contains(evidence.getExt().toLowerCase())) { //$NON-NLS-1$
-                    type = MediaType.application("x-tika-ooxml-protected-" + evidence.getExt().toLowerCase()); //$NON-NLS-1$
+                        && (ext.equals("docx") || ext.equals("xlsx") || ext.equals("pptx"))) { //$NON-NLS-1$
+                    type = MediaType.application("x-tika-ooxml-protected-" + ext); //$NON-NLS-1$
                 }
 
                 if (type == null) {
@@ -118,6 +125,16 @@ public class SignatureTask extends AbstractTask {
             }
         }
         evidence.setMediaType(MediaTypes.getMediaTypeRegistry().normalize(type));
+    }
+
+    private void setInputStreamFactory(TikaInputStream tis, IItem item) {
+        tis.setOpenContainer(new SimpleInputStreamFactory() {
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return item.getSeekableInputStream();
+            }
+        });
+
     }
 
     private boolean hasVHDFooter(IItem item) {

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,11 +18,11 @@ import iped.engine.config.LocalConfig;
 import iped.engine.data.CaseData;
 import iped.engine.data.IPEDSource;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.task.index.IndexItem.KnnVector;
 import iped.parsers.python.PythonParser;
 import iped.utils.ImageUtil;
 import jep.Jep;
 import jep.JepException;
-import jep.NDArray;
 
 public class PythonTask extends AbstractTask {
 
@@ -36,9 +37,8 @@ public class PythonTask extends AbstractTask {
     private static volatile int numInstances = 0;
 
     private Map<Long, Boolean> scriptLoaded = new ConcurrentHashMap<>();
-    private Map<Long, String> instanceName = new ConcurrentHashMap<>();
 
-    private ArrayList<String> globals = new ArrayList<>();
+    private List<String> globals = Collections.synchronizedList(new ArrayList<>());
     private File scriptFile;
     private String moduleName;
     private Boolean processQueueEnd;
@@ -58,37 +58,9 @@ public class PythonTask extends AbstractTask {
         super.caseData = caseData;
     }
 
-    private class ArrayConverter {
-        public NDArray<?> getNDArray(byte[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(int[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(long[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(float[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(double[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(boolean[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(short[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(char[] array) {
-            return new NDArray(array);
+    public class Converter {
+        public KnnVector toKnnVector(double[] array) {
+            return new KnnVector(array);
         }
     }
 
@@ -107,13 +79,13 @@ public class PythonTask extends AbstractTask {
     }
 
     private void setGlobalVars(Jep jep) throws JepException {
-        setGlobalVar(jep, "caseData", this.caseData); //$NON-NLS-1$
-        setGlobalVar(jep, "moduleDir", this.output); //$NON-NLS-1$
-        setGlobalVar(jep, "worker", this.worker); //$NON-NLS-1$
-        setGlobalVar(jep, "stats", this.stats); //$NON-NLS-1$
-        setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
-        setGlobalVar(jep, "javaArray", new ArrayConverter()); //$NON-NLS-1$
-        setGlobalVar(jep, "ImageUtil", new ImageUtil()); //$NON-NLS-1$
+        setGlobalVar(jep, "caseData", this.caseData);
+        setGlobalVar(jep, "moduleDir", this.output);
+        setGlobalVar(jep, "worker", this.worker);
+        setGlobalVar(jep, "stats", this.stats);
+        setGlobalVar(jep, "logger", LOGGER);
+        setGlobalVar(jep, "javaConverter", new Converter());
+        setGlobalVar(jep, "ImageUtil", new ImageUtil());
 
         LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         setGlobalVar(jep, "numThreads", Integer.valueOf(localConfig.getNumThreads()));
@@ -145,25 +117,38 @@ public class PythonTask extends AbstractTask {
 
         jep.eval("import " + moduleName);
 
-        long threadId = Thread.currentThread().getId();
-        String instanceName = className.toLowerCase() + "_thread_" + threadId;
-        jep.eval(instanceName + " = " + moduleName + "." + className + "()");
-        this.instanceName.put(threadId, instanceName);
+        // imports the script responsible for holding the instances per worker globally
+        jep.eval("from PythonTaskInstancesHolder import PythonTaskInstancesHolder");
+        jep.eval("PythonTaskInstancesHolder = PythonTaskInstancesHolder()");
 
-        for (String global : globals) {
-            jep.eval(moduleName + "." + global + " = " + global);
+        // sets logger object
+        jep.eval("PythonTaskInstancesHolder.logger = logger");
+
+        int workerId = 0;
+        if(this.worker!=null)
+            workerId = worker.id;
+
+        for (String global : globals.toArray(new String[0])) {
+            if (StringUtils.equals(global, "worker")) { // worker have to be defined in python module instance (see issue #2598)
+                //seta uma variavel local no modulo, que deve ser chamada com o self. (ex. self.worker)
+                jep.eval("PythonTaskInstancesHolder.getInstance(" + workerId + ", '" + moduleName + "')."  + global + " = " + global);
+            } else {
+                //seta uma variavel global no modulo
+                jep.eval(moduleName + "." + global + " = " + global);
+            }
         }
-
-        String taskInstancePerThread = moduleName + "_javaTaskPerThread";
-        jep.set(taskInstancePerThread, new TaskInstancePerThread(moduleName, this));
-        jep.eval(moduleName + ".javaTask" + " = " + taskInstancePerThread);
+        
+        // sets one PythonTask per worker per script
+        String taskInstancePerWorker = moduleName + "_javaTaskPerWorker_" + workerId;
+        jep.set(taskInstancePerWorker, this);
+        jep.eval("PythonTaskInstancesHolder.getInstance(" + workerId + ", '" + moduleName + "').javaTask" + " = " + taskInstancePerWorker);
 
         if (init) {
-            jep.invoke(getInstanceMethod("init"), ConfigurationManager.get());
+            callPythonModuleFunction(jep, "init", ConfigurationManager.get());
         }
 
         try {
-            isEnabled = (Boolean) jep.invoke(getInstanceMethod("isEnabled"));
+            isEnabled = (Boolean) callPythonModuleFunction(jep, "isEnabled");
 
         } catch (JepException e) {
             if (e.toString().contains(" has no attribute ")) {
@@ -172,26 +157,6 @@ public class PythonTask extends AbstractTask {
                 throw e;
             }
         }
-    }
-
-    public static class TaskInstancePerThread {
-
-        private static Map<String, PythonTask> map = new ConcurrentHashMap<>();
-        private String moduleName;
-
-        private TaskInstancePerThread(String moduleName, PythonTask task) {
-            this.moduleName = moduleName;
-            map.put(moduleName + Thread.currentThread().getId(), task);
-        }
-
-        public PythonTask get() {
-            return map.get(moduleName + Thread.currentThread().getId());
-        }
-
-    }
-
-    private String getInstanceMethod(String function) {
-        return this.instanceName.get(Thread.currentThread().getId()) + "." + function;
     }
 
     @Override
@@ -205,7 +170,10 @@ public class PythonTask extends AbstractTask {
             Jep j = getJep(false);
             List<Configurable<?>> configs = null;
             if (j != null) {
-                configs = (List<Configurable<?>>) j.invoke(getInstanceMethod("getConfigurables"));
+                int workerId = 0;
+                if(this.worker!=null)
+                    workerId = this.worker.id;
+                configs = (List<Configurable<?>>) callPythonModuleFunction(j, "getConfigurables");
             }
             return configs != null ? configs : Collections.emptyList();
 
@@ -254,7 +222,7 @@ public class PythonTask extends AbstractTask {
             setModuleVar(getJep(), moduleName, "ipedCase", ipedCase); //$NON-NLS-1$
             setModuleVar(getJep(), moduleName, "searcher", searcher); //$NON-NLS-1$
 
-            getJep().invoke(getInstanceMethod("finish")); //$NON-NLS-1$
+            callPythonModuleFunction(getJep(), "finish");
         }
 
         if (--numInstances == 0) {
@@ -279,7 +247,8 @@ public class PythonTask extends AbstractTask {
             return;
         }
         try {
-            getJep().invoke(getInstanceMethod("sendToNextTask"), item); //$NON-NLS-1$
+            // Pass itself as a parameter to call the sendToNextTaskSuper in the correct instance (see issue #2598)
+            callPythonModuleFunction(getJep(), "sendToNextTask", item);
             
         }catch(JepException e) {
             if (e.toString().contains(" has no attribute 'sendToNextTask'")) {
@@ -300,7 +269,7 @@ public class PythonTask extends AbstractTask {
     protected boolean processQueueEnd() {
         if (processQueueEnd == null) {
             try {
-                processQueueEnd = (Boolean) getJep().invoke(getInstanceMethod("processQueueEnd")); //$NON-NLS-1$
+                processQueueEnd = (Boolean) callPythonModuleFunction(getJep(), "processQueueEnd");
             } catch (JepException e) {
                 processQueueEnd = false;
             }
@@ -312,7 +281,7 @@ public class PythonTask extends AbstractTask {
     public void process(IItem item) throws Exception {
 
         try {
-            getJep().invoke(getInstanceMethod("process"), item); //$NON-NLS-1$
+            callPythonModuleFunction(getJep(), "process", item);
 
         } catch (JepException e) {
             LOGGER.warn("Exception from " + getName() + " on " + item.getPath() + ": " + e.toString(), e);
@@ -320,6 +289,21 @@ public class PythonTask extends AbstractTask {
                 throw e;
             }
         }
+    }
+
+    // This method is used to call a method in the script instance using the  
+    // PythonTaskInstancesHolder utility script to call the correct instance
+    private Object callPythonModuleFunction(Jep jep, String strFunctionName, Object... args) throws JepException {
+        int workerId = 0;
+        if(this.worker!=null)
+            workerId = this.worker.id;
+            
+        if(args!=null && args.length == 1)
+            return jep.invoke("PythonTaskInstancesHolder.callFunction", workerId, this.moduleName, strFunctionName, args[0]);
+        else if(args!=null && args.length == 2)
+            return jep.invoke("PythonTaskInstancesHolder.callFunction", workerId, this.moduleName, strFunctionName, args[0], args[1]);
+        
+        return jep.invoke("PythonTaskInstancesHolder.callFunction", workerId, this.moduleName, strFunctionName);
     }
 
 }

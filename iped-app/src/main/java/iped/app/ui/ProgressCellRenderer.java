@@ -27,13 +27,13 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.table.TableCellRenderer;
 
-class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
+public class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
 
     private static final long serialVersionUID = 1L;
 
     private Color alternateColor, backgroundColor;
 
-    ProgressCellRenderer() {
+    public ProgressCellRenderer() {
         super(SwingConstants.HORIZONTAL);
         setBorderPainted(false);
         setMaximum(100);
@@ -42,8 +42,7 @@ class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int row, int col) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
         int i = (int) Math.floor((Float) value);
         if (i == 1000) {
             setString("REF");

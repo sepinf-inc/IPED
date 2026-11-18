@@ -19,7 +19,7 @@ public class ConfiguredFSDirectory {
         IndexTaskConfig config = ConfigurationManager.get().findObject(IndexTaskConfig.class);
 
         FSDirectory result;
-        if (config.isUseNIOFSDirectory()) {
+        if (config != null && config.isUseNIOFSDirectory()) {
             result = new NIOFSDirectory(indexDir.toPath());
         } else {
             result = FSDirectory.open(indexDir.toPath());

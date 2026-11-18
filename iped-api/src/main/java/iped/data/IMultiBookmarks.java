@@ -5,6 +5,7 @@
  */
 package iped.data;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -24,7 +25,10 @@ import iped.search.IMultiSearchResult;
  */
 public interface IMultiBookmarks extends Serializable {
 
+    @Deprecated
     void addBookmark(List<IItemId> ids, String bookmarkName);
+
+    void addBookmark(Set<IItemId> uniqueSelectedIds, String bookmarkName);
 
     void addToTypedWords(String texto);
 
@@ -68,7 +72,10 @@ public interface IMultiBookmarks extends Serializable {
 
     void newBookmark(String bookmarkName);
 
+    @Deprecated
     void removeBookmark(List<IItemId> ids, String bookmarkName);
+
+    void removeBookmark(Set<IItemId> uniqueSelectedIds, String bookmarkName);
 
     void saveState();
 
@@ -80,6 +87,8 @@ public interface IMultiBookmarks extends Serializable {
 
     KeyStroke getBookmarkKeyStroke(String bookmarkName);
     
+    void removeBookmarkKeyStroke(String bookmarkName);
+    
     void checkAll();
 
     void setChecked(boolean value, IItemId item);
@@ -89,6 +98,12 @@ public interface IMultiBookmarks extends Serializable {
     public int getBookmarkCount(String bookmarkName);
 
     void setBookmarkComment(String texto, String comment);
+
+    Color getBookmarkColor(String bookmarkName);
+
+    void setBookmarkColor(String bookmarkName, Color color);
+    
+    Set<Color> getUsedColors();
 
     boolean isInReport(String bookmark);
 

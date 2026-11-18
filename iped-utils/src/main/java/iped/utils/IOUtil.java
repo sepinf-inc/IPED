@@ -117,13 +117,19 @@ public class IOUtil {
     }
 
     public static String getValidFilename(String filename) {
+        // max NTFS file name size is 255, but since max path size is 256, we use a
+        // much smaller value, which should handle most scenarios
+        return getValidFilename(filename, 160);
+    }
+
+    public static String getValidFilename(String filename, int maxLength) {
         filename = filename.trim();
 
         String invalidChars = "\\/:;*?\"<>|"; //$NON-NLS-1$
         char[] chars = filename.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             if ((invalidChars.indexOf(chars[i]) >= 0) || (chars[i] < '\u0020')) {
-                filename = filename.replace(chars[i] + "", ""); //$NON-NLS-1$ //$NON-NLS-2$
+                filename = filename.replace(chars[i] + "", " "); //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
 
@@ -137,20 +143,17 @@ public class IOUtil {
             }
         }
 
-        // Limite máximo do Joliet
-        int MAX_LENGTH = 64;
-
-        if (filename.length() > MAX_LENGTH) {
+        if (filename.length() > maxLength) {
             int extIndex = filename.lastIndexOf('.');
             if (extIndex == -1) {
-                filename = filename.substring(0, MAX_LENGTH);
+                filename = filename.substring(0, maxLength);
             } else {
                 String ext = filename.substring(extIndex);
                 int MAX_EXT_LEN = 20;
                 if (ext.length() > MAX_EXT_LEN) {
                     ext = filename.substring(extIndex, extIndex + MAX_EXT_LEN);
                 }
-                filename = filename.substring(0, MAX_LENGTH - ext.length()) + ext;
+                filename = filename.substring(0, maxLength - ext.length()) + ext;
             }
         }
 
@@ -423,23 +426,35 @@ public class IOUtil {
     }
 
     public static void ignoreInputStream(final InputStream stream) {
-        ignoreInputStream(stream, null);
+        ignoreInputStream0(stream);
     }
 
+    public static void ignoreInputStream(final Process p) {
+        ignoreInputStream0(p.getInputStream());
+    }
+
+    public static void ignoreErrorStream(Process p) {
+        ignoreInputStream0(p.getErrorStream());
+    }
+
+    @Deprecated
     public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg) {
+        ignoreInputStream0(stream);
+    }
+
+    private static void ignoreInputStream0(final InputStream stream) {
         Thread t = new Thread() {
             @Override
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         read = stream.read(out);
-                        if (msg != null)
-                            msg.progress = true;
-
-                    } catch (Exception e) {
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.setDaemon(true);

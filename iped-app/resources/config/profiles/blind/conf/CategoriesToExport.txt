@@ -82,6 +82,7 @@ Windows Registry
 #File Downloads
 #File Uploads
 #Financial Accounts
+#Transfers of Funds
 #Fuzzy Data
 #Journeys
 #Networks Usage

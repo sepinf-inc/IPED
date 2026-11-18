@@ -1,8 +1,9 @@
 package iped.engine.util;
 
 import java.io.File;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import iped.data.IBookmarks;
 
@@ -15,12 +16,13 @@ public class SaveStateThread extends Thread {
     public static int MAX_BACKUPS = 10;
     public static long BKP_INTERVAL = 60; // seconds
 
-    private static Map<IBookmarks, File> stateMap = new ConcurrentHashMap<>();
+    // Use a LinkedHashMap so bookmark files are saved in the order they are inserted
+    private final Map<IBookmarks, File> stateMap = new LinkedHashMap<>();
 
     private SaveStateThread() {
     }
 
-    public static SaveStateThread getInstance() {
+    public synchronized static SaveStateThread getInstance() {
         if (instance == null) {
             instance = new SaveStateThread();
             instance.setDaemon(true);
@@ -29,19 +31,28 @@ public class SaveStateThread extends Thread {
         return instance;
     }
 
-    public synchronized void saveState(IBookmarks state, File file) {
-        stateMap.put(state, file);
+    public void saveState(IBookmarks state, File file) {
+        synchronized (stateMap) {
+            stateMap.put(state, file);
+        }
     }
 
     public void run() {
         while (!Thread.interrupted()) {
             try {
-                for (IBookmarks state : stateMap.keySet().toArray(new IBookmarks[0])) {
-                    File file = stateMap.remove(state);
-                    if (file == null)
-                        continue;
-
-                    File tmp = new File(file.getAbsolutePath() + ".tmp"); //$NON-NLS-1$
+                IBookmarks state = null;
+                File file = null;
+                synchronized (stateMap) {
+                    if (!stateMap.isEmpty()) {
+                        Iterator<Map.Entry<IBookmarks, File>> it = stateMap.entrySet().iterator();
+                        Map.Entry<IBookmarks, File> entry = it.next();
+                        it.remove();
+                        state = entry.getKey();
+                        file = entry.getValue();
+                    }
+                }
+                if (state != null && file != null) {
+                    File tmp = new File(file.getAbsolutePath() + ".tmp");
                     if (tmp.exists())
                         tmp.delete();
                     state.saveState(tmp, true);
@@ -52,8 +63,9 @@ public class SaveStateThread extends Thread {
                         if (!tmp.renameTo(file))
                             bkp.renameTo(file);
                     }
+                } else {
+                    Thread.sleep(200);
                 }
-                Thread.sleep(200);
 
             } catch (InterruptedException e) {
                 break;

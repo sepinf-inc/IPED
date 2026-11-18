@@ -23,7 +23,7 @@ import iped.viewers.localization.Messages;
 public class LOExtractor extends CancelableWorker<Object, Object> {
 
     private File output, input;
-    private ProgressDialog progressMonitor;
+    private volatile ProgressDialog progressMonitor;
     private int progress = 0, numSubitens = 2876;// TODO obter número de itens automaticamente
     private boolean completed = false;
 
@@ -32,7 +32,7 @@ public class LOExtractor extends CancelableWorker<Object, Object> {
         this.input = input;
     }
 
-    public boolean decompressLO() {
+    public boolean decompressLO(boolean isNogui) {
 
         try {
             if (output.exists()) {
@@ -44,14 +44,16 @@ public class LOExtractor extends CancelableWorker<Object, Object> {
             }
 
             if (input.exists()) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        progressMonitor = new ProgressDialog(null, LOExtractor.this);
-                        progressMonitor.setMaximum(numSubitens);
-                        progressMonitor.setNote(Messages.getString("LOExtractor.DecompressingLO")); //$NON-NLS-1$
-                    }
-                });
+                if (!isNogui) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            progressMonitor = new ProgressDialog(null, LOExtractor.this);
+                            progressMonitor.setMaximum(numSubitens);
+                            progressMonitor.setNote(Messages.getString("LOExtractor.DecompressingLO")); //$NON-NLS-1$
+                        }
+                    });
+                }
 
                 try (ZipFile zip = new ZipFile(input)) {
                     Enumeration<ZipArchiveEntry> e = zip.getEntries();
@@ -69,15 +71,17 @@ public class LOExtractor extends CancelableWorker<Object, Object> {
                             if (++progress == numSubitens)
                                 completed = true;
 
-                            progressMonitor.setProgress(progress);
-
-                            if (progressMonitor.isCanceled())
-                                break;
+                            if (progressMonitor != null) {
+                                progressMonitor.setProgress(progress);
+    
+                                if (progressMonitor.isCanceled())
+                                    break;
+                            }
                         }
                     }
                 }
 
-                if (!progressMonitor.isCanceled()) {
+                if (progressMonitor != null && !progressMonitor.isCanceled()) {
                     progressMonitor.close();
                 }
 

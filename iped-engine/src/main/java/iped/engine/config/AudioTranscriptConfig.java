@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
+import iped.localization.LocaleResolver;
 import iped.utils.UTF8Properties;
 
 public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
@@ -27,10 +28,15 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String MAX_REQUESTS_KEY = "maxConcurrentRequests";
     private static final String MIN_WORD_SCORE = "minWordScore";
     public static final String HUGGING_FACE_MODEL = "huggingFaceModel";
+    public static final String WHISPER_MODEL = "whisperModel";
     public static final String WAV2VEC2_SERVICE = "wav2vec2Service";
+    public static final String REMOTE_SERVICE = "remoteServiceAddress";
     private static final String GOOGLE_MODEL = "googleModel";
     private static final String LANG_AUTO_VAL = "auto";
     private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
+    private static final String PRECISION = "precision";
+    private static final String BATCH_SIZE = "batchSize";
+    private static final String DEVICE = "device";
 
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
@@ -43,9 +49,25 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private int maxConcurrentRequests;
     private float minWordScore = 0.7f;
     private String huggingFaceModel;
-    private String wav2vec2Service;
+    private String whisperModel;
+    private String remoteService;
     private String googleModel;
     private boolean skipKnownFiles = true;
+    private String precision = "int8";
+    private int batchSize = 1;
+    private String device = "cpu";
+
+    public String getDevice() {
+        return device;
+    }
+
+    public String getPrecision() {
+        return precision;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
 
     public boolean getSkipKnownFiles() {
         return this.skipKnownFiles;
@@ -109,8 +131,12 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         return huggingFaceModel;
     }
 
-    public String getWav2vec2Service() {
-        return wav2vec2Service;
+    public String getWhisperModel() {
+        return whisperModel;
+    }
+
+    public String getRemoteService() {
+        return remoteService;
     }
 
     public String getGoogleModel() {
@@ -122,7 +148,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
         String langs = properties.getProperty(LANG_KEY).trim();
         if (LANG_AUTO_VAL.equalsIgnoreCase(langs)) {
-            languages.add(System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP));
+            languages.add(LocaleResolver.getLocaleString());
         } else {
             for (String lang : langs.split(";")) {
                 languages.add(lang.trim());
@@ -144,9 +170,17 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         if (huggingFaceModel != null) {
             huggingFaceModel = huggingFaceModel.trim();
         }
-        wav2vec2Service = properties.getProperty(WAV2VEC2_SERVICE);
-        if (wav2vec2Service != null) {
-            wav2vec2Service = wav2vec2Service.trim();
+        whisperModel = properties.getProperty(WHISPER_MODEL);
+        if (whisperModel != null) {
+            whisperModel = whisperModel.strip();
+        }
+
+        remoteService = properties.getProperty(REMOTE_SERVICE);
+        if (remoteService == null) {
+            remoteService = properties.getProperty(WAV2VEC2_SERVICE);
+        }
+        if (remoteService != null) {
+            remoteService = remoteService.trim();
         }
         googleModel = properties.getProperty(GOOGLE_MODEL);
         if (googleModel != null) {
@@ -165,6 +199,19 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         if (value != null) {
             timeoutPerSec = Integer.valueOf(value.trim());
         }
+        value = properties.getProperty(PRECISION);
+        if (value != null) {
+            precision = value.trim();
+        }
+        value = properties.getProperty(BATCH_SIZE);
+        if (value != null) {
+            batchSize = Integer.parseInt(value.trim());
+        }
+
+        value = properties.getProperty(DEVICE);
+        if (value != null && !value.isBlank()) {
+            device = value.strip();
+        }
     }
 
     /**
@@ -176,11 +223,15 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     public void clearTranscriptionServiceAddress(File moduleOutput) throws IOException {
         File config = new File(moduleOutput, "conf/" + CONF_FILE);
         if (config.exists() && config.canWrite()) {
+            String[] keys = { WAV2VEC2_SERVICE, REMOTE_SERVICE };
             List<String> lines = Files.readAllLines(config.toPath());
             List<String> outLines = new ArrayList<>();
             for (String line : lines) {
-                if (!line.isEmpty() && (line.trim().startsWith(WAV2VEC2_SERVICE) || line.substring(1).trim().startsWith(WAV2VEC2_SERVICE))) {
-                    line = "# " + WAV2VEC2_SERVICE + " = 127.0.0.1:11111";
+                for (String key : keys) {
+                    if (!line.isEmpty() && (line.trim().startsWith(key) || line.substring(1).trim().startsWith(key))) {
+                        line = "# " + key + " = 127.0.0.1:11111";
+                        break;
+                    }
                 }
                 outLines.add(line);
             }

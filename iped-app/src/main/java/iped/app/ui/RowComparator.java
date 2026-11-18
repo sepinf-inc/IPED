@@ -123,8 +123,7 @@ public class RowComparator implements Comparator<Integer> {
             NumericDocValues ndv = null;
             SortedNumericDocValues sndv = null;
 
-            if (IndexItem.getMetadataTypes().get(indexedField) == null
-                    || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
+            if (IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
                 ndv = atomicReader.getNumericDocValues(indexedField);
                 if (ndv == null) {
                     sndv = atomicReader.getSortedNumericDocValues(indexedField);
@@ -148,8 +147,7 @@ public class RowComparator implements Comparator<Integer> {
         }
     }
 
-    private void loadOrds(SortedDocValues sdv, SortedSetDocValues ssdv, NumericDocValues ndv,
-            SortedNumericDocValues sndv) throws IOException {
+    private void loadOrds(SortedDocValues sdv, SortedSetDocValues ssdv, NumericDocValues ndv, SortedNumericDocValues sndv) throws IOException {
         int maxDoc = App.get().appCase.getLeafReader().maxDoc();
         if (sdv != null) {
             sdvOrds = new int[maxDoc];
@@ -218,7 +216,7 @@ public class RowComparator implements Comparator<Integer> {
         Collator collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
         Collections.sort(sortedLocalizedVals, collator);
-        for(int i = 0; i < localizedOrds.length; i++) {
+        for (int i = 0; i < localizedOrds.length; i++) {
             localizedOrds[i] = sortedLocalizedVals.indexOf(localizedVals.get(i));
         }
         return localizedOrds;
@@ -248,8 +246,7 @@ public class RowComparator implements Comparator<Integer> {
         b = app.appCase.getLuceneId(itemB);
 
         if (col == 1) {
-            if (app.appCase.getMultiBookmarks().isChecked(itemA) == app.appCase.getMultiBookmarks()
-                    .isChecked(itemB))
+            if (app.appCase.getMultiBookmarks().isChecked(itemA) == app.appCase.getMultiBookmarks().isChecked(itemB))
                 return 0;
             else if (app.appCase.getMultiBookmarks().isChecked(itemA) == true)
                 return -1;
@@ -257,8 +254,7 @@ public class RowComparator implements Comparator<Integer> {
                 return 1;
 
         } else if (bookmarkCol) {
-            return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(itemA))
-                    .compareTo(Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(itemB)));
+            return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(itemA)).compareTo(Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(itemB)));
 
         } else if (isTimeStamp && itemA instanceof TimeItemId) {
             int ordA = ((TimeItemId) itemA).getTimeStampOrd();

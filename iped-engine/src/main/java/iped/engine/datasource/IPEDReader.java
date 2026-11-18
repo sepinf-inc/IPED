@@ -18,10 +18,12 @@
  */
 package iped.engine.datasource;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,14 +56,20 @@ import iped.datasource.IDataSource;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FileSystemConfig;
 import iped.engine.core.Manager;
+import iped.engine.data.BitmapBookmarks;
 import iped.engine.data.Bookmarks;
 import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
+import iped.engine.search.SimilarFacesSearch;
+import iped.engine.task.EmbeddedDiskProcessTask;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
@@ -71,11 +79,11 @@ import iped.engine.task.carver.CarverTask;
 import iped.engine.task.carver.LedCarveTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.index.IndexItem.KnnVector;
 import iped.engine.util.Util;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.ocr.OCRParser;
-import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -127,7 +135,7 @@ public class IPEDReader extends DataSourceReader {
         // Configuração para não expandir containers
         CategoryToExpandConfig expandConfig = ConfigurationManager.get().findObject(CategoryToExpandConfig.class);
         expandConfig.setEnabled(false);
-
+        EmbeddedDiskProcessTask.setEnabled(false);
         CarverTask.setEnabled(false);
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);
@@ -142,6 +150,11 @@ public class IPEDReader extends DataSourceReader {
         Object obj = Util.readObject(file.getAbsolutePath());
         if (obj instanceof IMultiBookmarks) {
             IMultiBookmarks mm = (IMultiBookmarks) obj;
+            if (mm.getSingleBookmarks().size() > 1) {
+                // Currently robust Image reading does not work with multicases.
+                FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+                fsConfig.setRobustImageReading(false);
+            }
             for (IBookmarks m : mm.getSingleBookmarks())
                 processBookmark(m);
         } else {
@@ -171,7 +184,7 @@ public class IPEDReader extends DataSourceReader {
             query.add(subitems.build(), Occur.MUST);
             IIPEDSearcher searcher = new IPEDSearcher(ipedCase, query.build());
             LuceneSearchResult result = LuceneSearchResult.get(ipedCase, searcher.search());
-            insertIntoProcessQueue(result, false);
+            insertIntoProcessQueue(result, false, false);
         }
     }
 
@@ -180,14 +193,14 @@ public class IPEDReader extends DataSourceReader {
         selectedLabels = new HashSet<Integer>();
         indexDir = state.getIndexDir().getCanonicalFile();
         basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
-        if(!listOnly) {
+        if (!listOnly) {
             List<File> reportingCases = (List<File>) caseData.getCaseObject(REPORTING_CASES);
             if (reportingCases == null) {
                 caseData.putCaseObject(REPORTING_CASES, reportingCases = new ArrayList<>());
             }
             reportingCases.add(new File(basePath));
         }
-        
+
         ipedCase = new IPEDSource(new File(basePath));
         ipedCase.checkImagePaths();
         /*
@@ -201,6 +214,10 @@ public class IPEDReader extends DataSourceReader {
         oldToNewIdMap = new int[ipedCase.getLastId() + 1];
         for (int i = 0; i < oldToNewIdMap.length; i++)
             oldToNewIdMap[i] = -1;
+
+        if (!listOnly) {
+            PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
+        }
 
         IIPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
         SearchResult searchResult = state.filterInReport(pesquisa.search());
@@ -232,27 +249,44 @@ public class IPEDReader extends DataSourceReader {
             return;
 
         int lastId = -1;
+        int totalItems = 0;
         for (int i = 0; i < oldToNewIdMap.length; i++) {
             if (oldToNewIdMap[i] > lastId) {
                 lastId = oldToNewIdMap[i];
             }
+            if (oldToNewIdMap[i] != -1) {
+                totalItems++;
+            }
+        }
+        if (lastId == -1) {
+            // Nothing was added, skip copying bookmarks (see issue #2037)
+            LOGGER.info("No bookmarked items copied from {}", basePath);
+            return;
         }
 
-        IBookmarks reportState = new Bookmarks(lastId - 1, lastId, output);
+        IBookmarks reportState = new BitmapBookmarks(output.getParentFile(), lastId);
+
         reportState.loadState();
 
+        int added = 0;
         for (int oldLabelId : selectedLabels) {
             String labelName = state.getBookmarkName(oldLabelId);
             String labelComment = state.getBookmarkComment(oldLabelId);
+            Color labelColor = state.getBookmarkColor(oldLabelId);
+
             int newLabelId = reportState.newBookmark(labelName);
             reportState.setBookmarkComment(newLabelId, labelComment);
+            reportState.setBookmarkColor(newLabelId, labelColor);
+
             ArrayList<Integer> newIds = new ArrayList<Integer>();
             for (int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
                 if (state.hasBookmark(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
                     newIds.add(oldToNewIdMap[oldId]);
             reportState.addBookmark(newIds, newLabelId);
+            added += newIds.size();
         }
-        reportState.saveState();
+        LOGGER.info("{} bookmarked items copied from {}", added, basePath);
+        reportState.saveState(true);
     }
 
     private void insertParentTreeNodes(LuceneSearchResult result) throws Exception {
@@ -416,7 +450,12 @@ public class IPEDReader extends DataSourceReader {
         return id;
     }
 
+
     private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode) throws Exception {
+        insertIntoProcessQueue(result, treeNode, true);
+    }
+
+    private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode, boolean countVolume) throws Exception {
 
         for (int docID : result.getLuceneIds()) {
             Document doc = ipedCase.getReader().document(docID);
@@ -437,13 +476,13 @@ public class IPEDReader extends DataSourceReader {
             }
 
             evidence.setLength(len);
-            if (treeNode) {
+            if (treeNode || !countVolume) {
                 evidence.setSumVolume(false);
             }
 
             if (listOnly) {
                 caseData.incDiscoveredEvidences(1);
-                if (!treeNode) {
+                if (!treeNode && countVolume) {
                     caseData.incDiscoveredVolume(len);
                 }
                 continue;
@@ -551,16 +590,17 @@ public class IPEDReader extends DataSourceReader {
                     if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
                         sourcePath = Util.getResolvedFile(basePath, sourcePath).toString();
                     }
-                    synchronized(inputStreamFactories) {
+                    synchronized (inputStreamFactories) {
                         SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                         if (sisf == null) {
-                            Class<?> clazz = Class.forName(className);
+                            @SuppressWarnings("unchecked")
+                            Class<SeekableInputStreamFactory> clazz = (Class<SeekableInputStreamFactory>) Class.forName(className);
                             try {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                                Constructor<SeekableInputStreamFactory> c = clazz.getConstructor(Path.class);
                                 sisf = c.newInstance(Path.of(sourcePath));
 
                             } catch (NoSuchMethodException e) {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                                Constructor<SeekableInputStreamFactory> c = clazz.getConstructor(URI.class);
                                 sisf = c.newInstance(URI.create(sourcePath));
                             }
                             if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
@@ -585,13 +625,17 @@ public class IPEDReader extends DataSourceReader {
 
             evidence.setTimeOut(Boolean.parseBoolean(doc.get(IndexItem.TIMEOUT)));
 
+            evidence.setHasPreview(Boolean.parseBoolean(doc.get(IndexItem.HAS_PREVIEW)));
+            evidence.setPreviewExt(doc.get(IndexItem.PREVIEW_EXT));
+            evidence.setPreviewBaseFolder(indexDir.getParentFile());
+
             value = doc.get(IndexItem.HASH);
             if (value != null && !treeNode) {
                 value = value.toUpperCase();
                 evidence.setHash(value);
 
                 if (!value.isEmpty() && caseData.isIpedReport()) {
-                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value); //$NON-NLS-1$
+                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), PreviewConstants.VIEW_FOLDER_NAME), value);
                     if (viewFile != null) {
                         evidence.setViewFile(viewFile);
                     }
@@ -672,17 +716,38 @@ public class IPEDReader extends DataSourceReader {
                 }
             }
 
-            // translate old msg ids to new ones
-            String[] ufedMsgIds = evidence.getMetadata().getValues(UFEDChatParser.CHILD_MSG_IDS);
-            evidence.getMetadata().remove(UFEDChatParser.CHILD_MSG_IDS);
-            for (String msgId : ufedMsgIds) {
-                int newId = getId(msgId);
-                evidence.getMetadata().add(UFEDChatParser.CHILD_MSG_IDS, Integer.toString(newId));
+            // restore "face_encodings" to KnnVector
+            @SuppressWarnings("unchecked")
+            List<byte[]> features = (List<byte[]>) evidence.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
+            if (features != null) {
+                List<KnnVector> featuresList = new ArrayList<>();
+                for (byte[] featureBytes : features) {
+                    float[] featureFloats = convByteArrayToFloatArray(featureBytes);
+                    featuresList.add(new KnnVector(convFloatToDoubleArray(featureFloats)));
+                }
+                evidence.setExtraAttribute(SimilarFacesSearch.FACE_FEATURES, featuresList);
             }
 
             Manager.getInstance().addItemToQueue(evidence);
         }
 
+    }
+
+    private static float[] convByteArrayToFloatArray(byte[] bytes) {
+        float[] result = new float[bytes.length / 4];
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        for (int i = 0; i < result.length; i++) {
+            result[i] = bb.getFloat();
+        }
+        return result;
+    }
+
+    public static final double[] convFloatToDoubleArray(float[] array) {
+        double[] result = new double[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = array[i];
+        }
+        return result;
     }
 
     private boolean isExtraAttrMultiValued(String field) throws IOException {

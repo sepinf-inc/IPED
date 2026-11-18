@@ -26,13 +26,15 @@ import dpf.ap.gpinf.interfacetelegram.PhotoData;
 
 public class Contact implements ContactInterface {
     private long id;
-    private int groupid;
+    private int groupId;
     private String name = null;
     private String lastName = null;
     private String username = null;
     private String phone = null;
     private byte[] avatar = null;
     private List<PhotoData> photos = null;
+    private boolean isGroup;
+    private boolean isChannel;
 
     public Contact(long id) {
         this.id = id;
@@ -44,6 +46,16 @@ public class Contact implements ContactInterface {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getTitle() {
+        if (isGroup) {
+            return "Group - " + name;
+        }
+        if (isChannel) {
+            return "Channel - " + name;
+        }
+        return name;
     }
 
     public String getName() {
@@ -115,14 +127,10 @@ public class Contact implements ContactInterface {
 
     @Override
     public void setBigName(String bigname) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void setSmallName(String smallname) {
-        // TODO Auto-generated method stub
-
     }
 
     public List<PhotoData> getPhotos() {
@@ -133,28 +141,57 @@ public class Contact implements ContactInterface {
         this.photos = photos;
     }
 
-    public int getGroupid() {
-        return groupid;
+    public int getGroupId() {
+        return groupId;
     }
 
-    public void setGroupid(int groupid) {
-        this.groupid = groupid;
+    public void setGroupId(int groupId) {
+        this.groupId = groupId;
+    }
+
+    public boolean isGroup() {
+        return isGroup;
+    }
+
+    public void setGroup(boolean isGroup) {
+        this.isGroup = isGroup;
+    }
+
+    public boolean isChannel() {
+        return isChannel;
+    }
+
+    public void setChannel(boolean isChannel) {
+        this.isChannel = isChannel;
+    }
+
+    public boolean isGroupOrChannel() {
+        return isGroup || isChannel;
     }
 
     @Override
     public String toString() {
-        String number = getPhone();
+        StringBuilder sb = new StringBuilder();
         String name = getFullname();
-        if (name == null)
-            name = "";
-        if (number != null && number.length() > 0) {
-            name += " (phone: " + number + ")";
-        } else if (getId() > 0) {
-            name += " (ID:" + getId() + " )";
+        if (name != null) {
+            sb.append(name.trim());
         }
-        if (name == null || name.trim().isEmpty())
-            name = "unknown";
-        return name;
+        String number = getPhone();
+        if (number != null && number.length() > 0) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append("(phone: ").append(number).append(')');
+        } else if (getId() > 0) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append("(ID:").append(getId()).append(')');
+        }
+        if (sb.length() == 0) {
+            sb.append("[unknown]");
+        }
+        return sb.toString();
     }
 
 }

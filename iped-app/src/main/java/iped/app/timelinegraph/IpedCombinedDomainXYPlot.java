@@ -67,6 +67,9 @@ public class IpedCombinedDomainXYPlot extends CombinedDomainXYPlot {
      */
     @Override
     public void draw(Graphics2D g2, Rectangle2D area, Point2D anchor, PlotState parentState, PlotRenderingInfo info) {
+        if (g2 == null) {
+            return;
+        }
         if (!(g2 instanceof IpedGraphicsWrapper)) {
             g2 = new IpedGraphicsWrapper(g2);
         }

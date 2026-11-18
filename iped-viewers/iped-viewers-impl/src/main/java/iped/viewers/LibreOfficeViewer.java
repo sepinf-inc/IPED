@@ -599,18 +599,22 @@ public class LibreOfficeViewer extends AbstractViewer {
     public void copyScreen(Component comp) {
         XWindow xWindow = officeFrame.getXFrame().getContainerWindow();
 
+        double uiScale = 1;
+        try {
+            uiScale = comp.getGraphicsConfiguration().getDefaultTransform().getScaleX();
+        } catch (Exception e) {
+        }
+
+        int w = (int) (comp.getWidth() * uiScale);
+        int h = (int) (comp.getHeight() * uiScale);
         XDevice xDevice = UnoRuntime.queryInterface(XDevice.class, xWindow);
-        XBitmap xBitmap = xDevice.createBitmap(0, 0, this.getPanel().getWidth(), this.getPanel().getHeight());
+        XBitmap xBitmap = xDevice.createBitmap(0, 0, w, h);
 
         XGraphics xGraphics = xDevice.createGraphics();
 
         if (xBitmap != null) {
             XDisplayBitmap xDisplayBitmap = xDevice.createDisplayBitmap(xBitmap);
-
-            com.sun.star.awt.Size aSize = xBitmap.getSize();
-
-            xGraphics.draw(xDisplayBitmap, 0, 0, aSize.Width, aSize.Height, 0, 0, this.getPanel().getWidth(),
-                    this.getPanel().getHeight());
+            xGraphics.draw(xDisplayBitmap, 0, 0, w, h, 0, 0, w, h);
 
             byte array[] = xBitmap.getDIB();
 

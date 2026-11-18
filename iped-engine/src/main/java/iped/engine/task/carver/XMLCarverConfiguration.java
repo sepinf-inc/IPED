@@ -165,6 +165,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         Element minLength = XMLUtil.getFirstElement(carverTypeEl, "minLength");
         Element maxLength = XMLUtil.getFirstElement(carverTypeEl, "maxLength");
         Element carverScriptFile = XMLUtil.getFirstElement(carverTypeEl, "carverScriptFile");
+        Element stopOnNextHeader = XMLUtil.getFirstElement(carverTypeEl, "stopOnNextHeader");
 
         if (name != null) {
             ct.setName(name.getTextContent());
@@ -188,6 +189,9 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         }
         if (maxLength != null) {
             ct.setMaxLength(Long.parseLong(maxLength.getTextContent().trim()));
+        }
+        if (stopOnNextHeader != null) {
+            ct.setStopOnNextHeader(Boolean.parseBoolean(stopOnNextHeader.getTextContent().trim()));
         }
         if (carverClass != null) {
             ct.setCarverClass(carverClass.getTextContent().trim());

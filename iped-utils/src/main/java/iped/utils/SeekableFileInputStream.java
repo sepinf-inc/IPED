@@ -5,21 +5,33 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import iped.io.SeekableInputStream;
 
 public class SeekableFileInputStream extends SeekableInputStream {
 
+    private File file;
     private SeekableByteChannel sbc;
     private boolean closed = false;
 
     public SeekableFileInputStream(File file) throws IOException {
+        this.file = file;
         this.sbc = FileChannel.open(file.toPath(), StandardOpenOption.READ);
+    }
+
+    public SeekableFileInputStream(Path filePath) throws IOException {
+        this.file = filePath.toFile();
+        this.sbc = FileChannel.open(filePath, StandardOpenOption.READ);
     }
 
     public SeekableFileInputStream(SeekableByteChannel channel) {
         this.sbc = channel;
+    }
+
+    public File getFile() {
+        return this.file;
     }
 
     @Override

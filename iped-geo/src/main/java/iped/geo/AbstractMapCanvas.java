@@ -20,6 +20,7 @@ abstract public class AbstractMapCanvas extends Canvas {
      * 
      */
     private static final long serialVersionUID = 1L;
+    protected static final String ALLMARKERS_TAG = "allmarkers";
     MapSelectionListener mapSelectionListener = null;
     protected MarkerEventListener markerEventListener = null;
     protected MarkerCheckBoxListener markerCheckBoxListener = null;
@@ -30,6 +31,7 @@ abstract public class AbstractMapCanvas extends Canvas {
 
     protected ArrayList<Runnable> onLoadRunnables = new ArrayList<Runnable>();
 
+    protected HashMap<String, Boolean> checkMapToApply;
     protected HashMap<String, Boolean> selectionMapToApply;
     protected String leadSelectionToApply;
     protected Runnable saveRunnable;
@@ -81,6 +83,11 @@ abstract public class AbstractMapCanvas extends Canvas {
         return saveRunnable;
     }
 
+    public void clearSelection() {
+        this.selectionMapToApply = new HashMap<String, Boolean>();
+        this.selectionMapToApply.put(AbstractMapCanvas.ALLMARKERS_TAG, false);
+    }
+
     public void sendSelection(final HashMap<String, Boolean> selectionMap) {
         if (this.selectionMapToApply == null) {
             this.selectionMapToApply = new HashMap<String, Boolean>();
@@ -90,6 +97,23 @@ abstract public class AbstractMapCanvas extends Canvas {
         marks = selectionMap.keySet().toArray(marks);
         for (int i = 0; i < marks.length; i++) {
             this.selectionMapToApply.put(marks[i], selectionMap.get(marks[i]));
+        }
+    }
+
+    public void clearCheck() {
+        this.checkMapToApply = new HashMap<String, Boolean>();
+        this.checkMapToApply.put(AbstractMapCanvas.ALLMARKERS_TAG, false);
+    }
+
+    public void sendCheck(final HashMap<String, Boolean> checkedMap) {
+        if (this.checkMapToApply == null) {
+            this.checkMapToApply = new HashMap<String, Boolean>();
+        }
+
+        String[] marks = new String[checkedMap.keySet().size()];
+        marks = checkedMap.keySet().toArray(marks);
+        for (int i = 0; i < marks.length; i++) {
+            this.checkMapToApply.put(marks[i], checkedMap.get(marks[i]));
         }
     }
 
@@ -132,6 +156,16 @@ abstract public class AbstractMapCanvas extends Canvas {
 
     public void setLeadSelectionToApply(String leadSelectionToApply) {
         this.leadSelectionToApply = leadSelectionToApply;
+    }
+
+    public void executeOnLoadRunnables() {
+        if (onLoadRunnables.size() > 0) {
+            for (Iterator iterator = onLoadRunnables.iterator(); iterator.hasNext();) {
+                Runnable runnable = (Runnable) iterator.next();
+                runnable.run();
+            }
+            onLoadRunnables.clear();
+        }
     }
 
     public void runAfterLoad(Runnable run) {

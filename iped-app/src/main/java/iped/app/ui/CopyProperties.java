@@ -41,13 +41,15 @@ import iped.utils.DateUtil;
 public class CopyProperties extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
     ArrayList<Integer> uniqueIds;
+    ArrayList<String> fields;
     ProgressMonitor progressMonitor;
     File file;
     int total;
-
-    public CopyProperties(File file, ArrayList<Integer> uniqueIds) {
+    
+    public CopyProperties(File file, ArrayList<Integer> uniqueIds, ArrayList<String> fields) {
         this.file = file;
         this.uniqueIds = uniqueIds;
+        this.fields = fields;
         this.total = uniqueIds.size();
 
         progressMonitor = new ProgressMonitor(App.get(), "", "", 0, total); //$NON-NLS-1$ //$NON-NLS-2$
@@ -62,14 +64,15 @@ public class CopyProperties extends SwingWorker<Boolean, Integer> implements Pro
         byte[] utf8bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
         fos.write(utf8bom);
 
-        ArrayList<String> fields = new ArrayList<String>();
-        for (String field : ResultTableModel.fields) {
-            fields.add(field);
+        if (fields == null || fields.isEmpty()) {
+            fields = new ArrayList<String>();
+            for (String field : ResultTableModel.fields) {
+                fields.add(field);
+            }
         }
 
         for (int col = 0; col < fields.size(); col++) {
-            writer.write(
-                    "\"" + fields.get(col).toUpperCase() + "\"" + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            writer.write("\"" + fields.get(col).toUpperCase() + "\"" + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
         writer.write("\r\n"); //$NON-NLS-1$
 
@@ -97,9 +100,7 @@ public class CopyProperties extends SwingWorker<Boolean, Integer> implements Pro
                         for (String val : values)
                             val = val.replace("" + CategoryTokenizer.SEPARATOR, " | "); //$NON-NLS-1$ //$NON-NLS-2$
 
-                    if (values.length > 0 && !values[0].isEmpty()
-                            && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED)
-                                    || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.CHANGED))) {
+                    if (values.length > 0 && !values[0].isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED) || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.CHANGED))) {
                         values[0] = df.format(DateUtil.stringToDate(values[0]));
                     }
                     String value = ""; //$NON-NLS-1$

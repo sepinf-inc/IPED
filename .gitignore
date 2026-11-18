@@ -4,3 +4,5 @@ nbactions.xml
 /.classpath
 /.project
 .pydevproject
+/.idea/
+.sdkmanrc

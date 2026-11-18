@@ -3,9 +3,12 @@ package iped.engine.search;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
@@ -24,14 +27,16 @@ public class SimilarFacesSearch {
     private static final float DEFAULT_MIN_DISTANCE = 0.5f;
 
     private static float minDistSquared = DEFAULT_MIN_DISTANCE * DEFAULT_MIN_DISTANCE;
+    private static int mode = 0; // Mode 0 = OR, Mode 1 = AND
+    private static Set<Integer> selectedIdxs;
 
     private IPEDMultiSource ipedCase;
-    private float[] refSimilarityFeatures;
+    private float[][] refSimilarityFeatures;
 
     public SimilarFacesSearch(IPEDSource ipedCase, IItem refImage) {
         this.ipedCase = ipedCase instanceof IPEDMultiSource ? (IPEDMultiSource) ipedCase
                 : new IPEDMultiSource(Collections.singletonList(ipedCase));
-        this.refSimilarityFeatures = getFirstFace(refImage);
+        this.refSimilarityFeatures = getFaceFeatures(refImage, selectedIdxs);
     }
 
     public MultiSearchResult search() throws IOException {
@@ -52,6 +57,14 @@ public class SimilarFacesSearch {
     public static final void setMinScore(int minScore) {
         float dist = 1 - ((float) minScore / 100);
         minDistSquared = dist * dist;
+    }
+
+    public static final void setMode(int mode) {
+        SimilarFacesSearch.mode = mode;
+    }
+
+    public static final void setSelectedIdxs(Set<Integer> selectedIdxs) {
+        SimilarFacesSearch.selectedIdxs = selectedIdxs;
     }
 
     private static final float squaredDistToScore(float squaredDist) {
@@ -78,6 +91,8 @@ public class SimilarFacesSearch {
                     }
                     int i0 = Math.min(len, itemsPerThread * threadIdx);
                     int i1 = Math.min(len, i0 + itemsPerThread);
+                    int numRefFaces = refSimilarityFeatures.length;
+                    float[] distsPerFace = new float[numRefFaces];
                     for (int i = i0; i < i1; i++) {
                         if (i % 1000 == 0 && this.isInterrupted()) {
                             return;
@@ -86,15 +101,53 @@ public class SimilarFacesSearch {
                         int luceneId = ipedCase.getLuceneId(itemId);
                         long ordinal;
                         float score = 0;
+                        Arrays.fill(distsPerFace, minDistSquared + 1);
                         try {
                             boolean hasVal = similarityFeaturesValues.advanceExact(luceneId);
-                            while (hasVal && (ordinal = similarityFeaturesValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                            while (hasVal && (ordinal = similarityFeaturesValues
+                                    .nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
                                 BytesRef bytesRef = similarityFeaturesValues.lookupOrd(ordinal);
                                 float[] currentFeatures = convToFloatVec(bytesRef.bytes);
-                                float squaredDist = distance(refSimilarityFeatures, currentFeatures, minDistSquared);
-                                if (squaredDist <= minDistSquared) {
-                                    score = squaredDistToScore(squaredDist);
-                                    break;
+                                int faceIdx = -1;
+                                float minDist = minDistSquared + 1;
+                                for (int j = 0; j < numRefFaces; j++) {
+                                    float squaredDist = distance(refSimilarityFeatures[j], currentFeatures, minDist);
+                                    if (squaredDist < minDist) {
+                                        minDist = squaredDist;
+                                        faceIdx = j;
+                                    }
+                                }
+                                if (faceIdx != -1 && minDist < distsPerFace[faceIdx]) {
+                                    distsPerFace[faceIdx] = minDist;
+                                }
+                            }
+                            if (numRefFaces == 1) {
+                                if (distsPerFace[0] <= minDistSquared) {
+                                    score = squaredDistToScore(distsPerFace[0]);
+                                }
+                            } else {
+                                // Multiple reference faces
+                                if (mode == 0) {
+                                    // OR mode
+                                    float minDist = distsPerFace[0];
+                                    for (int j = 1; j < numRefFaces; j++) {
+                                        minDist = Math.min(minDist, distsPerFace[j]);
+                                    }
+                                    if (minDist <= minDistSquared) {
+                                        score = squaredDistToScore(minDist);
+                                    }
+                                } else {
+                                    // AND mode
+                                    float maxDist = 0;
+                                    for (int j = 0; j < numRefFaces; j++) {
+                                        maxDist = Math.max(maxDist, distsPerFace[j]);
+                                        if (maxDist > minDistSquared) {
+                                            break;
+                                        }
+                                    }
+                                    if (maxDist <= minDistSquared) {
+                                        score = squaredDistToScore(maxDist);
+                                    }
                                 }
                             }
                         } catch (IOException e) {
@@ -139,27 +192,46 @@ public class SimilarFacesSearch {
             float d = a[i] - b[i++];
             distance += d * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d;
         }
-        return (float) distance;
+        return distance;
     }
 
-    private static float[] getFirstFace(IItem refImage) {
-        Object value = refImage.getExtraAttribute(FACE_FEATURES);
-        if (value instanceof Collection)
-            // get first face in image
-            value = ((Collection) value).iterator().next();
-        return convToFloatVec((byte[]) value);
+    private static float[][] getFaceFeatures(IItem item, Set<Integer> idxs) {
+        if (item == null) {
+            return new float[0][0];
+        }
+        Object value = item.getExtraAttribute(FACE_FEATURES);
+        if (value instanceof Collection) {
+            List<float[]> l = new ArrayList<float[]>();
+            Iterator<?> it = ((Collection<?>) value).iterator();
+            int idx = 0;
+            while (it.hasNext()) {
+                Object o = it.next();
+                if (idxs == null || idxs.isEmpty() || idxs.contains(idx)) {
+                    if (o instanceof byte[]) {
+                        l.add(convToFloatVec((byte[]) o));
+                    }
+                }
+                idx++;
+            }
+            return l.toArray(new float[0][]);
+        }
+        return new float[][] { convToFloatVec((byte[]) value) };
     }
 
-    public static List<String> getMatchLocations(IItem refImage, IItem item){
+    public static List<String> getMatchLocations(IItem refItem, IItem matchItem) {
         ArrayList<String> matchLocations = new ArrayList<>();
-        Object location = item.getExtraAttribute(SimilarFacesSearch.FACE_LOCATIONS);
+        Object location = matchItem.getExtraAttribute(SimilarFacesSearch.FACE_LOCATIONS);
         if (location instanceof List) {
-            float[] ref = getFirstFace(refImage);
-            List<byte[]> features = (List<byte[]>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
-            for (int i = 0; i < ((List) location).size(); i++) {
-                float[] face = convToFloatVec(features.get(i));
-                if (distance(ref, face, minDistSquared) <= minDistSquared) {
-                    matchLocations.add((String) ((List) location).get(i));
+            float[][] refFeatures = getFaceFeatures(refItem, selectedIdxs);
+            float[][] matchFeatures = getFaceFeatures(matchItem, null);
+            for (int i = 0; i < matchFeatures.length; i++) {
+                float[] mi = matchFeatures[i];
+                for (int j = 0; j < refFeatures.length; j++) {
+                    float[] rj = refFeatures[j];
+                    if (distance(mi, rj, minDistSquared) <= minDistSquared) {
+                        matchLocations.add((String) ((List<?>) location).get(i));
+                        break;
+                    }
                 }
             }
         } else {
@@ -167,5 +239,4 @@ public class SimilarFacesSearch {
         }
         return matchLocations;
     }
-
 }

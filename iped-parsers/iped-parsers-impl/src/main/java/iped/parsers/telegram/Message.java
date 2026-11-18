@@ -18,11 +18,11 @@
  */
 package iped.parsers.telegram;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
@@ -48,11 +48,18 @@ public class Message implements MessageInterface {
     private byte[] thumb = null;
     private String hashThumb = null;
     private List<PhotoData> names = null;
-    private long mediasize = 0;
+    private long mediaSize = 0;
     private long toId = 0;
     private Double latitude = null;
     private Double longitude = null;
-    private Set<String> childPornSets = new HashSet<>();
+    private List<String> childPornSets;
+    private String url;
+    private String linkTitle;
+    private PoolData poolData;
+    private boolean isDeleted = false;
+    private String recoveryString = null;
+    private int expiredMedia = -1;
+    private int  selfDestructTimer;
 
     public long getId() {
         return id;
@@ -68,7 +75,7 @@ public class Message implements MessageInterface {
 
     public void setMediaHash(String mediaHash) {
         this.mediaHash = mediaHash;
-        childPornSets.addAll(ChildPornHashLookup.lookupHash(mediaHash));
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(mediaHash, childPornSets);
     }
 
     public String getMediaFile() {
@@ -204,12 +211,12 @@ public class Message implements MessageInterface {
         this.names = names;
     }
 
-    public long getMediasize() {
-        return mediasize;
+    public long getMediaSize() {
+        return mediaSize;
     }
 
-    public void setMediasize(long mediasize) {
-        this.mediasize = mediasize;
+    public void setMediaSize(long mediaSize) {
+        this.mediaSize = mediaSize;
     }
 
     public String getMediaComment() {
@@ -248,11 +255,88 @@ public class Message implements MessageInterface {
         this.longitude = longitude;
     }
 
-    public Set<String> getChildPornSets() {
-        return this.childPornSets;
+    public List<String> getChildPornSets() {
+        return childPornSets == null ? Collections.emptyList() : childPornSets;
     }
 
     public void addChildPornSets(Collection<String> sets) {
         this.childPornSets.addAll(sets);
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getLinkTitle() {
+        return linkTitle;
+    }
+
+    public void setLinkTitle(String linkTitle) {
+        this.linkTitle = linkTitle;
+    }
+
+    public PoolData getPoolData() {
+        return poolData;
+    }
+
+    public void setPoolData(PoolData poolData) {
+        this.poolData = poolData;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public String getRecoveryString() {
+        return recoveryString;
+    }
+
+    public void setRecoveryString(String recoveryString) {
+        this.recoveryString = recoveryString;
+    }
+
+    public int getExpiredMedia() {
+        return expiredMedia;
+    }
+
+    public void setExpiredMedia(int expiredMedia) {
+        this.expiredMedia = expiredMedia;
+    }
+
+    public int getSelfDestructTimer() {
+        return selfDestructTimer;
+    }
+
+    public void setSelfDestructTimer(int selfDestructTimer) {
+        this.selfDestructTimer = selfDestructTimer;
+    }
+}
+
+class PoolData {
+    private final String title;
+    private final List<String> options = new ArrayList<String>();
+
+    public PoolData(String title) {
+        this.title = title;
+    }
+
+    public void add(String option) {
+        options.add(option);
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String[] getOptions() {
+        return options.toArray(new String[0]);
     }
 }

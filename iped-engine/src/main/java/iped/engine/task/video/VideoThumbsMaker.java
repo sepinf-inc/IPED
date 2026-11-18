@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +26,7 @@ import javax.script.ScriptException;
 
 import iped.utils.ImageUtil;
 
+import org.bytedeco.javacpp.Loader;
 
 /**
  * Classe principal de geração de imagens com cenas extraídas de vídeos. Utiliza
@@ -38,15 +40,17 @@ public class VideoThumbsMaker {
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
+    private static final String ffmpeg = Loader.load(org.bytedeco.ffmpeg.ffmpeg.class);
+    private static final String ffprobe = Loader.load(org.bytedeco.ffmpeg.ffprobe.class);
     private Boolean videoThumbsOriginalDimension = false;
     private int maxDimensionSize = 1024;
+    private int compression = 50;
     private String numFramesEquation;
     private ScriptEngine scriptEngine;
     private int timeoutProcess = 45000;
     private int timeoutInfo = 15000;
     private int timeoutFirstCall = 300000;
     private boolean verbose = false;
-    private int quality = 50;
     private boolean firstCall = true;
     private static final String prefix = "_vtm"; //$NON-NLS-1$
     private int ignoreWaitKeyFrame;
@@ -92,6 +96,7 @@ public class VideoThumbsMaker {
 
         boolean fixed = false;
         File lnk = null;
+        File subTmpFile = null;
         String videoStream = null;
         for (int step = numFrames <= 0 ? 0 : 1; step <= 1; step++) {
             if (step == 1) {
@@ -130,6 +135,25 @@ public class VideoThumbsMaker {
                     step--;
                     continue;
                 }
+                if (inOrg.getAbsolutePath().length() > 256) {
+                    subTmpFile = File.createTempFile("_temp_video_", ".tmp", subTmp);
+                    subTmpFile.deleteOnExit();
+                    if (verbose) {
+                        System.err.println("Using temp file = " + subTmpFile); //$NON-NLS-1$
+                    }
+                    try {
+                        Files.copy(inOrg.toPath(), subTmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        in = subTmpFile;
+                        cmds.set(cmds.size() - 1, in.getPath());
+                        step--;
+                        continue;
+                    } catch (IOException e) {
+                        if (verbose) {
+                            System.err.println("Error copying to temp a file with long path: " + inOrg.toPath()); //$NON-NLS-1$
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
             if (info != null) {
                 result.setVideoInfo(info);
@@ -146,8 +170,24 @@ public class VideoThumbsMaker {
             return result;
         }
 
-        if (result.getVideoDuration() == 0 || result.getDimension() == null || result.getDimension().width == 0
-                || result.getDimension().height == 0) {
+        // Calls FFprobe as a fallback to get video info
+        if ((result.getDimension() == null || result.getDimension().width == 0 || result.getDimension().height == 0
+                || result.getVideoDuration() <= 0) && ffprobe != null) {
+            cmds = new ArrayList<String>(Arrays.asList(new String[] { ffprobe, "-v", "error", "-select_streams", "v",
+                    "-show_entries", "stream:format:program", "-of", "default=nw=1", "-i", in.getPath() }));
+
+            ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo, null);
+            if (firstCall) {
+                firstCall = false;
+            }
+
+            String info = res.output;
+            if (info != null) {
+                result.setVideoInfoFFprobe(info);
+            }
+        }
+
+        if (result.getDimension() == null || result.getDimension().width == 0 || result.getDimension().height == 0) {
             return result;
         }
 
@@ -162,8 +202,8 @@ public class VideoThumbsMaker {
             if (maxThumbs < curr) {
                 maxThumbs = curr;
             }
-            if (maxSize < config.getThumbWidth()) {
-                maxSize = config.getThumbWidth();
+            if (maxSize < config.getThumbSize()) {
+                maxSize = config.getThumbSize();
             }
         }
 
@@ -217,7 +257,7 @@ public class VideoThumbsMaker {
             cmds.add(videoStream);
         }
 
-        cmds.addAll(Arrays.asList(new String[] { "-vo", "jpeg:smooth=50:nobaseline:quality=" + quality}));
+        cmds.addAll(Arrays.asList(new String[] { "-vo", "jpeg:smooth=50:nobaseline:quality=" + compression}));
 
         String rot = null;
         boolean transposed = false;
@@ -327,6 +367,68 @@ public class VideoThumbsMaker {
                 }
             }
         }
+
+        // Calls FFmpeg if no thumbs were generated by MPlayer
+        if (files.length == 0 && ffmpeg != null) {
+            scale = "\"scale=" + targetDimension.width + ":" + targetDimension.height + "\"";
+
+            cmds = new ArrayList<String>();
+            cmds.add(ffmpeg);
+
+            // Useful option to handle some corner cases
+            cmds.add("-ignore_editlist");
+            cmds.add("1");
+
+            // Could be changed to "quiet" to reduce log size
+            cmds.add("-v");
+            cmds.add("error");
+
+            rot = null;
+            transposed = false;
+            if (result.getRotation() == 90 || result.getRotation() == -270) {
+                rot = "transpose=2";
+                transposed = true;
+            } else if (result.getRotation() == 180 || result.getRotation() == -180) {
+                rot = "transpose=1,transpose=1";
+            } else if (result.getRotation() == 270 || result.getRotation() == -90) {
+                rot = "transpose=1";
+                transposed = true;
+            }
+
+            // Sets seeking time
+            Float ssTime = result.getVideoDuration() / ((maxThumbs < 1 ? 2 : maxThumbs + 1) * 1000.0f);
+
+            // Sets maxThumbs inputs
+            for (int ssFrame = 1; ssFrame <= maxThumbs; ++ssFrame) {
+                cmds.addAll(
+                        Arrays.asList(new String[] { "-ss", String.valueOf(ssTime * ssFrame), "-i", in.getPath() }));
+            }
+            // Maps previous set inputs to output files
+            for (int ssFrame = 1; ssFrame <= maxThumbs; ++ssFrame) {
+                cmds.addAll(
+                        Arrays.asList(new String[] { "-map", String.valueOf(ssFrame - 1) + ":v", "-vframes", "1" }));
+                if (rot != null) {
+                    cmds.add("-vf");
+                    cmds.add(rot);
+                }
+                // "-q:v" option sets JPEG file quality
+                cmds.addAll(Arrays.asList(
+                        new String[] { "-vf", scale, "-q:v", "3", "thumb" + String.format("%02d", ssFrame) + ".jpg" }));
+            }
+
+            ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess, subTmp);
+            if (res.timeout) {
+                result.setTimeout(true);
+            } else if (result.isTimeout()) {
+                result.setTimeout(false);
+            }
+            files = subTmp.listFiles(new FileFilter() {
+                public boolean accept(File pathname) {
+                    return pathname.getName().toLowerCase().endsWith(".jpg");
+                }
+            });
+        }
+        
         if (ignoreWaitKeyFrame == 0) {
             ignoreWaitKeyFrame = -1;
         }
@@ -339,6 +441,9 @@ public class VideoThumbsMaker {
         }
         if (lnk != null) {
             lnk.delete();
+        }
+        if (subTmpFile != null) {
+            subTmpFile.delete();
         }
         if (images.size() == 0) {
             return result;
@@ -440,8 +545,14 @@ public class VideoThumbsMaker {
         int border = config.getBorder();
         int w, h;
         // setting dimension for gallery thumbs
-        w = config.getThumbWidth();
-        h = dimension.height * w / dimension.width;
+        int size = config.getThumbSize();
+        if (dimension.width >= dimension.height) {
+            w = size;
+            h = dimension.height * w / dimension.width;
+        } else {
+            h = size;
+            w = dimension.width * h / dimension.height;
+        }
         if (w > maxDimensionSize) {
             w = maxDimensionSize;
         }
@@ -473,7 +584,7 @@ public class VideoThumbsMaker {
         }
         g2.dispose();
         ImageUtil.saveJpegWithMetadata(img, config.getOutFile(),
-                "Frames=" + config.getRows() + "x" + config.getColumns()); //$NON-NLS-1$ //$NON-NLS-2$
+                "Frames=" + config.getRows() + "x" + config.getColumns(), compression);
     }
 
     private final ExecResult run(String[] cmds, int timeout, File currDir) {
@@ -575,6 +686,10 @@ public class VideoThumbsMaker {
 
     public void setMaxDimensionSize(int maxDimensionSize) {
         this.maxDimensionSize = maxDimensionSize;
+    }
+
+    public void setCompression(int compression) {
+        this.compression = compression;
     }
 
     public Boolean getVideoThumbsOriginalDimension() {

@@ -15,6 +15,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vosk.LibVosk;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 
@@ -40,6 +41,9 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
         }
 
         if (model == null) {
+            // Suppress Vosk messages shown on the console
+            LibVosk.vosk_set_log_level(-2);
+
             List<String> langs = transcriptConfig.getLanguages();
             if (langs.size() > 1) {
                 logger.error("Vosk transcription supports only 1 language, '{}' will be used.", langs.get(0));
@@ -97,7 +101,8 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
             int words = 0;
 
             int nbytes;
-            byte[] buf = new byte[1 << 20];
+            // Buffer must be small (see #1909)
+            byte[] buf = new byte[(int) Math.min(tmpFile.length(), 1 << 16)];
             while ((nbytes = ais.read(buf)) >= 0) {
                 if (recognizer.acceptWaveForm(buf, nbytes)) {
                     TextScoreWords result = decodeFromJson(recognizer.getResult());

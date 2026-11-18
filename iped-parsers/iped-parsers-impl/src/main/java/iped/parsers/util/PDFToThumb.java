@@ -38,6 +38,14 @@ public class PDFToThumb implements Closeable {
             double zoom = maxDimension <= 0 ? 0.5 : targetSize / maxDimension;
             int w = Math.max(targetSize / 10, Math.min(targetSize, (int) Math.ceil(zoom * rc.getWidth())));
             int h = Math.max(targetSize / 10, Math.min(targetSize, (int) Math.ceil(zoom * rc.getHeight())));
+
+            // Swap w/h, if page rotation is 90 or 270 degrees (see issue #1938)
+            if (Math.abs(page.getRotation()) % 180 == 90) {
+                int aux = w;
+                w = h;
+                h = aux;
+            }
+
             img = new BufferedImage(w, h, BufferedImage.TYPE_INT_BGR);
             Graphics2D g = img.createGraphics();
             Shape clip = g.getClip();

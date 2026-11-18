@@ -47,8 +47,11 @@ public class JSInterfaceFunctionsOpenStreet implements JSInterfaceFunctions {
         MarkerEventListener l = map.getMarkerEventListener();
         if (l != null) {
             int modf = 0;
-            if (modfJS.toString().equals("shift")) { //$NON-NLS-1$
-                modf = MouseEvent.SHIFT_DOWN_MASK;
+            if (modfJS.toString().contains("shift")) { //$NON-NLS-1$
+                modf = modf | MouseEvent.SHIFT_DOWN_MASK;
+            }
+            if (modfJS.toString().contains("ctrl")) { //$NON-NLS-1$
+                modf = modf | MouseEvent.CTRL_DOWN_MASK;
             }
 
             try {

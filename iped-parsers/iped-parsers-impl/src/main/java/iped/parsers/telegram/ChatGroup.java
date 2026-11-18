@@ -23,11 +23,13 @@ import java.util.Set;
 
 public class ChatGroup extends Chat {
 
-    private Set<Long> members = new HashSet<>();
+    private final Set<Long> members = new HashSet<Long>();
+    private final Set<Long> admins = new HashSet<Long>();
+    private int participantsCount;
 
     public ChatGroup(long id, Contact c, String name) {
         super(id, c, name);
-        this.setGroup(true);
+        setGroup(true);
     }
 
     public Set<Long> getMembers() {
@@ -35,9 +37,37 @@ public class ChatGroup extends Chat {
     }
 
     public void addMember(long id) {
-        if (!members.contains(id)) {
-            members.add(id);
-        }
+        members.add(id);
     }
 
+    public Set<Long> getAdmins() {
+        return admins;
+    }
+
+    public void addAdmin(long id) {
+        admins.add(id);
+    }
+
+    public int getParticipantsCount() {
+        return participantsCount;
+    }
+
+    public void setParticipantsCount(int participantsCount) {
+        this.participantsCount = participantsCount;
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if (getName() != null) {
+            sb.append(getName());
+        } else if (getC() != null && getC().getName() != null) {
+            sb.append(getC().getName());
+        }
+        if (sb.length() > 0) {
+            sb.append(" (ID: ").append(getId()).append(")");
+        } else {
+            sb.append("ID: ").append(getId());
+        }
+        return sb.toString();
+    }
 }

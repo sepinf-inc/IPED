@@ -13,12 +13,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.apache.tika.Tika;
+import org.apache.tika.io.TikaInputStream;
 
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
@@ -28,10 +30,15 @@ import iped.app.ui.controls.CSelButton;
 import iped.app.ui.viewers.AttachmentSearcherImpl;
 import iped.app.ui.viewers.HexSearcherImpl;
 import iped.app.ui.viewers.TextViewer;
+import iped.engine.config.AgeEstimationConfig;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FaceRecognitionConfig;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
 import iped.io.URLUtil;
+import iped.properties.ExtraProperties;
 import iped.viewers.ATextViewer;
+import iped.viewers.AudioViewer;
 import iped.viewers.CADViewer;
 import iped.viewers.EmailViewer;
 import iped.viewers.HexViewerPlus;
@@ -59,6 +66,7 @@ import iped.viewers.util.LibreOfficeFinder;
 public class ViewerController {
     private final List<AbstractViewer> viewers = new ArrayList<>();
     private final ATextViewer textViewer;
+    private final MetadataViewer metadataViewer;
     private final HtmlLinkViewer linkViewer;
     private final MultiViewer viewersRepository;
     private final Map<AbstractViewer, DefaultSingleCDockable> dockPerViewer = new HashMap<>();
@@ -76,11 +84,11 @@ public class ViewerController {
 
     public ViewerController() {
         Window owner = App.get();
-        
+
         // These viewers will have their own docking frame
         viewers.add(new HexViewerPlus(owner, new HexSearcherImpl()));
         viewers.add(textViewer = new TextViewer());
-        viewers.add(new MetadataViewer() {
+        viewers.add(metadataViewer = new MetadataViewer() {
             @Override
             public boolean isFixed() {
                 return isFixed;
@@ -103,7 +111,10 @@ public class ViewerController {
         viewersRepository.addViewer(linkViewer);
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
-        viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
+        viewersRepository.addViewer(new AudioViewer(new AttachmentSearcherImpl()));
+        viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl(), () -> {
+            changeToViewer(metadataViewer);
+        }));
 
         new Thread() {
             public void run() {
@@ -116,7 +127,7 @@ public class ViewerController {
                     URI jarUri = URLUtil.getURL(LibreOfficeViewer.class).toURI();
                     File moduledir = new File(jarUri).getParentFile().getParentFile();
                     LibreOfficeFinder loFinder = new LibreOfficeFinder(moduledir);
-                    final String pathLO = loFinder.getLOPath();
+                    final String pathLO = loFinder.getLOPath(false);
                     if (pathLO != null) {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override
@@ -194,8 +205,7 @@ public class ViewerController {
     public boolean validateViewer(AbstractViewer viewer) {
         if (viewer.equals(viewersRepository)) {
             if (viewersRepository.getPanel().isShowing()) {
-                if (officeViewer != null && viewersRepository.getCurrentViewer() != null
-                        && viewersRepository.getCurrentViewer().equals(officeViewer)) {
+                if (officeViewer != null && viewersRepository.getCurrentViewer() != null && viewersRepository.getCurrentViewer().equals(officeViewer)) {
                     new Thread() {
                         public void run() {
                             officeViewer.constructLOFrame();
@@ -219,7 +229,7 @@ public class ViewerController {
         boolean currFixed = isFixed;
         isFixed = true;
         loadFile(this.file, this.viewFile, this.contentType, this.highlightTerms);
-        isFixed = currFixed; 
+        isFixed = currFixed;
     }
 
     public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms) {
@@ -255,7 +265,7 @@ public class ViewerController {
         }
         for (AbstractViewer viewer : viewers) {
             if (!viewer.equals(requested)) {
-                updateViewer(viewer, true);
+                updateViewer(viewer, true, false);
             }
         }
     }
@@ -289,14 +299,13 @@ public class ViewerController {
         return highlightTerms != null && !highlightTerms.isEmpty();
     }
 
-    public void updateViewer(AbstractViewer viewer, boolean clean) {
-        if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits())) {
+    public void updateViewer(AbstractViewer viewer, boolean clean, boolean forceLoad) {
+        if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits()) || forceLoad) {
             if (isInitialized())
                 loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);
             if (dock != null) {
-                boolean hitsEnabled = viewFile != null
-                        && ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
+                boolean hitsEnabled = viewFile != null && ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
 
                 ((CButton) dock.getAction("prevHit")).setEnabled(hitsEnabled);
                 ((CButton) dock.getAction("nextHit")).setEnabled(hitsEnabled);
@@ -306,6 +315,11 @@ public class ViewerController {
                     CSelButton butToolbar = (CSelButton) dock.getAction("toolbar");
                     butToolbar.setEnabled(toolbarSupport == 1);
                     butToolbar.setSelected(toolbarSupport == 1 && viewer.isToolbarVisible());
+                }
+
+                CButton butSearch = (CButton) dock.getAction("searchInViewer");
+                if (butSearch != null) {
+                    butSearch.setEnabled(viewer.isSearchSupported());
                 }
             }
         } else {
@@ -349,7 +363,9 @@ public class ViewerController {
                 if (tika == null) {
                     tika = new Tika();
                 }
-                viewType = tika.detect(viewFile.getTempFile());
+                try (TikaInputStream stream = TikaInputStream.get(viewFile.getSeekableInputStream())) {
+                    viewType = tika.detect(stream);
+                }
                 return;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -371,5 +387,34 @@ public class ViewerController {
             }
         }
         return result;
+    }
+
+    public void notifyAppLoaded() {
+
+        boolean faceRecognitionEnabled = Optional
+                .ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(FaceRecognitionConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasFaceRecognitionInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_COUNT) != null;
+        boolean enableHighlightFacesButton = faceRecognitionEnabled || hasFaceRecognitionInIndex;
+
+        boolean ageEstimationEnabled = Optional
+                .ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(AgeEstimationConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasAgeEstimationInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_AGE_LABELS) != null;
+        boolean enableAgeEstimationCombo = ageEstimationEnabled || hasAgeEstimationInIndex;
+
+        viewersRepository
+                .getViewerList()
+                .stream()
+                .filter(ImageViewer.class::isInstance)
+                .map(ImageViewer.class::cast)
+                .forEach(viewer -> {
+                    viewer.setEnableHighlightFacesButton(enableHighlightFacesButton);
+                    viewer.setEnableAgeEstimationCombo(enableAgeEstimationCombo);
+                });
     }
 }

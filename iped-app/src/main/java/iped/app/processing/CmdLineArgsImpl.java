@@ -51,7 +51,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     @Parameter(names = { "-d", "-data" }, description = "input data (can be used multiple times): "
-            + "folder, DD, 001, E01 images (+AFF on Linux), ISO, physical drive, "
+            + "DD, 001, E01, Ex01, VHD, VHDX, VMDK, Physical Drive, ISO, AFF (on Linux), AD1, UFDR, folder "
             + "or *.iped file (with tagged files to export and reindex)", validateWith = DatasourceExistsValidator.class, order = 0, splitter = NoSplitter.class)
     private List<File> datasources;
 
@@ -435,17 +435,16 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             Main.getInstance().logFile = this.logFile;
         }
 
-        if (outputDir != null) {
-            Main.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
-        } else {
-            Main.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
+        if (outputDir == null) {
+            outputDir = datasources.get(0).getParentFile();
         }
+        Main.getInstance().output = new File(outputDir, "iped");
 
         File file = outputDir;
         while (file != null) {
             for (File source : Main.getInstance().dataSource) {
                 if (file.getAbsoluteFile().equals(source.getAbsoluteFile())) {
-                    throw new ParameterException("Output folder can not be equal or subdir of input!"); //$NON-NLS-1$
+                    throw new ParameterException("The output folder can not be equal or a subfolder of an input!");
                 }
             }
             file = file.getParentFile();

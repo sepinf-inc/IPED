@@ -13,6 +13,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
      */
     private static final long serialVersionUID = 1L;
 
+    private static final String CONFIG_FILE0 = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String CONFIG_FILE = "conf/OCRConfig.txt"; //$NON-NLS-1$
 
     private Boolean enableOCR;
@@ -32,7 +33,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
         public boolean accept(Path entry) throws IOException {
-            return entry.endsWith(CONFIG_FILE);
+            return entry.endsWith(CONFIG_FILE0) || entry.endsWith(CONFIG_FILE);
         }
     };
 
@@ -42,11 +43,25 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     }
 
     @Override
+    public void processConfig(Path resource) throws IOException {
+        UTF8Properties loaded = new UTF8Properties();
+        loaded.load(resource.toFile());
+        if (resource.endsWith(CONFIG_FILE) && loaded.containsKey("enableOCR")) { //$NON-NLS-1$
+            throw new IOException("Deprecated enableOCR entry in " + resource
+                    + ". Remove enableOCR from OCRConfig.txt and configure it in IPEDConfig.txt.");
+        }
+        properties.putAll(loaded);
+        processProperties(properties);
+    }
+
+    @Override
     public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("enableOCR"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             enableOCR = Boolean.valueOf(value.trim());
+        } else if (enableOCR == null) {
+            enableOCR = false;
         }
 
         value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$

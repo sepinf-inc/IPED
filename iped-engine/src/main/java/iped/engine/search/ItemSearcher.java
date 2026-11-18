@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
 import iped.data.IItemReader;
 import iped.engine.data.IPEDSource;
@@ -41,6 +40,15 @@ public class ItemSearcher implements IItemSearcher {
     }
 
     @Override
+    public IItemReader searchFirst(String luceneQuery) {
+        SearchResult result = getResult(luceneQuery);
+        if (result.getLength() > 0) {
+            return iSource.getItemByID(result.getId(0));
+        }
+        return null;
+    }
+
+    @Override
     public Iterable<IItemReader> searchIterable(String luceneQuery) {
 
         SearchResult result = getResult(luceneQuery);
@@ -68,10 +76,10 @@ public class ItemSearcher implements IItemSearcher {
     }
 
     private SearchResult getResult(String luceneQuery) {
-        IPEDSearcher searcher = new IPEDSearcher(iSource, luceneQuery);
-        searcher.setTreeQuery(true);
-        searcher.setNoScoring(true);
         try {
+            IPEDSearcher searcher = new IPEDSearcher(iSource, luceneQuery);
+            searcher.setTreeQuery(true);
+            searcher.setNoScoring(true);
             return searcher.search();
 
         } catch (Exception e) {
@@ -88,8 +96,7 @@ public class ItemSearcher implements IItemSearcher {
 
     @Override
     public String escapeQuery(String string) {
-        string = string.replace('“', '"').replace('”', '"');
-        return QueryParserUtil.escape(string);
+        return QueryBuilder.escape(string);
     }
 
 }

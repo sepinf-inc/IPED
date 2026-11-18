@@ -327,28 +327,44 @@ L.KML = L.MarkerClusterGroup.extend({
     	}
 		window.app.selectMarkerBF(mids);
 	},
-	selecionaMarcador: function (id, b){
-		for(i=0;i<id.length;i++){
+    selecionaMarcador: function (id, b){
+        selecionaMarcador(id, b, true);
+    },
+    selecionaMarcador: function (id, b, notify){
+        for(i=0;i<id.length;i++){
             mark=this.markers[id[i]];
-			if(b=='true'){
-				mark.selected='true';
-				//mark.showDirectionLines(); 
-				this.selectedPlacemarks.push(mark);
-			}else{
-				mark.selected='false';
+            if(b=='true'){
+                mark.selected='true';
+                //mark.showDirectionLines(); 
+                this.selectedPlacemarks.push(mark);
+            }else{
+                mark.selected='false';
                 mark.hideDirectionLines();
                 let i = this.selectedPlacemarks.indexOf(mark);
                 if(i>-1){
                     this.selectedPlacemarks.splice(i,1);
                 }
-			}
-			mark.atualizaIcone();
-			mark.onClick();
-		}
-	},
+            }
+            mark.atualizaIcone();
+            if(notify){
+                mark.onClick();
+            }
+        }
+    },
+    checkMarcador: function (id, b, notify){
+            for(i=0;i<id.length;i++){
+                mark=this.markers[id[i]];
+                if(b=='true'){
+                    mark.checked='true';
+                }else{
+                    mark.checked='false';
+                }
+                mark.atualizaIcone();
+            }
+    },
 	marca: function (id, b){
         try{
-            let marker_checkbox = document.getElementById('marker_checkbox')
+            let marker_checkbox = document.getElementById('marker_checkbox_'+this.id)
             if(b=='true'){
                 this.markers[id].checked='true';
                 if(marker_checkbox){
@@ -687,8 +703,6 @@ L.KML = L.MarkerClusterGroup.extend({
     highlight: function(mark){
         mark.selected='true';
         this.selectedPlacemarks.push(mark);        
-        //mark.showDirectionLines();
-        mark.atualizaIcone();
     },
     
     unhighlight: function(mark){
@@ -704,11 +718,19 @@ L.KML = L.MarkerClusterGroup.extend({
         var m = new L.KMLMarker(new L.LatLng(lat, long), options);
         m.id=id;
         m.styles = this.styles;
-        m.checked=checked;
+        if(checked){
+            m.checked='true';
+        }else{
+            m.checked='false';
+        }
         m.selected=selected;
         m.name = name;
         m.descr = descr;
-        m.bindPopup('<input type="checkbox" id="marker_checkbox" value=""  onclick="L.checkMarker(window.clickedMark.id)"/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
+        checkedstr='';
+        if(checked){
+            checkedstr='checked';
+        }
+        m.bindPopup('<input type="checkbox" id="marker_checkbox_'+id+'"  '+checkedstr+' value=""  onclick="L.checkMarker(window.clickedMark.id)"/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
         this.popupOpened=false;
         m.styleUrl='#item';
         m.parent=this;
@@ -901,9 +923,15 @@ L.KML = L.MarkerClusterGroup.extend({
                         this.placemarks.push(m);
                         this.placemarkIndexes.push(a[i][1]);
                         if(a[i][2]){
-                            m.checked = 'true';
+                            if(m.checked != 'true'){
+                                m.checked = 'true';
+                                m.atualizaIcone();
+                            }
                         }else{
-                            m.checked = 'false';
+                            if(m.checked != 'false'){
+                                m.checked = 'false';
+                                m.atualizaIcone();
+                            }
                         }
                         this.orderedVisiblePlacemarks.push(null);
                         this.visibleMarkerCoords.push(null);
@@ -1310,43 +1338,47 @@ L.KMLMarker = L.Marker.extend({
 	onClick: function(e){
         try{
             window.clickedMark = this;
-            
+            var modf = '';
+
             //workaround to skip leaflet behaviour that invokes onClick twice, the one programatically invoked is skipped;
             if(!e.originalEvent.isTrusted) {
                 return;
             }
     
             if(this.parent){
-                if(!e.originalEvent.shiftKey){
+                if(!e.originalEvent.ctrlKey && !e.originalEvent.shiftKey){
                     this.parent.deselectAll();
                 }
             }
-    
-            if(this.selected=='true'){
-                this.parent.unhighlight(this);
-            }else{
-                this.parent.highlight(this);
-            }
-            this.atualizaIcone();
-    
+
             if(e.originalEvent.ctrlKey){
+                modf=modf+'|ctrl';
                 if(this.checked=='true'){
                     this.checked='false';
                 }else{
                     this.checked='true';
                 }
-                this.atualizaIcone();
-            }
-
-            if(this.checked=='true'){
-                document.getElementById('marker_checkbox').checked=true;
             }else{
-                document.getElementById('marker_checkbox').checked=false;
+                if(this.selected=='true'){
+                    this.parent.unhighlight(this);
+                }else{
+                    this.parent.highlight(this);
+                }
+            }
+            this.atualizaIcone();
+
+            if(this.checked && this.checked=='true'){                
+                document.getElementById('marker_checkbox_'+this.id).checked=true;
+            }else{
+                document.getElementById('marker_checkbox_'+this.id).checked=false;
             }
             
             var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
+            
             if(e.originalEvent.shiftKey){
-                window.app.markerMouseClickedBF(this.id, button, 'shift');
+                modf=modf+'|shift';
+
+                window.app.markerMouseClickedBF(this.id, button, modf);
                 if(e.originalEvent.ctrlKey){
                     window.app.checkMarkerBF(this.id, this.checked=='true');
                 }
@@ -1354,7 +1386,7 @@ L.KMLMarker = L.Marker.extend({
                 if(e.originalEvent.ctrlKey){
                     window.app.checkMarkerBF(this.id, this.checked=='true');
                 }           
-                window.app.markerMouseClickedBF(this.id, button, '');
+                window.app.markerMouseClickedBF(this.id, button, modf);
             }
             
             this.parent.curMark=this;

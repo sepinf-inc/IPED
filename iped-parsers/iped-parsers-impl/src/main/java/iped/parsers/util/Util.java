@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +24,7 @@ import org.slf4j.Logger;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
@@ -33,8 +33,6 @@ import iped.utils.IOUtil;
 
 public class Util {
 
-    private static final String imageThumbsDir = "../../../../iped/thumbs/"; //$NON-NLS-1$
-    private static final String videoThumbsDir = "../../../../iped/view/"; //$NON-NLS-1$
     private static final int MAX_PREVIEW_SIZE = 128;
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 
@@ -116,7 +114,7 @@ public class Util {
         return result;
     }
 
-    public static String decodeUnknowCharset(byte[] data) {
+    public static String decodeUnknownCharset(byte[] data) {
         try {
             return decodeUTF16OrUTF8(data);
 
@@ -160,7 +158,7 @@ public class Util {
 
         } catch (IOException | TikaException e) {
             if (useFallbackDetection) {
-                return decodeUnknowCharset(data);
+                return decodeUnknownCharset(data);
             } else {
                 return decodeWindows1252(data);
             }
@@ -218,14 +216,16 @@ public class Util {
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         read = stream.read(out);
-                        if (msg != null)
+                        if (msg != null) {
                             msg.progress = true;
-
-                    } catch (Exception e) {
+                        }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.setDaemon(true);
@@ -238,14 +238,16 @@ public class Util {
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         read = stream.read(out);
                         if (read > 0) {
                             logger.warn(new String(out, 0, read));
                         }
-                    } catch (Exception e) {
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.setDaemon(true);
@@ -257,6 +259,10 @@ public class Util {
             return Collections.emptyList();
         List<IItemReader> items = searcher.search(query);
         return items;
+    }
+
+    public static IItemReader getFirstItem(String query, IItemSearcher searcher) {
+        return searcher == null ? null : searcher.searchFirst(query);
     }
 
     public static String getExportPath(IItemReader item) {
@@ -275,16 +281,27 @@ public class Util {
         return sb.toString();
     }
 
-    public static String getReportHref(String hash, String ext, String originalPath) {
-        String exportPath = getExportPath(hash, ext);
-        String path = getSourceFileIfExists(originalPath);
-        return "javascript:openIfExists('" + exportPath + "','" + path + "')";
-    }
-
     public static String getReportHref(IItemReader item) {
         String exportPath = getExportPath(item);
         String originalPath = getSourceFileIfExists(item).orElse("");
-        return "javascript:openIfExists('" + exportPath + "','" + originalPath + "')";
+        StringBuilder sb = new StringBuilder();
+        sb.append("javascript:open");
+        String type = item.getMediaType().getType();
+        if (type.equals("image")) {
+            sb.append("Image");
+        } else if (type.equals("audio")) {
+            sb.append("Audio");
+        } else if (type.equals("video")) {
+            sb.append("Video");
+        } else {
+            sb.append("Other");
+        }
+        sb.append("('");
+        sb.append(exportPath);
+        sb.append("','");
+        sb.append(originalPath);
+        sb.append("')");
+        return sb.toString();
     }
 
     public static String getSourceFileIfExists(String originalPath) {
@@ -325,39 +342,6 @@ public class Util {
             return null;
         }
         return file.toPath().toAbsolutePath().normalize().toString();
-    }
-
-    public static byte[] getPreview(IItemReader item) {
-        byte[] thumb = null;
-        InputStream is = null;
-        try {
-            String mime = item.getMediaType().toString();
-            if (mime.startsWith("image")) //$NON-NLS-1$
-                thumb = IOUtil.loadInputStream(is = item.getBufferedInputStream());
-            else if (mime.startsWith("video") && item.getViewFile() != null) //$NON-NLS-1$
-                thumb = Files.readAllBytes(item.getViewFile().toPath());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            IOUtil.closeQuietly(is);
-        }
-        return thumb;
-    }
-
-    public static String getThumbPath(IItemReader item) {
-        String thumbPath = null;
-        String mime = item.getMediaType().toString();
-        String hash = item.getHash();
-        if (hash != null && hash.length() > 1) {
-            if (mime.startsWith("image")) //$NON-NLS-1$
-                thumbPath = imageThumbsDir;
-            else if (mime.startsWith("video") && item.getViewFile() != null) //$NON-NLS-1$
-                thumbPath = videoThumbsDir;
-            if (thumbPath != null)
-                thumbPath += hash.charAt(0) + "/" + hash.charAt(1) + "/" + hash + ".jpg"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        }
-        return thumbPath;
     }
 
     public static String getParentPath(String path) {
@@ -445,5 +429,27 @@ public class Util {
         return file;
     }
 
+    public static File getFileWithRightExt(IItem item) throws IOException {
+        File file = item.getTempFile();
+        String ext = item.getType();
+        boolean isTmpFile = IOUtil.isTemporaryFile(file);
+        boolean badExt = !ext.isEmpty() && !file.getName().endsWith("." + ext);
+        if (!isTmpFile && badExt) {
+            File tmp = File.createTempFile("iped", "." + ext);
+            tmp.deleteOnExit();
+            IOUtil.copyFile(file, tmp);
+            return tmp;
+        } else {
+            if (isTmpFile) {
+                file.deleteOnExit();
+                if (badExt) {
+                    file = Util.getFileRenamedToExt(file, ext);
+                }
+            } else {
+                file.setReadOnly();
+            }
+            return file;
+        }
+    }
 
 }

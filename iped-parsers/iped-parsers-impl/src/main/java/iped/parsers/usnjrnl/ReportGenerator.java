@@ -59,7 +59,7 @@ public class ReportGenerator {
         out.println("</BODY></HTML>"); //$NON-NLS-1$
     }
 
-    public InputStream createHTMLReport(List<UsnJrnlEntry> entries) {
+    public InputStream createHTMLReport(List<UsnJrnlEntry> entries, Exception entriesReadError) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
@@ -90,6 +90,8 @@ public class ReportGenerator {
 
         out.print("</table>");
 
+        out.print("<b>Error during additional entries read:</b>" + entriesReadError.getMessage());
+
         endHTMLDocument(out);
 
         out.close();
@@ -97,7 +99,8 @@ public class ReportGenerator {
 
     }
 
-    public InputStream createCSVReport(List<UsnJrnlEntry> entries, TemporaryResources tmp) throws IOException {
+    public InputStream createCSVReport(List<UsnJrnlEntry> entries, TemporaryResources tmp, Exception entriesReadError)
+            throws IOException {
         Path path = tmp.createTempFile();
         try (OutputStream os = Files.newOutputStream(path);
                 Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8);

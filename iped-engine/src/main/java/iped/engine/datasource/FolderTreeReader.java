@@ -30,6 +30,9 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
@@ -44,6 +47,8 @@ import iped.utils.FileInputStreamFactory;
 public class FolderTreeReader extends DataSourceReader {
 
     public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
+
+    private static final Logger logger = LoggerFactory.getLogger(FolderTreeReader.class);
 
     private FileInputStreamFactory inputStreamFactory;
 
@@ -227,9 +232,7 @@ public class FolderTreeReader extends DataSourceReader {
             parents.pollLast();
 
             if (exception != null) {
-                System.err.println(
-                        new Date() + "\t[WARN]\t" + "Directory ignored: " + path.toFile().getAbsolutePath() + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                + exception.toString());
+                logger.error("Directory ignored: " + path.toFile().getAbsolutePath() + ": " + exception.toString());
             }
 
             return FileVisitResult.CONTINUE;
@@ -239,8 +242,7 @@ public class FolderTreeReader extends DataSourceReader {
         public FileVisitResult visitFileFailed(Path path, IOException exception) throws IOException {
 
             if (exception != null) {
-                System.err.println(new Date() + "\t[WARN]\t" + "File ignored: " + path.toFile().getAbsolutePath() + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        + exception.toString());
+                logger.error("File/Folder ignored: " + path.toFile().getAbsolutePath() + ": " + exception.toString());
             }
 
             return FileVisitResult.CONTINUE;

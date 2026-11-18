@@ -18,7 +18,8 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
     private boolean toAddUnallocated = false;
     private boolean toAddFileSlacks = false;
     private boolean robustImageReading;
-    private int numImageReaders = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 4);
+    // Adjusted to 1/6 rounded up (see #2480)
+    private int numImageReaders = (Runtime.getRuntime().availableProcessors() + 5) / 6;
     private long unallocatedFragSize = 1 << 30;
     private long minOrphanSizeToIgnore = -1;
     private boolean ignoreHardLinks = true;
@@ -93,6 +94,10 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
 
     public boolean isRobustImageReading() {
         return robustImageReading;
+    }
+
+    public void setRobustImageReading(boolean value) {
+        this.robustImageReading = value;
     }
 
     public int getNumImageReaders() {

@@ -43,6 +43,8 @@ import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.io.ISeekableInputStreamFactory;
+import iped.localization.LocaleResolver;
+import iped.properties.ExtraProperties;
 import iped.utils.FileInputStreamFactory;
 import iped.viewers.ImageViewer;
 import iped.viewers.api.CancelableWorker;
@@ -99,7 +101,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             doc.add(new StoredField(IndexItem.NAME, "Help")); //$NON-NLS-1$
             doc.add(new StoredField(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString()));
 
-            String locale = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP);
+            String locale = LocaleResolver.getLocaleString();
             String helpPath = IPEDSource.MODULE_DIR + "/help/Help_" + locale + ".htm"; // $NON-NLS-1$ // $NON-NLS-2$
             if (!new File(caseDir, helpPath).exists()) {
                 helpPath = IPEDSource.MODULE_DIR + "/help/Help.htm"; // $NON-NLS-1$
@@ -155,13 +157,16 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         if (item.getMediaType() != null) {
             contentType = item.getMediaType().toString();
         }
-        
-        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) != null;
-        App.get().setEnableGallerySimSearchButton(enabled);
+
+        boolean imgSimEnabled = item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) != null;
+        App.get().setEnableGallerySimSearchButton(imgSimEnabled);
+
+        boolean faceEnabled = item.getExtraAttribute(ExtraProperties.FACE_ENCODINGS) != null;
+        App.get().setEnableGalleryFaceSearchButton(faceEnabled);
 
         IItem viewItem = item;
 
-        if (item.getViewFile() != null) {
+        if (item.getViewFile() != null || item.hasPreview()) {
             viewItem = IndexItem.getItem(doc, iCase, true);
         }
 
@@ -180,24 +185,23 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);
 
         if (listRelated) {
-            App.get().subItemModel.listSubItems(doc);
+            App.get().subItemModel.listItems(doc);
             if (Thread.currentThread().isInterrupted()) {
                 return;
             }
-            App.get().parentItemModel.listParents(doc);
+            App.get().parentItemModel.listItems(doc);
 
-            App.get().duplicatesModel.listDuplicates(doc);
+            App.get().duplicatesModel.listItems(doc);
 
-            App.get().referencedByModel.listReferencingItems(doc);
+            App.get().referencedByModel.listItems(doc);
 
-            App.get().referencesModel.listReferencingItems(doc);
+            App.get().referencesModel.listItems(doc);
         }
     }
 
     private void waitEvidenceOpening(final IItem item) throws InterruptedException {
         ISeekableInputStreamFactory factory = item.getInputStreamFactory();
-        if (!(factory instanceof SleuthkitInputStreamFactory) && !(factory instanceof ZIPInputStreamFactory)
-                && !(factory instanceof AD1InputStreamFactory)) {
+        if (!(factory instanceof SleuthkitInputStreamFactory) && !(factory instanceof ZIPInputStreamFactory) && !(factory instanceof AD1InputStreamFactory)) {
             return;
         }
         if (!dataSourceOpened.contains(item.getDataSource().getUUID())) {
