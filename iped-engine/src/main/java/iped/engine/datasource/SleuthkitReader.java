@@ -713,8 +713,6 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
 
-    private static final int SQLITE_BUSY_ERROR = 5;
-
     private List<AbstractFile> findFilesWhere(String where) throws TskCoreException, InterruptedException {
         long start = System.currentTimeMillis() / 1000;
         while (true) {
@@ -893,20 +891,6 @@ public class SleuthkitReader extends DataSourceReader {
             evidence.setLength(absFile.getSize());
         }
 
-        if (absFile.getOwnerUid().isPresent()) {
-            evidence.setExtraAttribute(ExtraProperties.OWNER_ID, absFile.getOwnerUid().get());
-        }
-        if (absFile.getOsAccountObjectId().isPresent()) {
-            OsAccount user = sleuthCase.getOsAccountManager()
-                    .getOsAccountByObjectId(absFile.getOsAccountObjectId().get());
-            if (user != null) {
-                if (user.getLoginName().isPresent())
-                    evidence.setExtraAttribute(ExtraProperties.OWNER_LOGIN, user.getLoginName().get());
-                if (user.getFullName().isPresent())
-                    evidence.setExtraAttribute(ExtraProperties.OWNER_FULL_NAME, user.getFullName().get());
-            }
-        }
-
         if (listOnly || fastmode || embeddedDisk) {
             itemCount++;
             caseData.incDiscoveredEvidences(1);
@@ -917,6 +901,22 @@ public class SleuthkitReader extends DataSourceReader {
             }
             if (listOnly)
                 return null;
+        }
+
+        if (absFile.getOwnerUid().isPresent()) {
+            evidence.setExtraAttribute(ExtraProperties.OWNER_ID, absFile.getOwnerUid().get());
+        }
+        if (absFile.getOsAccountObjectId().isPresent()) {
+            OsAccount user = sleuthCase.getOsAccountManager()
+                    .getOsAccountByObjectId(absFile.getOsAccountObjectId().get());
+            if (user != null) {
+                if (user.getLoginName().isPresent()) {
+                    evidence.setExtraAttribute(ExtraProperties.OWNER_LOGIN, user.getLoginName().get());
+                }
+                if (user.getFullName().isPresent()) {
+                    evidence.setExtraAttribute(ExtraProperties.OWNER_FULL_NAME, user.getFullName().get());
+                }
+            }
         }
 
         evidence.setDataSource(dataSource);
