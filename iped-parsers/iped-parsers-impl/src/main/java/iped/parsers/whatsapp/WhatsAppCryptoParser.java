@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
@@ -92,6 +95,9 @@ public class WhatsAppCryptoParser extends AbstractParser {
     private static final String WHATSAPP_METADATA_APP_VERSION = WHATSAPP_METADATA_PREFIX + "appVersion";
     private static final String WHATSAPP_METADATA_KEY_PATH = WHATSAPP_METADATA_PREFIX + "decryptionKeyPath";
 
+    /** Tool used to decrypt the file and its version, e.g. "wa-crypt-tools 0.1.0". */
+    private static final String WHATSAPP_METADATA_DECRYPTION_TOOL = WHATSAPP_METADATA_PREFIX + "decryptionTool";
+
     /** Result of the decryption attempt, one of the {@link DecryptionStatus} values. */
     private static final String WHATSAPP_METADATA_DECRYPTION_STATUS = WHATSAPP_METADATA_PREFIX + "decryptionStatus";
 
@@ -102,6 +108,12 @@ public class WhatsAppCryptoParser extends AbstractParser {
     private enum DecryptionStatus {
         decrypted, alreadyDecrypted, keyNotFound, failed, toolUnavailable;
     }
+
+    private static final String TOOL_NAME = "wa-crypt-tools";
+
+    /** File shipped with wa-crypt-tools declaring its version, its sources do not. */
+    private static final String TOOL_VERSION_FILE = "pyproject.toml";
+    private static final Pattern TOOL_VERSION_PATTERN = Pattern.compile("(?m)^version\\s*=\\s*\"([^\"]+)\"");
 
     private static final String PY_MODULE = "wa_decrypt";
     private static final String PY_RESOURCE = PY_MODULE + ".py";
@@ -117,6 +129,9 @@ public class WhatsAppCryptoParser extends AbstractParser {
     // only read and written inside the synchronized extractPyModule(), so it needs
     // neither to be volatile nor atomic
     private static File pyModuleFolder;
+
+    // lazily read by getDecryptionTool(), it is the same value for all threads
+    private static volatile String decryptionTool;
 
     /** Tells if the helper module was already loaded in the interpreter of this thread. */
     private static final ThreadLocal<Boolean> moduleLoaded = ThreadLocal.withInitial(() -> false);
@@ -258,6 +273,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
             logger.info("Decrypted {} using key {}", item.getPath(), usedKey.getPath());
             metadata.set(WHATSAPP_METADATA_DECRYPTION_STATUS, DecryptionStatus.decrypted.toString());
             metadata.set(WHATSAPP_METADATA_KEY_PATH, usedKey.getPath());
+            metadata.set(WHATSAPP_METADATA_DECRYPTION_TOOL, getDecryptionTool());
             if (StringUtils.isNotBlank(usedKey.getHash())) {
                 metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + usedKey.getHash());
             }
@@ -322,6 +338,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
         Metadata dbMetadata = new Metadata();
         dbMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, getDecryptedName(item));
         dbMetadata.set(WHATSAPP_METADATA_IS_DECRYPTED, Boolean.toString(true));
+        dbMetadata.set(WHATSAPP_METADATA_DECRYPTION_TOOL, getDecryptionTool());
         dbMetadata.set(ExtraProperties.DECODED_DATA, Boolean.toString(true));
         if (item.getCreationDate() != null) {
             dbMetadata.set(TikaCoreProperties.CREATED, item.getCreationDate());
@@ -449,6 +466,27 @@ public class WhatsAppCryptoParser extends AbstractParser {
         }
         moduleLoaded.set(true);
         return jep;
+    }
+
+    /**
+     * Returns the name of the tool used to decrypt followed by its version, or just
+     * its name if the version is unknown.
+     */
+    private static String getDecryptionTool() {
+        if (decryptionTool == null) {
+            String tool = TOOL_NAME;
+            File versionFile = new File(System.getProperty(TOOL_PATH_PROP), TOOL_VERSION_FILE);
+            try {
+                Matcher matcher = TOOL_VERSION_PATTERN.matcher(Files.readString(versionFile.toPath(), StandardCharsets.UTF_8));
+                if (matcher.find()) {
+                    tool += " " + matcher.group(1);
+                }
+            } catch (IOException e) {
+                logger.warn("Could not read {} version from {}: {}", TOOL_NAME, versionFile, e.toString());
+            }
+            decryptionTool = tool;
+        }
+        return decryptionTool;
     }
 
     /** Extracts the helper module from the classpath once, returning its folder. */

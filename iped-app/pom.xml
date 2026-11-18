@@ -101,6 +101,8 @@
 								<include>*/src/**</include>
 								<include>*/LICENSE</include>
 								<include>*/requirements.txt</include>
+								<!-- the version is read from it -->
+								<include>*/pyproject.toml</include>
 							</includes>
 							<fileMappers>
 			                  <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
