@@ -114,9 +114,6 @@ class WordReportChatCropDialog extends JDialog {
                 text.append("\n\n");
             }
             text.append(audio.text);
-            if (audio.metadata.containsKey("Hash")) {
-                text.append("\nHash: ").append(audio.metadata.get("Hash"));
-            }
         }
         transcription.setText(text.length() == 0 ? message("ChatCropNoTranscript") : text.toString());
         transcription.setCaretPosition(0);

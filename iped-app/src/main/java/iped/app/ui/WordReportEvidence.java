@@ -59,6 +59,16 @@ public class WordReportEvidence {
     }
 
     public static WordReportDocument.Evidence read(IPEDMultiSource source, IItemId id, boolean includeText, Path work) throws Exception {
+        return read(source, id, includeText, work, true);
+    }
+
+    /** Selection previews reuse existing thumbnails; full video generation waits for report review. */
+    static WordReportDocument.Evidence preview(IPEDMultiSource source, IItemId id, boolean includeText) throws Exception {
+        return read(source, id, includeText, null, false);
+    }
+
+    private static WordReportDocument.Evidence read(IPEDMultiSource source, IItemId id, boolean includeText,
+            Path work, boolean generateFrames) throws Exception {
         IItem item = source.getItemByItemId(id);
         try {
             if (isChat(item.getMediaType().toString(), item.getName())) {
@@ -75,10 +85,12 @@ public class WordReportEvidence {
             if (type == 1) {
                 result.image = ImageUtil.getSubSampledImage(item, 1600);
                 result.imageDescription = item.getName();
-            } else if (type == 2) {
+            } else if (type == 2 && generateFrames) {
                 result.videoFrames.addAll(WordReportVideo.read(item, work));
                 result.image = WordReportVideo.contactSheet(result.videoFrames);
                 result.imageDescription = item.getName();
+            } else if (type == 2 && item.getViewFile() != null) {
+                result.image = ImageIO.read(item.getViewFile());
             }
             if ((type == 1 || type == 2) && result.image == null) {
                 if (item.getThumb() != null) {

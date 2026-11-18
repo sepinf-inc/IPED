@@ -69,7 +69,8 @@ public class WordReportDocument {
         public boolean audio;
         public boolean video;
         public boolean chatCapture;
-        public boolean besidePreviousChat;
+        public boolean besidePrevious;
+        public boolean separateRow;
         public final List<BufferedImage> videoFrames = new ArrayList<>();
         public final List<Evidence> transcripts = new ArrayList<>();
         public final List<Evidence> messages = new ArrayList<>();
@@ -366,42 +367,48 @@ public class WordReportDocument {
             }
         }
         int inserted = 0;
-        Element previousChat = previousChatTable(location);
+        Element previousFrame = previousFrameTable(location);
         for (int i = 0; i < evidence.size();) {
-            if (evidence.get(i).chatCapture) {
-                Evidence chat = evidence.get(i);
-                if (chat.besidePreviousChat) {
-                    if (previousChat == null || !canPairChat(previousChat)) {
-                        throw new IOException(Messages.getString("WordReport.PreviousChatUnavailable"));
-                    }
-                    pairChatTable(previousChat, chat, includeText);
-                    previousChat = null;
-                } else {
-                    previousChat = chatTable(chat, includeText);
-                    body.insertBefore(previousChat, before);
-                    body.insertBefore(paragraph("", false), before);
-                    inserted += 2;
+            Evidence item = evidence.get(i);
+            if (item.besidePrevious) {
+                if (item.chatCapture ? !canPairChat(previousFrame) : !isImageFrame(item) || !canPairImage(previousFrame)) {
+                    throw new IOException(Messages.getString("WordReport.PreviousEvidenceUnavailable"));
                 }
+                pairFrameTable(previousFrame, item, includeText);
+                previousFrame = null;
                 i++;
                 continue;
             }
-            previousChat = null;
-            if (evidence.get(i).video) {
-                body.insertBefore(videoTable(evidence.get(i), includeText), before);
+            if (item.chatCapture) {
+                previousFrame = chatTable(item, includeText);
+                body.insertBefore(previousFrame, before);
                 body.insertBefore(paragraph("", false), before);
                 inserted += 2;
                 i++;
                 continue;
             }
-            boolean message = evidence.get(i).message;
+            previousFrame = null;
+            if (item.video) {
+                body.insertBefore(videoTable(item, includeText), before);
+                body.insertBefore(paragraph("", false), before);
+                inserted += 2;
+                i++;
+                continue;
+            }
+            boolean message = item.message;
             int end = i + 1;
-            while (end < evidence.size() && !evidence.get(end).video && !evidence.get(end).chatCapture && evidence.get(end).message == message
-                    && (message || end - i < columns)) {
+            while (end < evidence.size() && !evidence.get(end).video && !evidence.get(end).chatCapture
+                    && !evidence.get(end).besidePrevious && !evidence.get(end).separateRow
+                    && evidence.get(end).message == message && (message || end - i < columns)) {
                 end++;
             }
             List<Evidence> group = evidence.subList(i, end);
-            body.insertBefore(message ? messageTable(group, includeText) : evidenceTable(group, includeMetadata, includeText), before);
+            Element table = message ? messageTable(group, includeText) : evidenceTable(group, includeMetadata, includeText);
+            body.insertBefore(table, before);
             body.insertBefore(paragraph("", false), before);
+            if (!message && group.size() == 1 && isImageFrame(item)) {
+                previousFrame = table;
+            }
             inserted += 2;
             i = end;
         }
@@ -445,6 +452,9 @@ public class WordReportDocument {
     private Element evidenceTable(List<Evidence> evidence, boolean includeMetadata, boolean includeText) throws Exception {
         long[] widths = mediaWidths(evidence.size());
         Element table = reportTable(widths);
+        if (includeMetadata && evidence.size() == 1 && isImageFrame(evidence.get(0))) {
+            append((Element) table.getFirstChild(), W, "w:tblCaption").setAttributeNS(W, "w:val", "IPED_IMAGE_SINGLE");
+        }
         Element content = append(table, W, "w:tr");
         for (int i = 0; i < evidence.size(); i++) {
             Evidence item = evidence.get(i);
@@ -474,25 +484,49 @@ public class WordReportDocument {
     }
 
     public boolean hasPreviousChat(int location) {
-        return previousChatTable(location) != null;
+        return canPairChat(previousFrameTable(location));
     }
 
-    /** Only the immediately preceding, still unpaired export can receive another crop. */
-    private Element previousChatTable(int location) {
+    public boolean hasPreviousImage(int location) {
+        return canPairImage(previousFrameTable(location));
+    }
+
+    /** Only the immediately preceding, still unpaired frame can receive another image. */
+    private Element previousFrameTable(int location) {
         for (int i = Math.min(location, blocks.size()) - 1; i >= 0; i--) {
             Element block = blocks.get(i);
             if ("p".equals(block.getLocalName()) && text(block).trim().isEmpty()
                     && block.getElementsByTagNameNS(W, "drawing").getLength() == 0) {
                 continue;
             }
-            return canPairChat(block) ? block : null;
+            return block;
         }
         return null;
     }
 
+    private static boolean isImageFrame(Evidence item) {
+        return item.image != null && !item.audio && !item.video && !item.message && !item.chatCapture;
+    }
+
+    private boolean isSingleFrame(Element table) {
+        return table != null && "tbl".equals(table.getLocalName())
+                && table.getElementsByTagNameNS(W, "tr").getLength() == 3
+                && table.getElementsByTagNameNS(W, "drawing").getLength() == 1;
+    }
+
+    private boolean canPairImage(Element table) {
+        if (!isSingleFrame(table) || table.getElementsByTagNameNS(W, "tc").getLength() != 3) {
+            return false;
+        }
+        Element caption = (Element) table.getElementsByTagNameNS(W, "tblCaption").item(0);
+        if (caption != null) {
+            return "IPED_IMAGE_SINGLE".equals(caption.getAttributeNS(W, "val"));
+        }
+        return !text(table).contains("Chat_") && hasOwnImage(table) && text(table).contains(FILE_INFORMATION);
+    }
+
     private boolean canPairChat(Element table) {
-        if (!"tbl".equals(table.getLocalName()) || table.getElementsByTagNameNS(W, "tr").getLength() != 3
-                || table.getElementsByTagNameNS(W, "drawing").getLength() != 1) {
+        if (!isSingleFrame(table)) {
             return false;
         }
         Element caption = (Element) table.getElementsByTagNameNS(W, "tblCaption").item(0);
@@ -504,6 +538,10 @@ public class WordReportDocument {
         if (!text(table).contains("Chat_") || !text(table).contains(FILE_INFORMATION)) {
             return false;
         }
+        return hasOwnImage(table);
+    }
+
+    private boolean hasOwnImage(Element table) {
         Element blip = (Element) table.getElementsByTagNameNS(A, "blip").item(0);
         if (blip == null) {
             return false;
@@ -549,27 +587,13 @@ public class WordReportDocument {
                 Element properties = (Element) quote.getElementsByTagNameNS(W, "rPr").item(0);
                 properties.insertBefore(element(document, W, "w:i"), properties.getElementsByTagNameNS(W, "sz").item(0));
                 transcript.appendChild(quote);
-                String hash = audio.metadata.get("Hash");
-                if (hash != null && !hash.isEmpty()) {
-                    Element p = reportParagraph("", false, true, false);
-                    Element label = (Element) p.getElementsByTagNameNS(W, "r").item(0);
-                    ((Element) label.getElementsByTagNameNS(W, "t").item(0)).setTextContent("Hash:");
-                    append((Element) label.getFirstChild(), W, "w:b");
-                    append((Element) label.getFirstChild(), W, "w:highlight").setAttributeNS(W, "w:val", "lightGray");
-                    Element value = append(p, W, "w:r");
-                    reportRun(value, false, true);
-                    Element text = append(value, W, "w:t");
-                    text.setAttributeNS(XMLConstants.XML_NS_URI, "xml:space", "preserve");
-                    text.setTextContent(xmlText(" " + hash));
-                    transcript.appendChild(p);
-                }
                 transcript.appendChild(reportParagraph("", false, false, false));
             }
         }
     }
 
-    /** Reuse the approved left crop and its metadata, adding a distinct crop in the right column. */
-    private void pairChatTable(Element table, Evidence item, boolean includeText) throws Exception {
+    /** Retain the previous image and file information, adding a distinct image in the right column. */
+    private void pairFrameTable(Element table, Evidence item, boolean includeText) throws Exception {
         long[] widths = mediaWidths(2);
         NodeList rows = table.getElementsByTagNameNS(W, "tr");
         Element row = (Element) rows.item(0);
@@ -578,7 +602,10 @@ public class WordReportDocument {
         if (oldTranscript != null) {
             for (Node child = oldTranscript.getFirstChild(); child != null;) {
                 Node next = child.getNextSibling();
-                if (!"tcPr".equals(child.getLocalName())) {
+                if ("p".equals(child.getLocalName()) && text((Element) child).trim().startsWith("Hash:")) {
+                    // Earlier exports placed a redundant audio hash inside this transcription cell.
+                    oldTranscript.removeChild(child);
+                } else if (!"tcPr".equals(child.getLocalName())) {
                     left.appendChild(child);
                 }
                 child = next;
@@ -602,7 +629,11 @@ public class WordReportDocument {
             if (i == 0) {
                 right.appendChild(picture(item.image, item.imageDescription, widths[1], 5486400));
                 if (includeText) {
-                    appendChatTranscripts(right, item);
+                    if (item.chatCapture) {
+                        appendChatTranscripts(right, item);
+                    } else {
+                        appendText(right, item.text);
+                    }
                 }
             } else if (i == 1) {
                 right.appendChild(reportParagraph(FILE_INFORMATION, false, false, true));
@@ -629,7 +660,7 @@ public class WordReportDocument {
         if (caption == null) {
             caption = append(properties, W, "w:tblCaption");
         }
-        caption.setAttributeNS(W, "w:val", "IPED_CHAT_PAIR");
+        caption.setAttributeNS(W, "w:val", item.chatCapture ? "IPED_CHAT_PAIR" : "IPED_IMAGE_PAIR");
     }
 
     /** Other message items retain the reference's numbered four-column ledger. */

@@ -1,6 +1,7 @@
 package iped.app.ui;
 
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
@@ -49,6 +50,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -88,6 +90,8 @@ public class WordReportDialog extends JDialog {
         final WordReportChatSelection.Result capture;
         ReportItem beside;
         int besideLocation = -1;
+        int mediaType;
+        boolean separateRow;
 
         ReportItem(IItemId id, WordReportChatSelection.Result capture) {
             this.id = id;
@@ -110,6 +114,15 @@ public class WordReportDialog extends JDialog {
     private final JLabel pageNumber = new JLabel(" ");
     private final JScrollPane pageScroll = new JScrollPane(pageImage);
     private final JComboBox<String> zoom = new JComboBox<>(new String[] { message("FitPage"), "100%", "150%" });
+    private final CardLayout previewLayout = new CardLayout();
+    private final JPanel previewCards = new JPanel(previewLayout);
+    private final JPanel previewPanel = new JPanel(new BorderLayout(8, 8));
+    private final JLabel evidenceImage = new JLabel(message("SelectEvidencePreview"), JLabel.CENTER);
+    private final JTextArea evidenceText = new JTextArea();
+    private final JScrollPane evidenceScroll = new JScrollPane(evidenceImage);
+    private SwingWorker<WordReportDocument.Evidence, Void> evidenceWorker;
+    private ReportItem previewedItem;
+    private BufferedImage evidencePixels;
     private final JPanel content = new JPanel(new BorderLayout(8, 8));
     private final JPanel loading = new JPanel(new GridBagLayout());
     private final JLabel activity = new JLabel();
@@ -280,7 +293,7 @@ public class WordReportDialog extends JDialog {
         choices.setResizeWeight(0.65);
         choices.setDividerLocation(380);
         JPanel review = reviewPanel();
-        review.setBorder(BorderFactory.createTitledBorder(message("ReviewPanel")));
+        review.setBorder(BorderFactory.createTitledBorder(message("EvidencePreview")));
         JSplitPane workspace = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, choices, review);
         workspace.setResizeWeight(0.48);
         workspace.setDividerLocation(530);
@@ -337,11 +350,20 @@ public class WordReportDialog extends JDialog {
         tableModel.addTableModelListener(e -> {
             if (!updatingEvidence) {
                 invalidatePrepared();
+                updateActions();
             }
-            updateActions();
+        });
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!updatingEvidence && !e.getValueIsAdjusting()) {
+                showEvidencePreview();
+            }
         });
         layout.addActionListener(e -> invalidatePrepared());
-        text.addActionListener(e -> invalidatePrepared());
+        text.addActionListener(e -> {
+            invalidatePrepared();
+            showEvidencePreview();
+        });
         sections.addActionListener(e -> {
             if (!updatingLocations && loaded != null && !busy) {
                 updatePositions();
@@ -358,6 +380,12 @@ public class WordReportDialog extends JDialog {
             @Override
             public void componentResized(ComponentEvent e) {
                 fitPage();
+            }
+        });
+        evidenceScroll.getViewport().addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                fitEvidence();
             }
         });
         addWindowListener(new WindowAdapter() {
@@ -497,7 +525,97 @@ public class WordReportDialog extends JDialog {
         navigation.add(nextPage);
         navigation.add(zoom);
         panel.add(navigation, BorderLayout.SOUTH);
-        return panel;
+        evidenceText.setEditable(false);
+        evidenceText.setLineWrap(true);
+        evidenceText.setWrapStyleWord(true);
+        JSplitPane evidence = new JSplitPane(JSplitPane.VERTICAL_SPLIT, evidenceScroll, new JScrollPane(evidenceText));
+        evidence.setResizeWeight(0.7);
+        evidenceScroll.setMinimumSize(new Dimension(180, 100));
+        previewCards.add(evidence, "evidence");
+        previewCards.add(panel, "report");
+        previewPanel.add(previewCards, BorderLayout.CENTER);
+        return previewPanel;
+    }
+
+    private void showEvidencePreview() {
+        showEvidenceCard();
+        if (evidenceWorker != null) {
+            evidenceWorker.cancel(true);
+        }
+        int row = table.getSelectedRow();
+        previewedItem = row < 0 ? null : items.get(table.convertRowIndexToModel(row));
+        evidencePixels = null;
+        evidenceImage.setIcon(null);
+        evidenceText.setText("");
+        evidenceImage.setText(message(previewedItem == null ? "SelectEvidencePreview" : "LoadingEvidencePreview"));
+        if (previewedItem == null) {
+            return;
+        }
+        ReportItem selected = previewedItem;
+        boolean includeText = text.isSelected();
+        evidenceWorker = new SwingWorker<WordReportDocument.Evidence, Void>() {
+            @Override
+            protected WordReportDocument.Evidence doInBackground() throws Exception {
+                return selected.capture == null ? WordReportEvidence.preview(caseSource, selected.id, includeText)
+                        : WordReportEvidence.readChatCapture(caseSource, selected.id, selected.capture);
+            }
+
+            @Override
+            protected void done() {
+                if (isCancelled() || previewedItem != selected || !isDisplayable()) {
+                    return;
+                }
+                try {
+                    WordReportDocument.Evidence item = get();
+                    evidencePixels = item.image;
+                    evidenceImage.setText(item.image == null ? message("NoEvidenceImage") : "");
+                    StringBuilder details = new StringBuilder();
+                    if (includeText) {
+                        if (item.text != null && !item.text.isEmpty()) {
+                            details.append('\n').append(item.text);
+                        }
+                        for (WordReportDocument.Evidence audio : item.transcripts) {
+                            details.append("\n\n").append(audio.text);
+                        }
+                    }
+                    if (details.length() > 0) {
+                        details.append("\n\n");
+                    }
+                    for (java.util.Map.Entry<String, String> entry : item.metadata.entrySet()) {
+                        details.append(entry.getKey()).append(": ").append(entry.getValue()).append('\n');
+                    }
+                    evidenceText.setText(details.toString());
+                    evidenceText.setCaretPosition(0);
+                    fitEvidence();
+                } catch (Exception error) {
+                    LOGGER.warn("Could not preview Word report item: {}", error.getClass().getSimpleName());
+                    evidenceImage.setText(message("EvidencePreviewFailed"));
+                }
+            }
+        };
+        evidenceWorker.execute();
+    }
+
+    private void fitEvidence() {
+        if (evidencePixels == null) {
+            return;
+        }
+        Dimension available = evidenceScroll.getViewport().getExtentSize();
+        double scale = Math.min(1, Math.min(Math.max(1, available.width - 20) / (double) evidencePixels.getWidth(),
+                Math.max(1, available.height - 20) / (double) evidencePixels.getHeight()));
+        evidenceImage.setIcon(new ImageIcon(scale == 1 ? evidencePixels : evidencePixels.getScaledInstance(
+                Math.max(1, (int) (evidencePixels.getWidth() * scale)),
+                Math.max(1, (int) (evidencePixels.getHeight() * scale)), Image.SCALE_SMOOTH)));
+    }
+
+    private void showReportPreview() {
+        previewLayout.show(previewCards, "report");
+        previewPanel.setBorder(BorderFactory.createTitledBorder(message("ReviewPanel")));
+    }
+
+    private void showEvidenceCard() {
+        previewLayout.show(previewCards, "evidence");
+        previewPanel.setBorder(BorderFactory.createTitledBorder(message("EvidencePreview")));
     }
 
     private JButton button(String key, Runnable action) {
@@ -538,6 +656,7 @@ public class WordReportDialog extends JDialog {
             prepared = null;
             status.setText(message("PreviewOutdated"));
         }
+        showEvidenceCard();
         updateActions();
     }
 
@@ -562,10 +681,12 @@ public class WordReportDialog extends JDialog {
                     }
                 }
                 if (!exists) {
-                    if (entry.capture != null && !chooseChatPlacement(entry)) {
+                    Document doc = caseSource.getSearcher().doc(caseSource.getLuceneId(id));
+                    String mime = doc.get(IndexItem.CONTENTTYPE);
+                    entry.mediaType = mime == null ? 5 : WordReportEvidence.mediaType(mime);
+                    if ((entry.capture != null || entry.mediaType == 1 && selected.size() == 1) && !choosePlacement(entry)) {
                         continue;
                     }
-                    Document doc = caseSource.getSearcher().doc(caseSource.getLuceneId(id));
                     items.add(entry);
                     String name = doc.get(IndexItem.NAME);
                     if (entry.capture != null) {
@@ -576,7 +697,9 @@ public class WordReportDialog extends JDialog {
                             name = message("ChatBesideName", name);
                         }
                     }
-                    tableModel.addRow(new Object[] { true, id.getSourceId() + ":" + id.getId(), name, message("Pending") });
+                    String placement = entry.beside != null || entry.besideLocation >= 0 ? "BesidePrevious"
+                            : entry.separateRow ? "SeparateRow" : "Pending";
+                    tableModel.addRow(new Object[] { true, id.getSourceId() + ":" + id.getId(), name, message(placement) });
                     added++;
                 }
             }
@@ -588,27 +711,69 @@ public class WordReportDialog extends JDialog {
         if (added > 0) {
             invalidatePrepared();
         }
+        if (!items.isEmpty()) {
+            int model = items.size() - 1;
+            if (!selected.isEmpty()) {
+                ReportItem requested = selected.get(selected.size() - 1);
+                for (int i = 0; i < items.size(); i++) {
+                    if (items.get(i) == requested || requested.capture == null && items.get(i).capture == null
+                            && items.get(i).id.getSourceId() == requested.id.getSourceId()
+                            && items.get(i).id.getId() == requested.id.getId()) {
+                        model = i;
+                        break;
+                    }
+                }
+            }
+            int row = table.convertRowIndexToView(model);
+            int previousSelection = table.getSelectedRow();
+            table.setRowSelectionInterval(row, row);
+            if (previousSelection == row) {
+                showEvidencePreview();
+            }
+        }
         status.setText(message("AddedSelection", added));
         updateActions();
     }
 
-    private boolean chooseChatPlacement(ReportItem entry) {
+    private boolean choosePlacement(ReportItem entry) {
         List<ReportItem> pending = selectedItems();
         ReportItem previous = pending.isEmpty() ? null : pending.get(pending.size() - 1);
         WordReportDocument.Location position = locations.getSelectedValue();
-        boolean pendingChat = previous != null && previous.capture != null && previous.beside == null && previous.besideLocation < 0;
-        boolean savedChat = previous == null && loaded != null && position != null && loaded.hasPreviousChat(position.index);
-        if (!pendingChat && !savedChat) {
+        boolean chat = entry.capture != null;
+        boolean pendingFrame = previous != null && previous.beside == null && previous.besideLocation < 0
+                && (chat ? previous.capture != null : previous.mediaType == 1 && previous.capture == null && hasPendingImageColumn(pending));
+        boolean savedFrame = previous == null && loaded != null && position != null
+                && (chat ? loaded.hasPreviousChat(position.index) : loaded.hasPreviousImage(position.index));
+        if (!pendingFrame && !savedFrame) {
             return true;
         }
-        Object[] options = { message("ChatBesidePrevious"), message("ChatKeepSingle"), message("ChatCropCancel") };
-        int choice = JOptionPane.showOptionDialog(this, message("ChatPlacementQuestion"), message("ChatPlacementTitle"),
+        Object[] options = { message(chat ? "ChatBesidePrevious" : "ImageBesidePrevious"),
+                message(chat ? "ChatKeepSingle" : "ImageKeepSingle"), message("ChatCropCancel") };
+        int choice = JOptionPane.showOptionDialog(this, message(chat ? "ChatPlacementQuestion" : "ImagePlacementQuestion"),
+                message(chat ? "ChatPlacementTitle" : "ImagePlacementTitle"),
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
         if (choice == 0) {
-            entry.beside = pendingChat ? previous : null;
-            entry.besideLocation = savedChat ? position.index : -1;
+            entry.beside = pendingFrame ? previous : null;
+            entry.besideLocation = savedFrame ? position.index : -1;
+        } else if (choice == 1) {
+            entry.separateRow = true;
         }
         return choice == 0 || choice == 1;
+    }
+
+    private boolean hasPendingImageColumn(List<ReportItem> pending) {
+        int count = 0;
+        for (ReportItem item : pending) {
+            if (item.capture != null || item.mediaType == 2 || item.mediaType == 4 || item.beside != null || item.besideLocation >= 0) {
+                count = 0;
+            } else {
+                if (item.separateRow) {
+                    count = 0;
+                }
+                count = (count + 1) % (layout.getSelectedIndex() + 1);
+            }
+        }
+        return layout.getSelectedIndex() == 0 || count == 1;
     }
 
     private void documentChanged() {
@@ -791,6 +956,7 @@ public class WordReportDialog extends JDialog {
             JOptionPane.showMessageDialog(this, message("NeedSelection"));
             return;
         }
+        showReportPreview();
         if (prepared != null && preview != null) {
             task("ReadingDocument", () -> {
                 if (!loaded.isSourceCurrent()) {
@@ -827,11 +993,12 @@ public class WordReportDialog extends JDialog {
                 ReportItem item = selected.get(i);
                 if (item.beside != null && (i == 0 || selected.get(i - 1) != item.beside)
                         || item.besideLocation >= 0 && (i != 0 || location != item.besideLocation)) {
-                    throw new IOException(message("PreviousChatUnavailable"));
+                    throw new IOException(message("PreviousEvidenceUnavailable"));
                 }
                 WordReportDocument.Evidence read = item.capture == null ? WordReportEvidence.read(caseSource, item.id, withText, work)
                         : WordReportEvidence.readChatCapture(caseSource, item.id, item.capture);
-                read.besidePreviousChat = item.beside != null || item.besideLocation >= 0;
+                read.besidePrevious = item.beside != null || item.besideLocation >= 0;
+                read.separateRow = item.separateRow;
                 evidence.add(read);
             }
             String anchor = WordReportDocument.FILE_NAME + ": " + evidence.get(0).title;
@@ -923,22 +1090,38 @@ public class WordReportDialog extends JDialog {
             sourceType.setSelectedIndex(0);
             input.setText(saved.toAbsolutePath().normalize().toString());
             updatingSource = false;
-            updatingEvidence = true;
-            for (int i = 0; i < items.size(); i++) {
-                if (inserted.contains(items.get(i))) {
-                    tableModel.setValueAt(false, i, 0);
-                    tableModel.setValueAt(message("Inserted"), i, 3);
-                    items.get(i).beside = null;
-                    items.get(i).besideLocation = -1;
-                }
-            }
-            updatingEvidence = false;
+            removeSavedItems(inserted, after);
             prepared = null;
             preparedItems.clear();
             populatePositions(after);
             rememberSelection(0, saved.toAbsolutePath().normalize().toString());
             status.setText(message("ReadyForMore"));
         });
+    }
+
+    /** Keep only the unsaved batch while retaining a valid pairing anchor in the working report. */
+    private void removeSavedItems(List<ReportItem> inserted, int after) {
+        updatingEvidence = true;
+        try {
+            for (int i = items.size() - 1; i >= 0; i--) {
+                if (inserted.contains(items.get(i))) {
+                    items.remove(i);
+                    tableModel.removeRow(i);
+                } else if (inserted.contains(items.get(i).beside)) {
+                    ReportItem item = items.get(i);
+                    boolean last = !inserted.isEmpty() && item.beside == inserted.get(inserted.size() - 1);
+                    item.beside = null;
+                    item.besideLocation = last && (item.capture != null ? loaded.hasPreviousChat(after)
+                            : loaded.hasPreviousImage(after)) ? after : -1;
+                    if (item.besideLocation < 0) {
+                        item.separateRow = true;
+                        tableModel.setValueAt(message("SeparateRow"), i, 3);
+                    }
+                }
+            }
+        } finally {
+            updatingEvidence = false;
+        }
     }
 
     private void openReport() {
@@ -960,6 +1143,7 @@ public class WordReportDialog extends JDialog {
     }
 
     private void displayPage(int selected, BufferedImage image) {
+        showReportPreview();
         page = selected;
         renderedPage = image;
         pageImage.setText("");
@@ -1077,6 +1261,9 @@ public class WordReportDialog extends JDialog {
     }
 
     private void cleanup() {
+        if (evidenceWorker != null) {
+            evidenceWorker.cancel(true);
+        }
         closePreview();
         if (office != null) {
             try {

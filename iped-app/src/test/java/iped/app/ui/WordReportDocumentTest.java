@@ -536,7 +536,7 @@ public class WordReportDocumentTest {
             assertEquals(1, ((org.w3c.dom.Element) cells.item(0)).getElementsByTagNameNS(WordReportDocument.W, "drawing").getLength());
             assertTrue(cells.item(1).getTextContent().contains("Transcrição do áudio"));
             assertTrue(cells.item(1).getTextContent().contains(audio.text));
-            assertTrue(cells.item(1).getTextContent().contains("Hash: audio-hash"));
+            assertFalse(cells.item(1).getTextContent().contains("audio-hash"));
             assertFalse(table.getTextContent().contains(chat.text));
             assertFalse(table.getTextContent().contains("Conteúdo da mensagem"));
             for (int i = 0; i < 2; i++) {
@@ -604,7 +604,7 @@ public class WordReportDocumentTest {
         byte[] original = Files.readAllBytes(saved);
         WordReportDocument next = new WordReportDocument(saved);
         WordReportDocument.Evidence second = chat("second");
-        second.besidePreviousChat = true;
+        second.besidePrevious = true;
         assertEquals(5, next.insert(5, Collections.singletonList(second), true, true));
         Path output = temporary.getRoot().toPath().resolve("paired-chats.docx");
         next.write(output);
@@ -627,13 +627,155 @@ public class WordReportDocumentTest {
     }
 
     @Test
+    public void imageCanPairWithTheSavedSingleFrameAfterReopening() throws Exception {
+        WordReportDocument first = new WordReportDocument(fixture());
+        WordReportDocument.Evidence left = evidence();
+        left.title = "first-image.png";
+        left.metadata.put("Nome", left.title);
+        left.metadata.put("Hash", "first-image-hash");
+        first.insert(3, Collections.singletonList(left), true, true);
+        Path saved = temporary.getRoot().toPath().resolve("first-image.docx");
+        first.write(saved);
+        byte[] original = Files.readAllBytes(saved);
+        WordReportDocument next = new WordReportDocument(saved);
+        assertTrue(next.hasPreviousImage(5));
+        assertFalse(next.hasPreviousChat(5));
+        WordReportDocument.Evidence right = evidence();
+        right.title = "second-image.png";
+        right.metadata.put("Nome", right.title);
+        right.metadata.put("Hash", "second-image-hash");
+        right.image.setRGB(0, 0, 0xff00aa);
+        right.besidePrevious = true;
+        assertEquals(5, next.insert(5, Collections.singletonList(right), true, true));
+        Path output = temporary.getRoot().toPath().resolve("paired-images.docx");
+        next.write(output);
+        assertArrayEquals(original, Files.readAllBytes(saved));
+        org.w3c.dom.Element table = (org.w3c.dom.Element) documentXml(output)
+                .getElementsByTagNameNS(WordReportDocument.W, "tbl").item(1);
+        org.w3c.dom.NodeList rows = table.getElementsByTagNameNS(WordReportDocument.W, "tr");
+        assertEquals(3, rows.getLength());
+        for (int i = 0; i < 3; i++) {
+            assertEquals(2, ((org.w3c.dom.Element) rows.item(i)).getElementsByTagNameNS(WordReportDocument.W, "tc").getLength());
+        }
+        org.w3c.dom.NodeList metadata = ((org.w3c.dom.Element) rows.item(2)).getElementsByTagNameNS(WordReportDocument.W, "tc");
+        assertTrue(metadata.item(0).getTextContent().contains("first-image-hash"));
+        assertFalse(metadata.item(0).getTextContent().contains("second-image-hash"));
+        assertTrue(metadata.item(1).getTextContent().contains("second-image-hash"));
+        assertFalse(metadata.item(1).getTextContent().contains("first-image-hash"));
+        WordReportDocument paired = new WordReportDocument(output);
+        assertFalse(paired.hasPreviousImage(5));
+        WordReportDocument.Evidence third = evidence();
+        third.besidePrevious = true;
+        try {
+            paired.insert(5, Collections.singletonList(third), true, true);
+            fail("A complete pair must not accept a third image");
+        } catch (java.io.IOException expected) {
+            assertNotNull(expected.getMessage());
+        }
+    }
+
+    @Test
+    public void explicitImagePairAndSeparatePlacementOverrideTheTwoColumnDefault() throws Exception {
+        WordReportDocument report = new WordReportDocument(fixture());
+        WordReportDocument.Evidence first = evidence(), second = evidence();
+        second.besidePrevious = true;
+        assertEquals(5, report.insert(3, Arrays.asList(first, second), true, true, 2));
+        Path paired = temporary.getRoot().toPath().resolve("pending-image-pair.docx");
+        report.write(paired);
+        assertEquals(2, documentXml(paired).getElementsByTagNameNS(WordReportDocument.W, "tbl").getLength());
+
+        report = new WordReportDocument(fixture());
+        second.besidePrevious = false;
+        second.separateRow = true;
+        assertEquals(7, report.insert(3, Arrays.asList(first, second), true, true, 2));
+        Path separate = temporary.getRoot().toPath().resolve("separate-images.docx");
+        report.write(separate);
+        org.w3c.dom.NodeList tables = documentXml(separate).getElementsByTagNameNS(WordReportDocument.W, "tbl");
+        assertEquals(3, tables.getLength());
+        for (int i = 1; i < tables.getLength(); i++) {
+            assertEquals(3, ((org.w3c.dom.Element) tables.item(i)).getElementsByTagNameNS(WordReportDocument.W, "tc").getLength());
+        }
+    }
+
+    @Test
+    public void imagesDoNotPairWithChatFramesOrUnrelatedTables() throws Exception {
+        WordReportDocument report = new WordReportDocument(fixture());
+        assertFalse(report.hasPreviousImage(2));
+        report.insert(3, Collections.singletonList(chat("first")), true, true);
+        Path file = temporary.getRoot().toPath().resolve("chat-before-image.docx");
+        report.write(file);
+        report = new WordReportDocument(file);
+        assertFalse(report.hasPreviousImage(5));
+        assertTrue(report.hasPreviousChat(5));
+        WordReportDocument.Evidence image = evidence();
+        image.besidePrevious = true;
+        try {
+            report.insert(5, Collections.singletonList(image), true, true);
+            fail("An image must not silently replace a chat transcription column");
+        } catch (java.io.IOException expected) {
+            assertNotNull(expected.getMessage());
+        }
+    }
+
+    @Test
+    public void pairingAnEarlierChatOmitsItsLegacyAudioHashAndKeepsTheSourceHashes() throws Exception {
+        WordReportDocument report = new WordReportDocument(fixture());
+        WordReportDocument.Evidence first = chat("first");
+        WordReportDocument.Evidence audio = new WordReportDocument.Evidence();
+        audio.text = "Transcrição aprovada.";
+        first.transcripts.add(audio);
+        int after = report.insert(3, Collections.singletonList(first), true, true);
+        Path original = temporary.getRoot().toPath().resolve("earlier-chat.docx");
+        report.write(original);
+        org.w3c.dom.Document xml = documentXml(original);
+        org.w3c.dom.Element table = (org.w3c.dom.Element) xml.getElementsByTagNameNS(WordReportDocument.W, "tbl").item(1);
+        org.w3c.dom.Element row = (org.w3c.dom.Element) table.getElementsByTagNameNS(WordReportDocument.W, "tr").item(0);
+        org.w3c.dom.Element cell = (org.w3c.dom.Element) row.getElementsByTagNameNS(WordReportDocument.W, "tc").item(1);
+        org.w3c.dom.Element p = xml.createElementNS(WordReportDocument.W, "w:p");
+        org.w3c.dom.Element run = xml.createElementNS(WordReportDocument.W, "w:r");
+        org.w3c.dom.Element text = xml.createElementNS(WordReportDocument.W, "w:t");
+        text.setTextContent("Hash: legacy-audio-hash");
+        run.appendChild(text);
+        p.appendChild(run);
+        cell.appendChild(p);
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        javax.xml.transform.TransformerFactory.newInstance().newTransformer().transform(
+                new javax.xml.transform.dom.DOMSource(xml), new javax.xml.transform.stream.StreamResult(bytes));
+        Path legacy = temporary.getRoot().toPath().resolve("legacy-chat.docx");
+        try (ZipFile source = new ZipFile(original.toFile()); ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(legacy))) {
+            for (ZipEntry entry : Collections.list(source.entries())) {
+                out.putNextEntry(new ZipEntry(entry.getName()));
+                if (entry.getName().equals("word/document.xml")) {
+                    out.write(bytes.toByteArray());
+                } else {
+                    try (InputStream in = source.getInputStream(entry)) {
+                        in.transferTo(out);
+                    }
+                }
+                out.closeEntry();
+            }
+        }
+        report = new WordReportDocument(legacy);
+        WordReportDocument.Evidence second = chat("second");
+        second.besidePrevious = true;
+        report.insert(after, Collections.singletonList(second), true, true);
+        Path paired = temporary.getRoot().toPath().resolve("paired-legacy-chat.docx");
+        report.write(paired);
+        String content = documentXml(paired).getDocumentElement().getTextContent();
+        assertFalse(content.contains("legacy-audio-hash"));
+        assertTrue(content.contains(audio.text));
+        assertTrue(content.contains("first-hash"));
+        assertTrue(content.contains("second-hash"));
+    }
+
+    @Test
     public void pendingChatPairRetainsEachApprovedTranscriptionUnderItsOwnImage() throws Exception {
         WordReportDocument report = new WordReportDocument(fixture());
         WordReportDocument.Evidence first = chat("first"), second = chat("second");
         WordReportDocument.Evidence audio = new WordReportDocument.Evidence();
         audio.text = "Transcrição do primeiro trecho.";
         first.transcripts.add(audio);
-        second.besidePreviousChat = true;
+        second.besidePrevious = true;
         assertEquals(5, report.insert(3, Arrays.asList(first, second), true, true));
         Path output = temporary.getRoot().toPath().resolve("pending-chat-pair.docx");
         report.write(output);
@@ -650,7 +792,7 @@ public class WordReportDocumentTest {
     @Test
     public void pairingWithoutPreviousChatIsRejected() throws Exception {
         WordReportDocument.Evidence chat = chat("first");
-        chat.besidePreviousChat = true;
+        chat.besidePrevious = true;
         try {
             new WordReportDocument(fixture()).insert(3, Collections.singletonList(chat), true, true);
             fail("A pair requires an eligible previous chat");
