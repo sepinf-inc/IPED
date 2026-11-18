@@ -3,11 +3,10 @@ package iped.app.ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -26,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
+import javax.swing.SwingConstants;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -132,23 +132,36 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
         filterManager.setFilterEnabled(combinedFilterer, false);
 
         combinedFiltererTree = new JTree(new CombinedFilterTreeModel(combinedFilterer)) {
-            String dragHereMsg = Messages.get("iped.app.ui.filterdecisiontree.CombinedFilterer.dragAndDropTooltip");
+            private static final long serialVersionUID = 1L;
+            private final String dragHereMsg = Messages
+                    .get("iped.app.ui.filterdecisiontree.CombinedFilterer.dragAndDropTooltip");
+            private final JLabel label = new JLabel();
 
             @Override
             protected void paintComponent(Graphics g) {
-                // TODO Auto-generated method stub
                 super.paintComponent(g);
                 if (((CombinedFilterTreeModel) getModel()).getFiltersToNodeMap().size() == 0) {
-                    drawCenteredString(g, dragHereMsg, this.getBounds(), g.getFont());
+                    paintHintText(g);
                 }
             }
 
-            public void drawCenteredString(Graphics g, String text, Rectangle rect, Font font) {
-                FontMetrics metrics = g.getFontMetrics(font);
-                int x = rect.x + (rect.width - metrics.stringWidth(text)) / 2;
-                int y = rect.y + ((rect.height - metrics.getHeight()) / 2) + metrics.getAscent();
-                g.setFont(font);
-                g.drawString(text, x, y);
+            private void paintHintText(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                int margin = 20;
+                int availableWidth = Math.max(50, getWidth() - margin);
+                String html = String.format("<html><center>%s</center></html>", dragHereMsg);
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                label.setEnabled(false);
+                label.setText(html);
+                int textHeight = label.getPreferredSize().height;
+                label.setSize(availableWidth, textHeight);
+
+                int x = (getWidth() - availableWidth) / 2;
+                int y = (getHeight() - textHeight) / 2;
+                g2d.translate(x, y);
+                label.paint(g2d);
+                g2d.dispose();
             }
         };
         combinedFiltererTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
