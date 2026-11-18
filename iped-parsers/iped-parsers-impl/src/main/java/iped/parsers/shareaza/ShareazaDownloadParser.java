@@ -26,8 +26,6 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -42,8 +40,6 @@ import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 
 public class ShareazaDownloadParser extends AbstractParser {
-
-    private static Logger LOGGER = LoggerFactory.getLogger(ShareazaDownloadParser.class);
 
     private static final long serialVersionUID = 1L;
     public static final String SHAREAZA_DOWNLOAD_META = "application/x-shareaza-download";
@@ -216,7 +212,8 @@ public class ShareazaDownloadParser extends AbstractParser {
                 }
             }
 
-            int sha1Trust = readControl4Bytes(buffer);
+            // int sha1Trust = 
+            readControl4Bytes(buffer);
 
             int tigerValid = readControl4Bytes(buffer);
 
@@ -224,7 +221,8 @@ public class ShareazaDownloadParser extends AbstractParser {
                 addLine(xhtml, "TIGER:                   " + readHashString(buffer, 24));
             }
 
-            int tigerTrust = readControl4Bytes(buffer);
+            // int tigerTrust = 
+            readControl4Bytes(buffer);
 
             if (version >= 22) {
                 int md5Valid = readControl4Bytes(buffer);
@@ -238,7 +236,8 @@ public class ShareazaDownloadParser extends AbstractParser {
                     }
                 }
 
-                int md5Trust = readControl4Bytes(buffer);
+                // int md5Trust = 
+                readControl4Bytes(buffer);
 
             }
 
@@ -254,7 +253,8 @@ public class ShareazaDownloadParser extends AbstractParser {
                     }
                 }
 
-                int edonkeyTrust = readControl4Bytes(buffer);
+                // int edonkeyTrust = 
+                readControl4Bytes(buffer);
             }
 
             if (version >= 37) {
@@ -264,7 +264,8 @@ public class ShareazaDownloadParser extends AbstractParser {
                     addLine(xhtml, "BTH HASH:                " + readHashString(buffer, 20));
                 }
 
-                int bthTrust = readControl4Bytes(buffer);
+                // int bthTrust = 
+                readControl4Bytes(buffer);
 
             }
 
@@ -521,7 +522,6 @@ public class ShareazaDownloadParser extends AbstractParser {
                         sbTorrent.append("              Path:                           " + btPath + "\n");
                         sbTorrent.append("              Name:                           " + btName + "\n");
 
-                        // TODO: Check why some files don't have hashes
                         if (readControl4Bytes(buffer) != 0) {
                             String btSHA1 = readHashString(buffer, 20);
                             sbTorrent.append("              SHA1:                           " + btSHA1 + "\n");
@@ -601,7 +601,8 @@ public class ShareazaDownloadParser extends AbstractParser {
 
                     if (version >= 23) {
                         sbTorrent.append("    TorrentSuccess:      " + read2Bytes(buffer) + "\n");
-                        String torrentBlock = readHashString(buffer, blockCount);
+                        // String torrentBlock = 
+                        readHashString(buffer, blockCount);
                         // sbTorrent.append(" TorrentBlock: " + torrentBlock +"\n");
                         sbTorrent.append("    Seeding:             " + read2Bytes(buffer) + "\n");
                     }
@@ -837,7 +838,6 @@ public class ShareazaDownloadParser extends AbstractParser {
     }
 
     public int readUnsignedInt2Bytes(ByteBuffer buffer) {
-
         byte[] b = new byte[2];
         buffer.get(b);
 
@@ -982,5 +982,4 @@ public class ShareazaDownloadParser extends AbstractParser {
             xhtml.newline();
         }
     }
-
 }
