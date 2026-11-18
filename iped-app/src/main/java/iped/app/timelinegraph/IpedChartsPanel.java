@@ -93,7 +93,7 @@ import iped.app.timelinegraph.popups.LegendItemPopupMenu;
 import iped.app.timelinegraph.swingworkers.CheckWorker;
 import iped.app.timelinegraph.swingworkers.HighlightWorker;
 import iped.app.ui.App;
-import iped.app.ui.ColumnsManager;
+import iped.app.ui.columns.ColumnsManager;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
 import iped.engine.search.QueryBuilder;

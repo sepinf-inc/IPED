@@ -7,41 +7,41 @@
         <p style="font-size:24px"><b>Guida rapida IPED</b></p>
         <b>Sintassi di ricerca:</b><br />
         <br />
-        Per aprire l'interfaccia di analisi, è necessario un sistema operativo a 64 bit. Se il vostro Caso o Report è memorizzato in un disco ottico, l'analisi può diventare lenta. In tal caso, copiate l'intero Caso su un disco rigido locale, da dove aprire l'applicazione di analisi.<br>
+        Per aprire l'interfaccia di analisi, è necessario un sistema operativo a 64 bit. Se il vostro Caso o Report è memorizzato in un disco ottico, l'analisi potrebbe diventare lenta. In tal caso, copiate l'intero Caso su un disco rigido locale, da cui aprire l'applicazione di analisi.<br>
         <br>
-        La ricerca per parole chiave cerca i termini nel nome del file e nel contenuto dei file testuali, come Word, Excel, PDF, e-mail, pagine Internet, chat, ecc.. Se abilitata, la tecnologia OCR (<i>Optical Character Recognition</i>) viene utilizzata per cercare il testo nei file di immagine. Tuttavia, alcuni risultati potrebbero non essere trovati in immagini di bassa qualità o bassa risoluzione, o se i caratteri sono piccoli o poco comuni.<br>
+        La ricerca per parole chiave cerca i termini nel nome del file e nel contenuto dei file testuali, come Word, Excel, PDF, e-mail, pagine Internet, chat, ecc.. Se abilitata, viene utilizzata la tecnologia OCR (<i>Riconoscimento Ottico dei Caratteri</i>) per cercare il testo nei file immagine. Tuttavia, alcuni risultati potrebbero non essere trovati in immagini di bassa qualità o bassa risoluzione, o se i caratteri sono piccoli o poco comuni.<br>
         <br>
-        La ricerca per parole chiave non distingue la capitalizzazione delle lettere o gli accenti. <b>Si raccomanda, tuttavia, di includere gli accenti nelle ricerche, così le parole chiave vengano evidenziate correttamente nella scheda "Anteprima"</b>. Non è raccomandato cercare parole chiave comuni o molto brevi, come <b>DI</b>. Di seguito sono riportati alcuni esempi di ricerca:
+        La ricerca per parole chiave non distingue la capitalizzazione delle lettere o gli accenti. <b>Tuttavia, si consiglia di includere gli accenti nelle ricerche, in modo che le parole vengano evidenziate correttamente nella scheda "Anteprima"</b>. Non è consigliato cercare parole chiave comuni o molto brevi, come "<b>DI</b>". Di seguito sono riportati alcuni esempi di ricerca:
         <br>
         <ul>
-            <li>1. <b>sospetto</b><br/>Cerca i file che contengono la parola esatta <b>sospetto</b>. I file contenenti la parola <b>sospetti</b> non verranno trovati.
+            <li>1. <b>sospetto</b><br/>Cerca i file contenenti la parola esatta <b>sospetto</b>. I file contenenti la parola <b>sospetti</b> o <b>sospettoso</b> non verranno trovati.
                 <br><br /></li>
-            <li>2. <b>sospett?</b><br/>Cerca i file che contengono parole che iniziano con <b>sospett</b> più una qualsiasi lettera alla fine, come <b>sospetti</b> o <b>sospetta</b> ecc..
+            <li>2. <b>sospett?</b><br/>Cerca i file contenenti parole che iniziano con <b>sospett</b> più una qualsiasi lettera alla fine, come <b>sospetti</b> o <b>sospetta</b> ecc..
                 <br><br /></li>
             <li>3. <b>sospett*</b><br/>Cerca i file contenenti parole che iniziano con <b>sospett</b> con o senza un suffisso, come <b>sospetto</b>, <b>sospetti</b> e <b>sospettoso</b> ecc..
                 <br><br /></li>
-            <li>4. <b>carta~</b><br>Cerca file contenenti parole uguali o simili a <b>carta</b>, come <b>casta</b>, <b>canta</b> e <b>salta</b>. La ricerca è più lenta, ma il suo uso è raccomandato per trovare il testo nelle immagini o documenti scansionati (se l'OCR è stato abilitato).
+            <li>4. <b>carta~</b><br>Cerca file contenenti parole uguali o simili a <b>carta</b>, come <b>casta</b>, <b>canta</b> e <b>salta</b>. La ricerca è più lenta, ma il suo utilizzo è consigliato per trovare il testo nelle immagini o documenti scansionati (se l'OCR è stato abilitato).
                 <br /><br /></li>
-            <li>5. <b>"Mario Rossi"</b><br>Cerca l'espressione esatta <b>Mario Rossi</b>. Non è possibile usare i caratteri jolly <b>* ? ~</b> tra doppi apici.<br>
+            <li>5. <b>"Mario Rossi"</b><br>Cerca l'espressione esatta <b>Mario Rossi</b>. Non è possibile usare i caratteri jolly <b>* ? ~</b> tra virgolette.<br>
                 <br /></li>
-            <li>6. <b>Mario Rossi</b><br>Cerca i file che contengono una qualsiasi delle parole <b>Mario</b> o <b>Rossi</b>. È uguale alla ricerca di <b>Mario OR Rossi</b>
+            <li>6. <b>Mario Rossi</b><br>Cerca i file contenenti una delle parole <b>Mario</b> o <b>Rossi</b>. Equivale a cercare <b>Mario OR Rossi</b>
                 <br/><br /></li>
-            <li>7. <b>Mario AND Rossi</b><br>Cerca sia <b>Mario</b> che <b>Rossi</b>
+            <li>7. <b>Mario AND Rossi</b><br>Cerca file contenenti sia <b>Mario</b> che <b>Rossi</b>
                 <br><br /></li>
-            <li>8. <b>corruzione -pagamento</b><br> Cerca i file contenenti <b>corruzione</b> ma senza riferimenti a <b>pagamento</b>. È uguale alla ricerca di <b>corruzione AND NOT pagamento</b>
+            <li>8. <b>corruzione -pagamento</b><br> Cerca i file contenenti <b>corruzione</b> ma escludendo quelli contenenti <b>pagamento</b>. Equivalente a cercare <b>corruzione AND NOT pagamento</b>
                 <br /><br /></li>
-            <li>9. <b>(Mario Rossi) && pagamento</b><br>Cerca i file che contengono sia la parola <b>pagamento</b> sia una qualsiasi tra le parole <b>Mario</b> e <b>Rossi</b>.
+            <li>9. <b>(Mario Rossi) && pagamento</b><br>Cerca i file contenenti sia la parola <b>pagamento</b> sia una delle parole <b>Mario</b> o <b>Rossi</b>.
                 <br /><br /></li>
-            <li>10. <b>"Mario Rossi"~5</b><br>Cerca i file che contengono <b>Mario</b> al massimo a 5 parole di distanza da <b>Rossi</b>.
+            <li>10. <b>"Mario Rossi"~5</b><br>Cerca i file contenenti <b>Mario</b> a massimo 5 parole di distanza da <b>Rossi</b>.
                 <br><br /></li>
             <li>11. <b>(Mario Luigi Rossi)@2</b><br>Cerca i file contenenti almeno due termini del set.
                 <br><br /></li>
-            <li>12. <b>name:ricevuta</b><br> Cerca i file che contengono <b>ricevuta</b> nella proprietà <b>name</b>.
-                <br>Tutte le proprietà mostrate nel gestore delle colonne possono essere usate, tranne "bookmark" e "score" per adesso.
+            <li>12. <b>nome:ricevuta</b><br> Cerca i file contenenti <b>ricevuta</b> nella proprietà <b>Nome</b>.
+                <br>Tutte le proprietà mostrate nel gestore delle colonne possono essere usate, tranne "Segnalibri" e "Percentuale" per adesso.
                 <br><br /></li>
-            <li>13. <b>size:[5000 TO *]</b><br>Cerca i file con dimensioni maggiori o uguali di 5000 bytes. Utilizzare {} invece di [] per escludere il valore.
+            <li>13. <b>dimensione:[5000 TO *]</b><br>Cerca i file con dimensione maggiore o uguale a 5000 bytes. Utilizzare {} invece di [] per escludere il valore.
                 <br><br /></li>
-            <li>14. <b>modified:[2015-01-31 TO 2015-03-31T12\:59\:59Z]</b><br>Cerca i file con data ultima modifica compresa tra le 12:00am del 31/01/2015 e le 12:59:59pm del 31/03/2015.
+            <li>14. <b>modificato:[2015-01-31 TO 2015-03-31T12\:59\:59Z]</b><br>Cerca file con data di modifica compresa tra le 12:00am del 31/01/2015 e le 12:59:59pm del 31/03/2015.
                 <br><br /></li>
             <li>15. <b>/<0-17>y(r|o)/</b><br>Cerca un'espressione RegEx, delimitata da 2 barre in avanti "/.../". Funziona solo per i caratteri indicizzati (alfanumerici per impostazione predefinita).
                 <br><br /></li>

@@ -44,13 +44,12 @@ public class MetadataSearch extends MetadataSearchable {
     private static final int logScaleHalf = 20;
 
     volatile double min, max, interval;
+    volatile long[] actualMin, actualMax;
+
     // LINEAR SCALE: Up to 10 bins
     private static final int linearScaleBins = 10;
 
     volatile IMultiSearchResult ipedResult;
-
-    public MetadataSearch() {
-    }
 
     public void setIpedResult(IMultiSearchResult ipedResult2) {
         this.ipedResult = ipedResult2;
@@ -103,6 +102,15 @@ public class MetadataSearch extends MetadataSearchable {
                         ord = (int) ((val - min) / interval);
                         if (val == max && min != max)
                             ord--;
+                        if (!isFloat && !isDouble && actualMin != null) {
+                            long lval = (long) val;
+                            for (int i = Math.max(0, ord - 1); i <= ord + 1 && i < actualMin.length; i++) {
+                                if (lval >= actualMin[i] && lval <= actualMax[i]) {
+                                    ord = i;
+                                    break;
+                                }
+                            }
+                        }
                     }
                     if (ordsToGet.contains(ord)) {
                         items.add(item);
@@ -150,6 +158,15 @@ public class MetadataSearch extends MetadataSearchable {
                             ord = (int) ((val - min) / interval);
                             if (val == max && min != max)
                                 ord--;
+                            if (!isFloat && !isDouble && actualMin != null) {
+                                long lval = (long) val;
+                                for (int j = Math.max(0, ord - 1); j <= ord + 1 && j < actualMin.length; j++) {
+                                    if (lval >= actualMin[j] && lval <= actualMax[j]) {
+                                        ord = j;
+                                        break;
+                                    }
+                                }
+                            }
                         }
                     }
                     if (ordsToGet.contains(ord)) {
@@ -282,7 +299,7 @@ public class MetadataSearch extends MetadataSearchable {
             }
         }
 
-        return new MultiSearchResult(items.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[scores.size()])));
+        return new MultiSearchResult(items.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
     }
 
     private long[] getEventOrdsFromEventSet(SortedSetDocValues eventDocValues, String eventSet) throws IOException {
@@ -318,8 +335,8 @@ public class MetadataSearch extends MetadataSearchable {
         max = Double.MIN_VALUE;
         interval = 0;
 
-        long[] actualMin = null;
-        long[] actualMax = null;
+        actualMin = null;
+        actualMax = null;
         ArrayList<ValueCount> list = new ArrayList<ValueCount>();
 
         // Used for linearScale

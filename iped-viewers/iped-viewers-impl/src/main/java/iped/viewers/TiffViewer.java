@@ -7,6 +7,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +26,13 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import iped.data.IItemReader;
 import iped.io.IStreamSource;
 import iped.utils.IOUtil;
 import iped.utils.IconUtil;
 import iped.utils.ImageUtil;
 import iped.viewers.localization.Messages;
+import iped.viewers.util.ImageMetadataUtil;
 
 public class TiffViewer extends ImageViewer {
     private final JTextField textCurrentPage = new JTextField(2);
@@ -44,6 +47,8 @@ public class TiffViewer extends ImageViewer {
     volatile private IStreamSource currentContent;
     volatile private int currentPage = 0;
     volatile private int numPages = 0;
+    volatile private int orientation = 0;
+    volatile private Set<String> highlightTerms;
 
     private static final String actionFirstPage = "first-page";
     private static final String actionPreviousPage = "previous-page";
@@ -108,6 +113,7 @@ public class TiffViewer extends ImageViewer {
         super.cleanState(true);
         currentPage = 1;
         numPages = 0;
+        orientation = 0;
         textCurrentPage.setText("");
         labelNumPages.setText(" / ");
     }
@@ -115,6 +121,7 @@ public class TiffViewer extends ImageViewer {
     @Override
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         cleanState();
+        this.highlightTerms = highlightTerms;
         currentContent = content;
         toolBar.setVisible(currentContent != null && isToolbarVisible());
         if (currentContent != null) {
@@ -150,6 +157,9 @@ public class TiffViewer extends ImageViewer {
                     reader = ImageIO.getImageReaders(iis).next();
                     reader.setInput(iis, false, true);
                     numPages = reader.getNumImages(true);
+                    try (InputStream is2 = content.getSeekableInputStream(); BufferedInputStream in = new BufferedInputStream(is2)) {
+                        orientation = ImageMetadataUtil.getOrientation(in);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -170,6 +180,12 @@ public class TiffViewer extends ImageViewer {
                 if (content != currentContent)
                     return;
                 try {
+                    if (content instanceof IItemReader) {
+                        if (currentPage == 1) {
+                            loadFacesAttributes((IItemReader) content);
+                        }
+                    }
+
                     int w0 = reader.getWidth(currentPage - 1);
                     int h0 = reader.getHeight(currentPage - 1);
 
@@ -182,6 +198,8 @@ public class TiffViewer extends ImageViewer {
 
                     params.setSourceSubsampling(sampling, sampling, 0, 0);
                     image = reader.getImageTypes(currentPage - 1).next().createBufferedImage(finalW, finalH);
+                    originalDimension = new Dimension(finalW, finalH);
+
                     params.setDestination(image);
 
                     reader.read(currentPage - 1, params);
@@ -193,11 +211,26 @@ public class TiffViewer extends ImageViewer {
                     if (image != null)
                         image = getCompatibleImage(image);
                 }
-                if (rotation != 0) {
-                    imagePanel.setImage(ImageUtil.rotatePos(image, rotation));
-                } else {
-                    imagePanel.setImage(image);
+                if (orientation > 0) {
+                    image = ImageUtil.applyOrientation(image, orientation);
                 }
+                if (rotation != 0) {
+                    image = ImageUtil.rotate(image, rotation);
+                }
+
+                if (image != null) {
+                    if (currentPage == 1) {
+                        drawRectangles(image, highlightTerms, rectColorMainFacesInTerms, isToolbarVisible);
+                    }
+                    originalImage = ImageUtil.cloneImage(image);
+                }
+
+                if (currentPage == 1) {
+                    applyHighlightFaces(false);
+                }
+
+                imagePanel.setImage(image);
+
                 refreshGUI();
             }
         });

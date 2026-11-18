@@ -10,12 +10,15 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
 import iped.parsers.ares.AresParser;
+import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatParser;
 import iped.parsers.bittorrent.TorrentFileParser;
+import iped.parsers.bittorrent.TransmissionResumeParser;
 import iped.parsers.browsers.chrome.CacheIndexParser;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
+import iped.parsers.lnk.LNKShortcutParser;
 import iped.parsers.mail.RFC822Parser;
 import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.python.PythonParser;
@@ -25,7 +28,7 @@ import iped.parsers.skype.SkypeParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.threema.ThreemaParser;
-import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.usnjrnl.UsnJrnlParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.MediaTypes;
@@ -62,6 +65,9 @@ public class QueuesProcessingOrder {
         // handle wal logs
         mediaTypes.put(SQLite3Parser.MEDIA_TYPE, 2);
 
+        // links processed after theirs targets 
+        mediaTypes.put(LNKShortcutParser.LNK_MEDIA_TYPE, 2);
+
         // must be after sqlite processing to find storage_db.db
         mediaTypes.put(SkypeParser.SKYPE_MIME, 3);
 
@@ -81,6 +87,8 @@ public class QueuesProcessingOrder {
 
         mediaTypes.put(MediaType.parse(TorrentFileParser.TORRENT_FILE_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(BitTorrentResumeDatParser.RESUME_DAT_MIME_TYPE), 3);
+        mediaTypes.put(MediaType.parse(BitTorrentResumeDatEntryParser.RESUME_DAT_ENTRY_MIME_TYPE), 3);
+        mediaTypes.put(MediaType.parse(TransmissionResumeParser.TRANSMISSION_RESUME_MIME_TYPE), 3);
 
         mediaTypes.put(WhatsAppParser.WA_DB, 2);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 3);
@@ -90,7 +98,15 @@ public class QueuesProcessingOrder {
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE_2, 4);
         mediaTypes.put(ThreemaParser.CHAT_STORAGE, 3);
         mediaTypes.put(ThreemaParser.CHAT_STORAGE_F, 4);
-        mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 2);
+
+        // required to load ContactPhotos and Attachments
+        mediaTypes.put(MediaTypes.UFED_CONTACT_MIME, 2);
+        mediaTypes.put(MediaTypes.UFED_USER_ACCOUNT_MIME, 2);
+        mediaTypes.put(MediaTypes.UFED_EMAIL_MIME, 2);
+
+        // required to load Attachments, Coordinates, Contacts and ContactPhotos
+        mediaTypes.put(UfedChatParser.UFED_CHAT_MIME, 3);
+        mediaTypes.put(MediaTypes.UFED_MESSAGE_MIME, 4);
 
         // avoid NPE when the parser gets the item from parseContext when external
         // parsing is on

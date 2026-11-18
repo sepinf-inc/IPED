@@ -10,6 +10,7 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.columns.ColumnsManagerUI;
 import iped.engine.search.QueryBuilder;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
@@ -57,7 +58,7 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener {
                         App.get().galleryModel.fireTableStructureChanged();
                     }
                     App.get().resultsModel.fireTableDataChanged();
-                    ColumnsManager.getInstance().updateDinamicCols();
+                    ColumnsManagerUI.getInstance().updateDinamicCols();
                     new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
 
                 } catch (Exception e) {

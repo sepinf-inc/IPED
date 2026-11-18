@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -33,6 +33,7 @@ import javax.swing.KeyStroke;
 import iped.app.ui.themes.Theme;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItem;
+import iped.engine.config.BFACClientConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.search.SimilarFacesSearch;
@@ -45,17 +46,16 @@ public class MenuClass extends JPopupMenu {
 
     private static final long serialVersionUID = 1L;
 
-    JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted, deepCheckHighlighted, deepUncheckHighlighted, readHighlighted, unreadHighlighted, exportChecked, copyChecked, saveBookmarks, loadBookmarks,
+    JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted, readHighlighted, unreadHighlighted, exportChecked, copyChecked, saveBookmarks, loadBookmarks,
+            checkHighlightedAndSubItems, uncheckHighlightedAndSubItems, checkHighlightedAndParent, uncheckHighlightedAndParent, checkHighlightedAndReferences, uncheckHighlightedAndReferences, checkHighlightedAndReferencedBy, uncheckHighlightedAndReferencedBy,
             changeGalleryColCount, defaultLayout, changeLayout, previewScreenshot, manageBookmarks, clearSearchHistory, importKeywords, navigateToParent, exportTerms, manageFilters, manageColumns, exportCheckedToZip, exportCheckedTreeToZip,
-            exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
+            exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, openBfacClient, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
             similarFacesCurrent, similarFacesExternal, toggleTimelineView, uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
 
-    public MenuClass() {
-        this(null);
-    }
+    private boolean similarFacesExternalEnabled = SimilarFacesFilterActions.isExternalSearchEnabled();
 
     public MenuClass(boolean isTreeMenu) {
         super();
@@ -76,24 +76,55 @@ public class MenuClass extends JPopupMenu {
         uncheckHighlighted.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
         this.add(uncheckHighlighted);
 
-        deepCheckHighlighted = new JMenuItem(Messages.getString("MenuClass.CheckRecursivelyHighlighted")); //$NON-NLS-1$
-        deepCheckHighlighted.addActionListener(menuListener);
-        deepCheckHighlighted.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
-        this.add(deepCheckHighlighted);
+        JMenu submenu = new JMenu(Messages.getString("MenuClass.CheckAdvanced")); //$NON-NLS-1$
+        this.add(submenu);
 
-        deepUncheckHighlighted = new JMenuItem(Messages.getString("MenuClass.UnCheckRecursivelyHighlighted")); //$NON-NLS-1$
-        deepUncheckHighlighted.addActionListener(menuListener);
-        deepUncheckHighlighted.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
-        this.add(deepUncheckHighlighted);
+        checkHighlightedAndSubItems = new JMenuItem(Messages.getString("MenuClass.CheckHighlightedAndSubItems")); //$NON-NLS-1$
+        checkHighlightedAndSubItems.addActionListener(menuListener);
+        checkHighlightedAndSubItems.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
+        submenu.add(checkHighlightedAndSubItems);
 
-        /*
-         * readHighlighted = new JMenuItem("Marcar selecionados como lido");
-         * readHighlighted.addActionListener(menuListener); this.add(readHighlighted);
-         * 
-         * unreadHighlighted = new JMenuItem("Marcar selecionados como novo");
-         * unreadHighlighted.addActionListener(menuListener);
-         * this.add(unreadHighlighted);
-         */
+        uncheckHighlightedAndSubItems = new JMenuItem(Messages.getString("MenuClass.UncheckHighlightedAndSubItems")); //$NON-NLS-1$
+        uncheckHighlightedAndSubItems.addActionListener(menuListener);
+        uncheckHighlightedAndSubItems.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
+        submenu.add(uncheckHighlightedAndSubItems);
+
+        submenu.addSeparator();
+
+        checkHighlightedAndParent = new JMenuItem(Messages.getString("MenuClass.CheckHighlightedAndParent")); //$NON-NLS-1$
+        checkHighlightedAndParent.addActionListener(menuListener);
+        checkHighlightedAndParent.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
+        submenu.add(checkHighlightedAndParent);
+
+        uncheckHighlightedAndParent = new JMenuItem(Messages.getString("MenuClass.UncheckHighlightedAndParent")); //$NON-NLS-1$
+        uncheckHighlightedAndParent.addActionListener(menuListener);
+        uncheckHighlightedAndParent.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.ALT_MASK));
+        submenu.add(uncheckHighlightedAndParent);
+
+        submenu.addSeparator();
+
+        checkHighlightedAndReferences = new JMenuItem(Messages.getString("MenuClass.CheckHighlightedAndReferences")); //$NON-NLS-1$
+        checkHighlightedAndReferences.addActionListener(menuListener);
+        checkHighlightedAndReferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
+        submenu.add(checkHighlightedAndReferences);
+
+        uncheckHighlightedAndReferences = new JMenuItem(Messages.getString("MenuClass.UncheckHighlightedAndReferences")); //$NON-NLS-1$
+        uncheckHighlightedAndReferences.addActionListener(menuListener);
+        uncheckHighlightedAndReferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
+        submenu.add(uncheckHighlightedAndReferences);
+
+        submenu.addSeparator();
+
+        checkHighlightedAndReferencedBy = new JMenuItem(Messages.getString("MenuClass.CheckHighlightedAndReferencedBy")); //$NON-NLS-1$
+        checkHighlightedAndReferencedBy.addActionListener(menuListener);
+        checkHighlightedAndReferencedBy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.CTRL_MASK));
+        submenu.add(checkHighlightedAndReferencedBy);
+
+        uncheckHighlightedAndReferencedBy = new JMenuItem(Messages.getString("MenuClass.UncheckHighlightedAndReferencedBy")); //$NON-NLS-1$
+        uncheckHighlightedAndReferencedBy.addActionListener(menuListener);
+        uncheckHighlightedAndReferencedBy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
+        submenu.add(uncheckHighlightedAndReferencedBy);
+
         this.addSeparator();
 
         loadBookmarks = new JMenuItem(Messages.getString("MenuClass.LoadBookmarks")); //$NON-NLS-1$
@@ -113,7 +144,7 @@ public class MenuClass extends JPopupMenu {
         manageFilters.addActionListener(menuListener);
         this.add(manageFilters);
 
-        JMenu submenu = new JMenu(Messages.getString("MenuClass.ManageColumns")); //$NON-NLS-1$
+        submenu = new JMenu(Messages.getString("MenuClass.ManageColumns")); //$NON-NLS-1$
         this.add(submenu);
 
         manageColumns = new JMenuItem(Messages.getString("MenuClass.ManageVisibleCols")); //$NON-NLS-1$
@@ -217,7 +248,7 @@ public class MenuClass extends JPopupMenu {
                 submenu.add(themeItem);
                 themeItem.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
-                        ThemeManager.getInstance().setTheme(theme);
+                        ThemeManager.getInstance().setTheme(theme, true);
                     }
                 });
             }
@@ -246,6 +277,7 @@ public class MenuClass extends JPopupMenu {
         boolean enableGoToChat = false;
         if (item != null) {
             enableGoToChat = MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)
+                    || MediaTypes.UFED_MESSAGE_MIME.equals(item.getMediaType())
                     || (VCardParser.VCARD_MIME.equals(item.getMediaType()) && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
         }
         navigateToParentChat.setEnabled(enableGoToChat);
@@ -284,14 +316,14 @@ public class MenuClass extends JPopupMenu {
 
         similarFacesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarFaces.External")); //$NON-NLS-1$
         similarFacesExternal.addActionListener(menuListener);
-        similarFacesExternal.setEnabled(submenu.isEnabled());
+        similarFacesExternal.setEnabled(submenu.isEnabled() && similarFacesExternalEnabled);
         submenu.add(similarFacesExternal);
 
         this.addSeparator();
 
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);
-        openViewfile.setEnabled(item != null && item.getViewFile() != null);
+        openViewfile.setEnabled(item != null && (item.getViewFile() != null || item.hasPreview()));
         this.add(openViewfile);
 
         this.addSeparator();
@@ -301,6 +333,14 @@ public class MenuClass extends JPopupMenu {
         this.add(addToGraph);
 
         this.addSeparator();
+
+        // Only add BFAC Client menu item if enabled in config
+        BFACClientConfig bfacClientConfig = ConfigurationManager.get().findObject(BFACClientConfig.class);
+        if (bfacClientConfig != null && bfacClientConfig.isEnabled()) {
+            openBfacClient = new JMenuItem(Messages.getString("MenuClass.OpenBfacClient")); //$NON-NLS-1$
+            openBfacClient.addActionListener(menuListener);
+            this.add(openBfacClient);
+        }
 
         createReport = new JMenuItem(Messages.getString("MenuClass.GenerateReport")); //$NON-NLS-1$
         createReport.addActionListener(menuListener);

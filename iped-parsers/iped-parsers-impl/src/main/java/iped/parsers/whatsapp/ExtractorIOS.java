@@ -6,11 +6,17 @@ import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHANGED_NAME;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
-import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_NEW;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
-import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;                        
-import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;                        
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
+import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DESCRIPTION_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_NOT_AVAILABLE;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
@@ -20,10 +26,11 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
-import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_DELETED;
@@ -31,9 +38,11 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_DELETED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_NAME_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_NOT_PART_OF_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
@@ -48,6 +57,8 @@ import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.URL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADMIN;
+import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_INVITATION;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
@@ -58,7 +69,6 @@ import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
-import static iped.parsers.whatsapp.Message.MessageType.USER_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
@@ -83,6 +93,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +104,7 @@ import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
 import iped.parsers.whatsapp.ProtoBufDecoder.Part;
@@ -101,7 +113,7 @@ import iped.parsers.whatsapp.ProtoBufDecoder.Part;
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class ExtractorIOS extends Extractor {
+public abstract class ExtractorIOS extends Extractor {
 
     private static Logger logger = LoggerFactory.getLogger(ExtractorIOS.class);
 
@@ -111,6 +123,8 @@ public class ExtractorIOS extends Extractor {
     private boolean hasZTitleColumn = false;
     private boolean hasZSTANZAIDAndZMETADATAColumns = false;
     private boolean hasZMOVIEDURATIONColumn;
+    private boolean hasContactIdentifierColumn;
+    private boolean hasMessageInfoTable;
     private SQLException parsingException = null;
 
     public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account,
@@ -118,6 +132,8 @@ public class ExtractorIOS extends Extractor {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
+
+    protected abstract Connection getConnection() throws SQLException;
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
@@ -140,6 +156,7 @@ public class ExtractorIOS extends Extractor {
         if (recoverDeletedRecords) {
             try {
                 // try to recover deleted records
+                warnIfLowMemoryToRecoverDeletedRecords();
                 var undelete = new SQLiteUndelete(databaseFile.toPath());
                 undelete.addTableToRecover("ZWAMESSAGE"); //$NON-NLS-1$
                 undelete.addRecordValidator("ZWAMESSAGE", new WAIOSMessageValidator()); //$NON-NLS-1$
@@ -187,6 +204,8 @@ public class ExtractorIOS extends Extractor {
                     hasZSTANZAIDAndZMETADATAColumns = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMESSAGE",
                             "ZSTANZAID") && SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMETADATA");
                     hasZMOVIEDURATIONColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMOVIEDURATION");
+                    hasContactIdentifierColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWACHATSESSION", "ZCONTACTIDENTIFIER");
+                    hasMessageInfoTable = SQLite3DBParser.containsTable("ZWAMESSAGEINFO", conn);
                 } catch (SQLException e) {
                     if (firstTry || !isSqliteCorruptException(e)) {
                         throw e;
@@ -195,25 +214,43 @@ public class ExtractorIOS extends Extractor {
                     }
                 }
 
-                String chatListQuery = hasProfilePictureItemTable ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_PPIC;
+                String chatListQuery = hasContactIdentifierColumn ? SELECT_CHAT_LIST_IDENTIFIER
+                        : hasProfilePictureItemTable ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_PPIC;
 
                 try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
                     while (rs.next()) {
-                        String contactId = rs.getString("contact"); //$NON-NLS-1$
-                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            WAContact remote = contacts.getContact(contactId);
-                            Chat c = new Chat(remote);
-                            c.setId(rs.getLong("id")); //$NON-NLS-1$
-                            c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
-                            c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                            c.setChannelChat(contactId.endsWith("newsletter"));
-                            c.setDeleted(rs.getInt("ZREMOVED") != 0);
-                            remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
-                            if (recoverDeletedRecords) {
-                                activeChats.add(c.getId());
+                        String contactId = rs.getString("contact");
+                        String originalId = contactId; 
+                        if (contactId.endsWith(WAContact.lidSuffix)) {
+                            String identifier = rs.getString("identifier");
+                            if (StringUtils.isNotBlank(identifier)) {
+                                contactId = identifier;
                             }
-                            list.add(c);
                         }
+                        String subject = Util.getUTF8String(rs, "subject");
+                        WAContact remote = contacts.getContact(contactId);
+                        if (StringUtils.isNotBlank(subject) && remote.getId().equals(remote.getName())) {
+                            remote.setWaName(subject);
+                        }
+                        if (!originalId.equals(contactId)) {
+                            contacts.addContactMapping(originalId, contactId);
+                        }
+                        Chat c = new Chat(remote);
+                        c.setId(rs.getLong("id"));
+                        c.setSubject(subject);
+                        if (contactId.endsWith(WAContact.waGroupSuffix)) {
+                            c.setGroupChat(true);
+                        } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
+                            c.setChannelChat(true);
+                        } else if (contactId.endsWith(WAContact.waStatusSuffix)) {
+                            c.setBroadcast(true);
+                        }
+                        c.setDeleted(rs.getInt("ZREMOVED") != 0);
+                        remote.setAvatarPath(rs.getString("avatarPath"));
+                        if (recoverDeletedRecords) {
+                            activeChats.add(c.getId());
+                        }
+                        list.add(c);
                     }
                 } catch (SQLException ex) {
                     if (firstTry || !isSqliteCorruptException(ex)) {
@@ -265,7 +302,7 @@ public class ExtractorIOS extends Extractor {
                     }
 
                     // Find quoted messages
-                    findQuotedMessages(c.getMessages(), messagesMap);
+                    findQuotedMessages(c.getMessages(), messagesMap, idToChat);
                 }
 
                 if (recoverDeletedRecords && !firstTry) {
@@ -310,6 +347,11 @@ public class ExtractorIOS extends Extractor {
             sql = isGroupChat ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
         } else {
             sql = isGroupChat ? SELECT_MESSAGES_GROUP_NOZTITLE : SELECT_MESSAGES_USER_NOZTITLE;
+        }
+        
+        if (!hasMessageInfoTable) {
+            sql = sql.replace("LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO ", "");
+            sql = sql.replace("INFO.ZRECEIPTINFO", "NULL");
         }
 
         if (!hasZSTANZAIDAndZMETADATAColumns) {
@@ -382,11 +424,11 @@ public class ExtractorIOS extends Extractor {
                 }
             }
 
-            Collections.sort(chat.getMessages());
+            Message.sort(chat.getMessages());
         }
     }
 
-    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap) {
+    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap, Map<Long, Chat> idToChat) {
         long fakeIds = 2000000000L;
         for (Message m : messages) {
             byte[] metadata = m.getMetaData();
@@ -400,7 +442,9 @@ public class ExtractorIOS extends Extractor {
                     List<Part> childs = ProtoBufDecoder.findChilds(main, 19);
 
                     Message messageQuote = messagesMap.get(uuidQuote);
-                    if (messageQuote == null) {
+                    if (messageQuote != null) {
+                        messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
+                    }else {                        
                         // Referenced message was deleted, so create a new message and fill with data
                         // extracted from referencing message metadata.
                         messageQuote = new Message();
@@ -566,7 +610,15 @@ public class ExtractorIOS extends Extractor {
                                             }
                                         }
                                         break;
-
+                                    case 30:
+                                        type = MessageType.PRODUCT_MESSAGE;
+                                        MessageProduct mp = decodeQuotedProductInfo(c, messageQuote);
+                                        messageQuote.setProduct(mp);
+                                        messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_CATALOG);
+                                        messageQuote.setFromMe(false);
+                                        if (mp != null)
+                                            messageQuote.setRemoteResource(mp.getSeller());
+                                        break;
                                     default:
                                         break;
                                 }
@@ -574,8 +626,48 @@ public class ExtractorIOS extends Extractor {
                         }
 
                         messageQuote.setMessageType(type);
-                        messageQuote.setDeleted(true);
+
+                        String contactQuote = ProtoBufDecoder.findString(main, 7);
+                        if (contactQuote != null) {
+                            // find quotes outside this chat
+                            // is the reverse of real msg
+                            messageQuote.setFromMe(!m.isFromMe());
+                            // set remote resource if is not from me
+                            messageQuote.setRemoteResource(m.getRemoteResource());
+                            // just set default case if does not match order cases ...
+                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
+                            if (contactQuote.equals(WAContact.waStatusBroadcast)) {
+                                messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
+
+                            } else if (contactQuote.endsWith(WAContact.waGroupSuffix)) {
+
+                                // set it first in case if not found
+                                messageQuote.setQuotePrivateGroupName(contactQuote);
+                                boolean found = false;
+                                for (Chat cq : idToChat.values()) {
+                                    // Find friendly group name and message id
+
+                                    if (!cq.isGroupChat())
+                                        continue;
+
+                                    if (cq.getPrintId() != null && contactQuote.contains(cq.getPrintId()))
+                                        messageQuote.setQuotePrivateGroupName(cq.getTitle());
+
+                                    for (Message origin : cq.getMessages()) {
+                                        if (origin.getUuid() != null && origin.getUuid().compareTo(uuidQuote) == 0) {
+                                            messageQuote.setId(origin.getId());
+                                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (found)
+                                        break;
+                                }
+                            }
+                        }
                     }
+
                     if (messageQuote.getThumbData() == null && childs != null) {
                         byte[] thumbData = null;
                         for (Part c : childs) {
@@ -636,7 +728,7 @@ public class ExtractorIOS extends Extractor {
         }
         int gEventType = rs.getInt("gEventType"); //$NON-NLS-1$
         int messageType = rs.getInt("messageType"); //$NON-NLS-1$
-        m.setMessageType(decodeMessageType(messageType, gEventType));
+        m.setMessageType(decodeMessageType(messageType, gEventType, m.getData()));
         if (m.getMessageType() != CONTACT_MESSAGE) {
             if (m.getMessageType() != LOCATION_MESSAGE && m.getMessageType() != DELETED_BY_SENDER) {
                 m.setMediaMime(rs.getString("vCardString"));
@@ -671,10 +763,17 @@ public class ExtractorIOS extends Extractor {
         if (receiptInfo != null) {
             decodeReceiptInfo(m, receiptInfo);
         }
-        m.setForwarded(rs.getInt("forwarded") > 0);
 
-        byte[] metadata = rs.getBytes("metadata");
+        // Set forwarded based on zFlags 8th, 9th, and 10th bits (see #2687)
+        long zFlag = rs.getLong("zflags");
+        boolean fwdBit = (0b1000_0000 & zFlag) != 0; // 8th bit
+        boolean fwdStandardBit = (0b1_0000_0000 & zFlag) != 0; // 9th bit
+        boolean fwdChannelBit = (0b10_0000_0000 & zFlag) != 0; // 10th bit
+        m.setForwarded(fwdBit & (fwdStandardBit ^ fwdChannelBit));
+
+        byte[] metadata = null;
         if (hasZSTANZAIDAndZMETADATAColumns) {
+            metadata = rs.getBytes("metadata");
             m.setUuid(rs.getString("uuid"));
             m.setMetaData(metadata);
         }
@@ -924,6 +1023,59 @@ public class ExtractorIOS extends Extractor {
         return null;
     }
 
+    private MessageProduct decodeQuotedProductInfo(Part p2, Message m) {
+        String title = null;
+        String observation = null;
+        String currency = null;
+        String seller = null;
+        int amount = 0;
+        if (p2 != null) {
+            Part p3 = p2.getChild(1);
+            if (p3 != null) {
+                Part p4 = p3.getChild(1);
+                if (p4 != null) {
+                    Part p5 = p4.getChild(16);
+                    if (p5 != null) {
+                        byte[] bytes = p5.getBytes();
+                        if (bytes != null) {
+                            m.setThumbData(bytes);
+                        }
+                    }
+                }
+                p4 = p3.getChild(3);
+                if (p4 != null) {
+                    title = p4.getString();
+                }
+                p4 = p3.getChild(4);
+                if (p4 != null) {
+                    observation = p4.getString();
+                }
+                p4 = p3.getChild(5);
+                if (p4 != null) {
+                    currency = p4.getString();
+                }
+                p4 = p3.getChild(6);
+                if (p4 != null) {
+                    String v = p4.getString();
+                    if (v != null && !v.isBlank()) {
+                        try {
+                            amount = Integer.parseInt(v);
+                        } catch (NumberFormatException e) {
+                        }
+                    }
+                }
+                p3 = p2.getChild(2);
+                if (p3 != null) {
+                    seller = p3.getString();
+                }
+            }
+        }
+        if (title != null || currency != null || amount != 0 || seller != null) {
+            return new MessageProduct(title, seller, currency, amount, observation);
+        }
+        return null;
+    }
+
     private String decodeGroupInvite(byte[] metadata) {
         Part p1 = new ProtoBufDecoder(metadata).decode(28);
         if (p1 != null) {
@@ -1118,7 +1270,7 @@ public class ExtractorIOS extends Extractor {
         }
         int gEventType = (int) row.getIntValue("ZGROUPEVENTTYPE"); //$NON-NLS-1$
         int messageType = (int) row.getIntValue("ZMESSAGETYPE"); //$NON-NLS-1$
-        m.setMessageType(decodeMessageType(messageType, gEventType));
+        m.setMessageType(decodeMessageType(messageType, gEventType, m.getData()));
         SqliteRow mediaItem = mediaItems.get(m.getId());
         if (mediaItem != null) {
             try {
@@ -1263,23 +1415,39 @@ public class ExtractorIOS extends Extractor {
 
         if (undeleteChatsSessions != null && !undeleteChatsSessions.getTableRows().isEmpty()) {
             for (SqliteRow row : undeleteChatsSessions.getTableRows()) {
-                String contactId = row.getTextValue("ZCONTACTJID"); //$NON-NLS-1$
-                if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                    WAContact contact = contacts.getContact(contactId);
-                    Chat c = new Chat(contact);
-                    c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
-                    c.setDeleted(row.getIntValue("ZREMOVED") != 0 || row.isDeletedRow());
-                    c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
-                    c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                    result.add(c);
+                String contactId = row.getTextValue("ZCONTACTJID");
+                String originalId = contactId; 
+                if (contactId.endsWith(WAContact.lidSuffix)) {
+                    String identifier = row.getTextValue("ZCONTACTIDENTIFIER");
+                    if (StringUtils.isNotBlank(identifier)) {
+                        contactId = identifier;
+                    }
                 }
+                if (originalId != null && !originalId.equals(contactId)) {
+                    contacts.addContactMapping(originalId, contactId);
+                }
+
+                WAContact contact = contacts.getContact(contactId);
+                Chat c = new Chat(contact);
+                c.setId(row.getIntValue("Z_PK"));
+                c.setDeleted(row.getIntValue("ZREMOVED") != 0 || row.isDeletedRow());
+                c.setSubject(row.getTextValue("ZPARTNERNAME"));
+
+                if (contactId.endsWith(WAContact.waGroupSuffix)) {
+                    c.setGroupChat(true);
+                } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
+                    c.setChannelChat(true);
+                } else if (contactId.endsWith(WAContact.waStatusSuffix)) {
+                    c.setBroadcast(true);
+                }
+                result.add(c);
             }
         }
 
         return result;
     }
 
-    protected Message.MessageType decodeMessageType(int messageType, int gEventType) {
+    protected Message.MessageType decodeMessageType(int messageType, int gEventType, String data) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
             case 0:
@@ -1350,6 +1518,10 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_CREATED;
                         break;
 
+                    case 13:
+                        result = COMMUNITY_NOT_AVAILABLE;
+                        break;
+
                     case 15:
                         result = USER_JOINED_GROUP_FROM_LINK;
                         break;
@@ -1360,6 +1532,10 @@ public class ExtractorIOS extends Extractor {
 
                     case 18:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
+                        break;
+
+                    case 19:
+                        result = GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
                         break;
 
                     case 20:
@@ -1382,7 +1558,12 @@ public class ExtractorIOS extends Extractor {
                         result = EPHEMERAL_CHANGED;
                         break;
 
+                    case 30:
+                        result = USER_JOINED_GROUP_FROM_COMMUNITY;
+                        break;
+
                     case 31:
+                    case 61:
                         result = GROUP_ADDED_TO_COMMUNITY;
                         break;
 
@@ -1398,9 +1579,17 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
                         break;
 
+                    case 43:
+                        result = GROUP_NOT_PART_OF_COMMUNITY;
+                        break;
+
                     case 50:
                         // multiple users added to group
                         result = USER_ADDED_TO_GROUP;
+                        break;
+
+                    case 51:
+                        result = COMMUNITY_MANAGEMENT_ACTION;
                         break;
 
                     case 56:
@@ -1409,8 +1598,20 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_NAME_CHANGED;
                         break;
                         
+                    case 57:
+                        result = COMMUNITY_DESCRIPTION_CHANGED;
+                        break;
+                        
                     case 60:
-                        result = MessageType.COMMUNITY_WELCOME;
+                        result = COMMUNITY_WELCOME;
+                        break;
+
+                    case 64:
+                        if ("1".equals(data)) {
+                            result = COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+                        } else {
+                            result = COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
+                        }
                         break;
                 }
                 break;
@@ -1526,8 +1727,11 @@ public class ExtractorIOS extends Extractor {
             case 19:
             case 20:
             case 23:
+            case 24:
             case 30:
             case 32:
+            case 41:
+            case 42:
                 result = TEMPLATE_MESSAGE;
                 break;
 
@@ -1586,6 +1790,10 @@ public class ExtractorIOS extends Extractor {
             case 59:
                 result = VOICE_CALL;
                 break;
+            
+            case 66:
+                result = MESSAGE_ASSOCIATION;
+                break;
         }
         return result;
     }
@@ -1629,16 +1837,22 @@ public class ExtractorIOS extends Extractor {
     /**
      * Static query strings
      */
-    private static final String SELECT_CHAT_LIST = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath, ZREMOVED " //$NON-NLS-1$
-            + "FROM ZWACHATSESSION " //$NON-NLS-1$
-            + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID " //$NON-NLS-1$
-            + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
+    private static final String SELECT_CHAT_LIST_IDENTIFIER = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, "
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath, ZREMOVED, ZCONTACTIDENTIFIER AS identifier "
+            + "FROM ZWACHATSESSION "
+            + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID "
+            + "ORDER BY ZLASTMESSAGEDATE DESC";
 
-    private static final String SELECT_CHAT_LIST_NO_PPIC = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath, 0 as ZREMOVED " //$NON-NLS-1$
-            + "FROM ZWACHATSESSION " //$NON-NLS-1$
-            + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
+    private static final String SELECT_CHAT_LIST = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, "
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath, ZREMOVED, NULL AS identifier  "
+            + "FROM ZWACHATSESSION "
+            + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID "
+            + "ORDER BY ZLASTMESSAGEDATE DESC";
+
+    private static final String SELECT_CHAT_LIST_NO_PPIC = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, "
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath, 0 as ZREMOVED, NULL AS identifier "
+            + "FROM ZWACHATSESSION "
+            + "ORDER BY ZLASTMESSAGEDATE DESC";
 
     private static final String SELECT_PUSH_NAMES = "select ZJID as jid, ZPUSHNAME as pushname from ZWAPROFILEPUSHNAME";
     
@@ -1652,7 +1866,7 @@ public class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1667,7 +1881,7 @@ public class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1683,7 +1897,7 @@ public class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, NULL as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$           
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1698,7 +1912,7 @@ public class ExtractorIOS extends Extractor {
             + "as mediaName, ZVCARDNAME as mediaHash, NULL as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
-            + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$          
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
@@ -1710,7 +1924,7 @@ public class ExtractorIOS extends Extractor {
     private static final String VCARD_SEPARATOR = "_$!<VCard-Separator>!$_"; //$NON-NLS-1$
 
     private static final Set<MessageType> MEDIA_MESSAGES = ImmutableSet.of(AUDIO_MESSAGE, VIDEO_MESSAGE, GIF_MESSAGE,
-            DOC_MESSAGE, IMAGE_MESSAGE);
+            DOC_MESSAGE, IMAGE_MESSAGE, VIEW_ONCE_AUDIO_MESSAGE, VIEW_ONCE_IMAGE_MESSAGE, VIEW_ONCE_VIDEO_MESSAGE);
 
     private static class WAIOSMessageValidator implements SQLiteRecordValidator {
 
@@ -1723,7 +1937,10 @@ public class ExtractorIOS extends Extractor {
                 }
 
                 String remoteId = row.getTextValue("ZFROMJID"); //$NON-NLS-1$
-                if (remoteId == null || !(remoteId.endsWith("whatsapp.net") || remoteId.endsWith("g.us"))) { //$NON-NLS-1$ //$NON-NLS-2$
+                if (remoteId == null
+                        || !(remoteId.endsWith(WAContact.waSuffix) || remoteId.endsWith(WAContact.waNewsletterSuffix)
+                                || remoteId.endsWith(WAContact.waStatusBroadcast)
+                                || remoteId.endsWith(WAContact.waStatusSuffix))) {
                     return false;
                 }
 

@@ -629,8 +629,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         }
 
         // Avoid conflict with keys that are used for item selection (space) and
-        // recursive item selection (R).
-        if (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == 'R') {
+        // recursive item selection (R), parents (P), references (F) and referenced by (D)
+        if (e.getKeyCode() == KeyEvent.VK_SPACE || Arrays.asList('R', 'P', 'F', 'D').contains((char) e.getKeyCode())) {
             if (e.getSource() == list) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
                 e.consume();

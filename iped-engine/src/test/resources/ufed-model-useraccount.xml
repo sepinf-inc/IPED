@@ -1,0 +1,133 @@
+ <modelType type="UserAccount">
+    <model type="UserAccount" id="df377551-0743-4035-8dc8-fbc915839527" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="212094" extractionId="0">
+        <field name="UserMapping" type="DecodingSourceOptions">
+        <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+        </field>
+        <field name="Source" type="String">
+        <value type="String"><![CDATA[WhatsApp Business]]></value>
+        </field>
+        <field name="Name" type="String">
+        <value type="String"><![CDATA[Rattata]]></value>
+        </field>
+        <multiModelField name="Photos" type="ContactPhoto">
+        <model type="ContactPhoto" id="596a8782-56b5-4b48-92a7-fc1086d9f32d" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="212104" extractionId="0">
+            <field name="Name" type="String">
+            <value type="String"><![CDATA[Photo.jpg]]></value>
+            </field>
+            <nodeField name="PhotoNode">
+            <id name="PhotoNode">9bbd4e8d-5ccc-42e9-a36f-d2defef195b9</id>
+            </nodeField>
+        </model>
+        </multiModelField>
+        <multiModelField name="Entries" type="ContactEntry">
+        <model type="UserID" id="1ad3fd3e-af27-44b9-b32a-a483dea030ba" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="212098" extractionId="0">
+            <field name="Category" type="String">
+            <value type="String"><![CDATA[WhatsApp User Id]]></value>
+            </field>
+            <field name="Value" type="String">
+            <value type="String"><![CDATA[5511999997777@s.whatsapp.net]]></value>
+            </field>
+            <field name="Domain" type="String">
+            <value type="String"><![CDATA[User ID]]></value>
+            </field>
+        </model>
+        <model type="UserID" id="ba582bf4-562a-4ad4-8681-4b99f301cacf" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="212099" extractionId="0">
+            <field name="Category" type="String">
+            <value type="String"><![CDATA[Additional Name]]></value>
+            </field>
+            <field name="Value" type="String">
+            <value type="String"><![CDATA[Raticate wannabe]]></value>
+            </field>
+            <field name="Domain" type="String">
+            <value type="String"><![CDATA[User ID]]></value>
+            </field>
+        </model>
+        <model type="UserID" id="5079aef5-0e2d-4d1d-a7e3-cf6580a4f489" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="212100" extractionId="0">
+            <field name="Category" type="String">
+            <value type="String"><![CDATA[Additional Name]]></value>
+            </field>
+            <field name="Value" type="String">
+            <value type="String"><![CDATA[Normal · Flying]]></value>
+            </field>
+            <field name="Domain" type="String">
+            <value type="String"><![CDATA[User ID]]></value>
+            </field>
+        </model>
+        </multiModelField>
+        <multiModelField name="AdditionalInfo" type="KeyValueModel">
+        <model type="KeyValueModel" id="e8e5dcbe-dc60-4e10-a1c6-f6e244bbbfa8" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="212101" extractionId="0">
+            <field name="Key" type="String">
+            <value type="String"><![CDATA[About]]></value>
+            </field>
+            <field name="Value" type="String">
+            <value type="String"><![CDATA[Olá! Eu estou usando o WhatsApp.]]></value>
+            </field>
+        </model>
+        <model type="KeyValueModel" id="793e02d7-030b-4ea8-8587-f727f1c9f64e" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="212103" extractionId="0">
+            <field name="Key" type="String">
+            <value type="String"><![CDATA[Chat Backup Frequency]]></value>
+            </field>
+            <field name="Value" type="String">
+            <value type="String"><![CDATA[Daily]]></value>
+            </field>
+        </model>
+        </multiModelField>
+        <jumptargets name="">
+        <targetid ismodel="false" targetType="File"><![CDATA[9bbd4e8d-5ccc-42e9-a36f-d2defef195b9]]></targetid>
+        </jumptargets>
+    </model>
+   <model type="UserAccount" id="9628c161-85c6-45e5-9f1f-775bc36996b3" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="89416" extractionId="0">
+      <field name="UserMapping" type="DecodingSourceOptions">
+        <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+      </field>
+      <field name="Source" type="String">
+        <value type="String"><![CDATA[Instagram]]></value>
+      </field>
+      <field name="Name" type="String">
+        <value type="String"><![CDATA[Pidgeotto]]></value>
+      </field>
+      <multiModelField name="Photos" type="ContactPhoto">
+        <model type="ContactPhoto" id="d4159cfb-4e9c-450e-b374-6622bc1f52a5" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="89423" extractionId="0">
+          <multiField name="Url" type="String">
+            <value type="String"><![CDATA[profile_picture_url: https://scontent.cdninstagram.com/v/t51.00000000000000]]></value>
+            <value type="String"><![CDATA[profile_picture_large_url: https://scontent.cdninstagram.com/v/t51.1111111111111111]]></value>
+          </multiField>
+        </model>
+      </multiModelField>
+      <multiModelField name="Entries" type="ContactEntry">
+        <model type="ProfilePicture" id="8685c85b-86fb-49cd-bb17-3eb0685f92e4" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="89421" extractionId="0">
+          <field name="Category" type="String">
+            <value type="String"><![CDATA[profile_picture_url]]></value>
+          </field>
+          <field name="Value" type="String">
+            <value type="String"><![CDATA[https://scontent.cdninstagram.com/v/yyyyyyyyyyyyyyyyyyyyyyyyyyy]]></value>
+          </field>
+          <field name="Domain" type="String">
+            <value type="String"><![CDATA[Profile Picture]]></value>
+          </field>
+        </model>
+        <model type="ProfilePicture" id="8d85b44a-2d94-452b-8430-b3eec021102e" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="89422" extractionId="0">
+          <field name="Category" type="String">
+            <value type="String"><![CDATA[profile_picture_large_url]]></value>
+          </field>
+          <field name="Value" type="String">
+            <value type="String"><![CDATA[https://scontent.cdninstagram.com/v/xxxxxxxxxxxxxxxxxx]]></value>
+          </field>
+          <field name="Domain" type="String">
+            <value type="String"><![CDATA[Profile Picture]]></value>
+          </field>
+        </model>
+        <model type="UserID" id="4cb021f8-38a4-4616-9c43-0ecd32dbb39e" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="89418" extractionId="0">
+          <field name="Category" type="String">
+            <value type="String"><![CDATA[Facebook Id]]></value>
+          </field>
+          <field name="Value" type="String">
+            <value type="String"><![CDATA[1212121212121212]]></value>
+          </field>
+          <field name="Domain" type="String">
+            <value type="String"><![CDATA[User ID]]></value>
+          </field>
+        </model>
+      </multiModelField>
+    </model>
+</modelType>

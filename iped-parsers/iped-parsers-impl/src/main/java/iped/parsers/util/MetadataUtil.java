@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -19,6 +20,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.detect.apple.BPListDetector;
 import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
@@ -28,11 +31,11 @@ import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 
+import iped.data.IItem;
 import iped.parsers.image.TiffPageParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -196,7 +199,6 @@ public class MetadataUtil {
         ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
         ignorePreviewMetas.add(StandardParser.INDEXER_CONTENT_TYPE);
         ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
-        ignorePreviewMetas.add(UFEDChatParser.CHILD_MSG_IDS);
         return ignorePreviewMetas;
     }
 
@@ -253,6 +255,8 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.CONFIDENCE_ATTR);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
+        generalKeys.add(ExtraProperties.PARENT_VIEW_POSITION);
+        generalKeys.add(ExtraProperties.MOD_TO_INTERNAL_TIME_DIFF);
 
         return generalKeys;
     }
@@ -395,15 +399,17 @@ public class MetadataUtil {
         if (!prefixVideoMetadata(metadata)) {
             if (!prefixAudioMetadata(metadata)) {
                 if (!prefixImageMetadata(metadata)) {
-                    prefixPDFMetadata(metadata);
+                    if (!prefixPDFMetadata(metadata)) {
+                        prefixDocMetadata(metadata);
+                    }
                 }
             }
         }
-        prefixDocMetadata(metadata);
         prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
         renameKeys(metadata);
         removeExtraValsFromSingleValueKeys(metadata);
+        fixImageDimensions(metadata);
         // add again removed empty/corrupted thumbnails
         if (thumb != null && thumb.isEmpty()) {
             metadata.set(ExtraProperties.THUMBNAIL_BASE64, "");
@@ -438,35 +444,42 @@ public class MetadataUtil {
     }
 
     private static void normalizeGPSMeta(Metadata metadata) {
-        String lat = metadata.get(Metadata.LATITUDE);
-        if (lat == null)
-            lat = metadata.get(ExtraProperties.UFED_META_PREFIX + "Latitude");
-        String lon = metadata.get(Metadata.LONGITUDE);
-        if (lon == null)
-            lon = metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude");
-        boolean invalid = lat == null || lon == null;
-        if (!invalid) {
+        String lat = StringUtils.firstNonBlank(metadata.get(Metadata.LATITUDE),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Latitude"),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Associated Location Latitude"));
+
+        String lon = StringUtils.firstNonBlank(metadata.get(Metadata.LONGITUDE),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude"),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Associated Location Longitude"));
+
+        boolean valid = StringUtils.isNoneBlank(lat, lon);
+        if (valid) {
+            lat = lat.replace(',', '.');
+            lon = lon.replace(',', '.');
             try {
                 Float lati = Float.valueOf(lat);
                 Float longit = Float.valueOf(lon);
                 if ((lati < -90 || lati > 90 || longit < -180 || longit > 180 || Float.isNaN(lati)
                         || Float.isNaN(longit)) || (lati == 0.0 && longit == 0.0)) {
-                    invalid = true;
+                    valid = false;
                 }
             } catch (NumberFormatException e) {
-                invalid = true;
+                valid = false;
             }
         }
-        if (!invalid) {
+        if (valid) {
             metadata.add(ExtraProperties.LOCATIONS, lat + ";" + lon);
+
+            // always remove these, if valid, they were stored above
+            metadata.remove(Metadata.LATITUDE.getName());
+            metadata.remove(Metadata.LONGITUDE.getName());
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Latitude");
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Latitude");
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Longitude");
         } else {
             metadata.remove(Metadata.ALTITUDE.getName());
         }
-        // always remove these, if valid, they were stored above
-        metadata.remove(Metadata.LATITUDE.getName());
-        metadata.remove(Metadata.LONGITUDE.getName());
-        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Latitude");
-        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
     }
 
     private static void removeDuplicateValues(Metadata metadata) {
@@ -629,6 +642,7 @@ public class MetadataUtil {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
                     || key.startsWith(ExtraProperties.UFED_META_PREFIX)
                     || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
+                    || key.startsWith(ExtraProperties.CONVERSATION_PREFIX)
                     || key.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
                     || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX)) {
                 continue;
@@ -666,21 +680,49 @@ public class MetadataUtil {
     }
 
     private static boolean prefixImageMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("image")) {
+        if (isImageType(metadata.get(Metadata.CONTENT_TYPE))) {
             includePrefix(metadata, ExtraProperties.IMAGE_META_PREFIX);
             return true;
         }
         return false;
     }
 
+    public static boolean isImageSequence(String mediaType) {
+        return mediaType.equals("image/heic-sequence") || mediaType.equals("image/heif-sequence");
+    }
+
+    /**
+     * Check if the item is a multiple frame image. It works only after VideoThumbTask
+     * is executed.
+     */
+    public static boolean isAnimationImage(IItem item) {
+        return MetadataUtil.isImageSequence(item.getMediaType().toString()) ||
+                item.getMetadata().get(ExtraProperties.ANIMATION_FRAMES_PROP) != null;
+    }
+
+
+    public static boolean isImageType(MediaType mediaType) {
+        return mediaType == null ? false : isImageType(mediaType.toString());
+    }
+
+    public static boolean isImageType(String mediaType) {
+        return mediaType == null ? false
+                : mediaType.startsWith("image/") || mediaType.equals("application/coreldraw")
+                        || mediaType.equals("application/x-vnd.corel.zcf.draw.document+zip");
+    }
+
     public static boolean isVideoType(MediaType mediaType) {
-        return mediaType.getType().equals("video") //$NON-NLS-1$
-                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+        return mediaType == null ? false : isVideoType(mediaType.toString());
+    }
+
+    public static boolean isVideoType(String mediaType) {
+        return mediaType == null ? false
+                : mediaType.startsWith("video/") || mediaType.startsWith("application/vnd.rn-realmedia");
     }
 
     private static boolean prefixVideoMetadata(Metadata metadata) {
-        if (isVideoType(MediaType.parse(metadata.get(Metadata.CONTENT_TYPE)))
-                || isVideoType(MediaType.parse(metadata.get(StandardParser.INDEXER_CONTENT_TYPE)))) {
+        if (isVideoType(metadata.get(Metadata.CONTENT_TYPE))
+                || isVideoType(metadata.get(StandardParser.INDEXER_CONTENT_TYPE))) {
             includePrefix(metadata, ExtraProperties.VIDEO_META_PREFIX);
             return true;
         }
@@ -700,7 +742,10 @@ public class MetadataUtil {
         MediaType mediaType = MediaType.parse(contentType);
 
         if (contentType.startsWith("message") || //$NON-NLS-1$
-                MediaTypes.OUTLOOK_MSG.toString().equals(contentType))
+                MediaTypes.OUTLOOK_MSG.toString().equals(contentType) ||
+                MediaTypes.UFED_EMAIL_MIME.toString().equals(contentType) ||
+                MediaTypes.UFED_MESSAGE_MIME.toString().equals(contentType) ||
+                BPListDetector.PLIST.toString().equals(contentType))
             return;
 
         while (mediaType != null) {
@@ -804,4 +849,53 @@ public class MetadataUtil {
         }
     }
 
+    public static void normalizeTerms(List<String> l) {
+        Set<String> set = new HashSet<>();
+        for (String term : l) {
+            String s = normalizeTerm(term);
+            if (!s.isEmpty()) {
+                set.add(s);
+            }
+        }
+        l.clear();
+        l.addAll(set);
+    }
+
+    public static String normalizeTerm(String s) {
+        char[] chars = s.toCharArray();
+        int pos = 0;
+        boolean upper = true;
+        for (int i = 0; i < chars.length; i++) {
+            Character c = chars[i];
+            if (Character.isLetterOrDigit(c)) {
+                if (upper) {
+                    c = Character.toUpperCase(c);
+                    upper = false;
+                }
+                chars[pos++] = c;
+            } else {
+                upper = true;
+            }
+        }
+        return new String(chars, 0, pos);
+    }
+
+    private static void fixImageDimensions(Metadata metadata) {
+        fixImageDimension(metadata, ExtraProperties.IMAGE_META_PREFIX + "Width");
+        fixImageDimension(metadata, ExtraProperties.IMAGE_META_PREFIX + "Height");
+    }
+
+    private static void fixImageDimension(Metadata metadata, String key) {
+        String value = metadata.get(key);
+        if (value != null) {
+            int pos = value.toLowerCase().indexOf("pixels");
+            if (pos > 0) {
+                value = value.substring(0, pos).strip();
+                if (!value.isEmpty()) {
+                    metadata.set(key, value);
+                }
+            }
+
+        }
+    }
 }

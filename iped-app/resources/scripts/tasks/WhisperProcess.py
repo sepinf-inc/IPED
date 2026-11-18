@@ -1,7 +1,9 @@
-﻿import sys
-import numpy
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 stdout = sys.stdout
 sys.stdout = sys.stderr
+
+import numpy
 
 terminate = 'terminate_process'
 model_loaded = 'model_loaded'
@@ -10,13 +12,13 @@ finished = 'transcription_finished'
 ping = 'ping'
 
 def main():
-
     modelName = sys.argv[1]
-    deviceNum = int(sys.argv[2])
-    threads = int(sys.argv[3])
-    language = sys.argv[4]
-    compute_type = sys.argv[5]
-    batch_size = int(sys.argv[6])
+    device = sys.argv[2]
+    deviceNum = int(sys.argv[3])
+    threads = int(sys.argv[4])
+    language = sys.argv[5]
+    compute_type = sys.argv[6]
+    batch_size = int(sys.argv[7])
     
     if language == 'detect':
         language = None
@@ -31,9 +33,16 @@ def main():
     print(library_loaded, file=stdout, flush=True)
     print('whisperx' if whisperx_found else 'faster_whisper', file=stdout, flush=True)
     
-    import GPUtil
-    cudaCount = len(GPUtil.getGPUs())
-
+    if device != 'gpu':
+        cudaCount = 0
+        if compute_type == 'float16': # not supported on CPU
+            compute_type = 'int8'
+    else:
+        import GPUtil
+        cudaCount = len(GPUtil.getGPUs())
+        if cudaCount == 0:
+            raise RuntimeError('No GPU device detected!')
+    
     print(str(cudaCount), file=stdout, flush=True)
 
     if cudaCount > 0:
@@ -49,18 +58,7 @@ def main():
             model = faster_whisper.WhisperModel(modelName, device=deviceId, device_index=deviceNum, cpu_threads=threads, compute_type=compute_type)
             
     except Exception as e:
-        if deviceId != 'cpu':
-            # loading on GPU failed (OOM?), try on CPU
-            print('FAILED to load model on GPU, OOM? Fallbacking to CPU...', file=sys.stderr)
-            deviceId = 'cpu'
-            if compute_type == 'float16': # not supported on CPU
-                compute_type = 'int8'
-            if whisperx_found:
-                model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type, language=language)
-            else:
-                model = faster_whisper.WhisperModel(modelName, device=deviceId, cpu_threads=threads, compute_type=compute_type)
-        else:
-            raise e
+        raise e
     
     print(model_loaded, file=stdout, flush=True)
     print(deviceId, file=stdout, flush=True)
@@ -74,38 +72,44 @@ def main():
         if line == ping:
             print(ping, file=stdout, flush=True)
             continue
-
-        transcription = ''
+        
+        files = line.split(",")
+        transcription = []
         logprobs = []
+        for file in files:
+            transcription.append("")
+            logprobs.append([])
         try:
             if whisperx_found:
-                audio = whisperx.load_audio(line)
-                result = model.transcribe(audio, batch_size=batch_size, language=language)
+                result = model.transcribe(files, batch_size=batch_size, language=language,wav=True)
                 for segment in result['segments']:
-                    transcription += segment['text']
+                    idx = segment["audio"]
+                    transcription[idx] += segment['text']
                     if 'avg_logprob' in segment:
-                        logprobs.append(segment['avg_logprob'])
+                        logprobs[idx].append(segment['avg_logprob'])
             else:
-                segments, info = model.transcribe(audio=line, language=language, beam_size=5, vad_filter=True)
-                for segment in segments:
-                    transcription += segment.text
-                    logprobs.append(segment.avg_logprob)
+                for idx in range(len(files)):
+                    segments, info = model.transcribe(audio=files[idx], language=language, beam_size=5, vad_filter=True)
+                    for segment in segments:
+                        transcription[idx] += segment.text
+                        logprobs[idx].append(segment.avg_logprob)
 
         except Exception as e:
             msg = repr(e).replace('\n', ' ').replace('\r', ' ')
             print(msg, file=stdout, flush=True)
             continue
         
-        text = transcription.replace('\n', ' ').replace('\r', ' ')
-        
-        if len(logprobs) == 0:
-            finalScore = 0
-        else:
-            finalScore = numpy.mean(numpy.exp(logprobs))
-        
         print(finished, file=stdout, flush=True)
-        print(str(finalScore), file=stdout, flush=True)
-        print(text, file=stdout, flush=True)
+        
+        for idx in range(len(files)):
+            text = transcription[idx].replace('\n', ' ').replace('\r', ' ')
+            
+            if len(logprobs[idx]) == 0:
+                finalScore = 0
+            else:
+                finalScore = numpy.mean(numpy.exp(logprobs[idx]))
+            print(str(finalScore), file=stdout, flush=True)
+            print(text, file=stdout, flush=True)
 
     return
     

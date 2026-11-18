@@ -17,7 +17,6 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -170,13 +169,13 @@ public class BookmarkEditDialog extends JDialog {
 
         Dimension dim = new Dimension(100, 30);
         JButton butOk = new JButton();
-        butOk.setText(UIManager.get("OptionPane.okButtonText").toString());
+        butOk.setText(Messages.getString("Ok"));
         butOk.setPreferredSize(dim);
         p3.add(butOk);
 
         JButton butCancel = new JButton();
         butCancel.setPreferredSize(dim);
-        butCancel.setText(UIManager.get("OptionPane.cancelButtonText").toString());
+        butCancel.setText(Messages.getString("Cancel"));
         p3.add(butCancel);
 
         butOk.addActionListener(new ActionListener() {

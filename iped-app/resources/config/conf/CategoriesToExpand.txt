@@ -9,6 +9,7 @@ Compressed Archives
 Emails
 Databases
 Chats
+Instant Messages
 Contacts
 ISO disks
 Internet History
@@ -19,6 +20,9 @@ OLE files
 Georeferenced Files
 Peer-to-peer
 Chrome Cache
+Apple Configuration Files
+Automatic Destinations
+Custom Destinations
 #Event Files
 
 # Generates registry reports:

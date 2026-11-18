@@ -27,13 +27,13 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.table.TableCellRenderer;
 
-class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
+public class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
 
     private static final long serialVersionUID = 1L;
 
     private Color alternateColor, backgroundColor;
 
-    ProgressCellRenderer() {
+    public ProgressCellRenderer() {
         super(SwingConstants.HORIZONTAL);
         setBorderPainted(false);
         setMaximum(100);

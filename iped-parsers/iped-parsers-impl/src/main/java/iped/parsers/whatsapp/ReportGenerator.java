@@ -47,7 +47,6 @@ public class ReportGenerator {
     private static final String locationIcon = "<img class=\"location\">";
     private static final String forwardedIcon = "<img class=\"fwd\">";
     private static final String viewOnceIcon = "<img class=\"vo\">";
-    private static final String waSuffix = "@s.whatsapp.net";
 
     public ReportGenerator() {
     }
@@ -143,7 +142,7 @@ public class ReportGenerator {
     private static final String[] tagsWA = { "```", "*", "_", "~" };
     private static final String[] tagsHTML = { "tt", "b", "i", "s" };
 
-    private static final String convertWhatsAppTagsToHTML(String s) {
+    public static final String convertWhatsAppTagsToHTML(String s) {
         int start = 0;
         while (start < s.length()) {
             int min = s.length();
@@ -199,8 +198,9 @@ public class ReportGenerator {
         ByteArrayOutputStream chatBytes = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(chatBytes, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
-        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), c.isDeleted(), () -> {
-            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), c.isDeleted(),
+                c.isBroadcast(), () -> {
+                    ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
             if (c.getRecoveredFrom() != null) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -219,6 +219,10 @@ public class ReportGenerator {
                     // These messages are currently redundant with calls information already
                     // extracted from other tables (these come from messages table). So, at least
                     // for now, nothing should be included in the report.
+                    continue;
+                }
+                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION) {
+                    // These messages are not visible on the app and don't contain any data
                     continue;
                 }
                 String thisDate = dateFormat.format(m.getTimeStamp());
@@ -280,6 +284,10 @@ public class ReportGenerator {
             case AI_THIRD_PARTY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.AIThirdParty"));
+                break;
+            case CHAT_STARTED_FROM_AD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.ChatStartedFromAd"));
                 break;
             case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">");
@@ -523,6 +531,14 @@ public class ReportGenerator {
                 }
                 out.println("<br>");
                 break;
+            case COMMUNITY_NOT_AVAILABLE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.CommunityNotAvailable") + ".<br>");
+                break;
+            case GROUP_NOT_PART_OF_COMMUNITY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupNotPartOfCommunity") + ".<br>");
+                break;
             case COMMUNITY_RENAMED:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.CommunityRenamed") + ".<br>");
@@ -539,32 +555,44 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityWelcome") + "<br>");
                 break;
+            case COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityChangedOnlyAdminsCanAdd") + "<br>");
+                break;
+            case COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityChangedAllMembersCanAdd") + "<br>");
+                break;
             case NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.NewParticipantsNeedAdminApproval") + "<br>");
                 break;
             case USER_ADDED_TO_GROUP:
             case USER_ADDED_TO_COMMUNITY:
-            case USER_COMMUNITY_ADMIN:                
+            case USER_COMMUNITY_ADMIN:
+            case USER_JOINED_GROUP_FROM_COMMUNITY:
             case USER_JOINED_GROUP_FROM_INVITATION:
             case USER_JOINED_GROUP_FROM_LINK:
+            case USER_REQUEST_TO_ADD_TO_GROUP:
             case USER_REMOVED_FROM_GROUP:
                 List<String> users = message.getUsersAction();
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
                 boolean selfAction = false;
-                if (users.size() == 1) {
+                if (users.size() == 0) {
+                    if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP || message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
+                        out.print(Messages.getString("WhatsAppReport.WasAdded"));
+                        selfAction = true;
+                    }
+                } else if (users.size() == 1) {
                     String user = users.get(0);
                     user = getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account);
                     if (user != null && user.equals(name)) {
                         if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
                             out.print(Messages.getString("WhatsAppReport.RemovedGroup"));
                             selfAction = true;
-                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP) {
-                            out.print(Messages.getString("WhatsAppReport.AddedToGroup"));
-                            selfAction = true;
-                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
-                            out.print(Messages.getString("WhatsAppReport.AddedToCommunity"));
+                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP || message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
+                            out.print(Messages.getString("WhatsAppReport.WasAdded"));
                             selfAction = true;
                         } else if (message.getMessageType() == MessageType.USER_COMMUNITY_ADMIN) {
                             out.print(Messages.getString("WhatsAppReport.CommunityAdmin"));
@@ -575,21 +603,31 @@ public class ReportGenerator {
                 if (!selfAction) {
                     if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
                         out.print(Messages.getString("WhatsAppReport.UserRemovedGroup"));
+                    } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_COMMUNITY) {
+                        out.print(Messages.getString("WhatsAppReport.UserJoinedGroupCommunity"));
                     } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_INVITATION) {
                         out.print(Messages.getString("WhatsAppReport.UserJoinedGroupInvitation"));
                     } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_LINK) {
                         out.print(Messages.getString("WhatsAppReport.UserJoinedGroupLink"));
                     } else if (message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
                         out.print(Messages.getString("WhatsAppReport.UserAddedToCommunity"));
-                    } else  if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP) {
+                    } else if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP) {
                         out.print(Messages.getString("WhatsAppReport.UserAddedToGroup"));
-                    } else  if (message.getMessageType() == MessageType.USER_COMMUNITY_ADMIN) {
+                    } else if (message.getMessageType() == MessageType.USER_COMMUNITY_ADMIN) {
                         out.print(Messages.getString("WhatsAppReport.UserCommunityAdmin"));
-                    } 
+                    } else if (message.getMessageType() == MessageType.USER_REQUEST_TO_ADD_TO_GROUP) {
+                        out.print(Messages.getString("WhatsAppReport.UserRequestToAddToGroup"));
+                    }
+                    boolean first = true;
                     for (int i = 0; i < users.size(); i++) {
-                        out.print(i == 0 ? ": " : ", ");
                         String user = users.get(i);
-                        out.print(getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account));
+                        String contactName = getBestContactName(user == null || user.isBlank(), user, contactsDirectory,
+                                account);
+                        if (!name.equals(contactName)) {
+                            out.print(first ? ": " : ", ");
+                            out.print(contactName);
+                            first = false;
+                        }
                     }
                 }
                 out.print(".<br>");
@@ -597,17 +635,6 @@ public class ReportGenerator {
                     out.print(format(message.getData()) + "<br>");
                 }
                 out.println();
-                break;
-            case USER_JOINED_GROUP_FROM_COMMUNITY:
-                users = message.getUsersAction();
-                out.println("<div class=\"systemmessage\">");
-                for (int i = 0; i < users.size(); i++) {
-                    out.print(i == 0 ? "" : ", ");
-                    String user = users.get(i);
-                    out.print(getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account));
-                }
-                out.print(" "+ Messages.getString("WhatsAppReport.UserJoinedGroupCommunity"));
-                out.println(".<br>");
                 break;
             case USER_LEFT_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -620,6 +647,10 @@ public class ReportGenerator {
             case GROUP_ICON_DELETED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.GroupIconDeleted") + "<br>"); //$NON-NLS-1$
+                break;
+            case COMMUNITY_DESCRIPTION_CHANGED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityDescriptionChanged") + "<br>");
                 break;
             case GROUP_DESCRIPTION_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -648,10 +679,31 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.YouNotAdmin") + "<br>");
                 break;
+            case OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.Over256MembersOnlyAdminsCanEdit") + "<br>");
+                break;
+            case SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.SecurityNotificationsNoLongerAvailable") + "<br>");
+                break;
+            case CONTACTED_FIND_BUSINESSES:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.ContactedFindBusinesses", name) + "<br>");
+                break;
+            case GROUP_CHANGED_ADMIN_APPROVAL_OFF:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.GroupChangedAdminApprovalOff") + "<br>");
+                break;
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
                 out.println(Messages.getString("WhatsAppReport.UserAdmin") + "<br>");
+                break;
+            case GROUP_CHANGED_ALL_MEMBERS_CAN_ADD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedAllMembersCanAdd") + "<br>");
                 break;
             case GROUP_CHANGED_ONLY_ADMINS_CAN_ADD:
                 out.println("<div class=\"systemmessage\">");
@@ -706,6 +758,10 @@ public class ReportGenerator {
             case CHAT_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChatAddedPrivacy") + "<br>");
+                break;
+            case ADVANCED_PRIVACY_ON:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.AdvancedPrivacyOn") + "<br>");
                 break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
@@ -1018,7 +1074,7 @@ public class ReportGenerator {
                             }
                         }
                         if (thumb != null) {
-                            out.print("<br>");    
+                            out.print("<br>");
                         }
                         if (notNullNorBlank(message.getMediaCaption())) {
                             out.print(format(message.getMediaCaption()) + "<br>");
@@ -1243,9 +1299,43 @@ public class ReportGenerator {
             }
 
             String quoteEnd = "</span></div>";
-            if (messageQuote.isDeleted()) {
-                quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
-                        + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
+            String privateGroupName = messageQuote.getQuotePrivateGroupName();
+            switch (messageQuote.getMessageQuotedType()) {
+                case QUOTE_NOT_FOUND:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
+                            + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
+                    break;
+                case QUOTE_STATUS:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"statusIcon\"></div><i>"
+                            + Messages.getString("WhatsAppReport.QuoteStaus") + "</i>" + quoteEnd;
+                    break;
+                case QUOTE_CATALOG:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"catalogIcon\"></div><i>"
+                            + Messages.getString("WhatsAppReport.QuoteCatalog") + "</i>" + quoteEnd;
+                    break;
+                case QUOTE_PRIVACY_GROUP:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"privacyIcon\"></div><i>"
+                            + Messages.getString("WhatsAppReport.QuotePrivacy") + "</i>" + quoteEnd;
+                    if (privateGroupName != null && !privateGroupName.isEmpty()) {
+                        String ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": " + privateGroupName
+                                + "</br> " + Messages.getString("WhatsAppReport.ReferenceId") + " "
+                                + messageQuote.getId();
+                        quoteClick = "onclick=\"showMessage('" + ms + "');\"";
+                    }
+                    break;
+                case QUOTE_PRIVACY_GROUP_NOT_FOUND:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"privacyDeleteIcon\"></div><i>"
+                            + Messages.getString("WhatsAppReport.QuotePrivacyNotFound") + "</i>" + quoteEnd;
+                    String ms = "";
+                    if (privateGroupName != null && !privateGroupName.isEmpty()) {
+                        ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": " + privateGroupName
+                                + "</br> ";
+                    }
+                    ms += Messages.getString("WhatsAppReport.QuoteNotFound");
+                    quoteClick = "onclick=\"showMessage('" + ms + "');\"";
+                    break;
+                default:
+                    break;
             }
 
             switch (messageQuote.getMessageType()) {
@@ -1352,7 +1442,20 @@ public class ReportGenerator {
                     }
                     out.print(quoteEnd);
                     break;
-
+                case PRODUCT_MESSAGE:
+                    MessageProduct product = messageQuote.getProduct();
+                    String seller = null;
+                    if (product != null) {
+                        seller = getBestContactName(false, product.getSeller(), contactsDirectory, account);
+                    }
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + formatProduct(product, seller) + quoteEnd);
+                    if (quoteThumb != null) {
+                        out.print("<div><img class=\"quoteImg\" src=\"");
+                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                    }
+                    break;
                 default:
                     out.print("<div class=\"" + quoteClass + "\" " + quoteClick
                             + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
@@ -1523,9 +1626,12 @@ public class ReportGenerator {
                 WAContact contact = contactsDirectory.getContact(number);
                 if (contact != null) {
                     name = contact.getName();
+                    if (number.endsWith(WAContact.lidSuffix)) {
+                        number = contact.getId(); 
+                    }
                 }
-                if (number.endsWith(waSuffix)) {
-                    number = number.substring(0, number.length() - waSuffix.length());
+                if (number.endsWith(WAContact.waSuffix)) {
+                    number = number.substring(0, number.length() - WAContact.waSuffix.length());
                 }
             }
         }
@@ -1553,14 +1659,18 @@ public class ReportGenerator {
     }
 
     private static String getTitle(Message message) {
-        if (message.getMediaMime() != null && !message.getMediaMime().isEmpty())
-            return format(message.getMediaMime().substring(0, message.getMediaMime().indexOf('/')));
-        else
-            return "File"; //$NON-NLS-1$
+        String mime = message.getMediaMime();
+        if (mime != null && !mime.isEmpty()) {
+            int pos = message.getMediaMime().indexOf('/');
+            if (pos > 0) {
+                return format(mime.substring(0, pos));
+            }
+        }
+        return "File";
     }
 
     private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, boolean isDeleted,
-            Supplier<String> messages) {
+            boolean isBroadcast, Supplier<String> messages) {
         String strAvatar;
         if (avatar == null || avatar.length == 0) {
             strAvatar = Util.getImageResourceAsEmbedded("img/avatar.png");
@@ -1574,6 +1684,7 @@ public class ReportGenerator {
         } else {
             deletedDiv = "";
         }
+        String favicon = Util.getImageResourceAsEmbedded("img/whatsapp.png");
         StringSubstitutor interpolator = new StringSubstitutor(new StringLookup() {
 
             @Override
@@ -1585,6 +1696,8 @@ public class ReportGenerator {
                         return id;
                     case "avatar":
                         return strAvatar;
+                    case "topbarclass":
+                        return isBroadcast ? " class=\"status\"" : "";
                     case "messages":
                         return messages.get();
                     case "javascript":
@@ -1593,6 +1706,8 @@ public class ReportGenerator {
                         return css;
                     case "deleted":
                         return deletedDiv;
+                    case "favicon":
+                        return favicon;
                 }
                 return StringLookupFactory.INSTANCE.interpolatorStringLookup().lookup(key);
             }

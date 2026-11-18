@@ -2,14 +2,25 @@ package iped.parsers.whatsapp;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class Extractor {
+
+    private static final Logger logger = LoggerFactory.getLogger(Extractor.class);
+
+    /**
+     * Rough estimate of the memory needed to recover deleted records, in relation
+     * to the size of the database. Measured with databases from 15 MB to 2 GB.
+     */
+    private static final int RECOVERY_MEMORY_FACTOR = 8;
+
     protected final File databaseFile;
     protected List<Chat> chatList;
     protected final WAContactsDirectory contacts;
@@ -24,6 +35,26 @@ public abstract class Extractor {
         this.contacts = contacts;
         this.account = account;
         this.recoverDeletedRecords = recoverDeletedRecords;
+    }
+
+    /**
+     * Warns, before recovering deleted records, if the memory available may not be
+     * enough for it. The recovery is not skipped: it is an estimate, and the memory
+     * may be freed by the time it is needed.
+     */
+    protected void warnIfLowMemoryToRecoverDeletedRecords() {
+        Runtime runtime = Runtime.getRuntime();
+        long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+        long needed = databaseFile.length() * RECOVERY_MEMORY_FACTOR;
+        if (needed > available) {
+            // error level, so it is shown in the console while processing (warn is not)
+            logger.error("Recovering deleted WhatsApp records from {} ({} MB) may need about {} MB of memory, but only {} MB are available. "
+                    + "If the processing fails with OutOfMemoryError, give IPED more memory (e.g. add -Xmx32G to its command line, after iped.jar or iped.exe) "
+                    + "or disable this recovery (set {} to false for WhatsAppParser in conf/ParserConfig.xml).",
+                    itemPath, databaseFile.length() >> 20, needed >> 20, available >> 20,
+                    // a backup is only carved if the option for backups is enabled
+                    WhatsAppParser.isBackupDatabase(itemPath) ? "recoverDeletedRecordsFromBackups" : "recoverDeletedRecords");
+        }
     }
 
     /**
@@ -42,9 +73,7 @@ public abstract class Extractor {
 
     protected abstract List<Chat> extractChatList() throws WAExtractorException;
 
-    protected Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
-    }
+    protected abstract Connection getConnection() throws SQLException;
 
     protected void setGroupMembers(Chat c, Connection conn, String SELECT_GROUP_MEMBERS) throws SQLException {
         // adds all contacts that sent at least one message

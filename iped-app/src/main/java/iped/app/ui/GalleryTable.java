@@ -41,17 +41,6 @@ public class GalleryTable extends JTable {
     }
 
     @Override
-    public void repaint() {
-        // When repainting the gallery table, sometimes the current selected cell was
-        // not repainted. Stopping the cell editing seems to minimize (fix?) this issue.
-        TableCellEditor editor = getCellEditor();
-        if (editor != null) {
-            editor.stopCellEditing();
-        }
-        super.repaint();
-    }
-
-    @Override
     public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
         int currentCell = rowIndex * this.getColumnCount() + columnIndex;
         if (currentCell > App.get().ipedResult.getLength() - 1) {
@@ -89,6 +78,25 @@ public class GalleryTable extends JTable {
         }
 
         super.changeSelection(rowIndex, columnIndex, toggle, extend);
+    }
+
+    @Override
+    public void repaint() {
+        // Before calling the actual repaint(), force the repaint of current selected
+        // cell. If a single cell is selected, sometimes its content is not refreshed
+        // after calling the regular repaint();
+        // See issue #2391.
+        if (getModel() != null && getSelectionModel() != null) {
+            int col = getSelectedColumn();
+            int row = getSelectedRow();
+            if (row >= 0 && col >= 0) {
+                TableCellEditor editor = getCellEditor(row, col);
+                if (editor != null) {
+                    editor.stopCellEditing();
+                }
+            }
+        }
+        super.repaint();
     }
 
     public int getLeadSelectionIndex() {

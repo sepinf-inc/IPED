@@ -31,7 +31,6 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
 
     private BooleanQuery query;
     private LinkedHashSet<Category> categoryList = new LinkedHashSet<Category>();
-    private String queryStr;
     private HashSet<TreePath> selection = new HashSet<TreePath>();
     private TreePath root;
     private long collapsed = 0;
@@ -65,11 +64,9 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
             App.get().setCategoriesDefaultColor(true);
             categoryList.clear();
             query = null;
-            queryStr = null;
 
         } else {
             App.get().setCategoriesDefaultColor(false);
-            queryStr = "";
 
             Builder builder = new Builder();
             categoryList.clear();
@@ -88,19 +85,11 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     private void addCategoryToQuery(Category category, Builder builder) {
         String name = IndexItem.normalize(category.getName(), true);
         builder.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
-        queryStr += " category:\"" + name + "\"";
-
         categoryList.add(category);
-
-        for (Category subcat : category.getChildren()) {
-            addCategoryToQuery(subcat, builder);
-        }
     }
 
     @Override
     public void treeExpanded(TreeExpansionEvent event) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -121,19 +110,8 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
         return selection;
     }
 
-    public void recursiveCategoryQuery(Category cat, StringBuffer buff) {
-        for (Category category : cat.getChildren()) {
-            String name = IndexItem.normalize(category.getName(), true);
-            buff.append(" || category:\"");
-            buff.append(name);
-            buff.append("\"");
-            recursiveCategoryQuery(category, buff);
-        }
-    }
-
     @Override
     public List<IFilter> getDefinedFilters() {
-        CategoryTreeListener self = this;
         List<IFilter> result = new ArrayList<IFilter>();
         for (Category category : categoryList) {
             result.add(new IQueryFilter() {
@@ -144,7 +122,6 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
                     queryStr.append(" category:\"");
                     queryStr.append(name);
                     queryStr.append("\"");
-                    recursiveCategoryQuery(category, queryStr);
 
                     Query query;
                     try {

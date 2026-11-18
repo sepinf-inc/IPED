@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -24,9 +24,9 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,19 +48,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.TreeViewModel.Node;
+import iped.app.ui.columns.ColumnsManager;
+import iped.app.ui.columns.ColumnsManagerUI;
+import iped.app.ui.columns.ColumnsSelectUI;
 import iped.app.ui.utils.UiIconSize;
 import iped.app.ui.utils.UiScale;
 import iped.data.IIPEDSource;
 import iped.data.IItem;
 import iped.data.IItemId;
+import iped.engine.config.BFACClientConfig;
+import iped.engine.config.ConfigurationManager;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
-import iped.engine.search.IPEDSearcher;
-import iped.engine.search.QueryBuilder;
-import iped.parsers.ufed.UFEDChatParser;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.properties.ExtraProperties;
-import iped.properties.MediaTypes;
-import iped.search.SearchResult;
+import iped.utils.SeekableFileInputStream;
 import iped.utils.SpinnerDialog;
 import iped.viewers.api.AbstractViewer;
 
@@ -92,6 +94,11 @@ public class MenuListener implements ActionListener {
         if (dirDadosExportados.exists()) {
             fileChooser.setCurrentDirectory(dirDadosExportados);
         }
+    }
+
+    private void setupColumnsSelector() {
+        ColumnsSelectUI columnsSelector = ColumnsSelectUI.getInstance();
+        columnsSelector.setVisible();
     }
 
     private void setupFileChooserImportKeywords() {
@@ -157,7 +164,7 @@ public class MenuListener implements ActionListener {
 
         @Override
         public String getDescription() {
-            return "Comma Separeted Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            return "Comma Separated Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }
 
     }
@@ -181,37 +188,36 @@ public class MenuListener implements ActionListener {
             App.get().loadPanelLayout();
 
         } else if (e.getSource() == menu.checkHighlighted) {
-            BookmarksController.get().setMultiSetting(true);
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            for (Integer row : App.get().resultsTable.getSelectedRows()) {
-                App.get().resultsTable.setValueAt(true, row, col);
-            }
-            BookmarksController.get().setMultiSetting(false);
-            App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().updateUISelection();
+            App.get().resultTableListener.itemSelection(true);
 
         } else if (e.getSource() == menu.uncheckHighlighted) {
-            BookmarksController.get().setMultiSetting(true);
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            for (Integer row : App.get().resultsTable.getSelectedRows()) {
-                App.get().resultsTable.setValueAt(false, row, col);
-            }
-            BookmarksController.get().setMultiSetting(false);
-            App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().updateUISelection();
+            App.get().resultTableListener.itemSelection(false);
 
+        } else if (e.getSource() == menu.checkHighlightedAndSubItems) {
+            App.get().resultTableListener.itemSelectionAndSubItems(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndSubItems) {
+            App.get().resultTableListener.itemSelectionAndSubItems(false);
+
+        } else if (e.getSource() == menu.checkHighlightedAndParent) {
+            App.get().resultTableListener.itemSelectionAndParent(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndParent) {
+            App.get().resultTableListener.itemSelectionAndParent(false);
+
+        } else if (e.getSource() == menu.checkHighlightedAndReferences) {
+            App.get().resultTableListener.itemSelectionAndReferences(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndReferences) {
+            App.get().resultTableListener.itemSelectionAndReferences(false);
+
+        } else if (e.getSource() == menu.checkHighlightedAndReferencedBy) {
+            App.get().resultTableListener.itemSelectionAndReferencedBy(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndReferencedBy) {
+            App.get().resultTableListener.itemSelectionAndReferencedBy(false);
         }
 
-        if (e.getSource() == menu.deepCheckHighlighted) {
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.CTRL_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
-            for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyPressed(keyCTRL_R_Pressed);
-
-        } else if (e.getSource() == menu.deepUncheckHighlighted) {
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.ALT_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
-            for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyPressed(keyCTRL_R_Pressed);
-        }
         if (e.getSource() == menu.readHighlighted) {
             BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
@@ -253,15 +259,19 @@ public class MenuListener implements ActionListener {
                 int luceneId = App.get().appCase.getLuceneId(item);
                 selectedIds.add(luceneId);
             }
-            setupFileChooser();
-            fileChooser.setFileFilter(csvFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().endsWith(CSV)) {
-                    file = new File(file.getAbsolutePath() + CSV);
+            setupColumnsSelector();
+            if (ColumnsSelectUI.getOkButtonClicked()) {
+                setupFileChooser();
+                fileChooser.setFileFilter(csvFilter);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (!file.getName().endsWith(CSV)) {
+                        file = new File(file.getAbsolutePath() + CSV);
+                    }
+                    ArrayList<String> loadedSelectedFields = ColumnsSelectUI.loadSavedFields();
+                    (new CopyProperties(file, selectedIds, loadedSelectedFields)).execute();
                 }
-                (new CopyProperties(file, selectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.copyChecked) {
@@ -272,17 +282,20 @@ public class MenuListener implements ActionListener {
                     uniqueSelectedIds.add(docId);
                 }
             });
-            setupFileChooser();
-            fileChooser.setFileFilter(csvFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().endsWith(CSV)) {
-                    file = new File(file.getAbsolutePath() + CSV);
+            setupColumnsSelector();
+            if (ColumnsSelectUI.getOkButtonClicked()) {
+                setupFileChooser();
+                fileChooser.setFileFilter(csvFilter);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (!file.getName().endsWith(CSV)) {
+                        file = new File(file.getAbsolutePath() + CSV);
+                    }
+                    ArrayList<String> loadedSelectedFields = ColumnsSelectUI.loadSavedFields();
+                    (new CopyProperties(file, uniqueSelectedIds, loadedSelectedFields)).execute();
                 }
-                (new CopyProperties(file, uniqueSelectedIds)).execute();
             }
-
         } else if (e.getSource() == menu.exportChecked) {
             ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
@@ -360,15 +373,15 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.manageColumns) {
 
-            ColumnsManager.getInstance().setVisible();
+            ColumnsManagerUI.getInstance().setVisible();
 
         } else if (e.getSource() == menu.pinFirstColumns) {
 
-            int pinned = ColumnsManager.getInstance().getPinnedColumns();
+            int pinned = ColumnsManagerUI.getInstance().getPinnedColumns();
             String msg = Messages.getString("MenuListener.PinFirstCols");
             SpinnerDialog dialog = new SpinnerDialog(App.get(), msg, msg + ":", pinned, 2, 12);
             dialog.setVisible(true);
-            ColumnsManager.getInstance().setPinnedColumns(dialog.getSelectedValue());
+            ColumnsManagerUI.getInstance().setPinnedColumns(dialog.getSelectedValue());
 
         } else if (e.getSource() == menu.manageFilters) {
 
@@ -393,10 +406,10 @@ public class MenuListener implements ActionListener {
             SimilarImagesFilterActions.searchSimilarImages(true);
 
         } else if (e.getSource() == menu.similarFacesCurrent) {
-            SimilarFacesFilterActions.searchSimilarImages(false);
+            SimilarFacesFilterActions.searchSimilarFaces(false);
 
         } else if (e.getSource() == menu.similarFacesExternal) {
-            SimilarFacesFilterActions.searchSimilarImages(true);
+            SimilarFacesFilterActions.searchSimilarFaces(true);
 
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();
@@ -416,19 +429,42 @@ public class MenuListener implements ActionListener {
             IItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
             IItem item = App.get().appCase.getItemByItemId(itemId);
             LOGGER.info("Externally Opening preview of " + item.getPath()); //$NON-NLS-1$
-            ExternalFileOpen.open(item.getViewFile());
+            if (item.getViewFile() != null) {
+                ExternalFileOpen.open(item.getViewFile());
+            } else if (item.hasPreview()) {
+                File baseFolder = App.get().appCase.getAtomicSourceBySourceId(itemId.getSourceId()).getModuleDir();
+                try {
+                    SeekableFileInputStream stream = PreviewRepositoryManager.get(baseFolder).readPreview(item, true);
+                    ExternalFileOpen.open(stream.getFile());
+                } catch (SQLException | IOException e1) {
+                    e1.printStackTrace();
+                    JOptionPane.showMessageDialog(App.get(), e1.getMessage());
+                }
+            }
+
+        } else if (e.getSource() == menu.openBfacClient) {
+            // Check if BFAC Client is enabled before opening dialog
+            BFACClientConfig bfacClientConfig = ConfigurationManager.get().findObject(BFACClientConfig.class);
+            if (bfacClientConfig != null && bfacClientConfig.isEnabled()) {
+                iped.bfac.BfacDialog bfacDialog = iped.bfac.BfacDialog.getInstance(App.get());
+                bfacDialog.setIPEDSource(App.get().appCase);
+                bfacDialog.setBookmarks(App.get().appCase.getMultiBookmarks().getBookmarkSet());
+                bfacDialog.showDialog();
+            } else {
+                LOGGER.warn("BFAC Client is disabled in configuration");
+            }
 
         } else if (e.getSource() == menu.createReport) {
             new ReportDialog().setVisible();
 
         } else if (e.getSource() == menu.lastColLayout) {
-            ColumnsManager.getInstance().resetToLastLayout();
+            ColumnsManagerUI.getInstance().resetToLastLayout();
 
         } else if (e.getSource() == menu.saveColLayout) {
             ColumnsManager.getInstance().saveColumnsState();
 
         } else if (e.getSource() == menu.resetColLayout) {
-            ColumnsManager.getInstance().resetToDefaultLayout();
+            ColumnsManagerUI.getInstance().resetToDefaultLayout();
         } else if (e.getSource() == menu.addToGraph) {
             int[] rows = App.get().resultsTable.getSelectedRows();
             List<ItemId> items = new ArrayList<>(rows.length);
@@ -442,20 +478,7 @@ public class MenuListener implements ActionListener {
             IItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
             IIPEDSource atomicSource = App.get().appCase.getAtomicSourceBySourceId(itemId.getSourceId());
             IItem item = App.get().appCase.getItemByItemId(itemId);
-            int chatId = -1;
-            if (!MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
-                chatId = atomicSource.getParentId(itemId.getId());
-            } else {
-                IPEDSearcher searcher = new IPEDSearcher((IPEDSource) atomicSource);
-                searcher.setQuery(QueryBuilder.escape(UFEDChatParser.CHILD_MSG_IDS) + ":" + itemId.getId());
-                try {
-                    SearchResult r = searcher.search();
-                    if (r.getLength() == 1)
-                        chatId = r.getId(0);
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-            }
+            int chatId = atomicSource.getParentId(itemId.getId());
             if (chatId != -1) {
                 String position = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
                 // TODO change viewer api to pass this
@@ -495,6 +518,7 @@ public class MenuListener implements ActionListener {
                         if (idx == 0) {
                             IconManager.setCategoryIconSize(size);
                             App.get().categoryTree.updateUI();
+                            App.get().aiFiltersTree.updateUI();
                         } else if (idx == 1) {
                             IconManager.setGalleryIconSize(size);
                             App.get().gallery.updateUI();

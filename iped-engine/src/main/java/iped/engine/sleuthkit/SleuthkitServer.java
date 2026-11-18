@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -52,7 +53,7 @@ public class SleuthkitServer {
     public static void main(String args[]) {
 
         String dbPath = args[0];
-        // String id = args[1];
+        String configPath = args[1];
         String pipePath = args[2];
         MappedByteBuffer out = null;
 
@@ -68,7 +69,7 @@ public class SleuthkitServer {
             out = fc.map(MapMode.READ_WRITE, 0, size);
             out.load();
 
-            Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/iped"); //$NON-NLS-1$
+            Configuration.getInstance().loadConfigurables(configPath); // $NON-NLS-1$
             ConfigurationManager cm = ConfigurationManager.get();
             LocalConfig localConfig = new LocalConfig();
             localConfig.setIndexerTemp(new File(System.getProperty("java.io.tmpdir")));
@@ -76,7 +77,7 @@ public class SleuthkitServer {
             cm.loadConfigs();
             Configuration.getInstance().loadNativeLibs();
 
-            SleuthkitCase sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(dbPath);
+            SleuthkitCase sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(Paths.get(dbPath));
             HashMap<Long, SleuthkitInputStream> sisMap = new HashMap<>();
 
             java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$

@@ -471,6 +471,13 @@
 		<glob pattern="*.torrent"/>
 	</mime-type>
 
+	<mime-type type="application/x-transmission-resume">
+		<sub-class-of type="application/x-p2p"/>
+		<magic priority="50">
+    		<match value="d13:activity-date" type="string" offset="0"/>
+		</magic>
+	</mime-type>
+
     <mime-type type="message/outlook-pst">
         <magic priority="70">
             <match value="!--PST Email Message Indexer Preview--" type="string" offset="7"/>
@@ -1250,6 +1257,14 @@
     	<glob pattern="chat.*txt" isregex="true"/>
     </mime-type>
 
+    <mime-type type="application/x-ufed-instantmessage">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-deviceinfo">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+
     <mime-type type="application/x-ufed-contact">
     	<sub-class-of type="text/html"/>
     </mime-type>
@@ -1258,7 +1273,7 @@
     	<sub-class-of type="text/html"/>
     </mime-type>
 
-    <mime-type type="message/x-ufed-email">
+    <mime-type type="application/x-ufed-email">
     	<sub-class-of type="text/html"/>
     </mime-type>
 
@@ -1282,16 +1297,32 @@
     	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
-    <mime-type type="application/x-ufed-chat-preview-instagram">
+    <mime-type type="application/x-ufed-chat-preview-snapchat">
     	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
-    <mime-type type="application/x-ufed-chat-whatsapp">
-    	<sub-class-of type="application/x-ufed-chat"/>
+    <mime-type type="application/x-ufed-chat-preview-threema">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
-    <mime-type type="application/x-ufed-chat-telegram">
-    	<sub-class-of type="application/x-ufed-chat"/>
+    <mime-type type="application/x-ufed-chat-preview-discord">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-signal">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-tiktok">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-viber">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-instagram">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
     <mime-type type="application/x-win10-timeline">
@@ -1416,6 +1447,8 @@
         <glob pattern="com.whatsapp_preferences_light.xml"/>
         <glob pattern="com.whatsapp.w4b_preferences.xml"/>
         <glob pattern="com.whatsapp.w4b_preferences_light.xml"/>
+        <glob pattern="registration.RegisterPhone.xml"/>
+        <glob pattern="startup_prefs.xml"/>
     </mime-type>
 
     <mime-type type="application/x-whatsapp-user-plist">
@@ -1426,18 +1459,6 @@
     <mime-type type="application/x-threema-user-plist">
         <sub-class-of type="application/x-bplist"/>
         <glob pattern="group.ch.threema*.plist"/>
-    </mime-type>
-
-    <mime-type type="message/x-ufed-attachment">
-        <sub-class-of type="application/x-ufed-instantmessage"/>
-    </mime-type>
-
-    <mime-type type="application/x-ufed-instantmessage">
-        <sub-class-of type="message/x-chat-message"/>
-    </mime-type>
-
-    <mime-type type="application/x-ufed-deviceinfo">
-    	<sub-class-of type="text/html"/>
     </mime-type>
 
 	<mime-type type="application/x-database-table">
@@ -1616,6 +1637,18 @@
         <sub-class-of type="application/quicktime" />
     </mime-type>
 
+    <mime-type type="audio/x-aac">
+        <magic priority="60">
+            <match value="0xFC" type="string" offset="6">
+	            <match value="0xFFF15040" type="string" offset="0"/>
+	            <match value="0xFFF15080" type="string" offset="0"/>
+	            <match value="0xFFF15C40" type="string" offset="0"/>
+	            <match value="0xFFF15C80" type="string" offset="0"/>
+            </match>
+        </magic>
+        <glob pattern="*.aac"/>
+    </mime-type>
+
     <mime-type type="application/x-ofx-v1">
         <magic priority="50">
             <match value="OFXHEADER:100" type="string" offset="0:1"/>
@@ -1637,10 +1670,37 @@
         </magic>
         <glob pattern="*.ofc"/>
     </mime-type>
-    
+
+    <mime-type type="application/x-emule-collection">
+        <glob pattern="*.emulecollection"/>
+    </mime-type>
+
+    <mime-type type="application/x-emule-collection">
+        <sub-class-of type="text/plain"/>
+        <glob pattern="*.emulecollection"/>
+    </mime-type>
+
     <mime-type type="application/x-vlc-ini">
         <sub-class-of type="text/x-ini"/>
         <glob pattern="vlc-qt-interface.ini"/>
+    </mime-type>
+
+    <!-- jump lists -->
+    <mime-type type="application/x-automaticdestinations">
+        <glob pattern="*.automaticDestinations-ms"/>
+        <sub-class-of type="application/x-tika-msoffice"/>
+    </mime-type>
+    <mime-type type="application/x-customdestinations">
+        <glob pattern="*.customDestinations-ms"/>
+        <sub-class-of type="application/x-tika-msoffice"/>
+    </mime-type>
+
+    <!-- jump lists entries -->
+    <mime-type type="application/x-automaticdestinations-entry">
+    	<sub-class-of type="application/x-lnk"/>
+    </mime-type>
+    <mime-type type="application/x-customdestinations-entry">
+    	<sub-class-of type="application/x-lnk"/>
     </mime-type>
 
 </mime-info>

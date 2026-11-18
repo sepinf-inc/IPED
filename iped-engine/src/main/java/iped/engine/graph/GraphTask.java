@@ -51,7 +51,7 @@ import iped.parsers.discord.DiscordParser;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
-import iped.parsers.ufed.UfedMessage;
+import iped.parsers.ufed.model.Party;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.BasicProps;
@@ -251,7 +251,6 @@ public class GraphTask extends AbstractTask {
                 || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType)
                 || DiscordParser.MSG_MIME_TYPE.equals(mediaType)
                 || DiscordParser.ATTACH_MIME_TYPE.equals(mediaType)
-                || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(mediaType)
                 || MediaTypes.UFED_MESSAGE_MIME.toString().equals(mediaType)) {
             return "message";
         }
@@ -354,6 +353,10 @@ public class GraphTask extends AbstractTask {
         return null;
     }
 
+    private NodeValues getGroupNodeValues(String value) {
+        return new NodeValues(DynLabel.label(GraphConfiguration.CONTACT_GROUP_LABEL), BasicProps.NAME, value.trim().toLowerCase());
+    }
+
     private NodeValues getGenericNodeValues(String value) {
         return new NodeValues(DynLabel.label("GENERIC"), "entity", value.trim().toLowerCase());
     }
@@ -447,7 +450,7 @@ public class GraphTask extends AbstractTask {
             return;
         }
         if (MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)
-                && UfedMessage.SYSTEM_MESSAGE.equals(sender)) {
+                && Party.SYSTEM_MESSAGE.equalsIgnoreCase(sender)) {
             return;
         }
 
@@ -469,7 +472,12 @@ public class GraphTask extends AbstractTask {
         recipients.addAll(Arrays.asList(metadata.getValues(Message.MESSAGE_BCC)));
 
         for (String recipient : recipients) {
-            NodeValues nv2 = getNodeValues(recipient, evidence.getMetadata(), detectPhones);
+            NodeValues nv2;
+            if (Boolean.valueOf(metadata.get(ExtraProperties.IS_GROUP_MESSAGE))) {
+                nv2 = getGroupNodeValues(recipient);
+            } else {
+                nv2 = getNodeValues(recipient, metadata, detectPhones);
+            }
             graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue, nv2.props);
             graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, nv2.label,
                     nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
