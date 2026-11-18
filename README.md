@@ -18,6 +18,10 @@ Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthk
 
 If you are new to the tool, please refer to the [Beginner's Start Guide](https://github.com/lfcnassif/IPED/wiki/Beginner's-Start-Guide).
 
+## Word reports
+
+The analysis interface can insert highlighted evidence and metadata into a selected Word report, save updates in the same local file or create a separate copy, with saved templates and optional page previews. See the [application guide](iped-app/README.md#word-reports).
+
 ## Building
 
 To build from source, you need git, maven and Java JDK 11 + JavaFX (e.g. Liberica OpenJDK 11 Full JDK) installed. Set JAVA_HOME environment var to your java 11 installation folder, then run:

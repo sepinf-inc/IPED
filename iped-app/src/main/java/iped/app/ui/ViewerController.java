@@ -35,6 +35,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FaceRecognitionConfig;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
+import iped.data.IItem;
 import iped.io.URLUtil;
 import iped.properties.ExtraProperties;
 import iped.viewers.ATextViewer;
@@ -183,6 +184,14 @@ public class ViewerController {
 
     public HtmlLinkViewer getHtmlLinkViewer() {
         return linkViewer;
+    }
+
+    IItem getViewedItem() {
+        return file instanceof IItem ? (IItem) file : null;
+    }
+
+    IStreamSource getViewedContent() {
+        return viewFile;
     }
 
     public void dispose() {

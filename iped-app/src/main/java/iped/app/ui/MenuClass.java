@@ -50,7 +50,7 @@ public class MenuClass extends JPopupMenu {
             checkHighlightedAndSubItems, uncheckHighlightedAndSubItems, checkHighlightedAndParent, uncheckHighlightedAndParent, checkHighlightedAndReferences, uncheckHighlightedAndReferences, checkHighlightedAndReferencedBy, uncheckHighlightedAndReferencedBy,
             changeGalleryColCount, defaultLayout, changeLayout, previewScreenshot, manageBookmarks, clearSearchHistory, importKeywords, navigateToParent, exportTerms, manageFilters, manageColumns, exportCheckedToZip, exportCheckedTreeToZip,
             exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, openBfacClient, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
-            similarFacesCurrent, similarFacesExternal, toggleTimelineView, uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout;
+            similarFacesCurrent, similarFacesExternal, toggleTimelineView, uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout, wordReport;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
@@ -345,6 +345,10 @@ public class MenuClass extends JPopupMenu {
         createReport = new JMenuItem(Messages.getString("MenuClass.GenerateReport")); //$NON-NLS-1$
         createReport.addActionListener(menuListener);
         this.add(createReport);
+
+        wordReport = new JMenuItem(Messages.getString("WordReport.Title"));
+        wordReport.addActionListener(menuListener);
+        this.add(wordReport);
 
     }
 

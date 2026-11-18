@@ -5,3 +5,5 @@ nbactions.xml
 /.project
 .pydevproject
 /.idea/
+/.local/
+/COMPILAR-CVA.command

@@ -457,6 +457,9 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.createReport) {
             new ReportDialog().setVisible();
 
+        } else if (e.getSource() == menu.wordReport) {
+            WordReportDialog.showDialog();
+
         } else if (e.getSource() == menu.lastColLayout) {
             ColumnsManagerUI.getInstance().resetToLastLayout();
 
