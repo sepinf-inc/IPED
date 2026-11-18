@@ -7,4 +7,4 @@ nbactions.xml
 /.idea/
 .sdkmanrc
 /.local/
-/COMPILAR-CVA.command
+/iped-app/src/main/resources/iped/app/ui/*.docx

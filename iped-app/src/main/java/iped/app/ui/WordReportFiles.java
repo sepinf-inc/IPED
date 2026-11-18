@@ -163,12 +163,7 @@ public class WordReportFiles {
 
     public static Path defaultTemplate(Path work) throws IOException {
         Path destination = work.resolve("modelo-relatorio.docx");
-        try (InputStream in = WordReportFiles.class.getResourceAsStream("word-report-template.docx")) {
-            if (in == null) {
-                throw new IOException(Messages.getString("WordReport.NoTemplate"));
-            }
-            Files.copy(in, destination);
-        }
+        WordReportTemplate.create(destination);
         return destination;
     }
 

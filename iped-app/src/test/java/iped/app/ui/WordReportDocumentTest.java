@@ -926,11 +926,13 @@ public class WordReportDocumentTest {
     }
 
     @Test
-    public void bundledTemplateSupportsRepeatedExport() throws Exception {
-        Path model = temporary.newFile("template.docx").toPath();
-        try (InputStream in = getClass().getResourceAsStream("word-report-template.docx")) {
-            assertNotNull(in);
-            Files.write(model, in.readAllBytes());
+    public void neutralTemplateSupportsRepeatedExportWithoutBundledDocuments() throws Exception {
+        assertNull(getClass().getResourceAsStream("word-report-template.docx"));
+        Path model = WordReportFiles.defaultTemplate(temporary.newFolder().toPath());
+        try (ZipFile zip = new ZipFile(model.toFile())) {
+            assertEquals(6, zip.size());
+            assertFalse(zip.stream().anyMatch(e -> e.getName().startsWith("word/media/")
+                    || e.getName().startsWith("docProps/") || e.getName().startsWith("customXml/")));
         }
         WordReportDocument report = new WordReportDocument(model);
         int data = -1;
