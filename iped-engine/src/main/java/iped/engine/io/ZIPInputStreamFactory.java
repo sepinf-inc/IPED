@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
@@ -107,15 +106,15 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             while (true) {
                 File segment = new File(file.getParentFile(), namePrefix + ".z" + String.format("%02d", ++num));
                 if (segment.exists()) {
-                    RandomAccessFile raf = new RandomAccessFile(segment, "r");
-                    channels.add(new ReadOnlyRAFSeekableByteChannel(raf));
+                    BufferedRandomAccessFile braf = new BufferedRandomAccessFile(segment, "r", UFDR_BUF_SIZE);
+                    channels.add(new ReadOnlyRAFSeekableByteChannel(braf));
                 } else {
                     break;
                 }
             }
             // main ufdr should be the last one
-            RandomAccessFile raf = new RandomAccessFile(file, "r");
-            channels.add(new ReadOnlyRAFSeekableByteChannel(raf));
+            BufferedRandomAccessFile braf = new BufferedRandomAccessFile(file, "r", UFDR_BUF_SIZE);
+            channels.add(new ReadOnlyRAFSeekableByteChannel(braf));
 
             if (channels.size() == 1) {
                 sbc = channels.get(0);

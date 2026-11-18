@@ -160,9 +160,9 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         metadataSnapshotItem.add("child_volume", entry.getChildVolume());
         metadataSnapshotItem.add("parent_volume", entry.getParentVolume());
         if (!hashSets.isEmpty()) {
-            metadataSnapshotItem.set("hashDb:status", "pedo");
+            metadataSnapshotItem.set(ExtraProperties.STATUS_PROPERTY, "pedo");
             for (String set : hashSets) {
-                metadataSnapshotItem.add("hashDb:set", set);
+                metadataSnapshotItem.add(ExtraProperties.SET_PROPERTY, set);
             }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {

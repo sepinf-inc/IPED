@@ -12,8 +12,8 @@ public class KeyValueModel extends BaseModel {
         super("KeyValueModel");
     }
 
-    public String getKey() { return (String) getField("Key"); }
-    public String getValue() { return (String) getField("Value"); }
+    public String getKey() { return getFieldAsString("Key"); }
+    public String getValue() { return getFieldAsString("Value"); }
 
     @Override
     public String toString() {

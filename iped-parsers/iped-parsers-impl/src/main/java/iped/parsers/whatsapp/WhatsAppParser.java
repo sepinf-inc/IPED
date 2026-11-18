@@ -176,6 +176,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private int downloadConnectionTimeout = 500;
     private int downloadReadTimeout = 500;
     private boolean recoverDeletedRecords = true;
+    private boolean recoverDeletedRecordsFromBackups = false;
     private int minChatSplitSize = 6000000;
 
     @Override
@@ -224,6 +225,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Field
     public void setRecoverDeletedRecords(boolean recoverDeletedRecords) {
         this.recoverDeletedRecords = recoverDeletedRecords;
+    }
+
+    @Field
+    public void setRecoverDeletedRecordsFromBackups(boolean recoverDeletedRecordsFromBackups) {
+        this.recoverDeletedRecordsFromBackups = recoverDeletedRecordsFromBackups;
     }
 
     @Field
@@ -415,7 +421,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 File tempDbFile = tis.getFile();
                 extFactory.setConnectionParams(tis, metadata, context, this);
                 Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account,
-                        recoverDeletedRecords);
+                        shouldRecoverDeletedRecords(filePath));
                 List<Chat> chatList = waExtractor.getChatList();
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
 
@@ -571,6 +577,27 @@ public class WhatsAppParser extends SQLite3DBParser {
         metadata.set(StandardParser.INDEXER_CONTENT_TYPE, extFactory.getType2().toString());
     }
 
+    /**
+     * Recovering deleted records needs several times the size of the database in
+     * memory, and a device usually has several backups of its main database, so
+     * backups are only carved if recoverDeletedRecordsFromBackups is enabled.
+     */
+    private boolean shouldRecoverDeletedRecords(String dbPath) {
+        return recoverDeletedRecords && (recoverDeletedRecordsFromBackups || !isBackupDatabase(dbPath));
+    }
+
+    /**
+     * Tells by its path if a database is a backup, e.g. msgstore-2023-10-03.1.db or
+     * a database decrypted from msgstore.db.crypt15.
+     */
+    static boolean isBackupDatabase(String dbPath) {
+        if (dbPath == null) {
+            return false;
+        }
+        String name = dbPath.substring(Math.max(dbPath.lastIndexOf('/'), dbPath.lastIndexOf('>')) + 1);
+        return MSGSTORE_BKP.matcher(name).find() || dbPath.contains(MSGSTORE_CRYPTO);
+    }
+
     private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
         String type = wcontext.getItem().getMediaType().toString();
         // this is not used for IOS
@@ -598,7 +625,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             extFactory.setConnectionParams(tis, metadata, context, this);
             Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempFile, contacts, account,
-                    recoverDeletedRecords);
+                    shouldRecoverDeletedRecords(filePath));
             return waExtractor.getChatList();
         }
     }
@@ -1003,14 +1030,22 @@ public class WhatsAppParser extends SQLite3DBParser {
     private String formatContact(WAContact contact, Map<String, String> cache) {
         String result = cache.get(contact.getId());
         if (result == null) {
-            if (contact.getName() == null || contact.getName().isBlank()) {
-                result = contact.getFullId();
-            } else if (contact.getName().strip().equals(contact.getId())) {
-                result = contact.getFullId();
-            } else if (contact.getFullId().isBlank()) {
-                result = contact.getName().strip();
-            } else {
-                result = contact.getName().strip() + " (" + contact.getFullId().strip() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            result = contact.getName();
+            String number = contact.getFullId();
+            if (number.endsWith(WAContact.lidSuffix)) {
+                number = contact.getId();
+            }
+            if (number.endsWith(WAContact.waSuffix)) {
+                number = number.substring(0, number.length() - WAContact.waSuffix.length());
+            }
+            result = result == null ? "" : result.trim();
+            number = number == null ? "" : number.trim();
+            if (!number.isEmpty()) {
+                if (result.isEmpty()) {
+                    result = number;
+                } else if (!number.equals(result)) {
+                    result += " (" + number + ")";
+                }
             }
             cache.put(contact.getId(), result);
         }
@@ -1082,12 +1117,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             if (m.getMediaQuery() != null && m.getMediaSize() > 2) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
-                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery())); // $NON-NLS-1$
+                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery()));
             }
             if (!m.getChildPornSets().isEmpty()) {
-                meta.set("hash:status", "pedo"); //$NON-NLS-1$ //$NON-NLS-2$
+                meta.set(ExtraProperties.HASHDB_STATUS, "pedo");
                 for (String set : m.getChildPornSets()) {
-                    meta.add("hash:set", set); //$NON-NLS-1$
+                    meta.add(ExtraProperties.HASHDB_SET, set);
                 }
             }
 
@@ -1440,7 +1475,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 new_db = false;
             }
             if (new_db) {
-                return new ExtractorAndroidNew(itemPath, file, directory, account) {
+                return new ExtractorAndroidNew(itemPath, file, directory, account, recoverDeletedRecords) {
                     @Override
                     protected Connection getConnection() throws SQLException {
                         return ExtractorAndroidFactory.this.getConnection();

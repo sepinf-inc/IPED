@@ -23,7 +23,7 @@ import iped.exception.IPEDException;
 
 public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
 
-    private static Logger logger = LogManager.getLogger(Wav2Vec2TranscriptTask.class);
+    private static Logger logger = LogManager.getLogger(WhisperTranscriptTask.class);
 
     private static final String SCRIPT_PATH = "/scripts/tasks/WhisperProcess.py";
     private static final String LIBRARY_LOADED = "library_loaded";

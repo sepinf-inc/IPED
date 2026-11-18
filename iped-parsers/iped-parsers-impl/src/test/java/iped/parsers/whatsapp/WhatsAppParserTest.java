@@ -62,7 +62,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("unknownAccount", whatsapptracker.messagefrom.get(0));
             assertEquals("unknownAccount", whatsapptracker.messagefrom.get(1));
             assertEquals("unknownAccount", whatsapptracker.messagefrom.get(2));
-            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messagefrom.get(3));
+            assertEquals("Nickerida (556183125151)", whatsapptracker.messagefrom.get(3));
 
             assertEquals("This is a test for the IPED Whatsapp Parser.", whatsapptracker.messagebody.get(0));
             assertEquals("! MESSAGES_NOW_ENCRYPTED", whatsapptracker.messagebody.get(1));
@@ -72,9 +72,9 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("! USER_ADDED_TO_GROUP", whatsapptracker.messagebody.get(42));
             assertEquals("! MESSAGES_NOW_ENCRYPTED", whatsapptracker.messagebody.get(43));
 
-            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(0));
-            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(1));
-            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(2));
+            assertEquals("Nickerida (556183125151)", whatsapptracker.messageto.get(0));
+            assertEquals("Nickerida (556183125151)", whatsapptracker.messageto.get(1));
+            assertEquals("Nickerida (556183125151)", whatsapptracker.messageto.get(2));
             assertEquals("unknownAccount", whatsapptracker.messageto.get(3));
 
             assertEquals("2021-06-14T18:55:54Z", whatsapptracker.messagedate.get(0));
@@ -126,7 +126,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(384, whatsapptracker.username.size());
             assertEquals(365, whatsapptracker.userphone.size());
             assertEquals(384, whatsapptracker.useraccount.size());
-            assertEquals(166, whatsapptracker.usernotes.size());
+            assertEquals(165, whatsapptracker.usernotes.size());
             assertEquals(0, whatsapptracker.participants.size());
             assertEquals(0, whatsapptracker.messagefrom.size());
             assertEquals(0, whatsapptracker.messagebody.size());
@@ -171,8 +171,8 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("Olá! Eu estou usando WhatsApp.", whatsapptracker.usernotes.get(3));
             assertEquals("\"Nobility is about being superior than your former self\"",
                     whatsapptracker.usernotes.get(4));
-            assertEquals("Leve seus sonhos a sério", whatsapptracker.usernotes.get(164));
-            assertEquals("Disponível", whatsapptracker.usernotes.get(165));
+            assertEquals("Leve seus sonhos a sério", whatsapptracker.usernotes.get(163));
+            assertEquals("Disponível", whatsapptracker.usernotes.get(164));
 
         }
 
@@ -213,4 +213,17 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         }
     }
 
+
+    @Test
+    public void testIsBackupDatabase() {
+        String dir = "/data/media/0/Android/media/com.whatsapp/WhatsApp/Databases/";
+        assertFalse(WhatsAppParser.isBackupDatabase("/data/data/com.whatsapp/databases/msgstore.db"));
+        assertFalse(WhatsAppParser.isBackupDatabase("AppDomainGroup-group.net.whatsapp.WhatsApp.shared/ChatStorage.sqlite"));
+        assertFalse(WhatsAppParser.isBackupDatabase(null));
+        assertTrue(WhatsAppParser.isBackupDatabase(dir + "msgstore-2023-10-03.1.db"));
+        assertTrue(WhatsAppParser.isBackupDatabase(dir + "msgstore-2023-10-03.1.db.crypt15>>msgstore-2023-10-03.1.db"));
+        assertTrue(WhatsAppParser.isBackupDatabase(dir + "msgstore.db.crypt15>>msgstore.db"));
+        // a folder named like a backup does not make the main database a backup
+        assertFalse(WhatsAppParser.isBackupDatabase("/extraction/msgstore-2023-10-03/data/data/com.whatsapp/databases/msgstore.db"));
+    }
 }
