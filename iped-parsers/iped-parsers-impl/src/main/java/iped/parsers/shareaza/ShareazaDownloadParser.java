@@ -800,12 +800,10 @@ public class ShareazaDownloadParser extends AbstractParser {
     }
 
     public void padding(ByteBuffer buffer, int i) throws BufferUnderflowException {
-        byte[] read = new byte[i];
-
         if (buffer.remaining() < i) {
             throw new BufferUnderflowException();
         }
-
+        byte[] read = new byte[i];
         buffer.get(read);
     }
 
@@ -815,10 +813,10 @@ public class ShareazaDownloadParser extends AbstractParser {
         int length = readMiniHeader(read);
         if (length > 0) {
             int stringSize = length * 2;
-            byte[] stringBytes = new byte[stringSize];
             if (buffer.remaining() < stringSize) {
                 throw new BufferUnderflowException();
             }
+            byte[] stringBytes = new byte[stringSize];
             buffer.get(stringBytes);
             return new String(stringBytes, StandardCharsets.UTF_16LE);
         }
@@ -827,10 +825,10 @@ public class ShareazaDownloadParser extends AbstractParser {
 
     public byte[] readString(ByteBuffer buffer, int length) throws BufferUnderflowException {
         if (length > 0) {
-            byte[] stringBytes = new byte[length];
             if (buffer.remaining() < length) {
                 throw new BufferUnderflowException();
             }
+            byte[] stringBytes = new byte[length];
             buffer.get(stringBytes);
             return stringBytes;
         }
