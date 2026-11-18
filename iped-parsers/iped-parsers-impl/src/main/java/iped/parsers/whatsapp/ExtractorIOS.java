@@ -157,6 +157,7 @@ public abstract class ExtractorIOS extends Extractor {
         if (recoverDeletedRecords) {
             try {
                 // try to recover deleted records
+                warnIfLowMemoryToRecoverDeletedRecords();
                 var undelete = new SQLiteUndelete(databaseFile.toPath());
                 undelete.addTableToRecover("ZWAMESSAGE"); //$NON-NLS-1$
                 undelete.addRecordValidator("ZWAMESSAGE", new WAIOSMessageValidator()); //$NON-NLS-1$

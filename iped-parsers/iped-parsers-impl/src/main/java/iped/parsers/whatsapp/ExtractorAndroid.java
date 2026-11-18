@@ -107,6 +107,7 @@ public abstract class ExtractorAndroid extends Extractor {
 
         if (recoverDeletedRecords) {
             try {
+                warnIfLowMemoryToRecoverDeletedRecords();
                 SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
                 undelete.addTableToRecover("messages"); //$NON-NLS-1$
                 undelete.addRecordValidator("messages", new WAAndroidMessageValidator()); //$NON-NLS-1$
