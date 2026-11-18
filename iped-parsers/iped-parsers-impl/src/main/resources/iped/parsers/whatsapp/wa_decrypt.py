@@ -6,14 +6,12 @@ This module is loaded through JEP by iped.parsers.whatsapp.WhatsAppCryptoParser,
 which extracts it from the classpath to a temporary folder before importing it.
 It never spawns wa-crypt-tools command line tools, it calls its python API directly.
 
-wa-crypt-tools requires third party modules to be installed, they are listed in
-the requirements.txt shipped with it in the tools folder. See
+wa-crypt-tools is a python package that must be installed in the python used by
+IPED, with 'pip install wa-crypt-tools==0.1.0'. See
 https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 '''
 
 import logging
-import os
-import sys
 import zlib
 
 # wa-crypt-tools logs this (it does not raise) when the AES-GCM authentication tag
@@ -23,28 +21,19 @@ _KEY_MISMATCH = 'Authentication tag mismatch'
 _initialized = False
 
 
-def init(wa_crypt_tools_folder):
+def init():
     '''
-    Adds the wa-crypt-tools sources to sys.path. Must be called once per interpreter
+    Checks that wa-crypt-tools can be loaded. Must be called once per interpreter
     before any other function of this module.
 
-    Parameters:
-        wa_crypt_tools_folder: str
-            folder where the wa-crypt-tools release was unpacked (it must contain a 'src' subfolder)
-
     Raises:
-        ImportError: if wa-crypt-tools or one of its dependencies is not available
+        ImportError: if wa-crypt-tools or one of its dependencies is not installed
     '''
     global _initialized
     if _initialized:
         return
-    src_folder = os.path.join(wa_crypt_tools_folder, 'src')
-    if not os.path.isdir(src_folder):
-        raise ImportError('wa-crypt-tools sources not found in ' + str(src_folder))
-    if src_folder not in sys.path:
-        sys.path.append(src_folder)
 
-    # fail fast (and with a clear message) if a dependency is missing
+    # fail fast (and with a clear message) if it or a dependency is missing
     import wa_crypt_tools.lib.key.keyfactory
     import wa_crypt_tools.lib.db.dbfactory
 
@@ -53,6 +42,15 @@ def init(wa_crypt_tools_folder):
     logging.getLogger('wa_crypt_tools').setLevel(logging.ERROR)
 
     _initialized = True
+
+
+def get_version():
+    '''Returns the version of the installed wa-crypt-tools package, or None if unknown.'''
+    try:
+        from importlib.metadata import version
+        return version('wa-crypt-tools')
+    except Exception:
+        return None
 
 
 class _LogCollector(logging.Handler):

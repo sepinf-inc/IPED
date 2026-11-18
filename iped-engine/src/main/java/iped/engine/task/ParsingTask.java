@@ -114,7 +114,6 @@ import iped.parsers.util.ItemInfo;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.OCROutputFolder;
 import iped.parsers.util.PDFToImage;
-import iped.parsers.whatsapp.WhatsAppCryptoParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -846,7 +845,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         }
 
         System.setProperty(RegRipperParser.TOOL_PATH_PROP, appRoot + "/tools/regripper/"); //$NON-NLS-1$
-        System.setProperty(WhatsAppCryptoParser.TOOL_PATH_PROP, appRoot + "/tools/wa-crypt-tools/");
 
         OCRConfig ocrConfig = configurationManager.findObject(OCRConfig.class);
         setupOCROptions(ocrConfig);

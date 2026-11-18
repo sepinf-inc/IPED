@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -29,8 +28,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
@@ -67,7 +64,8 @@ import jep.JepException;
  *
  * The decryption itself is delegated to wa-crypt-tools
  * (https://github.com/ElDavoo/wa-crypt-tools), whose python API is called
- * through JEP. The decrypted file is created as a subitem of the encrypted one,
+ * through JEP. It is a python package that must be installed with pip, see
+ * {@link #INSTALL_COMMAND}. The decrypted file is created as a subitem of the encrypted one,
  * keeping its name without the .cryptNN extension, so the signature detection
  * types it and, in the case of databases, {@link WhatsAppParser} decodes it.
  *
@@ -84,8 +82,12 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(WA_CRYPT);
 
-    /** System property pointing to the folder where wa-crypt-tools was unpacked. */
-    public static final String TOOL_PATH_PROP = "waCryptToolsPath";
+    private static final String TOOL_NAME = "wa-crypt-tools";
+
+    /** Version of wa-crypt-tools this parser was tested with. */
+    private static final String TOOL_VERSION = "0.1.0";
+
+    public static final String INSTALL_COMMAND = "pip install " + TOOL_NAME + "==" + TOOL_VERSION;
 
     public static final String WHATSAPP_METADATA_PREFIX = "whatsapp:";
 
@@ -109,12 +111,6 @@ public class WhatsAppCryptoParser extends AbstractParser {
         decrypted, alreadyDecrypted, keyNotFound, failed, toolUnavailable;
     }
 
-    private static final String TOOL_NAME = "wa-crypt-tools";
-
-    /** File shipped with wa-crypt-tools declaring its version, its sources do not. */
-    private static final String TOOL_VERSION_FILE = "pyproject.toml";
-    private static final Pattern TOOL_VERSION_PATTERN = Pattern.compile("(?m)^version\\s*=\\s*\"([^\"]+)\"");
-
     private static final String PY_MODULE = "wa_decrypt";
     private static final String PY_RESOURCE = PY_MODULE + ".py";
 
@@ -130,7 +126,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
     // neither to be volatile nor atomic
     private static File pyModuleFolder;
 
-    // lazily read by getDecryptionTool(), it is the same value for all threads
+    // lazily got by getDecryptionTool(), it is the same value for all threads
     private static volatile String decryptionTool;
 
     /** Tells if the helper module was already loaded in the interpreter of this thread. */
@@ -151,9 +147,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
         synchronized (WhatsAppCryptoParser.class) {
             if (!initChecked) {
                 try {
-                    // fail fast: the tool path system property is already set when the
-                    // parsers are instantiated, so a failure here means the tool will
-                    // never work
+                    // fail fast: a failure here means wa-crypt-tools will never work
                     getInitializedJep();
 
                 } catch (TikaException e) {
@@ -273,12 +267,12 @@ public class WhatsAppCryptoParser extends AbstractParser {
             logger.info("Decrypted {} using key {}", item.getPath(), usedKey.getPath());
             metadata.set(WHATSAPP_METADATA_DECRYPTION_STATUS, DecryptionStatus.decrypted.toString());
             metadata.set(WHATSAPP_METADATA_KEY_PATH, usedKey.getPath());
-            metadata.set(WHATSAPP_METADATA_DECRYPTION_TOOL, getDecryptionTool());
+            metadata.set(WHATSAPP_METADATA_DECRYPTION_TOOL, getDecryptionTool(jep));
             if (StringUtils.isNotBlank(usedKey.getHash())) {
                 metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + usedKey.getHash());
             }
 
-            createDecryptedSubItem(item, decryptedFile, handler, metadata, context);
+            createDecryptedSubItem(jep, item, decryptedFile, handler, metadata, context);
 
         } catch (JepException e) {
             throw new TikaException("Error calling wa-crypt-tools for " + item.getPath(), e);
@@ -326,7 +320,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
      * detection assigns it the proper mediaType and, for the databases,
      * QueuesProcessingOrder moves it to the queue where WhatsAppParser decodes it.
      */
-    private void createDecryptedSubItem(IItemReader item, File decryptedFile, ContentHandler handler, Metadata metadata,
+    private void createDecryptedSubItem(Jep jep, IItemReader item, File decryptedFile, ContentHandler handler, Metadata metadata,
             ParseContext context) throws SAXException, IOException {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
@@ -338,7 +332,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
         Metadata dbMetadata = new Metadata();
         dbMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, getDecryptedName(item));
         dbMetadata.set(WHATSAPP_METADATA_IS_DECRYPTED, Boolean.toString(true));
-        dbMetadata.set(WHATSAPP_METADATA_DECRYPTION_TOOL, getDecryptionTool());
+        dbMetadata.set(WHATSAPP_METADATA_DECRYPTION_TOOL, getDecryptionTool(jep));
         dbMetadata.set(ExtraProperties.DECODED_DATA, Boolean.toString(true));
         if (item.getCreationDate() != null) {
             dbMetadata.set(TikaCoreProperties.CREATED, item.getCreationDate());
@@ -428,12 +422,6 @@ public class WhatsAppCryptoParser extends AbstractParser {
      */
     private static Jep getInitializedJep() throws TikaException {
 
-        String toolPath = System.getProperty(TOOL_PATH_PROP);
-        if (StringUtils.isBlank(toolPath) || !new File(toolPath).isDirectory()) {
-            // it is shipped with IPED, so a missing folder means a broken installation
-            throw new RuntimeException("wa-crypt-tools was not found in " + toolPath);
-        }
-
         Jep jep;
         try {
             jep = PythonParser.getJep();
@@ -453,13 +441,14 @@ public class WhatsAppCryptoParser extends AbstractParser {
             jep.eval("import sys");
             jep.eval("sys.path.append(r'" + moduleFolder.getAbsolutePath() + "')");
             jep.eval("import " + PY_MODULE);
-            jep.invoke(PY_MODULE + ".init", toolPath);
+            jep.invoke(PY_MODULE + ".init");
 
         } catch (JepException | IOException e) {
             if (e.toString().contains("ModuleNotFoundError") || e.toString().contains("ImportError")) {
-                // a dependency of wa-crypt-tools is not installed or is an incompatible version
-                throw new TikaException(e.getMessage() //
-                        + ". Please install the python dependencies listed in '" + new File(toolPath, "requirements.txt") + "'. " //
+                // wa-crypt-tools or one of its dependencies is not installed or is an
+                // incompatible version
+                throw new TikaException("The " + TOOL_NAME + " python package could not be loaded: " + e.getMessage() //
+                        + ". Please install it with '" + INSTALL_COMMAND + "'. " //
                         + PythonParser.SEE_MANUAL, e);
             }
             throw new RuntimeException(e);
@@ -469,20 +458,19 @@ public class WhatsAppCryptoParser extends AbstractParser {
     }
 
     /**
-     * Returns the name of the tool used to decrypt followed by its version, or just
-     * its name if the version is unknown.
+     * Returns the name of the tool used to decrypt followed by its installed
+     * version, or just its name if the version is unknown.
      */
-    private static String getDecryptionTool() {
+    private static String getDecryptionTool(Jep jep) {
         if (decryptionTool == null) {
             String tool = TOOL_NAME;
-            File versionFile = new File(System.getProperty(TOOL_PATH_PROP), TOOL_VERSION_FILE);
             try {
-                Matcher matcher = TOOL_VERSION_PATTERN.matcher(Files.readString(versionFile.toPath(), StandardCharsets.UTF_8));
-                if (matcher.find()) {
-                    tool += " " + matcher.group(1);
+                Object version = jep.invoke(PY_MODULE + ".get_version");
+                if (version != null) {
+                    tool += " " + version;
                 }
-            } catch (IOException e) {
-                logger.warn("Could not read {} version from {}: {}", TOOL_NAME, versionFile, e.toString());
+            } catch (JepException e) {
+                logger.warn("Could not get {} version: {}", TOOL_NAME, e.toString());
             }
             decryptionTool = tool;
         }
