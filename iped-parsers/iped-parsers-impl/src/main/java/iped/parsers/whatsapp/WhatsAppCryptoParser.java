@@ -100,7 +100,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
     /** Possible values of the {@link #WHATSAPP_METADATA_DECRYPTION_STATUS} metadata. */
     private enum DecryptionStatus {
-        decrypted, alreadyDecrypted, keyNotFound, failed;
+        decrypted, alreadyDecrypted, keyNotFound, failed, toolUnavailable;
     }
 
     private static final String PY_MODULE = "wa_decrypt";
@@ -121,8 +121,11 @@ public class WhatsAppCryptoParser extends AbstractParser {
     /** Tells if the helper module was already loaded in the interpreter of this thread. */
     private static final ThreadLocal<Boolean> moduleLoaded = ThreadLocal.withInitial(() -> false);
 
-    /** Set if wa-crypt-tools could not be loaded, disabling this parser. */
+    /** Set if wa-crypt-tools could not be loaded, so nothing will be decrypted. */
     private static volatile boolean initFailed = false;
+
+    /** Why wa-crypt-tools could not be loaded, recorded in the items not decrypted. */
+    private static volatile String unavailableReason;
 
     // this parser may be instantiated more than once, possibly by concurrent threads,
     // but it is checked just once. Both are guarded by this class monitor.
@@ -142,6 +145,7 @@ public class WhatsAppCryptoParser extends AbstractParser {
                     // the reason is in the message, so the stack trace adds nothing here,
                     // unexpected errors are thrown as RuntimeException by getInitializedJep
                     logger.error("WhatsApp encrypted backups will not be decrypted. {}", e.getMessage());
+                    unavailableReason = e.getMessage();
                     initFailed = true;
 
                 } catch (RuntimeException e) {
@@ -162,7 +166,9 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        return initFailed ? Collections.emptySet() : SUPPORTED_TYPES;
+        // still supported if wa-crypt-tools is not available, so that is recorded in
+        // the items and not only in the log
+        return SUPPORTED_TYPES;
     }
 
     @Override
@@ -185,12 +191,27 @@ public class WhatsAppCryptoParser extends AbstractParser {
             return;
         }
 
+        if (initFailed) {
+            // already logged once by the constructor
+            metadata.set(StandardParser.ENCRYPTED_DOCUMENT, Boolean.toString(true));
+            metadata.set(WHATSAPP_METADATA_DECRYPTION_STATUS, DecryptionStatus.toolUnavailable.toString());
+            if (unavailableReason != null) {
+                metadata.set(WHATSAPP_METADATA_DECRYPTION_ERROR, unavailableReason);
+            }
+            return;
+        }
+
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
 
         try (TemporaryResources tmp = new TemporaryResources()) {
 
-            Jep jep = getInitializedJep();
+            Jep jep;
+            try {
+                jep = getInitializedJep();
+            } catch (TikaException e) {
+                throw decryptionFailed(metadata, DecryptionStatus.toolUnavailable, e.getMessage(), e);
+            }
 
             File encryptedFile = TikaInputStream.get(stream, tmp).getFile();
 
@@ -418,8 +439,8 @@ public class WhatsAppCryptoParser extends AbstractParser {
             jep.invoke(PY_MODULE + ".init", toolPath);
 
         } catch (JepException | IOException e) {
-            if (e.toString().contains("ModuleNotFoundError")) {
-                // a dependency of wa-crypt-tools is not installed
+            if (e.toString().contains("ModuleNotFoundError") || e.toString().contains("ImportError")) {
+                // a dependency of wa-crypt-tools is not installed or is an incompatible version
                 throw new TikaException(e.getMessage() //
                         + ". Please install the python dependencies listed in '" + new File(toolPath, "requirements.txt") + "'. " //
                         + PythonParser.SEE_MANUAL, e);
