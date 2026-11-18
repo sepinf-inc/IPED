@@ -82,15 +82,14 @@ public class KnownMetCarveTask extends BaseCarveTask {
     private static final MediaType eMuleKnownMetMediaType = MediaType.application("x-emule-known-met");
 
     /**
-     * Media type dos arquivos part.met recuperados.
+     * Media type of part.met files.
      */
-    private static final MediaType eMulePartMetMediaType = MediaType.application("x-emule-part-met"); //$NON-NLS-1$
-
+    private static final MediaType eMulePartMetMediaType = MediaType.application("x-emule-part-met");
 
     /**
-     * Media type dos arquivos preferences.dat recuperados.
+     * Media type of preferences.dat files.
      */
-    private static final MediaType eMulePreferencesDatMediaType = MediaType.application("x-emule-preferences-dat"); //$NON-NLS-1$
+    private static final MediaType eMulePreferencesDatMediaType = MediaType.application("x-emule-preferences-dat");
 
     /**
      * Reading block size.
@@ -186,103 +185,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
         long offset = 0;
         try {
             is = evidence.getBufferedInputStream();
-<<<<<<< HEAD
-            while (is.read(bb) > 0) {
-                byte read = bb[0];
-                if (read == 14 || read == 15) {
-                    is.readNBytes(buf, 0, buf.length);
-                    int numFiles = toInt(buf, 0);
-                    if (numFiles > 0 && numFiles < 65536) {
-                        int pos = 4;
-                        long date = toInt(buf, pos) * 1000L;
-                        if (date > dateMin && date < dateMax) {
-                            pos += 4;
-                            pos += 16;
-                            int numParts = toSmall(buf, pos);
-                            pos += 2;
-                            pos += 16 * numParts;
-                            if (pos < 500) {
-                                int numTags = toInt(buf, pos);
-                                if (numTags > 2 && numTags < 100) {
-                                    int len = 512 * numFiles;
-                                    SeekableInputStream inParse = null;
-                                    try {
-                                        inParse = evidence.getSeekableInputStream();
-                                        inParse.seek(offset);
-                                        List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len, true);
-                                        if (!l.isEmpty()) {
-                                            // Check if at least one entry has a defined name and file size (#2116)
-                                            boolean valid = false;
-                                            for(KnownMetEntry entry : l) {
-                                                if (entry.getName() != null && entry.getFileSize() > 0) {
-                                                    valid = true;
-                                                    break;
-                                                }
-                                            }
-                                            if (valid) {
-                                                addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met",
-                                                        eMuleKnownMetMediaType);
-                                                numCarvedItems.incrementAndGet();
-                                            }
-                                        }
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    } finally {
-                                        IOUtil.closeQuietly(inParse);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else if (read == -32 || read == -30) {
-                    is.readNBytes(buf, 0, buf.length);
-                    long date = toInt(buf, 0) * 1000L;
-                    if (date > dateMin && date < dateMax) {
-                        int pos = 20;
-                        int numParts = toSmall(buf, pos);
-                        int numTags = 2;
-                        pos += 2;
-                        pos += 16 * numParts;
-                        if (pos < 500) {
-                            numTags = toInt(buf, pos);
-                        }
-                        if (numTags >= 2 && numTags <= 1024 && numParts <= 4096 && numParts >= 0) {
-                            SeekableInputStream inParse = null;
-                            try {
-                                inParse = evidence.getSeekableInputStream();
-                                inParse.seek(offset);
-                                int bytesRead = inParse.readNBytes(buf2, 0, buf2.length);
-                                if (bytesRead > 25) {
-                                    KnownMetEntry entry = new KnownMetEntry();
-                                    int len = KnownMetDecoder.parseEntry(entry, 1, buf2, true);
-                                    if (len > 0) {
-                                        addCarvedFile(evidence, offset, len + 1, "Carved-" + offset + "-part.met", //$NON-NLS-1$ //$NON-NLS-2$
-                                                eMulePartMetMediaType);
-                                        numCarvedItems.incrementAndGet();
-                                    }
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            } finally {
-                                IOUtil.closeQuietly(inParse);
-                            }
-                        }
-                    }
-                } else {
-                    long skip = 0;
-                    do {
-                        long i = is.skip(step - 1 - skip);
-                        if (i == 0) {
-                            // check EOF
-                            is.mark(1);
-                            if (is.read() == -1) {
-                                return;
-                            }
-                            is.reset();
-                        }
-                        skip += i;
-                    } while (skip < step - 1);
-=======
             int done = 0;
             int firstRead = is.readNBytes(currBuf, 0, blockSize);
             if (firstRead < blockSize) {
@@ -298,7 +200,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
                 if (len < blockSize) {
                     done++;
                     Arrays.fill(currBuf, Math.max(0, len), blockSize, (byte) 0);
->>>>>>> refs/remotes/origin/master
                 }
                 window.reset(prevBuf, currBuf);
                 int firstAligned = (int) ((SECTOR_SIZE - (offset & (SECTOR_SIZE - 1))) & (SECTOR_SIZE - 1));
@@ -362,7 +263,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                 }
                                 if (valid) {
                                     addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met",
-                                            eMuleMediaType);
+                                            eMuleKnownMetMediaType);
                                     numKnownMetItems.incrementAndGet();
                                     return true;
                                 }
