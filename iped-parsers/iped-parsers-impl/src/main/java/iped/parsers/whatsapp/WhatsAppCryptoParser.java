@@ -18,8 +18,11 @@ package iped.parsers.whatsapp;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -34,7 +37,6 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
-import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -64,7 +66,8 @@ import jep.JepException;
  *
  * The decryption itself is delegated to wa-crypt-tools
  * (https://github.com/ElDavoo/wa-crypt-tools), whose python API is called
- * through JEP. It is a python package that must be installed with pip, see
+ * through JEP. The backup is read from the item stream and decrypted in chunks,
+ * so it is neither written to disk nor fully loaded in memory. It is a python package that must be installed with pip, see
  * {@link #INSTALL_COMMAND}. The decrypted file is created as a subitem of the encrypted one,
  * keeping its name without the .cryptNN extension, so the signature detection
  * types it and, in the case of databases, {@link WhatsAppParser} decodes it.
@@ -115,6 +118,12 @@ public class WhatsAppCryptoParser extends AbstractParser {
     private static final String PY_RESOURCE = PY_MODULE + ".py";
 
     private static final String CRYPT_EXT_PREFIX = "crypt";
+
+    /** Enough to hold the header of any encrypted backup, they are smaller than 300 bytes. */
+    private static final int HEAD_SIZE = 512;
+
+    /** How many bytes of the encrypted backup are decrypted at a time. */
+    private static final int CHUNK_SIZE = 1 << 20;
 
     /**
      * Key files are java serialized byte arrays of 32 (crypt15) or 131 (crypt12 and
@@ -222,9 +231,13 @@ public class WhatsAppCryptoParser extends AbstractParser {
                 throw decryptionFailed(metadata, DecryptionStatus.toolUnavailable, e.getMessage(), e);
             }
 
-            File encryptedFile = TikaInputStream.get(stream, tmp).getFile();
+            // the given stream is not used: the backup must be read from its start
+            // again for each key tried, so its streams are got from the item. Direct
+            // because that is how JEP shares a buffer with python without copying it
+            int trailerSize = ((Number) jep.invoke(PY_MODULE + ".get_trailer_size")).intValue();
+            ByteBuffer buffer = ByteBuffer.allocateDirect(Math.max(HEAD_SIZE, CHUNK_SIZE + trailerSize));
 
-            fillHeaderInfo(jep, encryptedFile, metadata);
+            fillHeaderInfo(jep, item, buffer, metadata);
 
             metadata.set(StandardParser.ENCRYPTED_DOCUMENT, Boolean.toString(true));
 
@@ -248,11 +261,15 @@ public class WhatsAppCryptoParser extends AbstractParser {
 
             for (IItemReader key : keys) {
                 try {
-                    decrypt(jep, key.getTempFile(), encryptedFile, decryptedFile);
+                    String warning = decrypt(jep, key.getTempFile(), item, buffer, trailerSize, decryptedFile);
+                    if (warning != null) {
+                        logger.warn("{}: {}", warning, item.getPath());
+                        metadata.set(WHATSAPP_METADATA_DECRYPTION_ERROR, warning);
+                    }
                     usedKey = key;
                     break;
 
-                } catch (TikaException | IOException e) {
+                } catch (TikaException | IOException | JepException e) {
                     // just a wrong or unreadable key, try the next one
                     lastError = e.getMessage();
                     logger.debug("Could not decrypt {} with key {}: {}", item.getPath(), key.getPath(), lastError);
@@ -362,8 +379,15 @@ public class WhatsAppCryptoParser extends AbstractParser {
         return name;
     }
 
-    private void fillHeaderInfo(Jep jep, File encryptedFile, Metadata metadata) throws JepException {
-        Object result = jep.invoke(PY_MODULE + ".get_info", encryptedFile.getAbsolutePath());
+    private void fillHeaderInfo(Jep jep, IItemReader item, ByteBuffer buffer, Metadata metadata)
+            throws JepException, IOException {
+        byte[] head;
+        try (InputStream is = item.getBufferedInputStream()) {
+            head = is.readNBytes(HEAD_SIZE);
+        }
+        buffer.clear();
+        buffer.put(head);
+        Object result = jep.invoke(PY_MODULE + ".get_info", buffer, head.length);
         if (!(result instanceof Map)) {
             return;
         }
@@ -379,16 +403,64 @@ public class WhatsAppCryptoParser extends AbstractParser {
     }
 
     /**
-     * @throws TikaException
+     * Decrypts the given item into the given file, reading it in chunks that are
+     * decrypted by python. Its last bytes, the trailer, are not encrypted data: they
+     * are held until the end of the stream is reached, when they are used to check
+     * if the key matches.
+     *
+     * @return a warning about the decrypted content, or null if there is none
+     * @throws JepException
      *             with the reason reported by wa-crypt-tools if the key does not
      *             match or the backup is corrupted
+     * @throws TikaException
+     *             if nothing was decrypted
      */
-    private void decrypt(Jep jep, File keyFile, File encryptedFile, File decryptedFile)
-            throws JepException, TikaException {
-        Object result = jep.invoke(PY_MODULE + ".decrypt", keyFile.getAbsolutePath(), encryptedFile.getAbsolutePath(),
-                decryptedFile.getAbsolutePath());
-        if (result != null) {
-            throw new TikaException(result.toString());
+    private String decrypt(Jep jep, File keyFile, IItemReader item, ByteBuffer buffer, int trailerSize, File decryptedFile)
+            throws JepException, TikaException, IOException {
+
+        // bytes read and not decrypted yet, always ending with the possible trailer
+        byte[] pending = new byte[CHUNK_SIZE + trailerSize];
+        long decryptedSize = 0;
+
+        try (InputStream is = item.getBufferedInputStream(); OutputStream os = new FileOutputStream(decryptedFile)) {
+
+            byte[] head = is.readNBytes(HEAD_SIZE);
+            buffer.clear();
+            buffer.put(head);
+            int headerSize = ((Number) jep.invoke(PY_MODULE + ".begin", keyFile.getAbsolutePath(), buffer, head.length)).intValue();
+
+            int pendingSize = head.length - headerSize;
+            System.arraycopy(head, headerSize, pending, 0, pendingSize);
+
+            boolean eof = false;
+            while (!eof) {
+                pendingSize += is.readNBytes(pending, pendingSize, pending.length - pendingSize);
+                eof = pendingSize < pending.length;
+
+                int encryptedSize = pendingSize - trailerSize;
+                if (encryptedSize > 0) {
+                    buffer.clear();
+                    buffer.put(pending, 0, encryptedSize);
+                    byte[] decrypted = (byte[]) jep.invoke(PY_MODULE + ".update", buffer, encryptedSize);
+                    os.write(decrypted);
+                    decryptedSize += decrypted.length;
+
+                    System.arraycopy(pending, encryptedSize, pending, 0, trailerSize);
+                    pendingSize = trailerSize;
+                }
+            }
+
+            buffer.clear();
+            buffer.put(pending, 0, pendingSize);
+            List<?> result = (List<?>) jep.invoke(PY_MODULE + ".finish", buffer, pendingSize);
+            byte[] decrypted = (byte[]) result.get(0);
+            os.write(decrypted);
+            decryptedSize += decrypted.length;
+
+            if (decryptedSize == 0) {
+                throw new TikaException("Decrypted data is empty");
+            }
+            return (String) result.get(1);
         }
     }
 
