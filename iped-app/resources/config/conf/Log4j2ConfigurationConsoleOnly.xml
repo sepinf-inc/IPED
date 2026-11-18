@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="INFO" packages="iped.engine.log">
+<Configuration status="WARN">
 	<CustomLevels>
     	<CustomLevel name="MSG" intLevel="250" />
   	</CustomLevels>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[%class{3}]\t\t\t%msg%n" />
-            <PackageRegexpFilter regex="(.*org\.icepdf.*)|(.*org\.apache\.pdfbox.*)|(.*org\.apache\.poi.*)|(.*com\.levigo\.jbig2.*)|(.*apache\.fontbox.*)|(.*freemarker\..*)|(.*\.mp4parser\..*)|(.*ofx4j\..*)" onMatch="DENY" onMismatch="ACCEPT"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[%logger{3}]\t\t\t%msg%n" />
         </Console>
     </Appenders>
     <Loggers>
+        <Logger name="org.icepdf" level="off"/>
+        <Logger name="org.apache.pdfbox" level="off"/>
+        <Logger name="org.apache.poi" level="off"/>
+        <Logger name="com.levigo.jbig2" level="off"/>
+        <Logger name="org.apache.fontbox" level="off"/>
+        <Logger name="freemarker" level="off"/>
+        <Logger name="org.mp4parser" level="off"/>
+        <Logger name="com.googlecode.mp4parser" level="off"/>
+        <Logger name="com.webcohesion.ofx4j" level="off"/>
+        <Logger name="net.sf.ofx4j" level="off"/>
         <Root level="info">
             <AppenderRef ref="Console"/>
         </Root>

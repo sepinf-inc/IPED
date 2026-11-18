@@ -213,4 +213,17 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         }
     }
 
+
+    @Test
+    public void testIsBackupDatabase() {
+        String dir = "/data/media/0/Android/media/com.whatsapp/WhatsApp/Databases/";
+        assertFalse(WhatsAppParser.isBackupDatabase("/data/data/com.whatsapp/databases/msgstore.db"));
+        assertFalse(WhatsAppParser.isBackupDatabase("AppDomainGroup-group.net.whatsapp.WhatsApp.shared/ChatStorage.sqlite"));
+        assertFalse(WhatsAppParser.isBackupDatabase(null));
+        assertTrue(WhatsAppParser.isBackupDatabase(dir + "msgstore-2023-10-03.1.db"));
+        assertTrue(WhatsAppParser.isBackupDatabase(dir + "msgstore-2023-10-03.1.db.crypt15>>msgstore-2023-10-03.1.db"));
+        assertTrue(WhatsAppParser.isBackupDatabase(dir + "msgstore.db.crypt15>>msgstore.db"));
+        // a folder named like a backup does not make the main database a backup
+        assertFalse(WhatsAppParser.isBackupDatabase("/extraction/msgstore-2023-10-03/data/data/com.whatsapp/databases/msgstore.db"));
+    }
 }
