@@ -1702,5 +1702,97 @@
     <mime-type type="application/x-customdestinations-entry">
     	<sub-class-of type="application/x-lnk"/>
     </mime-type>
+    
+    <mime-type type="application/x-paraben-xml">
+        <sub-class-of type="application/xml"/>
+    </mime-type>
+
+    <mime-type type="application/x-paraben-device">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-paraben-info">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-paraben-timeline">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-paraben-contact">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-paraben-calendar">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-paraben-settings">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-paraben-app">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-paraben-message">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-paraben-facebook-settings">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+       
+    <mime-type type="application/x-paraben-facebook-settings-recovered">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-paraben-facebook-recovered-conversations">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+        
+    <mime-type type="application/x-facebook-chat">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+        
+    <mime-type type="application/x-paraben-facebook-messenger-message">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-paraben-facebook-messenger-chat-html">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-paraben-fb-setting">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-paraben-fb-recovered-settings">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-paraben-fb-current-settings">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-paraben-facebook-account">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-paraben-call-history">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+        
+        
+    <mime-type type="application/x-paraben-call">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+        
+        
+        
+    <mime-type type="application/x-facebook-recovered-blob">
+        <sub-class-of type="text/html"/>
+    </mime-type>    
+        
 
 </mime-info>
