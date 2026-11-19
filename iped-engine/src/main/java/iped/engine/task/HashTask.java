@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,22 +42,25 @@ import iped.engine.config.HashTaskConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
 
 /**
- * Classe para calcular e manipular hashes.
+ * Task for calculating and handling hashes.
  */
 public class HashTask extends AbstractTask {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
 
     private static final int HASH_BUFFER_LEN = 1024 * 1024;
 
-    private static final ExecutorService executorService = Executors.newCachedThreadPool();
+    // Bounded pool: with W workers hashing large files in parallel, digest
+    // threads beyond the CPU count just oversubscribe the machine.
+    private static final ExecutorService executorService = Executors
+            .newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     public enum HASH {
-        MD5("md5"), //$NON-NLS-1$
-        SHA1("sha-1"), //$NON-NLS-1$
-        SHA256("sha-256"), //$NON-NLS-1$
-        SHA512("sha-512"), //$NON-NLS-1$
-        EDONKEY("edonkey"); //$NON-NLS-1$
+        MD5("md5"),
+        SHA1("sha-1"),
+        SHA256("sha-256"),
+        SHA512("sha-512"),
+        EDONKEY("edonkey");
 
         private String name;
 
@@ -70,10 +74,14 @@ public class HashTask extends AbstractTask {
         }
     }
 
-    private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
-
+    private final HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
     private HashTaskConfig hashConfig;
+    private byte[] seqBuf;
 
+    private static final int ED2K_CHUNK_SIZE = 9500 * 1024;
+    private int ed2kChunk = 0, ed2kTotal = 0;
+    private final ByteArrayOutputStream ed2kOut = new ByteArrayOutputStream();
+    
     @Override
     public boolean isEnabled() {
         return hashConfig.isEnabled();
@@ -93,7 +101,7 @@ public class HashTask extends AbstractTask {
             if (!algorithm.equalsIgnoreCase(HASH.EDONKEY.toString())) {
                 digest = MessageDigest.getInstance(algorithm.toUpperCase());
             } else {
-                digest = MessageDigest.getInstance("MD4"); //$NON-NLS-1$
+                digest = MessageDigest.getInstance("MD4");
             }
             digestMap.put(algorithm, digest);
             if (HASH.SHA256.toString().equals(algorithm)) {
@@ -130,52 +138,10 @@ public class HashTask extends AbstractTask {
 
         try (InputStream in = evidence.getBufferedInputStream()) {
 
-            byte[] readBuf = new byte[HASH_BUFFER_LEN];
-            byte[] hashBuf = new byte[HASH_BUFFER_LEN];
-            byte[] tempBuf = null;
-            int len;
-
-            AtomicReference<CountDownLatch> countDown = new AtomicReference<>(null);
-            AtomicReference<Exception> ex = new AtomicReference<Exception>(null);
-
-            while ((len = in.read(readBuf)) >= 0 && !Thread.currentThread().isInterrupted()) {
-
-                if (countDown.get() != null) {
-                    countDown.get().await();
-                }
-
-                countDown.set(new CountDownLatch(digestMap.size()));
-
-                // swap hashBuf <-> readBuf
-                tempBuf = hashBuf;
-                hashBuf = readBuf;
-                readBuf = tempBuf;
-
-                final int currLen = len;
-                final byte[] currHashBuf = hashBuf;
-                for (String algo : digestMap.keySet()) {
-                    executorService.execute(() -> {
-                        try {
-                            if (!algo.equals(HASH.EDONKEY.toString())) {
-                                digestMap.get(algo).update(currHashBuf, 0, currLen);
-                            } else {
-                                updateEd2k(currHashBuf, currLen);
-                            }
-                        } catch (Exception e) {
-                            ex.set(e);
-                        } finally {
-                            countDown.get().countDown();
-                        }
-                    });
-                }
-
-                if (ex.get() != null) {
-                    throw ex.get();
-                }
-            }
-
-            if (countDown.get() != null) {
-                countDown.get().await();
+            if (evidence.getLength() <= HASH_BUFFER_LEN) {
+                hashSequential(in);
+            } else {
+                hashPipelined(in);
             }
 
             boolean defaultHash = true;
@@ -198,66 +164,129 @@ public class HashTask extends AbstractTask {
 
         } catch (Exception e) {
             if (e instanceof IOException) {
-                evidence.setExtraAttribute("ioError", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                evidence.setExtraAttribute("ioError", "true");
                 stats.incIoErrors();
             }
             LOGGER.warn("{} Error computing hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), //$NON-NLS-1$
                     e.toString());
-            // e.printStackTrace();
-
         }
-
     }
 
-    private static int CHUNK_SIZE = 9500 * 1024;
-    private int chunk = 0, total = 0;
-    private ByteArrayOutputStream out = new ByteArrayOutputStream();
+    /**
+     * Single-chunk items (the vast majority): updating the digests inline is
+     * cheaper than one executor round-trip + latch per algorithm, and there is
+     * no next chunk to overlap with anyway.
+     */
+    private void hashSequential(InputStream in) throws Exception {
+        if (seqBuf == null) {
+            seqBuf = new byte[HASH_BUFFER_LEN];
+        }
+        int len;
+        while ((len = in.read(seqBuf)) >= 0 && !Thread.currentThread().isInterrupted()) {
+            for (String algo : digestMap.keySet()) {
+                if (!algo.equals(HASH.EDONKEY.toString())) {
+                    digestMap.get(algo).update(seqBuf, 0, len);
+                } else {
+                    updateEd2k(seqBuf, len);
+                }
+            }
+        }
+    }
+
+    /**
+     * Multi-chunk items: double buffering overlaps reading the next chunk with
+     * digesting the current one, and the digests of a chunk run in parallel.
+     */
+    private void hashPipelined(InputStream in) throws Exception {
+
+        byte[] readBuf = new byte[HASH_BUFFER_LEN];
+        byte[] hashBuf = new byte[HASH_BUFFER_LEN];
+        byte[] tempBuf = null;
+        int len;
+
+        AtomicReference<CountDownLatch> countDown = new AtomicReference<>(null);
+        AtomicReference<Exception> ex = new AtomicReference<Exception>(null);
+
+        while ((len = in.read(readBuf)) >= 0 && !Thread.currentThread().isInterrupted()) {
+
+            if (countDown.get() != null) {
+                countDown.get().await();
+            }
+
+            countDown.set(new CountDownLatch(digestMap.size()));
+
+            // swap hashBuf <-> readBuf
+            tempBuf = hashBuf;
+            hashBuf = readBuf;
+            readBuf = tempBuf;
+
+            final int currLen = len;
+            final byte[] currHashBuf = hashBuf;
+            for (String algo : digestMap.keySet()) {
+                executorService.execute(() -> {
+                    try {
+                        if (!algo.equals(HASH.EDONKEY.toString())) {
+                            digestMap.get(algo).update(currHashBuf, 0, currLen);
+                        } else {
+                            updateEd2k(currHashBuf, currLen);
+                        }
+                    } catch (Exception e) {
+                        ex.set(e);
+                    } finally {
+                        countDown.get().countDown();
+                    }
+                });
+            }
+
+            if (ex.get() != null) {
+                throw ex.get();
+            }
+        }
+
+        if (countDown.get() != null) {
+            countDown.get().await();
+        }
+    }
 
     private void updateEd2k(byte[] buffer, int len) throws IOException {
 
         MessageDigest md4 = digestMap.get(HASH.EDONKEY.toString());
-        if (chunk + len >= CHUNK_SIZE) {
-            int offset = CHUNK_SIZE - chunk;
+        if (ed2kChunk + len >= ED2K_CHUNK_SIZE) {
+            int offset = ED2K_CHUNK_SIZE - ed2kChunk;
             md4.update(buffer, 0, offset);
-            out.write(md4.digest());
-            chunk = len - offset;
-            md4.update(buffer, offset, chunk);
+            ed2kOut.write(md4.digest());
+            ed2kChunk = len - offset;
+            md4.update(buffer, offset, ed2kChunk);
         } else {
             md4.update(buffer, 0, len);
-            chunk += len;
+            ed2kChunk += len;
         }
-        total += len;
+        ed2kTotal += len;
     }
 
     private byte[] digestEd2k() throws IOException {
 
         MessageDigest md4 = digestMap.get(HASH.EDONKEY.toString());
-        if (total == 0 || total % CHUNK_SIZE != 0) {
-            out.write(md4.digest());
+        if (ed2kTotal == 0 || ed2kTotal % ED2K_CHUNK_SIZE != 0) {
+            ed2kOut.write(md4.digest());
         }
 
-        if (out.size() > md4.getDigestLength()) {
-            md4.update(out.toByteArray());
-            out.reset();
-            out.write(md4.digest());
+        if (ed2kOut.size() > md4.getDigestLength()) {
+            md4.update(ed2kOut.toByteArray());
+            ed2kOut.reset();
+            ed2kOut.write(md4.digest());
         }
 
-        byte[] ed2k = out.toByteArray();
+        byte[] ed2k = ed2kOut.toByteArray();
 
-        chunk = 0;
-        total = 0;
-        out = new ByteArrayOutputStream();
+        ed2kChunk = 0;
+        ed2kTotal = 0;
+        ed2kOut.reset();
 
         return ed2k;
     }
 
     public static String getHashString(byte[] hash) {
-        StringBuilder result = new StringBuilder();
-        for (byte b : hash) {
-            result.append(String.format("%1$02X", b)); //$NON-NLS-1$
-        }
-
-        return result.toString();
+        return Hex.encodeHexString(hash, false);
     }
-
 }
