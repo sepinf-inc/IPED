@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URISyntaxException;
@@ -295,7 +295,9 @@ public class Bootstrap {
             public void run() {
                 try {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                    PrintWriter writer = new PrintWriter(os, true);
+                    // Write through the PrintStream itself (e.g. System.out), so its encoding is used
+                    // (the console encoding on Windows), instead of wrapping it with the default charset.
+                    PrintStream writer = os instanceof PrintStream ? (PrintStream) os : new PrintStream(os, true);
                     String line = null;
                     while ((line = reader.readLine()) != null) {
                         if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
