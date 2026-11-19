@@ -55,8 +55,8 @@ public class ShareazaDownloadParser extends AbstractParser {
     private static final String SDL_MAGIC_NOT_FOUND = "ERROR: magic value 'SDL' not found";
     private static final String VERSION_BEFORE_11 = "ERROR: version less than 11 is not supported";
     private static final String VERSION_AFTER_42 = "ERROR: version greater than 42 is not supported";
-    private static final String INCOMPLETE_FILE_EX_MESSAGE = "Error during file parsing, possible incomplete or corrupted file.";
-    private static final String ERROR_READING_CONTROL_BYTES = "Error reading control bytes, data is possibly corrupted";
+    private static final String INCOMPLETE_FILE_EX_MESSAGE = "ERROR: Failed to parse possibly incomplete or corrupted file.";
+    private static final String ERROR_READING_CONTROL_BYTES = "ERROR: Failed to read possibly corrupted control bytes.";
 
     private static final int MAX_BUF_SIZE = 1 << 23;
 
@@ -716,7 +716,9 @@ public class ShareazaDownloadParser extends AbstractParser {
             addLine(xhtml, "Serial ID:               " + serialID);
 
         } catch (BufferUnderflowException ex) {
+            addLine(xhtml, "");
             addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE);
+            addLine(xhtml, "");
             throw new TikaException(INCOMPLETE_FILE_EX_MESSAGE, ex);
         } finally {
             addLines(xhtml, sbFile);
