@@ -1,12 +1,16 @@
 package iped.viewers;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -76,6 +80,7 @@ public class EmailViewer extends HtmlLinkViewer {
     private static final String charsetWindows1252 = "windows-1252";
     private static final String charsetUSAscII = "us-ascii";
     private static final String charsetUTF8 = "UTF-8";
+    private static final int UTF8_LOOKAHEAD = 1 << 20;
 
     private static Collator collator = getCollator();
 
@@ -238,6 +243,7 @@ public class EmailViewer extends HtmlLinkViewer {
         /**
          * Checks if the charset is windows-1252 or ISO-8859-1 (including aliases, like
          * "cp1252" or "latin1"), which are commonly used to wrongly label UTF-8 content.
+         * Note that "us-ascii" and invalid charsets are previously mapped to windows-1252.
          */
         private boolean isSingleByteWestern(String charset) {
             try {
@@ -403,22 +409,33 @@ public class EmailViewer extends HtmlLinkViewer {
             attach.deleteOnExit();
 
             if (type.equalsIgnoreCase("text/plain") || type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$ //$NON-NLS-2$
-                byte[] buf = new byte[65536];
-                int len;
-                boolean first = true;
-                while ((len = is.read(buf)) >= 0) {
-                    String text = new String(buf, 0, len, charset);
-                    if (first && isSingleByteWestern(charset) && StringUtil.isUtf8(text)) {
+                // Look ahead the beginning of the body to check if it is actually UTF-8,
+                // as it is often mislabeled (or not labeled) as windows-1252/ISO-8859-1.
+                if (isSingleByteWestern(charset)) {
+                    BufferedInputStream bis = new BufferedInputStream(is, UTF8_LOOKAHEAD);
+                    is = bis;
+                    bis.mark(UTF8_LOOKAHEAD);
+                    byte[] head = bis.readNBytes(UTF8_LOOKAHEAD);
+                    bis.reset();
+                    if (StringUtil.isValidUtf8(head, 0, head.length, head.length == UTF8_LOOKAHEAD)) {
                         charset = charsetUTF8;
-                        text = new String(buf, 0, len, charset);
                     }
-                    if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
-                        text = LuceneSimpleHTMLEncoder.htmlEncode(text);
-                        text = text.replaceAll("\n", "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                    }
-                    outStream.write(text.getBytes(charset));
-                    first = false;
                 }
+                // Reader/Writer keep the decoding state, so multi-byte chars split
+                // between reads are handled correctly.
+                Reader reader = new InputStreamReader(is, charset);
+                Writer writer = new OutputStreamWriter(outStream, charset);
+                char[] buf = new char[65536];
+                int len;
+                while ((len = reader.read(buf)) >= 0) {
+                    String text = new String(buf, 0, len);
+                    if (type.equalsIgnoreCase("text/plain")) {
+                        text = LuceneSimpleHTMLEncoder.htmlEncode(text);
+                        text = text.replaceAll("\n", "<br>");
+                    }
+                    writer.write(text);
+                }
+                writer.flush();
             } else {
                 IOUtil.copyInputToOutputStream(is, outStream);
             }
