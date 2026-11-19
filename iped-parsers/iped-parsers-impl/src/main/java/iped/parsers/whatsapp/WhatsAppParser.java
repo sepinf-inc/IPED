@@ -307,7 +307,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             Message.sort(c.getMessages());
 
             getAvatar(searcher, c.getRemote());
-            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null);
+            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null, null);
             int frag = 0;
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator();
@@ -552,9 +552,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             ArrayList<Future<?>> futures = new ArrayList<>();
             AtomicInteger downloadedFiles = new AtomicInteger(0);
+            AtomicInteger expiredLinks = new AtomicInteger(0);
             for (Chat c : wcontext.getChalist()) {
                 futures.addAll(searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,
-                        wcontext.getItem().getTempFile(), context, downloadedFiles));
+                        wcontext.getItem().getTempFile(), context, downloadedFiles, expiredLinks));
             }
             if (futures.size() > 0) {
                 handler.startDocument();
@@ -570,6 +571,9 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             if (downloadedFiles.get() > 0) {
                 logger.info("Downloaded {} files from {}", downloadedFiles.get(), wcontext.getItem().getName());
+            }
+            if (expiredLinks.get() > 0) {
+                logger.info("{} expired media links from {} were not requested", expiredLinks.get(), wcontext.getItem().getName());
             }
         }
 
@@ -1542,7 +1546,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private List<Future<?>> searchMediaFilesForMessagesInBatches(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
-            AtomicInteger downloadedFiles) {
+            AtomicInteger downloadedFiles, AtomicInteger expiredLinks) {
 
         if (searcher == null) {
             return Collections.emptyList();
@@ -1569,7 +1573,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         ArrayList<Future<?>> futures = new ArrayList<>();
         for (List<Message> listToProcess : listsToProcess) {
             futures.addAll(searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context,
-                    downloadedFiles));
+                    downloadedFiles, expiredLinks));
         }
         return futures;
     }
@@ -1588,7 +1592,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private List<Future<?>> searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
-            AtomicInteger downloadedFiles) {
+            AtomicInteger downloadedFiles, AtomicInteger expiredLinks) {
 
         // just save heavy item refs if creating report, per chat, not per database
         boolean saveItemRef = downloadedFiles == null;
@@ -1813,8 +1817,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                     }
                     linksPerHash.computeIfAbsent(ld.getHash(), k -> new ArrayList<>()).add(ld);
                 }
-                if (expired > 0) {
-                    logger.info("{} of {} media links found in {} are expired and will not be requested.", expired, links.size(), dbPath);
+                if (expiredLinks != null) {
+                    expiredLinks.addAndGet(expired);
                 }
 
                 for (Map.Entry<String, List<LinkDownloader>> entry : linksPerHash.entrySet()) {

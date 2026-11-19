@@ -167,32 +167,20 @@ public class LinkExtractor implements Closeable {
 
         String sql = getQuery();
 
-        // URLs of the same media may differ only by their query (e.g. "&mms3=true")
-        HashSet<String> seen = new HashSet<>();
-
-        // Hashes are sent in batches, as SQLite limits the length of a statement
-        StringBuilder base64Hashes = new StringBuilder();
-        int count = 0;
+        StringBuilder base64Hashes = null;
         for (String hash : hashes) {
             hash = Base64.getEncoder().encodeToString(Hex.decodeHex(hash));
-            if (count++ > 0) {
+            if (base64Hashes == null) {
+                base64Hashes = new StringBuilder();
+            } else {
                 base64Hashes.append(",");
             }
             base64Hashes.append('\'').append(hash).append('\'');
-            if (count == HASHES_PER_QUERY) {
-                extractLinks(sql, base64Hashes.toString(), seen);
-                base64Hashes.setLength(0);
-                count = 0;
-            }
         }
-        if (count > 0) {
-            extractLinks(sql, base64Hashes.toString(), seen);
-        }
-    }
-
-    private void extractLinks(String sql, String base64Hashes, HashSet<String> seen) throws SQLException {
-        try (PreparedStatement stmt = con.prepareStatement(sql.replace("?", base64Hashes))) {
+        try (PreparedStatement stmt = con.prepareStatement(sql.replace("?", base64Hashes.toString()))) {
             ResultSet rs = stmt.executeQuery();
+            // URLs of the same media may differ only by their query (e.g. "&mms3=true")
+            HashSet<String> seen = new HashSet<>();
             while (rs.next()) {
                 String link = rs.getString("url");
                 String hash = rs.getString("hash");
@@ -247,13 +235,17 @@ public class LinkExtractor implements Closeable {
 
     /**
      * Checks if the URL points to a WhatsApp media host, as the database content
-     * is not trusted and the URL will be requested.
+     * is not trusted and the URL will be requested. Old URLs like
+     * "https://mmg.whatsapp.net/d/f/....enc" are discarded, as the server does not
+     * accept them anymore ("Non direct path download is not supported").
      */
     static boolean isMediaUrl(String link) {
         try {
             URI uri = new URI(link);
             String host = uri.getHost();
+            String path = uri.getPath();
             return "https".equalsIgnoreCase(uri.getScheme()) && host != null && uri.getUserInfo() == null
+                    && path != null && !path.startsWith("/d/")
                     && (host.equals(STATIC_MEDIA_HOST) || (host.startsWith("mm") && host.endsWith(".whatsapp.net")));
         } catch (Exception e) {
             return false;
@@ -297,8 +289,6 @@ public class LinkExtractor implements Closeable {
 
     }
 
-    private static final int HASHES_PER_QUERY = 5000;
-
     // host of some medias sent by WhatsApp itself (e.g. "/downloadable?category=PSA&...")
     private static final String STATIC_MEDIA_HOST = "static.whatsapp.net";
 
@@ -325,12 +315,13 @@ public class LinkExtractor implements Closeable {
     /*
      * The direct path is what WhatsApp currently uses to download medias. It may
      * exist when message_url is empty and it is an alternative (signed) URL for
-     * medias with old static URLs.
+     * medias with old static URLs. The URLs from message_url come first, so they
+     * are the ones kept when both have the same path.
      */
     public static final String sql_android_direct_path = "SELECT * FROM ("
-            + "SELECT message_url as url,file_hash as hash ,mime_type as tipo,null as data, message_row_id as _id, media_key as mediaKey FROM  message_media  "
+            + "SELECT message_url as url,file_hash as hash ,mime_type as tipo,null as data, message_row_id as _id, media_key as mediaKey, 0 as source FROM  message_media  "
             + "where " + urlFilter("message_url")
-            + " UNION SELECT '" + DEFAULT_MEDIA_HOST + "' || direct_path as url,file_hash as hash ,mime_type as tipo,null as data, message_row_id as _id, media_key as mediaKey FROM  message_media  "
-            + "where direct_path like '/%') where hash is not null and hash in (?) group by url";
+            + " UNION SELECT '" + DEFAULT_MEDIA_HOST + "' || direct_path as url,file_hash as hash ,mime_type as tipo,null as data, message_row_id as _id, media_key as mediaKey, 1 as source FROM  message_media  "
+            + "where direct_path like '/%') where hash is not null and hash in (?) group by url order by source";
 
 }

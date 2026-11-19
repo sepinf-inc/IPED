@@ -18,6 +18,9 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 
 public class LinkDownloader {
+    // signed URLs expire about 30 days after the message, so a larger value is not valid
+    private static final long MAX_EXPIRATION_AHEAD = 90L * 24 * 60 * 60 * 1000;
+
     private static final Pattern EXPIRATION_PATTERN = Pattern.compile("[?&]oe=([0-9A-Fa-f]{1,15})(&|$)");
 
     private String urlStr;
@@ -54,9 +57,18 @@ public class LinkDownloader {
         return null;
     }
 
+    /**
+     * Checks if the URL would be refused by the server because of its expiration
+     * time: it is in the past ("URL signature expired") or too far in the future
+     * ("URL Expiry out of range"), which happens in direct paths of old medias.
+     */
     public boolean isExpired() {
         Long expiration = getExpirationTime();
-        return expiration != null && expiration < System.currentTimeMillis();
+        if (expiration == null) {
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        return expiration < now || expiration > now + MAX_EXPIRATION_AHEAD;
     }
 
     public static String getSHA256(InputStream input) {
