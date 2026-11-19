@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.Collator;
 import java.text.DateFormat;
@@ -234,6 +235,19 @@ public class EmailViewer extends HtmlLinkViewer {
             }
         }
 
+        /**
+         * Checks if the charset is windows-1252 or ISO-8859-1 (including aliases, like
+         * "cp1252" or "latin1"), which are commonly used to wrongly label UTF-8 content.
+         */
+        private boolean isSingleByteWestern(String charset) {
+            try {
+                Charset cs = Charset.forName(charset);
+                return cs.equals(Charset.forName(charsetWindows1252)) || cs.equals(StandardCharsets.ISO_8859_1);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
         private String getCharset() {
             if (bodyList.isEmpty()) {
                 return charsetWindows1252;
@@ -274,7 +288,8 @@ public class EmailViewer extends HtmlLinkViewer {
                     if (!name[0].equals(TikaCoreProperties.CREATED.getName())) {
                         String[] values = metadata.getValues(name[0]);
                         for (int i = 0; i < values.length; i++) {
-                            text += LuceneSimpleHTMLEncoder.htmlEncode(StringUtil.decodeIfUtf8(values[i]));
+                            // values were already decoded when the header fields were parsed
+                            text += LuceneSimpleHTMLEncoder.htmlEncode(values[i]);
                             if (i < values.length - 1) {
                                 text += ", "; //$NON-NLS-1$
                             }
@@ -393,7 +408,7 @@ public class EmailViewer extends HtmlLinkViewer {
                 boolean first = true;
                 while ((len = is.read(buf)) >= 0) {
                     String text = new String(buf, 0, len, charset);
-                    if (first && charset.equalsIgnoreCase(charsetWindows1252) && StringUtil.isUtf8(text)) {
+                    if (first && isSingleByteWestern(charset) && StringUtil.isUtf8(text)) {
                         charset = charsetUTF8;
                         text = new String(buf, 0, len, charset);
                     }

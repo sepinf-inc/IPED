@@ -1,6 +1,6 @@
 package iped.utils;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 
 public class StringUtil {
@@ -27,16 +27,12 @@ public class StringUtil {
 
     public static String decodeIfUtf8(String value) {
         if (isUtf8(value)) {
-            try {
-                byte[] buf16 = value.getBytes("UTF-16LE");
-                byte[] buf8 = new byte[buf16.length / 2];
-                for (int i = 0; i < buf8.length; i++) {
-                    buf8[i] = buf16[i * 2];
-                }
-                value = new String(buf8, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+            byte[] buf16 = value.getBytes(StandardCharsets.UTF_16LE);
+            byte[] buf8 = new byte[buf16.length / 2];
+            for (int i = 0; i < buf8.length; i++) {
+                buf8[i] = buf16[i * 2];
             }
+            value = new String(buf8, StandardCharsets.UTF_8);
         }
         return value;
     }
