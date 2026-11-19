@@ -235,18 +235,24 @@ public class LinkExtractor implements Closeable {
 
     /**
      * Checks if the URL points to a WhatsApp media host, as the database content
-     * is not trusted and the URL will be requested. Old URLs like
-     * "https://mmg.whatsapp.net/d/f/....enc" are discarded, as the server does not
-     * accept them anymore ("Non direct path download is not supported").
+     * is not trusted and the URL will be requested. URLs of the "mm*" hosts must be
+     * signed ("oh" parameter), as the server does not accept the other ones
+     * anymore: old URLs like "https://mmg.whatsapp.net/d/f/....enc" ("Non direct
+     * path download is not supported") and paths without query ("Bad URL hash").
      */
     static boolean isMediaUrl(String link) {
         try {
             URI uri = new URI(link);
             String host = uri.getHost();
-            String path = uri.getPath();
-            return "https".equalsIgnoreCase(uri.getScheme()) && host != null && uri.getUserInfo() == null
-                    && path != null && !path.startsWith("/d/")
-                    && (host.equals(STATIC_MEDIA_HOST) || (host.startsWith("mm") && host.endsWith(".whatsapp.net")));
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || host == null || uri.getUserInfo() != null) {
+                return false;
+            }
+            if (host.equals(STATIC_MEDIA_HOST)) {
+                return true;
+            }
+            String query = uri.getQuery();
+            return host.startsWith("mm") && host.endsWith(".whatsapp.net") && query != null
+                    && (query.startsWith("oh=") || query.contains("&oh="));
         } catch (Exception e) {
             return false;
         }
