@@ -1,7 +1,7 @@
 package iped.viewers;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.SequenceInputStream;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -181,6 +182,8 @@ public class EmailViewer extends HtmlLinkViewer {
 
     private static class AttachInfo {
         private String name, mime;
+        // charset used to write tmpFile, when it is a text attachment
+        private String charset = charsetWindows1252;
         private File tmpFile;
         private IItemReader item;
 
@@ -239,18 +242,11 @@ public class EmailViewer extends HtmlLinkViewer {
             }
         }
 
-        private String getCharset() {
-            if (bodyList.isEmpty()) {
-                return charsetWindows1252;
-            }
-            return bodyList.get(0).charset;
-        }
-
         private void createHeader(OutputStreamWriter writer) throws IOException {
 
             writer.write("<html>"); //$NON-NLS-1$
             writer.write("<head>"); //$NON-NLS-1$
-            writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + getCharset() + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
+            writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charsetUTF8 + "\" />");
             writer.write("</head>"); //$NON-NLS-1$
             writer.write(
                     "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">"); //$NON-NLS-1$
@@ -396,15 +392,14 @@ public class EmailViewer extends HtmlLinkViewer {
             if (type.equalsIgnoreCase("text/plain") || type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$ //$NON-NLS-2$
                 // Look ahead the beginning of the body to check if it is actually UTF-8,
                 // as it is often mislabeled (or not labeled) as windows-1252/ISO-8859-1.
+                // Only up to the first 1MB is validated (the remaining content, if any, is
+                // assumed to use the same encoding).
                 if (StringUtil.isSingleByteWesternCharset(charset)) {
-                    BufferedInputStream bis = new BufferedInputStream(is, UTF8_LOOKAHEAD);
-                    is = bis;
-                    bis.mark(UTF8_LOOKAHEAD);
-                    byte[] head = bis.readNBytes(UTF8_LOOKAHEAD);
-                    bis.reset();
+                    byte[] head = is.readNBytes(UTF8_LOOKAHEAD);
                     if (StringUtil.isValidUtf8(head, 0, head.length, head.length == UTF8_LOOKAHEAD)) {
                         charset = charsetUTF8;
                     }
+                    is = new SequenceInputStream(new ByteArrayInputStream(head), is);
                 }
                 // Reader/Writer keep the decoding state, so multi-byte chars split
                 // between reads are handled correctly.
@@ -429,6 +424,7 @@ public class EmailViewer extends HtmlLinkViewer {
 
             AttachInfo attachInfo = new AttachInfo(attach, type,
                     (attachName == null ? Messages.getString("EmailViewer.UnNamed") : attachName)); //$NON-NLS-1$
+            attachInfo.charset = charset;
 
             if (attachName != null) {
                 isAttach = true;
@@ -484,7 +480,9 @@ public class EmailViewer extends HtmlLinkViewer {
             }
 
             try (OutputStream outStream = new BufferedOutputStream(new FileOutputStream(previewFile));
-                    OutputStreamWriter writer = new OutputStreamWriter(outStream, getCharset())) {
+                    // The preview is always written as UTF-8, as bodies, headers and
+                    // attachments may use different charsets.
+                    OutputStreamWriter writer = new OutputStreamWriter(outStream, charsetUTF8)) {
 
                 createHeader(writer);
 
@@ -528,8 +526,7 @@ public class EmailViewer extends HtmlLinkViewer {
                             writer.write(attach.name + ":<br>"); //$NON-NLS-1$
                         }
 
-                        writer.flush();
-                        Files.copy(attach.tmpFile.toPath(), outStream);
+                        writer.write(new String(Files.readAllBytes(attach.tmpFile.toPath()), attach.charset));
                     }
                 }
 
