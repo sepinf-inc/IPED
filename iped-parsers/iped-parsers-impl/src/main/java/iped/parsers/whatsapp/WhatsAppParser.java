@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1799,41 +1800,63 @@ public class WhatsAppParser extends SQLite3DBParser {
                     return futures;
                 }
 
+                // A media may have more than one URL, and signed URLs expire
+                Map<String, List<LinkDownloader>> linksPerHash = new LinkedHashMap<>();
+                int expired = 0;
                 for (LinkDownloader ld : links) {
-                    if (ld == null || ld.getHash() == null || !hashesDownloaded.add(ld.getHash())) {
+                    if (ld == null || ld.getHash() == null) {
                         continue;
                     }
+                    if (ld.isExpired()) {
+                        expired++;
+                        continue;
+                    }
+                    linksPerHash.computeIfAbsent(ld.getHash(), k -> new ArrayList<>()).add(ld);
+                }
+                if (expired > 0) {
+                    logger.info("{} of {} media links found in {} are expired and will not be requested.", expired, links.size(), dbPath);
+                }
+
+                for (Map.Entry<String, List<LinkDownloader>> entry : linksPerHash.entrySet()) {
+                    if (!hashesDownloaded.add(entry.getKey())) {
+                        continue;
+                    }
+                    List<LinkDownloader> candidates = entry.getValue();
 
                     Runnable r = new Runnable() {
 
                         @Override
                         public void run() {
 
-                            try (TemporaryResources tmp = new TemporaryResources()) {
+                            // try each URL of the media, until one works
+                            for (LinkDownloader ld : candidates) {
+                                try (TemporaryResources tmp = new TemporaryResources()) {
 
-                                File f = tmp.createTemporaryFile(), fout = tmp.createTemporaryFile();
+                                    File f = tmp.createTemporaryFile(), fout = tmp.createTemporaryFile();
 
-                                ld.downloadUsingStream(f);
+                                    ld.downloadUsingStream(f);
 
-                                ld.decript(f, fout);
+                                    ld.decript(f, fout);
 
-                                Metadata downloadMetadata = new Metadata();
+                                    Metadata downloadMetadata = new Metadata();
 
-                                downloadMetadata.set(ExtraProperties.DOWNLOADED_DATA, "true");
-                                downloadMetadata.set(TikaCoreProperties.TITLE,
-                                        "Dowloaded_item_" + downloadedFiles.incrementAndGet());
+                                    downloadMetadata.set(ExtraProperties.DOWNLOADED_DATA, "true");
+                                    downloadMetadata.set(TikaCoreProperties.TITLE,
+                                            "Dowloaded_item_" + downloadedFiles.incrementAndGet());
 
-                                try (FileInputStream out = new FileInputStream(fout)) {
-                                    synchronized (extractor) {
-                                        extractor.parseEmbedded(out, handler, downloadMetadata, false);
+                                    try (FileInputStream out = new FileInputStream(fout)) {
+                                        synchronized (extractor) {
+                                            extractor.parseEmbedded(out, handler, downloadMetadata, false);
+                                        }
                                     }
+                                    break;
+
+                                } catch (URLnotFound ex) {
+                                    // do not log this error as it is expected
+
+                                } catch (Exception e) {
+                                    logger.warn("Error trying to download medias referenced by " + dbPath, e);
                                 }
-
-                            } catch (URLnotFound ex) {
-                                // do not log this error as it is expected
-
-                            } catch (Exception e) {
-                                logger.warn("Error trying to download medias referenced by " + dbPath, e);
                             }
 
                         }
