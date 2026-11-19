@@ -12,7 +12,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.Collator;
 import java.text.DateFormat;
@@ -240,20 +239,6 @@ public class EmailViewer extends HtmlLinkViewer {
             }
         }
 
-        /**
-         * Checks if the charset is windows-1252 or ISO-8859-1 (including aliases, like
-         * "cp1252" or "latin1"), which are commonly used to wrongly label UTF-8 content.
-         * Note that "us-ascii" and invalid charsets are previously mapped to windows-1252.
-         */
-        private boolean isSingleByteWestern(String charset) {
-            try {
-                Charset cs = Charset.forName(charset);
-                return cs.equals(Charset.forName(charsetWindows1252)) || cs.equals(StandardCharsets.ISO_8859_1);
-            } catch (Exception e) {
-                return false;
-            }
-        }
-
         private String getCharset() {
             if (bodyList.isEmpty()) {
                 return charsetWindows1252;
@@ -411,7 +396,7 @@ public class EmailViewer extends HtmlLinkViewer {
             if (type.equalsIgnoreCase("text/plain") || type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$ //$NON-NLS-2$
                 // Look ahead the beginning of the body to check if it is actually UTF-8,
                 // as it is often mislabeled (or not labeled) as windows-1252/ISO-8859-1.
-                if (isSingleByteWestern(charset)) {
+                if (StringUtil.isSingleByteWesternCharset(charset)) {
                     BufferedInputStream bis = new BufferedInputStream(is, UTF8_LOOKAHEAD);
                     is = bis;
                     bis.mark(UTF8_LOOKAHEAD);

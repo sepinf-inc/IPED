@@ -17,8 +17,11 @@
 package iped.parsers.mail;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -88,6 +91,9 @@ public class RFC822Parser extends AbstractParser {
     private static final long serialVersionUID = -5504243905998074168L;
 
     private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
+
+    private static final int UTF8_LOOKAHEAD = 1 << 20;
+    private static final byte[] UTF8_BOM = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
 
     public static final MediaType RFC822_MAC_MIME = MediaType.parse("message/x-rfc822-mac");
     public static final MediaType RFC822_PARTIAL0_MIME = MediaType.parse("message/rfc822-partial");
@@ -247,6 +253,7 @@ public class RFC822Parser extends AbstractParser {
                         }
                     }
                 } else {
+                    is = markAsUtf8IfDetected(is, body.getCharset(), submd);
                     if (metadata.get(ExtraProperties.MESSAGE_BODY) == null) {
                         BufferedInputStream bis = new BufferedInputStream(is, 1024 * 1024);
                         bis.mark(1024 * 1024);
@@ -364,6 +371,31 @@ public class RFC822Parser extends AbstractParser {
                     throw me;
                 }
             }
+        }
+
+        /**
+         * Checks if a body declared (or defaulted) as a single byte western charset is
+         * actually UTF-8, strictly validating up to its first 1MB. If so, a UTF-8 BOM
+         * is prepended to the stream, because encoding detectors only sample the
+         * beginning of the content, which may be only ASCII. The BOM is skipped when
+         * the text is decoded.
+         */
+        private InputStream markAsUtf8IfDetected(InputStream is, String charset, Metadata submd) throws IOException {
+            if (!StringUtil.isSingleByteWesternCharset(charset)) {
+                return is;
+            }
+            BufferedInputStream bis = new BufferedInputStream(is, UTF8_LOOKAHEAD);
+            bis.mark(UTF8_LOOKAHEAD);
+            byte[] head = bis.readNBytes(UTF8_LOOKAHEAD);
+            bis.reset();
+            if (!StringUtil.isValidUtf8(head, 0, head.length, head.length == UTF8_LOOKAHEAD)) {
+                return bis;
+            }
+            submd.set(HttpHeaders.CONTENT_ENCODING, StandardCharsets.UTF_8.name());
+            if (head.length >= UTF8_BOM.length && Arrays.equals(head, 0, UTF8_BOM.length, UTF8_BOM, 0, UTF8_BOM.length)) {
+                return bis;
+            }
+            return new SequenceInputStream(new ByteArrayInputStream(UTF8_BOM), bis);
         }
 
         private String getRFC2231Value(String paramName, Map<String, String> params) {

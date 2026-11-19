@@ -88,6 +88,25 @@ public class StringUtil {
 
     private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
 
+    /**
+     * Checks if the declared charset is missing, US-ASCII, windows-1252 or
+     * ISO-8859-1 (including aliases, like "cp1252" or "latin1"), which are
+     * commonly used to wrongly label UTF-8 content. Unknown charsets are also
+     * included.
+     */
+    public static boolean isSingleByteWesternCharset(String charset) {
+        if (charset == null) {
+            return true;
+        }
+        try {
+            Charset cs = Charset.forName(charset);
+            return cs.equals(WINDOWS_1252) || cs.equals(StandardCharsets.ISO_8859_1)
+                    || cs.equals(StandardCharsets.US_ASCII);
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     private static boolean hasNonAscii(String value) {
         for (int i = 0; i < value.length(); i++) {
             if (value.charAt(i) >= 0x80) {
