@@ -74,15 +74,23 @@ public class StringUtil {
         CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
                 .onUnmappableCharacter(CodingErrorAction.REPORT);
         ByteBuffer in = ByteBuffer.wrap(buf, off, len);
-        CharBuffer out = CharBuffer.allocate(len);
-        CoderResult result = decoder.decode(in, out, !partialEnd);
-        if (result.isError()) {
-            return false;
+        // small buffer reused while decoding, as the decoded chars are not needed
+        CharBuffer out = CharBuffer.allocate(Math.max(2, Math.min(len, 8192)));
+        while (true) {
+            CoderResult result = decoder.decode(in, out, !partialEnd);
+            if (result.isError()) {
+                return false;
+            }
+            if (result.isUnderflow()) {
+                break;
+            }
+            out.clear();
         }
         if (partialEnd) {
             // at most an incomplete sequence (up to 3 bytes) may be left
             return in.remaining() <= 3;
         }
+        out.clear();
         return !decoder.flush(out).isError();
     }
 
