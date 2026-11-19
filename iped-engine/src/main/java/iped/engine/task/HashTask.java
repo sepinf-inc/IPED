@@ -42,7 +42,7 @@ import iped.engine.config.HashTaskConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
 
 /**
- * Classe para calcular e manipular hashes.
+ * Task for calculating and handling hashes.
  */
 public class HashTask extends AbstractTask {
 
