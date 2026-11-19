@@ -800,7 +800,8 @@ public class ShareazaDownloadParser extends AbstractParser {
     }
 
     public void padding(ByteBuffer buffer, int i) throws BufferUnderflowException {
-        if (buffer.remaining() < i) {
+        // negative sizes may be read from corrupted files
+        if (i < 0 || buffer.remaining() < i) {
             throw new BufferUnderflowException();
         }
         byte[] read = new byte[i];
@@ -885,7 +886,10 @@ public class ShareazaDownloadParser extends AbstractParser {
         return ByteBuffer.wrap(read).order(ByteOrder.LITTLE_ENDIAN).getLong();
     }
 
-    public String readHashString(ByteBuffer buffer, int len) {
+    public String readHashString(ByteBuffer buffer, int len) throws BufferUnderflowException {
+        if (len < 0 || buffer.remaining() < len) {
+            throw new BufferUnderflowException();
+        }
         byte[] read = new byte[len];
         buffer.get(read);
 
