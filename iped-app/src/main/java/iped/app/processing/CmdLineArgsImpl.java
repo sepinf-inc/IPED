@@ -369,7 +369,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
                 throw new RuntimeException(e);
             }
             String thisVersion = Version.APP_VERSION.substring(0, Version.APP_VERSION.lastIndexOf('.'));
-            String fullVersion = line.replace(Version.APP_NAME_PREFIX, "").trim();
+            String[] lt = line.split(" ");
+            String fullVersion = lt[lt.length - 1].trim();
             String version = fullVersion.substring(0, fullVersion.lastIndexOf('.'));
             if (!version.equals(thisVersion)) {
                 throw new IPEDException("Appending to case with old version " + fullVersion + " not supported.");
