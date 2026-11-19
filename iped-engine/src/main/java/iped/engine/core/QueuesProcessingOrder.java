@@ -24,6 +24,7 @@ import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.python.PythonParser;
 import iped.parsers.shareaza.ShareazaDownloadParser;
 import iped.parsers.shareaza.ShareazaLibraryDatParser;
+import iped.parsers.signal.SignalParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.telegram.TelegramParser;
@@ -98,6 +99,10 @@ public class QueuesProcessingOrder {
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE_2, 4);
         mediaTypes.put(ThreemaParser.CHAT_STORAGE, 3);
         mediaTypes.put(ThreemaParser.CHAT_STORAGE_F, 4);
+        mediaTypes.put(SignalParser.SIGNAL_DB, 3);
+        mediaTypes.put(SignalParser.SIGNAL_DB_ENCRYPTED, 3);
+        mediaTypes.put(SignalParser.SIGNAL_DB_F, 4);
+        mediaTypes.put(SignalParser.SIGNAL_DB_ENCRYPTED_F, 4);
 
         // required to load ContactPhotos and Attachments
         mediaTypes.put(MediaTypes.UFED_CONTACT_MIME, 2);
