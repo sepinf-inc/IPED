@@ -1,4 +1,4 @@
-﻿########################################################################
+﻿﻿########################################################################
 # Processing Settings
 ########################################################################
 
@@ -27,7 +27,9 @@ enableLedCarving = false
 enableKnownMetCarving = false
 enableImageThumbs = false
 enableImageSimilarity = false
-enableFaceRecognition = falsee
+enableFaceRecognition = false
+enableAgeEstimation = false
+enableSearchHardwareWallets = true
 enableVideoThumbs = false
 enableDocThumbs = false
 enableHTMLReport = false

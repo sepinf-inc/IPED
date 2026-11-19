@@ -30,17 +30,32 @@ public class DarkTheme extends Theme {
         put("Table[Enabled+Selected].textForeground", Color.white);
         put("Viewer.background", new Color(29, 38, 47));
         put("Viewer.foreground", Color.white);
-        put("Viewer.htmlLink",new Color(200, 200, 255));
+        put("Viewer.htmlLink", new Color(200, 200, 255));
         put("Graph.defaultEdge", new Color(128, 128, 128));
         put("Graph.defaultNode", Color.white);
         put("Graph.selectedNodeBox", Color.white);
         put("Graph.selectionBox", Color.white);
         put("Tree.expandIcon", new Color(210, 210, 211));
         put("Tree.expandIconSel", Color.white);
-        
+
+        put("Filter.Icon0", new Color(72, 76, 82, 200));
+        put("Filter.Icon0Hover", new Color(40, 86, 132, 200));
+        put("Filter.Icon1", new Color(255, 255, 255));
+        put("Filter.Icon2", new Color(172, 176, 182));
+        put("Filter.Icon2Hover", new Color(70, 116, 232));
+        put("Filter.Arrow", new Color(40, 52, 75, 220));
+        put("Filter.Border0", new Color(32, 36, 37));
+        put("Filter.Border1", new Color(48, 50, 52));
+        put("Filter.Border2", new Color(109, 111, 113));
+        put("Filter.Header1", new Color(126, 128, 130));
+        put("Filter.Header1Sorted", new Color(131, 133, 140));
+        put("Filter.Header2", new Color(145, 149, 154));
+        put("Filter.Header2Sorted", new Color(150, 154, 164));
+        put("Resizable.Spot", new Color(90, 92, 94));
+
         putDock("stack.tab.text.selected.focused", Color.white);
     }
-    
+
     @Override
     public String getName() {
         return Messages.getString("Theme.Dark");

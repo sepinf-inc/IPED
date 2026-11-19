@@ -500,6 +500,9 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
                 sortingUpdated = false;
             }
         }
+        if (index < 0) {
+            return index;
+        }
         if (modelToView == null) {
             if (index < 0 || index >= getModelWrapper().getRowCount()) {
                 throw new IndexOutOfBoundsException("Invalid index");
@@ -520,6 +523,9 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             synchronized (this) {
                 sortingUpdated = false;
             }
+        }
+        if (index < 0) {
+            return index;
         }
         if (viewToModel == null) {
             if (index < 0 || index >= getModelWrapper().getRowCount()) {

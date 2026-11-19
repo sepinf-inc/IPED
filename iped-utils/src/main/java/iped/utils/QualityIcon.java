@@ -1,5 +1,6 @@
 package iped.utils;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -15,9 +16,11 @@ import javax.swing.ImageIcon;
 public class QualityIcon implements Icon {
     private final Icon icon;
     private final BufferedImage img;
+    private final boolean enabled;
     private int w, h;
 
     private static final RenderingHints renderingHints;
+    private static final Color colorDisabled = new Color(255, 255, 255, 180);
 
     static {
         Map<Key, Object> hints = new HashMap<Key, Object>();
@@ -31,12 +34,14 @@ public class QualityIcon implements Icon {
         this.icon = other.icon;
         this.img = other.img;
         w = h = size;
+        enabled = true;
     }
 
     public QualityIcon(Icon icon, int size) {
         this.icon = icon;
         this.img = null;
         w = h = size;
+        enabled = true;
     }
 
     public QualityIcon(BufferedImage img, int w, int h) {
@@ -44,12 +49,18 @@ public class QualityIcon implements Icon {
         this.img = img;
         this.w = w;
         this.h = h;
+        enabled = true;
     }
 
     public QualityIcon(BufferedImage img, int size) {
+        this(img, size, true);
+    }
+
+    public QualityIcon(BufferedImage img, int size, boolean enabled) {
         this.icon = null;
         this.img = img;
         w = h = size;
+        this.enabled = enabled;
     }
 
     public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -64,6 +75,10 @@ public class QualityIcon implements Icon {
             } else {
                 icon.paintIcon(c, g, x, y);
             }
+        }
+        if (!enabled) {
+            g2.setColor(colorDisabled);
+            g2.fillRect(x, y, w + 1, h + 1);
         }
         g2.setRenderingHints(saveHints);
     }

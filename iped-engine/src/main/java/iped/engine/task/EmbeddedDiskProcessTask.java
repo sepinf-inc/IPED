@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.input.TaggedInputStream;
-import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +28,7 @@ import iped.engine.core.Manager;
 import iped.engine.data.Item;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.search.ItemSearcher;
+import iped.engine.search.QueryBuilder;
 import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.TextCache;
@@ -163,7 +163,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 if (dotIdx == -1)
                     dotIdx = item.getName().length();
                 String query = BasicProps.PARENTID + ":" + item.getParentId() + " && " + BasicProps.NAME + ":\""
-                        + QueryParserUtil.escape(item.getName().substring(0, dotIdx)) + "\"";
+                        + QueryBuilder.escape(item.getName().substring(0, dotIdx)) + "\"";
                 List<IItemReader> possibleParts = searcher.search(query);
                 logger.info("Found {} possible image segments of {}", possibleParts.size(), item.getPath());
                 // export (and process) deleted parts after allocated ones see #1660
@@ -237,7 +237,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             String parentTrackId = item.getExtraAttribute(IndexItem.PARENT_TRACK_ID).toString();
             File exportDir = new File(new File(this.output, outputFolder), parentTrackId);
             exportDir.mkdirs();
-            imageFile = new File(exportDir, item.getName()).getCanonicalFile();
+            imageFile = new File(exportDir, cleanFileName(item.getName())).getCanonicalFile();
             boolean alreadyExported = false;
 
             File trackFile = new File(imageFile.getAbsolutePath() + "_trackID");
@@ -255,7 +255,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                         }
                     } else {
                         // exported image refers to a different item with same path, use another output
-                        imageFile = new File(exportDir, trackId + "/" + item.getName()).getCanonicalFile();
+                        imageFile = new File(exportDir, trackId + "/" + cleanFileName(item.getName())).getCanonicalFile();
                         imageFile.getParentFile().mkdirs();
                         if (imageFile.exists() && imageFile.length() == item.getLength()) {
                             alreadyExported = true;
@@ -285,6 +285,10 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             exportedDisks.add(imageFile);
         }
         return imageFile;
+    }
+
+    private String cleanFileName(String name) {
+        return IOUtil.getValidFilename(name);
     }
 
 }

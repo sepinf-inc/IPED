@@ -1,17 +1,20 @@
 package iped.engine.config;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import iped.utils.UTF8Properties;
 
 public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
     private static final String ENABLE_PROP = "enableImageThumbs"; //$NON-NLS-1$
 
     private static final String CONFIG_FILE = "ImageThumbsConfig.txt"; //$NON-NLS-1$
+
+    public static final int DEFAULT_THUMB_SIZE = 256;
 
     private boolean enableExternalConv = true;
     private boolean useGraphicsMagick = false;
@@ -19,11 +22,14 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
     private boolean logGalleryRendering = false;
     private int minTimeout = 20;
     private int timeoutPerMB = 2;
-    private int thumbSize = 256;
+    private int thumbSize = DEFAULT_THUMB_SIZE;
     private int galleryThreads = 1;
     private int lowResDensity = 96;
     private int highResDensity = 250;
     private int maxMPixelsInMemory = 32;
+    private int maxViewImageSize = 2400;
+    private int compression = 60;
+    private final Set<String> mimesToCreateView = new HashSet<String>();
 
     public boolean isEnableExternalConv() {
         return enableExternalConv;
@@ -53,6 +59,10 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
         return thumbSize;
     }
 
+    public void setThumbSize(int value) {
+        this.thumbSize = value;
+    }
+
     public int getGalleryThreads() {
         return galleryThreads;
     }
@@ -67,6 +77,18 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     public int getMaxMPixelsInMemory() {
         return maxMPixelsInMemory;
+    }
+
+    public int getMaxViewImageSize() {
+        return maxViewImageSize;
+    }
+
+    public int getCompression() {
+        return compression;
+    }
+
+    public Set<String> getMimesToCreateView() {
+        return Collections.unmodifiableSet(mimesToCreateView);
     }
 
     @Override
@@ -141,6 +163,22 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
             maxMPixelsInMemory = Integer.valueOf(value.trim());
         }
 
-    }
+        value = properties.getProperty("compression");
+        if (value != null && !value.trim().isEmpty()) {
+            compression = Integer.valueOf(value.trim());
+        }
 
+        value = properties.getProperty("mimesToCreateView");
+        if (value != null) {
+            String[] mimes = value.split(";");
+            for (String mime : mimes) {
+                mimesToCreateView.add(mime.trim());
+            }
+        }
+
+        value = properties.getProperty("maxViewImageSize");
+        if (value != null && !value.trim().isEmpty()) {
+            maxViewImageSize = Integer.valueOf(value.trim());
+        }
+    }
 }

@@ -20,43 +20,45 @@ package iped.app.ui;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 
 import javax.swing.JOptionPane;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.roaringbitmap.RoaringBitmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.app.graph.FilterSelectedEdges;
-import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.IPEDSearcher;
-import iped.engine.search.ImageSimilarityLowScoreFilter;
-import iped.engine.search.ImageSimilarityScorer;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
-import iped.engine.search.SimilarFacesSearch;
-import iped.engine.search.SimilarImagesSearch;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.viewers.api.CancelableWorker;
+import iped.viewers.api.IBitmapFilter;
+import iped.viewers.api.IFilter;
 import iped.viewers.api.IQueryFilterer;
-import iped.viewers.api.ResultSetViewer;
+import iped.viewers.api.IResultSetFilter;
+import iped.viewers.api.IResultSetFilterer;
 
 public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Object> {
     private static Logger LOGGER = LoggerFactory.getLogger(CaseSearcherFilter.class);
     ArrayList<CaseSearchFilterListener> listeners = new ArrayList<CaseSearchFilterListener>();
+    RoaringBitmap[] unionsArray;
+    RoaringBitmap[] excludeUnionsArray;
 
-    private static SoftReference<MultiSearchResult> allItemsCache;
+    public static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
 
     private ExecutorService threadPool;
@@ -66,15 +68,18 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     String queryText;
     Query query;
     IPEDSearcher searcher;
+    FilterManager filterManager;
 
     public CaseSearcherFilter(String queryText) {
         this.queryText = queryText;
         searcher = new IPEDSearcher(App.get().appCase, queryText);
+        filterManager = App.get().getFilterManager();
     }
 
     public CaseSearcherFilter(Query query) {
         this.query = query;
         searcher = new IPEDSearcher(App.get().appCase, query);
+        filterManager = App.get().getFilterManager();
     }
 
     public void applyUIQueryFilters() {
@@ -92,7 +97,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
         }
     }
 
-    public Query getQueryWithUIFilter(Set<IQueryFilterer> exceptions) throws ParseException, QueryNodeException {
+    private Query getQueryWithUIFilter(Set<IQueryFilterer> exceptions) throws ParseException, QueryNodeException {
         Query result;
         numFilters = 0;
         if (queryText != null) {
@@ -105,74 +110,23 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 numFilters++;
         }
 
-        if(App.get().queryComboBox.getSelectedItem()!=null) {
-            String searchText = App.get().queryComboBox.getSelectedItem().toString();
-            if(searchText!=null) {
-                if (!(searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP))) {
-                    BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-                    boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(searchText), Occur.MUST);
-                    boolQuery.add(result, Occur.MUST);
-                    result = boolQuery.build();
-                    numFilters++;
-                }
-            }
-        }
+        if (applyUIFilters) {
+            List<IQueryFilterer> queryFilterers = filterManager.queryFilterers;
+            for (Iterator iterator = queryFilterers.iterator(); iterator.hasNext();) {
+                IQueryFilterer iQueryFilterer = (IQueryFilterer) iterator.next();
 
-        if (App.get().filterComboBox.getSelectedIndex() > 1) {
-            String filter = App.get().filterComboBox.getSelectedItem().toString();
-            filter = App.get().filterManager.getFilterExpression(filter);
-            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-            boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(filter), Occur.MUST);
-            boolQuery.add(result, Occur.MUST);
-            result = boolQuery.build();
-            numFilters++;
-        }
-
-        if (App.get().categoryListener.getQuery() != null) {
-            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-            boolQuery.add(App.get().categoryListener.getQuery(), Occur.MUST);
-            boolQuery.add(result, Occur.MUST);
-            result = boolQuery.build();
-            numFilters++;
-        }
-
-        Query treeQuery = App.get().treeListener.getQuery();
-        if (treeQuery != null) {
-            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-            boolQuery.add(treeQuery, Occur.MUST);
-            boolQuery.add(result, Occur.MUST);
-            result = boolQuery.build();
-            numFilters++;
-        }
-
-        /* loop through all registered result set viewer to get configured query filters */ 
-        List<ResultSetViewer> list = App.get().getResultSetViewers();
-        for (Iterator<ResultSetViewer> iterator = list.iterator(); iterator.hasNext();) {
-            ResultSetViewer resultSetViewer = iterator.next();
-            if (resultSetViewer instanceof IQueryFilterer) {
-                if (exceptions == null || !exceptions.contains(resultSetViewer)) {
-                    Query resultSetViewerQuery = ((IQueryFilterer) resultSetViewer).getQuery();
-                    if (resultSetViewerQuery != null) {
-                        BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-                        boolQuery.add(resultSetViewerQuery, Occur.MUST);
-                        boolQuery.add(result, Occur.MUST);
-                        result = boolQuery.build();
-                        numFilters++;
+                if (filterManager.isFiltererEnabled(iQueryFilterer)) {
+                    if (exceptions == null || !exceptions.contains(iQueryFilterer)) {
+                        Query fquery = iQueryFilterer.getQuery();
+                        if (fquery != null) {
+                            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                            boolQuery.add(fquery, Occur.MUST);
+                            boolQuery.add(result, Occur.MUST);
+                            result = boolQuery.build();
+                            numFilters++;
+                        }
                     }
                 }
-            }
-        }
-
-        if (App.get().similarImagesQueryRefItem != null) {
-            Query similarImagesQuery = new SimilarImagesSearch()
-                    .getQueryForSimilarImages(App.get().similarImagesQueryRefItem);
-            if (similarImagesQuery != null) {
-                BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-                boolQuery.add(result, Occur.MUST);
-                boolQuery.add(similarImagesQuery, Occur.MUST);
-                result = boolQuery.build();
-                searcher.setNoScoring(true);
-                numFilters++;
             }
         }
 
@@ -180,6 +134,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     }
 
     MultiSearchResult result = null;
+    private boolean applyUIFilters = true;
 
     public MultiSearchResult getDoneResult() {
         return this.result;
@@ -190,12 +145,18 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
         synchronized (this.getClass()) {
 
+            Date d1 = new Date();
+
             if (this.isCancelled())
-                return null;
+                throw new CancellationException();
 
             try {
                 for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
                     caseSearchFilterListener.onStart();
+                }
+
+                if (this.isCancelled()) {
+                    throw new CancellationException();
                 }
 
                 if (ipedCase == null || ipedCase != App.get().appCase) {
@@ -204,122 +165,139 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 }
 
                 Query q = searcher.getQuery();
-                //LOGGER.info("Searching for query " + (q != null ? q.toString() : queryText)); //$NON-NLS-1$
+                // LOGGER.info("Searching for query " + (q != null ? q.toString() : queryText));
+                // //$NON-NLS-1$
 
                 if (q instanceof MatchAllDocsQuery && allItemsCache != null)
                     result = allItemsCache.get();
 
                 if (result == null) {
                     result = searcher.multiSearch();
+
+                    if (this.isCancelled()) {
+                        throw new CancellationException();
+                    }
+
                     if (q instanceof MatchAllDocsQuery && (allItemsCache == null || allItemsCache.get() == null))
                         allItemsCache = new SoftReference(result.clone());
                 }
 
-                String filtro = ""; //$NON-NLS-1$
-                if (App.get().filterComboBox.getSelectedItem() != null)
-                    filtro = App.get().filterComboBox.getSelectedItem().toString();
+                result.setIPEDSource(ipedCase);
 
-                if (filtro.equals(App.FILTRO_SELECTED)) {
-                    result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(result);
-                    numFilters++;
-                    //LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
-                }
+                if (applyUIFilters && filterManager != null) {
+                    List<IResultSetFilterer> rsFilterers = filterManager.getResultSetFilterers();
 
-                Set<String> bookmarkSelection = App.get().bookmarksListener.getSelectedBookmarkNames();
-                if ((!bookmarkSelection.isEmpty() || App.get().bookmarksListener.isNoBookmarksSelected())
-                        && !App.get().bookmarksListener.isRootSelected()) {
-                    numFilters++;
-                    StringBuilder bookmarks = new StringBuilder();
-                    for (String bookmark : bookmarkSelection)
-                        bookmarks.append("\"" + bookmark + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
-                    //LOGGER.info("Filtering for bookmarks " + bookmarks.toString()); //$NON-NLS-1$
-
-                    if (App.get().bookmarksListener.isNoBookmarksSelected()) {
-                        if (bookmarkSelection.isEmpty()) {
-                            result = (MultiSearchResult) App.get().appCase.getMultiBookmarks()
-                                    .filterNoBookmarks(result);
-                        } else {
-                            result = (MultiSearchResult) App.get().appCase.getMultiBookmarks()
-                                    .filterBookmarksOrNoBookmarks(result, bookmarkSelection);
+                    for (Iterator iterator = rsFilterers.iterator(); iterator.hasNext() && result.getLength() > 0;) {
+                        if (this.isCancelled()) {
+                            throw new CancellationException();
                         }
-                    } else
-                        result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(result,
-                                bookmarkSelection);
 
-                }
-
-                Set<IItemId> selectedEdges = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
-                if (selectedEdges != null && !selectedEdges.isEmpty()) {
-                    numFilters++;
-                    ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
-                    ArrayList<Float> scores = new ArrayList<Float>();
-                    int i = 0;
-                    for (IItemId item : result.getIterator()) {
-                        if (selectedEdges.contains(item)) {
-                            filteredItems.add(item);
-                            scores.add(result.getScore(i));
-                        }
-                        i++;
+                        IResultSetFilterer iRSFilterer = (IResultSetFilterer) iterator.next();
+                        applyFilterer(iRSFilterer, result);
                     }
-                    result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
-                            ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
                 }
 
-                if (App.get().filterDuplicates.isSelected()) {
-                    DynamicDuplicateFilter duplicateFilter = new DynamicDuplicateFilter(App.get().appCase);
-                    result = duplicateFilter.filter(result);
-                    numFilters++;
+                if (this.isCancelled()) {
+                    throw new CancellationException();
                 }
-
-                if (App.get().similarImagesQueryRefItem != null) {
-                    //LOGGER.info("Starting similar image search...");
-                    long t = System.currentTimeMillis();
-                    new ImageSimilarityScorer(App.get().appCase, result, App.get().similarImagesQueryRefItem).score();
-                    result = ImageSimilarityLowScoreFilter.filter(result);
-                    t = System.currentTimeMillis() - t;
-                    //LOGGER.info("Similar image search took {}ms to find {} images", t, result.getLength());
+                if (unionsArray != null) {
+                    MultiSearchResult newresult = filterManager.applyFilter(unionsArray, result);
+                    if (newresult != result) {
+                        numFilters++;
+                        result = newresult;
+                        result.setIPEDSource(ipedCase);
+                    }
                 }
-
-                if (App.get().similarFacesRefItem != null) {
-                    //LOGGER.info("Starting similar face search...");
-                    long t = System.currentTimeMillis();
-                    SimilarFacesSearch sfs = new SimilarFacesSearch(App.get().appCase, App.get().similarFacesRefItem);
-                    result = sfs.filter(result);
-                    numFilters++;
-                    t = System.currentTimeMillis() - t;
-                    //LOGGER.info("Similar face search took {}ms to find {} faces", t, result.getLength());
+                if (excludeUnionsArray != null) {
+                    MultiSearchResult newresult = filterManager.applyExcludeFilter(excludeUnionsArray, result);
+                    if (newresult != result) {
+                        numFilters++;
+                        result = newresult;
+                        result.setIPEDSource(ipedCase);
+                    }
                 }
-
-                if (App.get().metadataPanel.isFiltering()) {
-                    long t = System.currentTimeMillis();
-                    result = App.get().metadataPanel.getFilteredItemIds(result);
-                    numFilters++;
-                    //LOGGER.info("Metadata panel filtering took {}ms", (System.currentTimeMillis() - t));
-                }
-
 
             } catch (Throwable e) {
-                e.printStackTrace();
-                return new MultiSearchResult(new ItemId[0], new float[0]);
-
-            }
-
-            for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
-                if (isCancelled()) {
-                    break;
+                if (!(e instanceof CancellationException)) {
+                    e.printStackTrace();
                 }
-                caseSearchFilterListener.onDone();
+                return new MultiSearchResult(new ItemId[0], new float[0]);
             }
+
             result.setIpedSearcher(searcher);
             result.setIPEDSource(ipedCase);
 
+            Date d2 = new Date();
+            LOGGER.info("Search and filtering took {}ms", d2.getTime() - d1.getTime());
+
             return result;
         }
+    }
 
+    private void applyFilterer(IResultSetFilterer iRSFilterer, MultiSearchResult result2) {
+        if (filterManager.isFiltererEnabled(iRSFilterer)) {
+            IFilter rsFilter = iRSFilterer.getFilter();
+
+            if (rsFilter != null) {
+                if (rsFilter instanceof IBitmapFilter) {// if the filter exposes a internal bitmap
+                    applyBitmapFilter((IBitmapFilter) rsFilter);
+                } else {
+                    RoaringBitmap[] cachedBitmaps = filterManager.getCachedBitmaps((IResultSetFilter) rsFilter);
+                    if (cachedBitmaps != null) { // if filtermanager returned a cached bitmap
+                        applyBitmapFilter(cachedBitmaps);
+                    } else {
+                        MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter) rsFilter, result);
+                        if (newresult != result) {
+                            numFilters++;
+                            result = newresult;
+                            result.setIPEDSource(ipedCase);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void applyBitmapFilter(RoaringBitmap[] cachedBitmaps) {
+        RoaringBitmap[] lunionsArray = result.getCasesBitSets((IPEDMultiSource) ipedCase);
+        for (int i = 0; i < unionsArray.length; i++) {
+            lunionsArray[i].and(cachedBitmaps[i]);
+        }
+
+        MultiSearchResult newresult = filterManager.applyFilter(lunionsArray, result);
+        if (newresult != result) {
+            numFilters++;
+            result = newresult;
+            result.setIPEDSource(ipedCase);
+        }
+    }
+
+    private void applyBitmapFilter(IBitmapFilter rsFilter) {
+        RoaringBitmap[] lunionsArray = result.getCasesBitSets((IPEDMultiSource) ipedCase);
+        for (int i = 0; i < lunionsArray.length; i++) {
+            if (rsFilter.isToFilterOut()) {
+                lunionsArray[i].andNot(((IBitmapFilter) rsFilter).getBitmap()[i]);
+            } else {
+                lunionsArray[i].and(((IBitmapFilter) rsFilter).getBitmap()[i]);
+            }
+        }
+
+        MultiSearchResult newresult = filterManager.applyFilter(lunionsArray, result);
+        if (newresult != result) {
+            numFilters++;
+            result = newresult;
+            result.setIPEDSource(ipedCase);
+        }
     }
 
     @Override
     public void done() {
+        for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
+            if (isCancelled()) {
+                break;
+            }
+            caseSearchFilterListener.onDone();
+        }
     }
 
     @Override
@@ -367,5 +345,37 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     public void setThreadPool(ExecutorService threadPool) {
         this.threadPool = threadPool;
+    }
+
+    public void setAppyUIFilters(boolean applyUIFilters) {
+        this.applyUIFilters = applyUIFilters;
+    }
+
+    public void addBitmapExcludeFilter(RoaringBitmap[] lunionsArray) {
+        if (excludeUnionsArray == null) {
+            excludeUnionsArray = new RoaringBitmap[lunionsArray.length];
+        }
+        for (int i = 0; i < excludeUnionsArray.length; i++) {
+            if (excludeUnionsArray[i] == null) {
+                excludeUnionsArray[i] = new RoaringBitmap();
+                excludeUnionsArray[i].or(lunionsArray[i]);
+            } else {
+                excludeUnionsArray[i].and(lunionsArray[i]);
+            }
+        }
+    }
+
+    public void addBitmapFilter(RoaringBitmap[] lunionsArray) {
+        if (unionsArray == null) {
+            unionsArray = new RoaringBitmap[lunionsArray.length];
+        }
+        for (int i = 0; i < unionsArray.length; i++) {
+            if (unionsArray[i] == null) {
+                unionsArray[i] = new RoaringBitmap();
+                unionsArray[i].or(lunionsArray[i]);
+            } else {
+                unionsArray[i].and(lunionsArray[i]);
+            }
+        }
     }
 }

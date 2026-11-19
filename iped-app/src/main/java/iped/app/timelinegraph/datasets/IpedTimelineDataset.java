@@ -52,14 +52,13 @@ import iped.app.timelinegraph.cache.TimeIndexedMap;
 import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.app.ui.App;
+import iped.app.ui.BookmarksTreeModel;
 import iped.app.ui.CaseSearcherFilter;
-import iped.app.ui.Messages;
-import iped.data.IIPEDSource;
+import iped.app.ui.FilterManager;
 import iped.data.IItemId;
-import iped.data.IMultiBookmarks;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
-import iped.engine.data.ItemId;
+import iped.engine.data.MultiBitmapBookmarks;
 import iped.engine.search.MultiSearchResult;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IMultiSearchResultProvider;
@@ -150,6 +149,11 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
      */
     Semaphore memoryCacheReloadSem = new Semaphore(1); // semaphore that controls start and end of load of cache window contourning the
     private IpedTimelineDatasetManager ipedTimelineDatasetManager;
+
+    private RoaringBitmap[] unionsArray;
+    private FilterManager filterManager;
+    static String noBookmarksStr = BookmarksTreeModel.NO_BOOKMARKS_NAME;
+    
     // visible items
 
     public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, String splitValue) throws Exception {
@@ -162,6 +166,28 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         this.xPosition = TimePeriodAnchor.START;
         this.resultsProvider = resultsProvider;
         this.splitValue = splitValue;
+
+        int maxSrcId = 0;
+        List<IPEDSource> srcs = App.get().appCase.getAtomicSources();
+        filterManager = App.get().getFilterManager();
+        for (Iterator iterator = srcs.iterator(); iterator.hasNext();) {
+            IPEDSource ipedSource = (IPEDSource) iterator.next();
+            int srcId = ipedSource.getSourceId();
+            if (srcId > maxSrcId) {
+                maxSrcId = srcId;
+            }
+        }
+        if (splitValue != null && !splitValue.equals("Bookmarks") && ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
+            MultiBitmapBookmarks multiBookmarks = (MultiBitmapBookmarks) App.get().getIPEDSource().getMultiBookmarks();
+
+            if (splitValue.equals(noBookmarksStr)) {
+                this.unionsArray = multiBookmarks.getBookmarksUnions();
+            } else {
+                HashSet<String> s = new HashSet<>();
+                s.add(splitValue);
+                this.unionsArray = multiBookmarks.getBookmarksUnions(s);
+            }
+        }
 
         startCaseSearchFilterLoad();
     }
@@ -212,54 +238,16 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             try {
                 App app = App.get();
                 Set<String> selectedBookmarks = app.getSelectedBookmarks();
-                String noBookmarksStr = Messages.get("BookmarksTreeModel.NoBookmarks");
-                IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
                 IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
-
+                
                 for (int i = 0; i < threadCtsEnd; i++) {
                     CacheTimePeriodEntry ct = threadLocalCts[i];
                     for (CacheEventEntry ce : ct.getEvents()) {
                         if (ce.docIds != null) {
+                            RoaringBitmap rb = RoaringBitmap.and(((MultiSearchResult) result).getDocIdBitSet(), ce.docIds);
+                            
                             Count count = new Count();
-                            for (int docId : ce.docIds) {
-                                if (result instanceof MultiSearchResult && ((MultiSearchResult) result).hasDocId(docId)) {
-                                    IIPEDSource atomicSource = appcase.getAtomicSource(docId);
-                                    int sourceId = atomicSource.getSourceId();
-                                    int baseDoc = appcase.getBaseLuceneId(atomicSource);
-                                    ItemId ii = new ItemId(sourceId, atomicSource.getId(docId - baseDoc));
-
-                                    boolean include = false;
-                                    if (splitValue != null && !splitValue.equals("Bookmarks") && ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
-                                        if (splitValue.equals(noBookmarksStr)) {
-                                            if (!multiBookmarks.hasBookmark(ii)) {
-                                                include = true;
-                                            }
-                                        } else {
-                                            if (multiBookmarks.hasBookmark(ii, splitValue)) {
-                                                include = true;
-                                            }
-                                        }
-                                    } else {
-                                        // not split by bookmark, so filter by selected bookmark
-                                        if (selectedBookmarks.size() > 0) {
-                                            if (selectedBookmarks.contains("Bookmarks")) {
-                                                include = true;
-                                            } else if (multiBookmarks.hasBookmark(ii, selectedBookmarks)) {
-                                                include = true;
-                                            } else if (selectedBookmarks.contains(noBookmarksStr)) {
-                                                if (!multiBookmarks.hasBookmark(ii)) {
-                                                    include = true;
-                                                }
-                                            }
-                                        } else {
-                                            include = true;// if no bookmark selected
-                                        }
-                                    }
-                                    if (include) {
-                                        count.value++;
-                                    }
-                                }
-                            }
+                            count.value = rb.getCardinality();
                             if (count.value > 0) {
                                 addValueSem.acquire();
                                 try {
@@ -280,6 +268,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 timeSem.release();
             }
         }
+
     }
 
     public String getWindowQuery() {
@@ -341,7 +330,13 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             csf.getSearcher().setNoScoring(true);
             csf.applyUIQueryFilters(exceptThis);// apply all filters from others UI objects except the chart defined interval
                                                 // filters
-
+            if(unionsArray!=null) {
+                if (splitValue.equals(noBookmarksStr)) {
+                    csf.addBitmapExcludeFilter(unionsArray);
+                } else {
+                    csf.addBitmapFilter(unionsArray);
+                }
+            }
             csf.execute();
             result = csf.get();
 
@@ -1128,11 +1123,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     public void addValue(Count count, TimePeriod t, String eventType) {
         accumulator.addValue(count, t, eventType);
     }
-
-    /*
-     * public void addValue(ValueCount valueCount, String eventType) {
-     * accumulator.addValue(valueCount, eventType); }
-     */
 
     @Override
     public Range getDomainBounds(List visibleSeriesKeys, boolean includeInterval) {

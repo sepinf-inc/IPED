@@ -44,8 +44,7 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
     private BookmarkCellRenderer bookmarkCellRenderer;
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
@@ -81,10 +80,8 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     }
                 }
 
-            } else if (colName.equalsIgnoreCase(IndexItem.NAME)
-                    || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.NAME))
-                    || (model instanceof DuplicatesTableModel && (colName.equalsIgnoreCase(IndexItem.PATH)
-                            || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.PATH))))) {
+            } else if (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.NAME))
+                    || (model instanceof DuplicatesTableModel && (colName.equalsIgnoreCase(IndexItem.PATH) || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.PATH))))) {
                 try {
                     IItemId item = ((SearchResultTableModel) model).getSearchResult().getItem(idx);
                     int docId = App.get().appCase.getLuceneId(item);
@@ -94,9 +91,7 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     } else {
                         String type = doc.get(IndexItem.TYPE);
                         String contentType = doc.get(IndexItem.CONTENTTYPE);
-                        icon = Boolean.valueOf(doc.get(IndexItem.ISROOT))
-                                ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon())
-                                : IconManager.getFileIcon(contentType, type);
+                        icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
                     }
                 } catch (IOException e) {
                 }

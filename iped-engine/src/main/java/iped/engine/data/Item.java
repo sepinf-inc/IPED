@@ -11,6 +11,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -20,6 +21,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.tika.io.TemporaryResources;
@@ -33,17 +38,22 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
+import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
+import iped.engine.preview.PreviewInputStreamFactory;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.TextCache;
 import iped.engine.util.Util;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
+import iped.utils.ByteArrayImageInputStream;
 import iped.utils.EmptyInputStream;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
+import iped.utils.ImageUtil;
 import iped.utils.LimitedSeekableInputStream;
 import iped.utils.SeekableByteChannelImpl;
 import iped.utils.SeekableFileInputStream;
@@ -63,6 +73,8 @@ import iped.utils.tika.SyncMetadata;
 public class Item implements IItem {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Item.class);
+
+    private static final String TIKA_OPEN_CONTAINER_KEY = "TIKA_OPEN_CONTAINER";
 
     private static Set<String> extraAttributeSet = Collections.synchronizedSet(new HashSet<String>());
 
@@ -160,6 +172,12 @@ public class Item implements IItem {
      */
     private File viewFile;
 
+    private boolean hasPreview;
+
+    private File previewBaseFolder;
+
+    private String previewExt;
+
     private HashSet<String> categories = new HashSet<String>();
 
     private List<String> labels = new ArrayList<>();
@@ -202,7 +220,9 @@ public class Item implements IItem {
 
     private ISeekableInputStreamFactory inputStreamFactory;
 
-    static final int BUF_LEN = 8 * 1024 * 1024;
+    private static final int BUF_LEN = 8 * 1024 * 1024;
+    
+    private static final int maxImageLength = 128 << 20;
 
     /**
      * Adiciona o item a uma categoria.
@@ -258,6 +278,13 @@ public class Item implements IItem {
         tis = null;
         parentTmpFile = null;
         try {
+            if (inputStreamFactory != null) {
+                inputStreamFactory.dispose();
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Error closing inputStreamFactory of " + getPath(), e);
+        }
+        try {
             if (textCache != null && clearTextCache) {
                 textCache.close();
                 textCache = null;
@@ -295,6 +322,36 @@ public class Item implements IItem {
             return new BufferedInputStream(new ByteArrayInputStream(data));
         }
         return new BufferedInputStream(getSeekableInputStream(), getBestBufferSize());
+    }
+
+    public ImageInputStream getImageInputStream() throws IOException {
+        if (data != null) {
+            return new ByteArrayImageInputStream(data);
+        }
+        if (tmpFile != null) {
+            return new FileImageInputStream(tmpFile);
+        }
+        File file = IOUtil.getFile(this);
+        if (file != null) {
+            return new FileImageInputStream(file);
+        }
+        if (length == null || length <= maxImageLength) {
+            BufferedInputStream bis = getBufferedInputStream();
+            return new MemoryCacheImageInputStream(bis) {
+                @Override
+                public void close() throws IOException {
+                    // This BufferedInputStream was created to be used by the returned
+                    // ImageInputStream, so it should be closed when the IIS is closed.
+                    IOUtil.closeQuietly(bis);
+                    super.close();
+                }
+            };
+        }
+
+        // If the file is too large, then create a temporary File, instead of using the
+        // InputStream to avoid excessive memory usage or even OOME (see issue #2033).
+        file = getTempFile();
+        return new FileImageInputStream(file);
     }
 
     /**
@@ -360,6 +417,24 @@ public class Item implements IItem {
 
     public static Set<String> getAllExtraAttributes() {
         return extraAttributeSet;
+    }
+
+    /**
+     * Retrieves a subset of extra attributes whose keys begin with the specified prefix.
+     *
+     * @param prefix The prefix string to search for at the beginning of attribute keys.
+     * @return A new {@code Map<String, Object>} containing only the key-value pairs 
+     * from {@code extraAttributes} where the key starts with {@code prefix}. 
+     * Returns an empty map if no matching keys are found.
+     */
+    public Map<String, Object> getExtraAttributesStartWith(String prefix) {
+        Map<String, Object> attrs = new HashMap<String, Object>();
+        // toArray avoids possible ConcurrentModificationException
+        for (String key : extraAttributes.keySet().toArray(new String[0])) {
+            if (key.startsWith(prefix))
+                attrs.put(key, extraAttributes.get(key));
+        }
+        return attrs;
     }
 
     /**
@@ -578,11 +653,13 @@ public class Item implements IItem {
 
         SeekableInputStream stream = null;
 
-        if (inputStreamFactory != null && idInDataSource != null) {
+        boolean isMetadataStream = inputStreamFactory instanceof MetadataInputStreamFactory;
+
+        if (inputStreamFactory != null && (idInDataSource != null || isMetadataStream)) {
             stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
         }
 
-        if (stream != null && startOffset != -1) {
+        if (stream != null && startOffset != -1 && !isMetadataStream && !(inputStreamFactory instanceof PreviewInputStreamFactory)) {
             stream = new LimitedSeekableInputStream(stream, startOffset, length);
         }
 
@@ -622,10 +699,15 @@ public class Item implements IItem {
             while (offset < data.length && (i = is.read(data, offset, data.length - offset)) != -1) {
                 offset += i;
             }
-            return true;
+            if (offset == data.length) {
+                return true;
+            }
+            LOGGER.warn("Not enough data read ({} / {}) from item {}", offset, data.length, getPath());
         } catch (IOException e) {
-            // ignore
+            LOGGER.warn("Error reading item " + getPath(), e);
         }
+        // Array "data" was not filled -> must be discarded.
+        data = null;
         return false;
     }
 
@@ -687,33 +769,47 @@ public class Item implements IItem {
      * @throws IOException
      */
     public TikaInputStream getTikaStream() throws IOException {
-
-        File file = null;
-        if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
-            tis = TikaInputStream.get(file.toPath());
+        if (data != null) {
+            tis = TikaInputStream.get(data);
         } else {
-            if (tmpFile == null && tis != null && tis.hasFile()) {
-                tmpFile = tis.getFile();
-            }
-            // reset tis, it may have been set (and consumed) by a previous call of this
-            // method
-            tis = null;
-            if (tmpFile != null) {
-                try {
-                    tis = TikaInputStream.get(tmpFile.toPath());
-                } catch (IOException fnfe) {
-                    tmpFile = null;
+            File file = null;
+            if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
+                tis = TikaInputStream.get(file.toPath());
+            } else {
+                if (tmpFile == null && tis != null && tis.hasFile()) {
+                    tmpFile = tis.getFile();
                 }
-            }
-            if (tis == null && data != null) {
-                tis = TikaInputStream.get(data);
-            }
-            if (tis == null) {
-                tis = TikaInputStream.get(getBufferedInputStream());
+                // reset tis, it may have been set (and consumed) by a previous call of this
+                // method
+                tis = null;
+                if (tmpFile != null) {
+                    try {
+                        tis = TikaInputStream.get(tmpFile.toPath());
+                    } catch (IOException fnfe) {
+                        tmpFile = null;
+                    }
+                }
+                if (tis == null) {
+                    tis = TikaInputStream.get(getBufferedInputStream());
+                }
             }
         }
         addTmpResource(tis);
+
+        // set the TikaInputStream openContainer with the object previously set in item.setOpenContainer(object)
+        Object openContainer = getTempAttribute(TIKA_OPEN_CONTAINER_KEY);
+        if (openContainer != null) {
+            tis.setOpenContainer(openContainer);
+        }
         return tis;
+    }
+
+    /**
+     * This method is used to pass a generic object to TikaInputStream in parsers.
+     * In the parser, the generic object can be fetch by calling TikaInputStream.getOpenContainer()
+     */
+    public void setOpenContainer(Object openContainer) {
+        setTempAttribute(TIKA_OPEN_CONTAINER_KEY, openContainer);
     }
 
     @Override
@@ -728,6 +824,26 @@ public class Item implements IItem {
      */
     public File getViewFile() {
         return viewFile;
+    }
+
+    @Override
+    public boolean hasPreview() {
+        return hasPreview;
+    }
+
+    @Override
+    public File getPreviewBaseFolder() {
+        return previewBaseFolder;
+    }
+
+    @Override
+    public String getPreviewExt() {
+        return previewExt;
+    }
+
+    @Override
+    public SeekableInputStream getPreviewSeekeableInputStream() throws SQLException, IOException {
+        return PreviewRepositoryManager.get(previewBaseFolder).readPreview(this, false);
     }
 
     /**
@@ -1167,6 +1283,20 @@ public class Item implements IItem {
         this.viewFile = viewFile;
     }
 
+    @Override
+    public void setHasPreview(boolean value) {
+        this.hasPreview = value;
+    }
+
+    @Override
+    public void setPreviewExt(String previewExt) {
+        this.previewExt = previewExt;
+    }
+
+    public void setPreviewBaseFolder(File previewBaseFolder) {
+        this.previewBaseFolder = previewBaseFolder;
+    }
+
     /**
      * Retorna String com os dados contidos no objeto.
      *
@@ -1244,7 +1374,13 @@ public class Item implements IItem {
     }
 
     public void setThumb(byte[] thumb) {
-        this.thumb = thumb;
+        if (ImageUtil.isImageValid(thumb)) {
+            this.thumb = thumb;
+        } else {
+            // Reject the invalid image data
+            // zero size thumb means thumb error
+            this.thumb = new byte[0];
+        }
     }
 
     public ISeekableInputStreamFactory getInputStreamFactory() {

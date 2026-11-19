@@ -100,8 +100,7 @@ public class ExportFileTree extends CancelableWorker {
                 textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
 
-            String activeStr = IndexItem.SUBITEM + ":false && " + IndexItem.CARVED + ":false && " + IndexItem.DELETED
-                    + ":false -" + BaseCarveTask.FILE_FRAGMENT + ":true";
+            String activeStr = IndexItem.SUBITEM + ":false && " + IndexItem.CARVED + ":false && " + IndexItem.DELETED + ":false -" + BaseCarveTask.FILE_FRAGMENT + ":true";
             if (allocated)
                 textQuery = "(" + textQuery + ") && (" + activeStr + ")";
             else
@@ -308,8 +307,7 @@ public class ExportFileTree extends CancelableWorker {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
-                    JOptionPane.showMessageDialog(App.get(),
-                            Messages.getString("ExportFileTree.ExportError") + e.getMessage(), "Error", //$NON-NLS-2$
+                    JOptionPane.showMessageDialog(App.get(), Messages.getString("ExportFileTree.ExportError") + e.getMessage(), "Error", //$NON-NLS-2$
                             JOptionPane.ERROR_MESSAGE);
                 }
             });
@@ -381,18 +379,15 @@ public class ExportFileTree extends CancelableWorker {
             // original, ele era sobrescrito silenciosamente.
             JFileChooser fileChooser = new JFileChooser() {
                 /**
-				 * 
-				 */
-				private static final long serialVersionUID = 1L;
+                 * 
+                 */
+                private static final long serialVersionUID = 1L;
 
-				@Override
+                @Override
                 public void approveSelection() {
                     File f = getSelectedFile();
                     if (f.exists() && f.isFile() && getDialogType() == SAVE_DIALOG) {
-                        int result = JOptionPane.showConfirmDialog(this,
-                                Messages.getString("ExportToZIP.FileAlreadyExistsMessageText"),
-                                Messages.getString("ExportToZIP.FileAlreadyExistsMessageTitle"),
-                                JOptionPane.YES_NO_CANCEL_OPTION);
+                        int result = JOptionPane.showConfirmDialog(this, Messages.getString("ExportToZIP.FileAlreadyExistsMessageText"), Messages.getString("ExportToZIP.FileAlreadyExistsMessageTitle"), JOptionPane.YES_NO_CANCEL_OPTION);
                         switch (result) {
                             case JOptionPane.YES_OPTION:
                                 super.approveSelection();

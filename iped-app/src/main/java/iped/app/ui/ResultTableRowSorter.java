@@ -36,18 +36,18 @@ import iped.viewers.api.events.RowSorterTableDataChange;
 import iped.viewers.util.ProgressDialog;
 
 public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSortModel> {
-    
+
     private static final int MAX_COMPARATOR_CACHE = 3;
-    
+
     private static Logger logger = LoggerFactory.getLogger(ResultTableRowSorter.class);
 
-    private static volatile Map<Integer, RowComparator> comparatorCache = new LinkedHashMap<Integer, RowComparator>(16, 0.75f, true){
+    private static volatile Map<Integer, RowComparator> comparatorCache = new LinkedHashMap<Integer, RowComparator>(16, 0.75f, true) {
         /**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
+         * 
+         */
+        private static final long serialVersionUID = 1L;
 
-		@Override
+        @Override
         protected boolean removeEldestEntry(Map.Entry<Integer, RowComparator> eldest) {
             return this.size() > MAX_COMPARATOR_CACHE;
         }
@@ -117,7 +117,7 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
             logger.info("Sorting by {} took {}ms", sortKeysString, t);
             return null;
         }
-        
+
         private List<String> getSortKeysString(List<? extends SortKey> list) {
             return list.stream().map(s -> "Col " + s.getColumn() + " order " + s.getSortOrder()).collect(Collectors.toList());
         }

@@ -2,7 +2,6 @@ package iped.parsers.threema;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,9 +42,7 @@ public abstract class Extractor {
 
     protected abstract List<Chat> extractChatList();
 
-    protected Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
-    }
+    protected abstract Connection getConnection() throws SQLException;
 
     protected void setGroupMembers(Chat c, Connection conn, String SELECT_GROUP_MEMBERS) throws SQLException {
         // adds user as group participant

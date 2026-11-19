@@ -65,7 +65,7 @@ import iped.parsers.threema.Message.MessageType;
  *
  * @author André Rodrigues Costa <andre.arc@pf.gov.br>
  */
-public class ExtractorIOS extends Extractor {
+public abstract class ExtractorIOS extends Extractor {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtractorIOS.class);
 
@@ -75,6 +75,9 @@ public class ExtractorIOS extends Extractor {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
+
+    @Override
+    protected abstract Connection getConnection() throws SQLException;
 
     @Override
     protected List<Chat> extractChatList() {
@@ -343,4 +346,5 @@ public class ExtractorIOS extends Extractor {
             + "FROM ZMESSAGE " + "INNER JOIN ZCONTACT on ZCONTACT.Z_PK = ZMESSAGE.ZSENDER " + "LEFT JOIN ZIMAGEDATA on ZIMAGEDATA.Z_PK = ZCONTACT.ZCONTACTIMAGE " + "WHERE ZMESSAGE.ZCONVERSATION = ?";
 
     private static final Set<MessageType> MEDIA_MESSAGES = ImmutableSet.of(AUDIO_MESSAGE, VIDEO_MESSAGE, GIF_MESSAGE, APP_MESSAGE, IMAGE_MESSAGE);
+
 }

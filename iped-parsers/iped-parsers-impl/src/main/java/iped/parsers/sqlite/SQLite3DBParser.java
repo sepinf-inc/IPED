@@ -79,7 +79,7 @@ public class SQLite3DBParser extends AbstractDBParser {
         }
         TemporaryResources tmp = new TemporaryResources();
         try {
-            final File dbFile;
+            final File tempDB;
             File tikaFile = TikaInputStream.get(stream, tmp).getFile();
             if (!IOUtil.isTemporaryFile(tikaFile)) {
                 File tempFile = Files.createTempFile("sqlite_tmp", ".db").toFile();
@@ -87,19 +87,19 @@ public class SQLite3DBParser extends AbstractDBParser {
                     tempFile.delete();
                 });
                 IOUtil.copyFile(tikaFile, tempFile);
-                dbFile = tempFile;
+                tempDB = tempFile;
             } else {
-                dbFile = tikaFile;
+                tempDB = tikaFile;
             }
 
-            exportWalLog(dbFile, context, tmp);
-            exportRollbackJournal(dbFile, context, tmp);
+            exportWalLog(tempDB, context, tmp);
+            exportRollbackJournal(tempDB, context, tmp);
 
             SQLiteConfig config = new SQLiteConfig();
             // don't set this: see #1186
             // config.setReadOnly(true);
 
-            String connectionString = getConnectionString(dbFile);
+            String connectionString = getConnectionString(tempDB);
             connection = config.createConnection(connectionString);
 
             connection = new DelegatingConnection(connection) {
@@ -108,12 +108,13 @@ public class SQLite3DBParser extends AbstractDBParser {
                     super.close();
                     try {
                         tmp.close();
-                        String absPath = dbFile.getAbsolutePath();
+                        String absPath = tempDB.getAbsolutePath();
                         Files.deleteIfExists(Paths.get(absPath + "-wal"));
                         Files.deleteIfExists(Paths.get(absPath + "-shm"));
                         Files.deleteIfExists(Paths.get(absPath + "-journal"));
-                    } catch (IOException e) {
-                        throw new SQLException(e);
+                    } catch (Exception e) {
+                        // don't propagate temp files deleting errors
+                        e.printStackTrace();
                     }
                 }
             };
@@ -126,11 +127,11 @@ public class SQLite3DBParser extends AbstractDBParser {
         return connection;
     }
 
-    public static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
+    private static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
         return exportRelatedFile(dbFile, "-wal", context, tmp);
     }
     
-    public static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
+    private static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
         return exportRelatedFile(dbFile, "-journal", context, tmp);
     }
     
@@ -161,11 +162,6 @@ public class SQLite3DBParser extends AbstractDBParser {
                             Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             e.printStackTrace();
-                        }
-                        if (null != tmp) {
-                            tmp.addResource(() -> {
-                                relatedFileTemp.delete();
-                            });
                         }
                         return relatedFileTemp;
                     }

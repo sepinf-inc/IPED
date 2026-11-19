@@ -19,6 +19,8 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItemReader;
+
 public class TiffPageParser extends AbstractParser {
     private static final long serialVersionUID = 2340523222085300794L;
     public static final String propNumPages = "tiff:NumPages";
@@ -35,27 +37,30 @@ public class TiffPageParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
         ImageReader reader = null;
-        try (ImageInputStream iis = ImageIO.createImageInputStream(stream)) {
-            Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
-            while (it.hasNext()) {
-                reader = it.next();
-                if (reader.getClass().getName().equals(preferredReader)) {
-                    break;
+        IItemReader item = context.get(IItemReader.class);
+        if (item != null) {
+            try (ImageInputStream iis = item.getImageInputStream()) {
+                Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
+                while (it.hasNext()) {
+                    reader = it.next();
+                    if (reader.getClass().getName().equals(preferredReader)) {
+                        break;
+                    }
+                }
+                if (reader == null) {
+                    throw new TikaException("No TIFF image reader in classpath!");
+                }
+                reader.setInput(iis, false, true);
+                int numPages = reader.getNumImages(true);
+                if (numPages > 0) {
+                    metadata.set(propNumPages, String.valueOf(numPages));
+                }
+            } finally {
+                if (reader != null) {
+                    reader.dispose();
                 }
             }
-            if (reader == null) {
-                throw new TikaException("No TIFF image reader in classpath!");
-            }
-            reader.setInput(iis, false, true);
-            int numPages = reader.getNumImages(true);
-            if (numPages > 0) {
-                metadata.set(propNumPages, String.valueOf(numPages));
-            }
-        } finally {
-            if (reader != null)
-                reader.dispose();
         }
-
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
         xhtml.endDocument();

@@ -1,4 +1,4 @@
-﻿/*
+﻿﻿/*
  * Script of Category Specialization based on item properties.
  * Uses javascript language to allow flexibility in definitions.
  */
@@ -26,6 +26,7 @@ function process(e){
 	var ext = e.getExt().toLowerCase();
 	var mime = e.getMediaType().toString();
 	var name = e.getName().toLowerCase();
+	var rawPath = e.getPath();
 	var path = e.getPath().toLowerCase().replace(/\\/g, "/");
 	
 	// Workaround for Tika limitation: https://github.com/sepinf-inc/IPED/issues/1793
@@ -45,15 +46,20 @@ function process(e){
 		}
 	}
 	
-	if(mime.equals("application/x-chrome-cache-index") && path.contains("/appdata/roaming/discord")){
-		if(e.getPath().toLowerCase().contains("gpucache")){
-			e.setMediaTypeStr("application/x-discord-gpucache-index");
-		} else {
-			e.setMediaTypeStr("application/x-discord-index");
-		}
+	if(e.getMetadata().get("chromeCache:isChromeCacheEntry")){
+		e.addCategory("Chrome Cache");
 	}
+    cacheUrl = e.getMetadata().get("chromeCache:chromeCacheUrl");
+    if(cacheUrl != null && cacheUrl.contains("discord")){
+        if(e.getName().startsWith("messages")){
+            e.setMediaTypeStr("application/x-discord-chat+json")
+        }
+        if(e.getName().contains("@me")){
+            e.setMediaTypeStr("application/x-discord-account")
+        }            
+    }
 	
-	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
+	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk$/i.test(e.getName())){
 	    e.setMediaTypeStr("application/x-vmdk-data");
 	}
 	
@@ -67,19 +73,46 @@ function process(e){
 	}
 	
 	if(mime.indexOf("x-ufed-") != -1 && categorias.indexOf("Other files") != -1){
-		var cat = mime.substring(mime.indexOf("x-ufed-") + 7);
-		cat = cat.substring(0, 1).toUpperCase() + cat.substring(1); 
+
+		var cat;
+		rawPathParts = rawPath.split('/');
+		anchorIndex = rawPathParts.indexOf("_DecodedData");
+		if (anchorIndex !== -1 && anchorIndex < rawPathParts.length - 1) {
+			cat = rawPathParts[anchorIndex + 1].replace(/([a-z])([A-Z])/g, '$1 $2'); // split modelType using camel case
+		} else {
+			cat = mime.substring(mime.indexOf("x-ufed-") + 7);
+			cat = cat.substring(0, 1).toUpperCase() + cat.substring(1);
+		}
 		e.setCategory(cat);
 	}
-	
-	if(mime.equals("application/dita+xml") && 
+
+	if(mime.equals("application/x-ufed-attachment")) {
+		if (rawPath.indexOf("/InstantMessage/") > -1 || rawPath.indexOf("/Chat/") > -1) {
+			e.setCategory("Message Attachments");
+		} else if (rawPath.indexOf("/Email/") > -1) {
+			e.setCategory("Email Attachments");
+		} else if (rawPath.indexOf("/SocialMediaActivity/") > -1) {
+			e.setCategory("Social Media Activities");
+		} else if (rawPath.indexOf("/Note/") > -1) {
+			e.setCategory("Notes");
+		} else if (rawPath.indexOf("/CalendarEntry/") > -1) {
+			e.setCategory("Calendar");
+		} else if (rawPath.indexOf("/Notification/") > -1) {
+			e.setCategory("Notifications");
+		}
+	}
+
+	if(path.indexOf("whatsapp") != -1 && mime.equals("application/dita+xml") &&
 		(e.getName().equals("com.whatsapp_preferences.xml") || 
 		 e.getName().equals("com.whatsapp_preferences_light.xml") ||
 		 e.getName().equals("com.whatsapp.w4b_preferences.xml") || 
-		 e.getName().equals("com.whatsapp.w4b_preferences_light.xml"))) {
+		 e.getName().equals("com.whatsapp.w4b_preferences_light.xml") ||
+		 e.getName().equals("registration.RegisterPhone.xml") ||
+		 e.getName().equals("startup_prefs.xml"))) {
 		e.setMediaTypeStr("application/x-whatsapp-user-xml");
-		e.setCategory("Contacts");
+		e.setCategory("User Accounts");
 	}
+
 	if(mime.equals("application/dita+xml") && e.getName().equals("userconfing.xml")){
 		e.setMediaTypeStr("application/x-telegram-user-conf");
 		//e.setCategory("Contacts");
@@ -143,11 +176,48 @@ function process(e){
 		}
 	}
 
+	// Calls sub-categories
+	if (mime.equals("application/x-ufed-call")) {
+		source = e.getMetadata().get("ufed:Source");
+		if (source == null) {
+			e.setCategory("Phone Calls");
+		} else {
+			source = source.toLowerCase();
+			if (source.contains("whatsapp")) {
+				e.setCategory("WhatsApp Calls");
+			} else if (source.contains("facebook")) {
+				e.setCategory("Facebook Calls");
+			} else if (source.contains("discord")) {
+				e.setCategory("Discord Calls");
+			} else if (source.contains("threema")) {
+				e.setCategory("Threema Calls");
+			} else if (source.contains("telegram")) {
+				e.setCategory("Telegram Calls");
+			} else if (source.contains("signal")) {
+				e.setCategory("Signal Calls");
+			} else {
+			    // New sub-categories may be created from other phone call apps handled by UFED
+				e.setCategory("Other Calls");
+			}
+		}
+	}
+
 	// Usually, conditions that overwrite the category (using setCategory()) 
 	// should go before the ones that add other categories (using addCategory()).
 
 	if(length == 0)
 		e.addCategory("Empty Files");
+
+	if (mime.equals("application/x-lnk")){
+		if (path.endsWith(".customdestinations-ms>>"+e.getName())){
+			e.setMediaTypeStr("application/x-customdestinations-entry");
+			e.setCategory("Custom Destinations");
+		}
+		if (path.endsWith(".automaticdestinations-ms>>"+e.getName())){
+			e.setMediaTypeStr("application/x-automaticdestinations-entry");
+			e.setCategory("Automatic Destinations");
+		}
+	}
 
 	if(inRecycle(e)){
 		e.addCategory("Windows Recycle");
@@ -206,6 +276,7 @@ function process(e){
 		(path.indexOf("dropbox/") !== -1)||
 		(path.indexOf("com.getdropbox") !== -1)||
 		(path.indexOf("onedrive/") !== -1)||
+		(path.indexOf("onedrive - ") !== -1)||   //onedrive - <OrganizationName> in the case of OneDrive for Business
 		(path.indexOf("skydrive/") !== -1)||
 		(path.indexOf("google drive/") !== -1)||
 		(path.indexOf("/my drive/") !== -1)||
@@ -247,16 +318,6 @@ function process(e){
 		(name.indexOf("shareaza.db3") !== -1)
 		)
 		e.addCategory("Shareaza");
-	
-		
-	//Telegram
-	if (name.equals("translit.cache") === true){
-		e.addCategory("Telegram");
-		e.addCategory("Contacts");
-	}
-	if ((path.indexOf("ph.telegra.telegraph") !== -1))	{
-		e.addCategory("Telegram");	
-	}
 	
 	//Categories for Brazilian Software
 	
@@ -424,6 +485,7 @@ function process(e){
 			e.addCategory("E-Mule");
 		}
 	}
+
 	
 	// Custom Regripper Reports
 

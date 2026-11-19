@@ -20,6 +20,7 @@ package iped.app.ui;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
@@ -207,7 +208,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
         }
 
         @Override
-        protected synchronized void afterRead(final int n) {
+        protected synchronized void afterRead(final int n) throws IOException {
             super.afterRead(n);
             progressMonitor.setProgress(this.getByteCount());
         }
@@ -233,8 +234,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
             InputStream is = item.getTikaStream();
 
             CountInputStream cis = null;
-            if (item.getLength() != null
-                    && !App.get().getAutoParser().hasSpecificParser(metadata)) {
+            if (item.getLength() != null && !App.get().getAutoParser().hasSpecificParser(metadata)) {
                 progressMonitor.setMaximum(item.getLength());
                 cis = new CountInputStream(is);
                 is = cis;
@@ -261,8 +261,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
                 char[] buf = new char[App.TEXT_BREAK_SIZE];
                 int off = 0;
-                while (!this.isCancelled() && off != buf.length
-                        && (read = textReader.read(buf, off, buf.length - off)) != -1) {
+                while (!this.isCancelled() && off != buf.length && (read = textReader.read(buf, off, buf.length - off)) != -1) {
                     off += read;
                     totalRead += read;
                     if (cis == null)
@@ -283,8 +282,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
                     }
                 }
 
-                TextFragment[] fragments = TextHighlighter.getHighlightedFrags(lastRowInserted == -1, contents,
-                        fieldName, App.FRAG_SIZE);
+                TextFragment[] fragments = TextHighlighter.getHighlightedFrags(lastRowInserted == -1, contents, fieldName, App.FRAG_SIZE);
 
                 TreeMap<Integer, TextFragment> sortedFrags = new TreeMap<Integer, TextFragment>();
                 for (int i = 0; i < fragments.length; i++) {
@@ -343,14 +341,11 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
                         // atualiza viewer permitindo rolar para o hit
                         if (viewRows.size() - 1 < ATextViewer.MAX_LINES) {
-                            App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1,
-                                    viewRows.size() - 2);
+                            App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
                             lastRowInserted = viewRows.size() - 2;
                         } else {
                             int line_disk_size = ATextViewer.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
-                            int line = ATextViewer.MAX_LINES
-                                    + (int) ((parsedFile.size() - viewRows.get(ATextViewer.MAX_LINES))
-                                            / line_disk_size);
+                            int line = ATextViewer.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(ATextViewer.MAX_LINES)) / line_disk_size);
                             App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
                             lastRowInserted = line;
                         }
@@ -368,13 +363,11 @@ public class TextParser extends CancelableWorker implements ITextParser {
                 }
                 // atualiza viewer
                 if (viewRows.size() - 1 < ATextViewer.MAX_LINES) {
-                    App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1,
-                            viewRows.size() - 2);
+                    App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
                     lastRowInserted = viewRows.size() - 2;
                 } else {
                     int line_disk_size = ATextViewer.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
-                    int line = ATextViewer.MAX_LINES
-                            + (int) ((parsedFile.size() - viewRows.get(ATextViewer.MAX_LINES)) / line_disk_size);
+                    int line = ATextViewer.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(ATextViewer.MAX_LINES)) / line_disk_size);
                     App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
                     lastRowInserted = line;
                 }

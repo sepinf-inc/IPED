@@ -18,3 +18,7 @@ faceDetectionModel = hog
 # Number of times the image will be upsampled before recognition. Default is 1x (doubles the image size).
 # This improves detection of small faces. But is limited by maxResolution setting.
 upSampling = 1
+
+# Minimum size (in pixels) to apply face recognition to an image. 
+# Images with either dimension (height or width) smaller than this threshold are ignored by this task.   
+minSize = 48

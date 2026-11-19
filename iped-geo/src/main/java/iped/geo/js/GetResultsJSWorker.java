@@ -67,7 +67,11 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             Object[] result = new Object[2];
             try {
                 result[0] = this.get();
-                result[1] = lastResultBitmap;
+                if (lastResultBitmap != null) {
+                    result[1] = lastResultBitmap;
+                } else {
+                    result[1] = createCasesEmptyBitmapArray(msource);// creates an empty bitmap array to avoid NPE
+                }
             } catch (Exception e) {
                 if (e instanceof CancellationException) {
 
@@ -357,11 +361,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             int batchSize = 1000;
             Semaphore sem = new Semaphore(batchSize);
 
-            List<IPEDSource> sources = msource.getAtomicSources();
-            lastResultBitmap = new RoaringBitmap[sources.size()];
-            for (int i = 0; i < sources.size(); i++) {
-                lastResultBitmap[i] = new RoaringBitmap();
-            }
+            lastResultBitmap = createCasesEmptyBitmapArray(msource);
 
             for (int row = 0; row < results.getLength(); row++) {
                 if (isCancelled()) {
@@ -485,6 +485,15 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
         }
 
         return kmlResult;
+    }
+
+    public RoaringBitmap[] createCasesEmptyBitmapArray(IPEDMultiSource msource) {
+        List<IPEDSource> sources = msource.getAtomicSources();
+        RoaringBitmap[] result = new RoaringBitmap[sources.size()];
+        for (int i = 0; i < sources.size(); i++) {
+            result[i] = new RoaringBitmap();
+        }
+        return result;
     }
 
 }

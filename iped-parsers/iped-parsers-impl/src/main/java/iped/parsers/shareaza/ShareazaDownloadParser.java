@@ -1,7 +1,6 @@
 package iped.parsers.shareaza;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -15,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -36,9 +34,9 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
-import iped.parsers.util.ExportFolder;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
+import iped.parsers.util.P2PUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -72,7 +70,6 @@ public class ShareazaDownloadParser extends AbstractParser {
         // Commented out because these values are always 0 in the samples tested
         // MetadataUtil.setMetadataType(META_PREFIX + "torrentTotalDownload", Long.class);
         // MetadataUtil.setMetadataType(META_PREFIX + "torrentTotalUpload", Long.class);
-        MetadataUtil.setMetadataType(META_PREFIX + "shared", String.class);
     }
 
     @Override
@@ -215,7 +212,7 @@ public class ShareazaDownloadParser extends AbstractParser {
                 addLine(xhtml, "SHA1:                    " + sha1);
                 hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_SHA1, sha1));
                 if (item == null) {
-                    item = searchItemInCase(searcher, HASH_SHA1, sha1);
+                    item = P2PUtil.searchItemInCase(searcher, HASH_SHA1, sha1);
                 }
             }
 
@@ -237,7 +234,7 @@ public class ShareazaDownloadParser extends AbstractParser {
                     addLine(xhtml, "MD5:                     " + md5);
                     hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_MD5, md5));
                     if (item == null) {
-                        item = searchItemInCase(searcher, HASH_MD5, md5);
+                        item = P2PUtil.searchItemInCase(searcher, HASH_MD5, md5);
                     }
                 }
 
@@ -253,7 +250,7 @@ public class ShareazaDownloadParser extends AbstractParser {
                     addLine(xhtml, "EDONKEY:                 " + edonkey);
                     hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_EDONKEY, edonkey));
                     if (item == null) {
-                        item = searchItemInCase(searcher, HASH_EDONKEY, edonkey);
+                        item = P2PUtil.searchItemInCase(searcher, HASH_EDONKEY, edonkey);
                     }
                 }
 
@@ -284,7 +281,7 @@ public class ShareazaDownloadParser extends AbstractParser {
                     attributes.addAttribute("", "name", "name", "CDATA", item.getHash().toUpperCase());
                 xhtml.startElement("span", attributes);
 
-                printNameWithLink(xhtml, item, item.getName());
+                P2PUtil.printNameWithLink(xhtml, item, item.getName());
                 xhtml.endElement("span");
                 xhtml.newline();
                 xhtml.newline();
@@ -421,12 +418,12 @@ public class ShareazaDownloadParser extends AbstractParser {
                 sbFile.append("File: " + "\n");
 
                 long nTotal = read8Bytes(buffer);
-                long nRemaning = read8Bytes(buffer);
+                long nRemaining = read8Bytes(buffer);
                 int nFragments = read4Bytes(buffer);
-                totalDownloaded = nTotal - nRemaning;
+                totalDownloaded = nTotal - nRemaining;
 
                 sbFile.append("    Total Size:          " + nTotal + "\n");
-                sbFile.append("    Total Remaning:      " + nRemaning + "\n");
+                sbFile.append("    Total Remaining:     " + nRemaining + "\n");
                 sbFile.append("    Total Downloaded:    " + totalDownloaded + "\n");
                 sbFile.append("    Number of Fragments: " + nFragments + "\n");
 
@@ -614,7 +611,7 @@ public class ShareazaDownloadParser extends AbstractParser {
             // TIGER HASH DATABASE
             int pTreeSize = read4Bytes(buffer);
             if (pTreeSize > 0) {
-                sbTigerDB.append("TIGER Hash Database");
+                sbTigerDB.append("TIGER Hash Database:"+ "\n");
                 sbTigerDB.append("     Tree Size:               " + pTreeSize + "\n");
 
                 int hashTigerDatabaseSize = hashTigerDataBaseSize(pTreeSize);
@@ -698,9 +695,11 @@ public class ShareazaDownloadParser extends AbstractParser {
             int shared = read4Bytes(buffer);
             String sharedStr = getBoolStr(shared);
             addLine(xhtml, "Shared:                  " + sharedStr);
-            metadata.set(META_PREFIX + "shared", sharedStr);
+            metadata.set(META_PREFIX + "sharedFlag", sharedStr);
 
-            if (Boolean.valueOf(sharedStr) && totalDownloaded > 0) {
+            boolean sharedBool = Util.TRI_STATE_TRUE.equals(sharedStr) && totalDownloaded > 0;
+            if (sharedBool) {
+                metadata.set(META_PREFIX + "shared", Boolean.toString(true));
                 if (md5 != null) {
                     metadata.add(ExtraProperties.SHARED_HASHES, md5);
                 }
@@ -761,11 +760,11 @@ public class ShareazaDownloadParser extends AbstractParser {
 
     public String getBoolStr(int num) {
         if (num == 0) {
-            return "FALSE";
+            return Util.TRI_STATE_FALSE;
         } else if (num == 1) {
-            return "TRUE";
+            return Util.TRI_STATE_TRUE;
         } else {
-            return "<none>";
+            return Util.TRI_STATE_UNKNOWN;
         }
     }
 
@@ -969,42 +968,6 @@ public class ShareazaDownloadParser extends AbstractParser {
         }
         sb.append(output);
         return sb.toString();
-    }
-
-    public static void printNameWithLink(XHTMLContentHandler xhtml, IItemReader item, String name) throws SAXException {
-        String hashPath = getPathFromHash(new File("../../../../", ExportFolder.getExportPath()), //$NON-NLS-1$
-                item.getHash(), item.getExt());
-
-        AttributesImpl attributes = new AttributesImpl();
-        attributes.addAttribute("", "onclick", "onclick", "CDATA", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                "app.open(\"" + BasicProps.HASH + ":" + item.getHash() + "\")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        attributes.addAttribute("", "href", "href", "CDATA", hashPath); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        xhtml.startElement("a", attributes); //$NON-NLS-1$
-        xhtml.characters(name);
-        xhtml.endElement("a"); //$NON-NLS-1$
-    }
-
-    private static String getPathFromHash(File baseDir, String hash, String ext) {
-        if (hash == null || hash.length() < 2)
-            return ""; //$NON-NLS-1$
-        StringBuilder path = new StringBuilder();
-        hash = hash.toUpperCase();
-        path.append(hash.charAt(0)).append('/');
-        path.append(hash.charAt(1)).append('/');
-        path.append(hash).append('.').append(ext);
-        File result = new File(baseDir, path.toString());
-        return result.getPath();
-    }
-
-    public static IItemReader searchItemInCase(IItemSearcher searcher, String hashAlgo, String hash) {
-        if (searcher == null) {
-            return null;
-        }
-        List<IItemReader> items = searcher.search(hashAlgo + ":" + hash); //$NON-NLS-1$
-        if (items == null || items.isEmpty()) {
-            return null;
-        }
-        return items.get(0);
     }
 
     private void addLine(XHTMLContentHandler xhtml, String value) throws SAXException {

@@ -1,12 +1,12 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
@@ -24,7 +24,7 @@ import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
@@ -60,13 +60,14 @@ import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.sqlite.SQLiteUndeleteTableResultSetAdapter;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
 
 /**
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class ExtractorAndroid extends Extractor {
+public abstract class ExtractorAndroid extends Extractor {
 
     private static Logger logger = LoggerFactory.getLogger(ExtractorAndroid.class);
 
@@ -86,6 +87,8 @@ public class ExtractorAndroid extends Extractor {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
     }
 
+    protected abstract Connection getConnection() throws SQLException;
+
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list;
@@ -103,6 +106,7 @@ public class ExtractorAndroid extends Extractor {
 
         if (recoverDeletedRecords) {
             try {
+                warnIfLowMemoryToRecoverDeletedRecords();
                 SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
                 undelete.addTableToRecover("messages"); //$NON-NLS-1$
                 undelete.addRecordValidator("messages", new WAAndroidMessageValidator()); //$NON-NLS-1$
@@ -184,12 +188,10 @@ public class ExtractorAndroid extends Extractor {
                         c.setId(rs.getLong("id")); //$NON-NLS-1$
                         c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                         c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            if (recoverDeletedRecords) {
-                                activeChats.add(contactId);
-                            }
-                            list.add(c);
+                        if (recoverDeletedRecords) {
+                            activeChats.add(contactId);
                         }
+                        list.add(c);
                     }
                 } catch (SQLException ex) {
                     if (firstTry || !isSqliteCorruptException(ex)) {
@@ -270,15 +272,13 @@ public class ExtractorAndroid extends Extractor {
             
             for (SqliteRow row : undeleteChatListTable.getTableRows()) {
                 String contactId = row.getTextValue("key_remote_jid"); //$NON-NLS-1$
-                if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                    WAContact contact = contacts.getContact(contactId);
-                    Chat c = new Chat(contact);
-                    c.setId(row.getIntValue("_id"));
-                    c.setDeleted(row.isDeletedRow());
-                    c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
-                    c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                    result.add(c);
-                }
+                WAContact contact = contacts.getContact(contactId);
+                Chat c = new Chat(contact);
+                c.setId(row.getIntValue("_id"));
+                c.setDeleted(row.isDeletedRow());
+                c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
+                c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                result.add(c);
             }
         } else if (undeleteChatTable != null && undeleteChatTable.getTableRows() != null && !undeleteChatTable.getTableRows().isEmpty()) {
             if (undeleteJIDTable != null && undeleteJIDTable.getTableRows() != null && !undeleteJIDTable.getTableRows().isEmpty()) {
@@ -291,15 +291,13 @@ public class ExtractorAndroid extends Extractor {
                     if (jid_rows.containsKey(jid_row_id)) {
                         SqliteRow jid_row = jid_rows.get(jid_row_id).get(0);
                         String contactId = jid_row.getTextValue("raw_string"); //$NON-NLS-1$
-                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            WAContact contact = contacts.getContact(contactId);
-                            Chat c = new Chat(contact);
-                            c.setId(row.getIntValue("_id"));
-                            c.setDeleted(true);
-                            c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
-                            c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                            result.add(c);
-                        }
+                        WAContact contact = contacts.getContact(contactId);
+                        Chat c = new Chat(contact);
+                        c.setId(row.getIntValue("_id"));
+                        c.setDeleted(true);
+                        c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
+                        c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                        result.add(c);
                     }
                 }
             }
@@ -426,7 +424,7 @@ public class ExtractorAndroid extends Extractor {
                 }
             }
     
-            Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
+            Message.sort(messages);
         }
 
         //Find quote messages
@@ -436,9 +434,10 @@ public class ExtractorAndroid extends Extractor {
             if (m != null){// Has quote
                 Message original = messagesMapUuid.get(mq.getUuid());//Try to find orginal message in messages
                 if (original != null){// has found original message reference, more complete
+                    original.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
                     m.setMessageQuote(original);
                 }else{// not found original message reference, get info from message_quotes table, less complete
-                    mq.setDeleted(true);
+                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
                     mq.setId(fakeIds--);
                     m.setMessageQuote(mq);
                 }
@@ -490,7 +489,7 @@ public class ExtractorAndroid extends Extractor {
         m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
         m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
         m.setMessageType(decodeMessageType(type, status, edit_version, caption, (int) media_size));
-        m.setMediaDuration(SQLite3DBParser.getIntIfExists(rs, "media_duration")); //$NON-NLS-1$
+        m.setDuration(SQLite3DBParser.getIntIfExists(rs, "media_duration")); //$NON-NLS-1$
         if (m.getMessageType() == CONTACT_MESSAGE) {
             m.setVcards(Arrays.asList(new String[] { m.getData() }));
         }
@@ -536,7 +535,7 @@ public class ExtractorAndroid extends Extractor {
                     } else if (mediaMime.startsWith("video")) {
                         m.setMessageType(VIDEO_MESSAGE);
                     } else if (mediaMime.startsWith("application")) {
-                        m.setMessageType(APP_MESSAGE);
+                        m.setMessageType(DOC_MESSAGE);
                     } else if (mediaMime.startsWith("audio")) {
                         m.setMessageType(AUDIO_MESSAGE);
                     } else if (m.getMediaCaption() != null) {
@@ -570,7 +569,7 @@ public class ExtractorAndroid extends Extractor {
                             break;
                         case 4:
                         case 12:
-                            result = USER_JOINED_GROUP;
+                            result = USER_ADDED_TO_GROUP;
                             break;
                         case 5:
                             result = USER_LEFT_GROUP;
@@ -638,7 +637,7 @@ public class ExtractorAndroid extends Extractor {
                 }
                 break;
             case 9:
-                result = APP_MESSAGE;
+                result = DOC_MESSAGE;
                 break;
             case 10:
                 if (caption != null) {

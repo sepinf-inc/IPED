@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- this config is merged with default config XML -->
+<properties>
+
+    <parsers>
+        <parser class="iped.parsers.usnjrnl.UsnJrnlParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
+    </parsers>
+
+</properties>

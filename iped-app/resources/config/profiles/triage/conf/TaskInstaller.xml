@@ -32,6 +32,7 @@
     <task class="iped.engine.task.ExportFileTask"></task>
     <task class="iped.engine.task.EmbeddedDiskProcessTask"></task>
     <task class="iped.engine.task.MakePreviewTask"></task>
+    <task class="iped.engine.task.jumplist.JumpListTask"></task>
     
     <task class="iped.engine.task.DocThumbTask"></task>
     <task class="iped.engine.task.ImageThumbTask"></task>

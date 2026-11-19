@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import iped.app.bootstrap.Bootstrap;
 import iped.app.processing.CmdLineArgsImpl;
 import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.app.ui.columns.ColumnsSelectReportUI;
 import iped.data.IMultiBookmarks;
 import iped.io.URLUtil;
 
@@ -61,6 +62,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
     JTextField keywords = new JTextField();
     JButton outButton = new JButton("..."); //$NON-NLS-1$
     JButton infoButton = new JButton(Messages.getString("ReportDialog.FillInfo")); //$NON-NLS-1$
+    JButton propertiesButton = new JButton(Messages.getString("ReportDialog.PropertiesButton"));
+    JButton propertiesLabel = new JButton(Messages.getString("ReportDialog.PropertiesLabel"));
     JButton keywordsButton = new JButton("..."); //$NON-NLS-1$
     JButton generate = new JButton(Messages.getString("ReportDialog.Create")); //$NON-NLS-1$
     JCheckBox noAttachs = new JCheckBox(Messages.getString("ReportDialog.NoAttachments")); //$NON-NLS-1$
@@ -89,6 +92,13 @@ public class ReportDialog implements ActionListener, TableModelListener {
         bpanel.add(infoButton, BorderLayout.WEST);
         footer2.add(bpanel, BorderLayout.SOUTH);
 
+        JPanel propertiesFooter = new JPanel(new BorderLayout());
+        propertiesFooter.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        propertiesFooter.add(new JLabel(Messages.getString("ReportDialog.PropertiesLabel")), BorderLayout.CENTER); //$NON-NLS-1$
+        bpanel = new JPanel(new BorderLayout());
+        bpanel.add(propertiesButton, BorderLayout.WEST);
+        propertiesFooter.add(bpanel, BorderLayout.SOUTH);
+
         JPanel footer3 = new JPanel(new BorderLayout());
         footer3.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         footer3.add(new JLabel(Messages.getString("ReportDialog.KeywordsFile")), BorderLayout.NORTH); //$NON-NLS-1$
@@ -107,6 +117,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         footer.add(footer1);
         footer.add(append);
         footer.add(footer3);
+        footer.add(propertiesFooter);
         footer.add(footer2);
         footer.add(okPanel);
 
@@ -121,6 +132,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         panel.add(footer, BorderLayout.SOUTH);
 
         outButton.addActionListener(this);
+        propertiesButton.addActionListener(this);
         infoButton.addActionListener(this);
         keywordsButton.addActionListener(this);
         generate.addActionListener(this);
@@ -148,19 +160,20 @@ public class ReportDialog implements ActionListener, TableModelListener {
         table = new JTable(tableModel);
         table.getColumnModel().getColumn(0).setMaxWidth(20);
         table.getColumnModel().getColumn(2).setMaxWidth(150);
+        table.setRowHeight(IconManager.getIconSize());
+
         tableModel.addTableModelListener(this);
         scrollPane = new JScrollPane(table);
 
-        ((JComponent) table.getDefaultRenderer(Boolean.class)).setOpaque(true);        
-        
+        ((JComponent) table.getDefaultRenderer(Boolean.class)).setOpaque(true);
+
         table.getColumnModel().getColumn(0).setHeaderRenderer(new DefaultTableCellRenderer() {
 
-			private static final long serialVersionUID = 1L;
-			private boolean listenerAdded = false;
+            private static final long serialVersionUID = 1L;
+            private boolean listenerAdded = false;
 
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                    boolean hasFocus, int row, int col) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
                 JTableHeader header = table.getTableHeader();
                 if (!listenerAdded) {
                     header.addMouseListener(new MouseAdapter() {
@@ -182,8 +195,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                    boolean hasFocus, int row, int column) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 setIcon(value == null ? null : BookmarkIcon.getIcon(multiBookmarks, value.toString()));
                 return this;
@@ -195,10 +207,10 @@ public class ReportDialog implements ActionListener, TableModelListener {
     }
 
     private class TableModel extends DefaultTableModel {
-		
+
         private static final long serialVersionUID = 1L;
 
-		TableModel(Object[][] data, Object[] columnNames) {
+        TableModel(Object[][] data, Object[] columnNames) {
             super(data, columnNames);
         }
 
@@ -230,6 +242,10 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
         if (e.getSource() == infoButton) {
             caseInfo.setVisible(true);
+        }
+        
+        if (e.getSource() == propertiesButton) {
+            ColumnsSelectReportUI.getInstance().setVisible();
         }
 
         if (e.getSource() == keywordsButton) {
@@ -281,21 +297,18 @@ public class ReportDialog implements ActionListener, TableModelListener {
         try {
             String classpath = new File(url.toURI()).getAbsolutePath();
             if (!classpath.endsWith(".jar")) //$NON-NLS-1$
-                classpath = App.get().appCase.getAtomicSources().get(0).getModuleDir().getAbsolutePath()
-                        + File.separator + "lib" + File.separator + "iped-search-app.jar"; //$NON-NLS-1$ //$NON-NLS-2$
+                classpath = App.get().appCase.getAtomicSources().get(0).getModuleDir().getAbsolutePath() + File.separator + "lib" + File.separator + "iped-search-app.jar"; //$NON-NLS-1$ //$NON-NLS-2$
 
             File input = File.createTempFile("report", ".iped"); //$NON-NLS-1$ //$NON-NLS-2$
             App.get().appCase.getMultiBookmarks().saveState(input);
 
             String javaBin = "java";
             if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-                javaBin = new File(App.get().appCase.getAtomicSources().get(0).getModuleDir(), "jre\\bin\\java.exe")
-                        .getAbsolutePath();
+                javaBin = new File(App.get().appCase.getAtomicSources().get(0).getModuleDir(), "jre\\bin\\java.exe").getAbsolutePath();
             }
             List<String> cmd = new ArrayList<>();
             cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-D" + Bootstrap.UI_REPORT_SYS_PROP, //$NON-NLS-1$ //$NON-NLS-2$
-                    Bootstrap.class.getCanonicalName(), 
-                    "-d", input.getAbsolutePath(), //$NON-NLS-1$
+                    Bootstrap.class.getCanonicalName(), "-d", input.getAbsolutePath(), //$NON-NLS-1$
                     "-o", output)); //$NON-NLS-1$
 
             if (!caseInfo.isEmpty())

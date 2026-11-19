@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
 import iped.data.IItemReader;
 import iped.engine.data.IPEDSource;
@@ -38,6 +37,15 @@ public class ItemSearcher implements IItemSearcher {
             items.add(item);
         }
         return items;
+    }
+
+    @Override
+    public IItemReader searchFirst(String luceneQuery) {
+        SearchResult result = getResult(luceneQuery);
+        if (result.getLength() > 0) {
+            return iSource.getItemByID(result.getId(0));
+        }
+        return null;
     }
 
     @Override
@@ -88,9 +96,7 @@ public class ItemSearcher implements IItemSearcher {
 
     @Override
     public String escapeQuery(String string) {
-        string = string.replace('“', '"').replace('”', '"').replace('„', '"').replace('＂', '"');
-        string = string.replace('«', ' ').replace('»', ' ');
-        return QueryParserUtil.escape(string);
+        return QueryBuilder.escape(string);
     }
 
 }

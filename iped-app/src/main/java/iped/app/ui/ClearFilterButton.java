@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.swing.JButton;
 
+import iped.viewers.api.ClearFilterListener;
+
 public class ClearFilterButton extends JButton {
 
     /**

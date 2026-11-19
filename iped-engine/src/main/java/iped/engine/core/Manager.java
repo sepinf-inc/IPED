@@ -29,7 +29,6 @@ import java.nio.file.StandardOpenOption;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
@@ -57,7 +56,6 @@ import iped.engine.CmdLineArgs;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.config.FileSystemConfig;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.SplashScreenConfig;
@@ -76,6 +74,7 @@ import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
 import iped.engine.lucene.CustomIndexDeletionPolicy;
 import iped.engine.lucene.analysis.AppAnalyzer;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IndexerSimilarity;
 import iped.engine.search.ItemSearcher;
@@ -127,7 +126,6 @@ public class Manager {
 
     private static long commitIntervalMillis = 30 * 60 * 1000;
     private static Logger LOGGER = LogManager.getLogger(Manager.class);
-    private static String FINISHED_FLAG = "data/processing_finished";
     private static Manager instance;
 
     private CaseData caseData;
@@ -153,8 +151,6 @@ public class Manager {
 
     private Thread commitThread = null;
     AtomicLong partialCommitsTime = new AtomicLong();
-
-    private final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
 
     private static final String appWinExeFileName = "IPED-SearchApp.exe";
 
@@ -230,7 +226,7 @@ public class Manager {
         return indexDir;
     }
 
-    Worker[] getWorkers() {
+    public Worker[] getWorkers() {
         return workers;
     }
 
@@ -271,17 +267,22 @@ public class Manager {
             LOGGER.info("Evidence " + (i++) + ": '{}'", source.getAbsolutePath()); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
+        PreviewRepositoryManager.configureWritable(output);
+
+        EvidenceStatus status = new EvidenceStatus(output.getParentFile());
+
         try {
             openIndex();
 
             if (args.getEvidenceToRemove() != null) {
-                removeEvidence(args.getEvidenceToRemove());
+                removeEvidence(args.getEvidenceToRemove(), status);
                 return;
             }
 
             initWorkers();
 
-            initSleuthkitServers();
+            status.addProcessingEvidences(args);
+            status.save();
 
             // apenas conta o número de arquivos a indexar
             counter = new ItemProducer(this, caseData, true, sources, output);
@@ -302,6 +303,7 @@ public class Manager {
 
         } finally {
             closeItemProducers();
+            PreviewRepositoryManager.close(output);
         }
 
         filterKeywords();
@@ -320,16 +322,9 @@ public class Manager {
 
         stats.logStatistics(this);
 
-        Files.createFile(getFinishedFileFlag(output).toPath());
+        status.addSuccessfulEvidences(args);
+        status.save();
 
-    }
-
-    private static File getFinishedFileFlag(File output) {
-        return new File(output, FINISHED_FLAG);
-    }
-
-    public static boolean isProcessingFinishedOK(File moduleDir) {
-        return getFinishedFileFlag(moduleDir).exists();
     }
 
     private void closeItemProducers() {
@@ -374,16 +369,6 @@ public class Manager {
         if (producer != null) {
             producer.interrupt();
             // produtor.join(5000);
-        }
-    }
-
-    public synchronized void initSleuthkitServers() throws InterruptedException {
-        File tskDB = SleuthkitReader.getSleuthkitDB(output);
-        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
-        if (tskDB.exists() && fsConfig.isRobustImageReading()) {
-            if (!initSleuthkitServers.getAndSet(true)) {
-                SleuthkitClient.initSleuthkitServers(tskDB.getParent());
-            }
         }
     }
 
@@ -432,7 +417,14 @@ public class Manager {
             mergeScheduler.setMaxMergesAndThreads(8, 4);
         }
         conf.setMergeScheduler(mergeScheduler);
-        conf.setRAMBufferSizeMB(64);
+        /*
+         * Scale the RAM buffer with the heap: fewer flushes and small-segment
+         * merges on large cases. 64MB (the old fixed value) stays as the floor
+         * so memory-constrained machines keep the previous behavior; above
+         * 512MB Lucene gains little.
+         */
+        long heapMB = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        conf.setRAMBufferSizeMB(Math.min(Math.max(64, heapMB / 32), 512));
         TieredMergePolicy tieredPolicy = new TieredMergePolicy();
         /*
          * Seta tamanho máximo dos subíndices. Padrão é 5GB. Poucos subíndices grandes
@@ -448,7 +440,7 @@ public class Manager {
         return conf;
     }
 
-    private void removeEvidence(String evidenceName) throws Exception {
+    private void removeEvidence(String evidenceName, EvidenceStatus status) throws Exception {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
         LOGGER.log(CONSOLE, "Removing evidence '{}' from case...", evidenceName);
 
@@ -460,7 +452,10 @@ public class Manager {
             IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
             SearchResult result = searcher.search();
             if (result.getLength() == 0) {
-                Files.createFile(getFinishedFileFlag(output).toPath());
+                if (status.removeEvidence(evidenceName)) {
+                    status.save();
+                    return;
+                }
                 throw new IPEDException("Evidence name '" + evidenceName + "' not found!");
             }
             Item item = (Item) ipedCase.getItemByID(result.getId(0));
@@ -519,7 +514,8 @@ public class Manager {
                 new File(output, GraphTask.CSVS_PATH));
         LOGGER.log(CONSOLE, "Deleted {} CSV connections.", deletions);
 
-        Files.createFile(getFinishedFileFlag(output).toPath());
+        status.removeEvidence(evidenceName);
+        status.save();
     }
 
     private void openIndex() throws IOException {
@@ -558,6 +554,9 @@ public class Manager {
         workers = new Worker[localConfig.getNumThreads()];
         for (int k = 0; k < workers.length; k++) {
             workers[k] = new Worker(k, caseData, writer, output, this);
+        }
+        for (Worker w : workers) {
+            w.init();
         }
 
         // Execução dos workers após todos terem sido instanciados e terem inicializado
@@ -619,7 +618,7 @@ public class Manager {
                             "Changed to processing queue with priority " + processingQueues.getCurrentQueuePriority()); //$NON-NLS-1$
                     caseData.putCaseObject(IItemSearcher.class.getName(),
                             new ItemSearcher(output.getParentFile(), writer));
-                    processingQueues.addLastToCurrentQueue(queueEnd);
+                    processingQueues.addToCurrentQueue(queueEnd);
                     for (int k = 0; k < workers.length; k++) {
                         workers[k].processNextQueue();
                     }
@@ -867,10 +866,6 @@ public class Manager {
             throw new IOException("Fail to create folder " + output.getAbsolutePath()); //$NON-NLS-1$
         }
 
-        // The finished file flag should be reset after basic checks (like already
-        // existing output) were done (see issue #2041).
-        Files.deleteIfExists(getFinishedFileFlag(output).toPath());
-
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "scripts"), new File(output, "scripts"), true); //$NON-NLS-1$ //$NON-NLS-2$
@@ -913,6 +908,12 @@ public class Manager {
             if (!currentProfile.equals(defaultProfile)) {
                 IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
                 resetLocalConfigToPortable(new File(output, Configuration.CASE_PROFILE_DIR + "/" + Configuration.LOCAL_CONFIG));
+            }
+            if (caseData.isIpedReport()) {
+                File caseProfile = new File(Configuration.getInstance().appRoot, Configuration.CASE_PROFILE_DIR);
+                if (caseProfile.exists()) {
+                    IOUtil.copyDirectory(caseProfile, new File(output, Configuration.CASE_PROFILE_DIR));
+                }
             }
 
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$

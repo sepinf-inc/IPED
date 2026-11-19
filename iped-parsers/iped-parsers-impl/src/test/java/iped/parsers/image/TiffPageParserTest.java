@@ -10,23 +10,20 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.util.BaseItemSearchContext;
 import iped.parsers.util.ToXMLContentHandler;
-import junit.framework.TestCase;
 
-public class TiffPageParserTest extends TestCase {
-
-    private static InputStream getStream(String name) {
-        return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    }
+public class TiffPageParserTest extends BaseItemSearchContext {
 
     @Test
     public void testImageOCRMetadataParsingTIFF() throws IOException, SAXException, TikaException {
 
+        String file = "test-files/test_lenaTiff.tiff";
+        ParseContext context = getContext(file);
         TiffPageParser parser = new TiffPageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new ToXMLContentHandler();
-        ParseContext context = new ParseContext();
-        try (InputStream stream = getStream("test-files/test_lenaTiff.tiff")) {
+        try (InputStream stream = getStream(file)) {
             metadata.set(Metadata.CONTENT_TYPE, "image/tiff");
             parser.parse(stream, handler, metadata, context);
 

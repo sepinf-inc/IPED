@@ -17,4 +17,11 @@ public class StringUtil {
         };
     }
 
+    public static String convertCamelCaseToSpaces(String input) {
+        if (input == null || input.isBlank()) {
+            return input;
+        }
+        return input.replaceAll("([a-z])([A-Z])", "$1 $2");
+    }
+
 }

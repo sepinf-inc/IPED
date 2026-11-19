@@ -38,6 +38,7 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
         protected List<String> contenttype = new ArrayList<String>();
         protected List<String> title = new ArrayList<String>();
         protected List<String> created = new ArrayList<String>();
+        protected List<Metadata> metadata = new ArrayList<Metadata>();
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -55,6 +56,8 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
 
             if (metadata.get(TikaCoreProperties.CREATED) != null)
                 created.add(metadata.get(TikaCoreProperties.CREATED));
+
+            this.metadata.add(metadata);
         }
 
     }

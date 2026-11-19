@@ -3,9 +3,12 @@ package iped.data;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
+
+import javax.imageio.stream.ImageInputStream;
 
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -13,6 +16,7 @@ import org.apache.tika.mime.MediaType;
 import iped.datasource.IDataSource;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.IStreamSource;
+import iped.io.SeekableInputStream;
 
 public interface IItemReader extends IStreamSource {
     /**
@@ -129,9 +133,19 @@ public interface IItemReader extends IStreamSource {
      */
     public File getViewFile();
 
+    boolean hasPreview();
+
+    File getPreviewBaseFolder();
+
+    String getPreviewExt();
+
+    SeekableInputStream getPreviewSeekeableInputStream() throws SQLException, IOException;
+
     public byte[] getThumb();
 
     public BufferedInputStream getBufferedInputStream() throws IOException;
+
+    public ImageInputStream getImageInputStream() throws IOException;
 
     /**
      * @return data da última modificação do arquivo

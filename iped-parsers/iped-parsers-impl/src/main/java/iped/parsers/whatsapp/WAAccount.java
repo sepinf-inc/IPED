@@ -1,21 +1,25 @@
 package iped.parsers.whatsapp;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
+import com.dd.plist.PropertyListFormatException;
 import com.dd.plist.PropertyListParser;
 
 public class WAAccount extends WAContact {
@@ -27,48 +31,72 @@ public class WAAccount extends WAContact {
     }
 
     public String getTitle() {
-        return "WhatsApp Account: " + getName(); //$NON-NLS-1$
+        return "WhatsApp Account: " + getName();
     }
 
-    public static WAAccount getFromAndroidXml(InputStream is) {
+    public static WAAccount getFromAndroidXml(InputStream is) throws SAXException, IOException {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(is);
 
-            XPath xpath = XPathFactory.newInstance().newXPath();
-            XPathExpression expr = xpath.compile("/map/string[@name=\"registration_jid\"]");
-            String value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value == null || value.isBlank()) {
-                expr = xpath.compile("/map/string[@name=\"ph\"]");
-                value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (value == null || value.isBlank())
-                    return null;
-            }
-            if (!value.endsWith(waSuffix))
-                value += waSuffix;
+            String id = null, name = null, status = null;
 
-            WAAccount account = new WAAccount(value);
+            XPath xpath = XPathFactory.newInstance().newXPath();
+
+            XPathExpression expr = xpath
+                    .compile("/map/string[@name=\"com.whatsapp.registration.RegisterPhone.phone_number\"]");
+            String value = (String) expr.evaluate(doc, XPathConstants.STRING);
+            if (StringUtils.isNotBlank(value)) {
+                String phoneNumber = value;
+                expr = xpath.compile("/map/string[@name=\"com.whatsapp.registration.RegisterPhone.country_code\"]");
+                value = (String) expr.evaluate(doc, XPathConstants.STRING);
+                if (StringUtils.isNotBlank(value)) {
+                    String countryCode = value;
+                    id = countryCode + phoneNumber + waSuffix;
+                }
+            } else {
+                expr = xpath.compile("/map/string[@name=\"registration_jid\"]");
+                value = (String) expr.evaluate(doc, XPathConstants.STRING);
+                if (StringUtils.isBlank(value)) {
+                    expr = xpath.compile("/map/string[@name=\"ph\"]");
+                    value = (String) expr.evaluate(doc, XPathConstants.STRING);
+                }
+                if (StringUtils.isNotBlank(value)) {
+                    if (!value.endsWith(waSuffix)) {
+                        value += waSuffix;
+                    }
+                    id = value;
+                }
+            }
 
             expr = xpath.compile("/map/string[@name=\"push_name\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value != null && !value.isBlank())
-                account.setWaName(value);
+            if (StringUtils.isNotBlank(value)) {
+                name = value;
+            }
 
             expr = xpath.compile("/map/string[@name=\"my_current_status\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value != null && !value.isBlank())
-                account.setStatus(value);
+            if (StringUtils.isNotBlank(value)) {
+                status = value;
+            }
+
+            if (StringUtils.isAllBlank(id, name, status)) {
+                return null;
+            }
+
+            WAAccount account = new WAAccount(id);
+            account.setWaName(name);
+            account.setStatus(status);
 
             return account;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+        } catch (ParserConfigurationException | XPathExpressionException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public static WAAccount getFromIOSPlist(InputStream is) {
+    public static WAAccount getFromIOSPlist(InputStream is) throws SAXException, IOException {
         try {
             NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
             NSObject value = rootDict.get("OwnJabberID");
@@ -92,26 +120,8 @@ public class WAAccount extends WAContact {
                 account.setStatus(value.toString());
 
             return account;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public static void main(String[] args) {
-        try (FileInputStream fis = new FileInputStream(
-                "c:/users/nassif/downloads/group.net.whatsapp.WhatsApp.shared.plist")) {
-            WAAccount a = getFromIOSPlist(fis);
-            System.out.println(a.getId());
-            System.out.println(a.getWaName());
-            System.out.println(a.getStatus());
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        } catch (PropertyListFormatException | ParseException | ParserConfigurationException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -122,5 +132,4 @@ public class WAAccount extends WAContact {
     public void setUnknown(boolean isUnknown) {
         this.isUnknown = isUnknown;
     }
-
 }

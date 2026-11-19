@@ -20,7 +20,6 @@ package iped.viewers.components;
 
 import java.awt.Dimension;
 
-import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
@@ -36,7 +35,6 @@ public class HitsTable extends JTable {
         setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         getTableHeader().setPreferredSize(new Dimension(0, 0));
         setShowGrid(false);
-        ((JComponent) getDefaultRenderer(Boolean.class)).setOpaque(true);
     }
 
     @Override

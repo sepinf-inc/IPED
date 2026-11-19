@@ -1,12 +1,22 @@
 package iped.parsers.whatsapp;
 
+import java.util.regex.Pattern;
+
 public class WAContact {
 
-    protected static final String waSuffix = "@s.whatsapp.net";
-    
-    private final String id;
+    // e.g. 5561999999999@s.whatsapp.net, 120363000000000000@g.us, status@broadcast
+    private static final Pattern JID_PATTERN = Pattern.compile("[\\w.:-]+@[a-z]+(\\.[a-z]+)*");
 
-    private final String suffix;
+    public static final String waSuffix = "@s.whatsapp.net";
+    public static final String waStatusBroadcast = "status@broadcast";
+    public static final String waGroupSuffix = "@g.us";
+    public static final String waStatusSuffix = "@status";
+    public static final String waNewsletterSuffix = "@newsletter";
+    public static final String lidSuffix = "@lid";
+
+    private String id;
+
+    private String suffix;
 
     private String status;
 
@@ -26,7 +36,23 @@ public class WAContact {
     
     private boolean deleted = false;
 
+    /**
+     * Checks if the id is a well formed JID, used to discard partially overwritten
+     * records recovered from deleted space.
+     */
+    public static boolean isValidJid(String id) {
+        return id != null && JID_PATTERN.matcher(id).matches();
+    }
+
     public WAContact(String id) {
+        updateId(id);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void updateId(String id) {
         if (id != null) {
             String[] idSplit = id.split("@", 2);
             this.id = idSplit[0].trim();
@@ -34,10 +60,6 @@ public class WAContact {
         } else {
             this.id = this.suffix = "";
         }
-    }
-
-    public String getId() {
-        return id;
     }
 
     public String getStatus() {
@@ -89,10 +111,10 @@ public class WAContact {
     }
 
     public String getName() {
-        if (waName != null && ! waName.isBlank())
-            return waName;
-        else if (displayName != null && !displayName.isBlank())
+        if (displayName != null && !displayName.isBlank())
             return displayName;
+        else if (waName != null && !waName.isBlank())
+            return waName;
         else if (givenName != null && !givenName.isBlank())
             return givenName;
         else if (nickName != null && !nickName.isBlank())
@@ -160,4 +182,10 @@ public class WAContact {
         return this.getFullId().hashCode();
     }
 
+    public boolean matches(WAContact o) {
+        if (id != null && o.id != null && id.equals(o.id)) {
+            return true;
+        }
+        return true;
+    }
 }

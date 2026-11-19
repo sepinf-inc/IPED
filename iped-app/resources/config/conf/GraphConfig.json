@@ -4,7 +4,7 @@
         "message/x-whatsapp-message", "message/x-whatsapp-attachment"
     ],
     "mimes-to-dont-detect-phones":[
-        "message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "message/x-ufed-email"
+        "message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "application/x-ufed-email"
     ],
     "detect-phones-on-other-mimes": true,
     "process-proximity-relationships": false,

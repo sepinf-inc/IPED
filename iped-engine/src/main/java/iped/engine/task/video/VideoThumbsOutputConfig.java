@@ -2,6 +2,8 @@ package iped.engine.task.video;
 
 import java.io.File;
 
+import iped.engine.config.VideoThumbsConfig;
+
 /*
  * Copyright 2015-2015, Wladimir Leite
  * 
@@ -29,13 +31,14 @@ import java.io.File;
 public class VideoThumbsOutputConfig {
 
     private File outFile;
-    private int thumbWidth, rows, columns, border;
+    private VideoThumbsConfig videoConfig;
+    private int thumbSize, rows, columns, border;
 
-    public VideoThumbsOutputConfig(File outFile, int thumbWidth, int columns, int rows, int border) {
+    public VideoThumbsOutputConfig(File outFile, VideoThumbsConfig videoConfig, int border) {
         this.outFile = outFile;
-        this.thumbWidth = thumbWidth;
-        this.rows = rows;
-        this.columns = columns;
+        this.videoConfig = videoConfig;
+        this.rows = videoConfig.getRows();
+        this.columns = videoConfig.getColumns();
         this.border = border;
     }
 
@@ -43,8 +46,11 @@ public class VideoThumbsOutputConfig {
         return border;
     }
 
-    public int getThumbWidth() {
-        return thumbWidth;
+    public int getThumbSize() {
+        if (thumbSize == 0) {
+            return this.videoConfig.getSize();
+        }
+        return thumbSize;
     }
 
     public File getOutFile() {
@@ -63,8 +69,8 @@ public class VideoThumbsOutputConfig {
         this.outFile = outFile;
     }
 
-    public void setThumbWidth(int thumbWidth) {
-        this.thumbWidth = thumbWidth;
+    public void setThumbSize(int thumbSize) {
+        this.thumbSize = thumbSize;
     }
 
     public void setRows(int rows) {
@@ -83,8 +89,8 @@ public class VideoThumbsOutputConfig {
         StringBuilder builder = new StringBuilder();
         builder.append("VideoThumbsOutputConfig [imageFile="); //$NON-NLS-1$
         builder.append(outFile);
-        builder.append(", thumbWidth="); //$NON-NLS-1$
-        builder.append(thumbWidth);
+        builder.append(", thumbSize="); //$NON-NLS-1$
+        builder.append(getThumbSize());
         builder.append(", rows="); //$NON-NLS-1$
         builder.append(rows);
         builder.append(", columns="); //$NON-NLS-1$

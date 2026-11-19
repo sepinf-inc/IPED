@@ -93,8 +93,7 @@ import iped.app.timelinegraph.popups.LegendItemPopupMenu;
 import iped.app.timelinegraph.swingworkers.CheckWorker;
 import iped.app.timelinegraph.swingworkers.HighlightWorker;
 import iped.app.ui.App;
-import iped.app.ui.ClearFilterListener;
-import iped.app.ui.ColumnsManager;
+import iped.app.ui.columns.ColumnsManager;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
 import iped.engine.search.QueryBuilder;
@@ -104,12 +103,14 @@ import iped.exception.QueryNodeException;
 import iped.properties.BasicProps;
 import iped.utils.IconUtil;
 import iped.viewers.api.GUIProvider;
+import iped.viewers.api.IFilter;
 import iped.viewers.api.IMultiSearchResultProvider;
+import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.events.RowSorterTableDataChange;
 
-public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener, ComponentListener {
+public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ComponentListener {
     JTable resultsTable;
     IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
@@ -948,7 +949,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     @Override
     public void clearFilter() {
-        chartPanel.removeAllFilters(false);
+        chartPanel.isClearing=true;
+        chartPanel.removeAllFilters();
+        chartPanel.isClearing=false;
     }
 
     @Override
@@ -1079,6 +1082,62 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         setTimePeriodClass(Day.class);
         setTimePeriodString("Day");
         refreshChart(true);
+    }
+
+    @Override
+    public List getDefinedFilters() {
+        ArrayList<IFilter> result = new ArrayList<IFilter>();
+        if (chartPanel.definedFilters.size() > 0) {
+            for (Date[] dates : chartPanel.definedFilters) {
+                result.add(new IQueryFilter() {
+                    private Query query;
+
+                    public String toString() {
+                        String timeFilter = domainAxis.ISO8601DateFormatUTC(dates[0]);
+                        timeFilter += " TO ";
+                        timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
+                        return timeFilter;
+                    }
+
+                    @Override
+                    public Query getQuery() {
+                        if (query == null) {
+                            String timeFilter = "timeStamp:[";
+                            timeFilter += domainAxis.ISO8601DateFormatUTC(dates[0]);
+                            timeFilter += " TO ";
+                            timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
+                            timeFilter += "]";
+
+                            try {
+                                query = new QueryBuilder(App.get().appCase).getQuery(timeFilter);
+                            } catch (ParseException | QueryNodeException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        }
+                        return query;
+                    }
+                });
+            }
+        }
+        for (String event : chartPanel.excludedEvents) {
+            result.add(new IFilter() {
+                public String toString() {
+                    return "-eventType:" + event;
+                }
+            });
+        }
+
+        return result;
+    }
+
+    public String toString() {
+        return "Timeline panel";
+    }
+
+    @Override
+    public boolean hasFilters() {
+        return chartPanel.definedFilters.size() > 0 || chartPanel.excludedEvents.size() > 0;
     }
 
     public static String[] getOrdToEventName() {
