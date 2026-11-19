@@ -46,7 +46,7 @@ public class MenuClass extends JPopupMenu {
 
     private static final long serialVersionUID = 1L;
 
-    JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted, readHighlighted, unreadHighlighted, exportChecked, copyChecked, saveBookmarks, loadBookmarks,
+    JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted, readHighlighted, unreadHighlighted, exportChecked, copyChecked, saveBookmarks, loadBookmarks, importBookmarksFromAnotherCase,
             checkHighlightedAndSubItems, uncheckHighlightedAndSubItems, checkHighlightedAndParent, uncheckHighlightedAndParent, checkHighlightedAndReferences, uncheckHighlightedAndReferences, checkHighlightedAndReferencedBy, uncheckHighlightedAndReferencedBy,
             changeGalleryColCount, defaultLayout, changeLayout, previewScreenshot, manageBookmarks, clearSearchHistory, importKeywords, navigateToParent, exportTerms, manageFilters, manageColumns, exportCheckedToZip, exportCheckedTreeToZip,
             exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, openBfacClient, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
@@ -134,6 +134,10 @@ public class MenuClass extends JPopupMenu {
         saveBookmarks = new JMenuItem(Messages.getString("MenuClass.SaveBookmarks")); //$NON-NLS-1$
         saveBookmarks.addActionListener(menuListener);
         this.add(saveBookmarks);
+
+        importBookmarksFromAnotherCase = new JMenuItem(Messages.getString("MenuClass.ImportBookmarksFromAnotherCase"));
+        importBookmarksFromAnotherCase.addActionListener(menuListener);
+        this.add(importBookmarksFromAnotherCase);
 
         manageBookmarks = new JMenuItem(Messages.getString("MenuClass.ManageBookmarks")); //$NON-NLS-1$
         manageBookmarks.addActionListener(menuListener);
