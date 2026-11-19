@@ -1,13 +1,17 @@
 package iped.viewers;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.Reader;
+import java.io.SequenceInputStream;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.text.Collator;
@@ -66,11 +70,17 @@ import iped.properties.ExtraProperties;
 import iped.utils.FileContentSource;
 import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
+import iped.utils.StringUtil;
 import iped.viewers.api.AttachmentSearcher;
 import iped.viewers.localization.Messages;
 import iped.viewers.util.LuceneSimpleHTMLEncoder;
 
 public class EmailViewer extends HtmlLinkViewer {
+
+    private static final String charsetWindows1252 = "windows-1252";
+    private static final String charsetUSAscII = "us-ascii";
+    private static final String charsetUTF8 = "UTF-8";
+    private static final int UTF8_LOOKAHEAD = 1 << 20;
 
     private static Collator collator = getCollator();
 
@@ -172,6 +182,8 @@ public class EmailViewer extends HtmlLinkViewer {
 
     private static class AttachInfo {
         private String name, mime;
+        // charset used to write tmpFile, when it is a text attachment
+        private String charset = charsetWindows1252;
         private File tmpFile;
         private IItemReader item;
 
@@ -184,7 +196,7 @@ public class EmailViewer extends HtmlLinkViewer {
 
     private static class Body {
         File file;
-        String charset = "windows-1252"; //$NON-NLS-1$
+        String charset = charsetWindows1252;
         BodyDescriptor multipartDesc;
         boolean isHtml;
 
@@ -230,44 +242,11 @@ public class EmailViewer extends HtmlLinkViewer {
             }
         }
 
-        private String decodeIfUtf8(String value) {
-            boolean isUtf8 = false;
-            int idx = value.indexOf('Ã');
-            if (idx > -1 && idx < value.length() - 1) {
-                int c_ = value.codePointAt(idx + 1);
-                if (c_ >= 0x0080 && c_ <= 0x00BC) {
-                    isUtf8 = true;
-                }
-            }
-            if (isUtf8) {
-                try {
-                    byte[] buf16 = value.getBytes("UTF-16LE"); //$NON-NLS-1$
-                    byte[] buf8 = new byte[buf16.length / 2];
-                    for (int i = 0; i < buf8.length; i++) {
-                        buf8[i] = buf16[i * 2];
-                    }
-                    value = new String(buf8, "UTF-8"); //$NON-NLS-1$
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-
-            }
-
-            return value;
-        }
-
-        private String getCharset() {
-            if (bodyList.isEmpty()) {
-                return "windows-1252";
-            }
-            return bodyList.get(0).charset;
-        }
-
         private void createHeader(OutputStreamWriter writer) throws IOException {
 
             writer.write("<html>"); //$NON-NLS-1$
             writer.write("<head>"); //$NON-NLS-1$
-            writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + getCharset() + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
+            writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charsetUTF8 + "\" />");
             writer.write("</head>"); //$NON-NLS-1$
             writer.write(
                     "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">"); //$NON-NLS-1$
@@ -296,7 +275,8 @@ public class EmailViewer extends HtmlLinkViewer {
                     if (!name[0].equals(TikaCoreProperties.CREATED.getName())) {
                         String[] values = metadata.getValues(name[0]);
                         for (int i = 0; i < values.length; i++) {
-                            text += LuceneSimpleHTMLEncoder.htmlEncode(decodeIfUtf8(values[i]));
+                            // values were already decoded when the header fields were parsed
+                            text += LuceneSimpleHTMLEncoder.htmlEncode(values[i]);
                             if (i < values.length - 1) {
                                 text += ", "; //$NON-NLS-1$
                             }
@@ -391,10 +371,10 @@ public class EmailViewer extends HtmlLinkViewer {
             try {
                 Charset.forName(charset);
             } catch (Exception e) {
-                charset = "windows-1252"; //$NON-NLS-1$
+                charset = charsetWindows1252;
             }
-            if (charset.equalsIgnoreCase("us-ascii")) { //$NON-NLS-1$
-                charset = "windows-1252"; //$NON-NLS-1$
+            if (charset.equalsIgnoreCase(charsetUSAscII)) {
+                charset = charsetWindows1252;
             }
 
             File attach;
@@ -410,16 +390,32 @@ public class EmailViewer extends HtmlLinkViewer {
             attach.deleteOnExit();
 
             if (type.equalsIgnoreCase("text/plain") || type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$ //$NON-NLS-2$
-                byte[] buf = new byte[10000];
-                int len;
-                while ((len = is.read(buf)) >= 0) {
-                    String text = new String(buf, 0, len, charset);
-                    if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
-                        text = LuceneSimpleHTMLEncoder.htmlEncode(text);
-                        text = text.replaceAll("\n", "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+                // Look ahead the beginning of the body to check if it is actually UTF-8,
+                // as it is often mislabeled (or not labeled) as windows-1252/ISO-8859-1.
+                // Only up to the first 1MB is validated (the remaining content, if any, is
+                // assumed to use the same encoding).
+                if (StringUtil.isSingleByteWesternCharset(charset)) {
+                    byte[] head = is.readNBytes(UTF8_LOOKAHEAD);
+                    if (StringUtil.isValidUtf8(head, 0, head.length, head.length == UTF8_LOOKAHEAD)) {
+                        charset = charsetUTF8;
                     }
-                    outStream.write(text.getBytes(charset));
+                    is = new SequenceInputStream(new ByteArrayInputStream(head), is);
                 }
+                // Reader/Writer keep the decoding state, so multi-byte chars split
+                // between reads are handled correctly.
+                Reader reader = new InputStreamReader(is, charset);
+                Writer writer = new OutputStreamWriter(outStream, charset);
+                char[] buf = new char[65536];
+                int len;
+                while ((len = reader.read(buf)) >= 0) {
+                    String text = new String(buf, 0, len);
+                    if (type.equalsIgnoreCase("text/plain")) {
+                        text = LuceneSimpleHTMLEncoder.htmlEncode(text);
+                        text = text.replaceAll("\n", "<br>");
+                    }
+                    writer.write(text);
+                }
+                writer.flush();
             } else {
                 IOUtil.copyInputToOutputStream(is, outStream);
             }
@@ -428,6 +424,7 @@ public class EmailViewer extends HtmlLinkViewer {
 
             AttachInfo attachInfo = new AttachInfo(attach, type,
                     (attachName == null ? Messages.getString("EmailViewer.UnNamed") : attachName)); //$NON-NLS-1$
+            attachInfo.charset = charset;
 
             if (attachName != null) {
                 isAttach = true;
@@ -483,7 +480,9 @@ public class EmailViewer extends HtmlLinkViewer {
             }
 
             try (OutputStream outStream = new BufferedOutputStream(new FileOutputStream(previewFile));
-                    OutputStreamWriter writer = new OutputStreamWriter(outStream, getCharset())) {
+                    // The preview is always written as UTF-8, as bodies, headers and
+                    // attachments may use different charsets.
+                    OutputStreamWriter writer = new OutputStreamWriter(outStream, charsetUTF8)) {
 
                 createHeader(writer);
 
@@ -527,8 +526,7 @@ public class EmailViewer extends HtmlLinkViewer {
                             writer.write(attach.name + ":<br>"); //$NON-NLS-1$
                         }
 
-                        writer.flush();
-                        Files.copy(attach.tmpFile.toPath(), outStream);
+                        writer.write(new String(Files.readAllBytes(attach.tmpFile.toPath()), attach.charset));
                     }
                 }
 
@@ -566,7 +564,7 @@ public class EmailViewer extends HtmlLinkViewer {
                     MailboxList mailboxList = fromField.getMailboxList();
                     if (fromField.isValidField() && mailboxList != null) {
                         for (int i = 0; i < mailboxList.size(); i++) {
-                            String from = decodeIfUtf8(getDisplayString(mailboxList.get(i)));
+                            String from = StringUtil.decodeIfUtf8(getDisplayString(mailboxList.get(i)));
                             metadata.add(Message.MESSAGE_FROM, from);
                             metadata.add(TikaCoreProperties.CREATOR, from);
                         }
@@ -578,12 +576,12 @@ public class EmailViewer extends HtmlLinkViewer {
                         if (from.endsWith(">")) { //$NON-NLS-1$
                             from = from.substring(0, from.length() - 1);
                         }
-                        from = decodeIfUtf8(from);
+                        from = StringUtil.decodeIfUtf8(from);
                         metadata.add(Message.MESSAGE_FROM, from);
                         metadata.add(TikaCoreProperties.CREATOR, from);
                     }
                 } else if (fieldname.equalsIgnoreCase("Subject")) { //$NON-NLS-1$
-                    String subject = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
+                    String subject = StringUtil.decodeIfUtf8(((UnstructuredField) parsedField).getValue());
                     metadata.add(ExtraProperties.MESSAGE_SUBJECT, subject);
 
                 } else if (fieldname.equalsIgnoreCase("To")) { //$NON-NLS-1$
@@ -652,7 +650,7 @@ public class EmailViewer extends HtmlLinkViewer {
 
         private String getRFC2231Value(String paramName, Map<String, String> params) {
             TreeMap<Integer, String> paramFrags = new TreeMap<Integer, String>();
-            String charset = "windows-1252"; //$NON-NLS-1$
+            String charset = charsetWindows1252;
             String[] keys = params.keySet().toArray(new String[0]);
             Arrays.sort(keys);
             for (String key : keys) {
@@ -712,12 +710,12 @@ public class EmailViewer extends HtmlLinkViewer {
             if (toField.isValidField()) {
                 AddressList addressList = toField.getAddressList();
                 for (int i = 0; i < addressList.size(); ++i) {
-                    metadata.add(metadataField, decodeIfUtf8(getDisplayString(addressList.get(i))));
+                    metadata.add(metadataField, StringUtil.decodeIfUtf8(getDisplayString(addressList.get(i))));
                 }
             } else {
                 String to = stripOutFieldPrefix(field, addressListType);
                 for (String eachTo : to.split(",")) { //$NON-NLS-1$
-                    metadata.add(metadataField, decodeIfUtf8(eachTo.trim()));
+                    metadata.add(metadataField, StringUtil.decodeIfUtf8(eachTo.trim()));
                 }
             }
         }
@@ -784,7 +782,7 @@ public class EmailViewer extends HtmlLinkViewer {
         @Override
         public void endHeader() throws MimeException {
             if (attachName != null) {
-                attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
+                attachName = StringUtil.decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
             }
         }
 

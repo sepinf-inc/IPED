@@ -24,7 +24,11 @@ EMAIL = [0-9a-z][0-9a-z\+\.\_\%\-]{1,64}\@[0-9a-z\-]{2,64}(\.[0-9a-z\-]{2,25}){1
 
 URL = ((https?|ftp|file):/{2,3}|www)[-a-z0-9\+\&\@\#\\/\%\?\=\~_\|!:,\.;]+
 
-IP = \b([^0].?.?&<1-255>)(\.(([^0].?.?&<1-255>)|0)){3}\b
+IP_V4 = \b([^0].?.?&<1-255>)(\.(([^0].?.?&<1-255>)|0)){3}\b
+
+# IPv6 addresses starting with 2xxx/3xxx (global unicast), fe80 (link-local) or fdxx (unique local), with at least two groups.
+# Sequences of 8 groups with exactly 2 hex digits are discarded, as they are usually part of hashes/fingerprints (e.g. AB:CD:2F:11:...).
+IP_V6 = \b((((2|3)[0-9a-fA-F]{1,3}|fe80|fd[0-9a-fA-F]{2}):(([0-9a-fA-F]{1,4}:){6}[0-9a-fA-F]{1,4}|:[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){0,5}|([0-9a-fA-F]{1,4}:){1,6}:|[0-9a-fA-F]{1,4}:(:[0-9a-fA-F]{1,4}){1,5}|([0-9a-fA-F]{1,4}:){2}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){3}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){4}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){5}:[0-9a-fA-F]{1,4}))&~([0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){7}))\b
 
 MAC_ADDRESS = \b([0-9A-F][0-9A-F]:){5}([0-9A-F][0-9A-F])\b
 
