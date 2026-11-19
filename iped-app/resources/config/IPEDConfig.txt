@@ -152,6 +152,12 @@ enableFaceRecognition = false
 # Advanced configuration options can be found in conf/AgeEstimationConfig.txt.
 enableAgeEstimation = false
 
+# Enables finding images by text descriptions, using a local image-text model.
+# Images get the categories described in conf/ImageTextSearchConfig.txt, shown in the AI filters panel.
+# You may install python and some dependencies (the same as the age estimation feature).
+# "enableImageThumbs" must be enabled.
+enableImageTextSearch = false
+
 # Enables searching for crypto hardware wallets.
 enableSearchHardwareWallets = true
 
