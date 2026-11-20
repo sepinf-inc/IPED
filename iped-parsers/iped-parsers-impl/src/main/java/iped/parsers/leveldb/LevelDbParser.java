@@ -49,6 +49,8 @@ public final class LevelDbParser extends AbstractParser {
     private static final long serialVersionUID = 1L;
     public static final MediaType TABLE = MediaType.application("x-leveldb-sstable");
     public static final MediaType CURRENT = MediaType.application("x-leveldb-current");
+    public static final MediaType RECORD = MediaType.application("x-leveldb-record");
+
     public static final String METADATA_PERFIX = "leveldb";
 
     private static final Set<MediaType> TYPES = MediaType.set(TABLE, CURRENT);
@@ -158,7 +160,7 @@ public final class LevelDbParser extends AbstractParser {
                     }
 
                     // Raw original value bytes are passed to the IPED subitem extractor.
-                    child.set(StandardParser.INDEXER_CONTENT_TYPE, "application/octet-stream");
+                    child.set(StandardParser.INDEXER_CONTENT_TYPE, RECORD.toString());
                     child.set(METADATA_PERFIX + ":originPath", original);
                     Integer originalId = evidenceIds.get(filename);
                     if (originalId != null)
