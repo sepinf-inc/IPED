@@ -29,7 +29,6 @@ import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
 import iped.parsers.leveldb.model.LDB4jReader;
-import iped.parsers.leveldb.model.LevelDbReader;
 import iped.parsers.leveldb.model.Manifest;
 import iped.parsers.leveldb.model.Record;
 import iped.parsers.leveldb.model.RecordSink;
