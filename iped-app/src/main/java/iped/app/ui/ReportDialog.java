@@ -1,6 +1,7 @@
 package iped.app.ui;
 
 import iped.utils.CharsetUtil;
+import iped.utils.JavaExecutable;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -303,14 +304,10 @@ public class ReportDialog implements ActionListener, TableModelListener {
             File input = File.createTempFile("report", ".iped"); //$NON-NLS-1$ //$NON-NLS-2$
             App.get().appCase.getMultiBookmarks().saveState(input);
 
-            String javaBin = "java";
-            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-                javaBin = new File(App.get().appCase.getAtomicSources().get(0).getModuleDir(), "jre\\bin\\java.exe").getAbsolutePath();
-            }
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-D" + Bootstrap.UI_REPORT_SYS_PROP, //$NON-NLS-1$ //$NON-NLS-2$
-                    Bootstrap.class.getCanonicalName(), "-d", input.getAbsolutePath(), //$NON-NLS-1$
-                    "-o", output)); //$NON-NLS-1$
+            cmd.addAll(Arrays.asList(JavaExecutable.getPath(), "-cp", classpath, "-D" + Bootstrap.UI_REPORT_SYS_PROP,
+                    Bootstrap.class.getCanonicalName(), "-d", input.getAbsolutePath(),
+                    "-o", output));
 
             if (!caseInfo.isEmpty())
                 cmd.addAll(Arrays.asList("-asap", caseInfo)); //$NON-NLS-1$

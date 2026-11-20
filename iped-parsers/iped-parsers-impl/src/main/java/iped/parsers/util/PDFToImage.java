@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.io.URLUtil;
 import iped.utils.IOUtil;
+import iped.utils.JavaExecutable;
 
 /**
  * Classe utilitária para converter páginas de arquivos PDF para arquivos de
@@ -168,7 +169,7 @@ public class PDFToImage implements Closeable {
                 URL url = URLUtil.getURL(this.getClass());
                 String jarDir = new File(url.toURI()).getParent();
                 String classpath = jarDir + "/*"; //$NON-NLS-1$
-                String[] cmd = { "java", "-cp", classpath, "-Xmx" + externalConvMaxMem, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                String[] cmd = { JavaExecutable.getPath(), "-cp", classpath, "-Xmx" + externalConvMaxMem,
                         this.getClass().getCanonicalName(), input.getAbsolutePath(), output.getAbsolutePath(),
                         String.valueOf(page), PDFLIB, String.valueOf(RESOLUTION) };
 

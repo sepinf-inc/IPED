@@ -46,6 +46,7 @@ import iped.parsers.util.PDFToThumb;
 import iped.parsers.util.Util;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
+import iped.utils.JavaExecutable;
 import iped.viewers.util.LibreOfficeFinder;
 
 public class DocThumbTask extends ThumbTask {
@@ -289,7 +290,7 @@ public class DocThumbTask extends ThumbTask {
                     String jarDir = new File(url.toURI()).getParent();
                     String classpath = jarDir + "/*";
                     File file = item.getTempFile();
-                    String[] cmd = { "java", "-cp", classpath, "-Xmx" + docThumbsConfig.getMaxPdfExternalMemory() + "M",
+                    String[] cmd = { JavaExecutable.getPath(), "-cp", classpath, "-Xmx" + docThumbsConfig.getMaxPdfExternalMemory() + "M",
                             PDFToThumb.class.getCanonicalName(), file.getAbsolutePath(),
                             String.valueOf(docThumbsConfig.getThumbSize()), item.toString(),
                             Boolean.toString(logger.isDebugEnabled()) };

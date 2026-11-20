@@ -1,5 +1,6 @@
 package iped.app.bootstrap;
 
+import iped.utils.JavaExecutable;
 import iped.utils.JvmFlags;
 import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
@@ -161,7 +162,6 @@ public class Bootstrap {
 
             classpath = fillClassPathWithLibreOfficeJars(iped, classpath, iped.getCmdLineArgs().isNogui());
 
-            String javaBin = "java";
             if (SystemUtils.IS_OS_WINDOWS) {
                 File javaHome = new File(System.getProperty("java.home"));
                 File embeddedJRE = new File(iped.getRootPath() + "/jre");
@@ -171,8 +171,10 @@ public class Bootstrap {
                         System.err.println(warn);
                     }
                 }
-                javaBin = javaHome.getPath() + "/bin/java.exe";
             }
+            // use the running JVM, not the "java" in the PATH: the JVM flags below are
+            // computed for this runtime and the classes need at least its version
+            String javaBin = JavaExecutable.getPath();
 
             List<String> cmd = new ArrayList<>();
             cmd.addAll(Arrays.asList(javaBin, "-cp", classpath));

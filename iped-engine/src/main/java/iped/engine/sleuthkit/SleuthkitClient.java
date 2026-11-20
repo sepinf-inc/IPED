@@ -1,6 +1,7 @@
 package iped.engine.sleuthkit;
 
 import iped.utils.CharsetUtil;
+import iped.utils.JavaExecutable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -200,7 +201,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
             classpath += pluginConfig.getTskJarFile().getAbsolutePath();
         }
 
-        String[] cmd = { "java", "-cp", classpath, "-Xmx128M", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        String[] cmd = { JavaExecutable.getPath(), "-cp", classpath, "-Xmx128M",
                 "-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir").replace("\"", "\\\"") + File.separator + "tsk-server-" + Math.abs(rand.nextLong()),
                 SleuthkitServer.class.getCanonicalName(), tskDb.getAbsolutePath(), // $NON-NLS-1$
                 Configuration.getInstance().appRoot, pipePath };
