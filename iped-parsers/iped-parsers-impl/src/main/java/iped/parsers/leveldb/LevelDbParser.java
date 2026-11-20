@@ -130,7 +130,7 @@ public final class LevelDbParser extends AbstractParser {
                     throw new IOException("Bad LevelDB table name");
                 Path staged = tmp.resolve(name);
                 Files.copy(input, staged);
-                if (!LevelDbReader.looksLikeTable(staged))
+                if (!LDB4jReader.looksLikeTable(staged))
                     throw new TikaException("Not a valid complete LevelDB SSTable (invalid footer)");
                 evidencePaths.put(name, item == null ? name : item.getPath());
                 if (item != null)
