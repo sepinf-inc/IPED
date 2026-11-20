@@ -54,6 +54,11 @@ public class Bootstrap {
 
     private static volatile File subProcessTempFolder;
 
+    // Printed by the child JVM at startup because of JvmFlags.vectorApi(). Not shown
+    // in the console, the JVM arguments of the child process are written to the log.
+    private static final String INCUBATOR_MODULE_WARNING = "WARNING: Using incubator modules: "
+            + JvmFlags.VECTOR_MODULE;
+
     // encoding of the stdout and stderr of the child process, piped to this process
     private static final Charset CHILD_OUTPUT_CHARSET = StandardCharsets.UTF_8;
 
@@ -341,7 +346,7 @@ public class Bootstrap {
                         // always swallow this line, the folder may already be known from getTempDirArgs()
                         if (line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
                             subProcessTempFolder = new File(line.substring(SUB_PROCESS_TEMP_FOLDER.length()));
-                        } else {
+                        } else if (!line.equals(INCUBATOR_MODULE_WARNING)) {
                             writer.println(line);
                         }
                     }
