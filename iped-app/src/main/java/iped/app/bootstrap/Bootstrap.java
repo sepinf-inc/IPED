@@ -327,7 +327,8 @@ public class Bootstrap {
                             : new PrintStream(os, true, CharsetUtil.NATIVE);
                     String line = null;
                     while ((line = reader.readLine()) != null) {
-                        if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
+                        // always swallow this line, the folder may already be known from getTempDirArgs()
+                        if (line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
                             subProcessTempFolder = new File(line.substring(SUB_PROCESS_TEMP_FOLDER.length()));
                         } else {
                             writer.println(line);
