@@ -9,6 +9,13 @@
                 <param name="extractEntries" type="bool">true</param>
             </params>
         </parser>
+	    <parser class="iped.parsers.leveldb.LevelDbParser">
+	        <params>
+	            <param name="extractStandalone" type="bool">true</param>
+	            <param name="extractDatabase" type="bool">true</param>
+	            <param name="maxRecords" type="int">1000000</param>
+	        </params>
+	    </parser>
     </parsers>
 
 </properties>
