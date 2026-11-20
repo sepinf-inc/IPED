@@ -106,6 +106,25 @@ public class WebKitNetworkGuardTest {
     }
 
     @Test
+    public void testDisallow() {
+        String loader = WebKitNetworkGuard.URL_LOADER;
+        Pattern p = Pattern.compile("https://example\\.com/");
+        WebKitNetworkGuard.allow(p);
+        WebKitNetworkGuard.allowUrlTemplate("http://tile.example.com/{z}/{x}/{y}.png");
+        assertFalse(blocked(loader, "https://example.com/a.js"));
+        assertFalse(blocked(loader, "http://tile.example.com/1/2/3.png"));
+
+        // an equal pattern removes it, Pattern has no equals()
+        WebKitNetworkGuard.disallow(Pattern.compile("https://example\\.com/"));
+        assertTrue(blocked(loader, "https://example.com/a.js"));
+        assertFalse(blocked(loader, "http://tile.example.com/1/2/3.png"));
+
+        WebKitNetworkGuard.disallowUrlTemplate("http://tile.example.com/{z}/{x}/{y}.png");
+        assertTrue(blocked(loader, "http://tile.example.com/1/2/3.png"));
+        assertEquals(0, WebKitNetworkGuard.allowedCountForTests());
+    }
+
+    @Test
     public void testMediaRequestsAlwaysBlocked() {
         // video and audio elements are loaded by JavaFX Media, not by the WebKit loader
         String locator = WebKitNetworkGuard.JFX_MEDIA_PACKAGE + "locator.Locator";

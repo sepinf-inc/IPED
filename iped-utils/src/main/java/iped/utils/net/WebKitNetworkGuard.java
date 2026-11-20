@@ -91,8 +91,19 @@ public class WebKitNetworkGuard extends ProxySelector {
     /** Allows WebKit requests to URLs matching this pattern (from the start). */
     public static void allow(Pattern urlPattern) {
         if (urlPattern != null) {
-            allowed.putIfAbsent(urlPattern.flags() + ":" + urlPattern.pattern(), urlPattern);
+            allowed.putIfAbsent(key(urlPattern), urlPattern);
         }
+    }
+
+    /** Removes a pattern added by {@link #allow(Pattern)}. */
+    public static void disallow(Pattern urlPattern) {
+        if (urlPattern != null) {
+            allowed.remove(key(urlPattern));
+        }
+    }
+
+    private static String key(Pattern urlPattern) {
+        return urlPattern.flags() + ":" + urlPattern.pattern();
     }
 
     /**
@@ -106,6 +117,11 @@ public class WebKitNetworkGuard extends ProxySelector {
         if (p != null) {
             allow(p);
         }
+    }
+
+    /** Removes a template added by {@link #allowUrlTemplate(String)}. */
+    public static void disallowUrlTemplate(String template) {
+        disallow(templateToPattern(template));
     }
 
     static Pattern templateToPattern(String template) {

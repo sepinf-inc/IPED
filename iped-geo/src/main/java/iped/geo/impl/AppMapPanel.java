@@ -225,18 +225,43 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
      */
     private static final Pattern LEAFLET_FILES = Pattern
             .compile("https://unpkg\\.com/leaflet(\\.markercluster)?@[^/]+/dist/", Pattern.CASE_INSENSITIVE);
-    private static final Pattern GOOGLE_MAPS_FILES = Pattern.compile(
-            "https://(unpkg\\.com/leaflet\\.gridlayer\\.googlemutant@[^/]+/|([a-z0-9-]+\\.)*(googleapis|gstatic|google|ggpht)\\.com/)",
+    /**
+     * Only the hosts used by the Google Maps JS API and its tiles. Other Google
+     * hosts are not allowed, some serve content controlled by third parties (e.g.
+     * storage.googleapis.com), and the allowed URLs are valid for all WebViews.
+     */
+    static final Pattern GOOGLE_MAPS_FILES = Pattern.compile(
+            "https://(unpkg\\.com/leaflet\\.gridlayer\\.googlemutant@[^/]+/|(maps|fonts)\\.(googleapis|gstatic)\\.com/|(khms?|mts?)[0-9]*\\.(googleapis|google)\\.com/)",
             Pattern.CASE_INSENSITIVE);
 
-    private static void allowMapNetworkAccess(String tilesSourceURL) {
+    /** tile server currently allowed, to remove it when another one is chosen */
+    private static String allowedTilesSourceURL;
+
+    private static boolean isGoogleMaps(String tilesSourceURL) {
+        return tilesSourceURL.contains("googleapis");
+    }
+
+    private static synchronized void allowMapNetworkAccess(String tilesSourceURL) {
         WebKitNetworkGuard.allow(LEAFLET_FILES);
-        if (tilesSourceURL.contains("googleapis")) {
-            // Google Maps JS API loads resources from several Google domains
+        if (tilesSourceURL.equals(allowedTilesSourceURL)) {
+            return;
+        }
+        if (allowedTilesSourceURL != null) {
+            // do not keep the previous tile server allowed until the application is closed
+            if (isGoogleMaps(allowedTilesSourceURL)) {
+                if (!isGoogleMaps(tilesSourceURL)) {
+                    WebKitNetworkGuard.disallow(GOOGLE_MAPS_FILES);
+                }
+            } else {
+                WebKitNetworkGuard.disallowUrlTemplate(allowedTilesSourceURL);
+            }
+        }
+        if (isGoogleMaps(tilesSourceURL)) {
             WebKitNetworkGuard.allow(GOOGLE_MAPS_FILES);
         } else {
             WebKitNetworkGuard.allowUrlTemplate(tilesSourceURL);
         }
+        allowedTilesSourceURL = tilesSourceURL;
     }
 
     public boolean config(String url) {
