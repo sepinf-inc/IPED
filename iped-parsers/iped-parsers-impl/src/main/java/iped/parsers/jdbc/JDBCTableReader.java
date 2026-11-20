@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.text.html.HTMLEditorKit.Parser;
@@ -60,7 +61,7 @@ import iped.utils.IOUtil;
 public class JDBCTableReader {
 
     private final static Attributes EMPTY_ATTRIBUTES = new AttributesImpl();
-    private final Connection connection;
+    protected final Connection connection;
     private final String tableName;
     int maxClobLength = 1000000;
     private ResultSet results = null;
@@ -69,6 +70,7 @@ public class JDBCTableReader {
     private Detector detector = null;
     private MimeTypes mimeTypes = null;
     private EmbeddedDocumentExtractor ex;
+	private Long rowCount;
     private static Logger LOGGER = LoggerFactory.getLogger(JDBCTableReader.class);
 
     public JDBCTableReader(Connection connection, String tableName, ParseContext context) {
@@ -81,7 +83,7 @@ public class JDBCTableReader {
     public boolean hasDateGuessed() {
         return false;
     }
-
+    
     public boolean nextRow(ContentHandler handler, ParseContext context) throws IOException, SAXException {
         // lazy initialization
         if (results == null) {
@@ -124,7 +126,10 @@ public class JDBCTableReader {
             ParseContext context, int rows)
             throws SQLException, IOException, SAXException {
         String text = null;
-        switch (rsmd.getColumnType(i)) {
+
+        int ct = rsmd.getColumnType(i);
+
+        switch (ct) {
             case Types.BLOB:
                 text = handleBlob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context);
                 break;
@@ -138,7 +143,7 @@ public class JDBCTableReader {
                 text = handleDate(results, i, handler);
                 break;
             case Types.TIMESTAMP:
-                text = handleTimeStamp(results, i, handler);
+                text = handleTimestamp(rsmd, results, i, handler);
                 break;
             case Types.INTEGER:
                 text = handleInteger(rsmd, results, i, handler);
@@ -146,20 +151,33 @@ public class JDBCTableReader {
             case Types.FLOAT:
                 // this is necessary to handle rounding issues in presentation
                 // Should we just use getString(i)?
-                text = Float.toString(results.getFloat(i));
+                text = handleFloat(rsmd, results, i, handler);
                 break;
             case Types.DOUBLE:
                 text = Double.toString(results.getDouble(i));
                 break;
             default:
-                text = results.getString(i);
+            	String value;
+                text = handleString(rsmd, results, i, handler);
                 break;
         }
         return text;
     }
 
-    public List<String> getHeaders() throws IOException {
-        List<String> headers = new ArrayList<String>();
+    protected String handleString(ResultSetMetaData rsmd, ResultSet results2, int i, ContentHandler handler) throws SQLException, SAXException  {
+		return results2.getString(i);
+	}
+
+	protected String handleTimestamp(ResultSetMetaData rsmd, ResultSet results2, int i, ContentHandler handler) throws SQLException, SAXException {
+		return handleInteger(rsmd, results2, i, handler);
+	}
+
+	protected String handleFloat(ResultSetMetaData rsmd, ResultSet results, int i, ContentHandler handler) throws SQLException, SAXException {
+		return Float.toString(results.getFloat(i));
+	}
+
+	public List<String> getHeaders() throws IOException {
+        List<String> headers = new LinkedList<String>();
         // lazy initialization
         if (results == null) {
             results = getTableData();
@@ -305,6 +323,39 @@ public class JDBCTableReader {
         }
         rows = 0;
         return results;
+    }
+
+    public ResultSet getSequentialGaps(String columnName) {
+        ResultSet results;
+        String sql = "select "+columnName+"+1 as start, (select MIN(\"+columnName+\")-1 from "+tableName+" t2\n"
+        		+ "				where t2.\"+columnName+\" > t1.\"+columnName+\") as end from \"+tableName+\" t1\n"
+        		+ "where not exists (select 1 from \"+tableName+\" t2\n"
+        		+ "				where t1.\"+columnName+\" == t2.\"+columnName+\" - 1)"; //$NON-NLS-1$
+        try {
+            Statement st = connection.createStatement();
+            results = st.executeQuery(sql);
+
+        } catch (SQLException e) {
+            results = null;
+            // throw new IOException(e);
+        }
+        rows = 0;
+        return results;
+    }
+
+    protected long getRowCount() {
+    	if(rowCount==null) {
+            String sql = "SELECT COUNT(*) from " + tableName; //$NON-NLS-1$
+            try(Statement st = connection.createStatement()) {                
+                try(ResultSet results = st.executeQuery(sql)){
+                    results.next();
+                    rowCount = results.getLong(1);
+                }
+            } catch (SQLException e) {
+            	rowCount=0l;
+			}
+    	}
+        return rowCount;
     }
 
     public void closeReader() throws SQLException {

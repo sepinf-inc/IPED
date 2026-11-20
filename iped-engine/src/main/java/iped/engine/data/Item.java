@@ -44,7 +44,6 @@ import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.preview.PreviewInputStreamFactory;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.index.IndexItem;
-import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.TextCache;
 import iped.engine.util.Util;
@@ -58,6 +57,7 @@ import iped.utils.ImageUtil;
 import iped.utils.LimitedSeekableInputStream;
 import iped.utils.SeekableByteChannelImpl;
 import iped.utils.SeekableFileInputStream;
+import iped.utils.tika.SyncMetadata;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,

@@ -19,11 +19,14 @@ package iped.parsers.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -40,6 +43,7 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
 import iped.properties.ExtraProperties;
+import iped.utils.tika.IpedMetadata;
 
 /**
  * Abstract class that handles iterating through tables within a database.
@@ -53,15 +57,29 @@ public abstract class AbstractDBParser extends AbstractParser {
     public static final MediaType TABLE_REPORT = MediaType.application("x-database-table");
 
     public static final int HTML_MAX_ROWS = Integer.MAX_VALUE;
+    
+    public static final String DATETIME_MARKUP_START = "<time datetime=\"";
+    public static final String DATABASEDATECOLUMN_PREFIX = "DatabaseDate"+TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER;
 
-    private Connection connection;
+    protected Connection connection;
+    int tableRowsPerItem = 100;
+
+    private boolean parseEmptyIncrementalRanges;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return null;
     }
+    
+    @Field
+    public void setParseEmptyIncrementalRanges(boolean value) {
+        this.parseEmptyIncrementalRanges = value;
+    }
 
-
+    @Field
+    public void setTableRowsPerItem(int value) {
+    	this.tableRowsPerItem = value;
+    }
 
     private int parseTables(ContentHandler handler, ParseContext context, JDBCTableReader reader)
             throws SAXException, IOException, SQLException {
@@ -73,31 +91,30 @@ public abstract class AbstractDBParser extends AbstractParser {
         do {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
-            Metadata tableM = new Metadata();
-            try (InputStream is = trg.createHtmlReport(HTML_MAX_ROWS, handler, context, tmp)) {
-                ++table_fragment;
-                hasNext = trg.hasNext();
-                String title = reader.getTableName();
-                if (hasNext || table_fragment > 1) {
-                    title += "_" + table_fragment;
-                }
-                tableM.set(TikaCoreProperties.TITLE, title);
-                tableM.set(StandardParser.INDEXER_CONTENT_TYPE, TABLE_REPORT.toString());
-                tableM.set(Database.TABLE_NAME, reader.getTableName());
-                tableM.set(Database.COLUMN_COUNT, Integer.toString(trg.getCols()));
-                tableM.set(Database.ROW_COUNT, Integer.toString(trg.getRows()));
-                tableM.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+            IpedMetadata tableM = new IpedMetadata();
+            do {            	
+                try(InputStream is = trg.createHtmlReport(tableRowsPerItem, handler, context, tmp, tableM)) {
+                    ++table_fragment;
+                    hasNext = trg.hasNext();
+                    String title = reader.getTableName();
+                    if (hasNext || table_fragment > 1) {
+                        title += "_" + table_fragment;
+                    }
+                    tableM.set(TikaCoreProperties.TITLE, title);
+                    tableM.set(StandardParser.INDEXER_CONTENT_TYPE, TABLE_REPORT.toString());
+                    tableM.set(Database.TABLE_NAME, reader.getTableName());
+                    tableM.set(Database.COLUMN_COUNT, Integer.toString(trg.getCols()));
+                    tableM.set(Database.ROW_COUNT, Integer.toString(trg.getRows()));
+                    tableM.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                extractor.parseEmbedded(is, handler, tableM, false);
-            }
+                    extractor.parseEmbedded(is, handler, tableM, false);
+                }
+            }while(trg.hasNext());
 
         } while (hasNext);
 
         return trg.getTotRows();
-
     }
-
-
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
@@ -140,9 +157,13 @@ public abstract class AbstractDBParser extends AbstractParser {
             xHandler.endElement("tr");
 
             xHandler.endElement("theader");
+            
+            StringBuffer sbfim = new StringBuffer(); 
 
+            boolean first = true;
             for (String tableName : tableNames) {
                 JDBCTableReader reader = getTableReader(connection, tableName, context);
+
                 int row_count = parseTables(xHandler, context, reader);
                 xHandler.startElement("tr");
 
@@ -159,7 +180,45 @@ public abstract class AbstractDBParser extends AbstractParser {
                 xHandler.endElement("td");
 
                 xHandler.endElement("tr");
+                
+                if (parseEmptyIncrementalRanges) {
+                    try {
+                        StringBuffer sb = new StringBuffer();
+                        DatabaseMetaData dbmd = connection.getMetaData();
+                        ResultSet rs = dbmd.getColumns(null, null, tableName, "");
+                        while (rs.next()) {
+                            String isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
+                            if (isAutoIncrement != null && isAutoIncrement.equals("YES")) {
+                                String columnName = rs.getString("COLUMN_NAME");
+                                ResultSet rsGaps = reader.getSequentialGaps(columnName);
+                                if (rs.next()) {
+                                    if (first) {
+                                        first = false;
+                                        sb.append("<h1>Tabelas com vãos em campos autoincrementais</h1>");
+                                    }
+                                    sb.append("<table>");
+                                    sb.append("<tr><th colspan=\"2\">Tabela:" + tableName + "</th></tr>");
+                                    sb.append("<tr><th colspan=\"2\">Coluna:" + columnName + "</th></tr>");
+                                    sb.append("<tr><th>Inicio</th><th>Fim</th></tr>");
+                                    do {
+                                        sb.append("<tr><td>" + rs.getString("start") + "</td><td>" + rs.getString("end")
+                                                + "</td></tr>");
+
+                                    } while (rs.next());
+                                    sb.append("</table>");
+                                }
+                            }
+                        }
+                        sbfim.append(sb.toString());
+                    } catch (Exception e) {
+                        // ignores
+                    }
+                }
+
+
                 reader.closeReader();
+                
+                xHandler.characters(sbfim.toString());
             }
         } catch (SQLException e) {
             throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$
