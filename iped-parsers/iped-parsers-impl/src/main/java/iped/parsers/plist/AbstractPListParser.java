@@ -210,7 +210,7 @@ public abstract class AbstractPListParser<T> implements Parser {
             processData((NSData) obj, path, state);
 
         } else {
-            getLogger().warn("obj is not supported", obj);
+            getLogger().warn("obj is not supported: {}", obj);
         }
     }
 
