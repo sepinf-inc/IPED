@@ -27,6 +27,11 @@ import org.slf4j.LoggerFactory;
  * which turns the exception thrown here into a load error;</li>
  * <li>WebSockets through com.sun.webkit.network.SocketStreamHandle.</li>
  * </ul>
+ * Media of {@code <video>} and {@code <audio>} elements is not loaded by
+ * WebKit, but by JavaFX Media (com.sun.media.jfxmedia), which opens its own
+ * connections. IPED doesn't use JavaFX Media for anything else, so all its
+ * network requests are blocked.
+ * <p>
  * The HTTP/2 loader (java.net.http.HttpClient, default on Java 12+) may select
  * the proxy asynchronously, without WebKit frames on the stack, so it is
  * disabled by {@link #install()}. WebKit DNS prefetching is not implemented in
@@ -47,6 +52,8 @@ public class WebKitNetworkGuard extends ProxySelector {
 
     static final String WEBKIT_NETWORK_PACKAGE = "com.sun.webkit.network.";
     static final String URL_LOADER = WEBKIT_NETWORK_PACKAGE + "URLLoader";
+    /** loads the media of video and audio elements of the WebView content */
+    static final String JFX_MEDIA_PACKAGE = "com.sun.media.jfxmedia.";
 
     /** Must be set before the first WebView is created, read once by JavaFX. */
     public static final String USE_HTTP2_LOADER_PROP = "com.sun.webkit.useHTTP2Loader";
@@ -135,10 +142,17 @@ public class WebKitNetworkGuard extends ProxySelector {
         return allowed.size();
     }
 
-    /** @return the innermost WebKit network class on the stack, or null. */
+    /**
+     * @return the innermost WebKit network or JavaFX Media class on the stack, or
+     *         null.
+     */
     private static String findWebKitCaller() {
         return WALKER.walk(frames -> frames.map(StackWalker.StackFrame::getClassName)
-                .filter(c -> c.startsWith(WEBKIT_NETWORK_PACKAGE)).findFirst().orElse(null));
+                .filter(WebKitNetworkGuard::isWebViewNetworkClass).findFirst().orElse(null));
+    }
+
+    static boolean isWebViewNetworkClass(String className) {
+        return className.startsWith(WEBKIT_NETWORK_PACKAGE) || className.startsWith(JFX_MEDIA_PACKAGE);
     }
 
     private static int port(URI uri) {

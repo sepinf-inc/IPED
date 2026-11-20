@@ -106,6 +106,22 @@ public class WebKitNetworkGuardTest {
     }
 
     @Test
+    public void testMediaRequestsAlwaysBlocked() {
+        // video and audio elements are loaded by JavaFX Media, not by the WebKit loader
+        String locator = WebKitNetworkGuard.JFX_MEDIA_PACKAGE + "locator.Locator";
+        assertTrue(WebKitNetworkGuard.isWebViewNetworkClass(locator));
+        assertTrue(WebKitNetworkGuard.isWebViewNetworkClass(WebKitNetworkGuard.URL_LOADER));
+        assertFalse(WebKitNetworkGuard.isWebViewNetworkClass("io.minio.MinioClient"));
+
+        assertTrue(blocked(locator, "http://example.com/video.mp4"));
+        assertTrue(blocked(locator, "socket://example.com:80"));
+        // not even for URLs allowed for the map
+        WebKitNetworkGuard.allow(Pattern.compile("https://example\\.com/"));
+        assertTrue(blocked(locator, "https://example.com/audio.mp3"));
+        assertTrue(blocked(locator, "socket://example.com:443"));
+    }
+
+    @Test
     public void testSocketAllowedOnlyOnSameThread() throws InterruptedException {
         WebKitNetworkGuard.allow(Pattern.compile("https://example\\.com/"));
         String loader = WebKitNetworkGuard.URL_LOADER;
