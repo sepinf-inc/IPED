@@ -2,14 +2,13 @@ package iped.app.bootstrap;
 
 import iped.utils.JvmFlags;
 import iped.utils.CharsetUtil;
-import java.io.OutputStreamWriter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URISyntaxException;
@@ -322,7 +321,10 @@ public class Bootstrap {
             public void run() {
                 try {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is, CharsetUtil.NATIVE));
-                    PrintWriter writer = new PrintWriter(new OutputStreamWriter(os, CharsetUtil.NATIVE), true);
+                    // Write through the PrintStream itself (e.g. System.out), so its encoding is used
+                    // (the console encoding on Windows), instead of wrapping it with another charset.
+                    PrintStream writer = os instanceof PrintStream ? (PrintStream) os
+                            : new PrintStream(os, true, CharsetUtil.NATIVE);
                     String line = null;
                     while ((line = reader.readLine()) != null) {
                         if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {

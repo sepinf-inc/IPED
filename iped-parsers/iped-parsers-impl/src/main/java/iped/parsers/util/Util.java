@@ -49,7 +49,7 @@ public class Util {
         return autoParser;
     }
 
-    private static String getContentPreview(InputStream is, Metadata m, String mimeType) {
+    public static String getContentPreview(InputStream is, Metadata m, String mimeType) {
         LimitedContentHandler contentHandler = new LimitedContentHandler(MAX_PREVIEW_SIZE);
         TextContentHandler textHandler = new TextContentHandler(contentHandler, true);
         if (m == null)
