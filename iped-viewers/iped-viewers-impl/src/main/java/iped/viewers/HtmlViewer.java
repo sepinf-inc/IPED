@@ -5,7 +5,6 @@ import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -26,6 +25,7 @@ import iped.utils.UiUtil;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 import iped.viewers.search.HitsUpdater;
+import iped.viewers.util.WebViewContentLoader;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -62,6 +62,8 @@ public class HtmlViewer extends AbstractViewer {
     FileHandler fileHandler = new FileHandler();
 
     protected volatile File tmpFile;
+    // html waiting for the document with the content security policy to be loaded
+    private File contentToWrite;
     private volatile String fileName;
     protected Set<String> highlightTerms;
     private volatile boolean scrollToPositionDone = false;
@@ -131,35 +133,47 @@ public class HtmlViewer extends AbstractViewer {
             @Override
             public void run() {
                 scrollToPositionDone = false;
+                contentToWrite = null;
                 webEngine.load(null);
                 webEngine.loadContent(UiUtil.getUIEmptyHtml());
 
                 if (content != null) {
-                    try {
-                        tmpFile = getTempFile(content);
-                        if (content instanceof IItem) {
-                            fileName = ((IItem) content).getName();
-                        } else {
-                            fileName = tmpFile.getName();
-                        }
-                        highlightTerms = terms;
+                    tmpFile = getTempFile(content);
+                    if (content instanceof IItem) {
+                        fileName = ((IItem) content).getName();
+                    } else {
+                        fileName = tmpFile.getName();
+                    }
+                    highlightTerms = terms;
 
-                        if (tmpFile.length() <= getMaxHtmlSize()) {
-                            webEngine.setJavaScriptEnabled(enableJavascript);
-                            webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
-                            webEngine.load(tmpFile.toURI().toURL().toString());
+                    if (tmpFile.length() <= getMaxHtmlSize()) {
+                        webEngine.setJavaScriptEnabled(enableJavascript);
+                        webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
+                        loadHtmlFile(tmpFile);
 
-                        } else {
-                            webEngine.setJavaScriptEnabled(true);
-                            webEngine.loadContent(LARGE_FILE_MSG);
-                        }
-
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
+                    } else {
+                        webEngine.setJavaScriptEnabled(true);
+                        webEngine.loadContent(LARGE_FILE_MSG);
                     }
                 }
             }
         });
+    }
+
+    /**
+     * Loads a html file blocking all network access of its content, see
+     * {@link WebViewContentLoader}. Must be called in the JavaFX thread.
+     */
+    protected void loadHtmlFile(File html) {
+        try {
+            contentToWrite = html;
+            webEngine.load(WebViewContentLoader.getShellFile().toURI().toURL().toString());
+
+        } catch (IOException e) {
+            // do not load the content without the policy
+            contentToWrite = null;
+            LOGGER.error("Error loading html", e);
+        }
     }
 
     private File getTempFile(IStreamSource content) {
@@ -226,57 +240,90 @@ public class HtmlViewer extends AbstractViewer {
 
                         if (newState == Worker.State.SUCCEEDED || newState == Worker.State.FAILED) {
 
-                            if (tmpFile != null && !webEngine.getLocation().endsWith(tmpFile.getName()))
+                            if (tmpFile != null && !WebViewContentLoader.isShell(webEngine.getLocation()))
                                 return;
 
-                            try {
-                                Object exec = currExec = new Object();
-                                synchronized (lock) {
-                                    while (isRunning) {
-                                        lock.wait();
-                                    }
-                                    isRunning = true;
-                                }
-                                doc = webEngine.getDocument();
-                                isNavigableTree = false;
-                                if (doc != null) {
-                                    try {
-                                        Boolean nt = (Boolean) webEngine.executeScript("document.querySelector('details') != null");
-                                        isNavigableTree = nt.booleanValue();
-                                    } catch (Exception e) {
-                                    }
-    
-                                    currentHit = -1;
-                                    totalHits = 0;
-                                    hits = new ArrayList<Object>();
-                                    if (highlightTerms != null && highlightTerms.size() > 0) {
-                                        highlightNode(doc, false, exec);
-                                    }
-    
-                                } else if (tmpFile != null) {
-                                    LOGGER.info("Null DOM to highlight!");
-                                    queryTerms = highlightTerms.toArray(new String[0]);
-                                    currTerm = queryTerms.length > 0 ? 0 : -1;
-                                    if (shouldScrollToHit()) {
-                                        scrollToNextHit(true);
-                                    }
-                                }
-                                if (doc != null) {
-                                    scrollToPosition();
-                                }
-                            } catch(Exception e) {
-                                e.printStackTrace();
-                            } finally{
-                                synchronized (lock) {
-                                    isRunning = false;
-                                    lock.notifyAll();
-                                }
+                            File html = contentToWrite;
+                            if (html != null && newState == Worker.State.SUCCEEDED) {
+                                // writing changes the load state, do it out of this listener
+                                Platform.runLater(() -> writeContent(html));
+                                return;
                             }
+                            onDocumentLoaded();
                         }
                     }
                 });
             }
         });
+    }
+
+    private void writeContent(File html) {
+        if (contentToWrite != html || !WebViewContentLoader.isShell(webEngine.getLocation())) {
+            // another file was loaded meanwhile
+            return;
+        }
+        contentToWrite = null;
+        try {
+            // scripts of the content may need it while the content is parsed
+            addJavascriptListener(webEngine);
+            WebViewContentLoader.write(webEngine, html);
+
+        } catch (IOException e) {
+            LOGGER.error("Error loading html", e);
+        }
+        // the load state does not change to succeeded after writing the content
+        onDocumentLoaded();
+        onContentWritten();
+    }
+
+    /** Called after the html content was written into the loaded document. */
+    protected void onContentWritten() {
+    }
+
+    private void onDocumentLoaded() {
+        try {
+            Object exec = currExec = new Object();
+            synchronized (lock) {
+                while (isRunning) {
+                    lock.wait();
+                }
+                isRunning = true;
+            }
+            doc = webEngine.getDocument();
+            isNavigableTree = false;
+            if (doc != null) {
+                try {
+                    Boolean nt = (Boolean) webEngine.executeScript("document.querySelector('details') != null");
+                    isNavigableTree = nt.booleanValue();
+                } catch (Exception e) {
+                }
+
+                currentHit = -1;
+                totalHits = 0;
+                hits = new ArrayList<Object>();
+                if (highlightTerms != null && highlightTerms.size() > 0) {
+                    highlightNode(doc, false, exec);
+                }
+
+            } else if (tmpFile != null) {
+                LOGGER.info("Null DOM to highlight!");
+                queryTerms = highlightTerms.toArray(new String[0]);
+                currTerm = queryTerms.length > 0 ? 0 : -1;
+                if (shouldScrollToHit()) {
+                    scrollToNextHit(true);
+                }
+            }
+            if (doc != null) {
+                scrollToPosition();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            synchronized (lock) {
+                isRunning = false;
+                lock.notifyAll();
+            }
+        }
     }
 
     @Override
