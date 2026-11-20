@@ -120,7 +120,7 @@ public class PDFTextParser extends PDFParser {
                 if (System.getProperty("iped.javaVersionChecked") != null) {
                     LOGGER.info(msg);
                 } else {
-                    LOGGER.error(msg);
+                    LOGGER.warn(msg);
                 }
             }
         }
