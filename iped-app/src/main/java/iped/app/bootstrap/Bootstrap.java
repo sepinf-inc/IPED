@@ -12,6 +12,8 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,6 +53,9 @@ public class Bootstrap {
     private static String separator = SystemUtils.IS_OS_WINDOWS ? ";" : ":";
 
     private static volatile File subProcessTempFolder;
+
+    // encoding of the stdout and stderr of the child process, piped to this process
+    private static final Charset CHILD_OUTPUT_CHARSET = StandardCharsets.UTF_8;
 
     public static void main(String args[]) {
         new Bootstrap().run(args);
@@ -171,6 +176,10 @@ public class Bootstrap {
             cmd.addAll(getCustomJVMArgs());
             cmd.addAll(getSystemProperties());
             cmd.addAll(getTempDirArgs());
+            // The output of the child process is piped to this one, use a fixed encoding in
+            // both sides: its System.out would use the OS charset and log4j the default one.
+            cmd.add("-Dstdout.encoding=" + CHILD_OUTPUT_CHARSET.name());
+            cmd.add("-Dstderr.encoding=" + CHILD_OUTPUT_CHARSET.name());
             if (SystemUtils.IS_OS_WINDOWS) {
                 cmd.add("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"); // fix for #1719
             }
@@ -185,9 +194,9 @@ public class Bootstrap {
             Process process = pb.start();
             System.setProperty(StartUpControl.ipedChildProcessPID, String.valueOf(process.pid()));
 
-            redirectStream(process.getInputStream(), System.out);
-            redirectStream(process.getErrorStream(), System.err);
-            redirectStream(System.in, process.getOutputStream());
+            redirectStream(process.getInputStream(), CHILD_OUTPUT_CHARSET, System.out);
+            redirectStream(process.getErrorStream(), CHILD_OUTPUT_CHARSET, System.err);
+            redirectStream(System.in, CharsetUtil.NATIVE, process.getOutputStream());
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
@@ -292,9 +301,11 @@ public class Bootstrap {
         List<String> props = new ArrayList<>();
         for (Entry<Object, Object> e : System.getProperties().entrySet()) {
             String key = e.getKey().toString();
-            // java.io.tmpdir and java.io.basetmpdir are set by getTempDirArgs()
+            // java.io.tmpdir and java.io.basetmpdir are set by getTempDirArgs(),
+            // stdout.encoding and stderr.encoding are set to CHILD_OUTPUT_CHARSET
             if (!key.equals("java.class.path") && !key.equals("sun.boot.library.path")
-                    && !key.equals("java.io.tmpdir") && !key.equals("java.io.basetmpdir")) {
+                    && !key.equals("java.io.tmpdir") && !key.equals("java.io.basetmpdir")
+                    && !key.equals("stdout.encoding") && !key.equals("stderr.encoding")) {
                 props.add("-D" + key + "=" + e.getValue().toString().replace("\"", "\\\""));
             }
         }
@@ -316,11 +327,11 @@ public class Bootstrap {
         return classpath;
     }
 
-    private static void redirectStream(InputStream is, OutputStream os) {
+    private static void redirectStream(InputStream is, Charset isCharset, OutputStream os) {
         Thread t = new Thread() {
             public void run() {
                 try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(is, CharsetUtil.NATIVE));
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is, isCharset));
                     // Write through the PrintStream itself (e.g. System.out), so its encoding is used
                     // (the console encoding on Windows), instead of wrapping it with another charset.
                     PrintStream writer = os instanceof PrintStream ? (PrintStream) os
