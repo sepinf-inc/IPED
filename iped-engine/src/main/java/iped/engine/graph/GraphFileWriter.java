@@ -58,6 +58,7 @@ public class GraphFileWriter implements Closeable, Flushable {
     private static final String REL_CSV_PREFIX = "relationships";
     private static final String HEADER_CSV_STR = "_headers_";
     private static final String SUFFIX = "iped";
+    private static final String COLUMN_SEPARATOR = "\",\"";
     private static final String ARG_FILE_NAME = GraphImportRunner.ARGS_FILE_NAME + "-" + SUFFIX + ".txt";
 
     private Map<String, CSVWriter> nodeWriters = new HashMap<>();
@@ -411,16 +412,33 @@ public class GraphFileWriter implements Closeable, Flushable {
                         for (File input : subFiles) {
                             File dest = new File(output, num + File.separator + input.getName().replace(".gzip", ""));
                             dest.getParentFile().mkdirs();
-                            if (input.getName().startsWith(NODE_CSV_PREFIX) && !input.getName().contains(HEADER_CSV_STR) && input.getName().endsWith(".csv.gzip")) {
+                            boolean isDataFile = !input.getName().contains(HEADER_CSV_STR) && input.getName().endsWith(".csv.gzip");
+                            // cases processed by older versions may have lines shorter than the header
+                            int numColumns = 0;
+                            if (isDataFile) {
+                                String dataSuffix = CSVWriter.SEPARATOR + SUFFIX + ".csv.gzip";
+                                String headerName = input.getName().substring(0, input.getName().length() - dataSuffix.length()) + HEADER_CSV_STR + SUFFIX + ".csv.gzip";
+                                numColumns = countHeaderColumns(new File(parent, headerName));
+                            }
+                            if (isDataFile && input.getName().startsWith(NODE_CSV_PREFIX)) {
                                 try (BufferedWriter writer = Files.newBufferedWriter(dest.toPath(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
                                         BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(Files.newInputStream(input.toPath())), StandardCharsets.UTF_8))) {
                                     String line = null;
                                     while ((line = reader.readLine()) != null) {
                                         String id = line.substring(0, line.indexOf(','));
                                         if (ids.add(id)) {
-                                            writer.write(line);
+                                            writer.write(padColumns(line, numColumns));
                                             writer.write("\r\n");
                                         }
+                                    }
+                                }
+                            } else if (isDataFile && input.getName().startsWith(REL_CSV_PREFIX)) {
+                                try (BufferedWriter writer = Files.newBufferedWriter(dest.toPath());
+                                        BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(Files.newInputStream(input.toPath())), StandardCharsets.UTF_8))) {
+                                    String line = null;
+                                    while ((line = reader.readLine()) != null) {
+                                        writer.write(padColumns(line, numColumns));
+                                        writer.write("\r\n");
                                     }
                                 }
                             } else
@@ -465,6 +483,43 @@ public class GraphFileWriter implements Closeable, Flushable {
 
         CSVWriter out = getNodeWriter(label);
         out.write(record);
+    }
+
+    /**
+     * Appends empty values to a CSV line with less columns than its header. Lines
+     * are written with the fields known at that moment, so they are shorter than
+     * the final header if a new field shows up later, and the neo4j importer
+     * rejects a shorter line ending with an empty value.
+     */
+    static String padColumns(String line, int numColumns) {
+        if (line.isEmpty()) {
+            return line;
+        }
+        int columns = 1;
+        int idx = -1;
+        // values never contain quotes, see CSVWriter.write()
+        while ((idx = line.indexOf(COLUMN_SEPARATOR, idx + 1)) != -1) {
+            columns++;
+        }
+        if (columns >= numColumns) {
+            return line;
+        }
+        StringBuilder sb = new StringBuilder(line);
+        for (; columns < numColumns; columns++) {
+            sb.append(",\"\"");
+        }
+        return sb.toString();
+    }
+
+    private static int countHeaderColumns(File gzipHeaderFile) throws IOException {
+        if (!gzipHeaderFile.exists()) {
+            return 0;
+        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                new GZIPInputStream(Files.newInputStream(gzipHeaderFile.toPath())), StandardCharsets.UTF_8))) {
+            String header = reader.readLine();
+            return header == null || header.isEmpty() ? 0 : header.split(",").length;
+        }
     }
 
     private static String uniqueId(Label label, String uniquePropertyName, String uniquePropertyValue) {
@@ -679,6 +734,7 @@ public class GraphFileWriter implements Closeable, Flushable {
             BufferedReader reader = null;
             BufferedWriter writer = null;
             File tmp = new File(output.getParentFile(), output.getName() + ".tmp");
+            int numColumns = getNumColumns();
             try {
                 writer = new BufferedWriter(
                         new OutputStreamWriter(new FileOutputStream(tmp), Charset.forName("utf-8")));
@@ -697,7 +753,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                     if (newId2 != null) {
                         line = line.replaceFirst(id2, newId2);
                     }
-                    writer.write(line);
+                    writer.write(padColumns(line, numColumns));
                     writer.write("\r\n");
                 }
             } finally {
@@ -715,6 +771,7 @@ public class GraphFileWriter implements Closeable, Flushable {
         public void normalizeNodes(Map<String, String> replaces) throws IOException {
             Map<String, String> uniques = new TreeMap<>();
             Set<String> finalIds = new HashSet<>();
+            int numColumns = getNumColumns();
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(new FileInputStream(output), Charset.forName("utf-8")))) {
                 String line;
@@ -760,7 +817,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                     new OutputStreamWriter(new FileOutputStream(output), Charset.forName("utf-8")))) {
                 for (Entry<String, String> entry : uniques.entrySet()) {
                     if (finalIds.contains(entry.getKey())) {
-                        writer.write(entry.getValue());
+                        writer.write(padColumns(entry.getValue(), numColumns));
                         writer.write("\r\n");
                     }
                 }
@@ -840,6 +897,12 @@ public class GraphFileWriter implements Closeable, Flushable {
                 } catch (ClassNotFoundException e) {
                     throw new IOException(e);
                 }
+            }
+        }
+
+        private int getNumColumns() {
+            synchronized (fieldPositions) {
+                return fieldPositions.size();
             }
         }
 
