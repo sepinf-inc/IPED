@@ -333,14 +333,26 @@ public class IOUtil {
         }
     }
 
+    private static final int COPY_BUFFER_SIZE = 1 << 20;
+
+    // reused by each thread, allocating a direct buffer per file is expensive when copying many small files
+    private static final ThreadLocal<ByteBuffer> COPY_BUFFER = ThreadLocal.withInitial(() -> ByteBuffer.allocateDirect(COPY_BUFFER_SIZE));
+
     public static void copyInputStreamToPath(InputStream in, Path out) throws IOException {
+        if (!(in instanceof BufferedInputStream)) {
+            // the channel below only fills the whole buffer if the stream reports available bytes
+            in = new BufferedInputStream(in, COPY_BUFFER_SIZE);
+        }
         try (ReadableByteChannel srcChannel = Channels.newChannel(in);
                 FileChannel destChannel = FileChannel.open(out, StandardOpenOption.CREATE, StandardOpenOption.WRITE,
                         StandardOpenOption.TRUNCATE_EXISTING)) {
-            ByteBuffer buffer = ByteBuffer.allocateDirect(1 << 20);
+            ByteBuffer buffer = COPY_BUFFER.get();
+            buffer.clear();
             while (srcChannel.read(buffer) != -1 && !Thread.currentThread().isInterrupted()) {
                 buffer.flip();
-                destChannel.write(buffer);
+                while (buffer.hasRemaining()) {
+                    destChannel.write(buffer);
+                }
                 buffer.clear();
             }
         }
