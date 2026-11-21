@@ -1355,7 +1355,7 @@ public class ReportGenerator {
                     break;
 
                 case QUOTE_CATALOG:
-                    quoteObs = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"catalogIcon\"></div><i> "
+                    quoteObs = "<span style=\"float:none\" class=\"outside\"><div class=\"catalogIcon\"></div><i> "
                             + Messages.getString("WhatsAppReport.QuoteCatalog") + "</i></span>";
                     break;
 
@@ -1474,10 +1474,12 @@ public class ReportGenerator {
                     if (product != null) {
                         seller = getBestContactName(false, product.getSeller(), contactsDirectory, account);
                     }
-                    if (!quoteMsg.isEmpty()) {
-                        quoteMsg += "<br>";
+                    if (product != null) {
+                        if (!quoteMsg.isEmpty()) {
+                            quoteMsg += "<br>";
+                        }
+                        quoteMsg += formatProduct(product, seller);
                     }
-                    quoteMsg = formatProduct(product, seller);
                     break;
 
                 default:
