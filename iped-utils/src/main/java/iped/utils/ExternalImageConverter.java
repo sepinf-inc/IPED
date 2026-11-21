@@ -242,9 +242,12 @@ public class ExternalImageConverter implements Closeable {
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(p.getInputStream(), StandardCharsets.ISO_8859_1))) {
                 String line = reader.readLine();
-                String[] d = line.split(" ");
-                if (d.length >= 2)
-                    return new Dimension(Integer.parseInt(d[0]), Integer.parseInt(d[1]));
+                if (line != null) {
+                    String[] d = line.split(" ");
+                    if (d.length >= 2) {
+                        return new Dimension(Integer.parseInt(d[0]), Integer.parseInt(d[1]));
+                    }
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
