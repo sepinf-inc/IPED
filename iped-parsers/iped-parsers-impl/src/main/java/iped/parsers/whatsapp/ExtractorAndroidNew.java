@@ -606,6 +606,9 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 if (m.getMessageType() == AI_RESPONSE) {
                     if (hasAIResponse && extractAIResponse(conn, m)) {
                         m.setMessageType(TEXT_MESSAGE);
+                    } else {
+                        // Response content not available or not decoded, do not render an empty bubble
+                        m.setMessageType(UNKNOWN_MESSAGE);
                     }
                 }
 
