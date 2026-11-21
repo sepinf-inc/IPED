@@ -845,8 +845,20 @@ public class ReportGenerator {
                         if (notNullNorBlank(message.getData())) {
                             out.print(format(message.getData()) + "<br>");
                         }
+                        String uiElements = "";
                         if (notNullNorBlank(message.getUiElements())) {
-                            out.print(formatUiElements(message.getUiElements()));
+                            uiElements = formatUiElements(message.getUiElements());
+                        }
+                        if (!uiElements.isEmpty()) {
+                            out.print(uiElements);
+                        } else if (message.getMessageType() == MessageType.UI_ELEMENTS
+                                && message.getThumbData() == null && message.getMediaItem() == null
+                                && !notNullNorBlank(message.getTitle()) && !notNullNorBlank(message.getDescription())
+                                && !notNullNorBlank(message.getUrl()) && !notNullNorBlank(message.getData())) {
+                            // No supported content was found (e.g. payment requests), so do not
+                            // render an empty bubble
+                            out.print("<i>" + Messages.getString("WhatsAppReport.UnknownMessage") + " [ID: "
+                                    + message.getId() + "]</i><br>");
                         }
                         break;
                     case PRODUCT_MESSAGE:
