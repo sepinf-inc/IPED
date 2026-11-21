@@ -254,8 +254,9 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         html = html.replace("{{leafletarrowheads}}", leafletarrowheads);
 
         String apikey = JMapOptionsPane.getGoogleAPIKey();
+        // GoogleMutant 0.15.0 is the last version compatible with Leaflet 1.x
         html = html.replace("{{googlemaps_scripts}}", "<script id=\"mapsapi\" src=\"https://maps.googleapis.com/maps/api/js?key=" + apikey + "\" async defer></script>\n"
-                + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js\"></script>");
+                + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@0.15.0/dist/Leaflet.GoogleMutant.js\"></script>");
 
         html = html.replace("{{tilelayer_script}}", "setTileServerUrl('" + url + "');");
 
