@@ -122,7 +122,8 @@ public class IPEDSource implements IIPEDSource {
     private record ReaderStoredFields(IndexReader reader, StoredFields storedFields) {
     }
 
-    private final CloseableThreadLocal<ReaderStoredFields> storedFieldsPerThread = new CloseableThreadLocal<>();
+    // replaced on reopen(), it can not be used after being closed
+    private volatile CloseableThreadLocal<ReaderStoredFields> storedFieldsPerThread = new CloseableThreadLocal<>();
 
     protected ArrayList<String> leafCategories = new ArrayList<String>();
     protected Category categoryTree;
@@ -592,6 +593,7 @@ public class IPEDSource implements IIPEDSource {
 
     public void reopen() throws IOException {
         close();
+        storedFieldsPerThread = new CloseableThreadLocal<>();
         openIndex(index, iw);
     }
 
