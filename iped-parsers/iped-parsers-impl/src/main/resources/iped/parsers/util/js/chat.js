@@ -200,7 +200,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (conversation) {
         conversation.addEventListener("click", (event) => {
-            if (event.target.closest("a, input, button, audio, video, .check")) {
+            // Ignore clicks on interactive elements, including quotes (which jump to the quoted message)
+            if (event.target.closest("a, input, button, audio, video, .check, .quoteTo, .quoteFrom")) {
                 return;
             }			
             const line = event.target.closest(".line");
