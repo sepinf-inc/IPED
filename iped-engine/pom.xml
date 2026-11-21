@@ -161,6 +161,11 @@
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
+                <!-- not used, java.util.logging is bridged by jul-to-slf4j -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-jul</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -279,6 +284,11 @@
                 <exclusion>
                     <groupId>org.neo4j</groupId>
                     <artifactId>neo4j-udc</artifactId>
+                </exclusion>
+                <!-- not used, java.util.logging is bridged by jul-to-slf4j -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-jul</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>commons-logging</groupId>
