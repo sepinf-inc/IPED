@@ -1,7 +1,6 @@
 package iped.engine.task;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.lucene.index.DirectoryReader;
@@ -17,6 +16,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.lucene.SlowCompositeReaderWrapper;
 import iped.engine.task.index.IndexItem;
+import iped.engine.util.HashIndex;
 import iped.utils.HashValue;
 
 /**
@@ -32,7 +32,7 @@ public class DuplicateTask extends AbstractTask {
 
     private static final String TASK_EXECUTED = DuplicateTask.class.getName() + "_EXECUTED";
 
-    private HashMap<IHashValue, IHashValue> hashMap;
+    private HashIndex hashIndex;
 
     private static boolean ignoreDuplicates = false;
 
@@ -55,14 +55,7 @@ public class DuplicateTask extends AbstractTask {
         boolean isDuplicate = false;
         IHashValue hashValue = evidence.getHashValue();
         if (hashValue != null) {
-            synchronized (hashMap) {
-                if (!hashMap.containsKey(hashValue)) {
-                    hashMap.put(hashValue, hashValue);
-                } else {
-                    isDuplicate = true;
-                }
-
-            }
+            isDuplicate = !hashIndex.add(hashValue);
         }
 
         if (ignoreDuplicates && isDuplicate && !evidence.isDir() && !evidence.isRoot()
@@ -78,10 +71,10 @@ public class DuplicateTask extends AbstractTask {
 
         ignoreDuplicates = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
 
-        hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(HASH_MAP);
-        if (hashMap == null) {
-            hashMap = new HashMap<IHashValue, IHashValue>();
-            caseData.putCaseObject(HASH_MAP, hashMap);
+        hashIndex = (HashIndex) caseData.getCaseObject(HASH_MAP);
+        if (hashIndex == null) {
+            hashIndex = new HashIndex();
+            caseData.putCaseObject(HASH_MAP, hashIndex);
 
             try (IndexReader reader = DirectoryReader.open(worker.writer, true, true)) {
                 LeafReader aReader = SlowCompositeReaderWrapper.wrap(reader);
@@ -90,8 +83,7 @@ public class DuplicateTask extends AbstractTask {
                     for (int ord = 0; ord < sdv.getValueCount(); ord++) {
                         String hash = sdv.lookupOrd(ord).utf8ToString();
                         if (hash != null && !hash.isEmpty()) {
-                            IHashValue hValue = new HashValue(hash);
-                            hashMap.put(hValue, hValue);
+                            hashIndex.add(new HashValue(hash));
                         }
                     }
                 }
@@ -104,7 +96,7 @@ public class DuplicateTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        hashMap.clear();
+        hashIndex.clear();
     }
 
 }
