@@ -174,7 +174,7 @@ public abstract class MetadataViewer extends AbstractViewer {
                             }
                             Files.write(viewer.tmpFile.toPath(), preview.getBytes("UTF-8"), //$NON-NLS-1$
                                     StandardOpenOption.TRUNCATE_EXISTING);
-                            webEngine.load(viewer.tmpFile.toURI().toURL().toString());
+                            viewer.loadHtmlFile(viewer.tmpFile);
 
                         } catch (IOException e) {
                             webEngine.loadContent(preview);

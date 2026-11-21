@@ -1,5 +1,6 @@
 package iped.parsers.registry.keys;
 
+import iped.utils.CharsetUtil;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -100,7 +101,7 @@ public class MRUKeyParser extends HtmlKeyParser {
                 int endNamePos = i + lenSB - 6;
                 i += 2;
                 if ((data[i] == 0x2F)) {
-                    fullPath.append(new String(ArrayUtils.subarray(data, i + 1, i + 3)) + "/");
+                    fullPath.append(new String(ArrayUtils.subarray(data, i + 1, i + 3), CharsetUtil.NATIVE) + "/");
                 }
                 if ((data[i] == 0x31) || (data[i] == 0x35) || (data[i] == 0x32) || (data[i] == 0x36)
                         || (data[i] == 0xb1)) {

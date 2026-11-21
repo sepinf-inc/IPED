@@ -1,5 +1,6 @@
 package iped.geo.kml;
 
+import java.nio.charset.StandardCharsets;
 import java.awt.FileDialog;
 import java.io.File;
 import java.io.FileWriter;
@@ -62,7 +63,7 @@ public class KMLResult {
 
             FileWriter w;
             try {
-                w = new FileWriter(f);
+                w = new FileWriter(f, StandardCharsets.UTF_8);
                 String[] cols = guiProvider.getColumnsManager().getLoadedCols();
                 cols = (String[]) ArrayUtils.subarray(cols, 2, cols.length);
                 GetResultsKMLWorker kmlWorker = new GetResultsKMLWorker(app, cols, null, null);

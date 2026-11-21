@@ -1,5 +1,6 @@
 package iped.parsers.whatsapp;
 
+import java.net.URI;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -58,7 +59,16 @@ public class LinkDownloader {
 
     public void downloadUsingStream(File tmp) throws IOException {
         int status = -1;
-        URL url = new URL(urlStr);
+        URL url;
+        try {
+            url = URI.create(urlStr).toURL();
+        } catch (IllegalArgumentException e) {
+            // URL from evidence that is not a valid URI (e.g. unencoded characters):
+            // keep the lenient parsing used before, it may still be downloadable
+            @SuppressWarnings("deprecation")
+            URL lenient = new URL(urlStr);
+            url = lenient;
+        }
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) url.openConnection();

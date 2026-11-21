@@ -243,10 +243,10 @@ public class RemoteTranscriptionTask extends AbstractTranscriptTask {
 
                 long t0 = System.currentTimeMillis();
 
-                bos.write(MESSAGES.VERSION_1_2.toString().getBytes());
+                bos.write(MESSAGES.VERSION_1_2.toString().getBytes(StandardCharsets.UTF_8));
                 // bos.write("\n".getBytes());
 
-                bos.write(MESSAGES.AUDIO_SIZE.toString().getBytes());
+                bos.write(MESSAGES.AUDIO_SIZE.toString().getBytes(StandardCharsets.UTF_8));
 
                 DataOutputStream dos = new DataOutputStream(bos);
                 // Must use long see #1833

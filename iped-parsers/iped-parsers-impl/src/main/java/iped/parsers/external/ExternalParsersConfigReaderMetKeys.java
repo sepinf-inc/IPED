@@ -50,4 +50,6 @@ public interface ExternalParsersConfigReaderMetKeys {
     String OUTPUT_IS_HTML = "outputIsHtml";
 
     String LINES_TO_IGNORE = "firstLinesToIgnore";
+
+    String UNESCAPE_OUTPUT = "unescapeOutput";
 }

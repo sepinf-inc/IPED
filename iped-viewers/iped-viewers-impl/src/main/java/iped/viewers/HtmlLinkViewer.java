@@ -126,6 +126,11 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
     }
 
     @Override
+    protected void onContentWritten() {
+        updateSelection();
+    }
+
+    @Override
     protected int getMaxHtmlSize() {
         return Integer.MAX_VALUE;
     }

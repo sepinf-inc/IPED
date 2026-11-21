@@ -1,5 +1,6 @@
 package iped.viewers;
 
+import iped.utils.CharsetUtil;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -538,8 +539,8 @@ public class LibreOfficeViewer extends AbstractViewer {
             Path source = fs.getPath("/[Content_Types].xml");
             Path temp = fs.getPath("/tmp.xml");
             Files.move(source, temp);
-            in = new BufferedReader(new InputStreamReader(Files.newInputStream(temp)));
-            out = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(source)));
+            in = new BufferedReader(new InputStreamReader(Files.newInputStream(temp), CharsetUtil.NATIVE));
+            out = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(source), CharsetUtil.NATIVE));
             String line = null;
             while ((line = in.readLine()) != null) {
                 int p = line.indexOf(s1);

@@ -83,7 +83,7 @@ public class CopyProperties extends SwingWorker<Boolean, Integer> implements Pro
         for (Integer docId : uniqueIds) {
             this.firePropertyChange("progress", progress, ++progress); //$NON-NLS-1$
             try {
-                Document doc = App.get().appCase.getSearcher().doc(docId);
+                Document doc = App.get().appCase.storedFields().document(docId);
                 for (int col = 0; col < fields.size(); col++) {
                     String[] values = new String[1];
                     String field = fields.get(col);

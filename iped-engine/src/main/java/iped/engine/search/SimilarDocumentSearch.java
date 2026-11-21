@@ -34,21 +34,22 @@ public class SimilarDocumentSearch {
 
     public Query getQueryForSimilarDocs(IItemId item, int matchPercent, IPEDSource appCase) {
 
-        MoreLikeThis mlt = new MoreLikeThis(appCase.getReader());
-        String[] fields = { IndexItem.CONTENT };
-
-        mlt.setMaxQueryTerms(50);
-        mlt.setFieldNames(fields);
-        mlt.setAnalyzer(appCase.getAnalyzer());
-        mlt.setBoost(true);
-        mlt.setMinDocFreq(2);
-        mlt.setMaxDocFreqPct(10);
-        mlt.setMinTermFreq(1);
-        mlt.setMaxNumTokensParsed(10000);
-        mlt.setMinWordLen(4);
-        mlt.setMaxWordLen(25);
-        mlt.setStopWords(stopSet);
         try {
+            MoreLikeThis mlt = new MoreLikeThis(appCase.getReader());
+            String[] fields = { IndexItem.CONTENT };
+
+            mlt.setMaxQueryTerms(50);
+            mlt.setFieldNames(fields);
+            mlt.setAnalyzer(appCase.getAnalyzer());
+            mlt.setBoost(true);
+            mlt.setMinDocFreq(2);
+            mlt.setMaxDocFreqPct(10);
+            mlt.setMinTermFreq(1);
+            mlt.setMaxNumTokensParsed(10000);
+            mlt.setMinWordLen(4);
+            mlt.setMaxWordLen(25);
+            mlt.setStopWords(stopSet);
+
             /*
              * StandardParser autoParser = new StandardParser();
              * autoParser.setFallback(Configuration.fallBackParser);

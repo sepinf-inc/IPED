@@ -25,6 +25,16 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$
 
+    /**
+     * Temp folder created by the process that started this JVM, which also passed
+     * it as java.io.tmpdir in the command line. Since Java 21 the JVM reads
+     * java.io.tmpdir only at startup, so changing it with System.setProperty()
+     * does not change where File.createTempFile() and Files.createTempFile()
+     * create their files.
+     */
+    public static final String SYS_PROP_IPED_TEMP = "iped.tempdir";
+    private static final String SYS_PROP_BASE_TMPDIR = "java.io.basetmpdir";
+
     public static final String NUM_THREADS = "numThreads";
 
     private static final String HASH_DB = "hashesDB";
@@ -60,39 +70,22 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
         Logger logger = Configuration.getInstance().logger;
 
-        if (System.getProperty("java.io.basetmpdir") == null) { //$NON-NLS-1$
-            System.setProperty("java.io.basetmpdir", System.getProperty("java.io.tmpdir")); //$NON-NLS-1$ //$NON-NLS-2$
-        }
-
         String value;
 
-        File newTmp = null, tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
-
-        value = properties.getProperty(IPED_TEMP); // $NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
         if (ipedTemp == null) {
-            if (value != null && !value.equalsIgnoreCase(DEFAULT_VAL)) { // $NON-NLS-1$
-                newTmp = new File(value);
-                if (!newTmp.exists() && !newTmp.mkdirs()) {
-                    if (logger != null)
-                        logger.info("Fail to create temp directory" + newTmp.getAbsolutePath()); //$NON-NLS-1$
-                } else {
-                    tmp = newTmp;
-                }
-            }
-            Random rand = new Random();
-            ipedTemp = new File(tmp, "iped-temp" + rand.nextLong()); //$NON-NLS-1$
-            if (!ipedTemp.mkdirs()) {
-                tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
-                ipedTemp = new File(tmp, "iped-temp" + rand.nextLong()); //$NON-NLS-1$
-                ipedTemp.mkdirs();
+            File configuredTemp = getConfiguredTemp(properties, logger);
+            String presetTemp = System.getProperty(SYS_PROP_IPED_TEMP);
+            if (presetTemp != null && new File(presetTemp).isDirectory()) {
+                // created by Bootstrap, this JVM was started with java.io.tmpdir pointing to it
+                ipedTemp = new File(presetTemp);
+            } else {
+                ipedTemp = createIpedTemp(configuredTemp);
             }
             if (ipedTemp.exists()) {
+                // for code that reads the property, see SYS_PROP_IPED_TEMP about createTempFile()
                 System.setProperty("java.io.tmpdir", ipedTemp.getAbsolutePath()); //$NON-NLS-1$
             }
-            if (tmp == newTmp) {
+            if (configuredTemp != null && configuredTemp.equals(ipedTemp.getParentFile())) {
                 indexTemp = new File(ipedTemp, "index"); //$NON-NLS-1$
             }
         }
@@ -134,6 +127,42 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             setHashDbFile(new File(value.trim()));
         }
 
+    }
+
+    /**
+     * Folder set in indexTemp, created if needed, or null if it is "default" or
+     * can not be created.
+     */
+    public static File getConfiguredTemp(UTF8Properties properties, Logger logger) {
+        String value = properties.getProperty(IPED_TEMP);
+        if (value == null || value.trim().equalsIgnoreCase(DEFAULT_VAL)) {
+            return null;
+        }
+        File dir = new File(value.trim()).getAbsoluteFile();
+        if (!dir.exists() && !dir.mkdirs()) {
+            if (logger != null)
+                logger.info("Fail to create temp directory" + dir.getAbsolutePath());
+            return null;
+        }
+        return dir;
+    }
+
+    /**
+     * Creates a new "iped-temp[random]" folder in the given folder or, if it is
+     * null or the folder can not be created there, in the system temp folder.
+     */
+    public static File createIpedTemp(File configuredTemp) {
+        if (System.getProperty(SYS_PROP_BASE_TMPDIR) == null) {
+            System.setProperty(SYS_PROP_BASE_TMPDIR, System.getProperty("java.io.tmpdir"));
+        }
+        File systemTemp = new File(System.getProperty(SYS_PROP_BASE_TMPDIR));
+        Random rand = new Random();
+        File dir = new File(configuredTemp != null ? configuredTemp : systemTemp, "iped-temp" + rand.nextLong());
+        if (!dir.mkdirs()) {
+            dir = new File(systemTemp, "iped-temp" + rand.nextLong());
+            dir.mkdirs();
+        }
+        return dir;
     }
 
     public void setIndexerTemp(File temp) {

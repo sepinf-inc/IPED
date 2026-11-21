@@ -334,7 +334,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                     int selectedIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
                     IItemId selectedItemId = App.get().ipedResult.getItem(selectedIndex);
                     final int selectedDocId = App.get().appCase.getLuceneId(selectedItemId);
-                    Document selectedDoc = App.get().appCase.getSearcher().doc(selectedDocId);
+                    Document selectedDoc = App.get().appCase.storedFields().document(selectedDocId);
                     Query query = tableModel.createQuery(selectedDoc);
                     if (query != null) {
                         IPEDSearcher task = new IPEDSearcher(App.get().appCase, query);

@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -47,8 +46,14 @@ public class PythonParser extends AbstractParser {
     public static final String DISABLED = Messages.getString("PythonModule.ModuleDisabled");
     public static final String SEE_MANUAL = Messages.getString("PythonModule.SeeManual");
 
-    private static final Map<Long, Jep> jepPerThread = new HashMap<>();
-    private static final Set<String> instancetPerThread = new HashSet<>();
+    /**
+     * Interpreter of the current thread. A jep interpreter can only be used and
+     * closed by the thread that created it, see {@link #closeJep()}.
+     */
+    private static final ThreadLocal<Jep> threadJep = new ThreadLocal<>();
+
+    /** Script instances loaded into the current thread interpreter. */
+    private static final ThreadLocal<Set<String>> threadInstances = ThreadLocal.withInitial(HashSet::new);
     private static final Map<MediaType, PythonParser> mediaToParserMap = new ConcurrentHashMap<>();
     private static final Map<MediaType, Integer> mediaTypesToQueueOrder = new ConcurrentHashMap<>();
     private static final AtomicBoolean jepNotFoundPrinted = new AtomicBoolean();
@@ -159,13 +164,29 @@ public class PythonParser extends AbstractParser {
     }
 
     public static Jep getJep() throws JepException {
-        synchronized (jepPerThread) {
-            Jep jep = jepPerThread.get(Thread.currentThread().getId());
-            if (jep == null) {
-                jep = getNewJep();
-                jepPerThread.put(Thread.currentThread().getId(), jep);
+        Jep jep = threadJep.get();
+        if (jep == null) {
+            jep = getNewJep();
+            if (jep != null) {
+                threadJep.set(jep);
+                threadInstances.get().clear();
             }
-            return jep;
+        }
+        return jep;
+    }
+
+    /**
+     * Closes the interpreter of the current thread, if any. Threads that used
+     * Python parsers or tasks should call it before ending: there is no way to
+     * close an interpreter from another thread, so it would leak its native
+     * resources. A later {@link #getJep()} on this thread creates a new one.
+     */
+    public static void closeJep() throws JepException {
+        Jep jep = threadJep.get();
+        threadJep.remove();
+        threadInstances.remove();
+        if (jep != null) {
+            jep.close();
         }
     }
 
@@ -218,16 +239,15 @@ public class PythonParser extends AbstractParser {
     }
 
     private String getInstanceName() {
-        return getClassName().toLowerCase() + "_thread_" + Thread.currentThread().getId();
+        return getClassName().toLowerCase() + "_thread_" + Thread.currentThread().threadId();
     }
 
     private String getInstanceMethod(String function) throws JepException {
         String instanceName = getInstanceName();
-        synchronized (instancetPerThread) {
-            if (!instancetPerThread.contains(instanceName)) {
-                loadScript(getJep());
-                instancetPerThread.add(instanceName);
-            }
+        Set<String> loaded = threadInstances.get();
+        if (!loaded.contains(instanceName)) {
+            loadScript(getJep());
+            loaded.add(instanceName);
         }
         String ret = instanceName + "." + function;
         return ret;

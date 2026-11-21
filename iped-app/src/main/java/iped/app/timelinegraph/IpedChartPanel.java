@@ -395,7 +395,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
             // bottom of the chart ((int)scaledDataArea.getMaxY())
             Rectangle2D scaledDataArea = getScreenDataArea((int) e.getX(), (int) e.getY());
             zoomPoint.setLocation(zoomPoint.getX(), e.getY());
-            MouseEvent en = new MouseEvent((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), (int) scaledDataArea.getMaxY(), e.getClickCount(), e.isPopupTrigger(), e.getButton());
+            MouseEvent en = new MouseEvent((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiersEx(), e.getX(), (int) scaledDataArea.getMaxY(), e.getClickCount(), e.isPopupTrigger(), e.getButton());
             super.mouseDragged(en);
         } else {
             super.mouseDragged(e);
@@ -584,7 +584,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
             e.printStackTrace();
         }
 
-        return new Date(1999, 0, 1);
+        return DateUtil.newLocalDate(1999, 0, 1);
     }
 
     public Date removeFromDatePart(Date date) {
@@ -596,7 +596,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
             e.printStackTrace();
         }
 
-        return new Date(1999, 0, 1);
+        return DateUtil.newLocalDate(1999, 0, 1);
     }
 
     public Date removeFromDatePart(Date date, int fromDatePart) {
@@ -621,7 +621,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
             e.printStackTrace();
         }
 
-        return new Date(1999, 0, 1);
+        return DateUtil.newLocalDate(1999, 0, 1);
     }
 
     public Date lastdateFromDatePart(Date date, int fromDatePart) {

@@ -47,6 +47,7 @@ import org.xml.sax.SAXException;
 
 import iped.io.URLUtil;
 import iped.utils.IOUtil;
+import iped.utils.JavaExecutable;
 
 public class ForkParser extends AbstractParser {
 
@@ -77,7 +78,7 @@ public class ForkParser extends AbstractParser {
     private final ParserFactoryFactory parserFactoryFactory;
 
     /** Java command line */
-    private List<String> java = Arrays.asList("java", "-Xmx32m", "-Djava.awt.headless=true");
+    private List<String> java = Arrays.asList(JavaExecutable.getPath(), "-Xmx32m", "-Djava.awt.headless=true");
 
     private int currentlyInUse = 0;
 
@@ -149,7 +150,7 @@ public class ForkParser extends AbstractParser {
 
     private static List<String> getCommand(String maxHeap) {
         List<String> cmd = new ArrayList<>();
-        cmd.add("java");
+        cmd.add(JavaExecutable.getPath());
         cmd.add("-Xmx" + maxHeap);
         for (Object key : System.getProperties().keySet()) {
             cmd.add("-D" + key + "=" + System.getProperty(key.toString()).replace("\"", "\\\""));

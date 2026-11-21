@@ -61,6 +61,8 @@ public class IpedFontMetricsWrapper extends FontMetrics {
         return fm.getMaxDescent();
     }
 
+    @Deprecated
+    @Override
     public int getMaxDecent() {
         return fm.getMaxDecent();
     }

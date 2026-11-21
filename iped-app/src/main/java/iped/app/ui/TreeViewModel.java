@@ -62,8 +62,8 @@ public class TreeViewModel implements TreeModel {
             @Override
             public int compare(Integer a, Integer b) {
                 try {
-                    Document doc1 = App.get().appCase.getReader().document(a, fields);
-                    Document doc2 = App.get().appCase.getReader().document(b, fields);
+                    Document doc1 = App.get().appCase.storedFields().document(a, fields);
+                    Document doc2 = App.get().appCase.storedFields().document(b, fields);
                     return collator.compare(doc1.get(IndexItem.NAME), doc2.get(IndexItem.NAME));
 
                 } catch (IOException e) {
@@ -89,7 +89,7 @@ public class TreeViewModel implements TreeModel {
             if (doc == null) {
                 if (docId != -1) {
                     try {
-                        this.doc = App.get().appCase.getReader().document(docId);
+                        this.doc = App.get().appCase.storedFields().document(docId);
 
                     } catch (IOException e) {
                         // e.printStackTrace();

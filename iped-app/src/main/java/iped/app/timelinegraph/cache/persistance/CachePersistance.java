@@ -1,5 +1,7 @@
 package iped.app.timelinegraph.cache.persistance;
 
+import iped.app.timelinegraph.DateUtil;
+import java.nio.charset.StandardCharsets;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -17,6 +19,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,7 +28,6 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
@@ -92,10 +94,10 @@ public class CachePersistance {
             MessageDigest md = DigestUtils.getMd5Digest();
             for (Iterator iterator = uuids.iterator(); iterator.hasNext();) {
                 String string = (String) iterator.next();
-                md.update(string.getBytes());
+                md.update(string.getBytes(StandardCharsets.UTF_8));
             }
 
-            String uuid = DatatypeConverter.printHexBinary(md.digest());
+            String uuid = HexFormat.of().withUpperCase().formatHex(md.digest());
 
             baseDir = new File(startDir, uuid);
             if (!baseDir.exists() && !baseDir.mkdirs()) {
@@ -276,12 +278,13 @@ public class CachePersistance {
                 }
                 dos.writeInt(-1);
 
+                Calendar ctDate = DateUtil.toLocalCalendar(ct.getDate());
                 c.clear();
-                c.set(Calendar.YEAR, 1900 + ct.getDate().getYear());
-                c.set(Calendar.MONTH, ct.getDate().getMonth());
-                c.set(Calendar.DAY_OF_MONTH, ct.getDate().getDate());
+                c.set(Calendar.YEAR, DateUtil.localYear(ctDate));
+                c.set(Calendar.MONTH, ctDate.get(Calendar.MONTH));
+                c.set(Calendar.DAY_OF_MONTH, ctDate.get(Calendar.DAY_OF_MONTH));
                 if (file.getName().contains("Minute") || file.getName().contains("Second")) {
-                    c.set(Calendar.HOUR_OF_DAY, ct.getDate().getHours());
+                    c.set(Calendar.HOUR_OF_DAY, ctDate.get(Calendar.HOUR_OF_DAY));
                 }
 
                 internalCount += events.length;

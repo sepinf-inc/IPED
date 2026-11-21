@@ -1,5 +1,6 @@
 package iped.parsers.evtx.model;
 
+import java.nio.charset.StandardCharsets;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +48,7 @@ public class EvtxFile {
         ByteBuffer bb = ByteBuffer.wrap(header);
         bb.order(ByteOrder.LITTLE_ENDIAN);
 
-        String sig = new String(ArrayUtil.copyOfSubArray(header, 0, 8));
+        String sig = new String(ArrayUtil.copyOfSubArray(header, 0, 8), StandardCharsets.ISO_8859_1);
 
         if (!sig.equals("ElfFile\0")) {
             throw new EvtxParseException("Invalid header signature");

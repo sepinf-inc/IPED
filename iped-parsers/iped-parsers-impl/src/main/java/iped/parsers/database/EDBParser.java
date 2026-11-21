@@ -1,5 +1,6 @@
 package iped.parsers.database;
 
+import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -157,7 +158,7 @@ public class EDBParser extends AbstractParser {
             ContentHandler handler) throws IOException, SAXException {
         Charset charset = Charset.forName("UTF-8"); //$NON-NLS-1$
         File html = tmp.createTemporaryFile();
-        try (BufferedReader reader = new BufferedReader(new FileReader(tabFile));
+        try (BufferedReader reader = new BufferedReader(new FileReader(tabFile, CharsetUtil.NATIVE));
                 BufferedWriter writer = new BufferedWriter(
                         new OutputStreamWriter(new FileOutputStream(html), charset));) {
             writer.write("<html>"); //$NON-NLS-1$

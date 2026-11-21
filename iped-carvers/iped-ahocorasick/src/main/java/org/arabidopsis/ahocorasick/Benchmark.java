@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.arabidopsis.ahocorasick;
 
+import java.nio.charset.StandardCharsets;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -44,7 +45,7 @@ public class Benchmark {
         long t0 = System.currentTimeMillis();
 
         BufferedReader fr = new BufferedReader(
-                new InputStreamReader(Benchmark.class.getResourceAsStream("christmas.txt")));
+                new InputStreamReader(Benchmark.class.getResourceAsStream("christmas.txt"), StandardCharsets.UTF_8));
         String text = "";
         String line = fr.readLine();
         while (line != null) {

@@ -1,5 +1,7 @@
 package iped.parsers.security;
 
+import iped.utils.CharsetUtil;
+import iped.utils.DateUtil;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
@@ -249,7 +250,7 @@ public class CertificateParser extends AbstractParser {
                         }
 
                         if (prim instanceof ASN1OctetString) {
-                            altNameStr = new String(((ASN1OctetString) prim).getOctets());
+                            altNameStr = new String(((ASN1OctetString) prim).getOctets(), CharsetUtil.NATIVE);
                         } else if (prim instanceof ASN1String) {
                             altNameStr = ((ASN1String) prim).getString();
                         }
@@ -282,6 +283,6 @@ public class CertificateParser extends AbstractParser {
     }
 
     private Date toDate(String timestamp) {
-        return DatatypeConverter.parseDateTime(timestamp).getTime();
+        return DateUtil.parseXsdDateTime(timestamp);
     }
 }

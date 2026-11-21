@@ -1,5 +1,6 @@
 package iped.geo.impl;
 
+import java.util.regex.Pattern;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -42,6 +43,7 @@ import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
+import iped.utils.net.WebKitNetworkGuard;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas
@@ -216,10 +218,57 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         browserCanvas = mcf.createMapCanvas(savedTilesSourceURL);
     }
 
+    /**
+     * WebKit network access is blocked except for these map resources, see
+     * WebKitNetworkGuard. Keep in sync with iped/geo/openstreet/main.html and
+     * MapCanvasOpenStreet.
+     */
+    private static final Pattern LEAFLET_FILES = Pattern
+            .compile("https://unpkg\\.com/leaflet(\\.markercluster)?@[^/]+/dist/", Pattern.CASE_INSENSITIVE);
+    /**
+     * Only the hosts used by the Google Maps JS API and its tiles. Other Google
+     * hosts are not allowed, some serve content controlled by third parties (e.g.
+     * storage.googleapis.com), and the allowed URLs are valid for all WebViews.
+     */
+    static final Pattern GOOGLE_MAPS_FILES = Pattern.compile(
+            "https://(unpkg\\.com/leaflet\\.gridlayer\\.googlemutant@[^/]+/|(maps|fonts)\\.(googleapis|gstatic)\\.com/|(khms?|mts?)[0-9]*\\.(googleapis|google)\\.com/)",
+            Pattern.CASE_INSENSITIVE);
+
+    /** tile server currently allowed, to remove it when another one is chosen */
+    private static String allowedTilesSourceURL;
+
+    private static boolean isGoogleMaps(String tilesSourceURL) {
+        return tilesSourceURL.contains("googleapis");
+    }
+
+    private static synchronized void allowMapNetworkAccess(String tilesSourceURL) {
+        WebKitNetworkGuard.allow(LEAFLET_FILES);
+        if (tilesSourceURL.equals(allowedTilesSourceURL)) {
+            return;
+        }
+        if (allowedTilesSourceURL != null) {
+            // do not keep the previous tile server allowed until the application is closed
+            if (isGoogleMaps(allowedTilesSourceURL)) {
+                if (!isGoogleMaps(tilesSourceURL)) {
+                    WebKitNetworkGuard.disallow(GOOGLE_MAPS_FILES);
+                }
+            } else {
+                WebKitNetworkGuard.disallowUrlTemplate(allowedTilesSourceURL);
+            }
+        }
+        if (isGoogleMaps(tilesSourceURL)) {
+            WebKitNetworkGuard.allow(GOOGLE_MAPS_FILES);
+        } else {
+            WebKitNetworkGuard.allowUrlTemplate(tilesSourceURL);
+        }
+        allowedTilesSourceURL = tilesSourceURL;
+    }
+
     public boolean config(String url) {
         if (url == null) {
             return false;
         } else {
+            allowMapNetworkAccess(url);
             if (browserCanvas == null) {
                 browserCanvas = mcf.createMapCanvas(url);
                 return false;
@@ -503,12 +552,12 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
                 IItemId item = resultsProvider.getResults()
                         .getItem(resultsProvider.getResultsTable().convertRowIndexToModel(leadIndex));
                 int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-                Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+                Document doc = resultsProvider.getIPEDSource().storedFields().document(docId);
                 String parentId = doc.get(IndexItem.PARENTID);
                 if (parentId != null) {
                     int parentDocId = resultsProvider.getIPEDSource()
                             .getLuceneId(new ItemId(item.getSourceId(), Integer.parseInt(parentId)));
-                    Document parentDoc = resultsProvider.getIPEDSource().getReader().document(parentDocId);
+                    Document parentDoc = resultsProvider.getIPEDSource().storedFields().document(parentDocId);
                     if ("1".equals(parentDoc.get("geo:isTrack"))) {
                         IIPEDSearcher search = resultsProvider.createNewSearch("parentId:" + parentId, trackSortFields);
 
@@ -537,7 +586,7 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
                 IItemId item = resultsProvider.getResults()
                         .getItem(resultsProvider.getResultsTable().convertRowIndexToModel(leadIndex));
                 int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-                Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+                Document doc = resultsProvider.getIPEDSource().storedFields().document(docId);
                 String jsonFeature = doc.get(GeofileParser.FEATURE_STRING);
                 return jsonFeature;
             }
@@ -551,7 +600,7 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         try {
             IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
             int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-            Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+            Document doc = resultsProvider.getIPEDSource().storedFields().document(docId);
 
             int count = 0;
             String[][] features = new String[fieldNames.length][];

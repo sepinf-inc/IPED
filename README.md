@@ -25,7 +25,7 @@ If you are new to the tool, please refer to the [Beginner's Start Guide](https:/
 
 ## Building
 
-To build from source, you need Git, Maven and Java JDK 11 + JavaFX (e.g. Liberica OpenJDK 11 Full JDK) installed. Set JAVA_HOME environment var to your Java 11 installation folder, then run:
+To build from source, you need git, Maven 3.9+ and Java JDK 25 + JavaFX (e.g. Liberica OpenJDK 25 Full JDK) installed. Set JAVA_HOME environment var to your Java 25 installation folder, then run:
 ```
 git clone https://github.com/sepinf-inc/IPED.git
 cd IPED

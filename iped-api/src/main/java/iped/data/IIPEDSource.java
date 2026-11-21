@@ -7,12 +7,14 @@ package iped.data;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.search.IndexSearcher;
 
 /**
@@ -69,6 +71,13 @@ public interface IIPEDSource extends Closeable {
     IndexReader getReader();
 
     IndexSearcher getSearcher();
+
+    /**
+     * Stored fields of {@link #getReader()} cached for the calling thread, avoiding
+     * a reader clone per document load. The returned instance must not be shared
+     * with other threads.
+     */
+    StoredFields storedFields() throws IOException;
 
     int getSourceId();
 

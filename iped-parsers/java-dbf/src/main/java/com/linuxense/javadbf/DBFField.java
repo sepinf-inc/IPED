@@ -12,6 +12,7 @@
 
 package com.linuxense.javadbf;
 
+import java.nio.charset.Charset;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -23,6 +24,11 @@ import java.io.IOException;
  * obtained from DBFReader object through getField( int) query.
  */
 public class DBFField {
+
+    /** OS charset (default charset up to Java 17, "native.encoding" since Java 18), see JEP 400. */
+    private static final Charset NATIVE_CHARSET = Charset
+            .forName(System.getProperty("native.encoding", Charset.defaultCharset().name()));
+
 
     public static final byte FIELD_TYPE_C = (byte) 'C';
     public static final byte FIELD_TYPE_L = (byte) 'L';
@@ -134,7 +140,7 @@ public class DBFField {
      */
     public String getName() {
 
-        return new String(this.fieldName, 0, nameNullIndex);
+        return new String(this.fieldName, 0, nameNullIndex, NATIVE_CHARSET);
     }
 
     /**
@@ -214,7 +220,7 @@ public class DBFField {
             throw new IllegalArgumentException("Field name should be of length 0-10");
         }
 
-        this.fieldName = value.getBytes();
+        this.fieldName = value.getBytes(NATIVE_CHARSET);
         this.nameNullIndex = this.fieldName.length;
     }
 

@@ -77,7 +77,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
         if (docId >= 0) {
             try {
-                doc = App.get().appCase.getSearcher().doc(docId);
+                doc = App.get().appCase.storedFields().document(docId);
 
                 String path = doc.get(IndexItem.PATH);
                 if (path.length() > STATUS_LENGTH) {
