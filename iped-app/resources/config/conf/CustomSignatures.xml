@@ -861,7 +861,7 @@
     <mime-type type="application/x-p2p">
     </mime-type>
 
-    <mime-type type="application/x-emule">
+    <mime-type type="application/x-emule-known-met">
         <sub-class-of type="application/x-p2p"/>
         <glob pattern="known*.met"/>
     </mime-type>
@@ -1669,10 +1669,6 @@
             <match value="&lt;OFC&gt;" type="string" offset="0"/>
         </magic>
         <glob pattern="*.ofc"/>
-    </mime-type>
-
-    <mime-type type="application/x-emule-collection">
-        <glob pattern="*.emulecollection"/>
     </mime-type>
 
     <mime-type type="application/x-emule-collection">
