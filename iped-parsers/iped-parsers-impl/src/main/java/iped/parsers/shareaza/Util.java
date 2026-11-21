@@ -31,6 +31,12 @@ import org.apache.commons.codec.binary.Base64;
  */
 class Util {
 
+    private final static long WINDOWS_UNIX_EPOCH_DIFF_MILLISECONDS = 11644473600000L;
+
+    public static final String TRI_STATE_UNKNOWN = "unknown";
+    public static final String TRI_STATE_TRUE = "true";
+    public static final String TRI_STATE_FALSE = "false";
+
     public static String encodeGUID(byte[] bytes) {
         long u1 = (long) (bytes[7]) << 56 | (long) (bytes[6] & 0xff) << 48 | (long) (bytes[5] & 0xff) << 40
                 | (long) (bytes[4] & 0xff) << 32 | (long) (bytes[3] & 0xff) << 24 | (long) (bytes[2] & 0xff) << 16
@@ -64,8 +70,11 @@ class Util {
         return encoder.encodeToString(bytes);
     }
 
-    public static long convertToEpoch(long timestamp) {
-        return timestamp / 10000L - 11644473600000L;
+    public static Long convertToEpoch(long adTimestamp) {
+        if (adTimestamp == 0) {
+            return null;
+        }
+        return adTimestamp / 10000L - WINDOWS_UNIX_EPOCH_DIFF_MILLISECONDS;
     }
 
     public static double convertToCSVTimestamp(long epoch) {
@@ -75,12 +84,12 @@ class Util {
     public static String decodeTriState(int state) {
         switch (state) {
             case 1:
-                return "False"; //$NON-NLS-1$
+                return TRI_STATE_FALSE; //$NON-NLS-1$
             case 2:
-                return "True"; //$NON-NLS-1$
+                return TRI_STATE_TRUE; //$NON-NLS-1$
             default:
         }
-        return "Unknown"; //$NON-NLS-1$
+        return TRI_STATE_UNKNOWN; //$NON-NLS-1$
     }
 
     // DateFormat nao é thread safe
@@ -92,7 +101,10 @@ class Util {
         }
     };
 
-    public static String formatDatetime(long epoch) {
+    public static String formatDatetime(Long epoch) {
+        if (epoch == null) {
+            return null;
+        }
         Date date = new Date(epoch);
         return threadLocal.get().format(date);
     }

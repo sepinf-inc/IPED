@@ -88,6 +88,16 @@ public class LuceneSearchResult {
         return new SearchResult(ids, scores);
     }
 
+    public SearchResult getFirstSearchResult(IIPEDSource iSource) {
+        int len = this.getLength() == 0 ? 0 : 1;
+        float[] scores = new float[len];
+        int[] ids = new int[len];
+        if (len > 0) {
+            ids[0] = iSource.getId(this.docs[0]);
+        }
+        return new SearchResult(ids, scores);
+    }
+
     public LuceneSearchResult addResults(ScoreDoc[] scoreDocs) {
 
         LuceneSearchResult result = new LuceneSearchResult(length + scoreDocs.length);

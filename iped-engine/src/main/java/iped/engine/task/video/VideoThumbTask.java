@@ -27,6 +27,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,6 +44,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -56,13 +61,14 @@ import iped.engine.config.VideoThumbsConfig;
 import iped.engine.core.Statistics;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.Item;
+import iped.engine.preview.PreviewRepository;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.PhotoDNATask;
 import iped.engine.task.ThumbTask;
 import iped.engine.task.die.DIETask;
-import iped.engine.util.Util;
 import iped.parsers.util.ISO6709Converter;
 import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
@@ -75,7 +81,9 @@ import iped.utils.ImageUtil;
  * @author Wladimir Leite
  */
 public class VideoThumbTask extends ThumbTask {
-    
+
+    public static final String PREVIEW_EXT = "jpg";
+
     /**
      * Indica se a tarefa está habilitada ou não.
      */
@@ -112,20 +120,10 @@ public class VideoThumbTask extends ThumbTask {
      */
     private static final AtomicBoolean finished = new AtomicBoolean(false);
 
-    /**
-     * Objeto estático com total de videos processados .
-     */
+    // Statistics for videos
     private static final AtomicLong totalVideosProcessed = new AtomicLong();
-
-    /**
-     * Objeto estático com total de videos que falharam.
-     */
+    private static final AtomicLong totalVideosProcessedFFmpeg = new AtomicLong();
     private static final AtomicLong totalVideosFailed = new AtomicLong();
-
-    /**
-     * Objeto estático com total de tempo gasto no processamento de vídeos, em
-     * milisegundos.
-     */
     private static final AtomicLong totalVideosTime = new AtomicLong();
 
     // Statistics for animated images
@@ -133,6 +131,7 @@ public class VideoThumbTask extends ThumbTask {
     private static final AtomicLong totalAnimatedImagesFailed = new AtomicLong();
     private static final AtomicLong totalAnimatedImagesTime = new AtomicLong();
     
+    // Statistics for thumb gallery creation
     private static final AtomicLong totalTimeGallery = new AtomicLong();
     private static final AtomicLong totalGallery = new AtomicLong();
 
@@ -161,21 +160,10 @@ public class VideoThumbTask extends ThumbTask {
     private VideoThumbsOutputConfig mainConfig;
 
     /**
-     * Pasta de saída das imagens.
-     */
-    private File baseFolder;
-
-    /**
      * Pasta temporária, utilizada como saído do MPlayer na extração de frames.
      */
     private File tmpFolder;
 
-    /**
-     * Nome do arquivo temporário de miniatura gerado. Após conclusão será renomeado
-     * pra nome definitivo.
-     */
-    private String tempSuffix;
-    
     private ISO6709Converter iso6709Converter = new ISO6709Converter();
 
     private VideoThumbsConfig videoConfig;
@@ -217,8 +205,7 @@ public class VideoThumbTask extends ThumbTask {
         videoThumbsMaker = new VideoThumbsMaker();
 
         // Inicializa pasta temporarária e sufixo de arquivos temporários
-        tmpFolder = new File(System.getProperty("java.io.tmpdir")); //$NON-NLS-1$
-        tempSuffix = Thread.currentThread().getId() + ".tmp"; //$NON-NLS-1$
+        tmpFolder = FileUtils.getTempDirectory();
 
         videoConfig = configurationManager.findObject(VideoThumbsConfig.class);
 
@@ -274,13 +261,8 @@ public class VideoThumbTask extends ThumbTask {
 
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();
-        configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig.getSize(), videoConfig.getColumns(), videoConfig.getRows(), 2));
+        configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig, 2));
 
-        // Inicializa diretório de saída
-        baseFolder = new File(output, "view"); //$NON-NLS-1$
-        if (!baseFolder.exists()) {
-            baseFolder.mkdirs();
-        }
     }
 
     @Override
@@ -299,8 +281,9 @@ public class VideoThumbTask extends ThumbTask {
                 finished.set(true);
 
                 // Videos statistics
-                logger.info("Total videos processed: " + totalVideosProcessed); //$NON-NLS-1$
-                logger.info("Total videos failed (MPlayer failed to create thumbs): " + totalVideosFailed); //$NON-NLS-1$
+                logger.info("Total videos processed: " + totalVideosProcessed);
+                logger.info("Total videos processed FFmpeg: " + totalVideosProcessedFFmpeg);
+                logger.info("Total videos failed (MPlayer failed to create thumbs): " + totalVideosFailed);
                 long total = totalVideosProcessed.longValue() + totalVideosFailed.longValue();
                 if (total > 0)
                     logger.info("Average video processing time (milliseconds/video): " //$NON-NLS-1$
@@ -344,17 +327,16 @@ public class VideoThumbTask extends ThumbTask {
             return;
         }
 
-        if (caseData.isIpedReport() && evidence.getViewFile() != null && evidence.getViewFile().length() > 0) {
+        if (caseData.isIpedReport() && (evidence.getViewFile() != null && evidence.getViewFile().length() > 0 || evidence.hasPreview())) {
             evidence.setExtraAttribute(HAS_THUMB, true);
+            // The viewFile/previewData will be copied in ExportFileTask
             return;
         }
-        
+
         // Check if the task is enabled (after handling the view file, if it is a report)
         if (!taskEnabled) {
             return;
         }
-
-        File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg"); //$NON-NLS-1$
 
         // TODO: update this results reusage logic to work when frames as subitems is
         // enabled
@@ -368,7 +350,8 @@ public class VideoThumbTask extends ThumbTask {
                     evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
                     if (r.isSuccess()) {
                         saveMetadata(r, evidence.getMetadata());
-                        evidence.setViewFile(mainOutFile);
+                        evidence.setHasPreview(true);
+                        evidence.setPreviewExt(PREVIEW_EXT);
                         File thumbFile = getThumbFile(evidence);
                         hasThumb(evidence, thumbFile);
                     }
@@ -378,23 +361,23 @@ public class VideoThumbTask extends ThumbTask {
             }
         }
 
+        PreviewRepository previewRepo = PreviewRepositoryManager.get(output);
+        boolean previewExists = previewRepo.previewExists(evidence);
+
         // Chama o método de extração de cenas
-        File mainTmpFile = null;
+        Path mainTmpFile = null;
         VideoProcessResult r = null;
         try {
-            if (!mainOutFile.getParentFile().exists()) {
-                mainOutFile.getParentFile().mkdirs();
-            }
 
-            // if output file exists and subitems are disabled, reuse previous result
-            if (mainOutFile.exists() && !videoConfig.getVideoThumbsSubitems()) {
+            // if preview exists and subitems are disabled, reuse previous result
+            if (previewExists && !videoConfig.getVideoThumbsSubitems()) {
                 synchronized (processedVideos) {
                     r = processedVideos.get(evidence.getHash());
                 }
             }
             if (r == null) {
-                mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
-                mainConfig.setOutFile(mainTmpFile);
+                mainTmpFile = Files.createTempFile("video-thumbs", ".jpg");
+                mainConfig.setOutFile(mainTmpFile.toFile());
 
                 //Check if it is an animated image
                 int numFrames = 0;
@@ -412,8 +395,8 @@ public class VideoThumbTask extends ThumbTask {
                 r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs, numFrames);
                 t = System.currentTimeMillis() - t;
 
-                if (r != null && isAnimated) {
-                    //Clear video duration for animated images
+                if (isAnimated) {
+                    // Clear video duration for animated images
                     r.setVideoDuration(-1);
                 }
 
@@ -421,16 +404,25 @@ public class VideoThumbTask extends ThumbTask {
                     generateSubitems(evidence, mainConfig, r.getFrames(), r.getDimension());
                 }
 
-                if (r.isSuccess() && (mainOutFile.exists() || mainTmpFile.renameTo(mainOutFile))) {
-                    (isAnimated ? totalAnimatedImagesProcessed : totalVideosProcessed).incrementAndGet();
-                } else {
-                    r.setSuccess(false);
+                if (r.isSuccess()) {
+                    try {
+                        if (!previewExists) {
+                            previewRepo.storeRawPreview(evidence, Files.newInputStream(mainTmpFile));
+                        }
+                        (isAnimated ? totalAnimatedImagesProcessed
+                                : r.isFFmpeg() ? totalVideosProcessedFFmpeg : totalVideosProcessed).incrementAndGet();
+                    } catch (SQLException | IOException e) {
+                        logger.warn("Error storing videoThumb preview: " + evidence, e);
+                        r.setSuccess(false);
+                    }
+                }
+
+                if (!r.isSuccess()) {
                     (isAnimated ? totalAnimatedImagesFailed : totalVideosFailed).incrementAndGet();
                     if (r.isTimeout()) {
                         stats.incTimeouts();
-                        evidence.setExtraAttribute(ImageThumbTask.THUMB_TIMEOUT, "true"); //$NON-NLS-1$
-                        logger.warn("Timeout creating video thumbs: " + evidence.getPath() + "(" //$NON-NLS-1$ //$NON-NLS-2$
-                                + evidence.getLength() + " bytes)"); //$NON-NLS-1$
+                        evidence.setExtraAttribute(ImageThumbTask.THUMB_TIMEOUT, Boolean.toString(true));
+                        logger.warn("Timeout creating video thumbs: {} ({} bytes)", evidence.getPath(), evidence.getLength());
                     }
                 }
                 (isAnimated ? totalAnimatedImagesTime : totalVideosTime).addAndGet(t);
@@ -439,11 +431,6 @@ public class VideoThumbTask extends ThumbTask {
             logger.warn(evidence.toString(), e);
 
         } finally {
-            // Tenta apaga possível temporários deixados "perdidos" (no caso normal eles
-            // foram renomeados)
-            if (mainTmpFile != null && mainTmpFile.exists()) {
-                mainTmpFile.delete();
-            }
 
             if (r == null)
                 r = new VideoProcessResult(null);
@@ -452,7 +439,8 @@ public class VideoThumbTask extends ThumbTask {
             evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
             if (r.isSuccess()) {
                 saveMetadata(r, evidence.getMetadata());
-                evidence.setViewFile(mainOutFile);
+                evidence.setHasPreview(true);
+                evidence.setPreviewExt(PREVIEW_EXT);
             }
 
             // If enabled (galleryThumbWidth > 0) create a thumb to be shown in the gallery,
@@ -461,7 +449,11 @@ public class VideoThumbTask extends ThumbTask {
             if (galleryThumbSize > 0 && r.isSuccess()) {
                 try {
                     long t = System.currentTimeMillis();
-                    Object[] read = ImageUtil.readJpegWithMetaData(mainOutFile);
+                    Object[] read;
+                    try (InputStream previewFileStream = (mainTmpFile != null) ? Files.newInputStream(mainTmpFile)
+                            : previewRepo.readPreview(evidence, false)) {
+                        read = ImageUtil.readJpegWithMetaData(previewFileStream);
+                    }
                     BufferedImage fullImg = (BufferedImage) read[0];
                     String comment = (String) read[1];
                     BufferedImage img = ImageUtil.getBestFramesFit(fullImg, comment, galleryThumbSize,
@@ -494,6 +486,10 @@ public class VideoThumbTask extends ThumbTask {
                     processedVideos.put(evidence.getHash(), r);
                     processedVideos.notifyAll();
                 }
+            }
+
+            if (mainTmpFile != null) {
+                Files.deleteIfExists(mainTmpFile);
             }
 
             // TODO: this deletes temp frames, so the logic to reuse frames from
@@ -592,6 +588,13 @@ public class VideoThumbTask extends ThumbTask {
             newItem.setModificationDate(item.getModDate());
             newItem.setCreationDate(item.getCreationDate());
             newItem.setChangeDate(item.getChangeDate());
+
+            // replicate 'hashDb:*' item's extra attributes to subitem
+            Map<String, Object> hashDbAttrs = ((Item) item).getExtraAttributesStartWith(ExtraProperties.HASHDB_PREFIX);
+            for (String key : hashDbAttrs.keySet()) {
+                newItem.setExtraAttribute(key, hashDbAttrs.get(key));
+            }
+            newItem.setExtraAttribute("hashDB:infoFromParent", true);
 
             ExportFileTask extractor = new ExportFileTask();
             extractor.setWorker(worker);

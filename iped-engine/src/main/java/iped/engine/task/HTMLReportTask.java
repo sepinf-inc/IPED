@@ -74,7 +74,9 @@ import iped.engine.data.IPEDSource;
 import iped.engine.data.ReportInfo;
 import iped.engine.localization.CategoryLocalization;
 import iped.engine.localization.Messages;
+import iped.engine.preview.PreviewConstants;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.parsers.util.MetadataUtil;
@@ -113,11 +115,6 @@ public class HTMLReportTask extends AbstractTask {
     private static final Collator collator = getCollator();
 
     /**
-     * Nome da subpasta com versões de visualização dos arquivos.
-     */
-    public static final String viewFolder = "view"; //$NON-NLS-1$
-
-    /**
      * Registros organizados por marcador.
      */
     private static final SortedMap<String, List<ReportEntry>> entriesByLabel = new TreeMap<String, List<ReportEntry>>(
@@ -149,11 +146,6 @@ public class HTMLReportTask extends AbstractTask {
      * da classe.
      */
     private static final AtomicBoolean init = new AtomicBoolean(false);
-
-    /**
-     * Nome da pasta com miniatutas de imagem.
-     */
-    public static String thumbsFolderName = "thumbs"; //$NON-NLS-1$
 
     /**
      * Nome da subpasta destino dos os arquivos do relatório.
@@ -215,6 +207,10 @@ public class HTMLReportTask extends AbstractTask {
 
     public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new HtmlReportTaskConfig());
+    }
+
+    public static File getReportSubFolder() {
+        return reportSubFolder;
     }
 
     protected Set<String> loadReportSelectedProps() throws ClassNotFoundException, IOException {
@@ -785,7 +781,7 @@ public class HTMLReportTask extends AbstractTask {
                     it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n"); //$NON-NLS-1$
                 }
             } else if (!reg.isVideo && reg.hash != null) {
-                File view = Util.findFileFromHash(new File(this.output, viewFolder), reg.hash);
+                File view = Util.findFileFromHash(new File(this.output, PreviewConstants.VIEW_FOLDER_NAME), reg.hash);
                 if (view != null) {
                     it.append(
                             "<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">" //$NON-NLS-1$
@@ -855,7 +851,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getVideoStripeFile(String hash) {
-        File file = Util.getFileFromHash(new File(reportSubFolder, thumbsFolderName), hash, "jpg"); //$NON-NLS-1$
+        File file = Util.getFileFromHash(new File(reportSubFolder, ThumbTask.THUMBS_FOLDER_NAME), hash, ThumbTask.THUMB_EXT);
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
@@ -863,7 +859,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getImageThumbFile(String hash) {
-        File file = Util.getFileFromHash(new File(output, ThumbTask.thumbsFolder), hash, "jpg"); //$NON-NLS-1$
+        File file = Util.getFileFromHash(new File(reportSubFolder, ThumbTask.THUMBS_FOLDER_NAME), hash, ThumbTask.THUMB_EXT);
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
@@ -871,7 +867,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getVideoThumbsFile(String hash) {
-        File file = Util.getFileFromHash(new File(this.output, viewFolder), hash, "jpg"); //$NON-NLS-1$
+        File file = Util.getFileFromHash(new File(this.output, PreviewConstants.VIEW_FOLDER_NAME), hash, VideoThumbTask.PREVIEW_EXT);
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }

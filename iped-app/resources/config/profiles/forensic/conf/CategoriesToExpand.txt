@@ -20,6 +20,8 @@ Georeferenced Files
 Peer-to-peer
 Chrome Cache
 Apple Configuration Files
+Automatic Destinations
+Custom Destinations
 Event Files
 
 # Generates registry reports:

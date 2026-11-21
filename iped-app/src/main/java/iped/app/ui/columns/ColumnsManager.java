@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import javax.swing.table.TableColumn;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
@@ -27,13 +28,13 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.search.LoadIndexFields;
-import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.LanguageDetectTask;
 import iped.engine.task.NamedEntityTask;
 import iped.engine.task.PhotoDNALookup;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.regex.RegexTask;
 import iped.engine.util.Util;
+import iped.localization.LocaleResolver;
 import iped.parsers.evtx.EvtxParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
@@ -63,7 +64,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     private static final File getGlobalColsFile() {
         String name = "visibleCols"; //$NON-NLS-1$
-        String locale = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+        String locale = LocaleResolver.getLocaleString();
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".dat"; //$NON-NLS-1$
@@ -155,11 +156,11 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
         autoManageCols = analysisConfig.isAutoManageCols();
 
-        moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
-
-        updateDinamicFields();
-
-        loadSavedCols();
+        if (App.get().appCase != null) {
+            moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+            updateDinamicFields();
+            loadSavedCols();
+        }
     }
 
     public void saveColumnsState() {
@@ -303,7 +304,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
                 regexFields.add(f);
             else if (f.startsWith(LanguageDetectTask.LANGUAGE_PREFIX))
                 languageFields.add(f);
-            else if (f.startsWith(HashDBLookupTask.ATTRIBUTES_PREFIX)
+            else if (f.startsWith(ExtraProperties.HASHDB_PREFIX)
                     || f.startsWith(PhotoDNALookup.PHOTO_DNA_HIT_PREFIX))
                 hashDbFields.add(f);
             else
@@ -329,7 +330,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
                 p2pFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
-            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
+            else if (StringUtils.startsWithAny(f, Message.MESSAGE_PREFIX, ExtraProperties.CONVERSATION_PREFIX, ExtraProperties.COMMUNICATION_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
                 communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);
@@ -365,7 +366,8 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         for (int i = 0; i < customGroups.length; i++)
             fieldGroups[i] = customGroups[i];
         fieldGroups[fieldGroups.length - 2] = otherFields.toArray(new String[0]);
-        fieldGroups[fieldGroups.length - 1] = indexFields.clone();
+        String[] all = fieldGroups[fieldGroups.length - 1] = Arrays.copyOf(indexFields, indexFields.length + 1);
+        all[all.length - 1] = ResultTableModel.BOOKMARK_COL;
 
         for (String[] fields : fieldGroups)
             Arrays.sort(fields, Collator.getInstance());

@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de EvidÃªncias Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -192,7 +192,8 @@ public class Configuration {
         addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
 
         configManager.addObject(new SplashScreenConfig());
-        
+        configManager.addObject(new BFACClientConfig());
+
         if (!loadAll) {
             configManager.loadConfigs();
             return;
@@ -204,9 +205,11 @@ public class Configuration {
         configManager.addObject(new OCRConfig());
         configManager.addObject(new FileSystemConfig());
         configManager.addObject(new AnalysisConfig());
+        configManager.addObject(new AIFiltersConfig());
         configManager.addObject(new ProcessingPriorityConfig());
 
         configManager.addObject(new EnableTaskProperty(FaceRecognitionConfig.enableParam));
+        configManager.addObject(new EnableTaskProperty(AgeEstimationConfig.enableParam));
 
         TaskInstallerConfig taskConfig = new TaskInstallerConfig();
         configManager.addObject(taskConfig);

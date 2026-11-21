@@ -43,7 +43,6 @@ import iped.engine.data.Item;
 import iped.engine.hashdb.HashDBDataSource;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.PhotoDNALookup;
 import iped.engine.task.index.IndexItem;
@@ -80,9 +79,9 @@ public class RegexTask extends AbstractTask {
         ignoredKeys.add(IndexItem.CONTAINER_TRACK_ID);
         ignoredKeys.add(IndexItem.EVIDENCE_UUID);
         ignoredKeys.add(ExtraProperties.GLOBAL_ID);
-        ignoredKeys.add(HashDBLookupTask.ATTRIBUTES_PREFIX + HashDBDataSource.ledMd5_512);
-        ignoredKeys.add(HashDBLookupTask.ATTRIBUTES_PREFIX + HashDBDataSource.ledMd5_64k);
-        ignoredKeys.add(HashDBLookupTask.ATTRIBUTES_PREFIX + HashDBDataSource.photoDna);
+        ignoredKeys.add(ExtraProperties.HASHDB_PREFIX + HashDBDataSource.ledMd5_512);
+        ignoredKeys.add(ExtraProperties.HASHDB_PREFIX + HashDBDataSource.ledMd5_64k);
+        ignoredKeys.add(ExtraProperties.HASHDB_PREFIX + HashDBDataSource.photoDna);
         ignoredKeys.add(PhotoDNALookup.PHOTO_DNA_HIT_PREFIX + HashTask.HASH.MD5.name());
         ignoredKeys.add(PhotoDNALookup.PHOTO_DNA_NEAREAST_HASH);
     }

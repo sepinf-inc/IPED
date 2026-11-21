@@ -50,10 +50,10 @@ import iped.engine.search.SimilarFacesSearch;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.PythonTask;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.index.IndexItem.KnnVector;
 import iped.parsers.util.IgnoreContentHandler;
 import iped.utils.FileInputStreamFactory;
 import iped.utils.ImageUtil;
-import jep.NDArray;
 
 public class SimilarFacesFilterActions {
 
@@ -268,12 +268,12 @@ public class SimilarFacesFilterActions {
                 // queueEnd.setQueueEnd(true);
                 // task.process(queueEnd);
 
-                List<?> faces = (List<?>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
+                @SuppressWarnings("unchecked")
+                List<KnnVector> faces = (List<KnnVector>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
                 if (faces != null && !faces.isEmpty()) {
                     List<byte[]> faceEncodings = new ArrayList<byte[]>();
-                    for (Object obj : faces) {
-                        NDArray<?> face = (NDArray<?>) obj;
-                        float[] array = IndexItem.convNDArrayToFloatArray(face);
+                    for (KnnVector face : faces) {
+                        float[] array = IndexItem.convDoubleToFloatArray(face.getArray());
                         byte[] bytes = IndexItem.convFloatArrayToByteArray(array);
                         faceEncodings.add(bytes);
                     }

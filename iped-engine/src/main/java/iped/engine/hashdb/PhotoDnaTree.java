@@ -27,7 +27,8 @@ public class PhotoDnaTree implements Serializable {
         childs = new int[maxLen];
         Arrays.fill(starts, -1);
 
-        split(0, items.length, len++);
+        len = 1;
+        split(0, items.length, 0);
 
         rays = Arrays.copyOf(rays, len);
         starts = Arrays.copyOf(starts, len);
@@ -35,11 +36,11 @@ public class PhotoDnaTree implements Serializable {
         childs = Arrays.copyOf(childs, len);
         photoDnaArr = new byte[items[0].getBytes().length][items.length];
         hashId = new int[items.length];
-        Map<Integer, Integer> posToId = new HashMap<Integer, Integer>();
+        Map<PhotoDnaItem, Integer> itemToPos = new HashMap<PhotoDnaItem, Integer>();
         for (int i = 0; i < items.length; i++) {
             PhotoDnaItem item = items[i];
-            int id = hashId[i] = item.getHashId();
-            posToId.put(id, i);
+            hashId[i] = item.getHashId();
+            itemToPos.put(item, i);
             byte[] b = item.getBytes();
             for (int j = 0; j < b.length; j++) {
                 photoDnaArr[j][i] = b[j];
@@ -49,7 +50,7 @@ public class PhotoDnaTree implements Serializable {
         for (int i = 0; i < len; i++) {
             PhotoDnaItem item = centerItems[i];
             if (item != null) {
-                centers[i] = posToId.get(item.getHashId());
+                centers[i] = itemToPos.get(item);
             }
         }
         this.items = null;
