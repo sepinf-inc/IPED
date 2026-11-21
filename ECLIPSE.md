@@ -48,3 +48,29 @@ The generated project files keep the Java version and the dependencies of the mo
 ## Running IPED
 
 The Eclipse build only compiles the classes. To get a runnable IPED, with its libraries, configuration files and tools, build it with Maven as described in [Building](README.md#building) and use the snapshot created in the `target/release` folder.
+
+## Debugging a processing
+
+IPED is not launched from Eclipse. It is started from the command line with the Java debug agent, which connects to Eclipse, where the breakpoints are set. In this mode Eclipse is the one that listens on a port and IPED connects to it (`server=n`).
+
+### In Eclipse
+
+1. Open `Run > Debug Configurations...` and create a new `Remote Java Application`.
+2. Set `Project` to `iped-app`, so the sources of all the modules are found.
+3. Set `Connection Type` to `Standard (Socket Listen)` and `Port` to a free port, e.g. `5005`.
+4. Set `Connection limit` to `2`. IPED runs as two Java processes, a small launcher and the process that does the processing, and both connect to Eclipse.
+5. Click `Debug`. Eclipse starts waiting for the connections.
+
+### Starting IPED
+
+Build IPED with Maven and, in the snapshot folder (`target/release/iped-<version>`), start the processing with the debug agent before `-jar`, using the port chosen above:
+
+```
+java -agentlib:jdwp=transport=dt_socket,server=n,suspend=n,address=5005 -jar iped.jar -d <evidence> -o <output folder>
+```
+
+- Eclipse must already be listening when IPED starts. If a process can not connect, it ends with `transport error 202: connect failed: Connection refused`. The same happens to the processing process if the connection limit is 1.
+- Two entries show up in the `Debug` view. The breakpoints of the processing code are hit in the second one.
+- To debug the first lines executed by a process, use `suspend=y`: each process waits for the debugger before running.
+- If Eclipse runs on another computer, use `address=<host>:<port>`.
+- The debugged classes are the ones of the snapshot, not the ones compiled by Eclipse. Build IPED again with Maven after changing the code, otherwise the breakpoints do not match the running code.
