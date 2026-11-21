@@ -347,27 +347,4 @@
             <classifier>linux-x86_64</classifier>
         </dependency>
      </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <!-- Registers iped.engine.log.PackageRegexpFilter in Log4j2Plugins.dat, so Log4j finds
-                         it without the deprecated "packages" attribute of its configuration files. -->
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.apache.logging.log4j</groupId>
-                            <artifactId>log4j-core</artifactId>
-                            <version>${log4j.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                    <annotationProcessors>
-                        <annotationProcessor>org.apache.logging.log4j.core.config.plugins.processor.PluginProcessor</annotationProcessor>
-                    </annotationProcessors>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
