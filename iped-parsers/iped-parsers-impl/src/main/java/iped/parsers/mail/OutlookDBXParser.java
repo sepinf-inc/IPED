@@ -48,7 +48,7 @@ public class OutlookDBXParser extends AbstractParser {
                 String msg = "DBX parser not found, DBX mailboxes will NOT be expanded."; //$NON-NLS-1$
                 // are we in analysis app?
                 if (System.getProperty("iped.javaVersionChecked") != null)
-                    LOGGER.warn(msg);
+                    LOGGER.info(msg);
                 else
                     LOGGER.error(msg);
             }

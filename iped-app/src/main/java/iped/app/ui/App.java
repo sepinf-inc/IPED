@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -133,6 +133,8 @@ import iped.app.ui.controls.CustomButton;
 import iped.app.ui.controls.table.FilterTableHeaderController;
 import iped.app.ui.controls.table.FilterTableHeaderRenderer;
 import iped.app.ui.themes.ThemeManager;
+import iped.app.ui.utils.CCustomButton;
+import iped.app.ui.utils.CCustomCheckBox;
 import iped.app.ui.utils.PanelsLayout;
 import iped.app.ui.viewers.TextViewer;
 import iped.data.IIPEDSource;
@@ -156,6 +158,7 @@ import iped.engine.search.QueryBuilder;
 import iped.engine.search.SimilarDocumentSearch;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.search.SimilarImagesSearch;
+import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.util.Util;
 import iped.exception.ParseException;
@@ -356,7 +359,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public MenuClass getContextMenu() {
         IItemId id = resultTableListener.getSelectedItemId();
-        IItem item = id == null ? null : appCase.getItemByItemId(id); 
+        IItem item = id == null ? null : appCase.getItemByItemId(id);
         return new MenuClass(item);
     }
 
@@ -387,6 +390,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // configuration
         try {
             new ImageThumbTask().init(ConfigurationManager.get());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Force initialization of HashTask
+        try {
+            new HashTask().init(ConfigurationManager.get());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -448,7 +458,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 ColumnsManagerUI.getInstance().dispose();
             }
 
-            appCase.close();
+            if (appCase != null) {
+                appCase.close();
+            }
 
             if (processingFinished) {
                 if (processingManager != null)
@@ -500,6 +512,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.setTitle(Version.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         this.setSize(new Dimension(800, 600));
         this.setExtendedState(Frame.MAXIMIZED_BOTH);
+        this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         this.addWindowListener(this);
         this.setIconImages(IconUtil.getIconImages("search", "/iped/app/icon"));
         this.setVisible(true);
@@ -582,7 +595,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         topPanel.add(exportToZip);
         exportToZip.setVisible(false);
         topPanel.add(checkBox);
-        topPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        topPanel.setBorder(BorderFactory.createEmptyBorder(2, 4, 0, 6));
 
         resultsModel = new ResultTableModel();
         resultsTable = new JTable(resultsModel);
@@ -772,7 +785,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         defaultFocusedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_FOCUSED);
         defaultSelectedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
 
-        timelineButton = new CCheckBox(Messages.get("App.ToggleTimelineView"), IconUtil.getToolbarIcon("time", resPath)) {
+        timelineButton = new CCustomCheckBox(Messages.get("App.ToggleTimelineView"), IconUtil.getToolbarIcon("time", resPath)) {
             protected void changed() {
                 if (timelineListener != null)
                     timelineListener.setTimelineTableView(isSelected());
@@ -980,7 +993,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
 
-        CCheckBox butToggleVideoFramesMode = new CCheckBox(Messages.getString("Gallery.ToggleVideoFrames"), IconUtil.getToolbarIcon("video", resPath)) {
+        CCheckBox butToggleVideoFramesMode = new CCustomCheckBox(Messages.getString("Gallery.ToggleVideoFrames"), IconUtil.getToolbarIcon("video", resPath)) {
             protected void changed() {
                 galleryModel.clearVideoThumbsInCache();
                 useVideoThumbsInGallery = isSelected();
@@ -990,7 +1003,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         galleryTabDock.addAction(butToggleVideoFramesMode);
         galleryTabDock.addSeparator();
 
-        galleryGrayButton = new CCheckBox(Messages.getString("Gallery.GalleryGrayFilter"), IconUtil.getToolbarIcon("gray-scale", resPath)) {
+        galleryGrayButton = new CCustomCheckBox(Messages.getString("Gallery.GalleryGrayFilter"), IconUtil.getToolbarIcon("gray-scale", resPath)) {
             protected void changed() {
                 galleryModel.setGrayFilter(isSelected());
                 gallery.repaint();
@@ -998,7 +1011,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         };
         galleryTabDock.addAction(galleryGrayButton);
 
-        galleryBlurButton = new CCheckBox(Messages.getString("Gallery.GalleryBlurFilter"), IconUtil.getToolbarIcon("blur-image", resPath)) {
+        galleryBlurButton = new CCustomCheckBox(Messages.getString("Gallery.GalleryBlurFilter"), IconUtil.getToolbarIcon("blur-image", resPath)) {
             protected void changed() {
                 galleryModel.setBlurFilter(isSelected());
                 gallery.repaint();
@@ -1007,7 +1020,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         galleryTabDock.addAction(galleryBlurButton);
         galleryTabDock.addSeparator();
 
-        butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"), IconUtil.getToolbarIcon("find", resPath));
+        butSimSearch = new CCustomButton(Messages.getString("MenuClass.FindSimilarImages"), IconUtil.getToolbarIcon("find", resPath));
         galleryTabDock.addAction(butSimSearch);
         butSimSearch.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -1016,7 +1029,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         });
         butSimSearch.setEnabled(false);
 
-        butFaceSearch = new CButton(Messages.getString("MenuClass.FindSimilarFaces"), IconUtil.getToolbarIcon("face", resPath));
+        butFaceSearch = new CCustomButton(Messages.getString("MenuClass.FindSimilarFaces"), IconUtil.getToolbarIcon("face", resPath));
         galleryTabDock.addAction(butFaceSearch);
         butFaceSearch.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -1024,13 +1037,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
         butFaceSearch.setEnabled(false);
-        
+
         galleryTabDock.addSeparator();
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
-        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getToolbarIcon("minus", resPath));
+        CButton butDec = new CCustomButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getToolbarIcon("minus", resPath));
         galleryTabDock.addAction(butDec);
-        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"), IconUtil.getToolbarIcon("plus", resPath));
+        CButton butInc = new CCustomButton(Messages.getString("Gallery.IncreaseThumbsSize"), IconUtil.getToolbarIcon("plus", resPath));
         galleryTabDock.addAction(butInc);
         galleryTabDock.addSeparator();
         butDec.addActionListener(new ActionListener() {
@@ -1120,7 +1133,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     private void setupViewerDocks() {
-        CCheckBox chkFixed = new CCheckBox(Messages.getString("ViewerController.FixViewer"), IconUtil.getToolbarIcon("pin", resPath)) {
+        CCheckBox chkFixed = new CCustomCheckBox(Messages.getString("ViewerController.FixViewer"), IconUtil.getToolbarIcon("pin", resPath)) {
             protected void changed() {
                 viewerController.setFixed(isSelected());
             }
@@ -1151,7 +1164,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             });
 
             if (viewer == App.get().getViewerController().getMultiViewer()) {
-                CButton searchInViewer = new CButton(Messages.getString("MenuClass.SearchInViewer"),
+                CButton searchInViewer = new CCustomButton(Messages.getString("MenuClass.SearchInViewer"),
                         IconUtil.getToolbarIcon("search", resPath));
                 searchInViewer.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
@@ -1163,7 +1176,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 viewerDock.addAction(searchInViewer);
                 viewerDock.putAction("searchInViewer", searchInViewer);
 
-                CButton copyViewerImage = new CButton(Messages.getString("MenuClass.CopyViewerImage"),
+                CButton copyViewerImage = new CCustomButton(Messages.getString("MenuClass.CopyViewerImage"),
                         IconUtil.getToolbarIcon("copy", resPath));
                 copyViewerImage.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
@@ -1174,8 +1187,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 viewerDock.addAction(copyViewerImage);
             }
 
-            CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getToolbarIcon("prev", resPath));
-            CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"), IconUtil.getToolbarIcon("next", resPath));
+            CButton prevHit = new CCustomButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getToolbarIcon("prev", resPath));
+            CButton nextHit = new CCustomButton(Messages.getString("ViewerController.NextHit"), IconUtil.getToolbarIcon("next", resPath));
             prevHit.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     viewer.scrollToNextHit(false);
@@ -1267,15 +1280,24 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
                 bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, aiFiltersTabDock, graphDock,
                 referencesDock, referencedByDock, filtersTabDock));
-        docks.addAll(viewerDocks);
-        docks.addAll(rsTabDock);
-        rsTabDock.clear();
+        // Closing the processing preview may precede viewer initialization.
+        if (viewerDocks != null) {
+            docks.addAll(viewerDocks);
+        }
+        if (rsTabDock != null) {
+            docks.addAll(rsTabDock);
+            rsTabDock.clear();
+        }
 
         for (DefaultSingleCDockable dockable : docks) {
             if (dockable != null) {
-                Component c = dockable.getContentPane().getComponent(0);
-                dockable.remove(c);
-                dockingControl.removeDockable(dockable);
+                Container content = dockable.getContentPane();
+                if (content.getComponentCount() > 0) {
+                    dockable.remove(content.getComponent(0));
+                }
+                if (dockingControl != null) {
+                    dockingControl.removeDockable(dockable);
+                }
             }
         }
     }
@@ -1526,6 +1548,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowClosing(WindowEvent e) {
+        // Check if BFAC upload is in progress
+        if (!iped.bfac.BfacDialog.confirmApplicationClose(this)) {
+            return; // User cancelled, don't close
+        }
+
         // Hide the window immediately so the user sees instant close feedback.
         // This avoids further UI interaction while shutdown is running.
         setVisible(false);
