@@ -299,14 +299,11 @@ public class ExternalParser extends AbstractParser {
                 process = Runtime.getRuntime().exec(cmd, null, workDir);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            // reported as a parsing error, instead of silently returning no content
+            throw new TikaException(this.getParserName() + " could not be started.", e);
         }
 
         try {
-            if (process == null) {
-                return;
-            }
-
             if (inputToStdIn) {
                 sendInput(process, stream);
             } else {

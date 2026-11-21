@@ -1,6 +1,7 @@
 package iped.parsers.external;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNotNull;
 
 import java.io.File;
@@ -309,6 +310,24 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
                 assertTrue(eventNumbers.get(i-1).matches("Event number.*" + String.valueOf(i)));
             }
 
+        }
+    }
+
+    @Test
+    public void testToolNotFound() throws IOException, SAXException {
+
+        ExternalParser parser = new ExternalParser();
+        parser.setParserName("MissingToolParser");
+        parser.setCommand("iped-missing-external-tool " + ExternalParser.INPUT_FILE_TOKEN);
+
+        Metadata metadata = new Metadata();
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "test_evtxLog.evtx");
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_evtxLog.evtx")) {
+            parser.parse(stream, new BodyContentHandler(), metadata, new ParseContext());
+            fail("A TikaException should be thrown if the external tool can not be started");
+        } catch (TikaException e) {
+            assertTrue(e.getCause() instanceof IOException);
         }
     }
 
