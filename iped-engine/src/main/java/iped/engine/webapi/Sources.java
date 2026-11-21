@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -149,7 +150,16 @@ public class Sources {
         if ((new File(urlToAskSources)).exists()) {
             in = new FileInputStream(urlToAskSources);
         } else {
-            in = URI.create(urlToAskSources).toURL().openConnection().getInputStream();
+            URL url;
+            try {
+                url = URI.create(urlToAskSources).toURL();
+            } catch (IllegalArgumentException e) {
+                MalformedURLException ex = new MalformedURLException(
+                        "Sources file not found and not a valid URL: " + urlToAskSources);
+                ex.initCause(e);
+                throw ex;
+            }
+            in = url.openConnection().getInputStream();
         }
         try {
             result = (JSONArray) JSONValue.parseWithException(new InputStreamReader(in, StandardCharsets.UTF_8));
