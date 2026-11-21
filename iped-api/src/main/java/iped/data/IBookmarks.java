@@ -121,4 +121,11 @@ public interface IBookmarks extends Serializable {
 
     SearchResult filterInReport(SearchResult result);
 
+    boolean isChatMessageSelected(int chatItemId, String msgId);
+
+    void setChatMessageSelected(boolean value, int chatItemId, String msgId);
+
+    Set<Integer> getChatsWithSelectedMessages();
+
+    SearchResult filterChatsWithSelectedMessages(SearchResult result);
 }

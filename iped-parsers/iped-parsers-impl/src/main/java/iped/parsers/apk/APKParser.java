@@ -36,7 +36,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.Messages;
-import iped.parsers.whatsapp.Util;
+import iped.parsers.util.ChatUtil;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
 import net.dongliu.apk.parser.bean.ApkMeta;
@@ -215,7 +215,7 @@ public class APKParser extends AbstractParser {
         img = ImageUtil.resizeImage(img, size, size);
         ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
         ImageIO.write(img, "png", out);
-        return Util.encodeBase64(out.toByteArray());
+        return ChatUtil.encodeBase64(out.toByteArray());
     }
 
     private void add(XHTMLContentHandler xhtml, Icon icon, String val) throws SAXException {

@@ -9,7 +9,6 @@ import java.util.Set;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import iped.parsers.threema.ThreemaParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -23,15 +22,18 @@ import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.shareaza.ShareazaDownloadParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.threema.ThreemaParser;
 import iped.parsers.util.Util;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.utils.IOUtil;
 import iped.viewers.api.AttachmentSearcher;
+import iped.viewers.api.MessageSelector;
 import iped.viewers.localization.Messages;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
+import javafx.scene.web.WebEngine;
 import netscape.javascript.JSObject;
 
 /**
@@ -52,15 +54,25 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
     public static final String UFED_HTML_REPORT_MIME = "application/x-ufed-html-report"; //$NON-NLS-1$
 
     protected AttachmentSearcher attachSearcher;
+    protected MessageSelector messageSelector;
+    private MessageHandler messageHandler;
 
     private HashSet<String> mediaHashesInView = new HashSet<>();
 
-    private boolean cheking = false;
+    private boolean checking = false;
 
     public HtmlLinkViewer(AttachmentSearcher attachSearcher) {
+        this(attachSearcher, null);
+    }
+    
+    public HtmlLinkViewer(AttachmentSearcher attachSearcher, MessageSelector messageSelector) {
         this.attachSearcher = attachSearcher;
+        this.messageSelector = messageSelector;
         this.fileHandler = new AttachmentHandler();
         this.enableJavascript = true;
+        if (messageSelector != null) {
+            messageHandler = new MessageHandler();
+        }
 
         Platform.runLater(new Runnable() {
             @Override
@@ -71,6 +83,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                             Worker.State newState) {
                         if (newState == Worker.State.SUCCEEDED) {
                             updateSelection();
+                            updateMessageSelection();
                             // imprecise, not needed for current chat reports after #633
                             // scrollToPosition();
                         }
@@ -97,6 +110,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                             Number newValue) {
                         addJavascriptListener(webEngine);
                         updateSelection();
+                        updateMessageSelection();
                         if (newValue.floatValue() > 0) {
                             // imprecise, not needed for current chat reports after #633
                             // scrollToPosition();
@@ -138,6 +152,54 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
         super.loadFile(content, terms);
     }
 
+    public class MessageHandler {
+        public void selectMessage(String messageId, boolean selected) {
+            if (messageSelector != null) {
+                messageSelector.selectMessage(messageId, selected);
+            }
+        }
+
+        public boolean isSelected(String messageId) {
+            return messageSelector != null && messageSelector.isMessageSelected(messageId);
+        }
+    }
+
+    @Override
+    protected void addJavascriptListener(WebEngine engine) {
+        super.addJavascriptListener(engine);
+        if (messageSelector != null && messageHandler != null) {
+            JSObject window = (JSObject) engine.executeScript("window");
+            if (window != null) {
+                window.setMember("msgApp", messageHandler);
+            }
+        }
+    }
+
+    private void updateMessageSelection() {
+        if (messageSelector == null || messageHandler == null) {
+            return;
+        }
+
+        JSObject window = (JSObject) webEngine.executeScript("window");
+        if (window != null) {
+            window.setMember("msgApp", messageHandler);
+        }
+
+        String script = 
+            "var lines = document.getElementsByClassName('line');" +
+            "for (var i = 0; i < lines.length; i++) {" +
+            "    var line = lines[i];" +
+            "    if (line.id && msgApp.isSelected(line.id)) {" +
+            "        line.classList.add('sel');" +
+            "    }" +
+            "}" +
+            "if (typeof updateNavigation === 'function') {" +
+            "    updateNavigation();" +
+            "}";
+
+        webEngine.executeScript(script);
+    }
+
     public class AttachmentHandler extends FileHandler {
 
         public void open(final String luceneQuery) {
@@ -171,9 +233,9 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
         }
 
         public void check(String luceneQuery, boolean checked) {
-            cheking = true;
+            checking = true;
             attachSearcher.checkItem(luceneQuery, checked);
-            cheking = false;
+            checking = false;
         }
 
         public boolean isChecked(String hash) {
@@ -201,7 +263,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
     @Override
     public void setSelected(IItemId item, boolean value) {
-        if (cheking || mediaHashesInView.isEmpty())
+        if (checking || mediaHashesInView.isEmpty())
             return;
         String hash = attachSearcher.getHash(item);
         if (!mediaHashesInView.contains(hash))

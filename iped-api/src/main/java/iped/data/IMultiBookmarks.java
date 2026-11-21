@@ -113,4 +113,9 @@ public interface IMultiBookmarks extends Serializable {
 
     void removeSelectionListener(SelectionListener listener);
 
+    boolean isChatMessageSelected(IItemId chatItem, String msgId);
+
+    void setChatMessageSelected(boolean value, IItemId chatItem, String msgId);
+
+    IMultiSearchResult filterChatsWithSelectedMessages(IMultiSearchResult result);
 }

@@ -22,11 +22,12 @@
             <div style="display: inline-block; padding: 6px 0px 2px 6px;">
                 <img src="${avatar}" width="72" height="72">
             </div>
-            <div style="display: inline-block; width: 555px; vertical-align: bottom;">
+            <div style="display: inline-block; flex: 1; min-width: 0; overflow: hidden; vertical-align: bottom;">
                 <span class="left">
                     ${title}
                 </span>
             </div>
+            ${navcontrols}
         </div>
         <div id="conversation">
         ${deleted}
