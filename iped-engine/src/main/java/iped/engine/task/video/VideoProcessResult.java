@@ -44,7 +44,7 @@ public class VideoProcessResult implements Closeable {
     private String videoFormat, videoCodec;
     private Map<String, String> clipInfos = new HashMap<String, String>();
     private List<File> frames = new ArrayList<>();
-    private boolean success, timeout;
+    private boolean success, timeout, usedFFmpeg;
     private long processingTime;
     private File subTmp;
 
@@ -82,6 +82,14 @@ public class VideoProcessResult implements Closeable {
 
     public void setSuccess(boolean success) {
         this.success = success;
+    }
+
+    public boolean isFFmpeg() {
+        return usedFFmpeg;
+    }
+
+    public void setFFmpeg(boolean usedFFmpeg) {
+        this.usedFFmpeg = usedFFmpeg;
     }
 
     public boolean isTimeout() {
