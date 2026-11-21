@@ -541,7 +541,8 @@ public class Bookmarks implements IBookmarks {
     @Override
     public synchronized void setChatMessageSelected(boolean selected, int chatItemId, String msgId) {
         if (chatsMsgs == null) {
-            return;
+            // State loaded from a file saved by a previous version
+            chatsMsgs = new HashMap<Integer, Set<String>>();
         }
         Set<String> msgs = chatsMsgs.get(chatItemId);
         if (msgs == null) {
