@@ -183,3 +183,7 @@ JUnRAR
 Lottie-player
 - Site: https://github.com/LottieFiles/lottie-player/blob/master/LICENSE
 - License: licenses/LOTTIE-PLAYER.txt
+
+wa-crypt-tools
+- Site: https://github.com/ElDavoo/wa-crypt-tools
+- License: GNU GPL v.3
