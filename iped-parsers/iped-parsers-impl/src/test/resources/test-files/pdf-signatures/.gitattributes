@@ -1,0 +1,4 @@
+# Signature byte ranges and SHA256SUMS depend on exact bytes: never convert line endings here.
+*           -text
+*.pdf       binary
+README.md   text encoding=UTF-8
