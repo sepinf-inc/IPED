@@ -66,7 +66,22 @@ public class KnownMetParser extends AbstractParser {
     public static final String EDONKEY = "edonkey";
 
     public static final String EMULE_KNOWN_MET_MIME_TYPE = "application/x-emule-known-met";
-    public static final String EMULE_KNOWN_MET_ENTRY_MIME_TYPE = "application/x-emule-known-met-entry"; //$NON-NLS-1$
+    public static final String EMULE_KNOWN_MET_ENTRY_MIME_TYPE = "application/x-emule-known-met-entry";
+
+    /**
+     * Media type assigned to known.met files before #2424. No longer set, but
+     * still present in cases processed by previous versions.
+     */
+    public static final String EMULE_KNOWN_MET_LEGACY_MIME_TYPE = "application/x-emule";
+
+    /**
+     * Checks if the given media type identifies a known.met file, including the
+     * legacy media type used by cases processed by previous versions.
+     */
+    public static boolean isKnownMetMimeType(String mediaType) {
+        return EMULE_KNOWN_MET_MIME_TYPE.equals(mediaType) || EMULE_KNOWN_MET_LEGACY_MIME_TYPE.equals(mediaType);
+    }
+
     private static final Set<MediaType> SUPPORTED_TYPES = Collections
             .singleton(MediaType.parse(EMULE_KNOWN_MET_MIME_TYPE));
 

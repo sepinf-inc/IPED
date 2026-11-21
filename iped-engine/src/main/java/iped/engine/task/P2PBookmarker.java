@@ -85,6 +85,8 @@ public class P2PBookmarker {
 
         P2PProgram progEMule = new P2PProgram(HashTask.HASH.EDONKEY.toString(), "Emule", new Color(140, 75, 30));
         p2pPrograms.put(KnownMetParser.EMULE_KNOWN_MET_MIME_TYPE, progEMule);
+        // Legacy known.met media type, present when appending to cases processed before #2424
+        p2pPrograms.put(KnownMetParser.EMULE_KNOWN_MET_LEGACY_MIME_TYPE, progEMule);
         p2pPrograms.put(PartMetParser.EMULE_PART_MET_MIME_TYPE, progEMule);
 
         p2pPrograms.put(AresParser.ARES_MIME_TYPE,
