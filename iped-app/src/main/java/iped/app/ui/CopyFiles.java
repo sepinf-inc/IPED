@@ -20,9 +20,7 @@ package iped.app.ui;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -95,14 +93,11 @@ public class CopyFiles extends SwingWorker<Boolean, Integer> implements Property
                     dst = new File(subdir, Util.concat(dstName, num++));
                 }
 
-                BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
-
                 LOGGER.info("Exporting file " + e.getPath()); //$NON-NLS-1$
 
-                IOUtil.copyInputToOutputStream(in, out);
+                IOUtil.copyInputStreamToPath(in, dst.toPath());
 
                 in.close();
-                out.close();
 
                 if (e.getModDate() != null)
                     dst.setLastModified(e.getModDate().getTime());

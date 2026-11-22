@@ -83,7 +83,7 @@ public class ReferencingTableModel extends BaseTableModel {
         if (sharedHashes.length > 0) {
             String field;
             String mediaType = doc.get(BasicProps.CONTENTTYPE);
-            if (KnownMetParser.EMULE_MIME_TYPE.equals(mediaType)) {
+            if (KnownMetParser.isKnownMetMimeType(mediaType)) {
                 field = HashTask.HASH.EDONKEY.toString();
             } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
                 field = HashTask.HASH.SHA1.toString();
