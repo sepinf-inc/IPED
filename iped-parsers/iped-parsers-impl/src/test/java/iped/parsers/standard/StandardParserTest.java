@@ -20,7 +20,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.content.TikaManager;
-import iped.content.TikaManager.TikaConfigAlreadyInitializedException;
 import iped.parsers.compress.SevenZipParser;
 import iped.properties.ExtraProperties;
 import junit.framework.TestCase;
@@ -39,10 +38,7 @@ public class StandardParserTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        try {
-            TikaManager.initializeTikaConfig(false, false);
-        } catch (TikaConfigAlreadyInitializedException ignore) {
-        }
+        TikaManager.initializeTikaConfig(false, false);
     }
 
     @Test

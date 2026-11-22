@@ -781,7 +781,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         this.autoParser = new StandardParser();
     }
 
-    private static synchronized void setupParsingOptionsAndInitializeTika(ConfigurationManager configurationManager) {
+    /**
+     * Sets the parsing options and initializes the global TikaConfig, only once.
+     * Custom signatures must have been installed before, see
+     * {@link SignatureTask#installCustomSignatures()}.
+     */
+    public static synchronized void setupParsingOptionsAndInitializeTika(ConfigurationManager configurationManager) {
         if (!initialized) {
             setupParsingOptions(configurationManager);
             TikaManager.initializeTikaConfig();
