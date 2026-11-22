@@ -21,9 +21,12 @@ package iped.engine.data;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,6 +37,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -44,15 +49,18 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Bits;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteException;
+
+import com.google.gson.Gson;
 
 import iped.data.IBookmarks;
 import iped.data.IIPEDSource;
@@ -79,6 +87,7 @@ import iped.exception.IPEDException;
 import iped.properties.BasicProps;
 import iped.utils.IOUtil;
 import iped.utils.SelectImagePathWithDialog;
+import iped.utils.UTF8Properties;
 
 public class IPEDSource implements IIPEDSource {
 
@@ -91,11 +100,9 @@ public class IPEDSource implements IIPEDSource {
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
     public static final String PREV_TEMP_INFO_PATH = DATA_DIR + "/prevTempDir.txt"; //$NON-NLS-1$
 
-    /**
-     * workaround para JVM não coletar objeto, nesse caso Sleuthkit perde referencia
-     * para FS_INFO
-     */
-    private static List<SleuthkitCase> tskCaseList = Collections.synchronizedList(new ArrayList<SleuthkitCase>());
+    // key in acquisition tool settings; the password for decrypting an image
+    // @see: org.sleuthkit.datamodel.SleuthkitCase.IMAGE_PASSWORD_KEY
+    private static final String IMAGE_PASSWORD_KEY = "imagePassword";
 
     private File casePath;
     private File moduleDir;
@@ -112,6 +119,7 @@ public class IPEDSource implements IIPEDSource {
 
     protected ArrayList<String> leafCategories = new ArrayList<String>();
     protected Category categoryTree;
+    protected final Map<String, Set<String>> descendantsCategories = new HashMap<String, Set<String>>();
 
     private IBookmarks bookmarks;
     IMultiBookmarks multiBookmarks;
@@ -161,6 +169,7 @@ public class IPEDSource implements IIPEDSource {
         this(casePath, iw, true);
     }
 
+    @SuppressWarnings("unchecked")
     public IPEDSource(File casePath, IndexWriter iw, boolean askImagePathIfNotFound) {
         this.askImagePathIfNotFound = askImagePathIfNotFound;
         this.casePath = casePath;
@@ -191,23 +200,17 @@ public class IPEDSource implements IIPEDSource {
 
             isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
 
-            File sleuthFile = new File(casePath, SLEUTH_DB);
-            if (sleuthFile.exists()) {
+            Path sleuthFile = casePath.toPath().resolve(SLEUTH_DB);
+            if (Files.exists(sleuthFile)) {
                 if (SleuthkitReader.sleuthCase != null)
                     // workaroud para demora ao abrir o caso enquanto tsk_loaddb não termina
                     sleuthCase = SleuthkitReader.sleuthCase;
                 else {
-                    // Unpatched TSK doesn't work with a read-only DB, must be writeable
-                    if (!SleuthkitReader.isTSKPatched()) {
-                        sleuthFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
-                    }
-                    sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(sleuthFile.getAbsolutePath());
+                    sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(sleuthFile);
                 }
 
                 if (!isReport)
-                    updateImagePathsToAbsolute(casePath, sleuthFile);
-
-                tskCaseList.add(sleuthCase);
+                    fixImagePathsToLocalEnvironment(casePath, sleuthFile.toFile());
             }
 
             AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
@@ -218,7 +221,7 @@ public class IPEDSource implements IIPEDSource {
 
             openIndex(index, iw);
 
-            BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
+            IndexSearcher.setMaxClauseCount(Integer.MAX_VALUE);
             analyzer = AppAnalyzer.get();
 
             populateLuceneIdToIdMap();
@@ -226,10 +229,11 @@ public class IPEDSource implements IIPEDSource {
             populateEvidenceUUIDs();
             countTotalItems();
 
-            SleuthkitReader.loadImagePasswords(moduleDir);
+            migrateImagesPassword();
 
             loadLeafCategories();
             loadCategoryTree();
+            buildDescendantsCategories(categoryTree);
 
             loadKeywords();
 
@@ -250,6 +254,47 @@ public class IPEDSource implements IIPEDSource {
                 throw (RuntimeException) e;
             }
             throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+     private void migrateImagesPassword() {
+
+        if (sleuthCase == null) {
+            return;
+        }
+
+        File file = new File(moduleDir, SleuthkitReader.PASSWORD_PER_IMAGE);
+        if (!file.exists()) {
+            return;
+        }
+
+        // This block handles a data migration scenario for backward compatibility.
+        // In previous versions of IPED, passwords for encrypted disk images were stored in a separate properties file.
+        // This code checks if the password is not yet stored in the Sleuthkit database (as part of the DataSource acquisition details).
+        // If it's not, it reads the password from the old properties file and updates the DataSource object,
+        // effectively migrating the password to the new storage mechanism used by TSK (The Sleuth Kit).
+        // This allows IPED to seamlessly open older cases.
+        UTF8Properties props = new UTF8Properties();
+        try {
+            props.load(file);
+            for (DataSource ds : sleuthCase.getDataSources()) {
+                if (!StringUtils.contains(ds.getAcquisitionToolSettings(), IMAGE_PASSWORD_KEY)) {
+                    // if password is not in the DB yet, get it from props and set it
+                    String password = props.getProperty(ds.getName() + "_PASSWORD");
+                    if (password != null) {
+                        Map<String, Object> acquisitionToolMap = new HashMap<>();
+                        acquisitionToolMap.put(IMAGE_PASSWORD_KEY, password);
+                        String acquisitionToolJson = (new Gson()).toJson(acquisitionToolMap);
+
+                        ds.setAcquisitionToolDetails(ds.getAcquisitionToolName(), ds.getAcquisitionToolVersion(),
+                                acquisitionToolJson);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error(
+                    "Error migrating image passwords from properties file to Sleuthkit database. " +
+                    "This may cause issues opening encrypted images if the password is not already stored in the database: " + casePath, e);
         }
     }
 
@@ -374,6 +419,27 @@ public class IPEDSource implements IIPEDSource {
         categoryTree = root;
     }
 
+    private void buildDescendantsCategories(Category category) {
+        Set<String> descendants = new HashSet<String>();
+        fillDescendants(category, category, descendants);
+        if (!descendants.isEmpty()) {
+            descendantsCategories.put(category.getName().toLowerCase(), descendants);
+        }
+
+        Set<Category> children = category.getChildren();
+        for (Category child : children) {
+            buildDescendantsCategories(child);
+        }
+    }
+
+    private void fillDescendants(Category ancestral, Category current, Set<String> descendants) {
+        Set<Category> children = current.getChildren();
+        for (Category child : children) {
+            descendants.add(child.getName().toLowerCase());
+            fillDescendants(ancestral, child, descendants);
+        }
+    }
+
     private boolean checkAndAddMissingCategory(Category root, Category leaf) {
         boolean found = false;
         if (leaf.getName().equalsIgnoreCase(root.getName())) {
@@ -421,19 +487,19 @@ public class IPEDSource implements IIPEDSource {
         if (category.getNumItems() != -1)
             return category.getNumItems();
 
-        int num = 0;
         for (Category child : category.getChildren()) {
-            num += countNumItems(child);
+            countNumItems(child);
         }
 
         String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
         IPEDSearcher searcher = new IPEDSearcher(this, query);
         searcher.setNoScoring(true);
+        int num = 0;
         try {
             if (this instanceof IPEDMultiSource) {
-                num += searcher.multiSearch().getLength();
+                num = searcher.multiSearch().getLength();
             } else {
-                num += searcher.search().getLength();
+                num = searcher.search().getLength();
             }
 
         } catch (Exception e) {
@@ -567,7 +633,7 @@ public class IPEDSource implements IIPEDSource {
         }
     }
 
-    private void updateImagePathsToAbsolute(File casePath, File sleuthFile) throws Exception {
+    private void fixImagePathsToLocalEnvironment(File casePath, File sleuthFile) throws Exception {
         char letter = casePath.getAbsolutePath().charAt(0);
         boolean isWindowsNetworkShare = casePath.getAbsolutePath().startsWith("\\\\");
         Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
@@ -581,13 +647,12 @@ public class IPEDSource implements IIPEDSource {
                     if (new File(newPath).exists())
                         newPaths.add(newPath);
                 } else if ((new File(path).exists() && path.contains(File.separator))
-                        || (System.getProperty("os.name").startsWith("Windows")
-                                && path.toLowerCase().contains("physicaldrive"))) {
+                        || (SystemUtils.IS_OS_WINDOWS && path.toLowerCase().contains("physicaldrive"))) {
                     newPaths = null;
                     break;
                 } else {
                     path = path.replace("/", File.separator).replace("\\", File.separator);
-                    String newPath = letter + path.substring(1);
+                    String newPath = new File(path).isAbsolute() && SystemUtils.IS_OS_WINDOWS ? letter + path.substring(1) : path;
                     if (new File(newPath).exists())
                         newPaths.add(newPath);
                     else {
@@ -612,8 +677,7 @@ public class IPEDSource implements IIPEDSource {
             }
             if (newPaths != null)
                 if (newPaths.size() > 0) {
-                    testCanWriteToCase(sleuthFile);
-                    sleuthCase.setImagePaths(id, newPaths);
+                    updateImagePaths(id, newPaths);
                 } else if (iw == null) {
                     if (askImagePathIfNotFound) {
                         askNewImagePath(id, paths, sleuthFile);
@@ -624,17 +688,32 @@ public class IPEDSource implements IIPEDSource {
         }
     }
 
-    File tmpCaseFile = null;
+    private void updateImagePaths(long imgId, List<String> newPaths) throws IOException, TskCoreException {
+        try {
 
-    private void testCanWriteToCase(File sleuthFile) throws TskCoreException, IOException {
-        if (tmpCaseFile != null) return;
-        File writeableDBFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
-        if (writeableDBFile != sleuthFile){
-            tmpCaseFile = writeableDBFile;
-            // causes "case is closed" error in some cases
-            // sleuthCase.close();
-            sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(tmpCaseFile.getAbsolutePath());
-            tskCaseList.add(sleuthCase);
+            sleuthCase.setImagePaths(imgId, newPaths);
+
+        } catch (TskCoreException e) {
+
+            // This only happens in patched versions of TSK prior to 4.14.0, where the sleuthCase.setImagePaths 
+            // method does not support transient image paths in read-only cases.
+            // The workaround is to create a temporary copy of the Sleuthkit database in a writable location and update the image paths there.
+            if (e.getCause() instanceof SQLiteException && e.getCause().getMessage().contains("SQLITE_READONLY")) {
+
+                // Do not close sleuthCase here. It is cached in SleuthkitInputStreamFactory.sleuthkitCasesMap
+                // and may still be referenced by other code paths.
+                // sleuthCase.close();
+
+                Path currentDBPath = Paths.get(sleuthCase.getDbDirPath(), sleuthCase.getDatabaseName());
+                Path tmpDBPath = SleuthkitInputStreamFactory.getWriteableDBPath(currentDBPath, true);
+                sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(tmpDBPath);
+
+                // set newPaths in the new writable sleuthCase instance
+                sleuthCase.setImagePaths(imgId, newPaths);
+
+            } else {
+                throw e;
+            }
         }
     }
 
@@ -653,8 +732,7 @@ public class IPEDSource implements IIPEDSource {
                     throw new IOException(Messages.getString("IPEDSource.ImgFragNotFound") + basePath + ext); //$NON-NLS-1$
                 newPaths.add(basePath + ext);
             }
-        testCanWriteToCase(sleuthFile);
-        sleuthCase.setImagePaths(imgId, newPaths);
+        updateImagePaths(imgId, newPaths);
     }
 
     public String getItemProperty(int id, String propertyName) {
@@ -716,6 +794,10 @@ public class IPEDSource implements IIPEDSource {
 
     public List<String> getLeafCategories() {
         return leafCategories;
+    }
+
+    public Set<String> getDescendantsCategories(String ancestral) {
+        return descendantsCategories.get(ancestral);
     }
 
     public Category getCategoryTree() {

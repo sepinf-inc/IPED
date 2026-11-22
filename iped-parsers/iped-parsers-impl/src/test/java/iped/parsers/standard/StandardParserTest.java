@@ -349,7 +349,9 @@ public class StandardParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             assertEquals("iped.parsers.standard.RawStringParser", metadata.get(PARSED_BY));
-            assertEquals("0.5720935240387917", metadata.get(RawStringParser.COMPRESS_RATIO));
+            // The exact value depends on the LZ4 implementation in use (native or pure
+            // Java, which is used if the native library can not be loaded).
+            assertEquals(0.572, Double.parseDouble(metadata.get(RawStringParser.COMPRESS_RATIO)), 0.001);
             assertEquals(MediaType.OCTET_STREAM.toString(), metadata.get(Metadata.CONTENT_TYPE));
 
         }

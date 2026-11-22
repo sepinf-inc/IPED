@@ -2,10 +2,11 @@ package iped.engine.localization;
 
 import java.text.Collator;
 import java.util.Enumeration;
-import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TreeMap;
+
+import iped.localization.LocaleResolver;
 
 public class CategoryLocalization {
 
@@ -42,9 +43,7 @@ public class CategoryLocalization {
     }
 
     private CategoryLocalization() {
-        String localeStr = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
-        Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-        RESOURCE_BUNDLE = iped.localization.Messages.getExternalBundle(BUNDLE_NAME, locale);
+        RESOURCE_BUNDLE = iped.localization.Messages.getExternalBundle(BUNDLE_NAME, LocaleResolver.getLocale());
 
         Enumeration<String> keys = (Enumeration<String>) RESOURCE_BUNDLE.getKeys();
         while (keys.hasMoreElements()) {

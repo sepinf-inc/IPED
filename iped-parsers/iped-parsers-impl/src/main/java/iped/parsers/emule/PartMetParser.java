@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
@@ -31,6 +30,7 @@ import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.parsers.util.P2PUtil;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
@@ -74,8 +74,10 @@ public class PartMetParser extends AbstractParser {
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         // PART.MET files are very small, so 1 MB should be more than enough.
-        byte[] bytes = new byte[1 << 20];
-        IOUtils.read(stream, bytes);
+        byte[] bytes = stream.readNBytes(1 << 20);
+        if (bytes.length < 1) {
+            throw new TikaException("Empty part.met file");
+        }
         int version = bytes[0] & 0xFF;
         if (version != 224 && version != 225 && version != 226) {
             throw new TikaException("Detected part.met file format version not supported: " + version);
@@ -85,15 +87,6 @@ public class PartMetParser extends AbstractParser {
         int ret = iped.parsers.emule.KnownMetDecoder.parseEntry(e, 1, bytes, false);
         if (ret <= 0) {
             throw new TikaException("part.met file parsing returned error code " + ret);
-        }
-
-        if (extractEntries) {
-            BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, PART_MET_ENTRY_MIME_TYPE, context);
-            // normalization to use same property name of other p2p parsers
-            bme.registerPropertyNameMapping(KnownMetEntry.class, "hash", "ed2k");
-            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
-            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
-            bme.extractEmbedded(0, context, metadata, handler, e);
         }
 
         metadata.add(ExtraProperties.SHARED_HASHES, e.getHash());
@@ -118,10 +111,24 @@ public class PartMetParser extends AbstractParser {
         int hashDBHits = 0;
         List<String> hashSets = ChildPornHashLookup.lookupHash(KnownMetParser.EDONKEY, e.getHash());
         IItemReader item = P2PUtil.searchItemInCase(searcher, KnownMetParser.EDONKEY, e.getHash());
-        if (item != null)
+        if (item != null) {
             hashSets = ChildPornHashLookup.lookupHashAndMerge(item.getHash(), hashSets);
-        if (hashSets != null && !hashSets.isEmpty())
+            e.setFoundInCase(true);
+        }
+        if (hashSets != null && !hashSets.isEmpty()) {
             hashDBHits++;
+            e.setFoundInHashDB(hashSets.toString());
+        }
+
+        if (extractEntries) {
+            BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, PART_MET_ENTRY_MIME_TYPE, context);
+            // normalization to use same property name of other p2p parsers
+            bme.registerPropertyNameMapping(KnownMetEntry.class, "hash", "ed2k");
+            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
+            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${sent != null && sent ? hash : null}");
+            bme.registerTransformationMapping(KnownMetEntry.class, BasicProps.NAME, "Part-Entry-[${name}].met");
+            bme.extractEmbedded(0, context, metadata, handler, e);
+        }
 
         AttributesImpl attributes = new AttributesImpl();
         if (e.getHash() != null && !e.getHash().isEmpty())

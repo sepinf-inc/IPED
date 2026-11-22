@@ -24,7 +24,7 @@
             ${title}
           </span>
         </div>
-        <div id="conversation"><br><br><br><br><br>
+        <div id="conversation">
         ${messages}
         <br><br><br>
         <div id="lastmsg">&nbsp;</div>

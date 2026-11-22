@@ -74,6 +74,7 @@ import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
 import iped.engine.lucene.CustomIndexDeletionPolicy;
 import iped.engine.lucene.analysis.AppAnalyzer;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IndexerSimilarity;
 import iped.engine.search.ItemSearcher;
@@ -225,7 +226,7 @@ public class Manager {
         return indexDir;
     }
 
-    Worker[] getWorkers() {
+    public Worker[] getWorkers() {
         return workers;
     }
 
@@ -266,7 +267,12 @@ public class Manager {
             LOGGER.info("Evidence " + (i++) + ": '{}'", source.getAbsolutePath()); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
+        PreviewRepositoryManager.configureWritable(output);
+
         EvidenceStatus status = new EvidenceStatus(output.getParentFile());
+
+        UIPropertyListenerProvider.getInstance().firePropertyChange("output", "",
+                output.getParentFile().getAbsolutePath());
 
         try {
             openIndex();
@@ -300,6 +306,7 @@ public class Manager {
 
         } finally {
             closeItemProducers();
+            PreviewRepositoryManager.close(output);
         }
 
         filterKeywords();
@@ -413,7 +420,14 @@ public class Manager {
             mergeScheduler.setMaxMergesAndThreads(8, 4);
         }
         conf.setMergeScheduler(mergeScheduler);
-        conf.setRAMBufferSizeMB(64);
+        /*
+         * Scale the RAM buffer with the heap: fewer flushes and small-segment
+         * merges on large cases. 64MB (the old fixed value) stays as the floor
+         * so memory-constrained machines keep the previous behavior; above
+         * 512MB Lucene gains little.
+         */
+        long heapMB = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        conf.setRAMBufferSizeMB(Math.min(Math.max(64, heapMB / 32), 512));
         TieredMergePolicy tieredPolicy = new TieredMergePolicy();
         /*
          * Seta tamanho máximo dos subíndices. Padrão é 5GB. Poucos subíndices grandes
@@ -544,6 +558,9 @@ public class Manager {
         for (int k = 0; k < workers.length; k++) {
             workers[k] = new Worker(k, caseData, writer, output, this);
         }
+        for (Worker w : workers) {
+            w.init();
+        }
 
         // Execução dos workers após todos terem sido instanciados e terem inicializado
         // suas tarefas
@@ -604,7 +621,7 @@ public class Manager {
                             "Changed to processing queue with priority " + processingQueues.getCurrentQueuePriority()); //$NON-NLS-1$
                     caseData.putCaseObject(IItemSearcher.class.getName(),
                             new ItemSearcher(output.getParentFile(), writer));
-                    processingQueues.addLastToCurrentQueue(queueEnd);
+                    processingQueues.addToCurrentQueue(queueEnd);
                     for (int k = 0; k < workers.length; k++) {
                         workers[k].processNextQueue();
                     }

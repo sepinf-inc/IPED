@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +33,6 @@ import iped.utils.IOUtil;
 
 public class Util {
 
-    private static final String imageThumbsDir = "../../../../iped/thumbs/"; //$NON-NLS-1$
-    private static final String videoThumbsDir = "../../../../iped/view/"; //$NON-NLS-1$
     private static final int MAX_PREVIEW_SIZE = 128;
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 
@@ -50,7 +47,7 @@ public class Util {
         return autoParser;
     }
 
-    private static String getContentPreview(InputStream is, Metadata m, String mimeType) {
+    public static String getContentPreview(InputStream is, Metadata m, String mimeType) {
         LimitedContentHandler contentHandler = new LimitedContentHandler(MAX_PREVIEW_SIZE);
         TextContentHandler textHandler = new TextContentHandler(contentHandler, true);
         if (m == null)
@@ -263,6 +260,10 @@ public class Util {
         return items;
     }
 
+    public static IItemReader getFirstItem(String query, IItemSearcher searcher) {
+        return searcher == null ? null : searcher.searchFirst(query);
+    }
+
     public static String getExportPath(IItemReader item) {
         String hash = item.getHash();
         String ext = item.getType(); // $NON-NLS-1$
@@ -340,39 +341,6 @@ public class Util {
             return null;
         }
         return file.toPath().toAbsolutePath().normalize().toString();
-    }
-
-    public static byte[] getPreview(IItemReader item) {
-        byte[] thumb = null;
-        InputStream is = null;
-        try {
-            String mime = item.getMediaType().toString();
-            if (mime.startsWith("image")) //$NON-NLS-1$
-                thumb = IOUtil.loadInputStream(is = item.getBufferedInputStream());
-            else if (mime.startsWith("video") && item.getViewFile() != null) //$NON-NLS-1$
-                thumb = Files.readAllBytes(item.getViewFile().toPath());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            IOUtil.closeQuietly(is);
-        }
-        return thumb;
-    }
-
-    public static String getThumbPath(IItemReader item) {
-        String thumbPath = null;
-        String mime = item.getMediaType().toString();
-        String hash = item.getHash();
-        if (hash != null && hash.length() > 1) {
-            if (mime.startsWith("image")) //$NON-NLS-1$
-                thumbPath = imageThumbsDir;
-            else if (mime.startsWith("video") && item.getViewFile() != null) //$NON-NLS-1$
-                thumbPath = videoThumbsDir;
-            if (thumbPath != null)
-                thumbPath += hash.charAt(0) + "/" + hash.charAt(1) + "/" + hash + ".jpg"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        }
-        return thumbPath;
     }
 
     public static String getParentPath(String path) {

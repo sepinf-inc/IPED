@@ -9,7 +9,10 @@ import java.awt.RenderingHints;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
+import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
+import java.awt.image.WritableRaster;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -127,6 +130,10 @@ public class ImageUtil {
 
     public static BufferedImage getSubSampledImage(InputStream inputStream, int size) {
         return doGetSubSampledImage(inputStream, size, null, null);
+    }
+
+    public static BufferedImage getSubSampledImage(InputStream inputStream, int size, String mimeType) {
+        return doGetSubSampledImage(inputStream, size, null, mimeType);
     }
 
     public static BufferedImage getSubSampledImage(File file, int size, String mimeType) {
@@ -392,7 +399,7 @@ public class ImageUtil {
      *
      * @return Array com {BufferedImage, String}
      */
-    public static Object[] readJpegWithMetaData(File inFile) throws IOException {
+    public static Object[] readJpegWithMetaData(Object inFile) throws IOException {
         ImageReader reader = null;
         ImageInputStream iis = null;
         try {
@@ -535,7 +542,7 @@ public class ImageUtil {
         return result;
     }
 
-    public static List<BufferedImage> getFrames(File videoFramesFile) throws IOException {
+    public static List<BufferedImage> getFrames(Object videoFramesFile) throws IOException {
         Object[] read = ImageUtil.readJpegWithMetaData(videoFramesFile);
         if (read != null && read.length == 2) {
             String videoComment = (String) read[1];
@@ -819,5 +826,39 @@ public class ImageUtil {
             }
         }
         pluginsPriorityUpdated = true;
+    }
+
+    public static BufferedImage cloneImage(BufferedImage source) {
+        if (source == null) {
+            return null;
+        }
+
+        ColorModel cm = source.getColorModel();
+        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+        WritableRaster raster = source.copyData(null);
+
+        return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
+    }
+
+    /**
+     * Checks if a given byte array represents a structurally valid image.
+     * 
+     * @param imageData The byte array of the image/thumbnail.
+     * @return true if the image is valid and can be decoded, false otherwise.
+     */
+    public static boolean isImageValid(byte[] imageData) {
+        if (imageData == null || imageData.length < 10) {
+            return false;
+        }
+
+        try (InputStream is = new ByteArrayInputStream(imageData)) {
+            // ImageIO.read returns a BufferedImage if successful,
+            // or null if no registered ImageReader claims to be able to read the stream.
+            return ImageIO.read(is) != null;
+        } catch (Exception e) {
+            // Any parsing error (like unexpected EOF from carved fragments) means it's
+            // structurally invalid
+            return false;
+        }
     }
 }
