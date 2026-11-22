@@ -809,12 +809,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             PluginConfig pluginConfig = configurationManager.findObject(PluginConfig.class);
             ForkParser.setPluginDir(pluginConfig.getPluginFolder().getAbsolutePath());
             ForkParser.setPoolSize(parsingConfig.getNumExternalParsers());
-            max_expanding_containers = Math.max(1, parsingConfig.getNumExternalParsers() / 2);
-            if (max_expanding_containers == 0) {
+            if (parsingConfig.getNumExternalParsers() < 2) {
                 // Abort. We must have at least 2 external parsing processes, 1 causes deadlock.
                 throw new IPEDException("You must have a minimum of 2 external parsing processes! Adjust the '" + ParsingTaskConfig.NUM_EXTERNAL_PARSERS + "' option.");
             }
             ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
+            max_expanding_containers = Math.max(1, parsingConfig.getNumExternalParsers() / 2);
         } else {
             LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
             if (localConfig.getNumThreads() < 2) {
