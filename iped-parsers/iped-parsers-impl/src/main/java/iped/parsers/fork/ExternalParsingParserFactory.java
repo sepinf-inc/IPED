@@ -32,6 +32,9 @@ public class ExternalParsingParserFactory extends ParserFactory {
     @Override
     public Parser build() throws IOException, SAXException, TikaException {
 
+        // This runs in the external parsing process, which receives the system
+        // properties of the main process, so TikaConfig can be initialized here
+        TikaManager.initializeTikaConfig();
         TikaConfig tikaConfig = TikaManager.getTikaConfig();
         final StandardParser recursiveParser = new StandardParser();
 
