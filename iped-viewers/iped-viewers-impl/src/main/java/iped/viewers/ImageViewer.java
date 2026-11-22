@@ -218,7 +218,9 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
                     applyHighlightFaces(false);
                 }
 
-            } catch (IOException e) {
+            } catch (Exception e) {
+                // Catch any exception, so the panel is always updated below and the
+                // previously displayed image is not kept when the current one fails
                 e.printStackTrace();
 
             } finally {

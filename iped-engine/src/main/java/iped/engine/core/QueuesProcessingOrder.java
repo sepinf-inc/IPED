@@ -79,7 +79,7 @@ public class QueuesProcessingOrder {
         mediaTypes.put(CacheIndexParser.CHROME_INDEX_MIME_TYPE, 2);
         mediaTypes.put(MediaType.parse(DiscordParser.CHAT_MIME_TYPE), 3);
 
-        mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_KNOWN_MET_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 2);

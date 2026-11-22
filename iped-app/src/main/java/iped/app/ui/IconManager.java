@@ -193,6 +193,8 @@ public class IconManager {
 
         QualityIcon icon = availableIconsMap.get("emule");
         if (icon != null) {
+            mimeIconMap.put("application/x-emule-known-met", icon);
+            // Legacy known.met media type, used by cases processed before #2424
             mimeIconMap.put("application/x-emule", icon);
             mimeIconMap.put("application/x-emule-part-met", icon);
             mimeIconMap.put("application/x-emule-searches", icon);
