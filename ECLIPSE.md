@@ -11,25 +11,25 @@ Several modules (`iped-viewers`, `iped-geo`, `iped-app`) use JavaFX, which is no
 On Debian, Ubuntu and derived Linux distributions it can be installed with `apt` instead:
 
 1. Add the BellSoft APT repository, following the "APT Repository" section of the [Liberica JDK installation guide](https://bell-sw.com/pages/repositories/).
-2. Install the `-full` package, which is the one with JavaFX, replacing `11` with the Java version required by IPED:
+2. Install the `-full` package, which is the one with JavaFX, replacing `25` if the branch being built requires another Java version:
    ```
-   sudo apt install bellsoft-java11-full
+   sudo apt install bellsoft-java25-full
    ```
 
-The JDK is installed in `/usr/lib/jvm/bellsoft-java11-full-amd64`, which is the folder to be used as `JRE home` in step 3.
+The JDK is installed in `/usr/lib/jvm/bellsoft-java25-full-amd64`, which is the folder to be used as `JRE home` in step 3.
 
 The same JDK is used to build IPED from the command line.
 
 ## 2. Install Eclipse
 
-Use a recent "Eclipse IDE for Java Developers" (or "Enterprise Java and Web Developers"). It must support the Java version required by IPED and already includes the Maven integration (m2e).
+Use a recent "Eclipse IDE for Java Developers" (or "Enterprise Java and Web Developers"). It must support the Java version required by IPED, which means Eclipse 2025-12 (4.38) or newer for Java 25, and already includes the Maven integration (m2e).
 
 ## 3. Register the Liberica Full JDK in Eclipse
 
 1. Open `Window > Preferences > Java > Installed JREs` (on macOS, `Eclipse > Settings...`).
 2. Click `Add...`, choose `Standard VM` and set `JRE home` to the folder of the Liberica Full JDK.
 3. Check the new entry to make it the default JRE.
-4. Open `Java > Installed JREs > Execution Environments`, select the environment of the Java version required by IPED (e.g. `JavaSE-11`) and check the Liberica Full JDK in the list of compatible JREs.
+4. Open `Java > Installed JREs > Execution Environments`, select the environment of the Java version required by IPED (e.g. `JavaSE-25`) and check the Liberica Full JDK in the list of compatible JREs.
 
 Step 4 is needed because the imported projects are bound to an execution environment, not directly to a JDK. If that environment points to a JDK without JavaFX, all `javafx.*` imports are reported as errors.
 
