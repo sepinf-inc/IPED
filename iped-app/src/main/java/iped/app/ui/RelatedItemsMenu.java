@@ -17,6 +17,7 @@ import iped.app.ui.bookmarks.BookmarkAndKey;
 import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
+import iped.utils.LocalizedFormat;
 
 /**
  * Context menu of the related items panels (subitems, parent, duplicates,
@@ -38,20 +39,28 @@ public class RelatedItemsMenu extends JPopupMenu implements ActionListener {
         this.table = table;
         this.highlightedIds = model.getSelectedItemIds(table);
 
-        checkHighlighted = createItem("MenuClass.CheckHighlighted");
-        uncheckHighlighted = createItem("MenuClass.UnCheckHighlighted");
+        checkHighlighted = createItem(highlightedLabel("MenuClass.CheckHighlighted"));
+        uncheckHighlighted = createItem(highlightedLabel("MenuClass.UnCheckHighlighted"));
         addSeparator();
         add(createBookmarksSubmenu(true));
         add(createBookmarksSubmenu(false));
         addSeparator();
-        exportHighlighted = createItem("MenuClass.ExportHighlighted");
+        exportHighlighted = createItem(highlightedLabel("MenuClass.ExportHighlighted"));
         addSeparator();
-        openExternally = createItem("RelatedItemsMenu.OpenExternally");
+        openExternally = createItem(Messages.getString("RelatedItemsMenu.OpenExternally"));
         openExternally.setEnabled(table.getSelectedRowCount() == 1);
     }
 
-    private JMenuItem createItem(String messageKey) {
-        JMenuItem item = new JMenuItem(Messages.getString(messageKey));
+    /**
+     * Returns the label of an action applied to the highlighted items, followed by
+     * the number of highlighted items, e.g. "Export Highlighted items (6)".
+     */
+    private String highlightedLabel(String messageKey) {
+        return Messages.getString(messageKey) + " (" + LocalizedFormat.format(highlightedIds.size()) + ")";
+    }
+
+    private JMenuItem createItem(String label) {
+        JMenuItem item = new JMenuItem(label);
         item.addActionListener(this);
         add(item);
         return item;
@@ -64,7 +73,7 @@ public class RelatedItemsMenu extends JPopupMenu implements ActionListener {
      */
     private JMenu createBookmarksSubmenu(boolean add) {
         IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
-        JMenu submenu = new JMenu(Messages.getString(add ? "RelatedItemsMenu.AddToBookmark" : "RelatedItemsMenu.RemoveFromBookmark"));
+        JMenu submenu = new JMenu(highlightedLabel(add ? "RelatedItemsMenu.AddToBookmark" : "RelatedItemsMenu.RemoveFromBookmark"));
 
         // same ordering used by the bookmark manager dialog
         TreeSet<BookmarkAndKey> bookmarks = new TreeSet<>();
