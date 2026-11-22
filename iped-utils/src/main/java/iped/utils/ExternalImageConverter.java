@@ -234,7 +234,8 @@ public class ExternalImageConverter implements Closeable {
         ProcessBuilder pb = new ProcessBuilder();
         setProcessEnvironment(pb);
 
-        String[] cmd = { CMD[0], "identify", "-ping", "-format", "%w %h", "-" };
+        // One line per frame, so the first line has only the dimensions of the first frame
+        String[] cmd = { CMD[0], "identify", "-ping", "-format", "%w %h\\n", "-" };
         try {
             pb.command(cmd);
             Process p = pb.start();
@@ -243,7 +244,7 @@ public class ExternalImageConverter implements Closeable {
                     new InputStreamReader(p.getInputStream(), StandardCharsets.ISO_8859_1))) {
                 String line = reader.readLine();
                 if (line != null) {
-                    String[] d = line.split(" ");
+                    String[] d = line.trim().split(" ");
                     if (d.length >= 2) {
                         return new Dimension(Integer.parseInt(d[0]), Integer.parseInt(d[1]));
                     }
@@ -251,6 +252,8 @@ public class ExternalImageConverter implements Closeable {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (NumberFormatException e) {
+            // Unexpected output, dimensions are unknown
         }
         return null;
     }
