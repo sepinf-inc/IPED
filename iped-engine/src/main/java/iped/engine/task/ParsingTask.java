@@ -55,7 +55,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.configuration.Configurable;
-import iped.content.TikaManager;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.data.IItemReader;
@@ -84,6 +83,7 @@ import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ItemInfoFactory;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.TextCache;
+import iped.engine.util.TikaInitializer;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.exception.ZipBombException;
@@ -164,7 +164,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
 
     private static AtomicInteger containersBeingExpanded = new AtomicInteger();
-    private static volatile boolean initialized = false;
 
     private CategoryToExpandConfig expandConfig;
     private ParsingTaskConfig parsingConfig;
@@ -776,22 +775,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         SplitLargeBinaryConfig splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
         minItemSizeToFragment = splitConfig.getMinItemSizeToFragment();
 
-        setupParsingOptionsAndInitializeTika(configurationManager);
+        TikaInitializer.init(configurationManager);
 
         this.autoParser = new StandardParser();
-    }
-
-    /**
-     * Sets the parsing options and initializes the global TikaConfig, only once.
-     * Custom signatures must have been installed before, see
-     * {@link SignatureTask#installCustomSignatures()}.
-     */
-    public static synchronized void setupParsingOptionsAndInitializeTika(ConfigurationManager configurationManager) {
-        if (!initialized) {
-            setupParsingOptions(configurationManager);
-            TikaManager.initializeTikaConfig();
-            initialized = true;
-        }
     }
 
     public static void setupParsingOptions(ConfigurationManager configurationManager) {

@@ -38,8 +38,7 @@ import iped.engine.core.Manager;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.preview.PreviewRepositoryManager;
-import iped.engine.task.ParsingTask;
-import iped.engine.task.SignatureTask;
+import iped.engine.util.TikaInitializer;
 import iped.parsers.standard.StandardParser;
 
 public class UICaseDataLoader extends SwingWorker<Void, Integer> {
@@ -118,8 +117,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                 App.get().resultsModel.initCols();
                 App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 
-                SignatureTask.installCustomSignatures();
-                ParsingTask.setupParsingOptionsAndInitializeTika(ConfigurationManager.get());
+                TikaInitializer.init(ConfigurationManager.get());
                 StandardParser autoParser = new StandardParser();
                 App.get().setAutoParser(autoParser);
 

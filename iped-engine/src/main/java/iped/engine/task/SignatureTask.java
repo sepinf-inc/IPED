@@ -21,6 +21,7 @@ import iped.content.TikaManager;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;
+import iped.engine.util.TikaInitializer;
 import iped.io.SeekableInputStream;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
@@ -34,8 +35,6 @@ public class SignatureTask extends AbstractTask {
     private static Logger LOGGER = LoggerFactory.getLogger(SignatureTask.class);
 
     private static final String[] HFS_ATTR_SUFFIX = { ":DATA", ":DECOMP", ":RSRC" };
-
-    private static volatile boolean initialized;
 
     private boolean processFileSignatures = true;
     private Detector detector;
@@ -163,18 +162,18 @@ public class SignatureTask extends AbstractTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
-        installCustomSignatures();
+        TikaInitializer.init(configurationManager);
         SignatureConfig config = configurationManager.findObject(SignatureConfig.class);
         processFileSignatures = config.isEnabled();
     }
 
-    public static synchronized void installCustomSignatures() {
-        if (!initialized) {
-            SignatureConfig config = ConfigurationManager.get().findObject(SignatureConfig.class);
-            System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
-
-            initialized = true;
-        }
+    /**
+     * Sets the system property with the custom signatures file, read by Tika when
+     * its configuration is created.
+     */
+    public static void installCustomSignatures(ConfigurationManager configurationManager) {
+        SignatureConfig config = configurationManager.findObject(SignatureConfig.class);
+        System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
     }
 
     @Override
