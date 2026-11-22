@@ -814,14 +814,14 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 throw new IPEDException("You must have a minimum of 2 external parsing processes! Adjust the '" + ParsingTaskConfig.NUM_EXTERNAL_PARSERS + "' option.");
             }
             ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
-            max_expanding_containers = Math.max(1, parsingConfig.getNumExternalParsers() / 2);
+            max_expanding_containers = Math.max(1, parsingConfig.getNumExternalParsers() / 4);
         } else {
             LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
             if (localConfig.getNumThreads() < 2) {
                 // Just 1 worker can cause a deadlock if a big container is being expanded due to max queue size
                 throw new IPEDException("You should have at least 2 processing workers! Please adjust '" + LocalConfig.NUM_THREADS + "' option.");
             }
-            max_expanding_containers = Math.max(1, localConfig.getNumThreads() / 2);
+            max_expanding_containers = Math.max(1, localConfig.getNumThreads() / 4);
         }
 
         String appRoot = Configuration.getInstance().appRoot;
