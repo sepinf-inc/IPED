@@ -36,6 +36,9 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
     protected int selectedIndex = -1;
     protected Document refDoc;
 
+    // true while the viewer shows the reference item instead of the highlighted one
+    private boolean showingRefItem;
+
     public void clear() {
         results = new LuceneSearchResult(0);
         fireTableDataChanged();
@@ -128,6 +131,15 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
         if (showContextMenu(evt)) {
             return;
         }
+        if (showingRefItem && evt.getSource() instanceof JTable) {
+            // the highlighted row did not change, so no selection event is fired
+            JTable table = (JTable) evt.getSource();
+            int row = table.rowAtPoint(evt.getPoint());
+            if (row != -1 && selectedIndex != -1 && table.convertRowIndexToModel(row) == selectedIndex) {
+                showingRefItem = false;
+                valueChanged(table.getSelectionModel());
+            }
+        }
         if (evt.getClickCount() == 2 && selectedIndex != -1) {
             int docId = results.getLuceneIds()[selectedIndex];
             ExternalFileOpen.open(docId);
@@ -153,6 +165,51 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
 
     public int getLuceneId(int modelRow) {
         return results.getLuceneIds()[modelRow];
+    }
+
+    /**
+     * Returns the key of the menu label of the action that shows the position of
+     * an item of this panel in the preview of the reference item (the one selected
+     * in the results table), or null if this panel does not support it.
+     */
+    public String getGoToPositionLabelKey() {
+        return null;
+    }
+
+    /**
+     * Configures the viewer to scroll to the position of the given item of this
+     * panel when the preview of the reference item is loaded.
+     * 
+     * @param apply
+     *            if false, just checks if the position is known
+     * @return false if the position is unknown
+     */
+    protected boolean setPositionToScroll(int luceneId, boolean apply) {
+        return false;
+    }
+
+    public boolean canGoToPosition(int modelRow) {
+        return refDoc != null && getRefLuceneId() != -1 && setPositionToScroll(getLuceneId(modelRow), false);
+    }
+
+    /**
+     * Shows the reference item (the one selected in the results table) in the
+     * viewer, scrolled to the position of the given item of this panel.
+     */
+    public void goToPosition(int modelRow) {
+        int refLuceneId = getRefLuceneId();
+        if (refDoc != null && refLuceneId != -1 && setPositionToScroll(getLuceneId(modelRow), true)) {
+            showingRefItem = true;
+            new FileProcessor(refLuceneId, false).execute();
+        }
+    }
+
+    private int getRefLuceneId() {
+        int row = App.get().resultsTable.getSelectedRow();
+        if (row == -1) {
+            return -1;
+        }
+        return App.get().appCase.getLuceneId(App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row)));
     }
 
     /**
@@ -188,6 +245,7 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
         }
 
         selectedIndex = lsm.getMinSelectionIndex();
+        showingRefItem = false;
         valueChanged(lsm);
     }
 

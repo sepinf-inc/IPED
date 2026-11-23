@@ -32,7 +32,7 @@ public class RelatedItemsMenu extends JPopupMenu implements ActionListener {
     private final JTable table;
     private final ArrayList<IItemId> highlightedIds;
 
-    private final JMenuItem checkHighlighted, uncheckHighlighted, exportHighlighted, openExternally;
+    private final JMenuItem checkHighlighted, uncheckHighlighted, exportHighlighted, openExternally, goToPosition;
 
     public RelatedItemsMenu(BaseTableModel model, JTable table) {
         this.model = model;
@@ -49,6 +49,14 @@ public class RelatedItemsMenu extends JPopupMenu implements ActionListener {
         addSeparator();
         openExternally = createItem(Messages.getString("RelatedItemsMenu.OpenExternally"));
         openExternally.setEnabled(table.getSelectedRowCount() == 1);
+
+        if (model.getGoToPositionLabelKey() != null) {
+            addSeparator();
+            goToPosition = createItem(Messages.getString(model.getGoToPositionLabelKey()));
+            goToPosition.setEnabled(table.getSelectedRowCount() == 1 && model.canGoToPosition(table.convertRowIndexToModel(table.getSelectedRow())));
+        } else {
+            goToPosition = null;
+        }
     }
 
     /**
@@ -125,6 +133,12 @@ public class RelatedItemsMenu extends JPopupMenu implements ActionListener {
             int row = table.getSelectedRow();
             if (row != -1) {
                 ExternalFileOpen.open(model.getLuceneId(table.convertRowIndexToModel(row)));
+            }
+
+        } else if (e.getSource() == goToPosition) {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                model.goToPosition(table.convertRowIndexToModel(row));
             }
         }
     }

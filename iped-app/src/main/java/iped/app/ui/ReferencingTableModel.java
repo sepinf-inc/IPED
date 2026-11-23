@@ -18,6 +18,7 @@
  */
 package iped.app.ui;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,6 +62,47 @@ public class ReferencingTableModel extends BaseTableModel {
         parsingTask.execute();
     }
 
+    /**
+     * Returns the hash field used by items of the given media type to reference
+     * other items.
+     */
+    static String getReferenceHashField(String mediaType) {
+        if (KnownMetParser.EMULE_MIME_TYPE.equals(mediaType)) {
+            return HashTask.HASH.EDONKEY.toString();
+        } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
+            return HashTask.HASH.SHA1.toString();
+        } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(mediaType)) {
+            return HashTask.HASH.MD5.toString();
+        } else {
+            return BasicProps.HASH;
+        }
+    }
+
+    @Override
+    public String getGoToPositionLabelKey() {
+        return "RelatedItemsMenu.GoToReferencePosition";
+    }
+
+    @Override
+    protected boolean setPositionToScroll(int luceneId, boolean apply) {
+        // the referenced items are identified by their hash in the referencing preview
+        String hash;
+        try {
+            Document doc = App.get().appCase.getSearcher().doc(luceneId);
+            hash = doc.get(getReferenceHashField(refDoc.get(BasicProps.CONTENTTYPE)));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        if (StringUtils.isBlank(hash)) {
+            return false;
+        }
+        if (apply) {
+            App.get().getViewerController().getHtmlLinkViewer().setElementNameToScroll(hash);
+        }
+        return true;
+    }
+
     @Override
     public Query createQuery(Document doc) {
         BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
@@ -81,17 +123,7 @@ public class ReferencingTableModel extends BaseTableModel {
         // sharedHashes
         String[] sharedHashes = doc.getValues(ExtraProperties.SHARED_HASHES);
         if (sharedHashes.length > 0) {
-            String field;
-            String mediaType = doc.get(BasicProps.CONTENTTYPE);
-            if (KnownMetParser.EMULE_MIME_TYPE.equals(mediaType)) {
-                field = HashTask.HASH.EDONKEY.toString();
-            } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
-                field = HashTask.HASH.SHA1.toString();
-            } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(mediaType)) {
-                field = HashTask.HASH.MD5.toString();
-            } else {
-                field = BasicProps.HASH;
-            }
+            String field = getReferenceHashField(doc.get(BasicProps.CONTENTTYPE));
 
             Set<BytesRef> hashes = Arrays.asList(sharedHashes).stream().filter(StringUtils::isNotBlank)
                     .map(h -> new BytesRef(h)).collect(Collectors.toSet());

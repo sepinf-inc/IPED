@@ -30,7 +30,9 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import iped.data.IItem;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.utils.LocalizedFormat;
 
 public class SubitemTableModel extends BaseTableModel {
@@ -48,6 +50,24 @@ public class SubitemTableModel extends BaseTableModel {
         parsingTask.execute();
 
         App.get().parentItemModel.fireTableDataChanged();
+    }
+
+    @Override
+    public String getGoToPositionLabelKey() {
+        return "MenuClass.GoToChat";
+    }
+
+    @Override
+    protected boolean setPositionToScroll(int luceneId, boolean apply) {
+        IItem item = App.get().appCase.getItemByLuceneID(luceneId);
+        String position = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
+        if (position == null) {
+            return false;
+        }
+        if (apply) {
+            App.get().getViewerController().getHtmlLinkViewer().setElementIDToScroll(position);
+        }
+        return true;
     }
 
     @Override
