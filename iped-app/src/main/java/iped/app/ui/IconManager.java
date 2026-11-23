@@ -23,11 +23,14 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
+
+import org.apache.commons.lang3.StringUtils;
 
 import iped.app.ui.utils.UiIconSize;
 import iped.engine.data.SimpleFilterNode;
@@ -193,21 +196,88 @@ public class IconManager {
     private static final String ALEAPP_MIME_PREFIX = "application/x-aleapp-";
 
     /**
-     * Generic icon for the ALEAPP subitem mime types that are derived dynamically from plugin/artifact names (e.g.
-     * application/x-aleapp-sms_mms-message), so they cannot be enumerated in the static mime map.
+     * Icon for the ALEAPP item mime types, which are derived dynamically from plugin/artifact names (e.g.
+     * application/x-aleapp-sms_mms-message, application/x-aleapp-web-history), so they cannot be enumerated in the
+     * static mime map. No new icon is created for them: they reuse the icon of the equivalent type already in the map.
      *
-     * Only the suffix is used. The conversation items do carry their app in the mime
-     * (application/x-aleapp-chat-preview-whatsapp), but those types are a closed set already registered in the mime
-     * map, so they are resolved by a plain lookup and never reach this method. Matching an app name inside the
-     * remaining (row) types would only mislabel them, since most are contacts, calls or account profiles rather than
-     * conversations.
+     * Types named after what the rows hold end with a suffix set by AleappMediaTypeResolver ("-call", "-message"...).
+     * The other ones are named after the artifact, so they are matched by its whole words.
+     *
+     * The conversation items do carry their app in the mime (application/x-aleapp-chat-preview-whatsapp), but those
+     * types are a closed set already registered in the mime map, so they are resolved by a plain lookup and never reach
+     * this method. Matching an app name inside the remaining (row) types would only mislabel them, since most are
+     * contacts, calls or account profiles rather than conversations.
      */
     private static Icon getAleappIcon(String mimeType, Map<String, QualityIcon> mimeIconMap) {
-        if (mimeType.endsWith("-message")) {
-            return mimeIconMap.get("application/x-aleapp-message");
+        String equivalent = getAleappEquivalentMime(StringUtils.removeStart(mimeType, ALEAPP_MIME_PREFIX));
+        return equivalent == null ? null : mimeIconMap.get(equivalent);
+    }
+
+    private static String getAleappEquivalentMime(String subtype) {
+
+        // what the rows hold
+        if (subtype.endsWith("-message")) {
+            return "application/x-aleapp-message";
         }
-        if (mimeType.endsWith("-chat") || mimeType.endsWith("-conversation")) {
-            return mimeIconMap.get("application/x-aleapp-chat-preview");
+        if (StringUtils.endsWithAny(subtype, "-chat", "-conversation")) {
+            return "application/x-aleapp-chat-preview";
+        }
+        if (subtype.endsWith("-call")) {
+            return "application/x-ufed-call";
+        }
+        if (subtype.endsWith("-contact")) {
+            return "application/x-ufed-contact";
+        }
+        if (subtype.equals("email") || subtype.endsWith("-email")) {
+            return "application/x-ufed-email";
+        }
+
+        // types fixed by AleappMediaTypeResolver
+        switch (subtype) {
+            case "notification":
+                return "application/x-ufed-notification";
+            case "account":
+            case "facebook-account":
+                return "application/x-ufed-useraccount";
+            case "account-authtoken":
+                return "application/x-ufed-password";
+            case "siminfo":
+                return "application/x-ufed-simdata";
+            case "deviceinfo":
+                return "application/x-ufed-deviceinfo";
+        }
+
+        // types named after the artifact (e.g. "web-history", "google-maps-searches")
+        Set<String> words = Set.of(StringUtils.split(subtype, "-_"));
+        if (words.contains("autofill")) {
+            return "application/x-ufed-autofill";
+        }
+        if (words.contains("cookies")) {
+            return "application/x-ufed-cookie";
+        }
+        if (words.contains("bookmarks")) {
+            return "application/x-ufed-webbookmark";
+        }
+        if ((words.contains("web") || words.contains("browser")) && (words.contains("history") || words.contains("visits"))) {
+            return "application/x-ufed-visitedpage";
+        }
+        if (words.contains("login") && words.contains("data")) {
+            return "application/x-ufed-password";
+        }
+        if (words.contains("searches")) {
+            return "application/x-ufed-searcheditem";
+        }
+        if (words.contains("notifications")) {
+            return "application/x-ufed-notification";
+        }
+        if (words.contains("calendar") || words.contains("calendars")) {
+            return "application/x-ufed-calendarentry";
+        }
+        if (words.contains("locations") || words.contains("places")) {
+            return "application/x-ufed-location";
+        }
+        if (StringUtils.containsAny(subtype, "wifi", "wi-fi")) {
+            return "application/x-ufed-wirelessnetwork";
         }
         return null;
     }
