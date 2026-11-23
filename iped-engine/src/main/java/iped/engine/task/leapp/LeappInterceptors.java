@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.engine.task.leapp.interceptors.IlapfuncsDeviceInfoInterceptor;
+import iped.engine.task.leapp.interceptors.IlapfuncsEmbeddedMediaInterceptor;
 import iped.engine.task.leapp.interceptors.IlapfuncsLogfuncInterceptor;
 import iped.engine.task.leapp.interceptors.LavaInsertSqliteDataInterceptor;
 import jep.Jep;
@@ -28,6 +29,8 @@ public class LeappInterceptors {
         interceptors.add(new LavaInsertSqliteDataInterceptor());
         // serializes concurrent writes to the shared ilapfuncs.identifiers dict
         interceptors.add(new IlapfuncsDeviceInfoInterceptor());
+        // keeps the data of embedded media, later turned into child items of the rows referencing it
+        interceptors.add(new IlapfuncsEmbeddedMediaInterceptor());
     }
 
     public void install(Jep jep) {
@@ -44,9 +47,10 @@ public class LeappInterceptors {
         }
     }
 
-    private void execPythonResource(Jep jep, String resourceName) {
+    /** Runs a python script kept as a resource of this package. */
+    public static void execPythonResource(Jep jep, String resourceName) {
         String script;
-        try (InputStream is = getClass().getResourceAsStream(resourceName)) {
+        try (InputStream is = LeappInterceptors.class.getResourceAsStream(resourceName)) {
             script = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to load resource: " + resourceName, e);
@@ -98,10 +102,17 @@ public class LeappInterceptors {
         jep.exec("scripts.ilapfuncs.check_in_media = _iped_leapp_check_in_media");
         jep.exec("del _iped_leapp_check_in_media");
 
-        // embedded media has no corresponding case item to link: keep it disabled
-        disablePythonFunction(jep, "scripts.ilapfuncs", "scripts.ilapfuncs.check_in_embedded_media");
+        // check_in_embedded_media is replaced by IlapfuncsEmbeddedMediaInterceptor
 
         jep.exec("scripts.ilapfuncs.get_data_list_with_media = lambda media_header_info, data_list: (data_list, data_list)");
+
+        // since v2026.4.x artifact_processor validates every 'media' cell against the LAVA media
+        // references table and blanks the ones not found there. That table is not used here (media cells
+        // hold the extraction paths returned by the patched check_in_media), so all cells would be blanked
+        // and the links to the case items lost: rows are passed through untouched instead.
+        // hasattr keeps this compatible with older ALEAPP versions, which have no such function.
+        jep.exec("if hasattr(scripts.ilapfuncs, 'lava_blank_invalid_media_refs'):\n"
+                + "    scripts.ilapfuncs.lava_blank_invalid_media_refs = lambda rows, media_indexes, label: rows");
     }
 
     private void disableLavaFuncs(Jep jep) {
@@ -109,7 +120,7 @@ public class LeappInterceptors {
         // Important!! ---> lavafuncs MUST be disabled before import ilapfuncs
 
         // disable lava init/finalize (not called by IPED explicitly)
-        // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L312
+        // https://github.com/abrignoni/ALEAPP/blob/v2026.4.5/aleapp.py#L424
         disablePythonFunction(jep, "scripts.lavafuncs", "scripts.lavafuncs.initialize_lava");
         disablePythonFunction(jep, "scripts.lavafuncs", "scripts.lavafuncs.lava_finalize_output");
 
@@ -125,8 +136,12 @@ public class LeappInterceptors {
         // LavaInsertSqliteDataInterceptor
         disablePythonFunction(jep, "scripts.lavafuncs", "scripts.lavafuncs.lava_insert_sqlite_data");
 
+        // called by artifact_processor after a streamed result (ArtifactResult) is inserted: there is no LAVA
+        // manifest to update
+        disablePythonFunction(jep, "scripts.lavafuncs", "scripts.lavafuncs.lava_update_record_count");
+
         // used in ilapfuncs.artifact_processor function (get_data_list_with_media)
-        // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/ilapfuncs.py#L402
+        // https://github.com/abrignoni/ALEAPP/blob/v2026.4.5/scripts/ilapfuncs.py#L472
         disablePythonFunction(jep, "scripts.lavafuncs", "scripts.lavafuncs.lava_get_full_media_info", "['', '', '', '', '', '', '', '']");
 
         // used by the original check_in_media/check_in_embedded_media (replaced in

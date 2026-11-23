@@ -40,7 +40,7 @@ public class PluginSpec {
      * Returns the plugin's file search patterns. Despite ALEAPP calling them "regexes" in places, these are shell-style
      * glob patterns (fnmatch semantics).
      *
-     * mimics https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/aleapp.py#L386
+     * mimics https://github.com/abrignoni/ALEAPP/blob/v2026.4.5/aleapp.py#L567
      */
     @SuppressWarnings("unchecked")
     public List<String> getSearchGlobs() {

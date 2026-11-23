@@ -6,6 +6,7 @@ import java.util.Map;
 import iped.engine.task.leapp.CallInterceptor;
 import iped.engine.task.leapp.LeappContext;
 import iped.engine.task.leapp.PluginResultsProcessor;
+import jep.Jep;
 import jep.PyMethod;
 
 /**
@@ -26,6 +27,27 @@ public class LavaInsertSqliteDataInterceptor extends CallInterceptor {
 
     public LavaInsertSqliteDataInterceptor() {
         super("scripts.ilapfuncs", "scripts.ilapfuncs.lava_insert_sqlite_data");
+    }
+
+    /**
+     * Besides the interception itself, a python wrapper is put in front of it to deal with streamed results
+     * (ArtifactResult, an iterable that is not a list, used by plugins with large row sets): the rows are gathered
+     * in a list before being handed to Java, and their count is returned, as the caller expects from the original
+     * function.
+     */
+    @Override
+    public void install(Jep jep) {
+        super.install(jep);
+
+        // the keyword-only default "_call=..." captures the interceptor at def time, so no extra global is left
+        // behind after the temp name is deleted
+        jep.exec("def _iped_leapp_insert_rows(table_name, data, object_columns, headers, column_map=None, *args,"
+                + " _call=scripts.ilapfuncs.lava_insert_sqlite_data, **kwargs):\n"
+                + "    rows = data if isinstance(data, list) else list(data)\n"
+                + "    _call(table_name, rows, object_columns, headers, column_map)\n"
+                + "    return len(rows)");
+        jep.exec("scripts.ilapfuncs.lava_insert_sqlite_data = _iped_leapp_insert_rows");
+        jep.exec("del _iped_leapp_insert_rows");
     }
 
     @SuppressWarnings("unchecked")

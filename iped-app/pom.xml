@@ -13,7 +13,7 @@
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
-        <aleapp.version>v2026.1.0</aleapp.version>
+        <aleapp.version>v2026.4.5</aleapp.version>
     </properties>
 
     <dependencies>
@@ -107,6 +107,7 @@
                                 <exclude>*/admin/</exclude>
                                 <exclude>*/assets/</exclude>
                                 <exclude>*/tests/</exclude>
+                                <exclude>*/packaging/</exclude>
                                 <exclude>**/*.md</exclude>
                                 <exclude>**/*.lcasedata</exclude>
                                 <exclude>**/*.alprofile</exclude>

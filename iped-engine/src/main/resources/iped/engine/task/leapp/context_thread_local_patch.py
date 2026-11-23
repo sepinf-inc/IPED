@@ -10,83 +10,87 @@ Each IPED worker interacts with Python from its own thread, so thread
 identity == worker identity: moving the state to threading.local() isolates
 each worker.
 
-The methods are patched IN PLACE (class identity is preserved), so bindings
-created earlier via "from scripts.context import Context" (e.g. inside
-ilapfuncs or plugin modules) also see the patched behavior.
+How: Context is replaced by a subclass whose METACLASS exposes every per-run
+class attribute as a property backed by threading.local(). A data descriptor
+on the metaclass takes precedence over the class __dict__, so every read and
+write of "Context._seeker" (and the like) becomes thread-local, while the
+original methods are kept untouched. All Context methods are staticmethods
+that resolve the global name "Context" of scripts.context at call time, so
+rebinding that name is enough: bindings created earlier via
+"from scripts.context import Context" (the original class) still run the same
+functions, which now read and write the thread-local state.
 
-One-time global state (_output_params, _data_folder) is left shared on
-purpose. get_source_file_path and get_relative_path need no patch: they only
-touch state through the patched methods or through the shared globals.
+The attributes are not listed by hand: they are every data attribute declared
+by the class, so one added by a future LEAPP version is isolated
+automatically.
 
-Everything is defined inside a single function so the patched methods keep
-their dependencies as CLOSURES: after the installer global is deleted below,
-no name is left behind in the interpreter namespace (which is shared with
-PythonParser/PythonTask scripts).
+The output parameters (_output_params, _data_folder, _output_folder_base) are
+thread-local too: each IPED worker stages the evidence files in a folder of
+its own, and Context.get_relative_path() must strip the folder of the worker
+running the plugin. Each worker sets them once, at setup.
+
+Everything is defined inside a single function, so after the installer global
+is deleted below no name is left behind in the interpreter namespace (which
+is shared with PythonParser/PythonTask scripts).
 """
 
 
 def _iped_leapp_patch_context():
+    import copy
+    import sys
     import threading
-    from os.path import basename
+    import types
 
-    from scripts.context import Context
+    import scripts.context
+
+    original = scripts.context.Context
+
+    if getattr(original, '_iped_thread_local', False):
+        # already patched
+        return
+
+    defaults = {
+        name: value for name, value in vars(original).items()
+        if not name.startswith('__')
+        and not isinstance(value, (staticmethod, classmethod, property))
+        and not callable(value)
+    }
 
     tls = threading.local()
 
-    per_run_attrs = ('report_folder', 'seeker', 'artifact_info', 'module_name',
-                     'module_file_path', 'artifact_name', 'files_found')
+    def make_property(name, default):
+        def fget(cls):
+            try:
+                return getattr(tls, name)
+            except AttributeError:
+                # mutable defaults (lists, dicts) must not be shared among threads
+                value = copy.copy(default)
+                setattr(tls, name, value)
+                return value
 
-    def state():
-        st = getattr(tls, 'state', None)
-        if st is None:
-            st = dict.fromkeys(per_run_attrs)
-            st['files_found'] = []
-            st['filename_lookup_map'] = {}
-            tls.state = st
-        return st
+        def fset(cls, value):
+            setattr(tls, name, value)
 
-    def make_setter(name):
-        def _set(value):
-            st = state()
-            st[name] = value
-            if name == 'files_found':
-                # the lookup map is derived from files_found: invalidate it
-                st['filename_lookup_map'] = {}
-        return _set
+        return property(fget, fset)
 
-    def make_getter(name):
-        def _get():
-            value = state()[name]
-            if not value:
-                # same behavior and message as the original Context getters
-                raise ValueError('Context not set. This function should be' +
-                                 ' called from within an artifact.')
-            return value
-        return _get
+    meta_namespace = {name: make_property(name, default) for name, default in defaults.items()}
+    meta = type('_IpedThreadLocalContextMeta', (type(original),), meta_namespace)
 
-    def get_filename_lookup_map():
-        st = state()
-        if not st['filename_lookup_map']:
-            if not st['files_found']:
-                raise ValueError(
-                    'Cannot build lookup map: _files_found is not set.')
-            lookup = {}
-            for path in st['files_found']:
-                lookup.setdefault(basename(path), []).append(path)
-            st['filename_lookup_map'] = lookup
-        return st['filename_lookup_map']
+    patched = meta(original.__name__, (original,), {
+        '__module__': original.__module__,
+        '__doc__': original.__doc__,
+        '_iped_thread_local': True,
+    })
 
-    def clear():
-        # re-initialized lazily on next access
-        tls.state = None
+    scripts.context.Context = patched
 
-    for name in per_run_attrs:
-        setattr(Context, 'set_' + name, staticmethod(make_setter(name)))
-        setattr(Context, 'get_' + name, staticmethod(make_getter(name)))
-
-    Context.get_filename_lookup_map = staticmethod(get_filename_lookup_map)
-    Context._build_lookup_map = staticmethod(get_filename_lookup_map)
-    Context.clear = staticmethod(clear)
+    # modules that already ran "from scripts.context import Context" keep working with the original
+    # class (see the module docstring), but are rebound anyway, so everyone sees the same object
+    # (ModuleType.__getattribute__ reads __dict__ without triggering the load of lazy modules)
+    for module in list(sys.modules.values()):
+        if isinstance(module, types.ModuleType) \
+                and types.ModuleType.__getattribute__(module, '__dict__').get('Context') is original:
+            module.Context = patched
 
 
 _iped_leapp_patch_context()
