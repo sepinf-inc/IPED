@@ -93,6 +93,18 @@ public class StandardParser extends CompositeParser {
     private boolean printMetadata = true;
     private boolean ignoreStyle = true;
     private boolean canUseForkParser = false;
+    private boolean forkParserAllowed = true;
+    
+    private static TikaConfig getTikaConfig() {
+        if(tikaConfig == null) {
+            synchronized(StandardParser.class) {
+                if(tikaConfig == null) {
+                    tikaConfig = TikaConfig.getDefaultConfig();
+                }
+            }
+        }
+        return tikaConfig;
+    }
 
     public StandardParser() {
         super(TikaManager.getTikaConfig().getMediaTypeRegistry(), ((CompositeParser) TikaManager.getTikaConfig().getParser()).getAllComponentParsers());
@@ -107,6 +119,16 @@ public class StandardParser extends CompositeParser {
 
     public void setCanUseForkParser(boolean shouldUseForkParser) {
         this.canUseForkParser = shouldUseForkParser;
+    }
+
+    /**
+     * Defines if this parser is allowed to delegate the parsing to external
+     * processes when external parsing is enabled. If set to false, it always parses
+     * in the current process, no matter the value of
+     * {@link #setCanUseForkParser(boolean)}.
+     */
+    public void setForkParserAllowed(boolean forkParserAllowed) {
+        this.forkParserAllowed = forkParserAllowed;
     }
 
     public void setErrorParser(Parser parser) {
@@ -227,7 +249,7 @@ public class StandardParser extends CompositeParser {
             try {
                 if (length != 0) {
                     if (metadata.get(INDEXER_TIMEOUT) == null) {
-                        if (canUseForkParser && ForkParser.isEnabled() && hasSpecificParser(metadata))
+                        if (forkParserAllowed && canUseForkParser && ForkParser.isEnabled() && hasSpecificParser(metadata))
                             ForkParser.getForkParser().parse(tis, sch, metadata, context);
                         else {
                             // Disable zip bomb prevention for ufed items
