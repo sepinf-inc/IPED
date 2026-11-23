@@ -1,5 +1,9 @@
 package iped.engine.task.leapp.conversation;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +19,10 @@ import org.apache.commons.lang3.StringUtils;
  *         "directionColumn": "Direction",
  *         "directionSentValue": "Outgoing",
  *         "timeColumn": "Timestamp",
- *         "senderColumn": "Username"
+ *         "senderColumn": "Username",
+ *         "sentMessageStaticLabel": "Local User",
+ *         "mediaColumn": "Media",
+ *         "extraColumns": ["Message Type"]
  *     }
  * }
  * </pre>
@@ -27,7 +34,7 @@ import org.apache.commons.lang3.StringUtils;
  * The backward compatibility rules of lava_process_artifact are mirrored: a "chat" view is upgraded to "conversation"
  * and thread*Column keys are remapped to conversation*Column.
  *
- * https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/lavafuncs.py#L253
+ * https://github.com/abrignoni/ALEAPP/blob/v2026.4.5/scripts/lavafuncs.py#L464
  */
 public class ConversationViewSpec {
 
@@ -40,6 +47,9 @@ public class ConversationViewSpec {
     private final String directionSentValue;
     private final String timeColumn;
     private final String senderColumn;
+    private final String sentMessageStaticLabel;
+    private final String mediaColumn;
+    private final List<String> extraColumns;
 
     private ConversationViewSpec(Map<?, ?> params) {
         this.discriminatorColumn = str(params, "conversationDiscriminatorColumn", "threadDiscriminatorColumn");
@@ -49,6 +59,19 @@ public class ConversationViewSpec {
         this.directionSentValue = str(params, "directionSentValue");
         this.timeColumn = str(params, "timeColumn");
         this.senderColumn = str(params, "senderColumn");
+        this.sentMessageStaticLabel = str(params, "sentMessageStaticLabel");
+        this.mediaColumn = str(params, "mediaColumn");
+
+        List<String> extras = new ArrayList<>();
+        Object extraValue = params.get("extraColumns");
+        if (extraValue instanceof Collection) {
+            for (Object column : (Collection<?>) extraValue) {
+                if (column != null && StringUtils.isNotBlank(column.toString())) {
+                    extras.add(column.toString());
+                }
+            }
+        }
+        this.extraColumns = Collections.unmodifiableList(extras);
     }
 
     /**
@@ -111,5 +134,23 @@ public class ConversationViewSpec {
 
     public String getSenderColumn() {
         return senderColumn;
+    }
+
+    /**
+     * The name to show as the sender of sent messages (e.g. "Local User"). When declared, the sender column of a sent
+     * message does not hold who sent it, but the other party (e.g. the "Address" of an SMS).
+     */
+    public String getSentMessageStaticLabel() {
+        return sentMessageStaticLabel;
+    }
+
+    /** The column holding the media of the message. It is not always declared as a 'media' typed column. */
+    public String getMediaColumn() {
+        return mediaColumn;
+    }
+
+    /** Columns whose values are shown along with each message (e.g. "Message Type"). Never null. */
+    public List<String> getExtraColumns() {
+        return extraColumns;
     }
 }

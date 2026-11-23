@@ -2,7 +2,6 @@ package iped.engine.task.leapp.conversation;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,8 +13,8 @@ import iped.data.IItem;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.Item;
 import iped.engine.task.ExportFileTask;
-import iped.engine.task.leapp.AleappTask;
 import iped.engine.task.leapp.LeappContext;
+import iped.engine.task.leapp.LeappTool;
 import iped.parsers.util.ConversationConstants;
 import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
@@ -29,31 +28,14 @@ import iped.utils.DateUtil;
  */
 public class ConversationCreator {
 
-    public static final MediaType ALEAPP_CONVERSATION_MEDIATYPE = MediaType
-            .application(AleappTask.ALEAPP_APPLICATION_PREFIX + "chat-preview");
-
     /**
-     * App-specific chat-preview media types, mirroring UfedChatParser: they carry the source app in the mime so
-     * IconManager and CategoriesConfig can give conversations the proper app icon/category. All of them MUST be
-     * registered in CustomSignatures.xml as sub-class-of x-aleapp-chat-preview, whose parent x-preview-with-links
-     * routes them to HtmlLinkViewer (enabling the app.open/app.check javascript bridge).
+     * Apps with a chat-preview media type of their own, mirroring UfedChatParser: they carry the source app in the
+     * mime so IconManager and CategoriesConfig can give conversations the proper app icon/category. All of them MUST
+     * be registered in CustomSignatures.xml as sub-class-of x-&lt;tool&gt;-chat-preview, whose parent
+     * x-preview-with-links routes them to HtmlLinkViewer (enabling the app.open/app.check javascript bridge).
      */
-    private static final Map<String, MediaType> APP_PREVIEW_MEDIATYPES = Map.ofEntries( //
-            Map.entry("whatsapp", previewType("whatsapp")), //
-            Map.entry("telegram", previewType("telegram")), //
-            Map.entry("skype", previewType("skype")), //
-            Map.entry("facebook", previewType("facebook")), //
-            Map.entry("instagram", previewType("instagram")), //
-            Map.entry("signal", previewType("signal")), //
-            Map.entry("snapchat", previewType("snapchat")), //
-            Map.entry("threema", previewType("threema")), //
-            Map.entry("tiktok", previewType("tiktok")), //
-            Map.entry("viber", previewType("viber")), //
-            Map.entry("discord", previewType("discord")));
-
-    private static MediaType previewType(String app) {
-        return MediaType.application(AleappTask.ALEAPP_APPLICATION_PREFIX + "chat-preview-" + app);
-    }
+    private static final List<String> APPS_WITH_PREVIEW_MEDIATYPE = List.of("whatsapp", "telegram", "skype", "facebook",
+            "instagram", "signal", "snapchat", "threema", "tiktok", "viber", "discord");
 
     /** Same default used by UfedChatParser/WhatsAppParser: bigger chats are split into multiple HTML parts. */
     private static final int MIN_CHAT_SPLIT_SIZE = 6000000;
@@ -158,40 +140,46 @@ public class ConversationCreator {
             metadata.set(ExtraProperties.COMMUNICATION_DIRECTION, message.isOutgoing()
                     ? ConversationConstants.DIRECTION_OUTGOING
                     : ConversationConstants.DIRECTION_INCOMING);
-            removeAleappMetadata(metadata, view.getDirectionColumn());
+            removeToolMetadata(metadata, view.getDirectionColumn());
         }
 
         if (metadata.get(ExtraProperties.COMMUNICATION_FROM) == null && StringUtils.isNotBlank(message.getSender())) {
             metadata.set(ExtraProperties.COMMUNICATION_FROM, message.getSender());
-            removeAleappMetadata(metadata, view.getSenderColumn());
+            removeToolMetadata(metadata, view.getSenderColumn());
         }
 
-        // no per-row recipient in LEAPP data: the conversation itself is the
+        // a sent message whose view names the local user: the sender column holds the other party
+        if (metadata.get(ExtraProperties.COMMUNICATION_TO) == null && StringUtils.isNotBlank(message.getRecipient())) {
+            metadata.set(ExtraProperties.COMMUNICATION_TO, message.getRecipient());
+            removeToolMetadata(metadata, view.getSenderColumn());
+        }
+
+        // otherwise there is no per-row recipient in LEAPP data: the conversation itself is the
         // destination, mirroring what InstantMessageHandler does for group chats
         if (metadata.get(ExtraProperties.COMMUNICATION_TO) == null) {
             metadata.set(ExtraProperties.COMMUNICATION_TO, conversation.getTitle());
             metadata.add(ExtraProperties.COMMUNICATION_TO + ExtraProperties.CONVERSATION_SUFFIX_ID, conversation.getId());
             // the discriminator/label cells became the chat's Conversation:id/Name
             // and this message's Communication:To
-            removeAleappMetadata(metadata, view.getDiscriminatorColumn());
-            removeAleappMetadata(metadata, view.getLabelColumn());
+            removeToolMetadata(metadata, view.getDiscriminatorColumn());
+            removeToolMetadata(metadata, view.getLabelColumn());
         }
 
         if (metadata.get(ExtraProperties.MESSAGE_DATE) == null && message.getTimestamp() != null) {
             metadata.set(ExtraProperties.MESSAGE_DATE, DateUtil.dateToString(message.getTimestamp()));
-            removeAleappMetadata(metadata, view.getTimeColumn());
+            removeToolMetadata(metadata, view.getTimeColumn());
         }
 
         if (metadata.get(ExtraProperties.MESSAGE_BODY) == null && StringUtils.isNotBlank(message.getBody())) {
             metadata.set(ExtraProperties.MESSAGE_BODY, message.getBody());
-            removeAleappMetadata(metadata, view.getTextColumn());
+            removeToolMetadata(metadata, view.getTextColumn());
         }
     }
 
-    /** Values promoted to a standard property are not kept duplicated under the "aleapp:" prefix. */
-    private static void removeAleappMetadata(Metadata metadata, String column) {
+    /** Values promoted to a standard property are not kept duplicated under the tool prefix (e.g. "aleapp:"). */
+    private void removeToolMetadata(Metadata metadata, String column) {
         if (column != null) {
-            metadata.remove(AleappTask.ALEAPP_META_PREFIX + column);
+            metadata.remove(context.getTool().getMetaPrefix() + column);
         }
     }
 
@@ -202,11 +190,11 @@ public class ConversationCreator {
     private MediaType resolvePreviewMediaType() {
         String hint = (context.getPlugin().getModuleName() + " " + context.getPlugin().getName())
                 .toLowerCase(Locale.ROOT);
-        for (Map.Entry<String, MediaType> entry : APP_PREVIEW_MEDIATYPES.entrySet()) {
-            if (hint.contains(entry.getKey())) {
-                return entry.getValue();
+        for (String app : APPS_WITH_PREVIEW_MEDIATYPE) {
+            if (hint.contains(app)) {
+                return context.getTool().mediaType(LeappTool.CHAT_PREVIEW_SUBTYPE + "-" + app);
             }
         }
-        return ALEAPP_CONVERSATION_MEDIATYPE;
+        return context.getTool().mediaType(LeappTool.CHAT_PREVIEW_SUBTYPE);
     }
 }

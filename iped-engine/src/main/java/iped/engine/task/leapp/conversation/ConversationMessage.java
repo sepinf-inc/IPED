@@ -2,7 +2,11 @@ package iped.engine.task.leapp.conversation;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
 
 import iped.data.IItemReader;
 import iped.utils.DateUtil;
@@ -19,6 +23,9 @@ public class ConversationMessage {
     private final String sender;
     private final String body;
 
+    /** The other party of a sent message, when the conversation view tells it apart from the sender; else null. */
+    private String recipient;
+
     /** True/false when the view declares a directionColumn; null when the direction is unknown. */
     private final Boolean outgoing;
 
@@ -26,6 +33,9 @@ public class ConversationMessage {
     private final Date timestamp;
 
     private final List<IItemReader> mediaItems = new ArrayList<>();
+
+    /** Extra columns the conversation view asks to show with the message: column name -> value. */
+    private final Map<String, String> extras = new LinkedHashMap<>();
 
     private String latitude;
     private String longitude;
@@ -45,10 +55,19 @@ public class ConversationMessage {
      * without fraction of second. Parsing failures are not fatal: the raw string is still shown in the HTML.
      */
     private static Date parseTime(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return DateUtil.tryToParseDate(value.trim());
+        return StringUtils.isBlank(value) ? null : DateUtil.tryToParseDate(value.trim());
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
+    }
+
+    public Map<String, String> getExtras() {
+        return extras;
     }
 
     public int getRowIndex() {

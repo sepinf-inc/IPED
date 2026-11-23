@@ -17,6 +17,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -169,6 +170,10 @@ public class ConversationHtmlReportGenerator {
         if (isNotBlank(body)) {
             out.print(format(body));
             out.print("<br/>");
+        }
+
+        for (Map.Entry<String, String> extra : message.getExtras().entrySet()) {
+            out.print("<i>" + format(extra.getKey()) + ": " + format(extra.getValue()) + "</i><br/>");
         }
     }
 
