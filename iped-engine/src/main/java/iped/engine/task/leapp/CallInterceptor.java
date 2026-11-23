@@ -3,6 +3,8 @@ package iped.engine.task.leapp;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,15 +120,7 @@ public class CallInterceptor {
     }
 
     protected Object getArgumentValue(String key, int index, Object[] args, Map<String, Object> kwargs) {
-        if (key != null && kwargs != null && kwargs.containsKey(key)) {
-            return kwargs.get(key);
-        }
-
-        if (index >= 0 && args != null && args.length > index) {
-            return args[index];
-        }
-
-        return null;
+        return MapUtils.getObject(kwargs, key, ArrayUtils.get(args, index));
     }
 
     protected void setArgumentValue(String key, int index, Object value, Object[] args, Map<String, Object> kwargs) {

@@ -13,10 +13,15 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.file.PathUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +30,7 @@ import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
 import iped.utils.IOUtil;
+import jep.PyMethod;
 
 public class FileSeeker {
 
@@ -35,6 +41,9 @@ public class FileSeeker {
     private Path exportFolder;
     
     private Map<String, IItemReader> exportedFiles = new HashMap<>();
+
+    // the same items, by their path relative to the extraction root
+    private Map<String, IItemReader> exportedByRelativePath = new HashMap<>();
 
     // Public snake_case fields: LEAPP plugins access these directly on the Python
     // side as attributes of the "seeker" object (e.g. seeker.data_folder), so the
@@ -68,28 +77,70 @@ public class FileSeeker {
     /**
      * Python-facing API, mirroring ALEAPP's FileSeekerBase:
      *
-     * def search(self, filepattern, return_on_first_hit=False): '''Returns a list of paths for files/folders that
-     * matched'''
+     * def search(self, filepattern, return_on_first_hit=False, force=False): '''Returns a list of paths for
+     * files/folders that matched'''
      *
      * Unlike ALEAPP seekers, the matched files live inside the IPED case, so each hit is exported to the local export
      * folder and the local paths are returned. For sqlite hits, -wal and -journal companion files are exported too, so
      * the databases can be opened consistently.
      *
-     * NOTE: Jep cannot map Python keyword arguments onto Java methods, so plugins must call seeker.search(pattern, True)
-     * positionally; the kwarg form return_on_first_hit=True is not supported.
+     * Plugins call it positionally (seeker.search(pattern, True)) or with keyword arguments
+     * (seeker.search(pattern, return_on_first_hit=True)). Jep only maps Python keyword arguments onto Java methods
+     * annotated with {@link PyMethod}, and dispatches by the Python call shape (positional-only, keyword-only or both),
+     * hence the three overloads below. "force" (re-extract a file already staged) is accepted and ignored: exported
+     * files are always checked against the case item.
      *
-     * https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L57
+     * https://github.com/abrignoni/ALEAPP/blob/v2026.4.5/scripts/search_files.py#L372
      */
-    public List<String> search(String filepattern) throws IOException {
-        return search(filepattern, false);
+    @PyMethod(varargs = true, kwargs = true)
+    public Object search(Object[] args, Map<String, Object> kwargs) throws IOException {
+
+        Object filepattern = getArgument("filepattern", 0, args, kwargs);
+        if (filepattern == null) {
+            throw new IllegalArgumentException("search() missing required argument: 'filepattern'");
+        }
+        boolean returnOnFirstHit = isTrue(getArgument("return_on_first_hit", 1, args, kwargs));
+
+        List<String> paths = searchAndExport(filepattern.toString(), returnOnFirstHit);
+
+        // mimics ALEAPP semantics: with return_on_first_hit the path itself is returned (a str, not a list)
+        // when there is a hit, and an empty list when there is none
+        if (returnOnFirstHit && !paths.isEmpty()) {
+            return paths.get(0);
+        }
+        return paths;
     }
 
-    public List<String> search(String filepattern, boolean returnOnFirstHit) throws IOException {
+    @PyMethod(varargs = true, kwargs = false)
+    public Object search(Object... args) throws IOException {
+        return search(args, null);
+    }
+
+    @PyMethod(varargs = false, kwargs = true)
+    public Object search(Object filepattern, Map<String, Object> kwargs) throws IOException {
+        return search(new Object[] { filepattern }, kwargs);
+    }
+
+    private static Object getArgument(String key, int index, Object[] args, Map<String, Object> kwargs) {
+        return MapUtils.getObject(kwargs, key, ArrayUtils.get(args, index));
+    }
+
+    /** The truth value of what a plugin can reasonably pass as a flag: a bool or a number. */
+    private static boolean isTrue(Object value) {
+        return value instanceof Number ? ((Number) value).doubleValue() != 0
+                : BooleanUtils.toBoolean(Objects.toString(value, null));
+    }
+
+    /**
+     * Java-facing counterpart of {@link #search(Object[], Map)}: searches the case and exports the hits (only the first
+     * one when returnOnFirstHit is set), returning their local paths.
+     */
+    public List<String> searchAndExport(String filepattern, boolean returnOnFirstHit) throws IOException {
 
         List<IItemReader> items = searchItems(List.of(filepattern));
 
         if (returnOnFirstHit && !items.isEmpty()) {
-            // mimics ALEAPP semantics: a list containing only the first hit
+            // only the first hit is exported
             items = items.subList(0, 1);
         }
 
@@ -146,11 +197,15 @@ public class FileSeeker {
         List<IItemReader> hits = searcher
                 .search(query) //
                 .stream() //
-                .filter(item -> item.getPath().startsWith(pathRoot)) //
-                .filter(item -> !item.getPath().substring(pathRoot.length()).contains(">>")) //
+                .filter(item -> item.getPath().startsWith(pathRoot + "/")) //
                 .filter(item -> {
+                    String relativePath = item.getPath().substring(pathRoot.length() + 1);
+                    // subitems of containers are not part of the device file system
+                    if (relativePath.contains(">>")) {
+                        return false;
+                    }
                     for (String glob : globPatterns) {
-                        if (LeappUtils.matchesGlob(item, glob)) {
+                        if (LeappUtils.matchesGlob(relativePath, glob)) {
                             return true;
                         }
                     }
@@ -220,6 +275,7 @@ public class FileSeeker {
         filePath = filePath.toAbsolutePath().normalize();
 
         exportedFiles.put(filePath.toString(), item);
+        exportedByRelativePath.put(StringUtils.removeStart(item.getPath(), pathRoot + "/"), item);
 
         // keep file_infos in sync: some plugins read seeker.file_infos[path] to recover
         // the original source path and timestamps of an exported file
@@ -243,7 +299,7 @@ public class FileSeeker {
                 .collect(Collectors.toList());
     }
 
-    // https://github.com/abrignoni/ALEAPP/blob/v2026.1.0/scripts/search_files.py#L61
+    // https://github.com/abrignoni/ALEAPP/blob/v2026.4.5/scripts/search_files.py#L382
     public void cleanup() {
         try {
             if (Files.exists(exportFolder)) {
@@ -253,9 +309,27 @@ public class FileSeeker {
             logger.warn("Failed to delete export folder: {}", exportFolder, e);
         }
         exportedFiles.clear();
+        exportedByRelativePath.clear();
         file_infos.clear();
     }
     
+    /**
+     * Returns the case item of a file staged by this seeker, given the path a plugin wrote in its results: either the
+     * local path of the staged file or, as plugins using Context.get_relative_path() do, its path relative to the
+     * extraction root. Returns null when the value is not the path of a staged file.
+     */
+    public IItemReader findExported(String path) {
+        if (StringUtils.isBlank(path)) {
+            return null;
+        }
+        IItemReader item = exportedFiles.get(path);
+        if (item == null && StringUtils.containsAny(path, '/', '\\')) {
+            // a lone name is not taken as a relative path: it could be any text
+            item = exportedByRelativePath.get(StringUtils.stripStart(path.replace('\\', '/'), "/"));
+        }
+        return item;
+    }
+
     public Map<String, IItemReader> getExportedFiles() {
         return exportedFiles;
     }
