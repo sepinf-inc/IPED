@@ -60,7 +60,7 @@ jobs:
           imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
-          pip install jep==4.0.3
+          pip install jep==4.4.0
 
           cd libagdb/ && sudo make install
           sudo ldconfig /usr/local/lib
@@ -148,7 +148,7 @@ jobs:
           imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
-          pip install jep==4.0.3
+          pip install jep==4.4.0
 
           cd libagdb/ && sudo make install
           sudo ldconfig /usr/local/lib
