@@ -2,8 +2,12 @@ package iped.app.ui;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -13,6 +17,9 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.Query;
 
 import iped.app.ui.bookmarks.BookmarkIcon;
@@ -204,7 +211,7 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
         }
     }
 
-    private int getRefLuceneId() {
+    protected int getRefLuceneId() {
         int row = App.get().resultsTable.getSelectedRow();
         if (row == -1) {
             return -1;
@@ -255,6 +262,92 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
 
     protected abstract void onListItemsResultsComplete();
 
+    /**
+     * Sorts the results of the search. By default they are sorted by the sort
+     * field comparing numbers inside the values by their numeric value, so e.g.
+     * "message_2" comes before "message_10".
+     */
+    protected void sortResults(LuceneSearchResult results) throws IOException {
+        Map<Integer, String> values = readSortValues(results.getLuceneIds(), sortResultsBy);
+        sortResults(results, (a, b) -> compareNaturally(values.get(a), values.get(b)));
+    }
+
+    /**
+     * Sorts the results with the given comparator of lucene ids. The sort is
+     * stable, so ties keep the order returned by the search.
+     */
+    protected void sortResults(LuceneSearchResult results, Comparator<Integer> comparator) {
+        int[] docs = results.getLuceneIds();
+        Integer[] sorted = Arrays.stream(docs).boxed().toArray(Integer[]::new);
+        Arrays.sort(sorted, comparator);
+        for (int i = 0; i < docs.length; i++) {
+            docs[i] = sorted[i];
+        }
+    }
+
+    /**
+     * Reads the (first) value of a string field, as indexed for sorting, for each
+     * given lucene id. Items without a value are mapped to an empty string.
+     */
+    protected Map<Integer, String> readSortValues(int[] docs, String field) throws IOException {
+        Map<Integer, String> values = new HashMap<>();
+        // doc values must be read in increasing doc id order
+        int[] docsById = docs.clone();
+        Arrays.sort(docsById);
+        LeafReader reader = App.get().appCase.getLeafReader();
+        SortedDocValues sdv = reader.getSortedDocValues(field);
+        SortedSetDocValues ssdv = sdv == null ? reader.getSortedSetDocValues(field) : null;
+        for (int doc : docsById) {
+            String value = "";
+            if (sdv != null && sdv.advanceExact(doc)) {
+                value = sdv.lookupOrd(sdv.ordValue()).utf8ToString();
+            } else if (ssdv != null && ssdv.advanceExact(doc)) {
+                value = ssdv.lookupOrd(ssdv.nextOrd()).utf8ToString();
+            }
+            values.put(doc, value);
+        }
+        return values;
+    }
+
+    static int compareNaturally(String a, String b) {
+        int i = 0, j = 0;
+        while (i < a.length() && j < b.length()) {
+            char ca = a.charAt(i), cb = b.charAt(j);
+            if (Character.isDigit(ca) && Character.isDigit(cb)) {
+                int endA = i, endB = j;
+                while (endA < a.length() && Character.isDigit(a.charAt(endA))) {
+                    endA++;
+                }
+                while (endB < b.length() && Character.isDigit(b.charAt(endB))) {
+                    endB++;
+                }
+                // ignores leading zeros
+                while (i < endA - 1 && a.charAt(i) == '0') {
+                    i++;
+                }
+                while (j < endB - 1 && b.charAt(j) == '0') {
+                    j++;
+                }
+                int result = (endA - i) - (endB - j);
+                if (result == 0) {
+                    result = a.substring(i, endA).compareTo(b.substring(j, endB));
+                }
+                if (result != 0) {
+                    return result;
+                }
+                i = endA;
+                j = endB;
+            } else {
+                if (ca != cb) {
+                    return ca - cb;
+                }
+                i++;
+                j++;
+            }
+        }
+        return (a.length() - i) - (b.length() - j);
+    }
+
     public final void listItems(Document doc) {
 
         if (cleanBeforeListItems) {
@@ -270,6 +363,7 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, query, sortResultsBy);
                 task.setRewritequery(false);
                 results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
+                sortResults(results);
 
                 final int length = results.getLength();
 
