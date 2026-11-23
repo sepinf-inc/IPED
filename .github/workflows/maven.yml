@@ -76,6 +76,9 @@ jobs:
 
     - name: Build with Maven
       id: build
+      env:
+        # jep is installed in the python set up above, which Jep only searches when it is the python home
+        PYTHONHOME: ${{ env.pythonLocation }}
       run: mvn -B -ntp package --file pom.xml
 
     - name: Save Maven repository
@@ -169,6 +172,9 @@ jobs:
 
     - name: Build with Maven
       id: build
+      env:
+        # jep is installed in the python set up above, which Jep only searches when it is the python home
+        PYTHONHOME: ${{ env.pythonLocation }}
       run: mvn -B -ntp package --file pom.xml
 
     - name: Save Maven repository
