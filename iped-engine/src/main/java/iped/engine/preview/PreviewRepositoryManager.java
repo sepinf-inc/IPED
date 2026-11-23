@@ -28,6 +28,8 @@ public class PreviewRepositoryManager {
     private static final Logger logger = LoggerFactory.getLogger(PreviewRepositoryManager.class);
 
     private static final String DB_NAME = "previews";
+    private static final String DB_FILE_EXT = ".mv.db";
+    private static final String READ_ONLY_PARAM = "ACCESS_MODE_DATA=r";
 
     private static final int H2_CACHE_SIZE = 64 * 1024; // in KB
     private static final int DEFAULT_POOL_SIZE = 8;
@@ -87,7 +89,7 @@ public class PreviewRepositoryManager {
         File dbFile = new File(baseFolder, DB_NAME);
         String dbUrl = "jdbc:h2:async:" + dbFile.getAbsolutePath() + ";CACHE_SIZE=" + H2_CACHE_SIZE + ";DB_CLOSE_ON_EXIT=TRUE";
         if (readOnly) {
-            dbUrl += ";ACCESS_MODE_DATA=r";
+            dbUrl += ";" + READ_ONLY_PARAM;
         }
 
         // maxPoolSize is numThreads when processing a case and DEFAULT_POOL_SIZE otherwise
@@ -136,6 +138,18 @@ public class PreviewRepositoryManager {
                         "Repository not configured. Call configureWritable/ReadOnly() first for: " + baseFolder);
             }
 
+            boolean readOnly = config.getJdbcUrl().contains(READ_ONLY_PARAM);
+
+            // Cases without any preview do not have the database, as it is created on
+            // demand, and it can not be created in read-only mode.
+            if (readOnly && !new File(key, DB_NAME + DB_FILE_EXT).exists()) {
+                repository = new PreviewRepository(null, true);
+                repositoryMap.put(key, repository);
+                repositoryConfigMap.put(key, null);
+                logger.info("No preview database found, using an empty PreviewRepository for: {}", baseFolder);
+                return repository;
+            }
+
             HikariDataSource dataSource = new HikariDataSource(config);
 
             // Ensure table exists
@@ -144,7 +158,7 @@ public class PreviewRepositoryManager {
             }
 
             // Create and cache the repository instance
-            repository = new PreviewRepository(dataSource, config.getJdbcUrl().contains("ACCESS_MODE_DATA=r"));
+            repository = new PreviewRepository(dataSource, readOnly);
             repositoryMap.put(key, repository);
             repositoryConfigMap.put(key, null);
             logger.info("Created and initialized PreviewRepository for: {}", baseFolder);
