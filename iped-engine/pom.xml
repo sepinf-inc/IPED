@@ -12,7 +12,7 @@
 
     <properties>
         <release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
-        <javacpp.ffmpeg.version>8.0.1-1.5.13</javacpp.ffmpeg.version>
+        <javacpp.ffmpeg.version>8.1.2-1.5.14</javacpp.ffmpeg.version>
     </properties>
 
     <dependencies>
