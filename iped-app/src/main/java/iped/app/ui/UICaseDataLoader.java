@@ -121,6 +121,9 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                 SignatureTask.installCustomSignatures();
                 ParsingTask.setupParsingOptions(ConfigurationManager.get());
                 StandardParser autoParser = new StandardParser();
+                // Always parses in this process, even if external parsing is enabled, so the
+                // user does not have to wait for the startup of an external parsing process.
+                autoParser.setForkParserAllowed(false);
                 App.get().setAutoParser(autoParser);
 
                 FileProcessor exibirAjuda = new FileProcessor(-1, false);
