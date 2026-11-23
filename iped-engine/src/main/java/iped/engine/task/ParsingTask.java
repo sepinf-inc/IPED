@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -84,6 +83,7 @@ import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ItemInfoFactory;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.TextCache;
+import iped.engine.util.TikaInitializer;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.exception.ZipBombException;
@@ -164,7 +164,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
 
     private static AtomicInteger containersBeingExpanded = new AtomicInteger();
-    private static AtomicBoolean tikaSAXPoolSizeSet = new AtomicBoolean(false);
 
     private CategoryToExpandConfig expandConfig;
     private ParsingTaskConfig parsingConfig;
@@ -291,7 +290,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
     }
 
-    @SuppressWarnings("resource")
     private void setEmptyTextCache(IItem evidence) {
         ((Item) evidence).setParsedTextCache(new TextCache());
     }
@@ -777,10 +775,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         SplitLargeBinaryConfig splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
         minItemSizeToFragment = splitConfig.getMinItemSizeToFragment();
 
-        setupParsingOptions(configurationManager);
+        TikaInitializer.init(configurationManager);
 
         this.autoParser = new StandardParser();
-
     }
 
     public static void setupParsingOptions(ConfigurationManager configurationManager) {
@@ -793,12 +790,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         org.apache.poi.hpsf.CodePageString.setMaxRecordLength(512_000);
 
         // heavy Tika configuration
-        if (!tikaSAXPoolSizeSet.getAndSet(true)) {
-            try {
-                XMLReaderUtils.setPoolSize(Runtime.getRuntime().availableProcessors());
-            } catch (TikaException e) {
-                e.printStackTrace();
-            }
+        try {
+            XMLReaderUtils.setPoolSize(Runtime.getRuntime().availableProcessors());
+        } catch (TikaException e) {
+            LOGGER.error("Error setting XMLReaderUtils poolSize to availableProcessors", e);
         }
 
         // most options below are set using sys props because they are also used by
