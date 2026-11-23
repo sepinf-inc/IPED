@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -18,9 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.configuration.Configurable;
+import iped.content.TikaManager;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;
+import iped.engine.util.TikaInitializer;
 import iped.io.SeekableInputStream;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
@@ -44,7 +45,7 @@ public class SignatureTask extends AbstractTask {
             if (MediaTypes.getParentType(MediaType.parse("message/x-chat-message")).equals(MediaType.OCTET_STREAM)) {
                 throw new RuntimeException("Custom signature file not loaded!");
             }
-            detector = TikaConfig.getDefaultConfig().getDetector();
+            detector = TikaManager.getTikaConfig().getDetector();
         }
         return detector;
     }
@@ -124,7 +125,7 @@ public class SignatureTask extends AbstractTask {
                         evidence.getPath(), evidence.getLength(), e.toString());
             }
         }
-        evidence.setMediaType(MediaTypes.getMediaTypeRegistry().normalize(type));
+        evidence.setMediaType(MediaTypes.normalize(type));
     }
 
     private void setInputStreamFactory(TikaInputStream tis, IItem item) {
@@ -161,13 +162,17 @@ public class SignatureTask extends AbstractTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
-        installCustomSignatures();
+        TikaInitializer.init(configurationManager);
         SignatureConfig config = configurationManager.findObject(SignatureConfig.class);
         processFileSignatures = config.isEnabled();
     }
 
-    public static void installCustomSignatures() {
-        SignatureConfig config = ConfigurationManager.get().findObject(SignatureConfig.class);
+    /**
+     * Sets the system property with the custom signatures file, read by Tika when
+     * its configuration is created.
+     */
+    public static void installCustomSignatures(ConfigurationManager configurationManager) {
+        SignatureConfig config = configurationManager.findObject(SignatureConfig.class);
         System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
     }
 

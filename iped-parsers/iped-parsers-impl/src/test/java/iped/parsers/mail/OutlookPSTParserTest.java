@@ -25,6 +25,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import iped.content.TikaManager;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.AbstractPkgTest;
 import iped.properties.ExtraProperties;
@@ -40,6 +41,9 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
 
     public void setUp() throws Exception {
         super.setUp();
+
+        TikaManager.initializeTikaConfig(false, false);
+
         psttracker = new EmbeddedPSTParser();
         pstContext = new ParseContext();
         pstContext.set(Parser.class, psttracker);
