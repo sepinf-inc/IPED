@@ -95,17 +95,6 @@ public class StandardParser extends CompositeParser {
     private boolean canUseForkParser = false;
     private boolean forkParserAllowed = true;
     
-    private static TikaConfig getTikaConfig() {
-        if(tikaConfig == null) {
-            synchronized(StandardParser.class) {
-                if(tikaConfig == null) {
-                    tikaConfig = TikaConfig.getDefaultConfig();
-                }
-            }
-        }
-        return tikaConfig;
-    }
-
     public StandardParser() {
         super(TikaManager.getTikaConfig().getMediaTypeRegistry(), ((CompositeParser) TikaManager.getTikaConfig().getParser()).getAllComponentParsers());
         detector = TikaManager.getTikaConfig().getDetector();
