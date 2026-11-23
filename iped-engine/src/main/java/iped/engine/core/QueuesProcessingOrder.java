@@ -9,7 +9,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
 import iped.content.TikaManager;
-import iped.engine.task.leapp.AleappTask;
+import iped.engine.task.leapp.aleapp.AleappTask;
 import iped.parsers.ares.AresParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatParser;

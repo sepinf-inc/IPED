@@ -1,6 +1,8 @@
 package iped.engine.task.leapp;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import iped.data.IItem;
 import iped.data.IItemReader;
@@ -9,6 +11,7 @@ import jep.Jep;
 
 public class LeappContext {
 
+    private LeappTool tool;
     private FileSeeker fileSeeker;
     private Worker worker;
     private PluginSpec plugin;
@@ -17,9 +20,26 @@ public class LeappContext {
     
     private List<IItemReader> foundFiles;
 
+    // data registered by the plugin through check_in_embedded_media, by the reference handed back to it
+    private final Map<String, EmbeddedMedia> embeddedMedia = new HashMap<>();
+
+    /** A media that is not a file of the extraction, but data stored inside one (see IlapfuncsEmbeddedMediaInterceptor). */
+    public static class EmbeddedMedia {
+        public final byte[] data;
+        public final String name;
+        public final String extension;
+
+        public EmbeddedMedia(byte[] data, String name, String extension) {
+            this.data = data;
+            this.name = name;
+            this.extension = extension;
+        }
+    }
+
     private static final ThreadLocal<LeappContext> threadLocal = new ThreadLocal<>();
 
-    private LeappContext(FileSeeker seeker, Worker worker, Jep jep, PluginSpec plugin,  IItem pluginItem, List<IItemReader> foundFiles) {
+    private LeappContext(LeappTool tool, FileSeeker seeker, Worker worker, Jep jep, PluginSpec plugin,  IItem pluginItem, List<IItemReader> foundFiles) {
+        this.tool = tool;
         this.fileSeeker = seeker;
         this.worker = worker;
         this.plugin = plugin;
@@ -28,8 +48,8 @@ public class LeappContext {
         this.pluginItem = pluginItem;
     }
 
-    public static LeappContext create(FileSeeker seeker, Worker worker, Jep jep, PluginSpec plugin, IItem pluginItem, List<IItemReader> foundFiles) {
-        LeappContext context = new LeappContext(seeker, worker, jep, plugin, pluginItem, foundFiles);
+    public static LeappContext create(LeappTool tool, FileSeeker seeker, Worker worker, Jep jep, PluginSpec plugin, IItem pluginItem, List<IItemReader> foundFiles) {
+        LeappContext context = new LeappContext(tool, seeker, worker, jep, plugin, pluginItem, foundFiles);
         threadLocal.set(context);
         return context;
     }
@@ -40,6 +60,10 @@ public class LeappContext {
 
     public static LeappContext get() {
         return threadLocal.get();
+    }
+
+    public LeappTool getTool() {
+        return tool;
     }
 
     public FileSeeker getFileSeeker() {
@@ -60,6 +84,10 @@ public class LeappContext {
 
     public IItem getPluginItem() {
         return pluginItem;
+    }
+
+    public Map<String, EmbeddedMedia> getEmbeddedMedia() {
+        return embeddedMedia;
     }
 
     public List<IItemReader> getFoundFiles() {

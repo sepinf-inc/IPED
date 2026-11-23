@@ -56,7 +56,7 @@
     <task class="iped.engine.task.EntropyTask"></task>
     <task class="iped.engine.task.MinIOTask"></task>
     
-    <task class="iped.engine.task.leapp.AleappTask"></task>
+    <task class="iped.engine.task.leapp.aleapp.AleappTask"></task>
     
     <task class="iped.engine.task.index.ElasticSearchIndexTask"></task>
     <task class="iped.engine.task.index.IndexTask"></task>
