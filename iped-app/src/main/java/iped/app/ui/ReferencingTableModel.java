@@ -59,7 +59,32 @@ public class ReferencingTableModel extends BaseTableModel {
         int id = results.getLuceneIds()[selectedIndex];
 
         FileProcessor parsingTask = new FileProcessor(id, false);
+        // the referenced item can be seen in the context of the referencing chat
+        int refLuceneId = getRefLuceneId();
+        String hash = getReferenceHash(id);
+        if (refLuceneId != -1 && hash != null) {
+            parsingTask.setReferencingChat(refLuceneId, hash);
+        }
         parsingTask.execute();
+    }
+
+    /**
+     * Returns the hash that identifies the given referenced item in the preview of
+     * the referencing item, or null if there is none.
+     */
+    private String getReferenceHash(int luceneId) {
+        if (refDoc == null) {
+            return null;
+        }
+        try {
+            Document doc = App.get().appCase.getSearcher().doc(luceneId);
+            String hash = doc.get(getReferenceHashField(refDoc.get(BasicProps.CONTENTTYPE)));
+            return StringUtils.isBlank(hash) ? null : hash;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -86,15 +111,8 @@ public class ReferencingTableModel extends BaseTableModel {
     @Override
     protected boolean setPositionToScroll(int luceneId, boolean apply) {
         // the referenced items are identified by their hash in the referencing preview
-        String hash;
-        try {
-            Document doc = App.get().appCase.getSearcher().doc(luceneId);
-            hash = doc.get(getReferenceHashField(refDoc.get(BasicProps.CONTENTTYPE)));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        if (StringUtils.isBlank(hash)) {
+        String hash = getReferenceHash(luceneId);
+        if (hash == null) {
             return false;
         }
         if (apply) {

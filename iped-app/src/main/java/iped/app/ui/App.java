@@ -1185,6 +1185,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     }
                 });
                 viewerDock.addAction(copyViewerImage);
+
+                CCheckBox chkShowInChat = new CCustomCheckBox(Messages.getString("ViewerController.ShowInChat"), IconUtil.getToolbarIcon("chat", resPath)) {
+                    protected void changed() {
+                        viewerController.setShowInChat(isSelected());
+                    }
+                };
+                chkShowInChat.setSelected(viewerController.isShowInChat());
+                chkShowInChat.setEnabled(false);
+                viewerDock.addAction(chkShowInChat);
+                viewerDock.putAction("showInChat", chkShowInChat);
             }
 
             CButton prevHit = new CCustomButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getToolbarIcon("prev", resPath));
