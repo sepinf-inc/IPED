@@ -687,7 +687,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                     // Add subitems to queue and blocks if queue is full. It shouldn't deadlock
                     // because we have at least 2 workers and a maximum of workers/2 expanding
                     // containers, so at least 1 worker is consuming items from the queue.
-                    Manager.getInstance().getProcessingQueues().addItem(subItem);
+                    Manager.getInstance().getProcessingQueues().addItemFirst(subItem);
                     caseData.incDiscoveredEvidences(1);
                     Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
@@ -809,19 +809,19 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             PluginConfig pluginConfig = configurationManager.findObject(PluginConfig.class);
             ForkParser.setPluginDir(pluginConfig.getPluginFolder().getAbsolutePath());
             ForkParser.setPoolSize(parsingConfig.getNumExternalParsers());
-            max_expanding_containers = parsingConfig.getNumExternalParsers() / 2;
-            if (max_expanding_containers == 0) {
+            if (parsingConfig.getNumExternalParsers() < 2) {
                 // Abort. We must have at least 2 external parsing processes, 1 causes deadlock.
                 throw new IPEDException("You must have a minimum of 2 external parsing processes! Adjust the '" + ParsingTaskConfig.NUM_EXTERNAL_PARSERS + "' option.");
             }
             ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
+            max_expanding_containers = Math.max(1, parsingConfig.getNumExternalParsers() / 4);
         } else {
             LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
             if (localConfig.getNumThreads() < 2) {
                 // Just 1 worker can cause a deadlock if a big container is being expanded due to max queue size
                 throw new IPEDException("You should have at least 2 processing workers! Please adjust '" + LocalConfig.NUM_THREADS + "' option.");
             }
-            max_expanding_containers = localConfig.getNumThreads() / 2;
+            max_expanding_containers = Math.max(1, localConfig.getNumThreads() / 4);
         }
 
         String appRoot = Configuration.getInstance().appRoot;
