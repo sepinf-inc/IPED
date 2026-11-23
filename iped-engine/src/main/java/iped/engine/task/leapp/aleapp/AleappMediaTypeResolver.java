@@ -1,4 +1,6 @@
-package iped.engine.task.leapp;
+package iped.engine.task.leapp.aleapp;
+
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.mime.MediaType;
@@ -35,11 +37,19 @@ public final class AleappMediaTypeResolver {
      * @param artifactName the artifact display name (e.g. "Gmail - App Emails")
      */
     public static MediaType resolveMediaType(String moduleName, String pluginName, String artifactName) {
+        return resolveMediaType(moduleName, pluginName, artifactName, false);
+    }
+
+    /**
+     * @param conversationRows whether the rows are the messages of a conversation view (see ConversationViewSpec)
+     */
+    public static MediaType resolveMediaType(String moduleName, String pluginName, String artifactName,
+            boolean conversationRows) {
         String subtype = pluginSpecificSubtype(moduleName, pluginName, artifactName);
         if (subtype == null) {
-            subtype = genericSubtype(pluginName, artifactName);
+            subtype = genericSubtype(moduleName, pluginName, artifactName, conversationRows);
         }
-        return MediaType.application(AleappTask.ALEAPP_APPLICATION_PREFIX + subtype);
+        return AleappTool.INSTANCE.mediaType(subtype);
     }
 
     /**
@@ -85,11 +95,37 @@ public final class AleappMediaTypeResolver {
         return null;
     }
 
+    // Words telling that an artifact named after calls, chats, messages or contacts does not hold the records
+    // themselves, but something about them (e.g. "Kik Chat Metadata", "WhatsApp - Message Reactions", "Truecaller -
+    // Call Cache"), so it must not get their category.
+    private static final Pattern NOT_THE_RECORDS = Pattern.compile(
+            "\\b(metadata|info|information|details?|settings?|preferences|status|state|counts?|telemetry|accounts?"
+                    + "|users?|members|participants|rooms|groups|drafts|hints?|reactions|receipts|edits?|records"
+                    + "|transcriptions?|screen|cache|media|files?|store|keys?|bundles|objects)\\b");
+
+    private static final Pattern CONTACT = Pattern.compile("\\bcontacts?\\b");
+    private static final Pattern CALL = Pattern.compile("\\bcalls?\\b");
+    private static final Pattern MESSAGE = Pattern.compile("\\b(messages?|e-?mails?)\\b");
+    private static final Pattern CHAT = Pattern.compile("\\bchats?\\b");
+    private static final Pattern CONVERSATION = Pattern.compile("\\bconversations?\\b");
+    private static final Pattern ACTIVITY = Pattern.compile("\\bactivit(y|ies)\\b");
+    private static final Pattern AUTOFILL = Pattern.compile("\\bautofill\\b");
+
+    // apps whose messages are emails
+    private static final Pattern EMAIL_APP = Pattern.compile("mail|thunderbird");
+
     /**
      * Generic per-artifact subtype. A module can register many plugins, so the plugin name (often prefixed with "get_",
-     * which is stripped) plus hints from the artifact name ("Call", "Chat", ...) are used to build a specific subtype.
+     * which is stripped) plus a hint about what the artifact holds ("-call", "-chat", "-message"...) are used to build
+     * a specific subtype. RefineCategoryTask.js gives the category from that hint.
+     *
+     * The hint is taken from whole words of the artifact name, ignoring the app name: matching substrings would give
+     * every "Snapchat - ..." or "ChatGPT - ..." artifact the chat category, and the "Truecaller - ..." ones the call
+     * category.
+     *
+     * @param conversationRows whether the rows are the messages of a conversation view, whatever the artifact is named
      */
-    private static String genericSubtype(String pluginName, String artifactName) {
+    private static String genericSubtype(String moduleName, String pluginName, String artifactName, boolean conversationRows) {
 
         String mimePluginName = pluginName.toLowerCase().replace(".", "");
         mimePluginName = StringUtils.removeStart(mimePluginName, "get_");
@@ -100,27 +136,47 @@ public final class AleappMediaTypeResolver {
             mimePluginName = StringUtils.substringBefore(artifactName, "- ").toLowerCase();
         }
 
+        // the app name is what comes before " - ", when the artifact is named "<app> - <what it holds>"
+        String app = StringUtils.contains(artifactName, " - ") ? StringUtils.substringBefore(artifactName, " - ") : moduleName;
+        boolean emailApp = EMAIL_APP.matcher(StringUtils.lowerCase(app + " " + moduleName)).find();
+
+        if (conversationRows) {
+            return mimePluginName + (emailApp ? "-email" : "-message");
+        }
+
         // Chrome plugins are named per artifact already, so the artifact name alone is used
         // (mimePluginName is intentionally ignored in this branch)
         if (StringUtils.containsIgnoreCase(pluginName, "chrome")) {
             return artifactNameToType(artifactName);
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Call")) {
-            return mimePluginName + "-call";
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Chat")) {
-            return mimePluginName + "-chat";
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Message")) {
-            return mimePluginName + "-message";
-        } else if (StringUtils.containsAnyIgnoreCase(artifactName, "Activity", "Activities")) {
-            return mimePluginName + "-activity";
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Contact")) {
-            return mimePluginName + "-contact";
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Conversation")) {
-            return mimePluginName + "-conversation";
-        } else if (StringUtils.containsIgnoreCase(artifactName, "Autofill")) {
-            return mimePluginName + "-autofill";
-        } else {
-            return artifactNameToType(artifactName);
         }
+
+        // what the artifact holds: its name without the app name and the trailing "(...)" note; names
+        // written in camel case (e.g. "GoogleMessages") are split in words
+        String kind = StringUtils.substringBefore(StringUtils.defaultIfBlank(StringUtils.substringAfter(artifactName, " - "), artifactName), " (");
+        if (!StringUtils.containsWhitespace(kind.trim())) {
+            kind = StringUtils.join(StringUtils.splitByCharacterTypeCamelCase(kind), ' ');
+        }
+        kind = kind.toLowerCase();
+
+        if (!NOT_THE_RECORDS.matcher(kind).find()) {
+            if (CONTACT.matcher(kind).find()) {
+                return mimePluginName + "-contact";
+            } else if (CALL.matcher(kind).find()) {
+                return mimePluginName + "-call";
+            } else if (MESSAGE.matcher(kind).find()) {
+                return mimePluginName + (emailApp ? "-email" : "-message");
+            } else if (CHAT.matcher(kind).find()) {
+                return mimePluginName + "-chat";
+            } else if (CONVERSATION.matcher(kind).find()) {
+                return mimePluginName + "-conversation";
+            }
+        }
+        if (ACTIVITY.matcher(kind).find()) {
+            return mimePluginName + "-activity";
+        } else if (AUTOFILL.matcher(kind).find()) {
+            return mimePluginName + "-autofill";
+        }
+        return artifactNameToType(artifactName);
     }
 
     private static String artifactNameToType(String artifactName) {

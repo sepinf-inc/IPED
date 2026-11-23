@@ -14,6 +14,7 @@ import java.util.List;
 import org.junit.Test;
 
 import iped.engine.data.Item;
+import iped.engine.task.leapp.aleapp.AleappTool;
 import iped.engine.tika.SyncMetadata;
 import iped.properties.ExtraProperties;
 
@@ -231,10 +232,7 @@ public class PluginResultsProcessorTest {
     }
 
     private boolean invokeIsNonFilePathColumn(String moduleName, String headerName) throws Exception {
-        Method m = PluginResultsProcessor.class
-                .getDeclaredMethod("isNonFilePathColumn", String.class, String.class);
-        m.setAccessible(true);
-        return (boolean) m.invoke(null, moduleName, headerName);
+        return AleappTool.INSTANCE.isNonFilePathColumn(moduleName, headerName);
     }
 
     @Test
@@ -279,7 +277,7 @@ public class PluginResultsProcessorTest {
 
     private void invokeSetLocation(Item item, String lat, String lon) throws Exception {
         Method m = PluginResultsProcessor.class
-                .getDeclaredMethod("setLocationIfValid", Item.class, String.class, String.class);
+                .getDeclaredMethod("addLocationIfValid", Item.class, String.class, String.class);
         m.setAccessible(true);
         m.invoke(null, item, lat, lon);
     }
@@ -332,5 +330,38 @@ public class PluginResultsProcessorTest {
         Item item = newItem();
         invokeSetLocation(item, "-15.7942", null);
         assertNull(item.getMetadata().get(ExtraProperties.LOCATIONS));
+    }
+
+    // ── calibration against ALEAPP v2026.4.5 headers ────────────────────────────
+
+    @Test
+    public void testUntypedRawOrDurationColumnsAreNotDates() throws Exception {
+        for (String header : Arrays.asList("Timestamp (as stored)", "Time As Printed", "Raw Timestamp Millis",
+                "Timestamp (ms)", "Timestamp Status", "Total Sleep Time", "Round Trip Time", "Watch Time")) {
+            assertEquals("header must not classify as DATE: " + header, "NONE", invokeClassify(header, null).toString());
+        }
+        for (String header : Arrays.asList("Time", "Date Received", "Last Update", "Visit Timestamp", "Creation Time")) {
+            assertEquals("header must classify as DATE: " + header, "DATE", invokeClassify(header, null).toString());
+        }
+        // a declared type always wins over the name
+        assertEquals("DATE", invokeClassify("Timestamp (as stored)", "datetime").toString());
+    }
+
+    @Test
+    public void testCoordinatePairs() throws Exception {
+        assertEquals("LATITUDE", invokeClassify("Latitude", null).toString());
+        assertEquals("LATITUDE", invokeClassify("End Latitude", null).toString());
+        assertEquals("LONGITUDE", invokeClassify("Start Longitude", null).toString());
+        // the limits of an area are not a place
+        assertEquals("NONE", invokeClassify("Max Latitude", null).toString());
+        assertEquals("NONE", invokeClassify("Latitude (as printed)", null).toString());
+    }
+
+    @Test
+    public void testPathsOutsideTheDeviceAreNotFilePaths() throws Exception {
+        for (String header : Arrays.asList("Cloud Path", "Remote Path", "Server File Path", "JSON Object Path")) {
+            assertEquals("header must not classify as FILE_PATH: " + header, "NONE",
+                    invokeClassify(header, null).toString());
+        }
     }
 }

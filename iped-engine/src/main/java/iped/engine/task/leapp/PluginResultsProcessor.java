@@ -9,7 +9,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
@@ -22,16 +24,17 @@ import iped.engine.task.leapp.conversation.Conversation;
 import iped.engine.task.leapp.conversation.ConversationCreator;
 import iped.engine.task.leapp.conversation.ConversationMessage;
 import iped.engine.task.leapp.conversation.ConversationViewSpec;
+import iped.engine.task.leapp.interceptors.IlapfuncsEmbeddedMediaInterceptor;
 import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
 
 /**
- * Turns the results of one ALEAPP plugin run into IPED subitems.
+ * Turns the results of one LEAPP plugin run into IPED subitems.
  *
  * <p>
  * This is where the plugin output is actually interpreted. It receives the two raw values a plugin produces —
  * {@code data_headers} (the column list) and {@code data_list} (the rows) — and for each row creates a subitem of the
- * plugin evidence, storing every cell as "aleapp:&lt;header&gt;" metadata.
+ * plugin evidence, storing every cell as "&lt;tool&gt;:&lt;header&gt;" metadata (e.g. "aleapp:Date").
  *
  * <p>
  * Some columns are additionally mapped to IPED standard properties. Location, media and file-path columns are mapped
@@ -57,10 +60,19 @@ public class PluginResultsProcessor {
             "datetime", "date/time", "date", "created", "created at", "updated at", //
             "time created", "creationtime", "last updated", "last login", "last modified", //
             "last access", "last accessed", //
-            "date added", "date created", "date modified", "date sent", "date stored", "date taken");
-    private static final Set<String> FROM_HEADERS = Set.of("sender", "from", "author");
-    private static final Set<String> TO_HEADERS = Set.of("recipient", "to", "receiver");
-    private static final Set<String> BODY_HEADERS = Set.of("message", "body", "text", "content");
+            "date added", "date created", "date modified", "date sent", "date stored", "date taken", //
+            "time", "date received", "date last used", "last update", "last contacted");
+
+    // Since ALEAPP v2026.4 real date columns are declared as ('name', 'datetime'), so untyped columns named like a date
+    // are often something else: the value as it is stored or printed (not converted), a duration or a status.
+    private static final Pattern NOT_A_DATE = Pattern.compile(
+            "\\b(as (stored|printed|recorded|logged)|raw|millis|ms|seconds|status|basis|records|position|relative|no zone)\\b|\\(s\\)");
+    private static final Set<String> DURATION_HEADERS = Set.of("sleep time", "total sleep time", "round trip time",
+            "watch time", "played time", "max played time");
+    private static final Set<String> FROM_HEADERS = Set.of("sender", "from", "author", "sender name", "message sender");
+    private static final Set<String> TO_HEADERS = Set.of("recipient", "to", "receiver", "recipients", "recipient name");
+    private static final Set<String> BODY_HEADERS = Set.of("message", "body", "text", "content", "message text",
+            "message body", "message content");
 
     // UNTYPED columns whose value is a device file path but which ALEAPP did NOT declare as ('name', 'media').
     // These cells are not rewritten by the media interception (check_in_media), so their value stays as the raw
@@ -71,18 +83,15 @@ public class PluginResultsProcessor {
     // set only holds the few file-path column names those rules do not catch.
     private static final Set<String> FILE_PATH_HEADERS = Set.of("local path to media");
 
-    // Per-plugin exceptions: columns whose name matches the file-path rules but do NOT hold a filesystem path in
-    // that specific plugin, so the file lookup must be skipped. Kept plugin-scoped (keyed by the plugin module name)
-    // because the same column name can be a real file path elsewhere: "Path" is a cookie/URL path in the cookie
-    // plugins but a MediaStore file path in emulatedSmeta and a transfer path in Zapya. Module names and column
-    // names are written exactly as declared in the plugins.
-    private static final Map<String, Set<String>> NON_FILE_PATH_COLUMNS = Map.of( //
-            "chromeCookies", Set.of("Path"), //
-            "firefoxCookies", Set.of("Path"), //
-            "OrnetBrowser", Set.of("Path"), //
-            "FairEmail", Set.of("Return Path"), //
-            "DuckDuckGo", Set.of("Folder Path"), //
-            "libretorrentFR", Set.of("Length - Path"));
+    // "* Path" columns that are not paths of the device file system
+    private static final Pattern NOT_A_FILE_PATH = Pattern.compile("\\b(url|json|xpath|cloud|remote|server)\\b");
+
+    private static final String LATITUDE = "latitude";
+    private static final String LONGITUDE = "longitude";
+
+    // coordinate columns can come in more than one pair per row ("Start Latitude"/"Start Longitude", "End ..."): the
+    // pairs are told apart by what comes before the word. These ones are not places, but the limits of an area.
+    private static final Set<String> NOT_A_PLACE_PREFIXES = Set.of("min", "max");
 
     // types used in LEAPP data_headers tuples (see lavafuncs.get_sql_type and ilapfuncs.get_media_header_info)
     private static final String LEAPP_TYPE_DATETIME = "datetime";
@@ -112,6 +121,9 @@ public class PluginResultsProcessor {
      */
     private boolean conversationPlugin;
 
+    /** Ids of the subitems created by this plugin run. */
+    private final AtomicInteger subitemIdSeq = new AtomicInteger();
+
     public PluginResultsProcessor(LeappContext context) {
         this.context = context;
     }
@@ -124,20 +136,18 @@ public class PluginResultsProcessor {
      */
     public void process(List<Object> rawHeaders, List<List<Object>> dataList) throws Exception {
 
-        // set hasChildren, so plugin will not be ignored in AleappTask.processPluginEvidence()
-        // and category will not be ignored in AleappTask.processCategoryEvidence()
+        // set hasChildren, so plugin will not be ignored in AbstractLeappTask.processPluginEvidence()
+        // and category will not be ignored in AbstractLeappTask.processCategoryEvidence()
         context.getPluginItem().setHasChildren(true);
-        IItem categoryItem = (IItem) context.getPluginItem().getTempAttribute(AleappTask.ALEAPP_PLUGIN_CATEGORY_KEY);
+        IItem categoryItem = (IItem) context.getPluginItem().getTempAttribute(AbstractLeappTask.LEAPP_PLUGIN_CATEGORY_KEY);
         categoryItem.setHasChildren(true);
 
         addLinkedItems();
 
         String artifactName = StringUtils.firstNonBlank(
                 (String) context.getPlugin().getArtifactInfo().get("name"), context.getPlugin().getName());
-        String pluginName = context.getPluginItem().getMetadata().get(AleappTask.ALEAPP_PLUGIN_KEYNAME_META);
+        String pluginName = context.getPluginItem().getMetadata().get(context.getTool().getPluginMetaPrefix() + "key");
         String pluginModule = context.getPlugin().getModuleName();
-        MediaType mediaType = AleappMediaTypeResolver.resolveMediaType(pluginModule, pluginName, artifactName);
-
         // headers are constant across rows: parse and classify each column once
         Header[] headers = new Header[rawHeaders.size()];
         StandardField[] standardFields = new StandardField[rawHeaders.size()];
@@ -146,13 +156,13 @@ public class PluginResultsProcessor {
             standardFields[i] = classifyHeader(headers[i]);
             // a column named like a file path may still be a non-file path in a specific plugin
             // (e.g. the cookie "Path"): drop it back to NONE so no file lookup is attempted
-            if (standardFields[i] == StandardField.FILE_PATH && isNonFilePathColumn(pluginModule, headers[i].name)) {
+            if (standardFields[i] == StandardField.FILE_PATH && context.getTool().isNonFilePathColumn(pluginModule, headers[i].name)) {
                 standardFields[i] = StandardField.NONE;
             }
             if (standardFields[i] == StandardField.DATE) {
                 // declares the column as a date metadata, so it is indexed as a real date instead of
                 // being stored as text plus a duplicated "...:date" field created by IndexItem.
-                MetadataUtil.setMetadataType(AleappTask.ALEAPP_META_PREFIX + headers[i].name, Date.class);
+                MetadataUtil.setMetadataType(context.getTool().getMetaPrefix() + headers[i].name, Date.class);
             }
         }
 
@@ -163,7 +173,7 @@ public class PluginResultsProcessor {
         int discriminatorIdx = view == null ? -1 : indexOfColumn(headers, view.getDiscriminatorColumn());
         conversationPlugin = discriminatorIdx >= 0;
 
-        AtomicInteger subitemIdSeq = new AtomicInteger();
+        MediaType mediaType = context.getTool().resolveRowMediaType(pluginModule, pluginName, artifactName, conversationPlugin);
 
         if (conversationPlugin) {
             createConversations(mediaType, artifactName, headers, standardFields, dataList, view, discriminatorIdx, subitemIdSeq);
@@ -190,6 +200,16 @@ public class PluginResultsProcessor {
         int directionIdx = indexOfColumn(headers, view.getDirectionColumn());
         int timeIdx = indexOfColumn(headers, view.getTimeColumn());
         int senderIdx = indexOfColumn(headers, view.getSenderColumn());
+        int mediaIdx = indexOfColumn(headers, view.getMediaColumn());
+
+        // extra columns to show with each message: header index -> column name
+        Map<Integer, String> extraColumns = new LinkedHashMap<>();
+        for (String column : view.getExtraColumns()) {
+            int idx = indexOfColumn(headers, column);
+            if (idx >= 0) {
+                extraColumns.put(idx, headers[idx].name);
+            }
+        }
 
         Map<String, Conversation> conversations = new LinkedHashMap<>();
 
@@ -206,24 +226,40 @@ public class PluginResultsProcessor {
             Boolean outgoing = (directionIdx < 0 || view.getDirectionSentValue() == null) ? null
                     : view.getDirectionSentValue().equalsIgnoreCase(StringUtils.trim(cellString(data, directionIdx)));
 
-            ConversationMessage message = new ConversationMessage(index, cellString(data, senderIdx),
-                    cellString(data, textIdx), outgoing, cellString(data, timeIdx));
+            // with a static label, the sender column of a sent message holds the other party, not the sender
+            String sender = cellString(data, senderIdx);
+            String recipient = null;
+            if (Boolean.TRUE.equals(outgoing) && view.getSentMessageStaticLabel() != null) {
+                recipient = sender;
+                sender = view.getSentMessageStaticLabel();
+            }
 
-            String lat = null, lon = null;
+            ConversationMessage message = new ConversationMessage(index, sender, cellString(data, textIdx), outgoing,
+                    cellString(data, timeIdx));
+            message.setRecipient(recipient);
+
+            for (Map.Entry<Integer, String> extra : extraColumns.entrySet()) {
+                String value = cellString(data, extra.getKey());
+                if (StringUtils.isNotBlank(value)) {
+                    message.getExtras().put(extra.getValue(), value);
+                }
+            }
+
+            Map<String, String[]> coordinates = new LinkedHashMap<>();
             for (int i = 0; i < headers.length; i++) {
                 Object value = cellValue(data, i);
                 if (value == null) {
                     continue;
                 }
-                if (standardFields[i] == StandardField.MEDIA) {
+                if (standardFields[i] == StandardField.MEDIA || i == mediaIdx) {
                     message.getMediaItems().addAll(getMediaCaseItems(context, value));
-                } else if (standardFields[i] == StandardField.LATITUDE) {
-                    lat = value.toString();
-                } else if (standardFields[i] == StandardField.LONGITUDE) {
-                    lon = value.toString();
+                } else if (standardFields[i] == StandardField.LATITUDE || standardFields[i] == StandardField.LONGITUDE) {
+                    addCoordinate(coordinates, headers[i].name, standardFields[i], value.toString());
                 }
             }
-            message.setLocation(lat, lon);
+            // the place of the message itself is in the plain columns, when there is more than one pair
+            String[] place = coordinates.getOrDefault("", coordinates.values().stream().findFirst().orElse(new String[2]));
+            message.setLocation(place[0], place[1]);
 
             conversation.getMessages().add(message);
         }
@@ -276,7 +312,7 @@ public class PluginResultsProcessor {
             if (mediaPath == null) {
                 continue;
             }
-            IItemReader item = context.getFileSeeker().getExportedFiles().get(mediaPath.toString());
+            IItemReader item = context.getFileSeeker().findExported(mediaPath.toString());
             if (item != null) {
                 items.add(item);
             }
@@ -298,7 +334,7 @@ public class PluginResultsProcessor {
 
     /**
      * Creates one subitem for a data row under the given parent (the plugin evidence or, when a conversation view
-     * exists, the conversation part item), storing each cell as "aleapp:&lt;header&gt;" metadata and mapping typed or
+     * exists, the conversation part item), storing each cell as "&lt;tool&gt;:&lt;header&gt;" metadata and mapping typed or
      * recognized columns to IPED standard properties.
      */
     private Item createSubItem(IItem parent, MediaType mediaType, String artifactName, int index,
@@ -316,7 +352,7 @@ public class PluginResultsProcessor {
         subItem.setSumVolume(false);
 
         // data as metadata
-        String lat = null, lon = null;
+        Map<String, String[]> coordinates = new LinkedHashMap<>();
         List<String> filePathMetaKeys = null;
         for (int i = 0; i < headers.length; i++) {
             Object value = cellValue(data, i);
@@ -334,8 +370,8 @@ public class PluginResultsProcessor {
             // cells holding a path exported by the seeker are rewritten back to the
             // original in-case path and linked to the original item
             boolean linkedToCaseItem = false;
-            if (context.getFileSeeker().getExportedFiles().containsKey(valueStr)) {
-                IItemReader valueItem = context.getFileSeeker().getExportedFiles().get(valueStr);
+            IItemReader valueItem = context.getFileSeeker().findExported(valueStr);
+            if (valueItem != null) {
                 valueStr = StringUtils.removeStart(valueItem.getPath(), context.getFileSeeker().getPathRoot());
                 subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, ExtraProperties.GLOBAL_ID + ":" + valueItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
                 linkedToCaseItem = true;
@@ -344,35 +380,35 @@ public class PluginResultsProcessor {
             // fallback for UNTYPED file-path columns (e.g. "File Path"): the value is a device file
             // path the seeker did not export, so it is not in getExportedFiles(). Resolving it needs an
             // index search per value, too costly to run here for every row: just record the metadata key
-            // and let AleappTask.process() resolve and link it when this subitem is reprocessed by a worker.
+            // and let AbstractLeappTask.process() resolve and link it when this subitem is reprocessed by a worker.
             if (!linkedToCaseItem && standardFields[i] == StandardField.FILE_PATH) {
                 if (filePathMetaKeys == null) {
                     filePathMetaKeys = new ArrayList<>();
                 }
-                filePathMetaKeys.add(AleappTask.ALEAPP_META_PREFIX + headers[i].name);
+                filePathMetaKeys.add(context.getTool().getMetaPrefix() + headers[i].name);
             }
 
             // cells promoted to a standard property (Communication:*, Message-Body) are
-            // not duplicated as "aleapp:" metadata. Only conversation plugins promote: for the
+            // not duplicated as "<tool>:" metadata. Only conversation plugins promote: for the
             // others the communication properties have no meaning, and the promoted column would
             // be picked by position (the first date/sender/body column wins), which is arbitrary.
             boolean promoted = false;
-            if (standardFields[i] == StandardField.LATITUDE) {
-                lat = valueStr;
-            } else if (standardFields[i] == StandardField.LONGITUDE) {
-                lon = valueStr;
+            if (standardFields[i] == StandardField.LATITUDE || standardFields[i] == StandardField.LONGITUDE) {
+                addCoordinate(coordinates, headers[i].name, standardFields[i], valueStr);
             } else if (conversationPlugin && standardFields[i] != StandardField.NONE) {
                 promoted = applyStandardField(subItem, standardFields[i], valueStr);
             }
             if (!promoted) {
-                subItem.getMetadata().set(AleappTask.ALEAPP_META_PREFIX + headers[i].name, valueStr);
+                subItem.getMetadata().set(context.getTool().getMetaPrefix() + headers[i].name, valueStr);
             }
         }
-        setLocationIfValid(subItem, lat, lon);
+        for (String[] pair : coordinates.values()) {
+            addLocationIfValid(subItem, pair[0], pair[1]);
+        }
 
-        // the recorded file-path columns are resolved and linked later, in AleappTask.process()
+        // the recorded file-path columns are resolved and linked later, in AbstractLeappTask.process()
         if (filePathMetaKeys != null) {
-            subItem.setTempAttribute(AleappTask.ALEAPP_METADATA_PATHS, filePathMetaKeys);
+            subItem.setTempAttribute(AbstractLeappTask.LEAPP_METADATA_PATHS, filePathMetaKeys);
         }
 
         return subItem;
@@ -387,20 +423,62 @@ public class PluginResultsProcessor {
     private void addMediaValue(Item subItem, String headerName, Object value) {
 
         List<Object> mediaPaths = (value instanceof List) ? (List<Object>) value : List.of(value);
+        Set<String> embeddedDone = new HashSet<>();
 
         for (Object mediaPath : mediaPaths) {
             if (mediaPath == null) {
                 continue;
             }
             String pathStr = mediaPath.toString();
-            IItemReader mediaItem = context.getFileSeeker().getExportedFiles().get(pathStr);
+
+            // data registered through check_in_embedded_media: it becomes a child item of the row
+            LeappContext.EmbeddedMedia embedded = context.getEmbeddedMedia().get(pathStr);
+            if (embedded != null) {
+                if (embeddedDone.add(pathStr)) {
+                    String name = addEmbeddedMedia(subItem, embedded, pathStr);
+                    subItem.getMetadata().add(context.getTool().getMetaPrefix() + headerName, name);
+                }
+                continue;
+            }
+
+            IItemReader mediaItem = context.getFileSeeker().findExported(pathStr);
             if (mediaItem != null) {
                 pathStr = StringUtils.removeStart(mediaItem.getPath(), context.getFileSeeker().getPathRoot());
                 subItem.getMetadata().add(ExtraProperties.LINKED_ITEMS,
                         ExtraProperties.GLOBAL_ID + ":" + mediaItem.getExtraAttribute(ExtraProperties.GLOBAL_ID));
             }
-            subItem.getMetadata().add(AleappTask.ALEAPP_META_PREFIX + headerName, pathStr);
+            subItem.getMetadata().add(context.getTool().getMetaPrefix() + headerName, pathStr);
         }
+    }
+
+    /**
+     * Records an embedded media to become a child item of the row subitem, and returns the name it will get. The child
+     * cannot be created yet: a child item needs the trackId of its parent, only set after the parent is enqueued. So
+     * it is done when the row comes back through AbstractLeappTask.process() (see processEmbeddedMedia).
+     */
+    @SuppressWarnings("unchecked")
+    private String addEmbeddedMedia(Item rowItem, LeappContext.EmbeddedMedia embedded, String reference) {
+
+        String hash = StringUtils.substringAfter(reference, IlapfuncsEmbeddedMediaInterceptor.REFERENCE_PREFIX);
+
+        // the name given by the plugin may be a path
+        String name = FilenameUtils.getName(StringUtils.trimToEmpty(embedded.name));
+        if (name.isEmpty()) {
+            name = "embedded-" + StringUtils.left(hash, 8);
+        }
+        if (StringUtils.isNotBlank(embedded.extension) && FilenameUtils.getExtension(name).isEmpty()) {
+            name += "." + embedded.extension;
+        }
+
+        Map<String, byte[]> pending = (Map<String, byte[]>) rowItem.getTempAttribute(AbstractLeappTask.LEAPP_EMBEDDED_MEDIA);
+        if (pending == null) {
+            pending = new LinkedHashMap<>();
+            rowItem.setTempAttribute(AbstractLeappTask.LEAPP_EMBEDDED_MEDIA, pending);
+        }
+        pending.putIfAbsent(name, embedded.data);
+        rowItem.setHasChildren(true);
+
+        return name;
     }
 
     private static Object cellValue(List<Object> data, int i) {
@@ -421,22 +499,38 @@ public class PluginResultsProcessor {
     }
 
     private static boolean isDateHeader(String h) {
-        return DATE_HEADERS.contains(h) || h.contains("timestamp") //
-                || h.endsWith(" time") || h.endsWith(" date") || h.endsWith("_date");
+        if (DATE_HEADERS.contains(h)) {
+            return true;
+        }
+        if (DURATION_HEADERS.contains(h) || NOT_A_DATE.matcher(h).find()) {
+            return false;
+        }
+        return h.contains("timestamp") || StringUtils.endsWithAny(h, " time", " date", "_date");
     }
 
     private static boolean isFilePathHeader(String h) {
-        return FILE_PATH_HEADERS.contains(h) || h.equals("path") //
-                || h.endsWith(" path") || h.endsWith("_path") || h.endsWith("filepath");
+        if (FILE_PATH_HEADERS.contains(h)) {
+            return true;
+        }
+        if (NOT_A_FILE_PATH.matcher(h).find()) {
+            return false;
+        }
+        return h.equals("path") || StringUtils.endsWithAny(h, " path", "_path", "filepath");
     }
 
     /**
-     * Whether the given column is a per-plugin exception that looks like a file path by name but is not one in this
-     * plugin (see {@link #NON_FILE_PATH_COLUMNS}), so the file lookup must be skipped.
+     * For a coordinate column, returns what tells its pair apart from the others of the row: the text before the given
+     * word ("latitude"/"longitude"), empty for the plain column. Returns null when the column is not a coordinate.
      */
-    private static boolean isNonFilePathColumn(String moduleName, String headerName) {
-        Set<String> columns = NON_FILE_PATH_COLUMNS.get(moduleName);
-        return columns != null && columns.contains(headerName);
+    private static String coordinatePrefix(String h, String word) {
+        if (h.equals(word)) {
+            return "";
+        }
+        if (!h.endsWith(" " + word)) {
+            return null;
+        }
+        String prefix = StringUtils.removeEnd(h, " " + word).trim();
+        return NOT_A_PLACE_PREFIXES.contains(prefix) ? null : prefix;
     }
 
     /**
@@ -461,9 +555,9 @@ public class PluginResultsProcessor {
             return StandardField.TO;
         } else if (BODY_HEADERS.contains(h)) {
             return StandardField.BODY;
-        } else if (h.equals("latitude")) {
+        } else if (coordinatePrefix(h, LATITUDE) != null) {
             return StandardField.LATITUDE;
-        } else if (h.equals("longitude")) {
+        } else if (coordinatePrefix(h, LONGITUDE) != null) {
             return StandardField.LONGITUDE;
         } else if (header.type == null && isFilePathHeader(h)) {
             return StandardField.FILE_PATH;
@@ -493,7 +587,14 @@ public class PluginResultsProcessor {
         }
     }
 
-    private static void setLocationIfValid(Item item, String lat, String lon) {
+    /** Puts the value of a coordinate column in its pair (see {@link #coordinatePrefix}). */
+    private static void addCoordinate(Map<String, String[]> coordinates, String headerName, StandardField field, String value) {
+        boolean latitude = field == StandardField.LATITUDE;
+        String prefix = coordinatePrefix(headerName.toLowerCase(Locale.ROOT).trim(), latitude ? LATITUDE : LONGITUDE);
+        coordinates.computeIfAbsent(prefix, k -> new String[2])[latitude ? 0 : 1] = value;
+    }
+
+    private static void addLocationIfValid(Item item, String lat, String lon) {
         if (StringUtils.isBlank(lat) || StringUtils.isBlank(lon)) {
             return;
         }
@@ -511,9 +612,9 @@ public class PluginResultsProcessor {
             // store the original strings like other LOCATIONS writers do:
             // Double.toString would emit scientific notation for small values,
             // which the KML consumers don't accept
-            item.getMetadata().set(ExtraProperties.LOCATIONS, lat + ";" + lon);
+            item.getMetadata().add(ExtraProperties.LOCATIONS, lat + ";" + lon);
         } catch (NumberFormatException e) {
-            // non-numeric coordinate values: leave them as aleapp:* metadata only
+            // non-numeric coordinate values: leave them as <tool>:* metadata only
         }
     }
 

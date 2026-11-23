@@ -207,6 +207,8 @@ function process(e){
 			e.setCategory("Other Calls");
 		} else if (mime.endsWith("-chat") || mime.endsWith("-conversation")) {
 			e.setCategory("Others Chats");
+		} else if (mime.endsWith("-email")) {
+			e.setCategory("Emails");
 		} else if (mime.endsWith("-message")) {
 			e.setCategory("Instant Messages");
 		} else if (mime.endsWith("-contact")) {
