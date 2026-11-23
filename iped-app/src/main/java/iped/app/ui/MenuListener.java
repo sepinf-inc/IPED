@@ -255,11 +255,8 @@ public class MenuListener implements ActionListener {
             BookmarksController.get().updateUISelection();
 
         } else if (e.getSource() == menu.exportHighlighted) {
-            setupFileChooser();
-            fileChooser.setFileFilter(defaultFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File dir = fileChooser.getSelectedFile();
+            File dir = chooseExportFolder();
+            if (dir != null) {
                 ArrayList<IItemId> selectedIds = new ArrayList<IItemId>();
                 for (int row : App.get().resultsTable.getSelectedRows()) {
                     IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
@@ -321,11 +318,8 @@ public class MenuListener implements ActionListener {
                     }
                 }
             }
-            setupFileChooser();
-            fileChooser.setFileFilter(defaultFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File dir = fileChooser.getSelectedFile();
+            File dir = chooseExportFolder();
+            if (dir != null) {
                 (new CopyFiles(dir, uniqueSelectedIds)).execute();
             }
 

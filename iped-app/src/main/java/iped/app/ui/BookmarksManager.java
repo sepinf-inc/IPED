@@ -581,6 +581,17 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
      * @return true if the key event matches a bookmark shortcut
      */
     public boolean applyBookmarkKeyStroke(KeyEvent e, Supplier<ArrayList<IItemId>> itemIdsSupplier) {
+        return applyBookmarkKeyStroke(e, itemIdsSupplier, false);
+    }
+
+    /**
+     * @param useDialogOptions
+     *            if true (main table), the "include duplicates" option of this
+     *            dialog is applied and a message is shown when there are no
+     *            items; if false (related items panels), exactly the supplied
+     *            items are bookmarked
+     */
+    private boolean applyBookmarkKeyStroke(KeyEvent e, Supplier<ArrayList<IItemId>> itemIdsSupplier, boolean useDialogOptions) {
         if (e.isConsumed()) {
             return false;
         }
@@ -590,8 +601,11 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             return false;
         }
         ArrayList<IItemId> itemIds = itemIdsSupplier.get();
-        if (!itemIds.isEmpty()) {
-            bookmark(itemIds, Collections.singletonList(bookmark), (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0, false, false);
+        boolean insert = (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0;
+        if (useDialogOptions) {
+            bookmark(itemIds, Collections.singletonList(bookmark), insert, false);
+        } else if (!itemIds.isEmpty()) {
+            bookmark(itemIds, Collections.singletonList(bookmark), insert, false, false);
         }
         e.consume();
         return true;
@@ -719,13 +733,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             e.consume();
 
         } else {
-            String bookmark = keystrokeToBookmark.get(stroke);
-            if (bookmark == null) {
-                return;
-            }
-            ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
-            bookmark(uniqueSelectedIds, Collections.singletonList(bookmark), (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0, false);
-            e.consume();
+            applyBookmarkKeyStroke(e, this::getUniqueSelectedIds, true);
         }
 
     }
