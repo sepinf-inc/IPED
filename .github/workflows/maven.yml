@@ -20,6 +20,12 @@ jobs:
         # like the Maven repository below, only pushes to master save the JDK cache
         cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
 
+    - name: Set up Python
+      # ALEAPP needs python 3.11 or newer, and jep (built from source) does not install with the system pip
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
       # the build fails (e.g. a remote repository is unavailable), see #3047
@@ -107,6 +113,12 @@ jobs:
         cache-jdk: true
         # like the Maven repository below, only pushes to master save the JDK cache
         cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
+
+    - name: Set up Python
+      # ALEAPP needs python 3.11 or newer, and jep (built from source) does not install with the system pip
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
