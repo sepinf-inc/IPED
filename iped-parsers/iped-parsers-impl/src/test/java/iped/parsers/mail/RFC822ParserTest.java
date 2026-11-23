@@ -23,6 +23,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import iped.content.TikaManager;
 import iped.properties.ExtraProperties;
 import junit.framework.TestCase;
 
@@ -30,6 +31,12 @@ public class RFC822ParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        TikaManager.initializeTikaConfig(false, false);
     }
 
     @Test
