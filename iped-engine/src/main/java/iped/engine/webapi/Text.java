@@ -25,6 +25,7 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.data.IPEDSource;
 import iped.engine.task.ParsingTask;
+import iped.engine.util.TikaInitializer;
 import iped.parsers.standard.StandardParser;
 
 @Api(value = "Documents")
@@ -39,6 +40,8 @@ public class Text {
 
         IIPEDSource source = Sources.getSource(sourceID);
         final IItem item = source.getItemByID(id);
+        // TikaConfig must be initialized before creating the parser
+        TikaInitializer.init(ConfigurationManager.get());
         final StandardParser parser = new StandardParser();
         final ParseContext context = getTikaContext(item, parser, (IPEDSource) source);
         final Metadata metadata = new Metadata();

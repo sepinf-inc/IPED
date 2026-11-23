@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
@@ -47,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.content.TikaManager;
 import iped.io.IStreamSource;
 import iped.parsers.fork.ForkParser;
 import iped.parsers.util.CorruptedCarvedException;
@@ -69,8 +69,6 @@ public class StandardParser extends CompositeParser {
     private static Logger LOGGER = LoggerFactory.getLogger(StandardParser.class);
 
     private static final long serialVersionUID = 1L;
-
-    private static TikaConfig tikaConfig;
 
     public static int parsingErrors = 0;
 
@@ -95,21 +93,11 @@ public class StandardParser extends CompositeParser {
     private boolean printMetadata = true;
     private boolean ignoreStyle = true;
     private boolean canUseForkParser = false;
+    private boolean forkParserAllowed = true;
     
-    private static TikaConfig getTikaConfig() {
-        if(tikaConfig == null) {
-            synchronized(StandardParser.class) {
-                if(tikaConfig == null) {
-                    tikaConfig = TikaConfig.getDefaultConfig();
-                }
-            }
-        }
-        return tikaConfig;
-    }
-
     public StandardParser() {
-        super(getTikaConfig().getMediaTypeRegistry(), ((CompositeParser) getTikaConfig().getParser()).getAllComponentParsers());
-        detector = getTikaConfig().getDetector();
+        super(TikaManager.getTikaConfig().getMediaTypeRegistry(), ((CompositeParser) TikaManager.getTikaConfig().getParser()).getAllComponentParsers());
+        detector = TikaManager.getTikaConfig().getDetector();
         if (fallbackParserEnabled) {
             this.setFallback(new RawStringParser(entropyTestEnabled));
         }
@@ -120,6 +108,16 @@ public class StandardParser extends CompositeParser {
 
     public void setCanUseForkParser(boolean shouldUseForkParser) {
         this.canUseForkParser = shouldUseForkParser;
+    }
+
+    /**
+     * Defines if this parser is allowed to delegate the parsing to external
+     * processes when external parsing is enabled. If set to false, it always parses
+     * in the current process, no matter the value of
+     * {@link #setCanUseForkParser(boolean)}.
+     */
+    public void setForkParserAllowed(boolean forkParserAllowed) {
+        this.forkParserAllowed = forkParserAllowed;
     }
 
     public void setErrorParser(Parser parser) {
@@ -240,7 +238,7 @@ public class StandardParser extends CompositeParser {
             try {
                 if (length != 0) {
                     if (metadata.get(INDEXER_TIMEOUT) == null) {
-                        if (canUseForkParser && ForkParser.isEnabled() && hasSpecificParser(metadata))
+                        if (forkParserAllowed && canUseForkParser && ForkParser.isEnabled() && hasSpecificParser(metadata))
                             ForkParser.getForkParser().parse(tis, sch, metadata, context);
                         else {
                             // Disable zip bomb prevention for ufed items

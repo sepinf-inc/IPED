@@ -36,7 +36,8 @@ public class PreviewRepository {
 
     /**
      * Package-private constructor. Instances should be obtained from {@link PreviewRepositoryManager}.
-     * @param dataSource The configured data source for this repository.
+     * @param dataSource The configured data source for this repository. It can be null for a read-only
+     *        repository without a database, which behaves as an empty one.
      */
     PreviewRepository(HikariDataSource dataSource, boolean readOnly) {
         this.dataSource = dataSource;
@@ -85,6 +86,9 @@ public class PreviewRepository {
      * @throws SQLException if a database error occurs.
      */
     public boolean previewExists(PreviewKey key) throws SQLException {
+        if (dataSource == null) {
+            return false;
+        }
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(CHECK_EXISTS_SQL)) {
             pstmt.setBytes(1, key.getBytes());
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -103,6 +107,7 @@ public class PreviewRepository {
      * @throws IOException
      */
     public void storeCompressedPreview(IItemReader evidence, InputStream compressedValueStream) throws SQLException, IOException {
+        checkWritable();
         PreviewKey key = PreviewKey.create(evidence);
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_DATA_SQL)) {
@@ -123,6 +128,7 @@ public class PreviewRepository {
      * @throws IOException if an I/O error occurs during compression.
      */
     public void storeRawPreview(IItemReader evidence, InputStream rawValueStream) throws SQLException, IOException {
+        checkWritable();
         PreviewKey key = PreviewKey.create(evidence);
 
         Deflater deflater = new Deflater(Deflater.BEST_SPEED);
@@ -138,6 +144,12 @@ public class PreviewRepository {
 
         } finally {
             deflater.end();
+        }
+    }
+
+    private void checkWritable() throws SQLException {
+        if (dataSource == null) {
+            throw new SQLException("Previews can not be stored in a read-only repository without a database");
         }
     }
 
@@ -198,6 +210,9 @@ public class PreviewRepository {
     * @throws IOException if an I/O error occurs during streaming.
     */
    public boolean consumePreview(PreviewKey key, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
+       if (dataSource == null) {
+           return false;
+       }
        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_DATA_SQL)) {
            pstmt.setBytes(1, key.getBytes());
            try (ResultSet rs = pstmt.executeQuery()) {
