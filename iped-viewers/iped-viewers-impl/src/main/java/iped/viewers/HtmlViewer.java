@@ -15,12 +15,14 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import iped.data.IItem;
 import iped.io.IStreamSource;
 import iped.parsers.util.Util;
+import iped.utils.HighlightTermMatcher;
 import iped.utils.IOUtil;
 import iped.utils.UiUtil;
 import iped.viewers.api.AbstractViewer;
@@ -253,7 +255,10 @@ public class HtmlViewer extends AbstractViewer {
                                     totalHits = 0;
                                     hits = new ArrayList<Object>();
                                     if (highlightTerms != null && highlightTerms.size() > 0) {
-                                        highlightNode(doc, false, exec);
+                                        HighlightTermMatcher matcher = new HighlightTermMatcher(highlightTerms);
+                                        if (!matcher.isEmpty()) {
+                                            highlightNode(doc, false, matcher, exec);
+                                        }
                                     }
     
                                 } else if (tmpFile != null) {
@@ -311,7 +316,7 @@ public class HtmlViewer extends AbstractViewer {
                         }
                         clearNode(doc, exec);
                         if (doc != null && !highlightTerms.isEmpty()) {
-                            highlightNode(doc, false, exec);
+                            highlightNode(doc, false, new HighlightTermMatcher(highlightTerms), exec);
                             scrollToPosition();
                         }
                         if (hitsUpdater != null) {                    
@@ -429,7 +434,7 @@ public class HtmlViewer extends AbstractViewer {
 
     protected ArrayList<Object> hits;
 
-    protected void highlightNode(Node node, boolean parentVisible, Object exec) {
+    protected void highlightNode(Node node, boolean parentVisible, HighlightTermMatcher matcher, Object exec) {
         if (node == null || exec != currExec) {
             return;
         }
@@ -449,65 +454,61 @@ public class HtmlViewer extends AbstractViewer {
             do {
 
                 if (parentVisible && (subnode.getNodeType() == Node.TEXT_NODE)) {
-                    String term;
-                    do {
-                        String value = subnode.getNodeValue();
-                        String fValue = value.toLowerCase();
-
-                        int idx = Integer.MAX_VALUE;
-                        term = null;
-                        for (String t : highlightTerms) {
-                            if (t.isBlank()) {
-                                // an empty term would be found again and again at the same position
-                                continue;
-                            }
-                            int j = 0, i;
-                            do {
-                                i = fValue.indexOf(t, j);
-                                if (i != -1 && i < idx) {
-                                    idx = i;
-                                    term = t;
-                                    break;
-                                }
-                            } while (i != -1 && i < idx);
-
-                        }
-                        if (term != null) {
-                            Node preNode = subnode.cloneNode(false);
-                            preNode.setNodeValue(value.substring(0, idx));
-                            node.insertBefore(preNode, subnode);
-
-                            Element termNode = doc.createElement("span");
-                            termNode.setAttribute("style", hitStyle);
-                            termNode.appendChild(doc.createTextNode(value.substring(idx, idx + term.length())));
-                            termNode.setAttribute("id", "ipedHit-" + totalHits);
-                            hits.add(termNode);
-                            totalHits++;
-                            node.insertBefore(termNode, subnode);
-                            subnode.setNodeValue(value.substring(idx + term.length()));
-                            if (isNavigableTree) {
-                                // expands all parent elements of a hit
-                                try {
-                                    webEngine.executeScript("for (let el = document.getElementById('ipedHit-"
-                                            + (totalHits - 1)
-                                            + "'); el; el = el.parentElement) if (el.tagName === 'DETAILS') el.open = true;");
-                                } catch (Exception e) {
-                                }
-                            }
-                            if (totalHits == 1) {
-                                termNode.setAttribute("style", selStyle);
-                                if (shouldScrollToHit()) {
-                                    webEngine.executeScript("x = document.getElementById(\"ipedHit-" + ++currentHit + "\"); " + scrollIntoView("x"));
-                                }
-                            }
-                        }
-                    } while (term != null);
-
+                    highlightText(node, subnode, matcher);
                 }
 
-                highlightNode(subnode, parentVisible, exec);
+                highlightNode(subnode, parentVisible, matcher, exec);
 
             } while ((subnode = subnode.getNextSibling()) != null && exec == currExec);
+        }
+    }
+
+    /**
+     * Wraps the matches of a text node in highlight spans. The text around them
+     * stays in text nodes, one before each span and the original node after the
+     * last one, as clearNode() expects.
+     */
+    private void highlightText(Node parent, Node textNode, HighlightTermMatcher matcher) {
+        String value = textNode.getNodeValue();
+        int[] matches = matcher.find(value);
+        if (matches.length == 0) {
+            return;
+        }
+        // build the highlighted text apart and insert it with a single DOM change
+        DocumentFragment fragment = doc.createDocumentFragment();
+        boolean firstHit = false;
+        int end = 0;
+        for (int i = 0; i < matches.length; i += 2) {
+            fragment.appendChild(doc.createTextNode(value.substring(end, matches[i])));
+            end = matches[i + 1];
+            Element termNode = doc.createElement("span");
+            termNode.setAttribute("style", totalHits == 0 ? selStyle : hitStyle);
+            termNode.setAttribute("id", "ipedHit-" + totalHits);
+            termNode.appendChild(doc.createTextNode(value.substring(matches[i], end)));
+            fragment.appendChild(termNode);
+            firstHit |= totalHits == 0;
+            hits.add(termNode);
+            totalHits++;
+        }
+        parent.insertBefore(fragment, textNode);
+        textNode.setNodeValue(value.substring(end));
+
+        if (isNavigableTree) {
+            openParentDetails(parent);
+        }
+        if (firstHit && shouldScrollToHit()) {
+            webEngine.executeScript("x = document.getElementById(\"ipedHit-" + ++currentHit + "\"); " + scrollIntoView("x"));
+        }
+    }
+
+    /**
+     * Expands the collapsed DETAILS elements around a hit.
+     */
+    private static void openParentDetails(Node node) {
+        for (Node n = node; n != null; n = n.getParentNode()) {
+            if (n instanceof Element && "details".equalsIgnoreCase(n.getNodeName())) {
+                ((Element) n).setAttribute("open", "");
+            }
         }
     }
 
