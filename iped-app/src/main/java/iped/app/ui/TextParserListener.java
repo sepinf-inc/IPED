@@ -51,7 +51,7 @@ public class TextParserListener implements PropertyChangeListener {
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                     fileParser.getProgressMonitor().setNote(Messages.getString("TextParserListener.Found") //$NON-NLS-1$
-                            + evt.getNewValue() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
+                            + " " + evt.getNewValue() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
                 }
             });
 
