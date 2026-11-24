@@ -457,6 +457,10 @@ public class HtmlViewer extends AbstractViewer {
                         int idx = Integer.MAX_VALUE;
                         term = null;
                         for (String t : highlightTerms) {
+                            if (t.isBlank()) {
+                                // an empty term would be found again and again at the same position
+                                continue;
+                            }
                             int j = 0, i;
                             do {
                                 i = fValue.indexOf(t, j);

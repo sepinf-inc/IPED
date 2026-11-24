@@ -436,6 +436,9 @@ public class QueryBuilder {
             }
         }
 
+        // a blank term, e.g. from "" or from quoted punctuation that the analysis drops, would match everywhere
+        result.removeIf(String::isBlank);
+
         logger.info("Expanded query terms: {}", result.toString());
 
         return result;
