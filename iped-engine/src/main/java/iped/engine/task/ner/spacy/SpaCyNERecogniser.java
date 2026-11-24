@@ -46,7 +46,8 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
     private static final String MODEL_LOADED = "model_loaded";
     private static final String PING = "ping";
     private static final String TERMINATE = "terminate_process";
-    private static final long QUEUE_POLL_TIMEOUT_SECONDS = 60;
+
+    private volatile long queuePollTimeoutSeconds = NamedEntityTaskConfig.DEFAULT_PROCESS_TIMEOUT_SECONDS;
 
     private final BlockingQueue<SpaCyServer> serverQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
@@ -71,6 +72,8 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
             return;
         }
         activeServers.set(0);
+        this.queuePollTimeoutSeconds = config.getProcessTimeout() > 0 ? config.getProcessTimeout()
+                : NamedEntityTaskConfig.DEFAULT_PROCESS_TIMEOUT_SECONDS;
 
         resolvePythonBinary(config);
         if (this.resolvedScriptPath == null) {
@@ -264,7 +267,7 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
 
         SpaCyServer server;
         try {
-            server = serverQueue.poll(QUEUE_POLL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            server = serverQueue.poll(queuePollTimeoutSeconds, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return Map.of();
@@ -278,7 +281,8 @@ public class SpaCyNERecogniser implements INamedEntityRecognizer {
                     taskConfig.setEnabled(false);
                 }
             } else {
-                LOGGER.warn("Timed out waiting for available SpaCy worker process. Skipping NER for this text fragment.");
+                LOGGER.warn("Timed out after {}s waiting for available SpaCy worker process. Skipping NER for this text fragment.",
+                        queuePollTimeoutSeconds);
             }
             return Map.of();
         }

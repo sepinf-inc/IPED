@@ -34,6 +34,10 @@ langModel_1 = pt : pt_core_news_sm
 # Increase if you have many CPU cores and want higher NER throughput.
 #numProcesses = 2
 
+# Timeout (in seconds) to wait for an available SpaCy Python worker process (defaults to 300).
+# Increase if using heavier models (e.g. transformer models like en_core_web_trf).
+processTimeout = 300
+
 # Path to python executable (optional; defaults to system 'python3' on Linux or embedded 'python/python.exe' on Windows).
 #pythonPath = python3
 

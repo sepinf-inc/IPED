@@ -18,11 +18,15 @@ public class NamedEntityTaskConfig extends AbstractTaskPropertiesConfig {
     public static final String ENABLE_PARAM = "enableNamedEntityRecogniton"; //$NON-NLS-1$
     public static final String ENABLE_PARAM_CORRECT = "enableNamedEntityRecognition"; //$NON-NLS-1$
 
+    public static final int DEFAULT_PROCESS_TIMEOUT_SECONDS = 300;
+
     private String nerImpl;
 
     private float minLangScore = 0;
 
     private int numProcesses = 2;
+
+    private int processTimeout = DEFAULT_PROCESS_TIMEOUT_SECONDS;
 
     private String pythonPath;
 
@@ -50,6 +54,16 @@ public class NamedEntityTaskConfig extends AbstractTaskPropertiesConfig {
 
     public void setNumProcesses(int numProcesses) {
         this.numProcesses = numProcesses;
+    }
+
+    public int getProcessTimeout() {
+        return processTimeout;
+    }
+
+    public void setProcessTimeout(int processTimeout) {
+        if (processTimeout > 0) {
+            this.processTimeout = processTimeout;
+        }
     }
 
     public String getPythonPath() {
@@ -139,6 +153,18 @@ public class NamedEntityTaskConfig extends AbstractTaskPropertiesConfig {
         if (numProc != null && !numProc.trim().isEmpty()) {
             try {
                 numProcesses = Integer.parseInt(numProc.trim());
+            } catch (NumberFormatException e) {
+                // keep default
+            }
+        }
+
+        String timeoutProp = properties.getProperty("processTimeout"); //$NON-NLS-1$
+        if (timeoutProp != null && !timeoutProp.trim().isEmpty()) {
+            try {
+                int parsedTimeout = Integer.parseInt(timeoutProp.trim());
+                if (parsedTimeout > 0) {
+                    processTimeout = parsedTimeout;
+                }
             } catch (NumberFormatException e) {
                 // keep default
             }

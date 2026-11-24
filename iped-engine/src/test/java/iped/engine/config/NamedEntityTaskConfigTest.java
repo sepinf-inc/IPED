@@ -24,6 +24,7 @@ public class NamedEntityTaskConfigTest {
         assertEquals("iped.engine.task.ner.spacy.SpaCyNERecogniser", config.getNerImpl());
         assertEquals("en_core_web_sm", config.getLangToModelMap().get("default"));
         assertEquals("pt_core_news_sm", config.getLangToModelMap().get("pt"));
+        assertEquals(300, config.getProcessTimeout());
         assertEquals(0.2f, config.getMinLangScore(), 0.001f);
         assertTrue(config.getMimeTypesToIgnore().contains("audio"));
         assertTrue(config.getMimeTypesToIgnore().contains("video"));
@@ -39,6 +40,7 @@ public class NamedEntityTaskConfigTest {
         props.setProperty("langModel_1", "pt:pt_core_news_sm");
         props.setProperty("langModel_2", "es:es_core_news_sm");
         props.setProperty("numProcesses", "4");
+        props.setProperty("processTimeout", "600");
         props.setProperty("pythonPath", "/usr/bin/python3");
         props.setProperty("minLangScore", "0.35");
         props.setProperty("mimeTypesToIgnore", "image/png; image/jpeg");
@@ -51,6 +53,7 @@ public class NamedEntityTaskConfigTest {
         assertEquals("pt_core_news_sm", config.getLangToModelMap().get("pt"));
         assertEquals("es_core_news_sm", config.getLangToModelMap().get("es"));
         assertEquals(4, config.getNumProcesses());
+        assertEquals(600, config.getProcessTimeout());
         assertEquals("/usr/bin/python3", config.getPythonPath());
         assertEquals(0.35f, config.getMinLangScore(), 0.001f);
         assertTrue(config.getMimeTypesToIgnore().contains("image/png"));
@@ -92,5 +95,23 @@ public class NamedEntityTaskConfigTest {
 
         assertEquals("C:\\models\\en_core_web_sm", config.getLangToModelMap().get("default"));
         assertEquals("D:\\shared\\models\\pt_core_news_sm", config.getLangToModelMap().get("pt"));
+    }
+
+    @Test
+    public void testProcessTimeoutDefaultAndInvalidValues() {
+        NamedEntityTaskConfig config = new NamedEntityTaskConfig();
+        assertEquals(NamedEntityTaskConfig.DEFAULT_PROCESS_TIMEOUT_SECONDS, config.getProcessTimeout());
+
+        for (String invalidValue : new String[] { "invalid", "0", "-5", " " }) {
+            UTF8Properties props = new UTF8Properties();
+            props.setProperty("processTimeout", invalidValue);
+            config.processProperties(props);
+            assertEquals(NamedEntityTaskConfig.DEFAULT_PROCESS_TIMEOUT_SECONDS, config.getProcessTimeout());
+        }
+
+        config.setProcessTimeout(0);
+        assertEquals(NamedEntityTaskConfig.DEFAULT_PROCESS_TIMEOUT_SECONDS, config.getProcessTimeout());
+        config.setProcessTimeout(-10);
+        assertEquals(NamedEntityTaskConfig.DEFAULT_PROCESS_TIMEOUT_SECONDS, config.getProcessTimeout());
     }
 }

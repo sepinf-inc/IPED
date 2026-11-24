@@ -644,7 +644,7 @@ public class SpaCyNERecogniserTest {
 
             assertNotNull(failFastResult);
             assertTrue(failFastResult.isEmpty());
-            assertTrue("Subsequent call should fail fast (< 1000ms) instead of hanging on 60s timeout, took " + elapsedMs + "ms",
+            assertTrue("Subsequent call should fail fast (< 1000ms) instead of hanging on 300s timeout, took " + elapsedMs + "ms",
                     elapsedMs < 1000);
 
             recogniser.finish();
@@ -652,6 +652,93 @@ public class SpaCyNERecogniserTest {
             if (tempScript.exists()) {
                 tempScript.delete();
             }
+        }
+    }
+
+    @Test
+    public void testQueuePollTimeoutFromConfig() throws Exception {
+        String pythonBinary = null;
+        for (String candidate : new String[] { "python3", "python" }) {
+            try {
+                Process p = new ProcessBuilder(candidate, "--version").start();
+                if (p.waitFor() == 0) {
+                    pythonBinary = candidate;
+                    break;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        org.junit.Assume.assumeNotNull(pythonBinary);
+
+        java.io.File tempScript = java.io.File.createTempFile("mock_timeout_spacy", ".py");
+        tempScript.deleteOnExit();
+
+        String scriptContent = ""
+                + "import sys, time\n"
+                + "print('spacy_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "print('model_loaded')\n"
+                + "sys.stdout.flush()\n"
+                + "for line in sys.stdin:\n"
+                + "    line = line.strip()\n"
+                + "    if not line:\n"
+                + "        continue\n"
+                + "    if line == 'terminate_process':\n"
+                + "        sys.exit(0)\n"
+                + "    elif line.startswith('RECOGNIZE'):\n"
+                + "        time.sleep(2.5)\n"
+                + "        print('{\"PERSON\": [\"Slow Person\"]}')\n"
+                + "        sys.stdout.flush()\n";
+
+        java.nio.file.Files.write(tempScript.toPath(), scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        try {
+            NamedEntityTaskConfig config = new NamedEntityTaskConfig();
+            config.setPythonPath(pythonBinary);
+            config.setNumProcesses(1);
+            config.setProcessTimeout(1);
+            config.getLangToModelMap().put("default", "mock_model");
+            config.setEnabled(true);
+
+            SpaCyNERecogniser recogniser = new SpaCyNERecogniser();
+            recogniser.setScriptPath(tempScript.getAbsolutePath());
+            recogniser.init(config);
+            assertTrue(recogniser.isAvailable());
+
+            java.util.concurrent.CountDownLatch started = new java.util.concurrent.CountDownLatch(1);
+            java.util.concurrent.atomic.AtomicReference<Map<String, Set<String>>> firstResultRef = new java.util.concurrent.atomic.AtomicReference<>();
+
+            Thread workerThread = new Thread(() -> {
+                started.countDown();
+                try {
+                    firstResultRef.set(recogniser.recognize("first slow text", "en"));
+                } catch (Exception ignored) {
+                }
+            });
+            workerThread.start();
+
+            started.await();
+            // Ensure workerThread checks out the single available server process
+            Thread.sleep(300);
+
+            long startTime = System.currentTimeMillis();
+            Map<String, Set<String>> timedOutResult = recogniser.recognize("second text", "en");
+            long elapsedMs = System.currentTimeMillis() - startTime;
+
+            assertNotNull(timedOutResult);
+            assertTrue("Concurrent call should time out and return empty map", timedOutResult.isEmpty());
+            assertTrue("Timeout should respect configured 1s processTimeout, took " + elapsedMs + "ms",
+                    elapsedMs >= 800 && elapsedMs < 2300);
+
+            workerThread.join(5000);
+            assertNotNull(firstResultRef.get());
+            assertTrue(firstResultRef.get().containsKey("PERSON"));
+            assertTrue(firstResultRef.get().get("PERSON").contains("Slow Person"));
+
+            recogniser.finish();
+            assertFalse(recogniser.isAvailable());
+        } finally {
+            tempScript.delete();
         }
     }
 }
