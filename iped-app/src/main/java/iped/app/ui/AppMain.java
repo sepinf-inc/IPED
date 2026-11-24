@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -33,6 +36,12 @@ public class AppMain {
     private static final String BUNDLED_JRE_VERSION = "11.0.13";
 
     public static final String HOME_JRE_FOLDER = ".iped/jre-" + BUNDLED_JRE_VERSION;
+
+    /**
+     * Font configuration shipped in the bundled JRE, adding fonts present in
+     * Windows 10/11 to the fallback list, so Swing displays all scripts.
+     */
+    private static final String FONT_CONFIG_FILE = "lib/fontconfig.properties";
 
     File casePath;
 
@@ -255,6 +264,8 @@ public class AppMain {
         File userJrePath = new File(userHome, HOME_JRE_FOLDER);
         File userJava = new File(userJrePath, "bin/java.exe");
         if (userJava != null && userJava.exists()) {
+            // copies made by older versions lack the font fallback configuration
+            syncJreFile(bundledJrePath, userJrePath, FONT_CONFIG_FILE);
             return;
         }
 
@@ -279,5 +290,20 @@ public class AppMain {
         };
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /** Copies a file from the bundled JRE to the user JRE copy if missing or different. */
+    private static void syncJreFile(File bundledJrePath, File userJrePath, String relativePath) {
+        try {
+            File source = new File(bundledJrePath, relativePath);
+            File target = new File(userJrePath, relativePath);
+            if (source.isFile() && (!target.isFile()
+                    || !Arrays.equals(Files.readAllBytes(source.toPath()), Files.readAllBytes(target.toPath())))) {
+                Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (Exception e) {
+            LoggerFactory.getLogger(AppMain.class).warn("Could not update {} in user JRE copy: {}", relativePath, //$NON-NLS-1$
+                    e.toString());
+        }
     }
 }
