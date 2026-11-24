@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
 import iped.utils.IOUtil;
@@ -35,6 +36,9 @@ import jep.PyMethod;
 public class FileSeeker {
 
     protected static final Logger logger = LoggerFactory.getLogger(FileSeeker.class);
+
+    // "embedded" attribute of the file entries of a ufdr report (see UfedXmlReader)
+    private static final String UFED_EMBEDDED_META = ExtraProperties.UFED_META_PREFIX + "embedded";
 
     private String pathRoot;
     private IItemSearcher searcher;
@@ -201,7 +205,7 @@ public class FileSeeker {
                 .filter(item -> {
                     String relativePath = item.getPath().substring(pathRoot.length() + 1);
                     // subitems of containers are not part of the device file system
-                    if (relativePath.contains(">>")) {
+                    if (relativePath.contains(">>") || isUfedEmbeddedFile(item)) {
                         return false;
                     }
                     for (String glob : globPatterns) {
@@ -216,20 +220,58 @@ public class FileSeeker {
         // Two or more items can share the same path (e.g. an active file plus a carved
         // copy or one recovered from deletion), which would collide in the export
         // folder. Keep only the most significant item per path: active > deleted >
-        // carved; ties keep the first hit.
+        // carved > folder; ties keep the first hit.
         Map<String, IItemReader> bestItemPerPath = new LinkedHashMap<>();
         for (IItemReader item : hits) {
             bestItemPerPath.merge(item.getPath(), item,
                     (current, candidate) -> significanceRank(candidate) < significanceRank(current) ? candidate : current);
         }
 
-        return new ArrayList<>(bestItemPerPath.values());
+        // An item below a file cannot be staged: its path needs the file to be a folder. The known cases are
+        // filtered above, this is a safety net for any other source of items nested in a file.
+        Set<String> filePaths = bestItemPerPath.values().stream()
+                .filter(item -> !item.isDir())
+                .map(IItemReader::getPath)
+                .collect(Collectors.toSet());
+
+        return bestItemPerPath.values().stream()
+                .filter(item -> !hasAncestorIn(item.getPath(), filePaths))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
-     * Lower is better: an active file is preferred over one recovered from deletion, which is preferred over a carved one
+     * Whether the item is a file UFED extracted from inside another file (e.g. the entries of a browser cache file).
+     * In a ufdr they are listed below the path of the file holding them, as if it was a folder, but they do not exist
+     * in the device file system.
+     */
+    private static boolean isUfedEmbeddedFile(IItemReader item) {
+        return BooleanUtils.toBoolean(item.getMetadata().get(UFED_EMBEDDED_META));
+    }
+
+    /** Whether any ancestor of the path, up to the extraction root, is one of the given paths. */
+    private boolean hasAncestorIn(String path, Set<String> paths) {
+        if (paths.isEmpty()) {
+            return false;
+        }
+        String ancestor = StringUtils.substringBeforeLast(path, "/");
+        while (ancestor.length() > pathRoot.length()) {
+            if (paths.contains(ancestor)) {
+                return true;
+            }
+            ancestor = StringUtils.substringBeforeLast(ancestor, "/");
+        }
+        return false;
+    }
+
+    /**
+     * Lower is better: an active file is preferred over one recovered from deletion, which is preferred over a carved
+     * one. A folder comes last: when it shares the path of a file, it is a virtual one, created to hold items found
+     * inside that file (as UfedXmlReader does for the files UFED extracted from it).
      */
     private static int significanceRank(IItemReader item) {
+        if (item.isDir()) {
+            return 3;
+        }
         if (item.isCarved()) {
             return 2;
         }
