@@ -84,8 +84,6 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                         if (newState == Worker.State.SUCCEEDED) {
                             updateSelection();
                             updateMessageSelection();
-                            // imprecise, not needed for current chat reports after #633
-                            // scrollToPosition();
                         }
                         if (newState == Worker.State.RUNNING) {
                             mediaHashesInView.clear();
@@ -110,10 +108,6 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                             Number newValue) {
                         addJavascriptListener(webEngine);
                         updateSelection();
-                        if (newValue.floatValue() > 0) {
-                            // imprecise, not needed for current chat reports after #633
-                            // scrollToPosition();
-                        }
                     }
                 });
             }
