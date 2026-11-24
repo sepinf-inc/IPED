@@ -192,4 +192,17 @@ public class LeappUtilsTest {
     public void testMatchesGlobWindowsSeparators() {
         assertTrue(LeappUtils.matchesGlob("data/Default/Session Storage/000003.log", "*\\Default\\Session Storage\\**"));
     }
+
+    @Test
+    public void testGetExtension() {
+        assertEquals("ufdr", LeappUtils.getExtension("case/phone.ufdr"));
+        assertEquals("zip", LeappUtils.getExtension("EXTRACTION_FFS.zip"));
+        assertEquals("", LeappUtils.getExtension("case.v1/Dump"));
+        assertEquals("", LeappUtils.getExtension(""));
+        assertEquals("", LeappUtils.getExtension(null));
+        // FilenameUtils.getExtension throws for these names on Windows (NTFS alternate data stream check)
+        assertEquals("android:answers", LeappUtils.getExtension("files/.Fabric/com.crashlytics.sdk.android:answers"));
+        assertEquals("db", LeappUtils.getExtension("files/com.crashlytics.sdk.android:answers/store.db"));
+        assertEquals("tap", LeappUtils.getExtension("C:\\dump\\session_analytics.tap"));
+    }
 }

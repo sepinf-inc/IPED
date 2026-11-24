@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -358,7 +357,7 @@ public abstract class AbstractLeappTask extends AbstractTask {
         }
 
         // a ufdr processed as a subitem of another evidence keeps its file name in the path
-        if (UFDR_EXT.equalsIgnoreCase(FilenameUtils.getExtension(parentPath))) {
+        if (UFDR_EXT.equalsIgnoreCase(LeappUtils.getExtension(parentPath))) {
             return true;
         }
 
@@ -368,7 +367,7 @@ public abstract class AbstractLeappTask extends AbstractTask {
         File sourceFile = dataSource != null ? dataSource.getSourceFile() : null;
 
         return sourceFile != null && !StringUtils.contains(parentPath, '/')
-                && UFDR_EXT.equalsIgnoreCase(FilenameUtils.getExtension(sourceFile.getName()));
+                && UFDR_EXT.equalsIgnoreCase(LeappUtils.getExtension(sourceFile.getName()));
     }
 
     /**

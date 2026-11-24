@@ -166,6 +166,17 @@ public final class LeappUtils {
         }
     }
 
+    /**
+     * The extension of the last segment of a path, without the dot, or an empty string when there is none.
+     *
+     * Used instead of {@code FilenameUtils.getExtension}, which on Windows throws for any name with a colon (taken as
+     * a NTFS alternate data stream): colons are common in the file names of an Android extraction.
+     */
+    public static String getExtension(String path) {
+        String name = StringUtils.substringAfterLast("/" + StringUtils.replaceChars(StringUtils.defaultString(path), '\\', '/'), "/");
+        return StringUtils.contains(name, '.') ? StringUtils.substringAfterLast(name, ".") : "";
+    }
+
     /** A phrase clause; only the two chars that are special inside a quoted phrase need escaping. */
     static String phrase(String field, String text) {
         return field + ":\"" + text.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";

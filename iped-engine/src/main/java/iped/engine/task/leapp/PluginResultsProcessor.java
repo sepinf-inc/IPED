@@ -466,7 +466,7 @@ public class PluginResultsProcessor {
         if (name.isEmpty()) {
             name = "embedded-" + StringUtils.left(hash, 8);
         }
-        if (StringUtils.isNotBlank(embedded.extension) && FilenameUtils.getExtension(name).isEmpty()) {
+        if (StringUtils.isNotBlank(embedded.extension) && LeappUtils.getExtension(name).isEmpty()) {
             name += "." + embedded.extension;
         }
 

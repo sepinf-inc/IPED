@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.mime.MediaType;
 
@@ -15,6 +14,7 @@ import iped.engine.config.ALeappConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.task.leapp.AbstractLeappTask;
 import iped.engine.task.leapp.LeappTool;
+import iped.engine.task.leapp.LeappUtils;
 import iped.engine.task.leapp.UfdrDecodingMode;
 import iped.engine.task.leapp.UfedModelRule;
 import iped.parsers.android.backup.AndroidBackupParser;
@@ -126,7 +126,7 @@ public class AleappTask extends AbstractLeappTask {
         String realExt = rootEvidence.getExt();
         if (rootEvidence.isRoot()) {
             String realName = rootEvidence.getDataSource().getSourceFile().getName();
-            realExt = FilenameUtils.getExtension(realName);
+            realExt = LeappUtils.getExtension(realName);
         }
         return ZIP_EXT.equalsIgnoreCase(realExt) ? EXTRACTION_TYPE_ZIP : EXTRACTION_TYPE_DUMP;
     }
