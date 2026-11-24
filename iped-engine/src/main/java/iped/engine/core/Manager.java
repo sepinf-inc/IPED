@@ -73,6 +73,7 @@ import iped.engine.io.ParsingReader;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
 import iped.engine.lucene.CustomIndexDeletionPolicy;
+import iped.engine.lucene.analysis.AnalyzerVersion;
 import iped.engine.lucene.analysis.AppAnalyzer;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
@@ -137,6 +138,12 @@ public class Manager {
     private ItemProducer counter, producer;
     private Worker[] workers;
     private IndexWriter writer;
+
+    /**
+     * Text analysis version of the index being processed: the latest for new
+     * cases, the one the case was created with when appending or continuing.
+     */
+    private int analyzerVersion = AnalyzerVersion.LATEST;
 
     public Statistics stats;
     public volatile Exception exception;
@@ -409,7 +416,7 @@ public class Manager {
     }
 
     private IndexWriterConfig getIndexWriterConfig() {
-        IndexWriterConfig conf = new IndexWriterConfig(AppAnalyzer.get());
+        IndexWriterConfig conf = new IndexWriterConfig(AppAnalyzer.get(analyzerVersion));
         conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         conf.setCommitOnClose(true);
@@ -527,14 +534,21 @@ public class Manager {
         boolean newIndex = !indexDir.exists();
         LOGGER.info((newIndex ? "Creating" : "Opening") + " index: {}", indexDir.getAbsoluteFile());
         Directory directory = ConfiguredFSDirectory.open(indexDir);
+
+        // existing cases keep the analysis they were indexed with, otherwise searches would break
+        analyzerVersion = newIndex ? AnalyzerVersion.LATEST
+                : AnalyzerVersion.readFromIndex(directory, AnalyzerVersion.LATEST);
+        LOGGER.info("Index text analysis version: {}", analyzerVersion);
+
         IndexWriterConfig config = getIndexWriterConfig();
-        
+
         if (args.isRestart()) {
             List<IndexCommit> commits = DirectoryReader.listCommits(directory);
             config.setIndexCommit(commits.get(0));
         }
 
         writer = new IndexWriter(directory, config);
+        setAnalyzerVersionCommitData(writer);
         if (newIndex) {
             // first empty commit to be used by --restart
             writer.commit();
@@ -550,6 +564,12 @@ public class Manager {
             loadExistingData();
         }
 
+    }
+
+    /** Records the text analysis version in the index, so the case is always searched with it. */
+    private void setAnalyzerVersionCommitData(IndexWriter indexWriter) {
+        indexWriter.setLiveCommitData(
+                AnalyzerVersion.withVersion(indexWriter.getLiveCommitData(), analyzerVersion).entrySet());
     }
 
     private void initWorkers() throws Exception {
@@ -824,6 +844,7 @@ public class Manager {
             }
 
             writer = new IndexWriter(ConfiguredFSDirectory.open(finalIndexDir), getIndexWriterConfig());
+            setAnalyzerVersionCommitData(writer);
 
             int startId = 0, interval = 1000, endId = interval;
             while (startId <= stats.getLastId()) {

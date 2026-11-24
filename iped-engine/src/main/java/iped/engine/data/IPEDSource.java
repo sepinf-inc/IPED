@@ -75,6 +75,7 @@ import iped.engine.datasource.SleuthkitReader;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
 import iped.engine.lucene.SlowCompositeReaderWrapper;
+import iped.engine.lucene.analysis.AnalyzerVersion;
 import iped.engine.lucene.analysis.AppAnalyzer;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IndexerSimilarity;
@@ -114,6 +115,8 @@ public class IPEDSource implements IIPEDSource {
     IndexWriter iw;
     IndexSearcher searcher;
     Analyzer analyzer;
+
+    int analyzerVersion = AnalyzerVersion.LEGACY;
 
     private ExecutorService searchExecutorService;
 
@@ -222,7 +225,9 @@ public class IPEDSource implements IIPEDSource {
             openIndex(index, iw);
 
             IndexSearcher.setMaxClauseCount(Integer.MAX_VALUE);
-            analyzer = AppAnalyzer.get();
+            analyzerVersion = readAnalyzerVersion(iw);
+            LOGGER.debug("Index text analysis version: {}", analyzerVersion); //$NON-NLS-1$
+            analyzer = AppAnalyzer.get(analyzerVersion);
 
             populateLuceneIdToIdMap();
             invertIdToLuceneIdArray();
@@ -814,6 +819,28 @@ public class IPEDSource implements IIPEDSource {
 
     public Analyzer getAnalyzer() {
         return analyzer;
+    }
+
+    /**
+     * @return the text analysis version the index was built with, see
+     *         {@link AnalyzerVersion}
+     */
+    public int getAnalyzerVersion() {
+        return analyzerVersion;
+    }
+
+    private int readAnalyzerVersion(IndexWriter iw) {
+        try {
+            if (iw != null) {
+                return AnalyzerVersion.fromCommitData(iw.getLiveCommitData());
+            }
+            if (reader instanceof DirectoryReader) {
+                return AnalyzerVersion.fromCommitData(((DirectoryReader) reader).getIndexCommit().getUserData());
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Error reading index analysis version, using legacy one", e); //$NON-NLS-1$
+        }
+        return AnalyzerVersion.LEGACY;
     }
 
     public SleuthkitCase getSleuthCase() {

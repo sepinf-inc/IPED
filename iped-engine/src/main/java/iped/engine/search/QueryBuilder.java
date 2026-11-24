@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import iped.data.IIPEDSource;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
+import iped.engine.data.IPEDMultiSource;
 import iped.engine.localization.CategoryLocalization;
 import iped.engine.lucene.PublicPointRangeQuery;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
@@ -404,6 +405,17 @@ public class QueryBuilder {
     }
 
     public Query getQuery(String texto) throws ParseException, QueryNodeException {
+        if (ipedCase instanceof IPEDMultiSource && !texto.trim().isEmpty()) {
+            // cases indexed with different text analysis versions: each one matches the query parsed with its own
+            IPEDMultiSource multiSource = (IPEDMultiSource) ipedCase;
+            if (multiSource.getAnalyzerVersions().size() > 1) {
+                BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                for (int version : multiSource.getAnalyzerVersions()) {
+                    builder.add(getQuery(texto, multiSource.getAnalyzer(version)), Occur.SHOULD);
+                }
+                return builder.build();
+            }
+        }
         return getQuery(texto, ipedCase.getAnalyzer());
     }
 
