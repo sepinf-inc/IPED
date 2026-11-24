@@ -8,6 +8,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Collections;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.bootstrap.Bootstrap;
+import iped.app.bootstrap.UnicodeArgs;
 import iped.app.config.LogConfiguration;
 import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
@@ -54,6 +56,9 @@ public class AppMain {
     File libDir;
 
     public static void main(String[] args) {
+        // BootstrapUI passes arguments with characters the launcher would lose encoded
+        args = UnicodeArgs.decode(UnicodeArgs.recoverWindowsArgs(args, Collections.singleton(AppMain.class.getName())));
+
         // Start up control client should be is created as soon as possible
         // and only when main is called (not when AppMain is instantiated directly).
         startUpControlClient = new StartUpControlClient();

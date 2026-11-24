@@ -53,6 +53,12 @@ public class Statistics {
     private static final String CARVED_IGNORED_MAP_FILE = "data/carvedIgnoredMap.dat";
 
     private static Logger LOGGER = LoggerFactory.getLogger(Statistics.class);
+
+    /**
+     * System property with the main class and the decoded command line arguments,
+     * set by the processing main class, logged instead of sun.java.command.
+     */
+    public static final String JAVA_COMMAND_PROPERTY = "iped.java.command";
     private static Statistics instance = null;
 
     private static final float IO_ERROR_RATE_TO_WARN = 0.05f;
@@ -403,7 +409,8 @@ public class Statistics {
         String configString = enabledTasks.getConfiguration().toString();
         LOGGER.info(Configuration.CONFIG_FILE + ": " + configString);
 
-        LOGGER.info("Java Command: {}", System.getProperty("sun.java.command"));
+        // sun.java.command may have characters replaced by '?' or encoded by the launcher on Windows
+        LOGGER.info("Java Command: {}", System.getProperty(JAVA_COMMAND_PROPERTY, System.getProperty("sun.java.command")));
 
         int minMemPerThread = 200;
         if (maxMemory / localConfig.getNumThreads() < minMemPerThread) {

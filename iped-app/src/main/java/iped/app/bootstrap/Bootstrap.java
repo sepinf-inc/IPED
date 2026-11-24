@@ -73,6 +73,9 @@ public class Bootstrap {
 
     protected void run(String args[]) {
 
+        // on Windows, characters outside the ANSI code page were replaced by '?' before reaching main()
+        args = UnicodeArgs.recoverWindowsArgs(args, Arrays.asList(getClass().getName(), Bootstrap.class.getName()));
+
         List<String> heapArgs = new ArrayList<>();
         List<String> finalArgs = new ArrayList<>();
         boolean XmxDefined = false;
@@ -171,7 +174,8 @@ public class Bootstrap {
             }
             cmd.add("-Djava.net.useSystemProxies=true"); // fix for #1446
             cmd.add(getMainClassName());
-            cmd.addAll(finalArgs);
+            // arguments with characters the child launcher would lose are passed encoded
+            cmd.addAll(UnicodeArgs.encodeForChildProcess(finalArgs));
             
             ProcessBuilder pb = new ProcessBuilder();
             // pb.directory(directory)
@@ -269,7 +273,13 @@ public class Bootstrap {
         for (Entry<Object, Object> e : System.getProperties().entrySet()) {
             String key = e.getKey().toString();
             if (!key.equals("java.class.path") && !key.equals("sun.boot.library.path")) {
-                props.add("-D" + key + "=" + e.getValue().toString().replace("\"", "\\\""));
+                String value = e.getValue().toString();
+                if (!UnicodeArgs.canPassOnCommandLine(key + value)) {
+                    // would reach the child with characters replaced by '?'. JVM provided properties like
+                    // user.dir or java.io.tmpdir are computed correctly by the child itself.
+                    continue;
+                }
+                props.add("-D" + key + "=" + value.replace("\"", "\\\""));
             }
         }
         return props;
