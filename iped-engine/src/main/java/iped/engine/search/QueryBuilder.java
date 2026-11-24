@@ -54,6 +54,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.localization.CategoryLocalization;
 import iped.engine.lucene.PublicPointRangeQuery;
+import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
@@ -75,6 +76,13 @@ public class QueryBuilder {
 
     private static Object lock = new Object();
 
+    /**
+     * Non ASCII characters that ASCII folding turns into query syntax
+     * characters. Typographic double quotes are not included, they are accepted
+     * as phrase quotes.
+     */
+    private static final boolean[] FOLDS_TO_QUERY_SYNTAX = buildFoldsToQuerySyntax();
+
     private IIPEDSource ipedCase;
 
     private boolean allowLeadingWildCard = true;
@@ -92,6 +100,38 @@ public class QueryBuilder {
 
     public void setAllowLeadingWildcard(boolean allow) {
         this.allowLeadingWildCard = allow;
+    }
+
+    private static boolean[] buildFoldsToQuerySyntax() {
+        String syntaxChars = "+-&|!(){}[]^~*?:\\/"; //$NON-NLS-1$
+        boolean[] result = new boolean[Character.MAX_VALUE + 1];
+        char[] in = new char[1];
+        char[] out = new char[8];
+        for (int c = 0x80; c <= Character.MAX_VALUE; c++) {
+            in[0] = (char) c;
+            int len = FastASCIIFoldingFilter.foldToASCII(in, 0, out, 0, 1);
+            result[c] = len == 1 && syntaxChars.indexOf(out[0]) >= 0;
+        }
+        return result;
+    }
+
+    /**
+     * Replaces by spaces the punctuation that ASCII folding would turn into query
+     * syntax, like the full width question marks, colons and parenthesis of CJK
+     * texts or en/em dashes, which would otherwise become wildcards, field
+     * separators, groups or NOT operators when a text is pasted in the search box.
+     */
+    static String replaceFoldedQuerySyntax(String text) {
+        char[] chars = null;
+        for (int i = 0; i < text.length(); i++) {
+            if (FOLDS_TO_QUERY_SYNTAX[text.charAt(i)]) {
+                if (chars == null) {
+                    chars = text.toCharArray();
+                }
+                chars[i] = ' ';
+            }
+        }
+        return chars == null ? text : new String(chars);
     }
 
     public static String escape(String query) {
@@ -393,7 +433,7 @@ public class QueryBuilder {
             IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
             // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
             if (analyzer != spaceAnalyzer && indexConfig.isConvertCharsToAscii()) {
-                texto = IndexItem.normalize(texto, false);
+                texto = IndexItem.normalize(replaceFoldedQuerySyntax(texto), false);
             }
 
             try {
