@@ -75,6 +75,7 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         String device = transcriptConfig.getDevice();
 
         pb.command(python, script, model, device, Integer.toString(deviceId), Integer.toString(threads), lang, precision, batchSize);
+        setPythonUTF8Mode(pb);
 
         Process process = pb.start();
 
