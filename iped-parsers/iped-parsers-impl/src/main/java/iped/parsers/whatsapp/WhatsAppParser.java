@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -306,7 +307,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             Message.sort(c.getMessages());
 
             getAvatar(searcher, c.getRemote());
-            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null);
+            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null, null);
             int frag = 0;
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator();
@@ -551,9 +552,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             ArrayList<Future<?>> futures = new ArrayList<>();
             AtomicInteger downloadedFiles = new AtomicInteger(0);
+            AtomicInteger expiredLinks = new AtomicInteger(0);
             for (Chat c : wcontext.getChalist()) {
                 futures.addAll(searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,
-                        wcontext.getItem().getTempFile(), context, downloadedFiles));
+                        wcontext.getItem().getTempFile(), context, downloadedFiles, expiredLinks));
             }
             if (futures.size() > 0) {
                 handler.startDocument();
@@ -569,6 +571,9 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             if (downloadedFiles.get() > 0) {
                 logger.info("Downloaded {} files from {}", downloadedFiles.get(), wcontext.getItem().getName());
+            }
+            if (expiredLinks.get() > 0) {
+                logger.info("{} expired media links from {} were not requested", expiredLinks.get(), wcontext.getItem().getName());
             }
         }
 
@@ -1541,7 +1546,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private List<Future<?>> searchMediaFilesForMessagesInBatches(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
-            AtomicInteger downloadedFiles) {
+            AtomicInteger downloadedFiles, AtomicInteger expiredLinks) {
 
         if (searcher == null) {
             return Collections.emptyList();
@@ -1568,7 +1573,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         ArrayList<Future<?>> futures = new ArrayList<>();
         for (List<Message> listToProcess : listsToProcess) {
             futures.addAll(searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context,
-                    downloadedFiles));
+                    downloadedFiles, expiredLinks));
         }
         return futures;
     }
@@ -1587,7 +1592,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private List<Future<?>> searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
-            AtomicInteger downloadedFiles) {
+            AtomicInteger downloadedFiles, AtomicInteger expiredLinks) {
 
         // just save heavy item refs if creating report, per chat, not per database
         boolean saveItemRef = downloadedFiles == null;
@@ -1799,41 +1804,63 @@ public class WhatsAppParser extends SQLite3DBParser {
                     return futures;
                 }
 
+                // A media may have more than one URL, and signed URLs expire
+                Map<String, List<LinkDownloader>> linksPerHash = new LinkedHashMap<>();
+                int expired = 0;
                 for (LinkDownloader ld : links) {
-                    if (ld == null || ld.getHash() == null || !hashesDownloaded.add(ld.getHash())) {
+                    if (ld == null || ld.getHash() == null) {
                         continue;
                     }
+                    if (ld.isExpired()) {
+                        expired++;
+                        continue;
+                    }
+                    linksPerHash.computeIfAbsent(ld.getHash(), k -> new ArrayList<>()).add(ld);
+                }
+                if (expiredLinks != null) {
+                    expiredLinks.addAndGet(expired);
+                }
+
+                for (Map.Entry<String, List<LinkDownloader>> entry : linksPerHash.entrySet()) {
+                    if (!hashesDownloaded.add(entry.getKey())) {
+                        continue;
+                    }
+                    List<LinkDownloader> candidates = entry.getValue();
 
                     Runnable r = new Runnable() {
 
                         @Override
                         public void run() {
 
-                            try (TemporaryResources tmp = new TemporaryResources()) {
+                            // try each URL of the media, until one works
+                            for (LinkDownloader ld : candidates) {
+                                try (TemporaryResources tmp = new TemporaryResources()) {
 
-                                File f = tmp.createTemporaryFile(), fout = tmp.createTemporaryFile();
+                                    File f = tmp.createTemporaryFile(), fout = tmp.createTemporaryFile();
 
-                                ld.downloadUsingStream(f);
+                                    ld.downloadUsingStream(f);
 
-                                ld.decript(f, fout);
+                                    ld.decript(f, fout);
 
-                                Metadata downloadMetadata = new Metadata();
+                                    Metadata downloadMetadata = new Metadata();
 
-                                downloadMetadata.set(ExtraProperties.DOWNLOADED_DATA, "true");
-                                downloadMetadata.set(TikaCoreProperties.TITLE,
-                                        "Dowloaded_item_" + downloadedFiles.incrementAndGet());
+                                    downloadMetadata.set(ExtraProperties.DOWNLOADED_DATA, "true");
+                                    downloadMetadata.set(TikaCoreProperties.TITLE,
+                                            "Downloaded_item_" + downloadedFiles.incrementAndGet());
 
-                                try (FileInputStream out = new FileInputStream(fout)) {
-                                    synchronized (extractor) {
-                                        extractor.parseEmbedded(out, handler, downloadMetadata, false);
+                                    try (FileInputStream out = new FileInputStream(fout)) {
+                                        synchronized (extractor) {
+                                            extractor.parseEmbedded(out, handler, downloadMetadata, false);
+                                        }
                                     }
+                                    break;
+
+                                } catch (URLnotFound ex) {
+                                    // do not log this error as it is expected
+
+                                } catch (Exception e) {
+                                    logger.warn("Error trying to download medias referenced by " + dbPath, e);
                                 }
-
-                            } catch (URLnotFound ex) {
-                                // do not log this error as it is expected
-
-                            } catch (Exception e) {
-                                logger.warn("Error trying to download medias referenced by " + dbPath, e);
                             }
 
                         }
