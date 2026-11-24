@@ -567,24 +567,41 @@ public class HtmlViewer extends AbstractViewer {
         if (subnode != null) {
             StringBuilder sb = new StringBuilder();
             do {
-                if (subnode instanceof Element) {
-                    String attr = ((Element) subnode).getAttribute("id");
-                    if (attr != null && attr.startsWith("ipedHit")) {
-                        Node prevSubnode = subnode.getPreviousSibling();
-                        sb.setLength(0);
-                        sb.append(prevSubnode.getNodeValue());
+                if (isHit(subnode)) {
+                    // merge the hits in a row and the text around them at once into the
+                    // text node after the last hit: merging hit by hit copied the text
+                    // before them again for each hit
+                    Node prevSubnode = subnode.getPreviousSibling();
+                    sb.setLength(0);
+                    sb.append(prevSubnode.getNodeValue());
+                    node.removeChild(prevSubnode);
+                    Node nextSubnode;
+                    while (true) {
                         sb.append(subnode.getFirstChild().getNodeValue());
-                        Node nextSubnode = subnode.getNextSibling();
-                        node.removeChild(prevSubnode);
+                        nextSubnode = subnode.getNextSibling();
                         node.removeChild(subnode);
+                        subnode = nextSubnode.getNextSibling();
+                        if (!isHit(subnode)) {
+                            break;
+                        }
                         sb.append(nextSubnode.getNodeValue());
-                        nextSubnode.setNodeValue(sb.toString());
-                        subnode = nextSubnode;
+                        node.removeChild(nextSubnode);
                     }
+                    sb.append(nextSubnode.getNodeValue());
+                    nextSubnode.setNodeValue(sb.toString());
+                    subnode = nextSubnode;
                 }
                 clearNode(subnode, exec);
             } while ((subnode = subnode.getNextSibling()) != null && exec == currExec);
         }
+    }
+
+    private static boolean isHit(Node node) {
+        if (!(node instanceof Element)) {
+            return false;
+        }
+        String id = ((Element) node).getAttribute("id");
+        return id != null && id.startsWith("ipedHit");
     }
 
     @Override
