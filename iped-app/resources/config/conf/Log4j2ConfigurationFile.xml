@@ -8,7 +8,7 @@
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[%logger{3}]\t\t\t%msg%n" />
         </Console>
         <File name="LogFile" fileName="${sys:logFileNamePath}" immediateFlush="true" append="true" bufferSize="4096">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[${sys:iped.logUser}]\t[%logger{3}]\t\t\t%msg%n" />
+            <PatternLayout charset="UTF-8" pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[${sys:iped.logUser}]\t[%logger{3}]\t\t\t%msg%n" />
         </File>
     </Appenders>
     <Loggers>
