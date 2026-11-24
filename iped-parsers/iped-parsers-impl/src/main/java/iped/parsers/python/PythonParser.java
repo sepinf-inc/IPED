@@ -57,6 +57,10 @@ public class PythonParser extends AbstractParser {
 
     private File scriptFile;
 
+    // The python library of the embedded python for Windows (org.python:python-jep-dlib in iped-app/pom.xml): its
+    // name has the python minor version, so both must change together.
+    private static final String PYTHON_DLL = "python313.dll";
+
     static {
         // fix for https://github.com/sepinf-inc/IPED/issues/586
         try {
@@ -76,7 +80,12 @@ public class PythonParser extends AbstractParser {
                     pyConfig.setUserSiteDirectory(false);
                     MainInterpreter.setInitParams(pyConfig);
                     System.load(pythonHome + "/vcruntime140.dll");
-                    System.load(pythonHome + "/python39.dll");
+                    // needed by C++ extension modules; shipped by the python bundle since python 3.13
+                    File vcruntime1 = new File(pythonHome, "vcruntime140_1.dll");
+                    if (vcruntime1.exists()) {
+                        System.load(vcruntime1.getAbsolutePath());
+                    }
+                    System.load(pythonHome + "/" + PYTHON_DLL);
                     MainInterpreter.setJepLibraryPath(pythonHome + "/Lib/site-packages/jep/jep.dll");
                 }
             }
