@@ -1438,11 +1438,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public void loadPanelLayout() {
         PanelsLayout.load(dockingControl);
+        viewerController.clear();
     }
 
     public void adjustLayout(boolean isReset) {
-        if (isReset)
+        if (isReset) {
+            viewerController.clear();
             removeAllDockables();
+        }
         createAllDockables();
 
         tableTabDock.setLocation(verticalLayout ? CLocation.base().normalNorth(0.7) : CLocation.base().normalNorth(0.5));
