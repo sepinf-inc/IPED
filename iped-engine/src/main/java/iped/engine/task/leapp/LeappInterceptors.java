@@ -69,8 +69,9 @@ public class LeappInterceptors {
         disablePythonFunction(jep, "scripts.ilapfuncs", "scripts.ilapfuncs.kmlgen");
         disablePythonFunction(jep, "scripts.ilapfuncs", "scripts.ilapfuncs.set_media_references");
 
-        // avoid to use backslash as path separator
-        disablePythonFunction(jep, "scripts.ilapfuncs", "scripts.ilapfuncs.is_platform_windows", "False");
+        // is_platform_windows() must NOT be overridden: plugins that split the paths of the staged files choose the
+        // separator with it (others use os.sep), and on Windows those paths have backslashes. Forcing it to False made
+        // them fail or find nothing there (settingsGlobalSystem, settingsSecure, runtimePerms, usagestats).
 
         // html output is not used
         disablePythonClass(jep, "scripts.artifact_report", "scripts.artifact_report.ArtifactHtmlReport");
