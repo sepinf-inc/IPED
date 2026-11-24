@@ -21,10 +21,11 @@ jobs:
         cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
 
     - name: Set up Python
-      # ALEAPP needs python 3.11 or newer, and jep (built from source) does not install with the system pip
+      # ALEAPP needs python 3.11 or newer, and 3.13 is the newest one every python module of IPED has packages for;
+      # jep (built from source) does not install with the system pip
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.13'
 
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
@@ -118,10 +119,11 @@ jobs:
         cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
 
     - name: Set up Python
-      # ALEAPP needs python 3.11 or newer, and jep (built from source) does not install with the system pip
+      # ALEAPP needs python 3.11 or newer, and 3.13 is the newest one every python module of IPED has packages for;
+      # jep (built from source) does not install with the system pip
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.13'
 
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
