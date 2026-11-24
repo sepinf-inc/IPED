@@ -167,7 +167,7 @@ public final class LeappUtils {
     }
 
     /** A phrase clause; only the two chars that are special inside a quoted phrase need escaping. */
-    private static String phrase(String field, String text) {
+    static String phrase(String field, String text) {
         return field + ":\"" + text.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 

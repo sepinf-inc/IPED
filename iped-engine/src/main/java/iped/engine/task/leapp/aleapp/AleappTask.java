@@ -15,6 +15,8 @@ import iped.engine.config.ALeappConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.task.leapp.AbstractLeappTask;
 import iped.engine.task.leapp.LeappTool;
+import iped.engine.task.leapp.UfdrDecodingMode;
+import iped.engine.task.leapp.UfedModelRule;
 import iped.parsers.android.backup.AndroidBackupParser;
 
 /**
@@ -37,7 +39,6 @@ public class AleappTask extends AbstractLeappTask {
 
     private static final String EXTRACTION_TYPE_ANDROID_BACKUP = "android-backup";
     private static final String EXTRACTION_TYPE_ZIP = "zip";
-    private static final String EXTRACTION_TYPE_UFDR = "ufdr";
     private static final String EXTRACTION_TYPE_DUMP = "dump";
 
     private ALeappConfig config;
@@ -74,6 +75,16 @@ public class AleappTask extends AbstractLeappTask {
     }
 
     @Override
+    protected UfdrDecodingMode getUfdrDecodingMode() {
+        return config.getUfdrDecodingToUse();
+    }
+
+    @Override
+    protected List<UfedModelRule> getUfedModels(String moduleName, String artifactName) {
+        return config.getUfedModels(moduleName, artifactName);
+    }
+
+    @Override
     protected boolean isExtractionRoot(IItem evidence) {
 
         if (AndroidBackupParser.SUPPORTED_TYPES.contains(evidence.getMediaType())) {
@@ -83,7 +94,7 @@ public class AleappTask extends AbstractLeappTask {
         // in a ufdr the device tree does not hang from the ufdr item itself, but from its file system
         // item, so the latter is the extraction root (see isUfdrFileSystem)
         if (isUfdrFileSystem(evidence)) {
-            return true;
+            return config.getUfdrDecodingToUse() != UfdrDecodingMode.NONE;
         }
 
         if (evidence.isRoot()) {

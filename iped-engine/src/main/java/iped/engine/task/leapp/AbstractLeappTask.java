@@ -72,6 +72,9 @@ public abstract class AbstractLeappTask extends AbstractTask {
 
     protected static final String UFDR_EXT = "ufdr";
 
+    /** Extraction type of the file system of a ufdr (see {@link #getExtractionType}). */
+    protected static final String EXTRACTION_TYPE_UFDR = "ufdr";
+
     // data_views is not copied to metadata: it is consumed by ConversationViewSpec
     // to build chat-preview items (see LavaInsertSqliteDataInterceptor)
     private static final Set<String> ARTIFACT_INFO_KEYS_TO_IGNORE = Set
@@ -144,6 +147,25 @@ public abstract class AbstractLeappTask extends AbstractTask {
     protected void callPlugin(PluginSpec plugin, List<String> filesFound, String reportFolder, FileSeeker seeker)
             throws Exception {
         plugin.getMethod().call(filesFound, reportFolder, seeker, false);
+    }
+
+    /**
+     * What to run over the file system of a ufdr, whose data was already decoded by UFED. The default runs every
+     * enabled plugin.
+     */
+    protected UfdrDecodingMode getUfdrDecodingMode() {
+        return UfdrDecodingMode.ALL;
+    }
+
+    /**
+     * The UFED models holding the same data a plugin decodes, used by {@link UfdrDecodingMode#EXTERNAL}. The default
+     * is none: the plugin always runs.
+     *
+     * @param moduleName the plugin module (python file stem)
+     * @param artifactName the artifact of the module
+     */
+    protected List<UfedModelRule> getUfedModels(String moduleName, String artifactName) {
+        return List.of();
     }
 
     @Override
@@ -400,9 +422,25 @@ public abstract class AbstractLeappTask extends AbstractTask {
         LeappTool tool = getTool();
         Map<String, Item> categoryItems = new HashMap<>();
 
+        boolean preferUfedData = EXTRACTION_TYPE_UFDR.equals(caseEvidence.getMetadata().get(extractionTypeMetaKey()))
+                && getUfdrDecodingMode() == UfdrDecodingMode.EXTERNAL;
+        // a model is usually equivalent to several plugins: each one is searched in the case only once
+        Map<UfedModelRule, Boolean> decodedByUfed = new HashMap<>();
+
         // creates one subitem for each plugin execution
         // (PluginSpec getters call PyObject.getAttr on this worker's interpreter)
         for (PluginSpec plugin : selectedPlugins.values()) {
+
+            if (preferUfedData) {
+                UfedModelRule ufedModel = findUfedDecodedModel(caseEvidence, plugin, decodedByUfed);
+                if (ufedModel != null) {
+                    logger.info("Skipping {} {} plugin: {} already has '{}' models decoded by UFED", tool.getDisplayName(),
+                            plugin.getName(), getUfdrPath(caseEvidence), ufedModel);
+                    caseEvidence.getMetadata().add(tool.getMetaPrefix() + "pluginsDecodedByUfed",
+                            plugin.getModuleName() + "/" + plugin.getName() + " (" + ufedModel + ")");
+                    continue;
+                }
+            }
 
             Item categoryItem = categoryItems.computeIfAbsent(plugin.getCategory(), name -> {
                 Item categoryEvidence = (Item) caseEvidence.createChildItem();
@@ -452,6 +490,40 @@ public abstract class AbstractLeappTask extends AbstractTask {
         deviceInfoEvidence.setPath(caseEvidence.getPath() + "/" + DEVICE_INFO_HTML);
         deviceInfoEvidence.setIdInDataSource("");
         worker.processNewItem(deviceInfoEvidence, ProcessTime.LATER);
+    }
+
+    /**
+     * The in-case path of the ufdr item the given results item belongs to: the parent of its file system item, which
+     * is the extraction root (see {@link #isUfdrFileSystem}).
+     */
+    private String getUfdrPath(IItem caseEvidence) {
+        return StringUtils.substringBeforeLast(getExtractionRootPath(caseEvidence), "/");
+    }
+
+    /**
+     * Looks, among the UFED models equivalent to the plugin, for one the ufdr really holds: UFED does not decode
+     * everything in every extraction, so the plugin is skipped only when its data is known to be in the case already.
+     *
+     * @param decodedByUfed cache of the models already searched in this ufdr
+     * @return the first model found, or null when the ufdr has none of them
+     */
+    private UfedModelRule findUfedDecodedModel(IItem caseEvidence, PluginSpec plugin,
+            Map<UfedModelRule, Boolean> decodedByUfed) {
+
+        List<UfedModelRule> models = getUfedModels(plugin.getModuleName(), plugin.getName());
+        if (models.isEmpty()) {
+            return null;
+        }
+
+        IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
+        String ufdrPath = getUfdrPath(caseEvidence);
+
+        for (UfedModelRule model : models) {
+            if (decodedByUfed.computeIfAbsent(model, m -> m.existsIn(searcher, ufdrPath))) {
+                return model;
+            }
+        }
+        return null;
     }
 
     /**
