@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -782,8 +781,9 @@ public class Manager {
             LOGGER.info("Filtering keywords..."); //$NON-NLS-1$
             UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("Manager.FilteringKeywords")); //$NON-NLS-1$
-            ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", //$NON-NLS-1$
-                    Charset.defaultCharset().name());
+            // the keyword list given by the user may be UTF-8 or in the platform charset
+            ArrayList<String> palavras = Util.loadKeywordsDetectingCharset(
+                    new File(output.getAbsolutePath(), "palavras-chave.txt")); //$NON-NLS-1$
 
             if (palavras.size() != 0) {
                 IPEDSource ipedCase = new IPEDSource(output.getParentFile());
