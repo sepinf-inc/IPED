@@ -110,7 +110,6 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                             Number newValue) {
                         addJavascriptListener(webEngine);
                         updateSelection();
-                        updateMessageSelection();
                         if (newValue.floatValue() > 0) {
                             // imprecise, not needed for current chat reports after #633
                             // scrollToPosition();
