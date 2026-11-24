@@ -53,6 +53,7 @@ public class PythonParser extends AbstractParser {
     private static final Map<MediaType, PythonParser> mediaToParserMap = new ConcurrentHashMap<>();
     private static final Map<MediaType, Integer> mediaTypesToQueueOrder = new ConcurrentHashMap<>();
     private static final AtomicBoolean jepNotFoundPrinted = new AtomicBoolean();
+    private static final AtomicBoolean numpyPreloaded = new AtomicBoolean();
     private static boolean inited = false;
 
     private File scriptFile;
@@ -198,9 +199,30 @@ public class PythonParser extends AbstractParser {
             }
         }
 
-        // setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
+        preloadNumpy(jep);
 
         return jep;
+    }
+
+    /**
+     * Imports numpy, if it is installed, when the first interpreter is created.
+     *
+     * On Windows, with python 3.13 and numpy 2.5.5, the first import of numpy hung the processing when it was done
+     * later, by a task being initialized in a worker thread: the thread never came back from loading the native
+     * library of numpy (numpy._core._multiarray_umath). The cause was not found, but it does not happen when numpy is
+     * imported here, before the tasks are initialized. The modules are shared by all the interpreters, so this is done
+     * only once.
+     */
+    private static void preloadNumpy(Jep jep) {
+        if (numpyPreloaded.getAndSet(true)) {
+            return;
+        }
+        try {
+            jep.exec("import numpy");
+        } catch (JepException e) {
+            // numpy is optional: only some python tasks need it
+            LOGGER.debug("numpy not preloaded: {}", e.toString());
+        }
     }
 
     private void loadScript(Jep jep) throws JepException {
