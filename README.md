@@ -43,6 +43,8 @@ On Linux you also must build The Sleuth Kit and additional dependencies. Please 
 
 Contributions are very welcome! Before contributing please refer to [Contributing](https://github.com/sepinf-inc/IPED/wiki/Contributing)
 
+To import the project into the Eclipse IDE, see [ECLIPSE.md](ECLIPSE.md).
+
 ## Features
 
 Some of IPED's many features are listed below:

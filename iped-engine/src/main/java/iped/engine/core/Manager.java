@@ -271,6 +271,9 @@ public class Manager {
 
         EvidenceStatus status = new EvidenceStatus(output.getParentFile());
 
+        UIPropertyListenerProvider.getInstance().firePropertyChange("output", "",
+                output.getParentFile().getAbsolutePath());
+
         try {
             openIndex();
 

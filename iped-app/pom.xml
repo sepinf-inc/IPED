@@ -340,7 +340,7 @@
                                 <artifactItem>
                                     <groupId>mplayer</groupId>
                                     <artifactId>mplayer-zip</artifactId>
-                                    <version>6.2.0-r38109</version>
+                                    <version>1.5-r38677</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
