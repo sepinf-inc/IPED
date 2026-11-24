@@ -145,7 +145,11 @@ if (navigator.userAgent.search("JavaFX") < 0) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const conversation = document.getElementById("conversation");
+	const conversation = document.getElementById("conversation");
+	const topbar = document.getElementById("topbar");
+	if (topbar && conversation) {
+		conversation.style.paddingTop = `${topbar.offsetHeight}px`;
+	}
     const navControls = document.getElementById("nav-controls");
     const navCounter = document.getElementById("nav-counter");
     const btnPrev = document.getElementById("btn-prev");
@@ -265,6 +269,3 @@ window.addEventListener('load', () => {
 
     updateNavigation();
 });
-
-const topHeight = document.getElementById('topbar').offsetHeight;
-document.getElementById('conversation').style.paddingTop = `${topHeight}px`;
