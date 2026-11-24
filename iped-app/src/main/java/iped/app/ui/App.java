@@ -305,7 +305,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private IPEDSource lastSelectedSource;
 
     public int lastSelectedDoc = -1;
-    private int lastValidSelectedDoc = -1;
 
     private StandardParser autoDetectParser;
 
@@ -337,17 +336,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public void setLastSelectedDoc(int lastSelectedDoc) {
         this.lastSelectedDoc = lastSelectedDoc;
-        if (lastSelectedDoc >= 0) {
-            lastValidSelectedDoc = lastSelectedDoc;
-        }
     }
 
     public int getLastSelectedDoc() {
-        return this.lastSelectedDoc;
-    }
-
-    public int getLastValidSelectedDoc() {
-        return lastValidSelectedDoc;
+        return lastSelectedDoc;
     }
 
     public void setHighlightTerms(Set<String> terms) {

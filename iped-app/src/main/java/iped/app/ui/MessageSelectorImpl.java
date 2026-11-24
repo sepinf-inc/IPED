@@ -23,7 +23,7 @@ public class MessageSelectorImpl implements MessageSelector {
     }
 
     private IItemId getItemId() {
-        int docId = App.get().getLastValidSelectedDoc();
+        int docId = App.get().getLastSelectedDoc();
         if (docId >= 0) {
             return App.get().appCase.getItemId(docId);
         }
