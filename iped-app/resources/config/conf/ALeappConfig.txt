@@ -27,7 +27,8 @@ includePlugins=
 # The default exclusions are listed below with justifications:
 # - walStrings: Excluded because IPED natively parses strings from unparsed files.
 # - WhatsApp: Excluded because IPED uses its own robust, internal parser for WhatsApp artifacts.
-excludePlugins=walStrings,WhatsApp
+# - telegramAndroid: Excluded because IPED uses its own internal parser for Telegram artifacts.
+excludePlugins=walStrings,WhatsApp,telegramAndroid
 
 # -----------------------------------------------------------------------------
 
@@ -54,7 +55,7 @@ ufdrDecodingToUse = external
 # The skip is by plugin: if a plugin decodes several applications in one run (e.g. every Chromium based
 # browser) and UFED decoded just one of them, the others are not decoded by ALEAPP either. Remove the line
 # of a plugin to always run it.
-# The WhatsApp lines only matter if the WhatsApp module is removed from 'excludePlugins' above.
+# The WhatsApp and telegramAndroid lines only matter if those modules are removed from 'excludePlugins' above.
 skipIfUfedHas.calllog.get_calllog = Call:-
 skipIfUfedHas.calllogs = Call:-
 skipIfUfedHas.contacts = Contact:-
