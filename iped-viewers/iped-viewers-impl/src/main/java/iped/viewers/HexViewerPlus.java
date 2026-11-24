@@ -84,6 +84,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileView;
 
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
+import org.apache.tika.metadata.Metadata;
 import org.exbin.deltahex.CaretMovedListener;
 import org.exbin.deltahex.CaretPosition;
 import org.exbin.deltahex.CodeAreaLineNumberLength;
@@ -108,6 +109,7 @@ import org.exbin.utils.binary_data.OutOfBoundsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.data.IItem;
 import iped.io.IStreamSource;
 import iped.io.SeekableInputStream;
 import iped.utils.IOUtil;
@@ -127,6 +129,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
     private CodeArea codeArea;
     private FilterComboBox charsetComboBox;
+
+    /** Charset for items without a detected text encoding: platform default or chosen by the user. */
+    private Charset preferredCharset;
+
+    private boolean updatingCharset = false;
 
     JPanel bottomPanel1, bottomPanel2, bottomPanelLeft, bottomPanelRight;
     private JTextField posicao;
@@ -225,6 +232,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         selecao_final = new CustomTextField();
 
         codeArea = new CodeArea();
+        preferredCharset = codeArea.getCharset();
         codeArea.setHandleClipboard(true);
         codeArea.setEditationAllowed(EditationAllowed.READ_ONLY);
         codeArea.setBorder(new LineBorder(Color.BLACK));
@@ -239,7 +247,13 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 String charset = (String) charsetComboBox.getSelectedItem();
                 if (charset != null && !charset.isEmpty() && Charset.isSupported(charset) && Charset.forName(charset).canEncode()) {
                     codeArea.setCharset(Charset.forName(charset));
-                    fcbCharset.setSelectedItem(charset);
+                    if (fcbCharset != null) {
+                        fcbCharset.setSelectedItem(charset);
+                    }
+                    if (!updatingCharset) {
+                        // chosen by the user: used for items without a detected text encoding
+                        preferredCharset = Charset.forName(charset);
+                    }
                 }
             }
         });
@@ -530,6 +544,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 if (codeArea.getViewMode() != selectedViewMode) {
                     codeArea.setViewMode(selectedViewMode);
                 }
+                selectCharset(content);
                 codeArea.setData(data);
                 codeArea.resetPosition();
                 codeArea.notifyDataChanged();
@@ -549,6 +564,37 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         }
 
+    }
+
+    /**
+     * Shows text items with their detected encoding (e.g. UTF-8 text in Cyrillic,
+     * CJK... would be shown as mojibake with a single byte charset), other items
+     * with the charset chosen by the user or the platform default.
+     */
+    private void selectCharset(IStreamSource content) {
+        Charset charset = preferredCharset;
+        if (content instanceof IItem) {
+            String encoding = ((IItem) content).getMetadata().get(Metadata.CONTENT_ENCODING);
+            if (encoding != null) {
+                try {
+                    Charset detected = Charset.forName(encoding.trim());
+                    if (detected.canEncode()) {
+                        charset = detected;
+                    }
+                } catch (IllegalArgumentException e) {
+                    // unknown encoding name, keep the default
+                }
+            }
+        }
+        if (charset != null && !charset.equals(codeArea.getCharset())) {
+            updatingCharset = true;
+            try {
+                codeArea.setCharset(charset);
+                charsetComboBox.setSelectedItem(charset.name());
+            } finally {
+                updatingCharset = false;
+            }
+        }
     }
 
     int keyBefore = -1;
@@ -2570,6 +2616,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         charsetParam = Charset.forName(charSetString);
                     } else {
                         JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.charset") + " \"" + charSetString + "\" " + Messages.getString("HexViewerPlus.invalid") + "!", appName, JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    // otherwise unmappable characters would be silently searched as '?'
+                    if (!charsetParam.canEncode() || !charsetParam.newEncoder().canEncode(texto)) {
+                        JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.cannotEncodeSearchText") + " " + charSetString, appName, JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 }
