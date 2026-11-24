@@ -6,7 +6,13 @@ import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
+import java.util.Map;
+
+import javax.imageio.ImageIO;
 
 import org.junit.Test;
 
@@ -103,6 +109,31 @@ public class WordReportChatSelectionTest {
         assertEquals("audio2", crop.transcripts.get(0).text);
         crop.keepTranscripts(Collections.singleton(2));
         assertTrue(crop.transcripts.isEmpty());
+    }
+
+    @Test
+    public void unrecognizedChatMarkupCanStillBeCroppedToTheVisiblePixels() {
+        HtmlViewerCapture capture = capture();
+        capture.messages.clear();
+        WordReportChatSelection.Result crop = WordReportChatSelection.select(capture, new boolean[0])
+                .crop(new Rectangle(20, 100, 30, 40));
+        assertEquals(30, crop.image.getWidth());
+        assertEquals(capture.image.getRGB(21, 101), crop.image.getRGB(1, 1));
+        assertTrue(crop.transcripts.isEmpty());
+    }
+
+    @Test
+    public void repeatedEmbeddedPhotosOfferOneThumbnailWithoutAnIndexedOriginal() throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(capture().image, "png", out);
+        String src = "data:image/png;base64," + Base64.getEncoder().encodeToString(out.toByteArray());
+        HtmlViewerCapture.Attachment first = new HtmlViewerCapture.Attachment("", new Rectangle(10, 10, 20, 20), src);
+        HtmlViewerCapture.Attachment second = new HtmlViewerCapture.Attachment("", new Rectangle(10, 80, 20, 20), src);
+        Map<String, WordReportEvidence.ChatImage> images = WordReportEvidence.findChatImages(null, null,
+                Arrays.asList(first, second));
+        assertEquals(1, images.size());
+        assertNull(images.get(src).id);
+        assertEquals(capture().image.getWidth(), images.get(src).thumbnail.getWidth());
     }
 
     @Test

@@ -9,30 +9,35 @@
     function bounds(rect) {
         return [rect.left, rect.top, rect.width, rect.height];
     }
-    var lines = document.querySelectorAll('.linha');
-    for (var m = 0; m < lines.length; m++) {
-        var line = lines[m];
-        var bubble = line.querySelector('.bbl, .bbr, .systemmessage');
-        if (!bubble || !visible(bubble.getBoundingClientRect())) continue;
+    var bubbles = document.querySelectorAll('.bbl, .bbr, .bbls, .bbrs, .systemmessage, .linha .incoming, .linha .outgoing');
+    for (var m = 0; m < bubbles.length; m++) {
+        var bubble = bubbles[m];
+        if (bubble.parentElement.closest('.bbl, .bbr, .bbls, .bbrs, .systemmessage')
+                || !visible(bubble.getBoundingClientRect())) continue;
         var name = bubble.querySelector('.name, span[style*="#b4c74b"]');
         var time = bubble.querySelector('.time');
         var label = name && visible(name.getBoundingClientRect()) ? name.textContent.trim() : '';
         if (time && visible(time.getBoundingClientRect())) label += ' ' + time.textContent.trim();
         var message = { bounds: bounds(bubble.getBoundingClientRect()), label: label.trim(), transcripts: [], images: [] };
-        var images = bubble.querySelectorAll('a img:not(.iped-video), a .imageImg');
+        var images = bubble.querySelectorAll('a img:not(.iped-video), a .imageImg, img.thumb:not(.iped-video)');
         for (var j = 0; j < images.length; j++) {
             var img = images[j];
             var box = img.getBoundingClientRect();
-            if (!visible(box)) continue;
+            if (!visible(box) || /^(audio|video)$/i.test(img.title)) continue;
             var link = img.closest('a');
-            var action = link.getAttribute('onclick') || '';
+            var action = link && link.getAttribute('onclick') || '';
             var match = /app\.open\(\s*['"]hash:([a-f0-9]{32,128})['"]\s*\)/i.exec(action);
-            var check = link.previousElementSibling;
+            var check = link && link.previousElementSibling;
             var hash = match ? match[1] : '';
             if (!hash && /app\.open\(/.test(action) && check && check.matches('input.check')) {
                 hash = check.getAttribute('name') || '';
             }
-            if (/^[a-f0-9]{32,128}$/i.test(hash)) message.images.push({hash: hash, bounds: bounds(box)});
+            if (!/^[a-f0-9]{32,128}$/i.test(hash)) hash = '';
+            var thumbnail = img.getAttribute('src') || '';
+            if (!img.matches('img.thumb') || /^(application|document|text)$/i.test(img.title)
+                    || !/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(thumbnail)
+                    || thumbnail.length > 8 * 1024 * 1024) thumbnail = '';
+            if (hash || thumbnail) message.images.push({hash: hash.toLowerCase(), thumbnail: thumbnail, bounds: bounds(box)});
         }
         if (bubble.querySelector('.audioImg, .iped-audio, audio')) {
             var italics = bubble.querySelectorAll('i');

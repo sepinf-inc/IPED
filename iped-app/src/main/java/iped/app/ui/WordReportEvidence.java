@@ -8,7 +8,7 @@ import java.io.Reader;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -64,44 +64,69 @@ public class WordReportEvidence {
         }
     }
 
-    /** Resolve linked thumbnails within the chat's evidence source. Keep duplicate paths selectable. */
-    static Map<String, List<ChatImage>> findChatImages(IPEDMultiSource source, IItemId chat,
+    /** Prefer a readable original from the chat's data source, with one choice per image. */
+    static Map<String, ChatImage> findChatImages(IPEDMultiSource source, IItemId chat,
             List<HtmlViewerCapture.Attachment> images) throws Exception {
-        Map<String, List<ChatImage>> matches = new LinkedHashMap<>();
-        String uuid = source.getSearcher().doc(source.getLuceneId(chat)).get(IndexItem.EVIDENCE_UUID);
+        Map<String, ChatImage> matches = new LinkedHashMap<>();
         for (HtmlViewerCapture.Attachment image : images) {
-            if (matches.containsKey(image.hash)) {
-                continue;
+            String key = image.key();
+            if (!matches.containsKey(key)) {
+                matches.put(key, image.hash.isEmpty() ? null : findOriginal(source, chat, image.hash));
             }
-            List<ChatImage> files = new ArrayList<>();
-            matches.put(image.hash, files);
-            TermQuery query = new TermQuery(new Term(IndexItem.HASH, image.hash.toLowerCase(Locale.ROOT)));
-            for (IItemId id : new IPEDSearcher(source, query).multiSearch().getIterator()) {
-                if (id.getSourceId() == chat.getSourceId()) {
-                    Document doc = source.getSearcher().doc(source.getLuceneId(id));
-                    if (uuid != null && uuid.equals(doc.get(IndexItem.EVIDENCE_UUID))
-                            && MetadataUtil.isImageType(doc.get(IndexItem.CONTENTTYPE))) {
-                        BytesRef bytes = doc.getBinaryValue(IndexItem.THUMB);
-                        BufferedImage thumbnail = bytes == null ? null : ImageUtil.getSubSampledImage(
-                                new ByteArrayInputStream(bytes.bytes, bytes.offset, bytes.length), 144);
-                        if (thumbnail == null) {
-                            IItem item = source.getItemByItemId(id);
-                            if (item != null) {
-                                try {
-                                    thumbnail = readChatImage(item, 144);
-                                } catch (IOException e) {
-                                    // The crop dialog can still use the thumbnail visible in the chat.
-                                } finally {
-                                    item.dispose();
-                                }
-                            }
-                        }
-                        files.add(new ChatImage(id, doc.get(IndexItem.NAME), doc.get(IndexItem.PATH), thumbnail));
-                    }
+            if (matches.get(key) == null && !image.thumbnail.isEmpty()) {
+                BufferedImage thumb = embeddedThumbnail(image.thumbnail);
+                if (thumb != null) {
+                    matches.put(key, new ChatImage(null, Messages.getString("WordReport.ChatEmbeddedImage"), "", thumb));
                 }
             }
         }
         return matches;
+    }
+
+    static BufferedImage embeddedThumbnail(String data) {
+        try {
+            byte[] bytes = Base64.getDecoder().decode(data.substring(data.indexOf(',') + 1));
+            return ImageUtil.getSubSampledImage(new ByteArrayInputStream(bytes), 2400);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static ChatImage findOriginal(IPEDMultiSource source, IItemId chat, String hash) throws Exception {
+        String uuid = source.getSearcher().doc(source.getLuceneId(chat)).get(IndexItem.EVIDENCE_UUID);
+        ChatImage fallback = null;
+        TermQuery query = new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase(Locale.ROOT)));
+        for (IItemId id : new IPEDSearcher(source, query).multiSearch().getIterator()) {
+            if (id.getSourceId() != chat.getSourceId()) {
+                continue;
+            }
+            Document doc = source.getSearcher().doc(source.getLuceneId(id));
+            if (uuid == null || !uuid.equals(doc.get(IndexItem.EVIDENCE_UUID))
+                    || !MetadataUtil.isImageType(doc.get(IndexItem.CONTENTTYPE))) {
+                continue;
+            }
+            IItem item = source.getItemByItemId(id);
+            if (item != null) {
+                try {
+                    BufferedImage thumb = readChatImage(item, 144);
+                    if (thumb != null) {
+                        return new ChatImage(id, item.getName(), item.getPath(), thumb);
+                    }
+                } catch (IOException e) {
+                    // Another indexed copy of the same image may still be readable.
+                } finally {
+                    item.dispose();
+                }
+            }
+            BytesRef bytes = doc.getBinaryValue(IndexItem.THUMB);
+            if (fallback == null && bytes != null) {
+                BufferedImage thumb = ImageUtil.getSubSampledImage(new ByteArrayInputStream(bytes.bytes, bytes.offset, bytes.length), 2400);
+                if (thumb != null) {
+                    fallback = new ChatImage(null, Messages.getString("WordReport.ChatEmbeddedImage"), "", thumb);
+                }
+            }
+        }
+        return fallback;
     }
 
     private static BufferedImage readChatImage(IItem item, int size) throws IOException {
@@ -128,18 +153,25 @@ public class WordReportEvidence {
         try {
             WordReportDocument.Evidence result = capturedEvidence(item, capture);
             if (capture.attachment != null) {
-                IItem image = source.getItemByItemId(capture.attachment);
-                try {
-                    WordReportDocument.Evidence attachment = new WordReportDocument.Evidence();
-                    attachment.title = image.getName();
-                    attachment.image = readChatImage(image, 2400);
-                    if (attachment.image == null) {
-                        throw new IOException(Messages.getString("WordReport.ChatImageUnreadable", image.getName()));
+                ChatImage selected = capture.attachment;
+                WordReportDocument.Evidence attachment = new WordReportDocument.Evidence();
+                attachment.title = selected.name;
+                if (selected.id == null) {
+                    attachment.image = selected.thumbnail;
+                } else {
+                    IItem image = source.getItemByItemId(selected.id);
+                    if (image != null) {
+                        try {
+                            attachment.image = readChatImage(image, 2400);
+                        } finally {
+                            image.dispose();
+                        }
                     }
-                    result.attachment = attachment;
-                } finally {
-                    image.dispose();
+                    if (attachment.image == null) {
+                        throw new IOException(Messages.getString("WordReport.ChatImageUnreadable", selected.name));
+                    }
                 }
+                result.attachment = attachment;
             }
             return result;
         } finally {

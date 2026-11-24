@@ -278,8 +278,7 @@ public class WordReportDialog extends JDialog {
                 }
                 if (failure != null || controller.getViewedItem() != viewed || !viewer.getPanel().isShowing()
                         || (viewer != controller.getTextViewer() && (controller.getViewedContent() != content
-                                || controller.getMultiViewer().getCurrentViewer() != viewer))
-                        || (chat && capture.messages.isEmpty())) {
+                                || controller.getMultiViewer().getCurrentViewer() != viewer))) {
                     JOptionPane.showMessageDialog(App.get(), hint);
                     return;
                 }
@@ -766,7 +765,7 @@ public class WordReportDialog extends JDialog {
                     if (entry.capture != null) {
                         long excerpt = items.stream().filter(item -> item.id.getSourceId() == id.getSourceId()
                                 && item.id.getId() == id.getId()).count();
-                        name = entry.capture.document ? message("DocumentCropName", name, excerpt)
+                        name = entry.capture.document || entry.capture.messageCount == 0 ? message("DocumentCropName", name, excerpt)
                                 : message("ChatCropName", name, excerpt, entry.capture.messageCount);
                         if (entry.chatGroupSize < 3 && (entry.beside != null || entry.besideLocation >= 0)) {
                             name = message("ChatBesideName", name);

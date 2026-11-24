@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import iped.data.IItemId;
 import iped.viewers.HtmlViewerCapture;
 
 /** Keeps message selection, pixels and transcription limited to the approved viewport crop. */
@@ -23,7 +22,7 @@ class WordReportChatSelection {
 
     static class Result {
         boolean document;
-        IItemId attachment;
+        WordReportEvidence.ChatImage attachment;
         final List<HtmlViewerCapture.Attachment> images = new ArrayList<>();
         final List<Integer> transcriptIndices = new ArrayList<>();
         BufferedImage image;
@@ -52,6 +51,9 @@ class WordReportChatSelection {
     static WordReportChatSelection select(HtmlViewerCapture capture, boolean[] selected) {
         if (selected.length != capture.messages.size()) {
             throw new IllegalArgumentException("Invalid message selection");
+        }
+        if (selected.length == 0) {
+            return new WordReportChatSelection(capture.image, false);
         }
         List<Rectangle> bands = new ArrayList<>();
         int selectedCount = 0;
@@ -96,7 +98,7 @@ class WordReportChatSelection {
                         Rectangle2D b = band.createIntersection(image.bounds);
                         if (!b.isEmpty()) {
                             selection.images.add(new HtmlViewerCapture.Attachment(image.hash, new Rectangle2D.Double(
-                                    b.getX(), b.getY() - band.y + offset, b.getWidth(), b.getHeight())));
+                                    b.getX(), b.getY() - band.y + offset, b.getWidth(), b.getHeight()), image.thumbnail));
                         }
                     }
                     for (HtmlViewerCapture.Transcript transcript : message.transcripts) {

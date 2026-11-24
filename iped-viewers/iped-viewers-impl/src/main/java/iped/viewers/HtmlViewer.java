@@ -179,6 +179,7 @@ public class HtmlViewer extends AbstractViewer {
             // WebKit may report SUCCEEDED before its first pixels have been painted.
             new AnimationTimer() {
                 private int frames;
+                private long lastAttempt;
 
                 @Override
                 public void handle(long now) {
@@ -189,22 +190,25 @@ public class HtmlViewer extends AbstractViewer {
                     if (++frames < 3) {
                         return;
                     }
-                    stop();
                     try {
-                        if (expectedSource == null || loadedSource != expectedSource || webEngine == null
-                                || webEngine.getLoadWorker().getState() != Worker.State.SUCCEEDED) {
-                            throw new IllegalStateException("The requested HTML preview is not ready");
+                        if (expectedSource == null || loadedSource != expectedSource || webEngine == null) {
+                            throw new IllegalStateException("The requested HTML preview has changed");
                         }
-                        if (chat) {
-                            result.complete(HtmlViewerCapture.capture(htmlViewer));
-                        } else {
-                            if (tmpFile == null || !tmpFile.toURI().equals(new java.net.URI(webEngine.getLocation()))) {
-                                throw new IllegalStateException("The document preview is not ready");
-                            }
-                            result.complete(new HtmlViewerCapture(javafx.embed.swing.SwingFXUtils.fromFXImage(
-                                    htmlViewer.snapshot(null, null), null)));
+                        if (webEngine.getLoadWorker().getState() != Worker.State.SUCCEEDED || tmpFile == null
+                                || !tmpFile.toURI().equals(new java.net.URI(webEngine.getLocation().split("#", 2)[0]))
+                                || now - lastAttempt < 200_000_000L) {
+                            return;
                         }
+                        lastAttempt = now;
+                        HtmlViewerCapture capture = chat ? HtmlViewerCapture.capture(htmlViewer)
+                                : new HtmlViewerCapture(javafx.embed.swing.SwingFXUtils.fromFXImage(htmlViewer.snapshot(null, null), null));
+                        if (chat && HtmlViewerCapture.isBlank(capture.image)) {
+                            return;
+                        }
+                        result.complete(capture);
+                        stop();
                     } catch (Exception e) {
+                        stop();
                         result.completeExceptionally(e);
                     }
                 }

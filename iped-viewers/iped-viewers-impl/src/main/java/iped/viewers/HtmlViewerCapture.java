@@ -31,9 +31,20 @@ public class HtmlViewerCapture {
         public final String hash;
         public final Rectangle2D bounds;
 
+        public final String thumbnail;
+
         public Attachment(String hash, Rectangle2D bounds) {
+            this(hash, bounds, "");
+        }
+
+        public Attachment(String hash, Rectangle2D bounds, String thumbnail) {
+            this.thumbnail = thumbnail;
             this.hash = hash;
             this.bounds = bounds;
+        }
+
+        public String key() {
+            return hash.isEmpty() ? thumbnail : hash;
         }
     }
 
@@ -64,9 +75,21 @@ public class HtmlViewerCapture {
             }
             script = new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
-        JSObject data = (JSObject) view.getEngine().executeScript(script);
-        int width = Math.min((int) Math.floor(view.getWidth()), number(data, "width"));
-        int height = Math.min((int) Math.floor(view.getHeight()), number(data, "height"));
+        JSObject data = null;
+        try {
+            Object result = view.getEngine().executeScript(script);
+            if (result instanceof JSObject) {
+                data = (JSObject) result;
+            }
+        } catch (netscape.javascript.JSException e) {
+            // Keep the visible pixels when WebKit cannot inspect the message markup.
+        }
+        int width = (int) Math.floor(view.getWidth());
+        int height = (int) Math.floor(view.getHeight());
+        if (data != null) {
+            width = Math.min(width, number(data, "width"));
+            height = Math.min(height, number(data, "height"));
+        }
         if (width <= 0 || height <= 0) {
             throw new IOException("Empty HTML viewport");
         }
@@ -74,6 +97,9 @@ public class HtmlViewerCapture {
         parameters.setViewport(new javafx.geometry.Rectangle2D(0, 0, width, height));
         HtmlViewerCapture capture = new HtmlViewerCapture(SwingFXUtils.fromFXImage(
                 view.snapshot(parameters, new WritableImage(width, height)), null));
+        if (data == null) {
+            return capture;
+        }
         JSObject messages = (JSObject) data.getMember("messages");
         for (int i = 0; i < number(messages, "length"); i++) {
             JSObject source = (JSObject) messages.getSlot(i);
@@ -84,7 +110,7 @@ public class HtmlViewerCapture {
             for (int j = 0; j < number(images, "length"); j++) {
                 JSObject image = (JSObject) images.getSlot(j);
                 message.images.add(new Attachment(String.valueOf(image.getMember("hash")),
-                        rectangle((JSObject) image.getMember("bounds"))));
+                        rectangle((JSObject) image.getMember("bounds")), String.valueOf(image.getMember("thumbnail"))));
             }
             JSObject transcripts = (JSObject) source.getMember("transcripts");
             for (int t = 0; t < number(transcripts, "length"); t++) {
@@ -101,13 +127,10 @@ public class HtmlViewerCapture {
             }
             capture.messages.add(message);
         }
-        if (!capture.messages.isEmpty() && isBlank(capture.image)) {
-            throw new IOException("The HTML preview has not been painted");
-        }
         return capture;
     }
 
-    private static boolean isBlank(BufferedImage image) {
+    static boolean isBlank(BufferedImage image) {
         int first = image.getRGB(0, 0);
         for (int y = 0; y < image.getHeight(); y++) {
             for (int x = 0; x < image.getWidth(); x++) {

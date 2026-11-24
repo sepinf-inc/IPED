@@ -266,12 +266,18 @@ public class WordReportDocument {
         for (int i = section.start; i < section.end; i++) {
             Element block = blocks.get(i);
             String value = getLocationText(i + 1);
+            boolean table = "tbl".equals(block.getLocalName());
+            if (table && value.isEmpty() && (wordElement(block, "drawing", 0) != null || wordElement(block, "pict", 0) != null)) {
+                value = Messages.getString("WordReport.IllustratedTable", i + 1);
+            }
             if (value.isEmpty() || isTableOfContents(block)) {
                 continue;
             }
-            String key = "tbl".equals(block.getLocalName()) ? "WordReport.AfterTable" : "WordReport.AfterText";
             String excerpt = value.length() <= 100 ? value : value.substring(0, 100) + "…";
-            positions.add(new Location(i + 1, Messages.getString(key, excerpt)));
+            if (table) {
+                positions.add(new Location(i, Messages.getString("WordReport.BeforeTable", excerpt)));
+            }
+            positions.add(new Location(i + 1, Messages.getString(table ? "WordReport.AfterTable" : "WordReport.AfterText", excerpt)));
         }
         return Collections.unmodifiableList(positions);
     }
@@ -368,6 +374,10 @@ public class WordReportDocument {
         if (location < 0 || location > blocks.size() || columns < 1 || columns > 2) {
             throw new IllegalArgumentException("Invalid insertion location or column count");
         }
+        if (location > 0 && location < blocks.size() && "tbl".equals(blocks.get(location - 1).getLocalName())
+                && isReportSpacer(blocks.get(location))) {
+            location++;
+        }
         Node before = location < blocks.size() ? blocks.get(location) : null;
         if (before == null) {
             for (Node child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -384,6 +394,7 @@ public class WordReportDocument {
         if (before instanceof Element && isFullChatGrid((Element) before)) {
             pageGrids.add((Element) before);
         }
+        boolean needsSpacer = location > 0 && "tbl".equals(blocks.get(location - 1).getLocalName());
         for (int i = 0; i < evidence.size();) {
             Evidence item = evidence.get(i);
             if (item.besidePrevious) {
@@ -407,17 +418,21 @@ public class WordReportDocument {
                 i++;
                 continue;
             }
+            if (needsSpacer) {
+                body.insertBefore(reportSpacer(), before);
+                needsSpacer = false;
+            }
             if (item.chatCapture) {
                 previousFrame = chatTable(item, includeText);
                 body.insertBefore(previousFrame, before);
-                body.insertBefore(paragraph("", false), before);
+                body.insertBefore(reportSpacer(), before);
                 i++;
                 continue;
             }
             previousFrame = null;
             if (item.video) {
                 body.insertBefore(videoTable(item, includeText), before);
-                body.insertBefore(paragraph("", false), before);
+                body.insertBefore(reportSpacer(), before);
                 i++;
                 continue;
             }
@@ -431,7 +446,7 @@ public class WordReportDocument {
             List<Evidence> group = evidence.subList(i, end);
             Element table = message ? messageTable(group, includeText) : evidenceTable(group, includeMetadata, includeText);
             body.insertBefore(table, before);
-            body.insertBefore(paragraph("", false), before);
+            body.insertBefore(reportSpacer(), before);
             if (!message && group.size() == 1 && isImageFrame(item)) {
                 previousFrame = table;
             }
@@ -1167,6 +1182,21 @@ public class WordReportDocument {
             }
         }
         return width == Long.MAX_VALUE ? 8640 : width;
+    }
+
+    private boolean isReportSpacer(Element block) {
+        return "p".equals(block.getLocalName())
+                && (block.isEqualNode(reportSpacer()) || block.isEqualNode(paragraph("", false)));
+    }
+
+    private Element reportSpacer() {
+        Element spacer = element(document, W, "w:p");
+        Element spacing = append(append(spacer, W, "w:pPr"), W, "w:spacing");
+        spacing.setAttributeNS(W, "w:before", "0");
+        spacing.setAttributeNS(W, "w:after", "0");
+        spacing.setAttributeNS(W, "w:line", "240");
+        spacing.setAttributeNS(W, "w:lineRule", "exact");
+        return spacer;
     }
 
     private Element paragraph(String value, boolean bold) {

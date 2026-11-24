@@ -293,7 +293,7 @@ public class WordReportDocumentTest {
         WordReportDocument.Evidence second = evidence();
         second.title = "Second batch";
         int cursor = first.insert(2, Arrays.asList(evidence(), evidence(), evidence()), true, true, 2);
-        assertEquals(6, cursor);
+        assertEquals(7, cursor);
         Path prepared = temporary.getRoot().toPath().resolve("prepared-batch.docx");
         first.write(prepared);
         Path saved = temporary.getRoot().toPath().resolve("saved-batch.docx");
@@ -374,6 +374,30 @@ public class WordReportDocumentTest {
     }
 
     @Test
+    public void separateEvidenceKeepsOneBlankParagraphOnEitherSideOfAnExistingFrame() throws Exception {
+        WordReportDocument first = new WordReportDocument(fixture());
+        int after = first.insert(3, Collections.singletonList(evidence()), true, true);
+        Path output = temporary.getRoot().toPath().resolve("spaced.docx");
+        first.write(output);
+        for (int position : new int[] { after - 2, after - 1 }) {
+            WordReportDocument reopened = new WordReportDocument(output);
+            reopened.insert(position, Collections.singletonList(chat("excerpt")), true, true);
+            Path saved = temporary.getRoot().toPath().resolve("position-" + position + ".docx");
+            reopened.write(saved);
+            org.w3c.dom.NodeList frames = documentXml(saved).getElementsByTagNameNS(WordReportDocument.W, "tbl");
+            org.w3c.dom.Node left = frames.item(1), right = frames.item(2);
+            assertEquals("p", left.getNextSibling().getLocalName());
+            assertTrue(left.getNextSibling().getTextContent().trim().isEmpty());
+            assertSame(right, left.getNextSibling().getNextSibling());
+            org.w3c.dom.Element gap = (org.w3c.dom.Element) left.getNextSibling();
+            org.w3c.dom.Element spacing = (org.w3c.dom.Element) gap.getElementsByTagNameNS(WordReportDocument.W, "spacing").item(0);
+            assertEquals("240", spacing.getAttributeNS(WordReportDocument.W, "line"));
+            assertEquals("exact", spacing.getAttributeNS(WordReportDocument.W, "lineRule"));
+            assertTrue((position == after - 2 ? right : left).getTextContent().contains(evidence().title));
+        }
+    }
+
+    @Test
     public void navigationUsesHeadingsAndReadablePositionsWithExactInsertionIndexes() throws Exception {
         Path source = fixture("<w:document xmlns:w=\"" + WordReportDocument.W + "\"><w:body>"
                 + "<w:p/><w:p><w:r><w:drawing/></w:r></w:p>"
@@ -388,12 +412,13 @@ public class WordReportDocumentTest {
         WordReportDocument.Section section = report.getSections().get(1);
         assertEquals("Dados obtidos", section.title);
         java.util.List<WordReportDocument.Location> positions = report.getPositions(section);
-        assertEquals(4, positions.size());
+        assertEquals(5, positions.size());
         assertEquals(8, positions.get(0).index);
         assertEquals(4, positions.get(1).index);
         assertEquals(6, positions.get(2).index);
         assertTrue(positions.get(2).label.contains("First readable paragraph"));
-        assertEquals(7, positions.get(3).index);
+        assertEquals(6, positions.get(3).index);
+        assertEquals(7, positions.get(4).index);
         assertEquals(2, report.getPositions(report.getSections().get(0)).size());
         report.insert(positions.get(2).index, Collections.singletonList(evidence()), true, true);
         Path output = temporary.getRoot().toPath().resolve("navigation.docx");
@@ -502,7 +527,7 @@ public class WordReportDocumentTest {
         WordReportDocument.Evidence last = evidence();
         last.title = "Última imagem";
         int next = report.insert(2, Arrays.asList(evidence(), message, message, last), true, true, 2);
-        assertEquals(8, next);
+        assertEquals(9, next);
         Path output = temporary.getRoot().toPath().resolve("reference-messages.docx");
         report.write(output);
         try (ZipFile zip = new ZipFile(output.toFile())) {

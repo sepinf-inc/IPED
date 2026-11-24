@@ -17,7 +17,6 @@ import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,7 +49,7 @@ class WordReportChatCropDialog extends JDialog {
     private final CropPanel canvas = new CropPanel();
     private final JPanel choices = new JPanel();
     private final Set<Integer> omittedTranscripts = new HashSet<>();
-    private Map<String, List<WordReportEvidence.ChatImage>> files = Collections.emptyMap();
+    private Map<String, WordReportEvidence.ChatImage> files = Collections.emptyMap();
     private WordReportEvidence.ChatImage selectedImage;
     private boolean loadingImages;
     private boolean imageSearchFailed;
@@ -119,7 +118,7 @@ class WordReportChatCropDialog extends JDialog {
         actions.add(cancel);
         accept.addActionListener(e -> {
             preview.keepTranscripts(omittedTranscripts);
-            preview.attachment = selectedImage == null ? null : selectedImage.id;
+            preview.attachment = selectedImage;
             result = preview;
             dispose();
         });
@@ -181,39 +180,36 @@ class WordReportChatCropDialog extends JDialog {
             images.add(none);
             Set<WordReportEvidence.ChatImage> visible = new HashSet<>();
             for (HtmlViewerCapture.Attachment image : preview.images) {
-                List<WordReportEvidence.ChatImage> matches = files.getOrDefault(image.hash, Collections.emptyList());
-                for (WordReportEvidence.ChatImage file : matches) {
-                    if (!visible.add(file)) {
-                        continue;
-                    }
-                    JRadioButton radio = new JRadioButton();
-                    radio.getAccessibleContext().setAccessibleName(file.name);
-                    radio.getAccessibleContext().setAccessibleDescription(file.path);
-                    radio.addActionListener(e -> selectedImage = file);
-                    radios.add(radio);
-                    BufferedImage thumbnail = file.thumbnail;
-                    if (thumbnail == null) {
-                        // The viewer already rendered this attachment even when the index has no thumbnail.
-                        Rectangle bounds = image.bounds.getBounds();
-                        thumbnail = selection.image.getSubimage(bounds.x, bounds.y, bounds.width, bounds.height);
-                    }
-                    ImageIcon icon = new ImageIcon(ImageUtil.resizeImage(thumbnail,
-                            Math.min(144, thumbnail.getWidth()), Math.min(96, thumbnail.getHeight())));
-                    JButton picture = new JButton(icon);
-                    picture.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-                    picture.setContentAreaFilled(false);
-                    picture.setFocusable(false);
-                    picture.getAccessibleContext().setAccessibleName(file.name);
-                    picture.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    picture.addActionListener(e -> radio.doClick(0));
-                    JPanel option = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 2));
-                    option.add(radio);
-                    option.add(picture);
-                    option.setMaximumSize(new Dimension(Integer.MAX_VALUE, option.getPreferredSize().height));
-                    images.add(option);
-                    if (file == selectedImage) {
-                        radio.setSelected(true);
-                    }
+                WordReportEvidence.ChatImage file = files.get(image.key());
+                if (file == null || !visible.add(file)) {
+                    continue;
+                }
+                JRadioButton radio = new JRadioButton();
+                radio.getAccessibleContext().setAccessibleName(file.name);
+                radio.getAccessibleContext().setAccessibleDescription(file.path);
+                radio.addActionListener(e -> selectedImage = file);
+                radios.add(radio);
+                BufferedImage thumbnail = file.thumbnail;
+                ImageIcon icon = new ImageIcon(ImageUtil.resizeImage(thumbnail,
+                        Math.min(144, thumbnail.getWidth()), Math.min(96, thumbnail.getHeight())));
+                JButton picture = new JButton(icon);
+                if (file.id == null) {
+                    picture.setToolTipText(message("ChatEmbeddedImage"));
+                    radio.setText(message("ChatEmbeddedImage"));
+                }
+                picture.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+                picture.setContentAreaFilled(false);
+                picture.setFocusable(false);
+                picture.getAccessibleContext().setAccessibleName(file.name);
+                picture.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                picture.addActionListener(e -> radio.doClick(0));
+                JPanel option = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 2));
+                option.add(radio);
+                option.add(picture);
+                option.setMaximumSize(new Dimension(Integer.MAX_VALUE, option.getPreferredSize().height));
+                images.add(option);
+                if (file == selectedImage) {
+                    radio.setSelected(true);
                 }
             }
             if (!visible.contains(selectedImage)) {
@@ -228,8 +224,9 @@ class WordReportChatCropDialog extends JDialog {
         }
         choices.revalidate();
         choices.repaint();
-        count.setText(message("ChatCropCount", preview.messageCount, capture.messages.size()));
-        accept.setEnabled(preview.messageCount > 0);
+        count.setText(capture.messages.isEmpty() ? message("ChatVisualCrop")
+                : message("ChatCropCount", preview.messageCount, capture.messages.size()));
+        accept.setEnabled(preview.messageCount > 0 || capture.messages.isEmpty());
         canvas.repaint();
     }
 
@@ -256,9 +253,9 @@ class WordReportChatCropDialog extends JDialog {
         }
         loadingImages = true;
         updateCrop();
-        new SwingWorker<Map<String, List<WordReportEvidence.ChatImage>>, Void>() {
+        new SwingWorker<Map<String, WordReportEvidence.ChatImage>, Void>() {
             @Override
-            protected Map<String, List<WordReportEvidence.ChatImage>> doInBackground() throws Exception {
+            protected Map<String, WordReportEvidence.ChatImage> doInBackground() throws Exception {
                 return WordReportEvidence.findChatImages(source, chat, selection.images);
             }
 
