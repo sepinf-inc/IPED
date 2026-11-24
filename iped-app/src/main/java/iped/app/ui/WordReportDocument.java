@@ -1,5 +1,6 @@
 package iped.app.ui;
 
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,6 +34,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import iped.utils.ImageUtil;
 
 /** Inserts evidence blocks without reserializing unrelated DOCX package parts. */
 public class WordReportDocument {
@@ -69,6 +72,7 @@ public class WordReportDocument {
         public boolean audio;
         public boolean video;
         public boolean chatCapture;
+        public Evidence attachment;
         public boolean besidePrevious;
         public boolean separateRow;
         public final List<BufferedImage> videoFrames = new ArrayList<>();
@@ -340,6 +344,12 @@ public class WordReportDocument {
         return count;
     }
 
+    int countTextOccurrencesBefore(int location, String anchor, boolean besidePrevious) {
+        // A paired item rewrites the previous table, including any duplicated transcript metadata.
+        int limit = besidePrevious ? previousFrameIndex(location) : location;
+        return countTextOccurrencesBefore(limit, anchor);
+    }
+
     private static String text(Element element) {
         StringBuilder text = new StringBuilder();
         NodeList nodes = element.getElementsByTagNameNS(W, "t");
@@ -366,16 +376,34 @@ public class WordReportDocument {
                 }
             }
         }
-        int inserted = 0;
+        List<Element> pageGrids = new ArrayList<>();
         Element previousFrame = previousFrameTable(location);
+        if (isFullChatGrid(previousFrame)) {
+            pageGrids.add(previousFrame);
+        }
+        if (before instanceof Element && isFullChatGrid((Element) before)) {
+            pageGrids.add((Element) before);
+        }
         for (int i = 0; i < evidence.size();) {
             Evidence item = evidence.get(i);
             if (item.besidePrevious) {
-                if (item.chatCapture ? !canPairChat(previousFrame) : !isImageFrame(item) || !canPairImage(previousFrame)) {
+                if (item.chatCapture && item.attachment == null && canPairChat(previousFrame)
+                        || isImageFrame(item) && canPairImage(previousFrame)) {
+                    pairFrameTable(previousFrame, item, includeText);
+                } else if (item.chatCapture && item.attachment == null && (!includeText || item.transcripts.isEmpty())) {
+                    List<ChatFrame> frames = gridFrames(previousFrame, item.metadata.get("Hash"));
+                    if (frames.size() < 2) {
+                        throw new IOException(Messages.getString("WordReport.PreviousEvidenceUnavailable"));
+                    }
+                    Element grid = appendChatToGrid(frames, item);
+                    if (isFullChatGrid(grid)) {
+                        pageGrids.add(grid);
+                    }
+                    body.replaceChild(grid, previousFrame);
+                    previousFrame = grid;
+                } else {
                     throw new IOException(Messages.getString("WordReport.PreviousEvidenceUnavailable"));
                 }
-                pairFrameTable(previousFrame, item, includeText);
-                previousFrame = null;
                 i++;
                 continue;
             }
@@ -383,7 +411,6 @@ public class WordReportDocument {
                 previousFrame = chatTable(item, includeText);
                 body.insertBefore(previousFrame, before);
                 body.insertBefore(paragraph("", false), before);
-                inserted += 2;
                 i++;
                 continue;
             }
@@ -391,7 +418,6 @@ public class WordReportDocument {
             if (item.video) {
                 body.insertBefore(videoTable(item, includeText), before);
                 body.insertBefore(paragraph("", false), before);
-                inserted += 2;
                 i++;
                 continue;
             }
@@ -409,10 +435,19 @@ public class WordReportDocument {
             if (!message && group.size() == 1 && isImageFrame(item)) {
                 previousFrame = table;
             }
-            inserted += 2;
             i = end;
         }
-        return location + inserted;
+        for (Element grid : pageGrids) {
+            separateGridPage(grid, true);
+            separateGridPage(grid, false);
+        }
+        int after = 0;
+        for (Node child = body.getFirstChild(); child != null && child != before; child = child.getNextSibling()) {
+            if (child instanceof Element && !"sectPr".equals(child.getLocalName())) {
+                after++;
+            }
+        }
+        return after;
     }
 
     private Element reportTable(long[] widths) {
@@ -491,17 +526,232 @@ public class WordReportDocument {
         return canPairImage(previousFrameTable(location));
     }
 
-    /** Only the immediately preceding, still unpaired frame can receive another image. */
+    int previousChatCount(int location, String hash) {
+        return gridFrames(previousFrameTable(location), hash).size();
+    }
+
+    private static class ChatFrame {
+        final Element image;
+        final Element info;
+
+        ChatFrame(Element image, Element info) {
+            this.image = image;
+            this.info = info;
+        }
+    }
+
+    private static Element wordElement(Element parent, String name, int index) {
+        return parent == null ? null : (Element) parent.getElementsByTagNameNS(W, name).item(index);
+    }
+
+    /** Reuse only plain crops identified by their source hash in the visible file-information row. */
+    private List<ChatFrame> gridFrames(Element table, String hash) {
+        if (hash == null || hash.isBlank() || table == null || !"tbl".equals(table.getLocalName())) {
+            return Collections.emptyList();
+        }
+        Element caption = wordElement(table, "tblCaption", 0);
+        String type = caption == null ? "" : caption.getAttributeNS(W, "val");
+        boolean grid = "IPED_CHAT_GRID".equals(type);
+        int count = table.getElementsByTagNameNS(W, "drawing").getLength();
+        int rows = table.getElementsByTagNameNS(W, "tr").getLength();
+        if (!(grid && count == 3 && (rows == 4 || rows == 6)
+                || "IPED_CHAT_PAIR".equals(type) && count == 2 && rows == 3
+                || canPairChat(table) && count == 1 && rows == 3)) {
+            return Collections.emptyList();
+        }
+        // A transcript or attachment from an earlier insertion must stay in its original layout.
+        if (count == 1 && wordElement(wordElement(table, "tr", 0), "tc", 1) != null) {
+            return Collections.emptyList();
+        }
+        boolean shared = grid && rows == 4;
+        List<ChatFrame> frames = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            int row = i / 2 * (shared ? 1 : 3);
+            Element image = wordElement(wordElement(table, "tr", row), "tc", i % 2);
+            Element info = wordElement(wordElement(table, "tr", shared ? 3 : row + 2), "tc", shared ? 0 : i % 2);
+            Element hashLine = wordElement(info, "p", 0);
+            if (image == null || !text(image).isBlank() || image.getElementsByTagNameNS(W, "drawing").getLength() != 1
+                    || hashLine == null || !hashLine.getTextContent().trim().replaceFirst("^Hash:\\s*", "").equalsIgnoreCase(hash.trim())) {
+                return Collections.emptyList();
+            }
+            frames.add(new ChatFrame(image, info));
+        }
+        return frames;
+    }
+
+    private Element appendChatToGrid(List<ChatFrame> frames, Evidence item) throws Exception {
+        long[] widths = mediaWidths(2);
+        long width = widths[frames.size() % 2];
+        Element staging = element(document, W, "w:tr");
+        Element image = reportCell(staging, width, null);
+        image.appendChild(picture(item.image, item.imageDescription, width, 5486400));
+        Element info = reportCell(staging, width, "EEEEEE");
+        appendInformation(info, item);
+        frames.add(new ChatFrame(image, info));
+
+        boolean shared = frames.stream().allMatch(frame -> frame.info.getTextContent().equals(frames.get(0).info.getTextContent()));
+        long maxHeight = gridPictureHeight(shared, frames.size() == 4);
+        Element table = reportTable(widths);
+        append(wordElement(table, "tblPr", 0), W, "w:tblCaption").setAttributeNS(W, "w:val", "IPED_CHAT_GRID");
+        for (int offset = 0; offset < frames.size(); offset += 2) {
+            Element row = append(table, W, "w:tr");
+            for (int col = 0; col < 2; col++) {
+                Element cell = reportCell(row, widths[col], null);
+                if (offset + col < frames.size()) {
+                    Element old = frames.get(offset + col).image;
+                    for (Node child = old.getFirstChild(); child != null; child = child.getNextSibling()) {
+                        if (!"tcPr".equals(child.getLocalName())) {
+                            cell.appendChild(child.cloneNode(true));
+                        }
+                    }
+                    fitPreviousPicture(cell, widths[col], maxHeight, frames.size() == 4);
+                } else {
+                    cell.appendChild(paragraph("", false));
+                }
+            }
+            if (!shared || offset == 2) {
+                Element heading = append(table, W, "w:tr");
+                Element data = append(table, W, "w:tr");
+                for (int col = 0; col < (shared ? 1 : 2); col++) {
+                    long cellWidth = shared ? widths[0] + widths[1] : widths[col];
+                    Element title = reportCell(heading, cellWidth, "DDD9C3");
+                    Element details = reportCell(data, cellWidth, "EEEEEE");
+                    if (shared) {
+                        for (Element cell : new Element[] { title, details }) {
+                            Element props = wordElement(cell, "tcPr", 0);
+                            Element span = element(document, W, "w:gridSpan");
+                            span.setAttributeNS(W, "w:val", "2");
+                            props.insertBefore(span, wordElement(props, "shd", 0));
+                        }
+                    }
+                    if (offset + col >= frames.size()) {
+                        title.appendChild(paragraph("", false));
+                        details.appendChild(paragraph("", false));
+                    } else {
+                        title.appendChild(reportParagraph(FILE_INFORMATION, false, false, true));
+                        Element source = frames.get(shared ? 0 : offset + col).info;
+                        for (Node child = source.getFirstChild(); child != null; child = child.getNextSibling()) {
+                            if (!"tcPr".equals(child.getLocalName())) {
+                                details.appendChild(child.cloneNode(true));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        NodeList rows = table.getElementsByTagNameNS(W, "tr");
+        for (int i = 0; i < rows.getLength(); i++) {
+            Element row = (Element) rows.item(i);
+            Element properties = element(document, W, "w:trPr");
+            row.insertBefore(properties, row.getFirstChild());
+            append(properties, W, "w:cantSplit");
+            if (i < rows.getLength() - 1) {
+                NodeList paragraphs = row.getElementsByTagNameNS(W, "pPr");
+                for (int j = 0; j < paragraphs.getLength(); j++) {
+                    Element props = (Element) paragraphs.item(j);
+                    if (wordElement(props, "keepNext", 0) == null) {
+                        props.insertBefore(element(document, W, "w:keepNext"), props.getFirstChild());
+                    }
+                }
+            }
+        }
+        return table;
+    }
+
+    private boolean isFullChatGrid(Element block) {
+        if (block == null || !"tbl".equals(block.getLocalName())) {
+            return false;
+        }
+        Element caption = wordElement(block, "tblCaption", 0);
+        return caption != null && "IPED_CHAT_GRID".equals(caption.getAttributeNS(W, "val"))
+                && block.getElementsByTagNameNS(W, "drawing").getLength() == 4;
+    }
+
+    /** Put a completed grid on its own page, without adding a blank first or last page. */
+    private void separateGridPage(Element table, boolean before) {
+        Node adjacent = before ? table.getPreviousSibling() : table.getNextSibling();
+        while (adjacent != null) {
+            if (adjacent instanceof Element) {
+                Element block = (Element) adjacent;
+                if ("sectPr".equals(block.getLocalName())) {
+                    return;
+                }
+                if ("p".equals(block.getLocalName())) {
+                    if (wordElement(block, "sectPr", 0) != null && before) {
+                        return;
+                    }
+                    if (!before && wordElement(block, "pageBreakBefore", 0) != null) {
+                        return;
+                    }
+                    if (!block.hasChildNodes() || text(block).isBlank()
+                            && wordElement(block, "drawing", 0) == null && wordElement(block, "pict", 0) == null) {
+                        Element br = wordElement(block, "br", 0);
+                        if (br != null && "page".equals(br.getAttributeNS(W, "type"))) {
+                            return;
+                        }
+                        adjacent = before ? adjacent.getPreviousSibling() : adjacent.getNextSibling();
+                        continue;
+                    }
+                }
+                Element separator = element(document, W, "w:p");
+                Element spacing = append(append(separator, W, "w:pPr"), W, "w:spacing");
+                spacing.setAttributeNS(W, "w:before", "0");
+                spacing.setAttributeNS(W, "w:after", "0");
+                spacing.setAttributeNS(W, "w:line", "20");
+                spacing.setAttributeNS(W, "w:lineRule", "exact");
+                append(append(separator, W, "w:r"), W, "w:br").setAttributeNS(W, "w:type", "page");
+                body.insertBefore(separator, before ? table : adjacent);
+                return;
+            }
+            adjacent = before ? adjacent.getPreviousSibling() : adjacent.getNextSibling();
+        }
+    }
+
+    private long gridPictureHeight(boolean shared, boolean fullPage) {
+        long height = Long.MAX_VALUE;
+        NodeList sections = document.getElementsByTagNameNS(W, "sectPr");
+        for (int i = 0; i < sections.getLength(); i++) {
+            Element section = (Element) sections.item(i);
+            Element size = wordElement(section, "pgSz", 0);
+            Element margins = wordElement(section, "pgMar", 0);
+            if (size != null && margins != null && size.hasAttributeNS(W, "h")
+                    && margins.hasAttributeNS(W, "top") && margins.hasAttributeNS(W, "bottom")) {
+                long available = Long.parseLong(size.getAttributeNS(W, "h"))
+                        - Math.abs(Long.parseLong(margins.getAttributeNS(W, "top")))
+                        - Math.abs(Long.parseLong(margins.getAttributeNS(W, "bottom")));
+                if (available > 0) {
+                    height = Math.min(height, available);
+                }
+            }
+        }
+        // Leave space for the file information and Word's inline-picture paragraph metrics.
+        if (height == Long.MAX_VALUE) {
+            height = 12960;
+        }
+        if (fullPage) {
+            long reserve = Math.min(height / 2, shared ? 1680 : 3360);
+            return (height - reserve) * 635 / 2;
+        }
+        return height * 635 / (shared ? 3 : 4);
+    }
+
+    /** Only extend the table immediately preceding the selected insertion point. */
     private Element previousFrameTable(int location) {
+        int index = previousFrameIndex(location);
+        return index < 0 ? null : blocks.get(index);
+    }
+
+    private int previousFrameIndex(int location) {
         for (int i = Math.min(location, blocks.size()) - 1; i >= 0; i--) {
             Element block = blocks.get(i);
             if ("p".equals(block.getLocalName()) && text(block).trim().isEmpty()
-                    && block.getElementsByTagNameNS(W, "drawing").getLength() == 0) {
+                    && wordElement(block, "drawing", 0) == null && wordElement(block, "sectPr", 0) == null
+                    && wordElement(block, "br", 0) == null && wordElement(block, "pageBreakBefore", 0) == null) {
                 continue;
             }
-            return block;
+            return i;
         }
-        return null;
+        return -1;
     }
 
     private static boolean isImageFrame(Evidence item) {
@@ -522,7 +772,7 @@ public class WordReportDocument {
         if (caption != null) {
             return "IPED_IMAGE_SINGLE".equals(caption.getAttributeNS(W, "val"));
         }
-        return !text(table).contains("Chat_") && hasOwnImage(table) && text(table).contains(FILE_INFORMATION);
+        return !isChatPicture(table) && hasOwnImage(table) && text(table).contains(FILE_INFORMATION);
     }
 
     private boolean canPairChat(Element table) {
@@ -535,10 +785,16 @@ public class WordReportDocument {
                     || "IPED_CHAT_TRANSCRIPT".equals(caption.getAttributeNS(W, "val"));
         }
         // Earlier exports have no caption. Recognize only our embedded screenshot and chat metadata.
-        if (!text(table).contains("Chat_") || !text(table).contains(FILE_INFORMATION)) {
+        if (!isChatPicture(table) || !text(table).contains(FILE_INFORMATION)) {
             return false;
         }
         return hasOwnImage(table);
+    }
+
+    private boolean isChatPicture(Element table) {
+        Element drawing = (Element) table.getElementsByTagNameNS(WP, "docPr").item(0);
+        return drawing != null && drawing.getAttribute("name").startsWith("iped-report-chat-")
+                || text(table).contains("Chat_");
     }
 
     private boolean hasOwnImage(Element table) {
@@ -554,27 +810,38 @@ public class WordReportDocument {
                 return true;
             }
         }
-        return false;
+        // Office may rename the media part and discard the table caption on save.
+        Element drawing = (Element) table.getElementsByTagNameNS(WP, "docPr").item(0);
+        return drawing != null && drawing.getAttribute("name").startsWith("iped-report-");
     }
 
     /** A lone screenshot uses the full frame; visible audio text keeps the reference's second column. */
     private Element chatTable(Evidence item, boolean includeText) throws Exception {
         boolean withTranscript = includeText && !item.transcripts.isEmpty();
-        long[] widths = mediaWidths(withTranscript ? 2 : 1);
+        long[] widths = mediaWidths(withTranscript || item.attachment != null ? 2 : 1);
         Element table = reportTable(widths);
         append((Element) table.getFirstChild(), W, "w:tblCaption").setAttributeNS(W, "w:val",
-                withTranscript ? "IPED_CHAT_TRANSCRIPT" : "IPED_CHAT_SINGLE");
+                item.attachment != null ? "IPED_CHAT_IMAGE" : withTranscript ? "IPED_CHAT_TRANSCRIPT" : "IPED_CHAT_SINGLE");
         Element row = append(table, W, "w:tr");
         Element screenshot = reportCell(row, widths[0], null);
-        screenshot.appendChild(picture(item.image, item.imageDescription, widths[0], 5486400));
-        if (withTranscript) {
-            appendChatTranscripts(reportCell(row, widths[1], null), item);
+        Element crop = picture(item.image, item.imageDescription, widths[0], 5486400);
+        Element drawing = (Element) crop.getElementsByTagNameNS(WP, "docPr").item(0);
+        drawing.setAttribute("name", drawing.getAttribute("name").replace("iped-report-", "iped-report-chat-"));
+        screenshot.appendChild(crop);
+        if (widths.length == 2) {
+            Element right = reportCell(row, widths[1], null);
+            if (withTranscript) {
+                appendChatTranscripts(right, item);
+            }
+            if (item.attachment != null) {
+                right.appendChild(picture(item.attachment.image, item.attachment.title, widths[1], 5486400));
+            }
         }
         Element heading = append(table, W, "w:tr");
         Element information = append(table, W, "w:tr");
-        for (long width : widths) {
-            reportCell(heading, width, "DDD9C3").appendChild(reportParagraph(FILE_INFORMATION, false, false, true));
-            appendInformation(reportCell(information, width, "EEEEEE"), item);
+        for (int i = 0; i < widths.length; i++) {
+            reportCell(heading, widths[i], "DDD9C3").appendChild(reportParagraph(FILE_INFORMATION, false, false, true));
+            appendInformation(reportCell(information, widths[i], "EEEEEE"), item);
         }
         return table;
     }
@@ -626,6 +893,12 @@ public class WordReportDocument {
             Element cell = (Element) currentRow.getElementsByTagNameNS(W, "tc").item(0);
             ((Element) cell.getElementsByTagNameNS(W, "tcW").item(0)).setAttributeNS(W, "w:w", Long.toString(widths[0]));
             Element right = reportCell(currentRow, widths[1], i == 1 ? "DDD9C3" : i == 2 ? "EEEEEE" : null);
+            // Editors may move the frame borders from the table to each existing cell.
+            Element borders = (Element) cell.getElementsByTagNameNS(W, "tcBorders").item(0);
+            if (borders != null) {
+                Element rightProperties = (Element) right.getFirstChild();
+                rightProperties.insertBefore(borders.cloneNode(true), rightProperties.getElementsByTagNameNS(W, "shd").item(0));
+            }
             if (i == 0) {
                 right.appendChild(picture(item.image, item.imageDescription, widths[1], 5486400));
                 if (includeText) {
@@ -641,26 +914,63 @@ public class WordReportDocument {
                 appendInformation(right, item);
             }
         }
-        NodeList extents = left.getElementsByTagNameNS(WP, "extent");
-        for (int i = 0; i < extents.getLength(); i++) {
-            Element extent = (Element) extents.item(i);
-            long cx = Long.parseLong(extent.getAttribute("cx"));
-            long maximum = (widths[0] - 216) * 635;
-            if (cx > maximum) {
-                String height = Long.toString(Long.parseLong(extent.getAttribute("cy")) * maximum / cx);
-                extent.setAttribute("cx", Long.toString(maximum));
-                extent.setAttribute("cy", height);
-                Element shape = (Element) ((Element) extent.getParentNode()).getElementsByTagNameNS(A, "ext").item(0);
-                shape.setAttribute("cx", Long.toString(maximum));
-                shape.setAttribute("cy", height);
-            }
-        }
+        fitPreviousPicture(left, widths[0], 5486400, false);
         Element properties = (Element) table.getFirstChild();
         Element caption = (Element) properties.getElementsByTagNameNS(W, "tblCaption").item(0);
         if (caption == null) {
             caption = append(properties, W, "w:tblCaption");
         }
         caption.setAttributeNS(W, "w:val", item.chatCapture ? "IPED_CHAT_PAIR" : "IPED_IMAGE_PAIR");
+    }
+
+    /** Word can rewrite the shape and inline extents separately when saving a report. */
+    private void fitPreviousPicture(Element cell, long columnWidth, long maxHeight, boolean fillColumn) throws IOException {
+        Element inline = (Element) cell.getElementsByTagNameNS(WP, "inline").item(0);
+        if (inline == null) {
+            throw new IOException(Messages.getString("WordReport.PreviousEvidenceUnavailable"));
+        }
+        Element extent = (Element) inline.getElementsByTagNameNS(WP, "extent").item(0);
+        Element transform = (Element) inline.getElementsByTagNameNS(A, "xfrm").item(0);
+        Element blip = (Element) inline.getElementsByTagNameNS(A, "blip").item(0);
+        Element shape = transform == null ? null : (Element) transform.getElementsByTagNameNS(A, "ext").item(0);
+        Dimension pixels = blip == null ? null : pictureDimensions(blip.getAttributeNS(R, "embed"));
+        if (extent == null || shape == null || pixels == null) {
+            throw new IOException(Messages.getString("WordReport.PreviousEvidenceUnavailable"));
+        }
+        long maxWidth = (columnWidth - 216) * 635;
+        if (!fillColumn) {
+            maxWidth = Math.min(maxWidth, Long.parseLong(extent.getAttribute("cx")));
+        }
+        double scale = Math.min((double) maxWidth / pixels.width, (double) maxHeight / pixels.height);
+        for (Element bounds : new Element[] { extent, shape }) {
+            bounds.setAttribute("cx", Long.toString(Math.max(1, Math.round(scale * pixels.width))));
+            bounds.setAttribute("cy", Long.toString(Math.max(1, Math.round(scale * pixels.height))));
+        }
+    }
+
+    private Dimension pictureDimensions(String id) throws IOException {
+        NodeList links = relationships.getElementsByTagNameNS(REL, "Relationship");
+        for (int i = 0; i < links.getLength(); i++) {
+            Element link = (Element) links.item(i);
+            if (!id.equals(link.getAttribute("Id"))) {
+                continue;
+            }
+            String target = link.getAttribute("Target");
+            String part = target.startsWith("/word/") ? target.substring(1) : "word/" + target;
+            byte[] data = additions.get(part);
+            if (data != null) {
+                return ImageUtil.getImageFileDimension(new ByteArrayInputStream(data));
+            }
+            try (ZipFile zip = new ZipFile(source.toFile())) {
+                ZipEntry entry = zip.getEntry(part);
+                if (entry != null) {
+                    try (InputStream stream = zip.getInputStream(entry)) {
+                        return ImageUtil.getImageFileDimension(stream);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /** Other message items retain the reference's numbered four-column ledger. */
@@ -916,6 +1226,8 @@ public class WordReportDocument {
         docPr.setAttribute("id", Integer.toString(++drawingId));
         docPr.setAttribute("name", name);
         docPr.setAttribute("descr", xmlText(description == null ? "" : description));
+        Element frame = append(inline, WP, "wp:cNvGraphicFramePr");
+        append(frame, A, "a:graphicFrameLocks").setAttribute("noChangeAspect", "1");
         Element graphic = append(inline, A, "a:graphic");
         Element data = append(graphic, A, "a:graphicData");
         data.setAttribute("uri", PIC);
@@ -924,7 +1236,8 @@ public class WordReportDocument {
         Element cpr = append(nv, PIC, "pic:cNvPr");
         cpr.setAttribute("id", "0");
         cpr.setAttribute("name", name);
-        append(nv, PIC, "pic:cNvPicPr");
+        Element nonVisual = append(nv, PIC, "pic:cNvPicPr");
+        append(nonVisual, A, "a:picLocks").setAttribute("noChangeAspect", "1");
         Element fill = append(pic, PIC, "pic:blipFill");
         append(fill, A, "a:blip").setAttributeNS(R, "r:embed", id);
         append(append(fill, A, "a:stretch"), A, "a:fillRect");

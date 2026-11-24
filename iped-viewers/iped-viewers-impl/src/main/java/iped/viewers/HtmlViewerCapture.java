@@ -23,7 +23,18 @@ public class HtmlViewerCapture {
     public static class Message {
         public Rectangle2D bounds;
         public String label = "";
+        public final List<Attachment> images = new ArrayList<>();
         public final List<Transcript> transcripts = new ArrayList<>();
+    }
+
+    public static class Attachment {
+        public final String hash;
+        public final Rectangle2D bounds;
+
+        public Attachment(String hash, Rectangle2D bounds) {
+            this.hash = hash;
+            this.bounds = bounds;
+        }
     }
 
     public static class Transcript {
@@ -69,6 +80,12 @@ public class HtmlViewerCapture {
             Message message = new Message();
             message.bounds = rectangle((JSObject) source.getMember("bounds"));
             message.label = String.valueOf(source.getMember("label"));
+            JSObject images = (JSObject) source.getMember("images");
+            for (int j = 0; j < number(images, "length"); j++) {
+                JSObject image = (JSObject) images.getSlot(j);
+                message.images.add(new Attachment(String.valueOf(image.getMember("hash")),
+                        rectangle((JSObject) image.getMember("bounds"))));
+            }
             JSObject transcripts = (JSObject) source.getMember("transcripts");
             for (int t = 0; t < number(transcripts, "length"); t++) {
                 JSObject text = (JSObject) transcripts.getSlot(t);

@@ -7,7 +7,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -263,6 +265,24 @@ public class WordReportDocumentTest {
         String anchor = WordReportDocument.FILE_NAME + ": " + evidence().title;
         assertEquals(0, next.countTextOccurrencesBefore(0, anchor));
         assertEquals(1, next.countTextOccurrencesBefore(next.getLocations().size() - 1, anchor));
+    }
+
+    @Test
+    public void pairedChatPreviewStartsAtTheReplacedTableWhenTheFileNameIsRepeated() throws Exception {
+        WordReportDocument report = new WordReportDocument(fixture());
+        WordReportDocument.Evidence excerpt = chat("repeated");
+        WordReportDocument.Evidence audio = new WordReportDocument.Evidence();
+        audio.text = "Transcription of the selected audio.";
+        excerpt.transcripts.add(audio);
+        int after = report.insert(3, Arrays.asList(excerpt, excerpt), true, true);
+        Path output = temporary.getRoot().toPath().resolve("repeated-chat.docx");
+        report.write(output);
+
+        WordReportDocument saved = new WordReportDocument(output);
+        String anchor = WordReportDocument.FILE_NAME + ": " + excerpt.title;
+        assertTrue(saved.hasPreviousChat(after));
+        assertEquals(4, saved.countTextOccurrencesBefore(after, anchor, false));
+        assertEquals(2, saved.countTextOccurrencesBefore(after, anchor, true));
     }
 
     @Test
@@ -549,6 +569,38 @@ public class WordReportDocumentTest {
     }
 
     @Test
+    public void enlargedAttachmentUsesChatFileInformationWithOrWithoutAudio() throws Exception {
+        WordReportDocument.Evidence excerpt = chat("example");
+        excerpt.attachment = evidence();
+        excerpt.attachment.title = "receipt.png";
+        excerpt.attachment.image = new BufferedImage(800, 1200, BufferedImage.TYPE_INT_RGB);
+        excerpt.attachment.metadata.put("Caminho", "media/receipt.png");
+        WordReportDocument.Evidence audio = new WordReportDocument.Evidence();
+        audio.text = "Selected transcription";
+        audio.metadata.put("Hash", "audio-hash");
+        excerpt.transcripts.add(audio);
+        for (boolean includeText : new boolean[] { true, false }) {
+            WordReportDocument report = new WordReportDocument(fixture());
+            int after = report.insert(3, Collections.singletonList(excerpt), true, includeText);
+            Path output = temporary.getRoot().toPath().resolve("attachment-" + includeText + ".docx");
+            report.write(output);
+            assertFalse(new WordReportDocument(output).hasPreviousChat(after));
+            org.w3c.dom.Element table = (org.w3c.dom.Element) documentXml(output).getElementsByTagNameNS(WordReportDocument.W, "tbl").item(1);
+            org.w3c.dom.NodeList cells = table.getElementsByTagNameNS(WordReportDocument.W, "tc");
+            assertEquals(6, cells.getLength());
+            assertEquals(includeText, cells.item(1).getTextContent().contains(audio.text));
+            assertEquals(1, ((org.w3c.dom.Element) cells.item(1)).getElementsByTagNameNS(WordReportDocument.W, "drawing").getLength());
+            assertTrue(cells.item(4).getTextContent().contains("example-hash"));
+            assertFalse(cells.item(4).getTextContent().contains("receipt.png"));
+            assertTrue(cells.item(4).getTextContent().contains(excerpt.title));
+            assertTrue(cells.item(4).getTextContent().contains(excerpt.metadata.get("Caminho")));
+            assertEquals(cells.item(4).getTextContent(), cells.item(5).getTextContent());
+            assertFalse(table.getTextContent().contains("fixture-hash"));
+            assertFalse(table.getTextContent().contains("audio-hash"));
+        }
+    }
+
+    @Test
     public void readsTheMetadataTranscriptionUsedByTheAudioViewer() throws Exception {
         iped.engine.data.Item item = new iped.engine.data.Item();
         String text = "Transcrição completa com acentuação. ".repeat(1500);
@@ -624,6 +676,51 @@ public class WordReportDocumentTest {
         assertTrue(metadata.item(1).getTextContent().contains("second-hash"));
         assertFalse(metadata.item(1).getTextContent().contains("first-hash"));
         assertFalse(new WordReportDocument(output).hasPreviousChat(5));
+    }
+
+    @Test
+    public void savedDocumentExcerptsKeepOnlyTheApprovedPixelsAndOriginalMetadata() throws Exception {
+        BufferedImage page = new BufferedImage(120, 180, BufferedImage.TYPE_INT_RGB);
+        page.setRGB(11, 20, 0xff44ee);
+        page.setRGB(61, 100, 0xaaff33);
+        iped.engine.data.Item item = new iped.engine.data.Item();
+        item.setName("sample.pdf");
+        item.setPath("/documents/sample.pdf");
+        item.setHash("AABBCC");
+        WordReportChatSelection selection = WordReportChatSelection.document(page);
+        WordReportDocument.Evidence first = WordReportEvidence.capturedEvidence(item,
+                selection.crop(new java.awt.Rectangle(10, 20, 36, 48)));
+        WordReportDocument.Evidence second = WordReportEvidence.capturedEvidence(item,
+                selection.crop(new java.awt.Rectangle(60, 100, 15, 35)));
+        assertFalse(first.chatCapture);
+        assertNull(first.text);
+        assertEquals(0xffff44ee, first.image.getRGB(1, 0));
+        WordReportDocument report = new WordReportDocument(fixture());
+        int location = report.insert(3, Collections.singletonList(first), true, true);
+        Path saved = temporary.getRoot().toPath().resolve("document-excerpt.docx");
+        report.write(saved);
+        report = new WordReportDocument(saved);
+        assertTrue(report.hasPreviousImage(location));
+        second.besidePrevious = true;
+        report.insert(location, Collections.singletonList(second), true, true);
+        Path pair = temporary.getRoot().toPath().resolve("document-pair.docx");
+        report.write(pair);
+        try (ZipFile zip = new ZipFile(pair.toFile())) {
+            java.util.List<BufferedImage> images = new ArrayList<>();
+            for (ZipEntry entry : Collections.list(zip.entries())) {
+                if (entry.getName().startsWith("word/media/iped-report-")) {
+                    try (InputStream stream = zip.getInputStream(entry)) {
+                        images.add(javax.imageio.ImageIO.read(stream));
+                    }
+                }
+            }
+            assertEquals(2, images.size());
+            assertTrue(images.stream().anyMatch(i -> i.getWidth() == 36 && i.getHeight() == 48 && i.getRGB(1, 0) == 0xffff44ee));
+            assertTrue(images.stream().anyMatch(i -> i.getWidth() == 15 && i.getHeight() == 35 && i.getRGB(1, 0) == 0xffaaff33));
+        }
+        String text = documentXml(pair).getDocumentElement().getTextContent();
+        assertTrue(text.contains("AABBCC") && text.contains("sample.pdf") && text.contains("/documents/sample.pdf"));
+        assertFalse(text.contains("Transcrição do áudio"));
     }
 
     @Test
@@ -738,6 +835,11 @@ public class WordReportDocumentTest {
         run.appendChild(text);
         p.appendChild(run);
         cell.appendChild(p);
+        String wp = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing";
+        String drawing = "http://schemas.openxmlformats.org/drawingml/2006/main";
+        ((org.w3c.dom.Element) table.getElementsByTagNameNS(wp, "extent").item(0)).setAttribute("cy", "200");
+        org.w3c.dom.Element blip = (org.w3c.dom.Element) table.getElementsByTagNameNS(drawing, "blip").item(0);
+        blip.appendChild(xml.createElementNS(drawing, "a:extLst")).appendChild(xml.createElementNS(drawing, "a:ext"));
         java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
         javax.xml.transform.TransformerFactory.newInstance().newTransformer().transform(
                 new javax.xml.transform.dom.DOMSource(xml), new javax.xml.transform.stream.StreamResult(bytes));
@@ -761,6 +863,14 @@ public class WordReportDocumentTest {
         report.insert(after, Collections.singletonList(second), true, true);
         Path paired = temporary.getRoot().toPath().resolve("paired-legacy-chat.docx");
         report.write(paired);
+        org.w3c.dom.Document pairedXml = documentXml(paired);
+        org.w3c.dom.Element frame = (org.w3c.dom.Element) pairedXml.getElementsByTagNameNS(wp, "extent").item(0);
+        org.w3c.dom.Element transform = (org.w3c.dom.Element) pairedXml.getElementsByTagNameNS(drawing, "xfrm").item(0);
+        org.w3c.dom.Element shape = (org.w3c.dom.Element) transform.getElementsByTagNameNS(drawing, "ext").item(0);
+        assertEquals(2 * Long.parseLong(frame.getAttribute("cy")), Long.parseLong(frame.getAttribute("cx")));
+        assertEquals(frame.getAttribute("cx"), shape.getAttribute("cx"));
+        assertEquals(frame.getAttribute("cy"), shape.getAttribute("cy"));
+        assertFalse(((org.w3c.dom.Element) pairedXml.getElementsByTagNameNS(drawing, "ext").item(0)).hasAttribute("cx"));
         String content = documentXml(paired).getDocumentElement().getTextContent();
         assertFalse(content.contains("legacy-audio-hash"));
         assertTrue(content.contains(audio.text));
@@ -787,6 +897,95 @@ public class WordReportDocumentTest {
         assertFalse(cells.item(1).getTextContent().contains(audio.text));
         assertEquals(1, ((org.w3c.dom.Element) cells.item(0)).getElementsByTagNameNS(WordReportDocument.W, "drawing").getLength());
         assertEquals(1, ((org.w3c.dom.Element) cells.item(1)).getElementsByTagNameNS(WordReportDocument.W, "drawing").getLength());
+    }
+
+    @Test
+    public void fourCropsCanExtendASavedPairAndShareTheirFileInformation() throws Exception {
+        Path source = fixture();
+        int after = 3;
+        final String hash = "abc123";
+        for (int i = 0; i < 4; i++) {
+            WordReportDocument report = new WordReportDocument(source);
+            if (i > 0) {
+                assertEquals(i, report.previousChatCount(after, hash));
+                assertEquals(0, report.previousChatCount(after, "different"));
+            }
+            WordReportDocument.Evidence item = chat("same");
+            item.metadata.put("Hash", "ABC123");
+            item.imageDescription = "Crop " + (i + 1);
+            item.image = new BufferedImage(120 + 15 * i, 480, BufferedImage.TYPE_INT_RGB);
+            item.besidePrevious = i > 0;
+            after = report.insert(after, Collections.singletonList(item), true, true);
+            source = temporary.getRoot().toPath().resolve("chat-" + i + ".docx");
+            report.write(source);
+            assertEquals(i == 3 ? 1 : 0, documentXml(source).getElementsByTagNameNS(WordReportDocument.W, "br").getLength());
+        }
+        org.w3c.dom.Element grid = (org.w3c.dom.Element) documentXml(source)
+                .getElementsByTagNameNS(WordReportDocument.W, "tbl").item(1);
+        assertEquals(4, grid.getElementsByTagNameNS(WordReportDocument.W, "tr").getLength());
+        String wp = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing";
+        for (int i = 0; i < 4; i++) {
+            org.w3c.dom.Element drawing = (org.w3c.dom.Element) grid.getElementsByTagNameNS(wp, "docPr").item(i);
+            assertEquals("Crop " + (i + 1), drawing.getAttribute("descr"));
+            org.w3c.dom.Element bounds = (org.w3c.dom.Element) grid.getElementsByTagNameNS(wp, "extent").item(i);
+            assertEquals((120 + 15 * i) / 480.0, Double.parseDouble(bounds.getAttribute("cx"))
+                    / Double.parseDouble(bounds.getAttribute("cy")), 0.00001);
+        }
+        assertEquals(1, grid.getTextContent().split("Hash:", -1).length - 1);
+        WordReportDocument full = new WordReportDocument(source);
+        assertEquals(0, full.previousChatCount(after, hash));
+        WordReportDocument continued = new WordReportDocument(source);
+        continued.insert(after, Collections.singletonList(chat("next")), true, true);
+        Path next = temporary.getRoot().toPath().resolve("continued.docx");
+        continued.write(next);
+        assertEquals(2, documentXml(next).getElementsByTagNameNS(WordReportDocument.W, "br").getLength());
+        WordReportDocument.Evidence fifth = chat("same");
+        fifth.metadata.put("Hash", hash);
+        fifth.besidePrevious = true;
+        try {
+            full.insert(after, Collections.singletonList(fifth), true, true);
+            fail("A full chat grid must not accept a fifth image");
+        } catch (java.io.IOException expected) {
+            assertNotNull(expected.getMessage());
+        }
+    }
+
+    @Test
+    public void chatGridPreservesDistinctPathsAndRejectsUnrelatedOrAnnotatedCrops() throws Exception {
+        List<WordReportDocument.Evidence> crops = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            WordReportDocument.Evidence item = chat("source-" + i);
+            item.metadata.put("Hash", "shared");
+            item.besidePrevious = i > 0;
+            crops.add(item);
+        }
+        WordReportDocument report = new WordReportDocument(fixture());
+        report.insert(3, crops, true, true);
+        Path output = temporary.getRoot().toPath().resolve("distinct-paths.docx");
+        report.write(output);
+        String xmlText = documentXml(output).getDocumentElement().getTextContent();
+        for (WordReportDocument.Evidence item : crops) {
+            assertTrue(xmlText.contains(item.metadata.get("Caminho")));
+        }
+        for (String invalid : new String[] { "different", "", "transcript", "attachment" }) {
+            WordReportDocument.Evidence third = chat("third");
+            third.besidePrevious = true;
+            third.metadata.put("Hash", invalid);
+            if ("transcript".equals(invalid) || "attachment".equals(invalid)) {
+                third.metadata.put("Hash", "shared");
+                if ("attachment".equals(invalid)) {
+                    third.attachment = evidence();
+                } else {
+                    third.transcripts.add(evidence());
+                }
+            }
+            try {
+                new WordReportDocument(fixture()).insert(3, Arrays.asList(crops.get(0), crops.get(1), third), true, true);
+                fail("Ineligible crop was grouped: " + invalid);
+            } catch (java.io.IOException expected) {
+                assertNotNull(expected.getMessage());
+            }
+        }
     }
 
     @Test
@@ -873,7 +1072,7 @@ public class WordReportDocumentTest {
 
     @Test
     public void videoSamplingKeepsChronologicalFramesWithoutFillingWithDuplicates() {
-        java.util.List<BufferedImage> frames = new java.util.ArrayList<>();
+        java.util.List<BufferedImage> frames = new ArrayList<>();
         for (int i = 0; i < 30; i++) {
             BufferedImage frame = new BufferedImage(40, 80, BufferedImage.TYPE_INT_RGB);
             frame.setRGB(0, 0, i);

@@ -1045,7 +1045,9 @@ public class IndexItem extends BasicProps {
             File newDataSource = siwd.askImagePathInGUI();
             if (newDataSource != null) {
                 sisf.setDataSourceURI(newDataSource.toPath().toUri());
-                saveDataSourcePath(caseModuleDir, path, newDataSource.toPath());
+                if (!IPEDSource.isReadOnlyView()) {
+                    saveDataSourcePath(caseModuleDir, path, newDataSource.toPath());
+                }
             }
         }
     }

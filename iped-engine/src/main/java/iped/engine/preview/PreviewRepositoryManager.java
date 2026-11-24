@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
+import iped.engine.data.IPEDSource;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.core.Manager;
@@ -88,6 +89,9 @@ public class PreviewRepositoryManager {
         String dbUrl = "jdbc:h2:async:" + dbFile.getAbsolutePath() + ";CACHE_SIZE=" + H2_CACHE_SIZE + ";DB_CLOSE_ON_EXIT=TRUE";
         if (readOnly) {
             dbUrl += ";ACCESS_MODE_DATA=r";
+            if (IPEDSource.isReadOnlyView()) {
+                dbUrl += ";IFEXISTS=TRUE;TRACE_LEVEL_FILE=0;FILE_LOCK=NO";
+            }
         }
 
         // maxPoolSize is numThreads when processing a case and DEFAULT_POOL_SIZE otherwise
@@ -139,8 +143,10 @@ public class PreviewRepositoryManager {
             HikariDataSource dataSource = new HikariDataSource(config);
 
             // Ensure table exists
-            try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
-                stmt.execute(CREATE_TABLE_SQL);
+            if (!IPEDSource.isReadOnlyView()) {
+                try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
+                    stmt.execute(CREATE_TABLE_SQL);
+                }
             }
 
             // Create and cache the repository instance

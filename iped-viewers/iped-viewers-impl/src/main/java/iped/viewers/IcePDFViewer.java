@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
@@ -32,7 +33,7 @@ import iped.io.IStreamSource;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 
-public class IcePDFViewer extends AbstractViewer {
+public class IcePDFViewer extends AbstractViewer implements DocumentViewport {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IcePDFViewer.class);
 
@@ -44,6 +45,7 @@ public class IcePDFViewer extends AbstractViewer {
     volatile int viewMode = DocumentViewControllerImpl.ONE_COLUMN_VIEW;
 
     private final Object lock = new Object();
+    private volatile IStreamSource displayedContent;
     private volatile IStreamSource lastContent;
 
     @Override
@@ -151,6 +153,14 @@ public class IcePDFViewer extends AbstractViewer {
     }
 
     @Override
+    public BufferedImage captureDocument(IStreamSource expectedSource) {
+        if (expectedSource == null || lastContent != expectedSource || displayedContent != expectedSource) {
+            throw new IllegalStateException("PDF preview is not ready");
+        }
+        return DocumentViewport.snapshot(pdfController.getDocumentViewController().getViewPort());
+    }
+
+    @Override
     public void copyScreen() {
         try {
             // Copy the current displayed page, with the current rotation applied.
@@ -184,6 +194,7 @@ public class IcePDFViewer extends AbstractViewer {
     @Override
     public void loadFile(final IStreamSource content, final Set<String> highlightTerms) {
 
+        displayedContent = null;
         lastContent = content;
 
         if (content == null) {
@@ -230,6 +241,7 @@ public class IcePDFViewer extends AbstractViewer {
                         }
 
                         viewerPanel.setVisible(true);
+                        displayedContent = content;
                         viewerPanel.revalidate();
                         getPanel().revalidate();
 

@@ -6,6 +6,8 @@ import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
+import java.util.Collections;
+
 import org.junit.Test;
 
 import iped.viewers.HtmlViewerCapture;
@@ -83,6 +85,24 @@ public class WordReportChatSelectionTest {
         assertEquals(source.image.getRGB(50, 210), result.image.getRGB(50, 80));
         assertEquals("audio0", result.transcripts.get(0).text);
         assertEquals("audio2", result.transcripts.get(1).text);
+    }
+
+    @Test
+    public void imageLinksAndIndividuallyApprovedTranscriptsFollowTheFinalCrop() {
+        HtmlViewerCapture capture = capture();
+        for (int i = 0; i < 3; i++) {
+            capture.messages.get(i).images.add(new HtmlViewerCapture.Attachment("image-" + i,
+                    new Rectangle2D.Double(10, i * 100 + 55, 25, 30)));
+        }
+        WordReportChatSelection selection = WordReportChatSelection.select(capture, new boolean[] { true, true, true });
+        WordReportChatSelection.Result crop = selection.crop(new Rectangle(0, 100, 100, 145));
+        assertEquals(1, crop.images.size());
+        assertEquals("image-1", crop.images.get(0).hash);
+        crop.keepTranscripts(Collections.singleton(1));
+        assertEquals(1, crop.transcripts.size());
+        assertEquals("audio2", crop.transcripts.get(0).text);
+        crop.keepTranscripts(Collections.singleton(2));
+        assertTrue(crop.transcripts.isEmpty());
     }
 
     @Test

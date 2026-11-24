@@ -18,7 +18,22 @@
         var time = bubble.querySelector('.time');
         var label = name && visible(name.getBoundingClientRect()) ? name.textContent.trim() : '';
         if (time && visible(time.getBoundingClientRect())) label += ' ' + time.textContent.trim();
-        var message = { bounds: bounds(bubble.getBoundingClientRect()), label: label.trim(), transcripts: [] };
+        var message = { bounds: bounds(bubble.getBoundingClientRect()), label: label.trim(), transcripts: [], images: [] };
+        var images = bubble.querySelectorAll('a img:not(.iped-video), a .imageImg');
+        for (var j = 0; j < images.length; j++) {
+            var img = images[j];
+            var box = img.getBoundingClientRect();
+            if (!visible(box)) continue;
+            var link = img.closest('a');
+            var action = link.getAttribute('onclick') || '';
+            var match = /app\.open\(\s*['"]hash:([a-f0-9]{32,128})['"]\s*\)/i.exec(action);
+            var check = link.previousElementSibling;
+            var hash = match ? match[1] : '';
+            if (!hash && /app\.open\(/.test(action) && check && check.matches('input.check')) {
+                hash = check.getAttribute('name') || '';
+            }
+            if (/^[a-f0-9]{32,128}$/i.test(hash)) message.images.push({hash: hash, bounds: bounds(box)});
+        }
         if (bubble.querySelector('.audioImg, .iped-audio, audio')) {
             var italics = bubble.querySelectorAll('i');
             for (var t = 0; t < italics.length; t++) {

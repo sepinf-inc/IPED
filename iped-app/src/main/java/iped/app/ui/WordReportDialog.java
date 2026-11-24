@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -63,9 +64,12 @@ import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.engine.data.IPEDSource;
 import iped.data.IItemId;
 import iped.data.IItem;
+import iped.viewers.DocumentViewport;
 import iped.viewers.HtmlViewer;
+import iped.viewers.HtmlViewerCapture;
 import iped.viewers.api.AbstractViewer;
 import iped.io.IStreamSource;
 import iped.engine.data.IPEDMultiSource;
@@ -83,15 +87,21 @@ public class WordReportDialog extends JDialog {
             .collect(java.util.stream.Collectors.joining("\n"));
 
     private final List<ReportItem> items = new ArrayList<>();
-    private static boolean capturingChat;
+    private static boolean capturingExcerpt;
 
     private static class ReportItem {
         final IItemId id;
         final WordReportChatSelection.Result capture;
         ReportItem beside;
         int besideLocation = -1;
+        String chatHash;
+        int chatGroupSize;
         int mediaType;
         boolean separateRow;
+
+        boolean isChatCrop() {
+            return capture != null && !capture.document;
+        }
 
         ReportItem(IItemId id, WordReportChatSelection.Result capture) {
             this.id = id;
@@ -119,10 +129,13 @@ public class WordReportDialog extends JDialog {
     private final JPanel previewPanel = new JPanel(new BorderLayout(8, 8));
     private final JLabel evidenceImage = new JLabel(message("SelectEvidencePreview"), JLabel.CENTER);
     private final JTextArea evidenceText = new JTextArea();
-    private final JScrollPane evidenceScroll = new JScrollPane(evidenceImage);
+    private final JLabel attachmentImage = new JLabel("", JLabel.CENTER);
+    private final JPanel evidenceImages = new JPanel(new GridLayout(1, 0, 4, 0));
+    private final JScrollPane evidenceScroll = new JScrollPane(evidenceImages);
     private SwingWorker<WordReportDocument.Evidence, Void> evidenceWorker;
     private ReportItem previewedItem;
     private BufferedImage evidencePixels;
+    private BufferedImage attachmentPixels;
     private final JPanel content = new JPanel(new BorderLayout(8, 8));
     private final JPanel loading = new JPanel(new GridBagLayout());
     private final JLabel activity = new JLabel();
@@ -189,65 +202,99 @@ public class WordReportDialog extends JDialog {
     }
 
     private static void prepareSelection(Consumer<List<ReportItem>> done) {
-        if (capturingChat) {
+        if (capturingExcerpt) {
             return;
         }
         IPEDMultiSource source = App.get().appCase;
         List<ReportItem> selected = new ArrayList<>();
-        ReportItem chat = null;
+        ReportItem excerpt = null;
+        boolean chat = false;
         try {
             for (int row : App.get().resultsTable.getSelectedRows()) {
                 IItemId id = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
                 Document doc = source.getSearcher().doc(source.getLuceneId(id));
                 ReportItem item = new ReportItem(id, null);
-                if (WordReportEvidence.isChat(doc.get(IndexItem.CONTENTTYPE), doc.get(IndexItem.NAME))) {
-                    if (chat != null) {
-                        JOptionPane.showMessageDialog(App.get(), message("OneChatAtATime"));
+                String mime = doc.get(IndexItem.CONTENTTYPE);
+                boolean isChat = WordReportEvidence.isChat(mime, doc.get(IndexItem.NAME));
+                if (isChat || WordReportEvidence.isDocument(mime)) {
+                    if (excerpt != null) {
+                        JOptionPane.showMessageDialog(App.get(), message("OneExcerptAtATime"));
                         return;
                     }
-                    chat = item;
+                    excerpt = item;
+                    chat = isChat;
                 }
                 selected.add(item);
             }
-            if (chat == null) {
+            if (excerpt == null) {
                 done.accept(selected);
                 return;
             }
-            ViewerController controller = App.get().getViewerController();
-            IItem viewed = controller.getViewedItem();
-            AbstractViewer viewer = controller.getMultiViewer().getCurrentViewer();
-            IStreamSource content = controller.getViewedContent();
-            Document doc = source.getSearcher().doc(source.getLuceneId(chat.id));
-            if (!(viewer instanceof HtmlViewer) || !viewer.getPanel().isShowing() || viewed == null
-                    || viewed.getId() != chat.id.getId() || viewed.getDataSource() == null
-                    || !viewed.getDataSource().getUUID().equals(doc.get(IndexItem.EVIDENCE_UUID))) {
-                JOptionPane.showMessageDialog(App.get(), message("OpenChatPreview"));
+            captureExcerpt(source, selected, excerpt, chat, done);
+        } catch (Exception e) {
+            LOGGER.warn("Word excerpt capture failed: {}", e.getClass().getSimpleName());
+            JOptionPane.showMessageDialog(App.get(), message(chat ? "OpenChatPreview" : "OpenDocumentPreview"));
+        }
+    }
+
+    private static void captureExcerpt(IPEDMultiSource source, List<ReportItem> selected, ReportItem excerpt,
+            boolean chat, Consumer<List<ReportItem>> done) throws IOException {
+        ViewerController controller = App.get().getViewerController();
+        IItem viewed = controller.getViewedItem();
+        AbstractViewer preview = controller.getMultiViewer().getCurrentViewer();
+        if (!chat && (preview == null || !preview.getPanel().isShowing())) {
+            preview = controller.getTextViewer();
+        }
+        AbstractViewer viewer = preview;
+        IStreamSource content = viewer == controller.getTextViewer() ? viewed : controller.getViewedContent();
+        Document doc = source.getSearcher().doc(source.getLuceneId(excerpt.id));
+        String hint = message(chat ? "OpenChatPreview" : "OpenDocumentPreview");
+        if (viewed == null || viewed.getDataSource() == null || viewed.getId() != excerpt.id.getId()
+                || !viewed.getDataSource().getUUID().equals(doc.get(IndexItem.EVIDENCE_UUID))
+                || viewer == null || !viewer.getPanel().isShowing() || content == null) {
+            JOptionPane.showMessageDialog(App.get(), hint);
+            return;
+        }
+        CompletableFuture<HtmlViewerCapture> snapshot;
+        if (viewer instanceof HtmlViewer) {
+            snapshot = ((HtmlViewer) viewer).captureVisible(content, chat);
+        } else if (!chat && viewer instanceof DocumentViewport) {
+            BufferedImage image = ((DocumentViewport) viewer).captureDocument(content);
+            if (image == null) {
+                JOptionPane.showMessageDialog(App.get(), hint);
                 return;
             }
-            ReportItem selectedChat = chat;
-            capturingChat = true;
-            App.get().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            ((HtmlViewer) viewer).captureVisible(content).whenComplete((capture, failure) -> SwingUtilities.invokeLater(() -> {
-                capturingChat = false;
-                App.get().setCursor(Cursor.getDefaultCursor());
+            snapshot = CompletableFuture.completedFuture(new HtmlViewerCapture(image));
+        } else {
+            JOptionPane.showMessageDialog(App.get(), hint);
+            return;
+        }
+        capturingExcerpt = true;
+        App.get().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        snapshot.whenComplete((capture, failure) -> SwingUtilities.invokeLater(() -> {
+            try {
                 if (App.get().appCase != source) {
                     return;
                 }
-                if (failure != null || controller.getViewedItem() != viewed || controller.getViewedContent() != content
-                        || controller.getMultiViewer().getCurrentViewer() != viewer || capture.messages.isEmpty()) {
-                    JOptionPane.showMessageDialog(App.get(), message("OpenChatPreview"));
+                if (failure != null || controller.getViewedItem() != viewed || !viewer.getPanel().isShowing()
+                        || (viewer != controller.getTextViewer() && (controller.getViewedContent() != content
+                                || controller.getMultiViewer().getCurrentViewer() != viewer))
+                        || (chat && capture.messages.isEmpty())) {
+                    JOptionPane.showMessageDialog(App.get(), hint);
                     return;
                 }
-                WordReportChatSelection.Result crop = WordReportChatCropDialog.show(capture);
-                if (crop != null) {
-                    selected.set(selected.indexOf(selectedChat), new ReportItem(selectedChat.id, crop));
+                App.get().setCursor(Cursor.getDefaultCursor());
+                WordReportChatSelection.Result crop = chat ? WordReportChatCropDialog.show(capture, source, excerpt.id)
+                        : WordReportChatCropDialog.showDocument(capture);
+                if (crop != null && App.get().appCase == source) {
+                    selected.set(selected.indexOf(excerpt), new ReportItem(excerpt.id, crop));
                     done.accept(selected);
                 }
-            }));
-        } catch (Exception e) {
-            LOGGER.warn("Word chat capture failed: {}", e.getClass().getSimpleName());
-            JOptionPane.showMessageDialog(App.get(), message("OpenChatPreview"));
-        }
+            } finally {
+                capturingExcerpt = false;
+                App.get().setCursor(Cursor.getDefaultCursor());
+            }
+        }));
     }
 
     public WordReportDialog() {
@@ -525,6 +572,7 @@ public class WordReportDialog extends JDialog {
         navigation.add(nextPage);
         navigation.add(zoom);
         panel.add(navigation, BorderLayout.SOUTH);
+        evidenceImages.add(evidenceImage);
         evidenceText.setEditable(false);
         evidenceText.setLineWrap(true);
         evidenceText.setWrapStyleWord(true);
@@ -545,6 +593,11 @@ public class WordReportDialog extends JDialog {
         int row = table.getSelectedRow();
         previewedItem = row < 0 ? null : items.get(table.convertRowIndexToModel(row));
         evidencePixels = null;
+        attachmentPixels = null;
+        evidenceImages.remove(attachmentImage);
+        attachmentImage.setIcon(null);
+        evidenceImages.revalidate();
+        evidenceImages.repaint();
         evidenceImage.setIcon(null);
         evidenceText.setText("");
         evidenceImage.setText(message(previewedItem == null ? "SelectEvidencePreview" : "LoadingEvidencePreview"));
@@ -556,8 +609,8 @@ public class WordReportDialog extends JDialog {
         evidenceWorker = new SwingWorker<WordReportDocument.Evidence, Void>() {
             @Override
             protected WordReportDocument.Evidence doInBackground() throws Exception {
-                return selected.capture == null ? WordReportEvidence.preview(caseSource, selected.id, includeText)
-                        : WordReportEvidence.readChatCapture(caseSource, selected.id, selected.capture);
+                return selected.capture == null ? WordReportEvidence.preview(caseSource, selected.id, includeText, work)
+                        : WordReportEvidence.readCapture(caseSource, selected.id, selected.capture);
             }
 
             @Override
@@ -568,6 +621,12 @@ public class WordReportDialog extends JDialog {
                 try {
                     WordReportDocument.Evidence item = get();
                     evidencePixels = item.image;
+                    if (item.attachment != null) {
+                        attachmentPixels = item.attachment.image;
+                        attachmentImage.setToolTipText(item.attachment.title);
+                        evidenceImages.add(attachmentImage);
+                        evidenceImages.revalidate();
+                    }
                     evidenceImage.setText(item.image == null ? message("NoEvidenceImage") : "");
                     StringBuilder details = new StringBuilder();
                     if (includeText) {
@@ -601,11 +660,19 @@ public class WordReportDialog extends JDialog {
             return;
         }
         Dimension available = evidenceScroll.getViewport().getExtentSize();
-        double scale = Math.min(1, Math.min(Math.max(1, available.width - 20) / (double) evidencePixels.getWidth(),
-                Math.max(1, available.height - 20) / (double) evidencePixels.getHeight()));
-        evidenceImage.setIcon(new ImageIcon(scale == 1 ? evidencePixels : evidencePixels.getScaledInstance(
-                Math.max(1, (int) (evidencePixels.getWidth() * scale)),
-                Math.max(1, (int) (evidencePixels.getHeight() * scale)), Image.SCALE_SMOOTH)));
+        int width = (available.width - 20) / evidenceImages.getComponentCount();
+        setPreviewImage(evidenceImage, evidencePixels, width, available.height - 20);
+        if (attachmentPixels != null) {
+            setPreviewImage(attachmentImage, attachmentPixels, width, available.height - 20);
+        }
+    }
+
+    private void setPreviewImage(JLabel label, BufferedImage image, int width, int height) {
+        double scale = Math.min(1, Math.min(Math.max(1, width) / (double) image.getWidth(),
+                Math.max(1, height) / (double) image.getHeight()));
+        label.setIcon(new ImageIcon(scale == 1 ? image : image.getScaledInstance(
+                Math.max(1, (int) (image.getWidth() * scale)),
+                Math.max(1, (int) (image.getHeight() * scale)), Image.SCALE_SMOOTH)));
     }
 
     private void showReportPreview() {
@@ -683,7 +750,14 @@ public class WordReportDialog extends JDialog {
                 if (!exists) {
                     Document doc = caseSource.getSearcher().doc(caseSource.getLuceneId(id));
                     String mime = doc.get(IndexItem.CONTENTTYPE);
-                    entry.mediaType = mime == null ? 5 : WordReportEvidence.mediaType(mime);
+                    entry.mediaType = entry.capture != null && entry.capture.document ? 1
+                            : mime == null ? 5 : WordReportEvidence.mediaType(mime);
+                    if (entry.isChatCrop() && entry.capture.attachment == null && entry.capture.transcripts.isEmpty()) {
+                        entry.chatHash = doc.get(IndexItem.HASH);
+                        if (entry.chatHash != null && !entry.chatHash.isBlank()) {
+                            entry.chatGroupSize = 1;
+                        }
+                    }
                     if ((entry.capture != null || entry.mediaType == 1 && selected.size() == 1) && !choosePlacement(entry)) {
                         continue;
                     }
@@ -692,12 +766,13 @@ public class WordReportDialog extends JDialog {
                     if (entry.capture != null) {
                         long excerpt = items.stream().filter(item -> item.id.getSourceId() == id.getSourceId()
                                 && item.id.getId() == id.getId()).count();
-                        name = message("ChatCropName", name, excerpt, entry.capture.messageCount);
-                        if (entry.beside != null || entry.besideLocation >= 0) {
+                        name = entry.capture.document ? message("DocumentCropName", name, excerpt)
+                                : message("ChatCropName", name, excerpt, entry.capture.messageCount);
+                        if (entry.chatGroupSize < 3 && (entry.beside != null || entry.besideLocation >= 0)) {
                             name = message("ChatBesideName", name);
                         }
                     }
-                    String placement = entry.beside != null || entry.besideLocation >= 0 ? "BesidePrevious"
+                    String placement = entry.chatGroupSize >= 3 ? "SameChatPage" : entry.beside != null || entry.besideLocation >= 0 ? "BesidePrevious"
                             : entry.separateRow ? "SeparateRow" : "Pending";
                     tableModel.addRow(new Object[] { true, id.getSourceId() + ":" + id.getId(), name, message(placement) });
                     added++;
@@ -739,22 +814,36 @@ public class WordReportDialog extends JDialog {
         List<ReportItem> pending = selectedItems();
         ReportItem previous = pending.isEmpty() ? null : pending.get(pending.size() - 1);
         WordReportDocument.Location position = locations.getSelectedValue();
-        boolean chat = entry.capture != null;
-        boolean pendingFrame = previous != null && previous.beside == null && previous.besideLocation < 0
-                && (chat ? previous.capture != null : previous.mediaType == 1 && previous.capture == null && hasPendingImageColumn(pending));
-        boolean savedFrame = previous == null && loaded != null && position != null
-                && (chat ? loaded.hasPreviousChat(position.index) : loaded.hasPreviousImage(position.index));
-        if (!pendingFrame && !savedFrame) {
+        boolean chat = entry.isChatCrop();
+        if (chat && entry.capture.attachment != null) {
             return true;
         }
-        Object[] options = { message(chat ? "ChatBesidePrevious" : "ImageBesidePrevious"),
+        boolean pendingFrame = previous != null && previous.beside == null && previous.besideLocation < 0
+                && (chat ? previous.isChatCrop() && previous.capture.attachment == null : previous.mediaType == 1 && !previous.isChatCrop() && hasPendingImageColumn(pending));
+        boolean savedFrame = previous == null && loaded != null && position != null
+                && (chat ? loaded.hasPreviousChat(position.index) : loaded.hasPreviousImage(position.index));
+        int previousCount = 0;
+        if (entry.chatGroupSize == 1) {
+            if (previous != null && entry.chatHash.equalsIgnoreCase(previous.chatHash)) {
+                previousCount = previous.chatGroupSize;
+            } else if (previous == null && loaded != null && position != null) {
+                previousCount = loaded.previousChatCount(position.index, entry.chatHash);
+            }
+        }
+        boolean extendGrid = previousCount == 2 || previousCount == 3;
+        if (!pendingFrame && !savedFrame && !extendGrid) {
+            return true;
+        }
+        Object[] options = { extendGrid ? message("ChatGridAdd", previousCount + 1)
+                : message(chat ? "ChatBesidePrevious" : "ImageBesidePrevious"),
                 message(chat ? "ChatKeepSingle" : "ImageKeepSingle"), message("ChatCropCancel") };
-        int choice = JOptionPane.showOptionDialog(this, message(chat ? "ChatPlacementQuestion" : "ImagePlacementQuestion"),
+        int choice = JOptionPane.showOptionDialog(this, message(extendGrid ? "ChatGridQuestion" : chat ? "ChatPlacementQuestion" : "ImagePlacementQuestion"),
                 message(chat ? "ChatPlacementTitle" : "ImagePlacementTitle"),
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
         if (choice == 0) {
-            entry.beside = pendingFrame ? previous : null;
-            entry.besideLocation = savedFrame ? position.index : -1;
+            entry.chatGroupSize = previousCount > 0 ? previousCount + 1 : 0;
+            entry.beside = previous;
+            entry.besideLocation = previous == null ? position.index : -1;
         } else if (choice == 1) {
             entry.separateRow = true;
         }
@@ -764,7 +853,7 @@ public class WordReportDialog extends JDialog {
     private boolean hasPendingImageColumn(List<ReportItem> pending) {
         int count = 0;
         for (ReportItem item : pending) {
-            if (item.capture != null || item.mediaType == 2 || item.mediaType == 4 || item.beside != null || item.besideLocation >= 0) {
+            if (item.isChatCrop() || item.mediaType == 2 || item.mediaType == 4 || item.beside != null || item.besideLocation >= 0) {
                 count = 0;
             } else {
                 if (item.separateRow) {
@@ -996,13 +1085,14 @@ public class WordReportDialog extends JDialog {
                     throw new IOException(message("PreviousEvidenceUnavailable"));
                 }
                 WordReportDocument.Evidence read = item.capture == null ? WordReportEvidence.read(caseSource, item.id, withText, work)
-                        : WordReportEvidence.readChatCapture(caseSource, item.id, item.capture);
+                        : WordReportEvidence.readCapture(caseSource, item.id, item.capture);
                 read.besidePrevious = item.beside != null || item.besideLocation >= 0;
                 read.separateRow = item.separateRow;
                 evidence.add(read);
             }
-            String anchor = WordReportDocument.FILE_NAME + ": " + evidence.get(0).title;
-            int occurrence = report.countTextOccurrencesBefore(location, anchor);
+            WordReportDocument.Evidence first = evidence.get(0);
+            String anchor = WordReportDocument.FILE_NAME + ": " + first.title;
+            int occurrence = report.countTextOccurrencesBefore(location, anchor, first.besidePrevious);
             reportActivity("WritingPreview");
             int after = report.insert(location, evidence, withMetadata, withText, columns);
             Path output = work.resolve("preview-" + UUID.randomUUID() + ".docx");
@@ -1017,7 +1107,7 @@ public class WordReportDialog extends JDialog {
                         office);
                 result.page = result.preview.findPageContaining(anchor, occurrence);
                 if (result.page < 0) {
-                    result.page = result.preview.findPage(evidence.get(0).title);
+                    result.page = result.preview.findPage(first.title);
                 }
                 reportActivity("RenderingPage");
                 result.image = result.preview.render(result.page);
@@ -1075,6 +1165,7 @@ public class WordReportDialog extends JDialog {
         List<ReportItem> inserted = prepared == null ? new ArrayList<>() : new ArrayList<>(preparedItems);
         int after = prepared != null ? nextLocation : locations.getSelectedValue() == null ? -1 : locations.getSelectedValue().index;
         task(update ? "SavingReport" : "SavingCopy", () -> {
+            checkReportDestination(destination);
             if (update) {
                 loaded.savePreparedReport(reviewed);
             } else {
@@ -1111,9 +1202,10 @@ public class WordReportDialog extends JDialog {
                     ReportItem item = items.get(i);
                     boolean last = !inserted.isEmpty() && item.beside == inserted.get(inserted.size() - 1);
                     item.beside = null;
-                    item.besideLocation = last && (item.capture != null ? loaded.hasPreviousChat(after)
+                    item.besideLocation = last && (item.isChatCrop() ? loaded.hasPreviousChat(after) || loaded.previousChatCount(after, item.chatHash) >= 2
                             : loaded.hasPreviousImage(after)) ? after : -1;
                     if (item.besideLocation < 0) {
+                        item.chatGroupSize = item.chatHash == null || item.chatHash.isBlank() ? 0 : 1;
                         item.separateRow = true;
                         tableModel.setValueAt(message("SeparateRow"), i, 3);
                     }
@@ -1124,11 +1216,25 @@ public class WordReportDialog extends JDialog {
         }
     }
 
+    private void checkReportDestination(Path destination) throws IOException {
+        if (IPEDSource.isReadOnlyView()) {
+            Path real = Files.exists(destination) ? destination.toRealPath() : destination.toAbsolutePath().getParent().toRealPath();
+            for (IPEDSource item : App.get().appCase.getAtomicSources()) {
+                for (Path p = real; p != null; p = p.getParent()) {
+                    if (Files.isSameFile(p, item.getCaseDir().toPath())) {
+                        throw new IOException(message("OutsideCase"));
+                    }
+                }
+            }
+        }
+    }
+
     private void openReport() {
         if (loaded == null || !workingDocument || source == null) {
             return;
         }
         try {
+            checkReportDestination(source);
             Desktop.getDesktop().open(source.toFile());
         } catch (Exception e) {
             error(e);

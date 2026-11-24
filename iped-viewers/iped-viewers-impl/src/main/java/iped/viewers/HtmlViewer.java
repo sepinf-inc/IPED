@@ -170,6 +170,10 @@ public class HtmlViewer extends AbstractViewer {
 
     /** Captures only the currently displayed viewport, without scrolling or changing the document. */
     public CompletableFuture<HtmlViewerCapture> captureVisible(IStreamSource expectedSource) {
+        return captureVisible(expectedSource, true);
+    }
+
+    public CompletableFuture<HtmlViewerCapture> captureVisible(IStreamSource expectedSource, boolean chat) {
         CompletableFuture<HtmlViewerCapture> result = new CompletableFuture<>();
         Platform.runLater(() -> {
             // WebKit may report SUCCEEDED before its first pixels have been painted.
@@ -191,7 +195,15 @@ public class HtmlViewer extends AbstractViewer {
                                 || webEngine.getLoadWorker().getState() != Worker.State.SUCCEEDED) {
                             throw new IllegalStateException("The requested HTML preview is not ready");
                         }
-                        result.complete(HtmlViewerCapture.capture(htmlViewer));
+                        if (chat) {
+                            result.complete(HtmlViewerCapture.capture(htmlViewer));
+                        } else {
+                            if (tmpFile == null || !tmpFile.toURI().equals(new java.net.URI(webEngine.getLocation()))) {
+                                throw new IllegalStateException("The document preview is not ready");
+                            }
+                            result.complete(new HtmlViewerCapture(javafx.embed.swing.SwingFXUtils.fromFXImage(
+                                    htmlViewer.snapshot(null, null), null)));
+                        }
                     } catch (Exception e) {
                         result.completeExceptionally(e);
                     }

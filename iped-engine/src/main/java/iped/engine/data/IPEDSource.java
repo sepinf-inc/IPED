@@ -97,6 +97,25 @@ public class IPEDSource implements IIPEDSource {
     public static final String INDEX_DIR = "index"; //$NON-NLS-1$
     public static final String DATA_DIR = "data"; //$NON-NLS-1$
     public static final String LIB_DIR = "lib"; //$NON-NLS-1$
+    private static boolean readOnlyView;
+
+    public static void enableReadOnlyView() {
+        readOnlyView = true;
+    }
+
+    public static void requireCompletedDatabase(Path db) throws IOException {
+        for (String suffix : new String[] { "-journal", "-wal" }) {
+            Path journal = db.resolveSibling(db.getFileName() + suffix);
+            if (!Files.notExists(journal) && Files.size(journal) > 0) {
+                throw new IOException("Database has a pending journal: " + db);
+            }
+        }
+    }
+
+    public static boolean isReadOnlyView() {
+        return readOnlyView;
+    }
+
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
     public static final String PREV_TEMP_INFO_PATH = DATA_DIR + "/prevTempDir.txt"; //$NON-NLS-1$
 
@@ -206,7 +225,14 @@ public class IPEDSource implements IIPEDSource {
                     // workaroud para demora ao abrir o caso enquanto tsk_loaddb não termina
                     sleuthCase = SleuthkitReader.sleuthCase;
                 else {
-                    sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(sleuthFile);
+                    Path db = sleuthFile;
+                    if (readOnlyView) {
+                        // TSK may update image paths and migrate older schemas, even during a search session.
+                        requireCompletedDatabase(db);
+                        db = Files.copy(db, Files.createTempDirectory("iped-sleuth-").resolve(SLEUTH_DB));
+                        db.toFile().setWritable(true);
+                    }
+                    sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(db);
                 }
 
                 if (!isReport)
@@ -525,6 +551,9 @@ public class IPEDSource implements IIPEDSource {
         LOGGER.info("Opening index " + index.getAbsolutePath()); //$NON-NLS-1$
 
         if (iw == null) {
+            if (readOnlyView && !Files.isDirectory(index.toPath())) {
+                throw new IOException("Missing case index: " + index);
+            }
             Directory directory = ConfiguredFSDirectory.open(index);
             reader = DirectoryReader.open(directory);
         } else {

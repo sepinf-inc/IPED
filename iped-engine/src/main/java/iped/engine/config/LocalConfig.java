@@ -12,6 +12,7 @@ import java.util.Random;
 
 import org.slf4j.Logger;
 
+import iped.engine.data.IPEDSource;
 import iped.utils.UTF8Properties;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {
@@ -73,7 +74,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             value = value.trim();
         }
         if (ipedTemp == null) {
-            if (value != null && !value.equalsIgnoreCase(DEFAULT_VAL)) { // $NON-NLS-1$
+            if (!IPEDSource.isReadOnlyView() && value != null && !value.equalsIgnoreCase(DEFAULT_VAL)) { // $NON-NLS-1$
                 newTmp = new File(value);
                 if (!newTmp.exists() && !newTmp.mkdirs()) {
                     if (logger != null)

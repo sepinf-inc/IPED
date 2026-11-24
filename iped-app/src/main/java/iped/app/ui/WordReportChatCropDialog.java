@@ -13,17 +13,33 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 
+import javax.swing.SwingWorker;
+
+import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
+import iped.utils.ImageUtil;
 import iped.viewers.HtmlViewerCapture;
 
 /** Review the visible chat pixels before opening the document/insertion screen. */
@@ -32,15 +48,28 @@ class WordReportChatCropDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private final HtmlViewerCapture capture;
     private final CropPanel canvas = new CropPanel();
-    private final JTextArea transcription = new JTextArea();
+    private final JPanel choices = new JPanel();
+    private final Set<Integer> omittedTranscripts = new HashSet<>();
+    private Map<String, List<WordReportEvidence.ChatImage>> files = Collections.emptyMap();
+    private WordReportEvidence.ChatImage selectedImage;
+    private boolean loadingImages;
+    private boolean imageSearchFailed;
+    private WordReportChatSelection.Result preview;
     private final JLabel count = new JLabel();
     private final JButton accept = new JButton(message("UseChatCrop"));
     private WordReportChatSelection selection;
     private Rectangle crop;
     private WordReportChatSelection.Result result;
 
-    static WordReportChatSelection.Result show(HtmlViewerCapture capture) {
-        WordReportChatCropDialog dialog = new WordReportChatCropDialog(capture);
+    static WordReportChatSelection.Result show(HtmlViewerCapture capture, IPEDMultiSource source, IItemId chat) {
+        WordReportChatCropDialog dialog = new WordReportChatCropDialog(capture, false);
+        dialog.loadImages(source, chat);
+        dialog.setVisible(true);
+        return dialog.result;
+    }
+
+    static WordReportChatSelection.Result showDocument(HtmlViewerCapture capture) {
+        WordReportChatCropDialog dialog = new WordReportChatCropDialog(capture, true);
         dialog.setVisible(true);
         return dialog.result;
     }
@@ -49,8 +78,8 @@ class WordReportChatCropDialog extends JDialog {
         return Messages.getString("WordReport." + key, arguments);
     }
 
-    private WordReportChatCropDialog(HtmlViewerCapture capture) {
-        super(App.get(), message("ChatCropTitle"), true);
+    private WordReportChatCropDialog(HtmlViewerCapture capture, boolean document) {
+        super(App.get(), message(document ? "DocumentCropTitle" : "ChatCropTitle"), true);
         this.capture = capture;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
@@ -59,21 +88,25 @@ class WordReportChatCropDialog extends JDialog {
         setLocationRelativeTo(App.get());
         JPanel content = new JPanel(new BorderLayout(12, 12));
         content.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
-        content.add(new JLabel(message("ChatCropHint")), BorderLayout.NORTH);
+        content.add(new JLabel(message(document ? "DocumentCropHint" : "ChatCropHint")), BorderLayout.NORTH);
         canvas.setPreferredSize(new Dimension(650, 600));
         canvas.setMinimumSize(new Dimension(240, 200));
-        transcription.setEditable(false);
-        transcription.setLineWrap(true);
-        transcription.setWrapStyleWord(true);
-        JScrollPane text = new JScrollPane(transcription);
-        text.setBorder(BorderFactory.createTitledBorder(message("ChatCropTranscripts")));
-        JPanel options = new JPanel(new BorderLayout(8, 8));
-        options.setMinimumSize(new Dimension(230, 200));
-        options.add(text, BorderLayout.CENTER);
-        options.add(count, BorderLayout.SOUTH);
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, canvas, options);
-        split.setResizeWeight(0.72);
-        content.add(split, BorderLayout.CENTER);
+        if (document) {
+            content.add(canvas, BorderLayout.CENTER);
+        } else {
+            choices.setLayout(new BoxLayout(choices, BoxLayout.Y_AXIS));
+            JPanel list = new JPanel(new BorderLayout());
+            list.add(choices, BorderLayout.PAGE_START);
+            JScrollPane text = new JScrollPane(list);
+            text.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            JPanel options = new JPanel(new BorderLayout(8, 8));
+            options.setMinimumSize(new Dimension(230, 200));
+            options.add(text, BorderLayout.CENTER);
+            options.add(count, BorderLayout.SOUTH);
+            JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, canvas, options);
+            split.setResizeWeight(0.72);
+            content.add(split, BorderLayout.CENTER);
+        }
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton normal = new JButton(message("ChatCropNormal"));
         normal.addActionListener(e -> resetCrop());
@@ -85,13 +118,20 @@ class WordReportChatCropDialog extends JDialog {
         cancel.addActionListener(e -> dispose());
         actions.add(cancel);
         accept.addActionListener(e -> {
-            result = selection.crop(crop);
+            preview.keepTranscripts(omittedTranscripts);
+            preview.attachment = selectedImage == null ? null : selectedImage.id;
+            result = preview;
             dispose();
         });
         actions.add(accept);
         content.add(actions, BorderLayout.SOUTH);
         add(content);
-        rebuild();
+        if (document) {
+            selection = WordReportChatSelection.document(capture.image);
+            resetCrop();
+        } else {
+            rebuild();
+        }
     }
 
     private void rebuild() {
@@ -107,19 +147,135 @@ class WordReportChatCropDialog extends JDialog {
     }
 
     private void updateCrop() {
-        WordReportChatSelection.Result preview = selection.crop(crop);
-        StringBuilder text = new StringBuilder();
-        for (WordReportDocument.Evidence audio : preview.transcripts) {
-            if (text.length() > 0) {
-                text.append("\n\n");
-            }
-            text.append(audio.text);
+        preview = selection.crop(crop);
+        if (preview.document) {
+            canvas.repaint();
+            return;
         }
-        transcription.setText(text.length() == 0 ? message("ChatCropNoTranscript") : text.toString());
-        transcription.setCaretPosition(0);
+        choices.removeAll();
+        JPanel transcripts = group("ChatCropTranscripts");
+        if (preview.transcripts.isEmpty()) {
+            transcripts.add(new JLabel(message("ChatCropNoTranscript")));
+        }
+        for (int i = 0; i < preview.transcripts.size(); i++) {
+            int index = preview.transcriptIndices.get(i);
+            JCheckBox include = new JCheckBox(message("ChatAudioNumber", index + 1), !omittedTranscripts.contains(index));
+            include.addActionListener(e -> {
+                if (include.isSelected()) {
+                    omittedTranscripts.remove(index);
+                } else {
+                    omittedTranscripts.add(index);
+                }
+            });
+            JPanel option = new JPanel(new BorderLayout());
+            option.add(include, BorderLayout.NORTH);
+            option.add(detail(preview.transcripts.get(i).text), BorderLayout.CENTER);
+            transcripts.add(option);
+        }
+        if (!preview.images.isEmpty()) {
+            JPanel images = group("ChatSideImage");
+            ButtonGroup radios = new ButtonGroup();
+            JRadioButton none = new JRadioButton(message("ChatNoSideImage"), true);
+            none.addActionListener(e -> selectedImage = null);
+            radios.add(none);
+            images.add(none);
+            Set<WordReportEvidence.ChatImage> visible = new HashSet<>();
+            for (HtmlViewerCapture.Attachment image : preview.images) {
+                List<WordReportEvidence.ChatImage> matches = files.getOrDefault(image.hash, Collections.emptyList());
+                for (WordReportEvidence.ChatImage file : matches) {
+                    if (!visible.add(file)) {
+                        continue;
+                    }
+                    JRadioButton radio = new JRadioButton();
+                    radio.getAccessibleContext().setAccessibleName(file.name);
+                    radio.getAccessibleContext().setAccessibleDescription(file.path);
+                    radio.addActionListener(e -> selectedImage = file);
+                    radios.add(radio);
+                    BufferedImage thumbnail = file.thumbnail;
+                    if (thumbnail == null) {
+                        // The viewer already rendered this attachment even when the index has no thumbnail.
+                        Rectangle bounds = image.bounds.getBounds();
+                        thumbnail = selection.image.getSubimage(bounds.x, bounds.y, bounds.width, bounds.height);
+                    }
+                    ImageIcon icon = new ImageIcon(ImageUtil.resizeImage(thumbnail,
+                            Math.min(144, thumbnail.getWidth()), Math.min(96, thumbnail.getHeight())));
+                    JButton picture = new JButton(icon);
+                    picture.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+                    picture.setContentAreaFilled(false);
+                    picture.setFocusable(false);
+                    picture.getAccessibleContext().setAccessibleName(file.name);
+                    picture.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    picture.addActionListener(e -> radio.doClick(0));
+                    JPanel option = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 2));
+                    option.add(radio);
+                    option.add(picture);
+                    option.setMaximumSize(new Dimension(Integer.MAX_VALUE, option.getPreferredSize().height));
+                    images.add(option);
+                    if (file == selectedImage) {
+                        radio.setSelected(true);
+                    }
+                }
+            }
+            if (!visible.contains(selectedImage)) {
+                selectedImage = null;
+            }
+            if (visible.isEmpty()) {
+                images.add(detail(message(loadingImages ? "ChatImagesLoading"
+                        : imageSearchFailed ? "ChatImageSearchFailed" : "ChatNoOriginalImage")));
+            }
+        } else {
+            selectedImage = null;
+        }
+        choices.revalidate();
+        choices.repaint();
         count.setText(message("ChatCropCount", preview.messageCount, capture.messages.size()));
         accept.setEnabled(preview.messageCount > 0);
         canvas.repaint();
+    }
+
+    private JPanel group(String title) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createTitledBorder(message(title)));
+        choices.add(panel);
+        return panel;
+    }
+
+    private JTextArea detail(String value) {
+        JTextArea field = new JTextArea(value, 0, 18);
+        field.setEditable(false);
+        field.setLineWrap(true);
+        field.setWrapStyleWord(true);
+        field.setOpaque(false);
+        return field;
+    }
+
+    private void loadImages(IPEDMultiSource source, IItemId chat) {
+        if (selection.images.isEmpty()) {
+            return;
+        }
+        loadingImages = true;
+        updateCrop();
+        new SwingWorker<Map<String, List<WordReportEvidence.ChatImage>>, Void>() {
+            @Override
+            protected Map<String, List<WordReportEvidence.ChatImage>> doInBackground() throws Exception {
+                return WordReportEvidence.findChatImages(source, chat, selection.images);
+            }
+
+            @Override
+            protected void done() {
+                if (!isDisplayable()) {
+                    return;
+                }
+                loadingImages = false;
+                try {
+                    files = get();
+                } catch (Exception e) {
+                    imageSearchFailed = true;
+                }
+                updateCrop();
+            }
+        }.execute();
     }
 
     private class CropPanel extends JPanel {
