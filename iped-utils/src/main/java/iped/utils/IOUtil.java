@@ -30,9 +30,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -325,6 +330,31 @@ public class IOUtil {
         int len;
         while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {
             out.write(buf, 0, len);
+        }
+    }
+
+    private static final int COPY_BUFFER_SIZE = 1 << 20;
+
+    // reused by each thread, allocating a direct buffer per file is expensive when copying many small files
+    private static final ThreadLocal<ByteBuffer> COPY_BUFFER = ThreadLocal.withInitial(() -> ByteBuffer.allocateDirect(COPY_BUFFER_SIZE));
+
+    public static void copyInputStreamToPath(InputStream in, Path out) throws IOException {
+        if (!(in instanceof BufferedInputStream)) {
+            // the channel below only fills the whole buffer if the stream reports available bytes
+            in = new BufferedInputStream(in, COPY_BUFFER_SIZE);
+        }
+        try (ReadableByteChannel srcChannel = Channels.newChannel(in);
+                FileChannel destChannel = FileChannel.open(out, StandardOpenOption.CREATE, StandardOpenOption.WRITE,
+                        StandardOpenOption.TRUNCATE_EXISTING)) {
+            ByteBuffer buffer = COPY_BUFFER.get();
+            buffer.clear();
+            while (srcChannel.read(buffer) != -1 && !Thread.currentThread().isInterrupted()) {
+                buffer.flip();
+                while (buffer.hasRemaining()) {
+                    destChannel.write(buffer);
+                }
+                buffer.clear();
+            }
         }
     }
 

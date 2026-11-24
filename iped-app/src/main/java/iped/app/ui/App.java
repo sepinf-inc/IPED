@@ -158,6 +158,7 @@ import iped.engine.search.QueryBuilder;
 import iped.engine.search.SimilarDocumentSearch;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.search.SimilarImagesSearch;
+import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.util.Util;
 import iped.exception.ParseException;
@@ -398,6 +399,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // configuration
         try {
             new ImageThumbTask().init(ConfigurationManager.get());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Force initialization of HashTask
+        try {
+            new HashTask().init(ConfigurationManager.get());
         } catch (Exception e) {
             e.printStackTrace();
         }
