@@ -75,12 +75,35 @@ jobs:
           sudo apt-get install gsfonts
 
 
+    - name: Install ALEAPP python requirements
+      # LeappPythonIntegrationTest runs the python side of the ALEAPP integration, so it needs ALEAPP and what it
+      # depends on. The build only downloads ALEAPP in iped-app, after the tests of iped-engine: here the same
+      # version (aleapp.version in iped-app/pom.xml) is fetched before, and given to the test below.
+      run: |
+          ALEAPP_VERSION=$(sed -n 's:.*<aleapp.version>\(.*\)</aleapp.version>.*:\1:p' iped-app/pom.xml)
+          test -n "$ALEAPP_VERSION"
+          curl -sSfL -o "$RUNNER_TEMP/aleapp.zip" "https://github.com/abrignoni/ALEAPP/archive/refs/tags/$ALEAPP_VERSION.zip"
+          unzip -q "$RUNNER_TEMP/aleapp.zip" -d "$RUNNER_TEMP/aleapp"
+          ALEAPP_DIR=$(echo "$RUNNER_TEMP"/aleapp/*)
+          cd "$ALEAPP_DIR"
+          pip install -r requirements.txt
+          pip install --no-deps -r requirements-msl-lock.txt
+          echo "ALEAPP_DIR=$ALEAPP_DIR" >> "$GITHUB_ENV"
+
     - name: Build with Maven
       id: build
       env:
         # jep is installed in the python set up above, which Jep only searches when it is the python home
         PYTHONHOME: ${{ env.pythonLocation }}
-      run: mvn -B -ntp package --file pom.xml
+      # -U: always check the snapshots (e.g. the python bundle) for a newer one, even when the cached one was checked today
+      run: mvn -B -ntp -U package --file pom.xml -Dleapp.test.toolFolder="$ALEAPP_DIR"
+
+    - name: Check that the ALEAPP integration test ran
+      # the test skips itself when Jep or a python requirement is missing: a skip must not go unnoticed here
+      run: |
+          REPORT=iped-engine/target/surefire-reports/TEST-iped.engine.task.leapp.LeappPythonIntegrationTest.xml
+          grep -o '<testsuite [^>]*' "$REPORT"
+          grep -q '<testsuite [^>]*skipped="0"' "$REPORT"
 
     - name: Save Maven repository
       # Only pushes to master save the cache: branches and pull requests restore master's cache
@@ -172,12 +195,35 @@ jobs:
           cd ..
           sudo apt-get install gsfonts
 
+    - name: Install ALEAPP python requirements
+      # LeappPythonIntegrationTest runs the python side of the ALEAPP integration, so it needs ALEAPP and what it
+      # depends on. The build only downloads ALEAPP in iped-app, after the tests of iped-engine: here the same
+      # version (aleapp.version in iped-app/pom.xml) is fetched before, and given to the test below.
+      run: |
+          ALEAPP_VERSION=$(sed -n 's:.*<aleapp.version>\(.*\)</aleapp.version>.*:\1:p' iped-app/pom.xml)
+          test -n "$ALEAPP_VERSION"
+          curl -sSfL -o "$RUNNER_TEMP/aleapp.zip" "https://github.com/abrignoni/ALEAPP/archive/refs/tags/$ALEAPP_VERSION.zip"
+          unzip -q "$RUNNER_TEMP/aleapp.zip" -d "$RUNNER_TEMP/aleapp"
+          ALEAPP_DIR=$(echo "$RUNNER_TEMP"/aleapp/*)
+          cd "$ALEAPP_DIR"
+          pip install -r requirements.txt
+          pip install --no-deps -r requirements-msl-lock.txt
+          echo "ALEAPP_DIR=$ALEAPP_DIR" >> "$GITHUB_ENV"
+
     - name: Build with Maven
       id: build
       env:
         # jep is installed in the python set up above, which Jep only searches when it is the python home
         PYTHONHOME: ${{ env.pythonLocation }}
-      run: mvn -B -ntp package --file pom.xml
+      # -U: always check the snapshots (e.g. the python bundle) for a newer one, even when the cached one was checked today
+      run: mvn -B -ntp -U package --file pom.xml -Dleapp.test.toolFolder="$ALEAPP_DIR"
+
+    - name: Check that the ALEAPP integration test ran
+      # the test skips itself when Jep or a python requirement is missing: a skip must not go unnoticed here
+      run: |
+          REPORT=iped-engine/target/surefire-reports/TEST-iped.engine.task.leapp.LeappPythonIntegrationTest.xml
+          grep -o '<testsuite [^>]*' "$REPORT"
+          grep -q '<testsuite [^>]*skipped="0"' "$REPORT"
 
     - name: Save Maven repository
       # Only pushes to master save the cache: branches and pull requests restore master's cache
