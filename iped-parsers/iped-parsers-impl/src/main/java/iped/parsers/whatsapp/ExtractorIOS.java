@@ -44,6 +44,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMU
 import static iped.parsers.whatsapp.Message.MessageType.IGNORED;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.MENTIONED_YOU_IN_STATUS;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
@@ -1815,6 +1816,10 @@ public abstract class ExtractorIOS extends Extractor {
 
             case 66:
                 result = MESSAGE_ASSOCIATION;
+                break;
+
+            case 68:
+                result = MENTIONED_YOU_IN_STATUS;
                 break;
 
             case 75:
