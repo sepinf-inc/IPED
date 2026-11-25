@@ -12,6 +12,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.CHAT_STARTED_FROM_AD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DESCRIPTION_CHANGED;
@@ -1723,6 +1724,10 @@ public abstract class ExtractorIOS extends Extractor {
 
                     case 67:
                         result = OFFERS_ANNOUNCEMENTS;
+                        break;
+
+                    case 68:
+                        result = CHAT_STARTED_FROM_AD;
                         break;
                 }
                 break;
