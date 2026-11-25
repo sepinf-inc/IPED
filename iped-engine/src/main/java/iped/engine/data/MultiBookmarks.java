@@ -29,9 +29,6 @@ import iped.search.IMultiSearchResult;
 
 public class MultiBookmarks implements Serializable, IMultiBookmarks {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
     private transient List<SelectionListener> selectionListeners = new ArrayList<>();
@@ -460,4 +457,44 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         selectionListeners.remove(listener);
     }
 
+    @Override
+    public boolean isChatMessageSelected(IItemId chatItem, String msgId) {
+        return map.get(chatItem.getSourceId()).isChatMessageSelected(chatItem.getId(), msgId);
+    }
+
+    @Override
+    public void setChatMessageSelected(boolean selected, IItemId chatItem, String msgId) {
+        map.get(chatItem.getSourceId()).setChatMessageSelected(selected, chatItem.getId(), msgId);
+    }
+
+    @Override
+    public IMultiSearchResult filterChatsWithSelectedMessages(IMultiSearchResult result) {
+        ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
+        ArrayList<Float> scores = new ArrayList<Float>();
+
+        Set<IItemId> chatsWithSelectedMessages = new HashSet<IItemId>();
+        for (Integer sourceId : map.keySet()) {
+            IBookmarks m = map.get(sourceId);
+            Set<Integer> items = m.getChatsWithSelectedMessages();
+            if (items != null && !items.isEmpty()) {
+                for (int item : items) {
+                    chatsWithSelectedMessages.add(new ItemId(sourceId, item));
+                }
+            }
+        }
+
+        if (!chatsWithSelectedMessages.isEmpty()) {
+            int i = 0;
+            for (IItemId item : result.getIterator()) {
+                if (chatsWithSelectedMessages.contains(item)) {
+                    selectedItems.add(item);
+                    scores.add(result.getScore(i));
+                }
+                i++;
+            }
+        }
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
+                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        return r;
+    }
 }
