@@ -205,10 +205,11 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     protected void logInputStream(InputStream is) {
         Thread t = new Thread() {
             public void run() {
-                byte[] buf = new byte[1024];
+                // the process runs in Python UTF-8 mode (see setPythonUTF8Mode)
+                char[] buf = new char[1024];
                 int read = 0;
-                try {
-                    while ((read = is.read(buf)) != -1) {
+                try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+                    while ((read = reader.read(buf)) != -1) {
                         logger.log(logLevel, new String(buf, 0, read).trim());
                     }
                 } catch (IOException e) {
