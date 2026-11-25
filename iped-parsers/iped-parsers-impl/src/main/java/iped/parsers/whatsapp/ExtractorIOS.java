@@ -1,5 +1,6 @@
 package iped.parsers.whatsapp;
 
+import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHANGED_NAME;
@@ -1793,11 +1794,15 @@ public abstract class ExtractorIOS extends Extractor {
                         break;
                 }
                 break;
-                
+
+            case 57:
+                result = AI_RECEIVE_MESSAGES;
+                break;
+
             case 59:
                 result = VOICE_CALL;
                 break;
-            
+
             case 66:
                 result = MESSAGE_ASSOCIATION;
                 break;
