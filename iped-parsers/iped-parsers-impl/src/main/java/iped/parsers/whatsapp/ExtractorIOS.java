@@ -1,5 +1,6 @@
 package iped.parsers.whatsapp;
 
+import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
@@ -1728,6 +1729,10 @@ public abstract class ExtractorIOS extends Extractor {
 
                     case 68:
                         result = CHAT_STARTED_FROM_AD;
+                        break;
+
+                    case 91:
+                        result = ADVANCED_PRIVACY_ON;
                         break;
                 }
                 break;
