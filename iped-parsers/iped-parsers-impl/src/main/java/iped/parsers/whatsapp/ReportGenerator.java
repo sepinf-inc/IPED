@@ -220,8 +220,8 @@ public class ReportGenerator {
             String lastId = "1000000000";
             while (currentMsg < c.getMessages().size()) {
                 Message m = c.getMessages().get(currentMsg++);
-                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION) {
-                    // These messages are not visible on the app and don't contain any data
+                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION || m.getMessageType() == MessageType.IGNORED) {
+                    // These messages are not visible on the app and don't contain any useful data
                     continue;
                 }
                 String thisDate = dateFormat.format(m.getTimeStamp());

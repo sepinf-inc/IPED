@@ -41,6 +41,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_NAME_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_NOT_PART_OF_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
+import static iped.parsers.whatsapp.Message.MessageType.IGNORED;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
@@ -1712,6 +1713,10 @@ public abstract class ExtractorIOS extends Extractor {
                     case 58:
                         result = PINNED_MESSAGE;
                         break;
+
+                    case 62:
+                        result = IGNORED;
+                        break;
                 }
                 break;
 
@@ -1772,6 +1777,10 @@ public abstract class ExtractorIOS extends Extractor {
 
             case 46:
                 result = POLL_MESSAGE;
+                break;
+
+            case 51:
+                result = IGNORED;
                 break;
 
             case 53:
