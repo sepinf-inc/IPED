@@ -120,20 +120,10 @@ public class VideoThumbTask extends ThumbTask {
      */
     private static final AtomicBoolean finished = new AtomicBoolean(false);
 
-    /**
-     * Objeto estático com total de videos processados .
-     */
+    // Statistics for videos
     private static final AtomicLong totalVideosProcessed = new AtomicLong();
-
-    /**
-     * Objeto estático com total de videos que falharam.
-     */
+    private static final AtomicLong totalVideosProcessedFFmpeg = new AtomicLong();
     private static final AtomicLong totalVideosFailed = new AtomicLong();
-
-    /**
-     * Objeto estático com total de tempo gasto no processamento de vídeos, em
-     * milisegundos.
-     */
     private static final AtomicLong totalVideosTime = new AtomicLong();
 
     // Statistics for animated images
@@ -141,6 +131,7 @@ public class VideoThumbTask extends ThumbTask {
     private static final AtomicLong totalAnimatedImagesFailed = new AtomicLong();
     private static final AtomicLong totalAnimatedImagesTime = new AtomicLong();
     
+    // Statistics for thumb gallery creation
     private static final AtomicLong totalTimeGallery = new AtomicLong();
     private static final AtomicLong totalGallery = new AtomicLong();
 
@@ -290,8 +281,9 @@ public class VideoThumbTask extends ThumbTask {
                 finished.set(true);
 
                 // Videos statistics
-                logger.info("Total videos processed: " + totalVideosProcessed); //$NON-NLS-1$
-                logger.info("Total videos failed (MPlayer failed to create thumbs): " + totalVideosFailed); //$NON-NLS-1$
+                logger.info("Total videos processed: " + totalVideosProcessed);
+                logger.info("Total videos processed FFmpeg: " + totalVideosProcessedFFmpeg);
+                logger.info("Total videos failed (MPlayer failed to create thumbs): " + totalVideosFailed);
                 long total = totalVideosProcessed.longValue() + totalVideosFailed.longValue();
                 if (total > 0)
                     logger.info("Average video processing time (milliseconds/video): " //$NON-NLS-1$
@@ -418,6 +410,9 @@ public class VideoThumbTask extends ThumbTask {
                             previewRepo.storeRawPreview(evidence, Files.newInputStream(mainTmpFile));
                         }
                         (isAnimated ? totalAnimatedImagesProcessed : totalVideosProcessed).incrementAndGet();
+                        if (r.isFFmpeg()) {
+                            totalVideosProcessedFFmpeg.incrementAndGet();
+                        }
                     } catch (SQLException | IOException e) {
                         logger.warn("Error storing videoThumb preview: " + evidence, e);
                         r.setSuccess(false);

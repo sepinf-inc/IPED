@@ -5,10 +5,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
+import iped.content.TikaManager;
 import iped.parsers.ares.AresParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatParser;
@@ -80,7 +80,7 @@ public class QueuesProcessingOrder {
         mediaTypes.put(CacheIndexParser.CHROME_INDEX_MIME_TYPE, 2);
         mediaTypes.put(MediaType.parse(DiscordParser.CHAT_MIME_TYPE), 3);
 
-        mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_KNOWN_MET_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 2);
@@ -127,7 +127,7 @@ public class QueuesProcessingOrder {
     private static synchronized void setMediaRegistry() {
 
         if (mediaRegistry == null) {
-            mediaRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+            mediaRegistry = TikaManager.getTikaConfig().getMediaTypeRegistry();
         }
 
         // also install python parsers mediaType queue order

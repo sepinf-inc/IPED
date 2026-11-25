@@ -158,6 +158,7 @@ import iped.engine.search.QueryBuilder;
 import iped.engine.search.SimilarDocumentSearch;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.search.SimilarImagesSearch;
+import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.util.Util;
 import iped.exception.ParseException;
@@ -286,6 +287,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     final static String FILTER_NO_FILTER = "[" + Messages.getString("App.NoFilter") + "]";
     final static String FILTER_CHECKED = "[" + Messages.getString("App.Checked") + "]";
+    final static String FILTER_CHATS_CHECKED_MESSAGES = "[" + Messages.getString("App.ChatsWithSelectedMessages") + "]";
     public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
 
     static int MAX_HITS = 10000;
@@ -337,7 +339,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     public int getLastSelectedDoc() {
-        return this.lastSelectedDoc;
+        return lastSelectedDoc;
     }
 
     public void setHighlightTerms(Set<String> terms) {
@@ -389,6 +391,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // configuration
         try {
             new ImageThumbTask().init(ConfigurationManager.get());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Force initialization of HashTask
+        try {
+            new HashTask().init(ConfigurationManager.get());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1429,11 +1438,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public void loadPanelLayout() {
         PanelsLayout.load(dockingControl);
+        viewerController.clear();
     }
 
     public void adjustLayout(boolean isReset) {
-        if (isReset)
+        if (isReset) {
+            viewerController.clear();
             removeAllDockables();
+        }
         createAllDockables();
 
         tableTabDock.setLocation(verticalLayout ? CLocation.base().normalNorth(0.7) : CLocation.base().normalNorth(0.5));

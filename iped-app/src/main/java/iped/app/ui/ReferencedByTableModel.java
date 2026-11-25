@@ -59,7 +59,7 @@ public class ReferencedByTableModel extends BaseTableModel {
 
         String nameToScroll = null;
         if (refDoc != null) {
-            if (KnownMetParser.EMULE_MIME_TYPE.equals(item.getMediaType().toString())) {
+            if (KnownMetParser.isKnownMetMimeType(item.getMediaType().toString())) {
                 nameToScroll = refDoc.get(HashTask.HASH.EDONKEY.toString());
             } else if (AresParser.ARES_MIME_TYPE.equals(item.getMediaType().toString())) {
                 nameToScroll = refDoc.get(HashTask.HASH.SHA1.toString());

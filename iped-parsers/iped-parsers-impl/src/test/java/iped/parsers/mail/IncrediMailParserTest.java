@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.content.TikaManager;
 import iped.parsers.util.AbstractPkgTest;
 
 public class IncrediMailParserTest extends AbstractPkgTest {
@@ -32,6 +33,7 @@ public class IncrediMailParserTest extends AbstractPkgTest {
 
     protected void setUp() throws Exception {
         super.setUp();
+        TikaManager.initializeTikaConfig(false, false);
         tracker = new EmbeddedOLEParser();
         context = new ParseContext();
         context.set(Parser.class, tracker);
