@@ -84,7 +84,7 @@ import iped.utils.ProcessUtil;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 
-public class LibreOfficeViewer extends AbstractViewer {
+public class LibreOfficeViewer extends AbstractViewer implements DocumentViewport {
 
     private static Logger LOGGER = LoggerFactory.getLogger(LibreOfficeViewer.class);
 
@@ -286,6 +286,8 @@ public class LibreOfficeViewer extends AbstractViewer {
 
     private volatile boolean loading = false;
     private volatile boolean restartCalled = false;
+    private volatile IStreamSource requestedSource;
+    private volatile IStreamSource displayedSource;
     private volatile File lastFile;
     private volatile String lastContentType;
     private volatile Set<String> lastHighlightTerms;
@@ -303,6 +305,8 @@ public class LibreOfficeViewer extends AbstractViewer {
 
     @Override
     public void loadFile(final IStreamSource content, final String contentType, final Set<String> highlightTerms) {
+        requestedSource = content;
+        displayedSource = null;
         File file = null;
         try {
             file = content != null ? content.getTempFile() : null;
@@ -313,7 +317,7 @@ public class LibreOfficeViewer extends AbstractViewer {
         lastContentType = contentType;
         lastHighlightTerms = highlightTerms;
         numTries.set(0);
-        doLoadFile(file, contentType, highlightTerms);
+        doLoadFile(content, file, contentType, highlightTerms);
     }
 
     public void reloadLastFile(boolean reset) {
@@ -321,11 +325,11 @@ public class LibreOfficeViewer extends AbstractViewer {
             numTries.set(0);
         }
         if (numTries.getAndIncrement() == 0) {
-            doLoadFile(lastFile, lastContentType, lastHighlightTerms);
+            doLoadFile(requestedSource, lastFile, lastContentType, lastHighlightTerms);
         }
     }
 
-    private void doLoadFile(File file, String contentType, Set<String> highlightTerms) {
+    private void doLoadFile(IStreamSource source, File file, String contentType, Set<String> highlightTerms) {
         new Thread() {
             @Override
             public void run() {
@@ -350,6 +354,7 @@ public class LibreOfficeViewer extends AbstractViewer {
                     DocumentDescriptor descriptor = DocumentDescriptor.DEFAULT;
                     descriptor.setReadOnly(true);
 
+                    displayedSource = null;
                     loading = true;
                     if (file != null) {
                         noaPanel.setVisible(true);
@@ -366,7 +371,8 @@ public class LibreOfficeViewer extends AbstractViewer {
                         IDocument prevDocument = document;
                         document = officeApplication.getDocumentService().loadDocument(officeFrame,
                                 lastFile.toURI().toURL().toString(), descriptor);
-                        if (document != null && document.equalsTo(prevDocument)) {
+                        boolean opened = document != null && !document.equalsTo(prevDocument);
+                        if (document != null && !opened) {
                             LOGGER.info("Failed to load Office document.");
                             cleanDocument(descriptor);
                         }
@@ -375,6 +381,7 @@ public class LibreOfficeViewer extends AbstractViewer {
                         officeFrame.getXFrame().getContainerWindow().setVisible(false);
                         officeFrame.getXFrame().getContainerWindow().setVisible(true);
                         noaPanel.revalidate();
+                        displayedSource = opened ? source : null;
 
                     } else {
                         cleanDocument(descriptor);
@@ -597,6 +604,23 @@ public class LibreOfficeViewer extends AbstractViewer {
 
     @Override
     public void copyScreen(Component comp) {
+        BufferedImage image = snapshot(comp);
+        if (image != null) {
+            TransferableImage trans = new TransferableImage(image);
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(trans, trans);
+        }
+    }
+
+    @Override
+    public BufferedImage captureDocument(IStreamSource expectedSource) {
+        if (expectedSource == null || requestedSource != expectedSource || displayedSource != expectedSource || loading) {
+            throw new IllegalStateException("Office preview is not ready");
+        }
+        return snapshot(noaPanel);
+    }
+
+    private BufferedImage snapshot(Component comp) {
         XWindow xWindow = officeFrame.getXFrame().getContainerWindow();
 
         double uiScale = 1;
@@ -625,10 +649,9 @@ public class LibreOfficeViewer extends AbstractViewer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            TransferableImage trans = new TransferableImage(image);
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            clipboard.setContents(trans, trans);
+            return image;
         }
+        return null;
     }
 
     private ArrayList<Object> hits;

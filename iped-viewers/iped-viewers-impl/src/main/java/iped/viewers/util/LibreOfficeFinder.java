@@ -37,6 +37,9 @@ public class LibreOfficeFinder {
     }
 
     public String getLOPath(boolean isNogui) {
+        if (Boolean.getBoolean("iped.skipLibreOfficeDetection")) {
+            return null;
+        }
         if (detectedPath == null) {
             detectedPath = System.getProperty("libreOfficePath");
             if (detectedPath != null)

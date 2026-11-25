@@ -6,7 +6,7 @@ IPED is open-source software that can be used to process and analyze digital evi
 
 - **Download**: Get the latest version from [GitHub Releases](https://github.com/sepinf-inc/IPED/releases)
 - **Documentation**: Access the [IPED Wiki](https://github.com/sepinf-inc/IPED/wiki) for comprehensive guides
-  
+
 ## History
 
 IPED - Digital Evidence Processor and Indexer (translated from Portuguese) is a tool implemented in Java and originally and still developed by digital forensic experts from Brazilian Federal Police since 2012. Although it has always been open source, its code was only officially published in 2019.
@@ -22,6 +22,10 @@ Since the beginning, the goal of the tool has been efficient data processing and
 Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthkit) only to decode disk images and file systems, so the same image formats are supported: RAW/DD, E01, ISO9660, AFF, VHD, VMDK. There is also support for EX01, VHDX, UDF(ISO), AD1 (AccessData) and UFDR (Cellebrite) formats.
 
 If you are new to the tool, please refer to the [Beginner's Start Guide](https://github.com/sepinf-inc/IPED/wiki/Beginner's-Start-Guide).
+
+## Word reports
+
+The analysis interface can insert highlighted evidence and metadata into a selected Word report, save updates in the same local file or create a separate copy, with saved templates and optional page previews. See the [application guide](iped-app/README.md#word-reports).
 
 ## Building
 
@@ -47,11 +51,11 @@ Some of IPED's many features are listed below:
 
 - Supported hashes: MD5, SHA-1, SHA-256, SHA-512 and eDonkey. PhotoDNA is also available **for law enforcement** (please contact iped at pf dot gov dot br)
 - Supported hash sets: NIST NSRL, NIST CAID, ProjectVIC, Interpol ICSE, standard CSV format
-- Fast hash deduplication 
+- Fast hash deduplication
 - Signature analysis
 - Categorization by file type and properties
 - Recursive container expansion of dozens of file formats
-- Embedded forensic/virtual disks expansion: supports split or single-segment DD, E01, EX01, VHD, VHDX, VMDK (differential VMDKs are also supported) 
+- Embedded forensic/virtual disks expansion: supports split or single-segment DD, E01, EX01, VHD, VHDX, VMDK (differential VMDKs are also supported)
 - Image and video gallery for hundreds of formats
 - Georeferencing of GPS data, using Google Maps, Bing or OpenStreetMap
 - Regex searches with optional script validation for credit cards, emails, URLs, ip & mac addresses, money values, Bitcoin, ethereum, monero, ripple wallets and more...

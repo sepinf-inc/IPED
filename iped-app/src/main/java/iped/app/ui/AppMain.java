@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.engine.data.IPEDSource;
 import iped.app.bootstrap.Bootstrap;
 import iped.app.config.LogConfiguration;
 import iped.app.ui.splash.StartUpControlClient;
@@ -129,6 +130,8 @@ public class AppMain {
             }
             if (args[i].equals("--nologfile")) { //$NON-NLS-1$
                 nolog = true;
+            } else if (args[i].equals("-readonly")) {
+                IPEDSource.enableReadOnlyView();
             } else if (args[i].equals("-multicases")) { //$NON-NLS-1$
                 isMultiCase = true;
                 casesPathFile = new File(args[i + 1]).getAbsoluteFile();
@@ -157,7 +160,7 @@ public class AppMain {
                 logParent = casesPathFile.getParentFile();
 
             File logFile = new File(logParent, appLogFileName).getCanonicalFile();
-            if ((logFile.exists() && !IOUtil.canWrite(logFile)) || !IOUtil.canCreateFile(logFile.getParentFile())) {
+            if (IPEDSource.isReadOnlyView() || (logFile.exists() && !IOUtil.canWrite(logFile)) || !IOUtil.canCreateFile(logFile.getParentFile())) {
                 logFile = new File(System.getProperty("java.io.tmpdir"), appLogFileName);
             }
 

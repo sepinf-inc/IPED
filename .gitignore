@@ -6,3 +6,5 @@ nbactions.xml
 .pydevproject
 /.idea/
 .sdkmanrc
+/.local/
+/iped-app/src/main/resources/iped/app/ui/*.docx

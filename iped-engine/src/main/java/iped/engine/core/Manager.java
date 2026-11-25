@@ -876,17 +876,15 @@ public class Manager {
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped.localization.Messages.BUNDLES_FOLDER),
                     new File(output, iped.localization.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
-            // Copy tools. For now, skip copying mplayer
+            // Include mplayer for video frames generated while composing portable Word reports.
             File source = new File(Configuration.getInstance().appRoot, "tools");
             for (File file : source.listFiles()) {
-                if (!file.getName().equals("mplayer")) {
-                    File dest = new File(output, "tools/" + file.getName());
-                    if (file.isDirectory()) {
-                        IOUtil.copyDirectory(file, dest); // $NON-NLS-1$ //$NON-NLS-2$
-                    } else {
-                        dest.getParentFile().mkdirs();
-                        IOUtil.copyFile(file, dest);
-                    }
+                File dest = new File(output, "tools/" + file.getName());
+                if (file.isDirectory()) {
+                    IOUtil.copyDirectory(file, dest); // $NON-NLS-1$ //$NON-NLS-2$
+                } else {
+                    dest.getParentFile().mkdirs();
+                    IOUtil.copyFile(file, dest);
                 }
             }
 

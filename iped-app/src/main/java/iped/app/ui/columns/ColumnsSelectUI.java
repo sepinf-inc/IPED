@@ -23,6 +23,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
+import iped.engine.data.IPEDSource;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.app.ui.ResultTableModel;
@@ -170,7 +171,9 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
         } else if (e.getSource().equals(combo)) {
             updatePanelList();
         } else if (e.getSource().equals(okButton)) {
-            saveSelectedProps(getPropertiesFile());
+            if (!IPEDSource.isReadOnlyView()) {
+                saveSelectedProps(getPropertiesFile());
+            }
             okButtonClicked = true;
             dispose();
         } else if (e.getSource() instanceof JCheckBox) {

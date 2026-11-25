@@ -13,6 +13,7 @@
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
+        <skipSleuthkitDlls>false</skipSleuthkitDlls>
     </properties>
 
     <dependencies>
@@ -354,6 +355,7 @@
                             <goal>unpack</goal>
                         </goals>
                         <configuration>
+                            <skip>${skipSleuthkitDlls}</skip>
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>

@@ -177,7 +177,9 @@ public class ColumnsManager implements Serializable, IColumnsManager {
             if (cs.visibleFields.size() > 0) {
                 globalCols.getParentFile().mkdirs();
                 Util.writeObject(cs, globalCols.getAbsolutePath());
-                Util.writeObject(cs, caseCols.getAbsolutePath());
+                if (!IPEDSource.isReadOnlyView()) {
+                    Util.writeObject(cs, caseCols.getAbsolutePath());
+                }
             }
         } catch (Exception e1) {
             e1.printStackTrace();

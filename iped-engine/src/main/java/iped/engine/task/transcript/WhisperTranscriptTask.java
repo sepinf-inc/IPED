@@ -63,7 +63,11 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         }
 
         int cpus = getNumProcessors();
-        int threads = Runtime.getRuntime().availableProcessors() / cpus;
+        int processors = Runtime.getRuntime().availableProcessors();
+        if (!"gpu".equals(transcriptConfig.getDevice())) {
+            cpus = cpuProcessCount(cpus, processors, System.getProperty("iped.whisper.cpuProcesses"));
+        }
+        int threads = processors / cpus;
 
         String lang = transcriptConfig.getLanguages().get(0);
         if (lang.contains("-")) {
@@ -133,6 +137,19 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         server.device = deviceId;
 
         return server;
+    }
+
+    // Virtual hosts can report one physical package for each logical processor.
+    // An explicit CPU limit avoids loading a model per virtual socket; GPU count is unchanged.
+    static int cpuProcessCount(int detected, int available, String configured) {
+        if (configured == null) {
+            return detected;
+        }
+        int count = Integer.parseInt(configured);
+        if (count < 1 || count > available) {
+            throw new IllegalArgumentException("iped.whisper.cpuProcesses must be between 1 and " + available);
+        }
+        return count;
     }
 
     @Override

@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -212,6 +213,9 @@ public class ExportFileTask extends AbstractTask {
     }
 
     public static Connection getSQLiteStorageCon(File output, byte[] hash) {
+        if (IPEDSource.isReadOnlyView()) {
+            return openReadOnlyStorage(new File(new File(output, STORAGE_PREFIX), STORAGE_PREFIX + "-" + getStorageSuffix(hash) + ".db"));
+        }
         if (storageCon.get(output) == null) {
             configureSQLiteStorage(output);
         }
@@ -223,7 +227,28 @@ public class ExportFileTask extends AbstractTask {
         return (hash[0] & 0xFF) >> (8 - DB_SUFFIX_BITS);
     }
 
+    private static final Map<File, Connection> readOnlyStorage = new HashMap<>();
+
+    private static synchronized Connection openReadOnlyStorage(File db) {
+        try {
+            db = db.getCanonicalFile();
+            Connection conn = readOnlyStorage.get(db);
+            if (conn == null || conn.isClosed()) {
+                IPEDSource.requireCompletedDatabase(db.toPath());
+                String uri = db.toURI().toASCIIString();
+                conn = new SQLiteConfig().createConnection("jdbc:sqlite:" + uri + "?mode=ro&immutable=1");
+                readOnlyStorage.put(db, conn);
+            }
+            return conn;
+        } catch (IOException | SQLException e) {
+            throw new IllegalStateException("Unable to read " + db, e);
+        }
+    }
+
     private static Connection getSQLiteStorageCon(File db) {
+        if (IPEDSource.isReadOnlyView()) {
+            return openReadOnlyStorage(db);
+        }
         File output = db.getParentFile().getParentFile();
         if (storageCon.get(output) == null) {
             configureSQLiteStorage(output);

@@ -32,6 +32,7 @@ import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
+import iped.engine.data.IPEDSource;
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
@@ -69,7 +70,9 @@ public class CachePersistance {
 
     public CachePersistance() {
         File startDir;
-        if (App.get().appCase.getAtomicSources().size() == 1) {
+        if (IPEDSource.isReadOnlyView()) {
+            startDir = new File(System.getProperty("java.io.tmpdir"));
+        } else if (App.get().appCase.getAtomicSources().size() == 1) {
             // single case
             startDir = new File(App.get().casesPathFile, "iped/data");
         } else {

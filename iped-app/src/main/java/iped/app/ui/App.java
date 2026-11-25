@@ -213,7 +213,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public JDialog dialogBar;
     JProgressBar progressBar;
     JComboBox<String> queryComboBox, filterComboBox;
-    JButton searchButton, optionsButton, updateCaseData, helpButton, exportToZip;
+    JButton searchButton, optionsButton, updateCaseData, helpButton, exportToZip, wordReportButton;
     JCheckBox checkBox, recursiveTreeList, filterDuplicates;
     JTable resultsTable;
     ResultTableListener resultTableListener;
@@ -451,6 +451,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private void destroy() {
         boolean processingFinished = processingManager == null || processingManager.isProcessingFinished();
         try {
+            WordReportDialog.disposeCurrent();
             if (viewerController != null) {
                 viewerController.dispose();
             }
@@ -550,6 +551,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         updateCaseData = new JButton(Messages.getString("App.Update")); //$NON-NLS-1$
         helpButton = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
         exportToZip = new JButton(Messages.getString("App.ExportZip")); //$NON-NLS-1$
+        wordReportButton = new JButton(Messages.getString("WordReport.Toolbar"));
+        wordReportButton.setToolTipText(Messages.getString("WordReport.ToolbarHint"));
+        wordReportButton.setEnabled(false);
         checkBox = new JCheckBox("0"); //$NON-NLS-1$
 
         filterComboBox = new JComboBox<String>();
@@ -591,6 +595,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         topPanel.add(optionsButton);
         if (processingManager != null)
             topPanel.add(updateCaseData);
+        topPanel.add(wordReportButton);
         topPanel.add(helpButton);
         topPanel.add(exportToZip);
         exportToZip.setVisible(false);
@@ -827,10 +832,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         searchButton.addActionListener(appletListener);
         optionsButton.addActionListener(appletListener);
         exportToZip.addActionListener(appletListener);
+        wordReportButton.addActionListener(e -> WordReportDialog.showDialog());
         updateCaseData.addActionListener(appletListener);
         helpButton.addActionListener(appletListener);
         checkBox.addActionListener(appletListener);
         resultsTable.getSelectionModel().addListSelectionListener(resultTableListener);
+        resultsTable.getSelectionModel().addListSelectionListener(e ->
+                wordReportButton.setEnabled(resultsTable.getSelectedRowCount() > 0));
         resultsTable.addMouseListener(resultTableListener);
         resultsTable.addKeyListener(resultTableListener);
 

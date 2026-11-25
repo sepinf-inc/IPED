@@ -11,6 +11,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,7 @@ import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 import iped.viewers.search.HitsUpdater;
 import javafx.application.Platform;
+import javafx.animation.AnimationTimer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
@@ -63,6 +66,7 @@ public class HtmlViewer extends AbstractViewer {
 
     protected volatile File tmpFile;
     private volatile String fileName;
+    private volatile IStreamSource loadedSource;
     protected Set<String> highlightTerms;
     private volatile boolean scrollToPositionDone = false;
 
@@ -123,6 +127,8 @@ public class HtmlViewer extends AbstractViewer {
     @Override
     public void loadFile(final IStreamSource content, final Set<String> terms) {
 
+        loadedSource = content;
+
         if (tmpFile != null) {
             tmpFile.delete();
         }
@@ -160,6 +166,55 @@ public class HtmlViewer extends AbstractViewer {
                 }
             }
         });
+    }
+
+    /** Captures only the currently displayed viewport, without scrolling or changing the document. */
+    public CompletableFuture<HtmlViewerCapture> captureVisible(IStreamSource expectedSource) {
+        return captureVisible(expectedSource, true);
+    }
+
+    public CompletableFuture<HtmlViewerCapture> captureVisible(IStreamSource expectedSource, boolean chat) {
+        CompletableFuture<HtmlViewerCapture> result = new CompletableFuture<>();
+        Platform.runLater(() -> {
+            // WebKit may report SUCCEEDED before its first pixels have been painted.
+            new AnimationTimer() {
+                private int frames;
+                private long lastAttempt;
+
+                @Override
+                public void handle(long now) {
+                    if (result.isDone()) {
+                        stop();
+                        return;
+                    }
+                    if (++frames < 3) {
+                        return;
+                    }
+                    try {
+                        if (expectedSource == null || loadedSource != expectedSource || webEngine == null) {
+                            throw new IllegalStateException("The requested HTML preview has changed");
+                        }
+                        if (webEngine.getLoadWorker().getState() != Worker.State.SUCCEEDED || tmpFile == null
+                                || !tmpFile.toURI().equals(new java.net.URI(webEngine.getLocation().split("#", 2)[0]))
+                                || now - lastAttempt < 200_000_000L) {
+                            return;
+                        }
+                        lastAttempt = now;
+                        HtmlViewerCapture capture = chat ? HtmlViewerCapture.capture(htmlViewer)
+                                : new HtmlViewerCapture(javafx.embed.swing.SwingFXUtils.fromFXImage(htmlViewer.snapshot(null, null), null));
+                        if (chat && HtmlViewerCapture.isBlank(capture.image)) {
+                            return;
+                        }
+                        result.complete(capture);
+                        stop();
+                    } catch (Exception e) {
+                        stop();
+                        result.completeExceptionally(e);
+                    }
+                }
+            }.start();
+        });
+        return result.orTimeout(10, TimeUnit.SECONDS);
     }
 
     private File getTempFile(IStreamSource content) {

@@ -446,6 +446,9 @@ public class Bookmarks implements IBookmarks {
 
     @Override
     public void saveState(boolean synchronous) {
+        if (IPEDSource.isReadOnlyView()) {
+            return;
+        }
         try {
             if (IOUtil.canWrite(stateFile) || (!stateFile.exists() && IOUtil.canCreateFile(stateFile.getParentFile())))
                 saveState(stateFile, synchronous);
