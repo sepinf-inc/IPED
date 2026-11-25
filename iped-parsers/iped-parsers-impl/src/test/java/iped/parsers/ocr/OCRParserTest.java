@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -42,12 +43,17 @@ public class OCRParserTest {
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static String OCR_OUTPUT_FOLDER_NAME = "ocr_output";
     private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
+    private static Properties savedProperties;
 
     @Rule
     public TestName testName = new TestName();
 
     @BeforeClass
     public static void setUpTool() throws IOException {
+        // Saved to be restored after the tests, so the properties set here (e.g. OCR
+        // enabled) do not leak to other test classes running in the same JVM
+        savedProperties = (Properties) System.getProperties().clone();
+
         if (osName.startsWith("windows")) {
             String repoPath = "tesseract/tesseract-zip/5.3.2-24-g3922_1/tesseract-zip-5.3.2-24-g3922_1.zip";
             RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
@@ -68,11 +74,15 @@ public class OCRParserTest {
 
     @AfterClass
     public static void tearDownTool() throws IOException {
-        if (osName.startsWith("windows")) {
-            File tool_path = new File(System.clearProperty(OCRParser.TOOL_PATH_PROP));
-            FileUtils.deleteDirectory(tool_path.getParentFile());
+        try {
+            if (osName.startsWith("windows")) {
+                File tool_path = new File(System.clearProperty(OCRParser.TOOL_PATH_PROP));
+                FileUtils.deleteDirectory(tool_path.getParentFile());
+            }
+            FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
+        } finally {
+            System.setProperties(savedProperties);
         }
-        FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
     }
 
 
