@@ -17,8 +17,8 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  * <li>converts the token to Unicode normalization form NFC, so composed and
  * decomposed (e.g. macOS file names) texts match. When folding, NFKC is used
  * instead, which also maps compatibility characters (full width and half width
- * forms, Arabic presentation forms, ligatures...) and emoji skin tone modifiers
- * are removed.</li>
+ * forms, Arabic presentation forms, ligatures...) except the ordinal indicators
+ * º and ª, and emoji skin tone modifiers are removed.</li>
  * </ul>
  */
 public final class UnicodeNormalizationFilter extends TokenFilter {
@@ -83,11 +83,35 @@ public final class UnicodeNormalizationFilter extends TokenFilter {
         if (check) {
             CharBuffer chars = CharBuffer.wrap(buf, 0, newLen);
             if (!Normalizer.isNormalized(chars, form)) {
-                String normalized = Normalizer.normalize(chars, form);
-                termAtt.setEmpty().append(normalized);
+                termAtt.setEmpty().append(normalize(chars));
             }
         }
         return true;
+    }
+
+    private String normalize(CharBuffer chars) {
+        if (!folding) {
+            return Normalizer.normalize(chars, form);
+        }
+        // normalize the text around ordinal indicators, which are kept
+        StringBuilder sb = new StringBuilder(chars.length());
+        int start = 0;
+        for (int i = 0; i < chars.length(); i++) {
+            if (isOrdinalIndicator(chars.charAt(i))) {
+                sb.append(Normalizer.normalize(chars.subSequence(start, i), form)).append(chars.charAt(i));
+                start = i + 1;
+            }
+        }
+        return sb.append(Normalizer.normalize(chars.subSequence(start, chars.length()), form)).toString();
+    }
+
+    /**
+     * NFKC turns "º" and "ª" into "o" and "a", so "nº" would match the very common
+     * Portuguese and Spanish word "no", and "2ª" would be "2a". Keep them, as the
+     * legacy analysis does.
+     */
+    private static boolean isOrdinalIndicator(int c) {
+        return c == 0x00AA || c == 0x00BA;
     }
 
     private boolean isIgnorable(int cp) {
@@ -124,6 +148,8 @@ public final class UnicodeNormalizationFilter extends TokenFilter {
         for (int c = 0; c <= Character.MAX_VALUE; c++) {
             if (isBmpIgnorable(c)) {
                 actions[c] = REMOVE;
+            } else if (nfkc && isOrdinalIndicator(c)) {
+                actions[c] = KEEP;
             } else if (Character.isSurrogate((char) c) || isMark(c) || isConjoiningJamo(c)
                     || !Normalizer.isNormalized(String.valueOf((char) c), form)) {
                 actions[c] = CHECK;

@@ -141,6 +141,17 @@ public class UnicodeAnalysisTest {
     }
 
     @Test
+    public void testOrdinalIndicatorsAreKept() throws IOException {
+        // NFKC would turn "nº" into the very common word "no", and "2ª" into "2a"
+        List<String> expected = Arrays.asList("nº", "5", "1º", "lugar", "2ª", "via");
+        assertEquals(expected, v2("Nº 5, 1º lugar, 2ª via"));
+        assertEquals(expected, tokens(analyzer(AnalyzerVersion.LEGACY), "Nº 5, 1º lugar, 2ª via"));
+        // the rest of the token is still folded
+        assertEquals(Arrays.asList("finº"), v2("ﬁnº"));
+        assertEquals("nº*", analyzer(AnalyzerVersion.UNICODE).normalize(FIELD, "Nº*").utf8ToString());
+    }
+
+    @Test
     public void testLongRunsAndBufferBoundaries() throws IOException {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 4095; i++) {
