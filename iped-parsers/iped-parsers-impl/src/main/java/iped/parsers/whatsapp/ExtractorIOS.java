@@ -1738,6 +1738,7 @@ public abstract class ExtractorIOS extends Extractor {
             case 32:
             case 41:
             case 42:
+            case 43:
                 result = TEMPLATE_MESSAGE;
                 break;
 
