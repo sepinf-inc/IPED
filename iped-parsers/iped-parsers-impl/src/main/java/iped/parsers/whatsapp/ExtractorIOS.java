@@ -1598,6 +1598,7 @@ public abstract class ExtractorIOS extends Extractor {
                         break;
 
                     case 51:
+                    case 81:
                         result = COMMUNITY_MANAGEMENT_ACTION;
                         break;
 
