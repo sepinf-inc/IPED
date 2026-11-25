@@ -145,11 +145,11 @@ if (navigator.userAgent.search("JavaFX") < 0) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-	const conversation = document.getElementById("conversation");
-	const topbar = document.getElementById("topbar");
-	if (topbar && conversation) {
-		conversation.style.paddingTop = `${topbar.offsetHeight}px`;
-	}
+    const conversation = document.getElementById("conversation");
+    const topbar = document.getElementById("topbar");
+    if (topbar && conversation) {
+        conversation.style.paddingTop = `${topbar.offsetHeight}px`;
+    }
     const navControls = document.getElementById("nav-controls");
     const navCounter = document.getElementById("nav-counter");
     const btnPrev = document.getElementById("btn-prev");
@@ -165,40 +165,40 @@ document.addEventListener("DOMContentLoaded", () => {
         window.scrollTo(0, elementTop - topbarHeight - 8);
     }
 
-	function updateNavigation(targetLine = null) {
-	    const spinner = document.getElementById("topbar-spinner");
-	    const navContent = document.getElementById("nav-content");
+    function updateNavigation(targetLine = null) {
+        const spinner = document.getElementById("topbar-spinner");
+        const navContent = document.getElementById("nav-content");
 
-	    if (isLoading) {
-	        if (spinner) spinner.style.display = "block";
-	        if (navContent) navContent.style.display = "none";
-	        return;
-	    }
-	    if (spinner) {
-	        spinner.style.display = "none";
-	    }
+        if (isLoading) {
+            if (spinner) spinner.style.display = "block";
+            if (navContent) navContent.style.display = "none";
+            return;
+        }
+        if (spinner) {
+            spinner.style.display = "none";
+        }
 
-	    const selectedLines = Array.from(document.querySelectorAll("#conversation .line.sel"));
-	    const total = selectedLines.length;
+        const selectedLines = Array.from(document.querySelectorAll("#conversation .line.sel"));
+        const total = selectedLines.length;
 
-	    if (total === 0) {
-	        if (navContent) navContent.style.display = "none";
-	        selectedIndex = 0;
-	        return;
-	    }
+        if (total === 0) {
+            if (navContent) navContent.style.display = "none";
+            selectedIndex = 0;
+            return;
+        }
 
-	    if (navContent) navContent.style.display = "flex";
+        if (navContent) navContent.style.display = "flex";
 
-	    if (targetLine && selectedLines.includes(targetLine)) {
-	        selectedIndex = selectedLines.indexOf(targetLine);
-	    } else if (selectedIndex >= total) {
-	        selectedIndex = total - 1;
-	    } else if (selectedIndex < 0) {
-	        selectedIndex = 0;
-	    }
+        if (targetLine && selectedLines.includes(targetLine)) {
+            selectedIndex = selectedLines.indexOf(targetLine);
+        } else if (selectedIndex >= total) {
+            selectedIndex = total - 1;
+        } else if (selectedIndex < 0) {
+            selectedIndex = 0;
+        }
 
-	    document.getElementById("nav-counter").textContent = `${selectedIndex + 1} / ${total}`;
-	}
+        document.getElementById("nav-counter").textContent = `${selectedIndex + 1} / ${total}`;
+    }
 
     window.updateNavigation = updateNavigation;
 
@@ -207,16 +207,16 @@ document.addEventListener("DOMContentLoaded", () => {
             // Ignore clicks on interactive elements, including quotes (which jump to the quoted message)
             if (event.target.closest("a, input, button, audio, video, .check, .quoteTo, .quoteFrom")) {
                 return;
-            }			
+            }
             const line = event.target.closest(".line");
             if (line) {
-				if (line.id) {
+                if (line.id) {
                     const isSel = line.classList.toggle("sel");
                     if (window.msgApp) {
                         window.msgApp.selectMessage(line.id, isSel);
                     }
                     updateNavigation(line);
-				}
+                }
             }
         });
     }
@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let isLoading = true;
 window.addEventListener('load', () => {
-	isLoading = false;
+    isLoading = false;
 
     const spinner = document.getElementById('topbar-spinner');
     if (spinner) {
