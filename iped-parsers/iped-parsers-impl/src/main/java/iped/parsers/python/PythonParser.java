@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -48,13 +49,18 @@ public class PythonParser extends AbstractParser {
     public static final String SEE_MANUAL = Messages.getString("PythonModule.SeeManual");
 
     private static final Map<Long, Jep> jepPerThread = new HashMap<>();
-    private static final Set<String> instancetPerThread = new HashSet<>();
+    private static final Set<String> instancePerThread = new HashSet<>();
     private static final Map<MediaType, PythonParser> mediaToParserMap = new ConcurrentHashMap<>();
     private static final Map<MediaType, Integer> mediaTypesToQueueOrder = new ConcurrentHashMap<>();
     private static final AtomicBoolean jepNotFoundPrinted = new AtomicBoolean();
+    private static final AtomicBoolean numpyPreloaded = new AtomicBoolean();
     private static boolean inited = false;
 
     private File scriptFile;
+
+    // The python library of the embedded python for Windows (org.python:python-jep-dlib in iped-app/pom.xml): its
+    // name has the python minor version, so both must change together.
+    private static final String PYTHON_DLL = "python313.dll";
 
     static {
         // fix for https://github.com/sepinf-inc/IPED/issues/586
@@ -65,17 +71,22 @@ public class PythonParser extends AbstractParser {
             config.redirectStdout(System.out);
             SharedInterpreter.setConfig(config);
 
-            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            if (SystemUtils.IS_OS_WINDOWS) {
                 String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
                 if (ipedRoot != null && new File(ipedRoot).exists()) {
-                    PyConfig pyConfig = new PyConfig();
+                    PyConfig pyConfig = PyConfig.python();
                     String pythonHome = ipedRoot + "/python";
-                    pyConfig.setPythonHome(pythonHome);
-                    pyConfig.setIgnoreEnvironmentFlag(1);
-                    pyConfig.setNoUserSiteDirectory(1);
+                    pyConfig.setHome(pythonHome);
+                    pyConfig.setUseEnvironment(false);
+                    pyConfig.setUserSiteDirectory(false);
                     MainInterpreter.setInitParams(pyConfig);
                     System.load(pythonHome + "/vcruntime140.dll");
-                    System.load(pythonHome + "/python39.dll");
+                    // needed by C++ extension modules; shipped by the python bundle since python 3.13
+                    File vcruntime1 = new File(pythonHome, "vcruntime140_1.dll");
+                    if (vcruntime1.exists()) {
+                        System.load(vcruntime1.getAbsolutePath());
+                    }
+                    System.load(pythonHome + "/" + PYTHON_DLL);
                     MainInterpreter.setJepLibraryPath(pythonHome + "/Lib/site-packages/jep/jep.dll");
                 }
             }
@@ -86,7 +97,7 @@ public class PythonParser extends AbstractParser {
     }
 
     @SuppressWarnings("unchecked")
-    public PythonParser(){
+    public PythonParser() {
 
         synchronized (this.getClass()) {
             if (inited) {
@@ -188,9 +199,30 @@ public class PythonParser extends AbstractParser {
             }
         }
 
-        // setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
+        preloadNumpy(jep);
 
         return jep;
+    }
+
+    /**
+     * Imports numpy, if it is installed, when the first interpreter is created.
+     *
+     * On Windows, with python 3.13 and numpy 2.5.5, the first import of numpy hung the processing when it was done
+     * later, by a task being initialized in a worker thread: the thread never came back from loading the native
+     * library of numpy (numpy._core._multiarray_umath). The cause was not found, but it does not happen when numpy is
+     * imported here, before the tasks are initialized. The modules are shared by all the interpreters, so this is done
+     * only once.
+     */
+    private static void preloadNumpy(Jep jep) {
+        if (numpyPreloaded.getAndSet(true)) {
+            return;
+        }
+        try {
+            jep.exec("import numpy");
+        } catch (JepException e) {
+            // numpy is optional: only some python tasks need it
+            LOGGER.debug("numpy not preloaded: {}", e.toString());
+        }
     }
 
     private void loadScript(Jep jep) throws JepException {
@@ -223,10 +255,10 @@ public class PythonParser extends AbstractParser {
 
     private String getInstanceMethod(String function) throws JepException {
         String instanceName = getInstanceName();
-        synchronized (instancetPerThread) {
-            if (!instancetPerThread.contains(instanceName)) {
+        synchronized (instancePerThread) {
+            if (!instancePerThread.contains(instanceName)) {
                 loadScript(getJep());
-                instancetPerThread.add(instanceName);
+                instancePerThread.add(instanceName);
             }
         }
         String ret = instanceName + "." + function;

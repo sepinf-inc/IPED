@@ -1,0 +1,103 @@
+# -----------------------------------------------------------------------------
+# ALEAPP Integration Settings
+# -----------------------------------------------------------------------------
+
+# Path to the main ALEAPP installation directory.
+# If this property is commented out or left empty, IPED will search for ALEAPP
+# in the default directory: <IPED_installation_folder>/tools/aleapp
+# Example for Windows: aleapFolder=C:\Forensic Tools\aleapp
+# Example for Linux: aleapFolder=/home/user/aleapp
+# aleapFolder=
+
+# -----------------------------------------------------------------------------
+
+# Comma-separated list of specific ALEAPP plugins to run.
+# Use this to create an inclusion list, forcing IPED to run ONLY the specified plugins.
+# If left empty (default behavior), IPED will run all available ALEAPP plugins
+# except for those defined in the 'excludePlugins' property below.
+# Example: includePlugins=firefox,teams,googleCalendar
+includePlugins=
+
+# -----------------------------------------------------------------------------
+
+# Comma-separated list of ALEAPP plugins to specifically exclude from processing.
+# This is useful for disabling plugins that are redundant with native IPED parsers,
+# are irrelevant to the case, or produce undesired output.
+#
+# The default exclusions are listed below with justifications:
+# - walStrings: Excluded because IPED natively parses strings from unparsed files.
+# - WhatsApp: Excluded because IPED uses its own robust, internal parser for WhatsApp artifacts.
+# - telegramAndroid: Excluded because IPED uses its own internal parser for Telegram artifacts.
+excludePlugins=walStrings,WhatsApp,telegramAndroid
+
+# -----------------------------------------------------------------------------
+
+# What to run over the file system of a UFDR. The data decoded by UFED (calls, contacts, chats, accounts...)
+# is already imported by IPED from the report, so decoding the same files again with ALEAPP duplicates it.
+# Possible values:
+#   all      - run every enabled plugin (results may duplicate the data decoded by UFED).
+#   external - prefer the data decoded by UFED: a plugin is skipped when the UFDR holds at least one of the
+#              UFED models configured as its equivalent ('skipIfUfedHas.*' properties below). Plugins with no
+#              equivalent model, or whose models UFED did not decode in that UFDR, run as usual.
+#   none     - do not run ALEAPP over UFDR extractions.
+# This has no effect on other kinds of extraction (zip, folder, android backup).
+ufdrDecodingToUse = external
+
+# ALEAPP plugins to skip when the UFDR already has the same data decoded by UFED, used when
+# 'ufdrDecodingToUse = external'. The key names the ALEAPP plugin, the value the equivalent UFED models:
+#   skipIfUfedHas.<module> = <models>              all the artifacts of an ALEAPP module (python file name, as in 'excludePlugins')
+#   skipIfUfedHas.<module>.<artifact> = <models>   one artifact of an ALEAPP module (takes precedence over the module one)
+# <models> is a comma-separated list of UFED models, the plugin is skipped if the UFDR has any of them:
+#   Type          models of that type, from any source (e.g. InstalledApplication)
+#   Type:Source   models of that type whose 'Source' is the given application (e.g. Chat:Telegram)
+#   Type:-        models of that type with no source (as UFED reports the native call log and contact list)
+# Type and Source are the ones shown by IPED in the UFED items ('application/x-ufed-<type>' and 'ufed:Source').
+# The skip is by plugin: if a plugin decodes several applications in one run (e.g. every Chromium based
+# browser) and UFED decoded just one of them, the others are not decoded by ALEAPP either. Remove the line
+# of a plugin to always run it.
+# The WhatsApp and telegramAndroid lines only matter if those modules are removed from 'excludePlugins' above.
+skipIfUfedHas.calllog.get_calllog = Call:-
+skipIfUfedHas.calllogs = Call:-
+skipIfUfedHas.contacts = Contact:-
+skipIfUfedHas.smsmms = Chat:Native Messages, InstantMessage:Native Messages
+skipIfUfedHas.accounts_ce.accounts_ce = UserAccount:Accounts
+skipIfUfedHas.accounts_ce.accounts_ce_authtokens = Password:Accounts
+skipIfUfedHas.accounts_de = UserAccount:Accounts
+skipIfUfedHas.packageInfo = InstalledApplication:-
+skipIfUfedHas.netstats = NetworkUsage:Network Stats
+skipIfUfedHas.wellbeing.get_wellbeing = AppsUsageLog:Digital Wellbeing
+skipIfUfedHas.wifiConfigstore2 = WirelessNetwork:WiFi
+skipIfUfedHas.wifiProfiles = WirelessNetwork:WiFi
+skipIfUfedHas.bluetoothConnections.get_bluetoothConnections = RecognizedDevice:Bluetooth Devices
+skipIfUfedHas.googleCalendar.get_calendar = CalendarEntry:Calendar
+skipIfUfedHas.gmailEmails.gmailEmails = Email:Gmail
+skipIfUfedHas.chrome.get_chrome = VisitedPage:Chrome
+skipIfUfedHas.chrome.get_chromeWebVisits = VisitedPage:Chrome
+skipIfUfedHas.chrome.get_chromeSearchTerms = SearchedItem:Chrome
+skipIfUfedHas.chrome.get_chromeKeywordSearchTerms = SearchedItem:Chrome
+skipIfUfedHas.chromeCookies = Cookie:Chrome
+skipIfUfedHas.chromeBookmarks = WebBookmark:Chrome
+skipIfUfedHas.chromeAutofill = Autofill:Chrome
+skipIfUfedHas.chromeCreditCards = CreditCard:Chrome
+skipIfUfedHas.telegramAndroid.get_telegramMessages = Chat:Telegram
+skipIfUfedHas.telegramAndroid.get_telegramChats = Chat:Telegram
+skipIfUfedHas.telegramAndroid.get_telegramContacts = Contact:Telegram
+skipIfUfedHas.telegramAndroid.get_telegramUsers = Contact:Telegram
+skipIfUfedHas.telegramAndroid.get_telegramAccounts = UserAccount:Telegram
+skipIfUfedHas.FacebookMessenger.get_fb_msys_chats = Chat:Facebook Messenger
+skipIfUfedHas.FacebookMessenger.get_fb_threads_chats = Chat:Facebook Messenger
+skipIfUfedHas.FacebookMessenger.get_fb_msys_contacts = Contact:Facebook Messenger
+skipIfUfedHas.FacebookMessenger.get_fb_threads_contacts = Contact:Facebook Messenger
+skipIfUfedHas.FacebookMessenger.get_fb_user_id = UserAccount:Facebook Messenger
+skipIfUfedHas.facebookApp.facebookAppContacts = Contact:Facebook
+skipIfUfedHas.instagram.instagramDirectMessages = Chat:Instagram
+skipIfUfedHas.instagram.instagramDirectThreads = Chat:Instagram
+skipIfUfedHas.instagram.instagramContacts = Contact:Instagram
+skipIfUfedHas.instagram.instagramAccounts = UserAccount:Instagram
+skipIfUfedHas.WhatsApp.get_whatsapp_messages = Chat:WhatsApp, Chat:WhatsApp Business, Chat:WhatsApp (Dual App)
+skipIfUfedHas.WhatsApp.get_whatsapp_one_to_one_messages = Chat:WhatsApp, Chat:WhatsApp Business, Chat:WhatsApp (Dual App)
+skipIfUfedHas.WhatsApp.get_whatsapp_group_messages = Chat:WhatsApp, Chat:WhatsApp Business, Chat:WhatsApp (Dual App)
+skipIfUfedHas.WhatsApp.get_whatsapp_group_details = Chat:WhatsApp, Chat:WhatsApp Business, Chat:WhatsApp (Dual App)
+skipIfUfedHas.WhatsApp.get_whatsapp_contacts = Contact:WhatsApp, Contact:WhatsApp Business, Contact:WhatsApp (Dual App)
+skipIfUfedHas.WhatsApp.get_whatsapp_call_logs = Call:WhatsApp, Call:WhatsApp Business, Call:WhatsApp (Dual App)
+skipIfUfedHas.WhatsApp.get_whatsapp_user_profile = UserAccount:WhatsApp, UserAccount:WhatsApp Business, UserAccount:WhatsApp (Dual App)

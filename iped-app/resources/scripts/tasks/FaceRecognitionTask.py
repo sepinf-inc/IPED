@@ -136,16 +136,10 @@ class FaceRecognitionTask:
             module_name = 'numpy'
             global np
             import numpy as np
-            
-            # check if numpy version is supported (<2.x)
-            np_version_unsupported_min = '2'
-            np_version = np.__version__
-            if np_version >= np_version_unsupported_min:
-                # numpy version is not supported
-                msg = msg_task_init_error + f': \'{module_name}\' module version is {np_version} (must be <{np_version_unsupported_min}.x).'
-                logger.error(msg + ' ' + msg_see_manual)
-                FaceRecognitionTask.enabled = False
-                return
+
+            # numpy 2.x is accepted: it was refused (#2457) because the jep of the python bundles for
+            # python 3.9 was built with numpy 1.x and failed to load numpy 2. Jep is now built with numpy 2,
+            # and there is no numpy 1.x for python 3.13.
 
         except ModuleNotFoundError:
             # required module not installed

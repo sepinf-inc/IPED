@@ -122,6 +122,9 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String UFED_NATIVE_SCENE_CLASSIFICATION = ExtraProperties.UFED_META_PREFIX + "Native Scene Classification";
     public static final String MSISDN_PROP = "MSISDN";
 
+    /** Name of the virtual folder holding the decoded models, a direct child of the ufdr root item. */
+    public static final String DECODED_DATA_FOLDER_NAME = "_DecodedData";
+
     private static final String EMPTY_EXTRACTION_STR = "-";
 
     private static final String FILE_ID_ATTR = ExtraProperties.UFED_META_PREFIX + "file_id"; //$NON-NLS-1$
@@ -392,7 +395,7 @@ public class UfedXmlReader extends DataSourceReader {
             return;
 
         decodedFolder = new Item();
-        decodedFolder.setName("_DecodedData"); //$NON-NLS-1$
+        decodedFolder.setName(DECODED_DATA_FOLDER_NAME);
         decodedFolder.setParent(rootItem);
         decodedFolder.setIdInDataSource("");
         decodedFolder.setPath(rootItem.getPath() + "/" + decodedFolder.getName()); //$NON-NLS-1$

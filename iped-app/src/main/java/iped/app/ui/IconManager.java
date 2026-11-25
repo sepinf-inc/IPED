@@ -23,11 +23,14 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
+
+import org.apache.commons.lang3.StringUtils;
 
 import iped.app.ui.utils.UiIconSize;
 import iped.engine.data.SimpleFilterNode;
@@ -65,6 +68,10 @@ public class IconManager {
 
     private static final String folderOpenedKey = "folder-opened";
     private static final String folderClosedKey = "folder-closed";
+
+    private static final String reportFolderOpenedKey = "report-folder-opened";
+    private static final String reportFolderClosedKey = "report-folder-closed";
+
     private static final String diskKey = "drive";
     private static final String fileKey = "file";
 
@@ -121,6 +128,14 @@ public class IconManager {
         return getTreeIcon(isOpened ? folderOpenedKey : folderClosedKey);
     }
 
+    public static Icon getReportFolderIcon() {
+        return getReportFolderIcon(false);
+    }
+
+    public static Icon getReportFolderIcon(boolean isOpened) {
+        return getTreeIcon(isOpened ? reportFolderOpenedKey : reportFolderClosedKey);
+    }
+
     public static Icon getFolderIconGallery() {
         return getFolderIconGallery(false);
     }
@@ -143,7 +158,11 @@ public class IconManager {
 
     private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap, Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
         if (mimeType != null && !mimeType.isBlank()) {
-            Icon icon = mimeIconMap.get(mimeType.strip());
+            String mime = mimeType.strip();
+            Icon icon = mimeIconMap.get(mime);
+            if (icon == null && mime.startsWith(ALEAPP_MIME_PREFIX)) {
+                icon = getAleappIcon(mime, mimeIconMap);
+            }
             if (icon != null) {
                 return icon;
             }
@@ -155,6 +174,112 @@ public class IconManager {
             }
         }
         return defaultIcon;
+    }
+
+    /**
+     * Returns the icon registered for the given mime type (including the dynamic x-aleapp resolution), or null when
+     * there is none. Lets cell renderers give specific mime icons precedence over generic ones like the decoded
+     * report folder icon.
+     */
+    public static Icon getMimeIcon(String mimeType) {
+        if (mimeType == null || mimeType.isBlank()) {
+            return null;
+        }
+        String mime = mimeType.strip();
+        Icon icon = mimeIconMap.get(mime);
+        if (icon == null && mime.startsWith(ALEAPP_MIME_PREFIX)) {
+            icon = getAleappIcon(mime, mimeIconMap);
+        }
+        return icon;
+    }
+
+    private static final String ALEAPP_MIME_PREFIX = "application/x-aleapp-";
+
+    /**
+     * Icon for the ALEAPP item mime types, which are derived dynamically from plugin/artifact names (e.g.
+     * application/x-aleapp-sms_mms-message, application/x-aleapp-web-history), so they cannot be enumerated in the
+     * static mime map. No new icon is created for them: they reuse the icon of the equivalent type already in the map.
+     *
+     * Types named after what the rows hold end with a suffix set by AleappMediaTypeResolver ("-call", "-message"...).
+     * The other ones are named after the artifact, so they are matched by its whole words.
+     *
+     * The conversation items do carry their app in the mime (application/x-aleapp-chat-preview-whatsapp), but those
+     * types are a closed set already registered in the mime map, so they are resolved by a plain lookup and never reach
+     * this method. Matching an app name inside the remaining (row) types would only mislabel them, since most are
+     * contacts, calls or account profiles rather than conversations.
+     */
+    private static Icon getAleappIcon(String mimeType, Map<String, QualityIcon> mimeIconMap) {
+        String equivalent = getAleappEquivalentMime(StringUtils.removeStart(mimeType, ALEAPP_MIME_PREFIX));
+        return equivalent == null ? null : mimeIconMap.get(equivalent);
+    }
+
+    private static String getAleappEquivalentMime(String subtype) {
+
+        // what the rows hold
+        if (subtype.endsWith("-message")) {
+            return "application/x-aleapp-message";
+        }
+        if (StringUtils.endsWithAny(subtype, "-chat", "-conversation")) {
+            return "application/x-aleapp-chat-preview";
+        }
+        if (subtype.endsWith("-call")) {
+            return "application/x-ufed-call";
+        }
+        if (subtype.endsWith("-contact")) {
+            return "application/x-ufed-contact";
+        }
+        if (subtype.equals("email") || subtype.endsWith("-email")) {
+            return "application/x-ufed-email";
+        }
+
+        // types fixed by AleappMediaTypeResolver
+        switch (subtype) {
+            case "notification":
+                return "application/x-ufed-notification";
+            case "account":
+            case "facebook-account":
+                return "application/x-ufed-useraccount";
+            case "account-authtoken":
+                return "application/x-ufed-password";
+            case "siminfo":
+                return "application/x-ufed-simdata";
+            case "deviceinfo":
+                return "application/x-ufed-deviceinfo";
+        }
+
+        // types named after the artifact (e.g. "web-history", "google-maps-searches")
+        Set<String> words = Set.of(StringUtils.split(subtype, "-_"));
+        if (words.contains("autofill")) {
+            return "application/x-ufed-autofill";
+        }
+        if (words.contains("cookies")) {
+            return "application/x-ufed-cookie";
+        }
+        if (words.contains("bookmarks")) {
+            return "application/x-ufed-webbookmark";
+        }
+        if ((words.contains("web") || words.contains("browser")) && (words.contains("history") || words.contains("visits"))) {
+            return "application/x-ufed-visitedpage";
+        }
+        if (words.contains("login") && words.contains("data")) {
+            return "application/x-ufed-password";
+        }
+        if (words.contains("searches")) {
+            return "application/x-ufed-searcheditem";
+        }
+        if (words.contains("notifications")) {
+            return "application/x-ufed-notification";
+        }
+        if (words.contains("calendar") || words.contains("calendars")) {
+            return "application/x-ufed-calendarentry";
+        }
+        if (words.contains("locations") || words.contains("places")) {
+            return "application/x-ufed-location";
+        }
+        if (StringUtils.containsAny(subtype, "wifi", "wi-fi")) {
+            return "application/x-ufed-wirelessnetwork";
+        }
+        return null;
     }
 
     public static Icon getCategoryIcon(String category) {
@@ -281,6 +406,12 @@ public class IconManager {
             mimeIconMap.put("application/x-windows-registry-report", icon);
         }
 
+        icon = availableIconsMap.get("chat");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview", icon);
+        }
+
         icon = availableIconsMap.get("whatsapp");
         if (icon != null) {
             mimeIconMap.put("application/x-whatsapp-db", icon);
@@ -288,6 +419,7 @@ public class IconManager {
             mimeIconMap.put("application/x-whatsapp-chatstorage", icon);
             mimeIconMap.put("application/x-whatsapp-chat", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-whatsapp", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-whatsapp", icon);
         }
 
         icon = availableIconsMap.get("threema");
@@ -296,36 +428,43 @@ public class IconManager {
             mimeIconMap.put("application/x-threema-user-plist", icon);
             mimeIconMap.put("application/x-threema-chatstorage", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-threema", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-threema", icon);
         }
 
         icon = availableIconsMap.get("facebook");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-facebook", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-facebook", icon);
         }
 
         icon = availableIconsMap.get("signal");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-signal", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-signal", icon);
         }
 
         icon = availableIconsMap.get("snapchat");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-snapchat", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-snapchat", icon);
         }
 
         icon = availableIconsMap.get("tiktok");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-tiktok", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-tiktok", icon);
         }
 
         icon = availableIconsMap.get("viber");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-viber", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-viber", icon);
         }
 
         icon = availableIconsMap.get("instagram");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-instagram", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-instagram", icon);
         }
 
         icon = availableIconsMap.get("skype");
@@ -334,6 +473,7 @@ public class IconManager {
             mimeIconMap.put("application/skype", icon);
             mimeIconMap.put("application/x-skype-conversation", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-skype", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-skype", icon);
         }
 
         icon = availableIconsMap.get("telegram");
@@ -341,6 +481,7 @@ public class IconManager {
             mimeIconMap.put("application/x-telegram-chat", icon);
             mimeIconMap.put("application/x-telegram-db", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-telegram", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-telegram", icon);
         }
 
         icon = availableIconsMap.get("apple-config");
@@ -487,7 +628,7 @@ public class IconManager {
         icon = availableIconsMap.get("message");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-instantmessage", icon);
-            mimeIconMap.put("application/x-ufed-chat-preview", icon);
+            mimeIconMap.put("application/x-aleapp-message", icon);
             mimeIconMap.put("message/x-chat-message", icon);
             mimeIconMap.put("message/x-discord-message", icon);
         }
@@ -668,6 +809,7 @@ public class IconManager {
             mimeIconMap.put("application/x-discord-index", icon);
             mimeIconMap.put("application/x-discord-chat", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-discord", icon);
+            mimeIconMap.put("application/x-aleapp-chat-preview-discord", icon);
         }
 
         icon = availableIconsMap.get("discord-attachment");

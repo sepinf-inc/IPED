@@ -109,6 +109,18 @@ public class ReferencedByTableModel extends BaseTableModel {
             }
         }
 
+        // globalId
+        String globalId = doc.get(ExtraProperties.GLOBAL_ID);
+        if (StringUtils.isNotBlank(globalId)) {
+            String globalIdQuery = ExtraProperties.LINKED_ITEMS + ":" + ExtraProperties.GLOBAL_ID //
+                    + " AND " + ExtraProperties.LINKED_ITEMS + ":" + globalId;
+            try {
+                queryBuilder.add(b.getQuery(globalIdQuery), Occur.SHOULD);
+            } catch (ParseException | QueryNodeException e) {
+                e.printStackTrace();
+            }
+        }
+
         // jumpList:ids
         String[] appIds = doc.getValues(JumpListTask.JUMPLIST_PROGRAM_APP_IDS);
         for (String appId: appIds) {

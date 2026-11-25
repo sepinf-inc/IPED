@@ -73,6 +73,12 @@ public class ExportCSVTask extends AbstractTask {
      *
      * @return true
      */
+    /**
+     * Temp attribute to keep an ignored item out of the file list. Ignored items are listed, since they are part of
+     * the evidence; this is for items a task created itself and then discarded, which never were in the evidence.
+     */
+    public static final String SKIP_FILE_LIST = "skipFileList";
+
     @Override
     protected boolean processIgnoredItem() {
         return true;
@@ -87,6 +93,10 @@ public class ExportCSVTask extends AbstractTask {
     protected void process(IItem evidence) throws IOException {
 
         if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase())) {
+            return;
+        }
+
+        if (evidence.getTempAttribute(SKIP_FILE_LIST) != null) {
             return;
         }
 
