@@ -803,6 +803,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.PinnedMessage") + ".<br>");
                 break;
+            case SENT_HISTORY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.SentHistory") + ".<br>");
+                break;
 
             default:
                 IItemReader mediaItem = null;

@@ -52,6 +52,7 @@ import static iped.parsers.whatsapp.Message.MessageType.PINNED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_ADDED_TO_CONTACTS;
+import static iped.parsers.whatsapp.Message.MessageType.SENT_HISTORY;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.TEMPLATE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
@@ -1814,6 +1815,10 @@ public abstract class ExtractorIOS extends Extractor {
 
             case 66:
                 result = MESSAGE_ASSOCIATION;
+                break;
+
+            case 75:
+                result = SENT_HISTORY;
                 break;
         }
         return result;
