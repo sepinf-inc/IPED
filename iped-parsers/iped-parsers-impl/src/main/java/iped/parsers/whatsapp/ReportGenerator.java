@@ -288,6 +288,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.AIThirdParty"));
                 break;
+            case OFFERS_ANNOUNCEMENTS:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.OffersAnnoucements"));
+                break;              
             case CHAT_STARTED_FROM_AD:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChatStartedFromAd"));

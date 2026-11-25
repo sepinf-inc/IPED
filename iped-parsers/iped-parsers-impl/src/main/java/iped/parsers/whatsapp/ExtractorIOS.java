@@ -49,6 +49,7 @@ import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.OFFERS_ANNOUNCEMENTS;
 import static iped.parsers.whatsapp.Message.MessageType.PINNED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
@@ -1718,6 +1719,10 @@ public abstract class ExtractorIOS extends Extractor {
 
                     case 62:
                         result = IGNORED;
+                        break;
+
+                    case 67:
+                        result = OFFERS_ANNOUNCEMENTS;
                         break;
                 }
                 break;
