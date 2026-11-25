@@ -65,9 +65,25 @@ public class KnownMetParser extends AbstractParser {
 
     public static final String EDONKEY = "edonkey";
 
-    public static final String EMULE_MIME_TYPE = "application/x-emule"; //$NON-NLS-1$
-    public static final String KNOWN_MET_ENTRY_MIME_TYPE = "application/x-emule-known-met-entry"; //$NON-NLS-1$
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(EMULE_MIME_TYPE));
+    public static final String EMULE_KNOWN_MET_MIME_TYPE = "application/x-emule-known-met";
+    public static final String EMULE_KNOWN_MET_ENTRY_MIME_TYPE = "application/x-emule-known-met-entry";
+
+    /**
+     * Media type assigned to known.met files before #2424. No longer set, but
+     * still present in cases processed by previous versions.
+     */
+    public static final String EMULE_KNOWN_MET_LEGACY_MIME_TYPE = "application/x-emule";
+
+    /**
+     * Checks if the given media type identifies a known.met file, including the
+     * legacy media type used by cases processed by previous versions.
+     */
+    public static boolean isKnownMetMimeType(String mediaType) {
+        return EMULE_KNOWN_MET_MIME_TYPE.equals(mediaType) || EMULE_KNOWN_MET_LEGACY_MIME_TYPE.equals(mediaType);
+    }
+
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections
+            .singleton(MediaType.parse(EMULE_KNOWN_MET_MIME_TYPE));
 
     public static final String[] header = new String[] { Messages.getString("KnownMetParser.Seq"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.Name"), //$NON-NLS-1$
@@ -104,13 +120,13 @@ public class KnownMetParser extends AbstractParser {
         final DateFormat df = new SimpleDateFormat(Messages.getString("KnownMetParser.DataFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
 
-        metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_MIME_TYPE);
+        metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_KNOWN_MET_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         BeanMetadataExtraction bme = null;
 
         if (extractEntries) {
-            bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, KNOWN_MET_ENTRY_MIME_TYPE, context);
+            bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, EMULE_KNOWN_MET_ENTRY_MIME_TYPE, context);
             // normalization to use same property name of other p2p parsers
             bme.registerPropertyNameMapping(KnownMetEntry.class, "hash", "ed2k");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");

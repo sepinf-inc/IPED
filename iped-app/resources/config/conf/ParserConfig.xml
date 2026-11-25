@@ -23,8 +23,16 @@
         <parser class="iped.parsers.external.CompositeExternalParser"></parser>
 
         <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
-        <parser class="iped.parsers.plist.PListParser"></parser>
-        <parser class="iped.parsers.plist.NSKeyedArchiverParser"></parser>
+        <parser class="iped.parsers.plist.PListParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
+        <parser class="iped.parsers.plist.NSKeyedArchiverParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
         <!-- <parser class="org.apache.tika.parser.apple.PListParser"></parser> -->
         <parser class="org.apache.tika.parser.asm.ClassParser"></parser>
         <parser class="org.apache.tika.parser.audio.AudioParser"></parser>
@@ -314,6 +322,9 @@
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
                 <param name="recoverDeletedRecords" type="bool">true</param>
+                <!--Also recover deleted records from backups (msgstore-yyyy-mm-dd.db, msgstore.db.crypt*).
+                    It needs several times the size of each database in memory.-->
+                <param name="recoverDeletedRecordsFromBackups" type="bool">false</param>
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
