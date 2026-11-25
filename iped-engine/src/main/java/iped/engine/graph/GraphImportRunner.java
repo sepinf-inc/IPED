@@ -71,7 +71,7 @@ public class GraphImportRunner {
 
     }
 
-    public void run(File neo4jHome, String dbName, boolean highIO) throws IOException {
+    public List<String> buildCommand(File neo4jHome, String dbName, boolean highIO) throws IOException {
 
         List<String> args = new ArrayList<>();
 
@@ -79,6 +79,8 @@ public class GraphImportRunner {
         args.add("-cp");
         try {
             URL url = URLUtil.getURL(AdminTool.class);
+            // Keep the wildcard as a single ProcessBuilder argument so the JVM,
+            // not the shell, expands it.
             args.add(new File(url.toURI()).getParentFile().getAbsolutePath() + "/*");
         } catch (URISyntaxException e1) {
             throw new IOException(e1);
@@ -88,6 +90,13 @@ public class GraphImportRunner {
         args.add("import");
 
         writeArgs(args, dbName, highIO);
+
+        return args;
+    }
+
+    public void run(File neo4jHome, String dbName, boolean highIO) throws IOException {
+
+        List<String> args = buildCommand(neo4jHome, dbName, highIO);
 
         ExecutorService executorService = null;
 
