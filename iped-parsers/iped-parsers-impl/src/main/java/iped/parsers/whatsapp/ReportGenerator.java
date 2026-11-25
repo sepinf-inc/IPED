@@ -721,6 +721,10 @@ public class ReportGenerator {
                 out.print(name + " ");
                 out.println(Messages.getString("WhatsAppReport.UserAdmin") + "<br>");
                 break;
+            case GROUP_RESET_INVITE_LINK:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupResetInviteLink") + "<br>");
+                break;
             case GROUP_CHANGED_ALL_MEMBERS_CAN_ADD:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedAllMembersCanAdd") + "<br>");
