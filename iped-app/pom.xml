@@ -13,8 +13,14 @@
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
-    	<!-- also names the JRE copy in user home searched by the Windows launchers, see AppMain.getHomeJreFolder() -->
-    	<bundled.jre.version>25.0.5</bundled.jre.version>
+        <!-- Bundled Windows JRE (Liberica Full). New releases: https://github.com/bell-sw/Liberica/releases
+             To upgrade, set the release <version>+<build> and the SHA-256 of
+             bellsoft-jre<version>+<build>-windows-amd64-full.zip -->
+        <bundled.jre.version>25.0.5.1</bundled.jre.version>
+        <bundled.jre.build>5</bundled.jre.build>
+        <bundled.jre.sha256>2b5cca98d2e43046d1a4b0eb28f54c804e870869b0a6b9fd8c22ce6bec0613fd</bundled.jre.sha256>
+        <!-- also names the JRE copy in user home searched by the Windows launchers, see AppMain.getHomeJreFolder() -->
+        <bundled.jre.release>${bundled.jre.version}+${bundled.jre.build}</bundled.jre.release>
         <!-- the external tools of the parsers go into the release: see the pluginManagement of the parent pom -->
         <tools.unpack.phase>package</tools.unpack.phase>
         <tools.windows.skip>false</tools.windows.skip>
@@ -66,11 +72,69 @@
 
     <build>
         <plugins>
+            <!-- Must be declared before the download plugin, both run in the package phase. The JRE zip is
+                 unpacked at every execution of the download plugin, so it is skipped if the release already
+                 has the JRE of the configured version. An outdated JRE folder is removed first, to not leave
+                 files of the previous version behind. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>check-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <exportAntProperties>true</exportAntProperties>
+                            <target>
+                                <!-- ${release.dir} refers to the parent project, which is not resolved here -->
+                                <property name="bundled.jre.dir" location="${project.build.directory}/../../target/release/iped-${project.version}/jre" />
+                                <loadfile property="bundled.jre.current" srcFile="${bundled.jre.dir}/release" failonerror="false" quiet="true" />
+                                <condition property="bundled.jre.skip" value="true" else="false">
+                                    <matches string="${bundled.jre.current}" pattern="JAVA_RUNTIME_VERSION=&quot;\Q${bundled.jre.release}\E[-&quot;]" />
+                                </condition>
+                                <!-- a folder that does not exist if the JRE is up to date -->
+                                <condition property="bundled.jre.outdated.dir" value="${bundled.jre.dir}-none" else="${bundled.jre.dir}">
+                                    <istrue value="${bundled.jre.skip}" />
+                                </condition>
+                                <delete dir="${bundled.jre.outdated.dir}" />
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- the executions of the external tools the parsers use are defined once, in the
                  pluginManagement of the parent pom: iped-parsers-impl unpacks them for its tests too -->
             <plugin>
                 <groupId>io.github.download-maven-plugin</groupId>
                 <artifactId>download-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- the zip is kept in the cache of this plugin in the local maven repository -->
+                        <id>download-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                        <configuration>
+                            <!-- set by the check-jre execution above -->
+                            <skip>${bundled.jre.skip}</skip>
+                            <url>https://github.com/bell-sw/Liberica/releases/download/${bundled.jre.release}/bellsoft-jre${bundled.jre.release}-windows-amd64-full.zip</url>
+                            <sha256>${bundled.jre.sha256}</sha256>
+                            <unpack>true</unpack>
+                            <!-- the root folder of the zip is named after its version -->
+                            <fileMappers>
+                                <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    <pattern>^jre-[^/]+/</pattern>
+                                    <replacement>jre/</replacement>
+                                </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                            </fileMappers>
+                            <outputDirectory>${release.dir}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -80,25 +144,6 @@
                         <goals>
                             <goal>analyze</goal>
                         </goals>
-                    </execution>
-                    <execution>
-                        <id>unpack-jre</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>java</groupId>
-                                    <artifactId>jre</artifactId>
-                                    <version>${bundled.jre.version}</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
                     </execution>
                     <execution>
                         <id>unpack-python</id>
@@ -550,7 +595,7 @@
                             <icon>${resources.dir}/launcher/iped.ico</icon>
                             <disableVersionInfoDefaults>true</disableVersionInfoDefaults>
                             <jre>
-                                <path>%USERPROFILE%\.iped\jre-${bundled.jre.version};%EXEDIR%\jre</path>
+                                <path>%USERPROFILE%\.iped\jre-${bundled.jre.release};%EXEDIR%\jre</path>
                                 <requires64Bit>true</requires64Bit>
                                 <minVersion>25</minVersion>
                             </jre>
@@ -575,7 +620,7 @@
                             <icon>${resources.dir}/launcher/iped-search-app.ico</icon>
                             <disableVersionInfoDefaults>true</disableVersionInfoDefaults>
                             <jre>
-                                <path>%USERPROFILE%\.iped\jre-${bundled.jre.version};%EXEDIR%\iped\jre</path>
+                                <path>%USERPROFILE%\.iped\jre-${bundled.jre.release};%EXEDIR%\iped\jre</path>
                                 <requires64Bit>true</requires64Bit>
                                 <minVersion>25</minVersion>
                             </jre>

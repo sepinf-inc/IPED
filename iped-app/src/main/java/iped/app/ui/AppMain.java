@@ -34,22 +34,43 @@ public class AppMain {
     private static StartUpControlClient startUpControlClient;
 
     /**
-     * Folder in user home where the bundled JRE is copied on Windows. It must match
-     * the JRE search path of iped.exe and IPED-SearchApp.exe (see
-     * bundled.jre.version in iped-app/pom.xml).
+     * Folder in user home where the bundled JRE is copied on Windows, named after
+     * its version and build, like ".iped/jre-25.0.5.1+5". It must match the JRE
+     * search path of iped.exe and IPED-SearchApp.exe (see bundled.jre.release in
+     * iped-app/pom.xml).
+     *
+     * @param runtimeVersion
+     *            the java.runtime.version of the JRE, like "25.0.5.1+5-LTS"
      */
-    public static String getHomeJreFolder(String jreVersion) {
-        return ".iped/jre-" + jreVersion;
+    public static String getHomeJreFolder(String runtimeVersion) {
+        return ".iped/jre-" + getJreRelease(runtimeVersion);
     }
 
     /**
-     * @return JAVA_VERSION from the release file of the JRE, or null if not found
+     * @return the version and build of a runtime version, without the optional
+     *         information after the build: "25.0.5.1+5" for "25.0.5.1+5-LTS"
+     */
+    static String getJreRelease(String runtimeVersion) {
+        int plus = runtimeVersion.indexOf('+');
+        if (plus == -1) {
+            return runtimeVersion;
+        }
+        int end = plus + 1;
+        while (end < runtimeVersion.length() && Character.isDigit(runtimeVersion.charAt(end))) {
+            end++;
+        }
+        return runtimeVersion.substring(0, end);
+    }
+
+    /**
+     * @return JAVA_RUNTIME_VERSION from the release file of the JRE, or null if not
+     *         found
      */
     private static String getJreVersion(File jreHome) {
         try {
             for (String line : Files.readAllLines(new File(jreHome, "release").toPath(), StandardCharsets.UTF_8)) {
-                if (line.startsWith("JAVA_VERSION=")) {
-                    return line.substring("JAVA_VERSION=".length()).replace("\"", "").trim();
+                if (line.startsWith("JAVA_RUNTIME_VERSION=")) {
+                    return line.substring("JAVA_RUNTIME_VERSION=".length()).replace("\"", "").trim();
                 }
             }
         } catch (IOException e) {

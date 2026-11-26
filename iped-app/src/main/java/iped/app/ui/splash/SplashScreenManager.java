@@ -170,7 +170,7 @@ public class SplashScreenManager {
                             // Check if the is a JRE in user home
                             // the running JRE is the bundled one or its copy in user home
                             File userJrePath = new File(userHome,
-                                    AppMain.getHomeJreFolder(System.getProperty("java.version")));
+                                    AppMain.getHomeJreFolder(System.getProperty("java.runtime.version")));
                             if (userJrePath.exists()) {
 
                                 // Warn the user about possibly corrupted JRE
