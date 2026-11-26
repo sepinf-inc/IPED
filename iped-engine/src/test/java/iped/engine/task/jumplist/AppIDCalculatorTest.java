@@ -16,4 +16,16 @@ public class AppIDCalculatorTest {
         assertThat(calculateAppIDs("/image.E01/vol_vol3/Windows/notepad.exe"),  hasItem("47592b67dd97a119"));
         assertThat(calculateAppIDs("/image.E01/vol_vol3/Windows/System32/notepad.exe"),  hasItem("9b9cdc69c1c24e2b"));
     }
+
+    @Test
+    public void testUserProfilePath() {
+        assertThat(calculateAppIDs("/image.E01/vol_vol3/Users/Alice/Desktop/app.exe"),
+                hasItem("71a2d020d541101f"));
+    }
+
+    @Test
+    public void testPublicDesktopPath() {
+        assertThat(calculateAppIDs("/image.E01/vol_vol3/Users/Public/Desktop/app.exe"),
+                hasItem("2d6444092979636d"));
+    }
 }

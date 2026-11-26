@@ -1,3 +1,23 @@
+28/03/2026: IPED-4.3.1
+#2855: Add audio transcription results to Telegram chats reports (@hauck-jvsh)
+#2786: Regression: SharedHashes field being populated with medias received by the local account (@aberenguel)
+#2777: Regression: PhotoDNALookup may miss part of possible hits - regression (@wladimirleite)
+#2843: Handle "lid" contacts in WhatsApp for iOS internal parser (@wladimirleite, @gisms)
+#2848: Improve "lid" contacts support in WhatsApp for Android internal parser (@wladimirleite, @@SidneyCardosojus)
+#2687: WhatsApp iOS messages occasionally misidentified as forwarded (@wladimirleite, @gfd2020, @aberenguel)
+#2851: DiscordParser resource leak causing OutOfMemoryError (@lfcnassif)
+#2643: Discord Cache parsing exceptions (@felipecampanini, @lfcnassif)
+#2842: RemoteImageClassifierTask can possibly hang (@hauck-jvsh, @lfcnassif)
+#2751: Regression: UFDR parsing failed with email name (@wladimirleite)
+#1694: Regression: Optimize UFDR evidences opening time through some networks (@lfcnassif, @wladimirleite)
+#2795: "hash:status" and "hash:set" being incorrectly used if WhatsApp media messages hit the hash database (@wladimirleite)
+#2797: Previews not displayed in multicases if relatives paths are used (@aberenguel)
+#2761: Bookmark name incorrectly split in Bookmark column (@wladimirleite, @marcosammoura)
+#2799: Files not exported when creating a report from a read-only case (@wladimirleite, @lfcnassif)
+#2849: Fail to parse very old WhatsApp iOS databases (@wladimirleite)
+#2834: Report generation fails due to inconsistency of data type for field html:image:og:image:height (@wladimirleite, @lfcnassif)
+#2824: Fix AD1Extractor.close() to close all channels on failure (@iamsanjaymalakar)
+
 31/12/2025: IPED-4.3.0
 News:
 #2438: Adds a new remote task to classify CSAM images, depends on proprietary service/model (@joaomacedo, @hauck-jvsh, @marcosammoura, @wladimirleite)

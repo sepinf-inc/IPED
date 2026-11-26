@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 
     private GalleryCellEditor cellEditor;
-    private static Logger logger = LoggerFactory.getLogger(ResultTableListener.class);
+    private static Logger logger = LoggerFactory.getLogger(GalleryListener.class);
 
     @Override
     public void valueChanged(ListSelectionEvent e) {

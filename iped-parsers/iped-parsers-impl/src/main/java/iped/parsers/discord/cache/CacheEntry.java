@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 
-import org.apache.commons.io.IOUtils;
 import org.brotli.dec.BrotliInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,8 +157,9 @@ public class CacheEntry {
 
         selfHash = Index.readUnsignedInt(is);
         if (keyDataSize > 0) {
-            keyData = IOUtils.readFully(is, Math.min((256 - 24 * 4) + (3 * 256), keyDataSize));
-
+        	// Uses readNBytes to prevent a crash if the block is truncated.
+            int bytesToRead = Math.min((256 - 24 * 4) + (3 * 256), keyDataSize);
+            keyData = is.readNBytes(bytesToRead);
         } else {
             keyData = new byte[0];
         }
@@ -190,7 +190,9 @@ public class CacheEntry {
                 }
 
                 if (longKeyAddress > 0) {
-                    key = new String(longKeyAddressCacheAddress.getInputStream(dataFiles, externalFiles, null).readNBytes(keyDataSize));
+                    try (InputStream is = longKeyAddressCacheAddress.getInputStream(dataFiles, externalFiles, null)) {
+                        key = new String(is.readNBytes(keyDataSize));
+                    }
                 } else {
                     key = new String(keyData);
                 }
@@ -204,7 +206,7 @@ public class CacheEntry {
             return key;
 
         } catch (Exception exe) {
-            exe.printStackTrace();
+            logger.warn("Failed to retrieve URL. Cache file:", getName());
             return "";
         }
     }
@@ -232,7 +234,7 @@ public class CacheEntry {
                 try {
                     return new GZIPInputStream(bis);
                 } catch (IOException e) {
-                    logger.warn("Gzip decoder failed, trying default", e);
+                    logger.warn("Gzip decoder failed, trying default");
                 }
             default:
                 return bis;
@@ -282,27 +284,34 @@ public class CacheEntry {
             }
         } catch (InputStreamNotAvailable e) {
             // ignore
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            String url = getRequestURL();
+            String fileName = getName();
+            
+            String contentType = "";
+            if (httpResponse.containsKey("content-type")) {
+                contentType = httpResponse.get("content-type");
+            } else if (httpResponse.containsKey("Content-Type")) {
+                contentType = httpResponse.get("Content-Type");
+            }
+
+            logger.warn("Truncated/invalid cache entry. File: {} | URL: {} | Content-Type: {}", 
+                        fileName, url, contentType);
         }
 
         return httpResponse;
     }
 
     public String readString(InputStream is) throws IOException {
-
-        int length;
-        byte[] data = null;
-        int ret;
-
-        length = Index.read4bytes(is);
-        data = new byte[length];
-        ret = is.read(data);
-
-        // Checking if the reading occurred correctly
-        if (ret != length && ret != -1)
-            throw new IOException();
-
+        
+    	int length = Index.read4bytes(is);
+        
+        if (length <= 0 || length > 1048576) {
+            return "";
+        }
+        
+        byte[] data = is.readNBytes(length);
+        
         return new String(data);
     }
 

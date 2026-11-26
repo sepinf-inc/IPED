@@ -21,12 +21,15 @@ package iped.engine.datasource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -88,6 +91,7 @@ import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
 import iped.utils.UTF8Properties;
@@ -97,11 +101,12 @@ public class SleuthkitReader extends DataSourceReader {
     private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitReader.class);
 
     private static final String RANGE_ID_FILE = "data/SleuthkitIdsPerImage.txt";
-    private static final String PASSWORD_PER_IMAGE = "data/PasswordPerImage.txt";
+    public static final String PASSWORD_PER_IMAGE = "data/PasswordPerImage.txt";
 
     // TODO update @deleteDatasource() when updating TSK
-    public static final String MIN_TSK_VER_TESTED = "4.11.0";
-    public static final String MAX_TSK_VER_TESTED = "4.12.0";
+    public static final String MIN_TSK_VER_TESTED = "4.13.0";
+    public static final String MAX_TSK_VER_TESTED = "4.15.0";
+    public static final List<String> UNTESTED_TSK_VERS = Arrays.asList("4.13.", "4.14.");
 
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -148,8 +153,8 @@ public class SleuthkitReader extends DataSourceReader {
     // via referência interna ao JNI para acessar os itens do caso
     public static volatile SleuthkitCase sleuthCase;
 
-    public static File getSleuthkitDB(File output) {
-        return new File(output.getParent(), DB_NAME);
+    public static Path getSleuthkitDB(File output) {
+        return output.toPath().getParent().resolve(DB_NAME).toAbsolutePath();
     }
 
     public SleuthkitReader(boolean embeddedDisk, ICaseData caseData, File output) {
@@ -262,7 +267,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
 
-    private static synchronized void checkTSKVersion() throws Exception {
+    private static synchronized void checkTSKVersion() {
 
         if (tskChecked) {
             return;
@@ -289,14 +294,14 @@ public class SleuthkitReader extends DataSourceReader {
         int maxMinorVerTested = Integer.valueOf(MAX_TSK_VER_TESTED.split("\\.")[1]);
 
         if (majorVerExpected != majorVerFound || minorVerFound < minorVerExpected)
-            throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER_TESTED); //$NON-NLS-1$ //$NON-NLS-2$
-        if (minorVerFound > maxMinorVerTested)
+            throw new RuntimeException("Sleuthkit version " + tskVer + " not supported. Install version " + MAX_TSK_VER_TESTED);
+        if (minorVerFound > maxMinorVerTested || UNTESTED_TSK_VERS.stream().anyMatch(tskVer::startsWith))
             LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;
     }
     
-    public static synchronized boolean isTSKPatched() throws Exception {
+    public static synchronized boolean isTSKPatched() {
         if (!tskChecked) {
             checkTSKVersion();
         }
@@ -320,11 +325,6 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         int sectorSize = args.getBlocksize();
-
-        String password = getEvidencePassword(image);
-        if (password != null) {
-            setImagePassword(output, image.getName(), password);
-        }
 
         firstId = null;
         lastId = null;
@@ -350,7 +350,7 @@ public class SleuthkitReader extends DataSourceReader {
             }
         }
 
-        String dbPath = getSleuthkitDB(output).getAbsolutePath();
+        Path dbPath = getSleuthkitDB(output);
 
         if (listOnly || embeddedDisk) {
 
@@ -359,14 +359,14 @@ public class SleuthkitReader extends DataSourceReader {
             if (sleuthCase == null) {
                 synchronized (this.getClass()) {
                     if (sleuthCase == null) {
-                        if (new File(dbPath).exists()) {
+                        if (Files.exists(dbPath)) {
                             sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(dbPath);
 
                         } else {
                             UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                                     Messages.getString("SleuthkitReader.Creating") + dbPath); //$NON-NLS-1$
                             LOGGER.info("Creating database {}", dbPath); //$NON-NLS-1$
-                            sleuthCase = SleuthkitCase.newCase(dbPath);
+                            sleuthCase = SleuthkitCase.newCase(dbPath.toString());
                             LOGGER.info("{} database created", dbPath); //$NON-NLS-1$
                         }
                     }
@@ -379,7 +379,7 @@ public class SleuthkitReader extends DataSourceReader {
             }
             System.setProperties(sysProps);
 
-            SleuthkitClient.initSleuthkitServers(new File(dbPath));
+            SleuthkitClient.initSleuthkitServers(dbPath.toFile());
 
             Long[] range = getDecodedRangeId(image, output);
             if (range != null && args.isContinue()) {
@@ -420,7 +420,10 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.notify();
                 }
 
-                addImage = sleuthCase.makeAddImageProcess(timezone, true, false, "");
+                String password = getEvidencePassword(image);
+
+                addImage = sleuthCase.makeAddImageProcess(timezone, true, false, "", password);
+
                 addImageInBackground(addImage, image, sectorSize);
 
             }
@@ -497,44 +500,6 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
     
-    public static synchronized void loadImagePasswords(File output) {
-        File file = new File(output, PASSWORD_PER_IMAGE);
-        if (file.exists()) {
-            UTF8Properties props = new UTF8Properties();
-            try {
-                props.load(file);
-                for (String key : props.stringPropertyNames()) {
-                    setEnvVar(key, props.getProperty(key));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private static synchronized void setImagePassword(File output, String imageName, String password) {
-        String envVar = imageName + "_PASSWORD";
-        setEnvVar(envVar, password);
-
-        File file = new File(output, PASSWORD_PER_IMAGE);
-        UTF8Properties props = new UTF8Properties();
-        try {
-            if (file.exists()) {
-                props.load(file);
-            }
-            props.setProperty(envVar, password);
-            props.store(file);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void setEnvVar(String envVar, String value) {
-        Util.setEnvVar(envVar, value);
-        SleuthkitClient.addEnvVar(envVar, value);
-    }
-
     public void read(File image) throws Exception {
         read(image, null);
     }
@@ -748,8 +713,6 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
 
-    private static final int SQLITE_BUSY_ERROR = 5;
-
     private List<AbstractFile> findFilesWhere(String where) throws TskCoreException, InterruptedException {
         long start = System.currentTimeMillis() / 1000;
         while (true) {
@@ -938,6 +901,22 @@ public class SleuthkitReader extends DataSourceReader {
             }
             if (listOnly)
                 return null;
+        }
+
+        if (absFile.getOwnerUid().isPresent()) {
+            evidence.setExtraAttribute(ExtraProperties.OWNER_ID, absFile.getOwnerUid().get());
+        }
+        if (absFile.getOsAccountObjectId().isPresent()) {
+            OsAccount user = sleuthCase.getOsAccountManager()
+                    .getOsAccountByObjectId(absFile.getOsAccountObjectId().get());
+            if (user != null) {
+                if (user.getLoginName().isPresent()) {
+                    evidence.setExtraAttribute(ExtraProperties.OWNER_LOGIN, user.getLoginName().get());
+                }
+                if (user.getFullName().isPresent()) {
+                    evidence.setExtraAttribute(ExtraProperties.OWNER_FULL_NAME, user.getFullName().get());
+                }
+            }
         }
 
         evidence.setDataSource(dataSource);

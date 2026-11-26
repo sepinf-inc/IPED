@@ -3,23 +3,32 @@ package iped.parsers.whatsapp;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import iped.parsers.util.ChatUtil;
+import iped.parsers.util.Messages;
+
 public class WAContactsDirectory {
-    private Map<String, WAContact> contacts = new ConcurrentHashMap<>();
+    private final Map<String, WAContact> contacts = new ConcurrentHashMap<>();
 
     public WAContact getContact(String id) {
-        String nameId = Util.getNameFromId(id);
+        String nameId = ChatUtil.getNameFromId(id);
         WAContact contact = contacts.get(nameId);
         if (contact == null) {
             contact = new WAContact(id);
             contacts.put(nameId, contact);
+            if ("0".equals(nameId)) {
+                // Add special contact "0", used as Official WhatsApp Account
+                contact.setDisplayName(Messages.getString("WhatsAppReport.OfficialAccount"));
+                byte[] bytes = ChatUtil.readResourceAsBytes("img/whatsapp-official.png");
+                contact.setAvatar(bytes);
+            }
         }
         return contact;
     }
 
     public boolean addContactMapping(String lid, String jid) {
-        String nameJid = Util.getNameFromId(jid);
+        String nameJid = ChatUtil.getNameFromId(jid);
         WAContact contact = contacts.get(nameJid);
-        String nameLid = Util.getNameFromId(lid);
+        String nameLid = ChatUtil.getNameFromId(lid);
         if (contact != null) {
             contacts.put(nameLid, contact);
             return true;

@@ -29,12 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -83,6 +83,7 @@ import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ItemInfoFactory;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.TextCache;
+import iped.engine.util.TikaInitializer;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.exception.ZipBombException;
@@ -163,7 +164,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
 
     private static AtomicInteger containersBeingExpanded = new AtomicInteger();
-    private static AtomicBoolean tikaSAXPoolSizeSet = new AtomicBoolean(false);
 
     private CategoryToExpandConfig expandConfig;
     private ParsingTaskConfig parsingConfig;
@@ -290,7 +290,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
     }
 
-    @SuppressWarnings("resource")
     private void setEmptyTextCache(IItem evidence) {
         ((Item) evidence).setParsedTextCache(new TextCache());
     }
@@ -668,7 +667,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             // set the subItem openContainer with the object passed in the inputStrem of the call parseEmbedded()
             // it will be used in the parser of the the subitem
             if (inputStream instanceof TikaInputStream) {
-                subItem.setOpenContainer(TikaInputStream.cast(inputStream).getOpenContainer());
+                subItem.setOpenContainer(getEmbeddedOpenContainer(TikaInputStream.cast(inputStream)));
             }
 
             if ("".equals(metadata.get(BasicProps.LENGTH))) {
@@ -686,7 +685,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                     // Add subitems to queue and blocks if queue is full. It shouldn't deadlock
                     // because we have at least 2 workers and a maximum of workers/2 expanding
                     // containers, so at least 1 worker is consuming items from the queue.
-                    Manager.getInstance().getProcessingQueues().addItem(subItem);
+                    Manager.getInstance().getProcessingQueues().addItemFirst(subItem);
                     caseData.incDiscoveredEvidences(1);
                     Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
@@ -776,10 +775,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         SplitLargeBinaryConfig splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
         minItemSizeToFragment = splitConfig.getMinItemSizeToFragment();
 
-        setupParsingOptions(configurationManager);
+        TikaInitializer.init(configurationManager);
 
         this.autoParser = new StandardParser();
-
     }
 
     public static void setupParsingOptions(ConfigurationManager configurationManager) {
@@ -792,12 +790,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         org.apache.poi.hpsf.CodePageString.setMaxRecordLength(512_000);
 
         // heavy Tika configuration
-        if (!tikaSAXPoolSizeSet.getAndSet(true)) {
-            try {
-                XMLReaderUtils.setPoolSize(Runtime.getRuntime().availableProcessors());
-            } catch (TikaException e) {
-                e.printStackTrace();
-            }
+        try {
+            XMLReaderUtils.setPoolSize(Runtime.getRuntime().availableProcessors());
+        } catch (TikaException e) {
+            LOGGER.error("Error setting XMLReaderUtils poolSize to availableProcessors", e);
         }
 
         // most options below are set using sys props because they are also used by
@@ -808,19 +804,19 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             PluginConfig pluginConfig = configurationManager.findObject(PluginConfig.class);
             ForkParser.setPluginDir(pluginConfig.getPluginFolder().getAbsolutePath());
             ForkParser.setPoolSize(parsingConfig.getNumExternalParsers());
-            max_expanding_containers = parsingConfig.getNumExternalParsers() / 2;
-            if (max_expanding_containers == 0) {
+            if (parsingConfig.getNumExternalParsers() < 2) {
                 // Abort. We must have at least 2 external parsing processes, 1 causes deadlock.
                 throw new IPEDException("You must have a minimum of 2 external parsing processes! Adjust the '" + ParsingTaskConfig.NUM_EXTERNAL_PARSERS + "' option.");
             }
             ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
+            max_expanding_containers = Math.max(1, parsingConfig.getNumExternalParsers() / 4);
         } else {
             LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
             if (localConfig.getNumThreads() < 2) {
                 // Just 1 worker can cause a deadlock if a big container is being expanded due to max queue size
                 throw new IPEDException("You should have at least 2 processing workers! Please adjust '" + LocalConfig.NUM_THREADS + "' option.");
             }
-            max_expanding_containers = localConfig.getNumThreads() / 2;
+            max_expanding_containers = Math.max(1, localConfig.getNumThreads() / 4);
         }
 
         String appRoot = Configuration.getInstance().appRoot;
@@ -854,8 +850,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     }
 
     private static void setupOCROptions(OCRConfig ocrConfig) {
-        if (ocrConfig.isOCREnabled()) {
-            System.setProperty(OCRParser.ENABLE_PROP, "true");
+        boolean enabled = ocrConfig.isOCREnabled();
+        System.setProperty(OCRParser.ENABLE_PROP, Boolean.toString(enabled));
+        if (enabled) {
             System.setProperty(OCRParser.LANGUAGE_PROP, ocrConfig.getOcrLanguage());
             System.setProperty(OCRParser.SKIP_KNOWN_FILES_PROP, String.valueOf(ocrConfig.isSkipKnownFiles()));
             System.setProperty(OCRParser.MIN_SIZE_PROP, ocrConfig.getMinFileSize2OCR());
@@ -885,4 +882,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             dest.putAll(timesPerParser);
         }
     }
+
+    static Object getEmbeddedOpenContainer(TikaInputStream stream) {
+        Object container = stream.getOpenContainer();
+        // The extraction stream owns POIFS and may close it before the queued child
+        // is parsed. Let OfficeParser reopen the extracted bytes instead.
+        return container instanceof POIFSFileSystem ? null : container;
+    }
+
 }

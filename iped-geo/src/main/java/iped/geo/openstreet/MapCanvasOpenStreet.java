@@ -579,6 +579,9 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         webEngine.executeScript("track.clearVisibleMarkers();");
                     }
                     webEngine.executeScript("track.tourOrder='"+self.tourOrder+"';");                    
+                    if (gids.isEmpty()) {
+                        webEngine.executeScript("doFullyLoaded();");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -599,6 +602,8 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                             webEngine.executeScript("track.createMarkers(" + jsgids + ");");
                         }
                         webEngine.executeScript("track.orderVisibleMarkers();");
+                    } else {
+                        webEngine.executeScript("doFullyLoaded();");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

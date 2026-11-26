@@ -38,7 +38,7 @@ public class UserAccountHandler extends AccountableHandler<UserAccount> {
                 .append(model.getModelType())
                 .append(sourceStr)
                 .append("-[")
-                .append(StringUtils.firstNonBlank(data, model.getId()))
+                .append(StringUtils.truncate(StringUtils.firstNonBlank(data, model.getId()), maxTitleLen))
                 .append("]")
                 .toString();
     }
