@@ -1,76 +1,76 @@
-# Audio transcript task config file.
+﻿# Audio transcription task config file.
 
 #########################################
 # Choose the transcription implementation
 #########################################
 
-# Default implementation uses Vosk transcription on local CPU (slow and medium quality).
-# We include small portable models for 'en' and 'pt-BR', if you want to use a different language model
-# you should download it from https://alphacephei.com/vosk/models and put in 'models/vosk/[lang]' folder.
+# The default implementation uses Vosk transcription on the local CPU (slow with medium quality).
+# We include small portable models for 'en' and 'pt-BR'; if you want to use a different language model,
+# you should download it from https://alphacephei.com/vosk/models and put it in the 'models/vosk/[lang]' folder.
 implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 
-# Uses a local wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
-# This is up to 10x slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
+# Uses a local wav2vec2 implementation for transcription. Accuracy is much better than with most Vosk models.
+# This is up to 10x slower than Vosk on high-end CPUs. Using a good GPU is highly recommended!
 # Please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
-# If you enable this, you must set 'huggingFaceModel' param below.
+# If you enable this, you must set the 'huggingFaceModel' param below.
 #implementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
 
 # Uses a local Whisper implementation for transcription. Accuracy is better than wav2vec2 depending on the model.
-# This is up to 4x slower than wav2vec2 depending on compared models. Using a high end GPU is strongly recommended!
+# This is up to 4x slower than wav2vec2 depending on the compared models. Using a high-end GPU is strongly recommended!
 # Please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#whisper
-# If you enable this, you must set 'whisperModel' param below.
+# If you enable this, you must set the 'whisperModel' param below.
 #implementationClass = iped.engine.task.transcript.WhisperTranscriptTask
 
 # Uses a remote service for transcription.
 # The remote service is useful if you have a central server/cluster with many GPUs to be shared among processing nodes.
-# Please check steps on https://github.com/sepinf-inc/IPED/wiki/User-Manual#remote-transcription
-# If you enable this, you must set 'remoteServiceAddress' param below.
+# Please check the steps at https://github.com/sepinf-inc/IPED/wiki/User-Manual#remote-transcription
+# If you enable this, you must set the 'remoteServiceAddress' param below.
 #implementationClass = iped.engine.task.transcript.RemoteTranscriptionTask
 
-# If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
-# You MUST include Microsoft client-sdk.jar into plugins folder.
+# If you want to use the Microsoft Azure service implementation, comment out the active line above and uncomment the line below.
+# You MUST put Microsoft's client-sdk.jar into the plugins folder.
 # Download it from https://csspeechstorage.blob.core.windows.net/maven/com/microsoft/cognitiveservices/speech/client-sdk/1.19.0/client-sdk-1.19.0.jar
-# You must pass your subscription key using command line parameter -XazureSubscriptionKey=XXXXXXXX
+# You must pass your subscription key using the command-line parameter -XazureSubscriptionKey=XXXXXXXX
 #implementationClass = iped.engine.task.transcript.MicrosoftTranscriptTask
 
-# If you want to use the Google Service implementation, comment above and uncomment below.
-# You must include google-cloud-speech-1.22.5.jar AND ITS DEPENDENCIES in plugins folder.
+# If you want to use the Google service implementation, comment out the active line above and uncomment the line below.
+# You must include google-cloud-speech-1.22.5.jar AND ITS DEPENDENCIES in the plugins folder.
 # You can download an all-in-one jar from https://gitlab.com/iped-project/iped-maven/-/blob/master/com/google/cloud/google-cloud-speech/1.22.5-shaded/google-cloud-speech-1.22.5-shaded.jar
-# Finally you must set environment variable GOOGLE_APPLICATION_CREDENTIALS pointing to your credential file
+# Finally, you must set the environment variable GOOGLE_APPLICATION_CREDENTIALS pointing to your credentials file.
 #implementationClass = iped.engine.task.transcript.GoogleTranscriptTask
 
 #########################################
 # Global options
 #########################################
 
-# Language model(s) to use when processing audios. 'auto' uses the 'locale' set on LocalConfig.txt
-# You can specify one or two languages separated by ; if Microsoft or Google are used.
-# Vosk implementation accepts just one language for now.
-# Wav2Vec2 local or remote implementation don't use this, you must set 'huggingFaceModel' below
-# Setting more than 1 lang model can result in wrong language detection.
+# Language model(s) to use when processing audio files. 'auto' uses the 'locale' set in LocalConfig.txt.
+# You can specify one or two languages separated by ';' if Microsoft or Google is used.
+# The Vosk implementation accepts only one language for now.
+# Local or remote Wav2Vec2 implementations don't use this; you must set 'huggingFaceModel' below.
+# Setting more than 1 language model can result in incorrect language detection.
 language = auto
 
-# Command to convert audios to wav before transcription. Do not change $INPUT or $OUTPUT params.
+# Command to convert audio files to WAV before transcription. Do not change the $INPUT or $OUTPUT params.
 convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le,resample=16000,channels=1 -ao pcm:fast:file=$OUTPUT $INPUT
 
-# Mime types or supertypes to process. If you want to add videos use ; as separator and update 'convertCommand'.
+# MIME types or supertypes to process. If you want to add videos, use ';' as a separator and update 'convertCommand'.
 mimesToProcess = audio/3gpp; audio/3gpp2; audio/vnd.3gpp.iufp; audio/x-aac; audio/x-aiff; audio/amr; audio/amr-wb; audio/amr-wb+; audio/mp4; audio/ogg; audio/vorbis; audio/x-oggflac; audio/x-oggpcm; audio/opus; audio/speex; audio/qcelp; audio/vnd.wave; audio/x-caf; audio/x-ms-wma; audio/x-opus+ogg; audio/ilbc
 
-# Skip known audios found in the hash lookup database.
+# Skip known audio files found in the hash lookup database.
 skipKnownFiles = true
 
 # Minimum number of seconds to wait for each audio transcription.
 minTimeout = 180
 
-# Number of seconds to wait for each audio second transcription. 'minTimeout' param above is added to this.
+# Number of seconds to wait per second of audio transcribed. The 'minTimeout' param above is added to this.
 timeoutPerSec = 3
 
 #########################################
 # VoskTranscriptTask options
 #########################################
 
-# Minimum word score to include the word in transcription result. Applies just to Vosk implementation.
-# If you don't want to see * in transcription results, set this to 0
+# Minimum word score to include a word in the transcription result. Applies only to the Vosk implementation.
+# If you don't want to see '*' in transcription results, set this to 0.
 minWordScore = 0.5
 
 #########################################
@@ -79,7 +79,7 @@ minWordScore = 0.5
 
 # HuggingFace model card to be used by Wav2Vec2TranscriptTask. You must uncomment one of them.
 
-# Small models for portuguese, ~23-24% WER on tested data sets
+# Small models for Portuguese, ~23-24% WER on tested datasets
 # huggingFaceModel = lgris/bp_400h_xlsr2_300M
 # huggingFaceModel = Edresson/wav2vec2-large-xlsr-coraa-portuguese
 
@@ -90,8 +90,8 @@ minWordScore = 0.5
 # huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-spanish
 # huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-french
 
-# Bigger models, better on tested pt-BR data sets, but uses more RAM and is ~2x slower.
-# The portuguese model has ~19% WER on tested data sets.
+# Larger models, better on tested pt-BR datasets, but they use more RAM and are ~2x slower.
+# The Portuguese model has ~19% WER on tested datasets.
 # huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-portuguese
 # huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-english
 # huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-german
@@ -106,22 +106,22 @@ minWordScore = 0.5
 # Possible values: tiny, base, small, medium, large-v3, dwhoelz/whisper-large-pt-cv11-ct2
 # large-v3 is much better than medium, but 2x slower and uses 2x more memory.
 # If you know the language you want to transcribe, please set the 'language' option above.
-# 'language = auto' uses the 'locale' set on LocalConfig.txt
-# 'language = detect' uses auto detection, but it can cause mistakes
+# 'language = auto' uses the 'locale' set in LocalConfig.txt
+# 'language = detect' uses auto-detection, which can cause mistakes
 whisperModel = medium
 
 # Which device to use: 'cpu' or 'gpu'. For 'gpu', please see the official faster-whisper documentation
 # for the installation requirements: https://github.com/SYSTRAN/faster-whisper?tab=readme-ov-file#gpu  
 device = cpu
 
-# Compute type precision. This affects accuracy, speed and memory usage.
+# Compute type precision. This affects accuracy, speed, and memory usage.
 # Possible values: float32 (better), float16 (recommended for GPU), int8 (faster)
 precision = int8
 
 # Batch size (number of parallel transcriptions). If you have a GPU with enough memory,
-# increasing this value to e.g. 16 can speed up transcribing long audios up to 10x.
-# Test what is the better value for your GPU before hitting OOM.
-# This works just if you are using whisperx library instead of faster_whisper
+# increasing this value to e.g. 16 can speed up transcribing long audio files up to 10x.
+# Test what the best value is for your GPU before hitting OOM.
+# This only works if you are using the whisperx library instead of faster_whisper.
 batchSize = 1
 
 #########################################
@@ -135,10 +135,10 @@ batchSize = 1
 # MicrosoftTranscriptTask options
 #########################################
 
-# Specific for Microsoft service. Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
+# Specific to the Microsoft service. Replace with your own subscription region identifier from: https://aka.ms/speech/sdkregion
 serviceRegion = brazilsouth
 
-# Depending on your subscription, Microsoft limits the number of max concurrent requests
+# Depending on your subscription, Microsoft limits the maximum number of concurrent requests.
 maxConcurrentRequests = 100
 
 #########################################
