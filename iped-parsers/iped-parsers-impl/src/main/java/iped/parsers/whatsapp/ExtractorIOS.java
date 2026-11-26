@@ -59,6 +59,7 @@ import static iped.parsers.whatsapp.Message.MessageType.PINNED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.RESET_GROUP_LINK;
+import static iped.parsers.whatsapp.Message.MessageType.SCHEDULED_EVENT;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_ADDED_TO_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.SENT_HISTORY;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
@@ -138,6 +139,7 @@ public abstract class ExtractorIOS extends Extractor {
     private boolean hasZMOVIEDURATIONColumn;
     private boolean hasContactIdentifierColumn;
     private boolean hasMessageInfoTable;
+    private boolean hasMediaSectionColumn;
     private SQLException parsingException = null;
 
     public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account,
@@ -219,6 +221,7 @@ public abstract class ExtractorIOS extends Extractor {
                     hasZMOVIEDURATIONColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMOVIEDURATION");
                     hasContactIdentifierColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWACHATSESSION", "ZCONTACTIDENTIFIER");
                     hasMessageInfoTable = SQLite3DBParser.containsTable("ZWAMESSAGEINFO", conn);
+                    hasMediaSectionColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMESSAGE", "ZMEDIASECTIONID");
                 } catch (SQLException e) {
                     if (firstTry || !isSqliteCorruptException(e)) {
                         throw e;
@@ -373,6 +376,10 @@ public abstract class ExtractorIOS extends Extractor {
 
         if (!hasZMOVIEDURATIONColumn) {
             sql = sql.replace("ZWAMEDIAITEM.ZMOVIEDURATION as duration, ", "");
+        }
+
+        if (!hasMediaSectionColumn) {
+            sql = sql.replace("ZWAMESSAGE.ZMEDIASECTIONID as sectionId, ", "");
         }
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -940,11 +947,45 @@ public abstract class ExtractorIOS extends Extractor {
                 }
                 break;
 
+            case SCHEDULED_EVENT:
+                if (decodeEventData(metadata, m) && hasMediaSectionColumn) {
+                    String sectionId = rs.getString("sectionId");
+                    if (sectionId != null) {
+                        int p = sectionId.indexOf('-');
+                        if (p >= 0) {
+                            sectionId = sectionId.substring(p + 1);
+                        }
+                        try {
+                            long val = Long.parseLong(sectionId);
+                            m.getEventData().setDate(new Date(val));
+                        } catch (NumberFormatException e) {
+                        }
+                    }
+                }
+                break;
+
             default:
                 break;
         }
 
         return m;
+    }
+
+    private boolean decodeEventData(byte[] metadata, Message m) {
+        String title = null;
+        List<Part> parts1 = new ProtoBufDecoder(metadata).decode();
+        if (parts1 != null) {
+            List<Part> parts2 = ProtoBufDecoder.findChilds(parts1, 100);
+            if (parts2 != null) {
+                title = ProtoBufDecoder.findString(parts2, 1);
+                if (title != null && !title.isBlank()) {
+                    m.setEventData(new EventData(null, title));
+                    return true;
+                }
+            }
+        }
+        m.setMessageType(UNKNOWN_MESSAGE);
+        return false;
     }
 
     private void decodeURLInfo(byte[] metadata, Message m) {
@@ -1853,6 +1894,10 @@ public abstract class ExtractorIOS extends Extractor {
                 result = VOICE_CALL;
                 break;
 
+            case 63:
+                result = SCHEDULED_EVENT;
+                break;
+
             case 66:
                 result = MESSAGE_ASSOCIATION;
                 break;
@@ -1944,6 +1989,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
+            + "ZWAMESSAGE.ZMEDIASECTIONID as sectionId, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -1959,6 +2005,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
+            + "ZWAMESSAGE.ZMEDIASECTIONID as sectionId, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -1975,6 +2022,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$           
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
+            + "ZWAMESSAGE.ZMEDIASECTIONID as sectionId, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -1990,6 +2038,7 @@ public abstract class ExtractorIOS extends Extractor {
             + "ZFLAGS as zflags, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$          
             + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
+            + "ZWAMESSAGE.ZMEDIASECTIONID as sectionId, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAGROUPMEMBER ON ZWAGROUPMEMBER.ZCHATSESSION = chatId AND ZWAGROUPMEMBER.Z_PK = ZGROUPMEMBER " //$NON-NLS-1$

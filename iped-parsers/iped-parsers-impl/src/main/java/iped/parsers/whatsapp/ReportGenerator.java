@@ -854,12 +854,23 @@ public class ReportGenerator {
  
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
+                    case SCHEDULED_EVENT:
                     case TEMPLATE_QUOTE:
                     case UI_ELEMENTS_QUOTE:
                     case UI_ELEMENTS:
                         // Some textual messages may have thumbs, URL and UIElements
                         printThumb(out, message);
                         printTitleDesc(out, message);
+                        if (message.getEventData() != null) {
+                            EventData evt = message.getEventData();
+                            out.print("\uD83D\uDCC5<br>"); // Calendar emoji 
+                            if (notNullNorBlank(evt.getTitle())) {
+                                out.print("<b>[" + format(evt.getTitle()) + "]</b><br>");
+                            }
+                            if (evt.getDate() != null) {
+                                out.print(timeFormat.format(evt.getDate()) + "<br>");
+                            }
+                        }
                         if (notNullNorBlank(message.getUrl())) {
                             out.print(format(message.getUrl()) + "<br>");
                         }
