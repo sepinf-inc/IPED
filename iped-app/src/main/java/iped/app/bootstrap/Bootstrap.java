@@ -173,6 +173,12 @@ public class Bootstrap {
                 cmd.add("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"); // fix for #1719
             }
             cmd.add("-Djava.net.useSystemProxies=true"); // fix for #1446
+            // Keeps the CORS headers of WebView requests, needed by Google Maps (#3041).
+            // Only needed with Java 11, where the JavaFX WebView uses the legacy HTTP
+            // loader (HttpURLConnection), which drops those headers.
+            // TODO remove after the upgrade to Java 25 (#1522), where the WebView uses
+            // the HTTP/2 loader and Google Maps works without this option.
+            cmd.add("-Dsun.net.http.allowRestrictedHeaders=true");
             cmd.add(getMainClassName());
             // arguments with characters the child launcher would lose are passed encoded
             cmd.addAll(UnicodeArgs.encodeForChildProcess(finalArgs));

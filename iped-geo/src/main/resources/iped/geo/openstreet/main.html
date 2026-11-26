@@ -3,12 +3,18 @@
 
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 
-		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-   integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
    crossorigin=""/>
 
-		<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
-   integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+		<!-- Leaflet 1.9.4 sets "mix-blend-mode: plus-lighter" in tile images, a workaround for Chromium.
+		     The JavaFX WebView does not render it properly: tiles are painted in just part of the map. -->
+		<style>
+			.leaflet-container img.leaflet-tile { mix-blend-mode: normal; }
+		</style>
+
+		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
    crossorigin=""></script>
    
         {{googlemaps_scripts}}   
