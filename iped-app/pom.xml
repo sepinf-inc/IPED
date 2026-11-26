@@ -126,7 +126,7 @@
                                 <artifactItem>
                                     <groupId>org.python</groupId>
                                     <artifactId>python-jep-dlib</artifactId>
-                                    <version>3.9.12-4.0.3-19.23.1-2</version>
+                                    <version>3.9.13-4.0.3-20.0.1-1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
@@ -259,7 +259,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>sccainfo</artifactId>
-                                    <version>20240427</version>
+                                    <version>20260527</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -354,7 +354,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>sleuthkit-dlls</artifactId>
-                                    <version>4.15.0-p1</version>
+                                    <version>4.15.0-p3</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>

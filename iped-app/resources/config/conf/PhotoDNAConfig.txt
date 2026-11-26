@@ -2,11 +2,11 @@
 # PhotoDNA Task configuration
 #############################
 
-# Compute photoDNA from image thumbnails. Much faster than using original image.
+# Computes PhotoDNA from image thumbnails. Much faster than using the original image.
 computeFromThumbnail = true
 
-# Minimal image size (bytes) to compute photoDNA
+# Minimum image size (in bytes) to compute PhotoDNA
 minFileSize = 4000
 
-# Do not compute photoDNA of files present in hashes database
+# Do not compute PhotoDNA for files present in the hash database.
 skipHashDBFiles = true

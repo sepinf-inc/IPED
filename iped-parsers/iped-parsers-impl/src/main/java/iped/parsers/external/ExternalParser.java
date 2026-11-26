@@ -297,14 +297,11 @@ public class ExternalParser extends AbstractParser {
             // call did for single element commands) broke paths with spaces
             process = Runtime.getRuntime().exec(cmd, null, workDir);
         } catch (Exception e) {
-            e.printStackTrace();
+            // reported as a parsing error, instead of silently returning no content
+            throw new TikaException(this.getParserName() + " could not be started.", e);
         }
 
         try {
-            if (process == null) {
-                return;
-            }
-
             if (inputToStdIn) {
                 sendInput(process, stream);
             } else {

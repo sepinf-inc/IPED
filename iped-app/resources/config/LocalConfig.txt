@@ -1,33 +1,33 @@
 ﻿########################################################################
-# Local environment configuration
+# IPED - Local environment configuration
 ########################################################################
 
 # Defines program localization/language. Currently there are localizations for 'en', 'pt-BR', 'it-IT', 'de-DE', 'es-AR' and 'fr-FR'.
 locale = en
 
 # Temporary directory for processing: "default" uses the system temporary folder.
-# Configure it on a folder free of antivirus, system indexing or restoring. Using a SSD disk is highly recommended.
+# Configure it to a folder excluded from antivirus scanning, system indexing, or system restore. Using an SSD is highly recommended.
 indexTemp = default
 
-# Enable if indexTemp is on a SSD disk. Optimizations are made that can improve processing speed up to 2x.
-# Do not enable it if indexTemp is NOT on SSD or you will have performance problems.
+# Enable if indexTemp is on an SSD. Optimizations are made that can improve processing speed up to 2x.
+# Do not enable it if indexTemp is NOT on an SSD, or you will have performance problems.
 indexTempOnSSD = false
 
-# Enable if output/case folder is on SSD. If enabled, index is created directly in case folder,
-# not in indexTemp, so you will need less free space in temp folder.
+# Enable if the output/case folder is on an SSD. If enabled, the index is created directly in the case folder,
+# not in indexTemp, so you will need less free space in the temp folder.
 outputOnSSD = false
 
 # Number of processing threads/workers: "default" uses the number of CPU logical cores.
-# If you have memory usage problems, you can decrease it or increase java heap memory (-Xms).
+# If you have memory usage problems, you can decrease it or increase Java heap memory (-Xms).
 numThreads = default
 
-# Full path for IPED hash database. It is highly recommended to store it on a fast disk, 
-# preferably SSD, and not the same used as "indexTemp", if other disk is available.
+# Full path to the IPED hash database. It is highly recommended to store it on a fast disk,
+# preferably an SSD, and not the same one used for "indexTemp", if another disk is available.
 #hashesDB = C:/IPED/iped-hashes.db
 
-# Full path for sleuthkit-4.x.x.jar built on Linux OS.
-# It is distributed a Windows only version with some optimization patches.
-# It is recommended to apply the patch (in source folder) before building sleuthkit on Linux.
+# Full path to sleuthkit-4.x.x.jar built on Linux OS.
+# A Windows-only version with some optimization patches is distributed with IPED.
+# It is recommended to apply the patch (in the source folder) before building Sleuthkit on Linux.
 #tskJarPath = /usr/local/share/java/sleuthkit-4.15.0.jar
 
 # Plugin folder for optional libs not embedded because of license restrictions.

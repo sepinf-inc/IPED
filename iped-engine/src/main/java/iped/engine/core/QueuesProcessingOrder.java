@@ -5,10 +5,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
+import iped.content.TikaManager;
 import iped.parsers.ares.AresParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatParser;
@@ -30,6 +30,7 @@ import iped.parsers.telegram.TelegramParser;
 import iped.parsers.threema.ThreemaParser;
 import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.usnjrnl.UsnJrnlParser;
+import iped.parsers.whatsapp.WhatsAppCryptoParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.MediaTypes;
 
@@ -90,6 +91,10 @@ public class QueuesProcessingOrder {
         mediaTypes.put(MediaType.parse(BitTorrentResumeDatEntryParser.RESUME_DAT_ENTRY_MIME_TYPE), 3);
         mediaTypes.put(MediaType.parse(TransmissionResumeParser.TRANSMISSION_RESUME_MIME_TYPE), 3);
 
+        // encrypted backups must be decrypted after the key files are indexed (queue 0)
+        // and before the decrypted DBs are decoded by WhatsAppParser (queue 3)
+        mediaTypes.put(WhatsAppCryptoParser.WA_CRYPT, 2);
+
         mediaTypes.put(WhatsAppParser.WA_DB, 2);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 3);
         mediaTypes.put(WhatsAppParser.MSG_STORE_2, 4);
@@ -122,7 +127,7 @@ public class QueuesProcessingOrder {
     private static synchronized void setMediaRegistry() {
 
         if (mediaRegistry == null) {
-            mediaRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+            mediaRegistry = TikaManager.getTikaConfig().getMediaTypeRegistry();
         }
 
         // also install python parsers mediaType queue order

@@ -1,5 +1,5 @@
 ﻿########################################################################
-# Local environment configuration
+# IPED - Local environment configuration
 ########################################################################
 
 indexTempOnSSD = false
