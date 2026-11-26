@@ -220,7 +220,7 @@ public class ReportGenerator {
             String lastId = "1000000000";
             while (currentMsg < c.getMessages().size()) {
                 Message m = c.getMessages().get(currentMsg++);
-                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION || m.getMessageType() == MessageType.IGNORED) {
+                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION || m.getMessageType() == MessageType.IGNORE_MESSAGE) {
                     // These messages are not visible on the app and don't contain any useful data
                     continue;
                 }
@@ -725,10 +725,6 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
                 out.println(Messages.getString("WhatsAppReport.UserAdmin") + "<br>");
-                break;
-            case GROUP_RESET_INVITE_LINK:
-                out.println("<div class=\"systemmessage\">");
-                out.println(name + " " + Messages.getString("WhatsAppReport.GroupResetInviteLink") + "<br>");
                 break;
             case GROUP_CHANGED_ALL_MEMBERS_CAN_ADD:
                 out.println("<div class=\"systemmessage\">");

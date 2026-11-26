@@ -45,8 +45,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_NAME_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_NOT_PART_OF_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
-import static iped.parsers.whatsapp.Message.MessageType.GROUP_RESET_INVITE_LINK;
-import static iped.parsers.whatsapp.Message.MessageType.IGNORED;
+import static iped.parsers.whatsapp.Message.MessageType.IGNORE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MENTIONED_YOU_IN_STATUS;
@@ -58,6 +57,7 @@ import static iped.parsers.whatsapp.Message.MessageType.OFFERS_ANNOUNCEMENTS;
 import static iped.parsers.whatsapp.Message.MessageType.PINNED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.RESET_GROUP_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_ADDED_TO_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.SENT_HISTORY;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
@@ -1539,7 +1539,7 @@ public abstract class ExtractorIOS extends Extractor {
                         break;
 
                     case 16:
-                        result = GROUP_RESET_INVITE_LINK;
+                        result = RESET_GROUP_LINK;
                         break;
 
                     case 17:
@@ -1736,7 +1736,7 @@ public abstract class ExtractorIOS extends Extractor {
                         break;
 
                     case 62:
-                        result = IGNORED;
+                        result = IGNORE_MESSAGE;
                         break;
 
                     case 67:
@@ -1816,7 +1816,7 @@ public abstract class ExtractorIOS extends Extractor {
                 break;
 
             case 51:
-                result = IGNORED;
+                result = IGNORE_MESSAGE;
                 break;
 
             case 53:
