@@ -263,7 +263,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>sccainfo</artifactId>
-                                    <version>20240427</version>
+                                    <version>20260527</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
