@@ -1,0 +1,5 @@
+# Encodings of the strings extracted by RawStringParser from unallocated space, file slacks and unknown or corrupted files.
+# latin1: ASCII and Latin-1 text (western European languages), as single bytes (windows-1252), UTF-8 or UTF-16.
+# all: also enables UTF-8 and UTF-16 (little and big endian) text in other scripts and languages, like Cyrillic, Greek, Arabic,
+# Hebrew, Indic, Thai, Chinese, Japanese, Korean, Polish, Turkish or Vietnamese. Up to 3 times slower on binary data.
+rawStrings = all

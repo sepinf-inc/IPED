@@ -1,5 +1,7 @@
 package iped.engine.config;
 
+import iped.exception.IPEDException;
+import iped.parsers.standard.RawStringParser;
 import iped.utils.UTF8Properties;
 
 public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
@@ -23,6 +25,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
     private int timeOut = 180;
     private int timeOutPerMB = 2;
     private int minRawStringSize = 4;
+    private String rawStrings = RawStringParser.LATIN1;
     private boolean storeTextCacheOnDisk = true;
     private boolean sortPDFChars;
     private boolean processImagesInPDFs = false;
@@ -90,6 +93,11 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
             minRawStringSize = Integer.valueOf(value.trim());
         }
 
+        value = properties.getProperty("rawStrings"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            rawStrings = parseRawStrings(value.trim());
+        }
+
         value = properties.getProperty("storeTextCacheOnDisk"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             storeTextCacheOnDisk = Boolean.valueOf(value.trim());
@@ -115,6 +123,16 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
             internalParsersList = value.trim();
         }
 
+    }
+
+    private static String parseRawStrings(String value) {
+        for (String option : new String[] { RawStringParser.LATIN1, RawStringParser.ALL }) {
+            if (option.equalsIgnoreCase(value)) {
+                return option;
+            }
+        }
+        throw new IPEDException("Invalid rawStrings value in " + CONF_FILE + ": " + value + ". Use " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                + RawStringParser.LATIN1 + " or " + RawStringParser.ALL + "."); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public boolean isEnableExternalParsing() {
@@ -163,6 +181,14 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
 
     public int getMinRawStringSize() {
         return minRawStringSize;
+    }
+
+    /**
+     * @return the encodings of the strings extracted by RawStringParser:
+     *         {@link RawStringParser#LATIN1} or {@link RawStringParser#ALL}
+     */
+    public String getRawStrings() {
+        return rawStrings;
     }
 
     public String getInternalParsersList() {

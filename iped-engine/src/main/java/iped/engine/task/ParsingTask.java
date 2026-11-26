@@ -830,6 +830,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         System.setProperty(PDFTextParser.SORT_PDF_CHARS, String.valueOf(parsingConfig.isSortPDFChars()));
         System.setProperty(PDFTextParser.PROCESS_INLINE_IMAGES, String.valueOf(parsingConfig.isProcessImagesInPDFs()));
         System.setProperty(RawStringParser.MIN_STRING_SIZE, String.valueOf(parsingConfig.getMinRawStringSize()));
+        System.setProperty(RawStringParser.ENCODINGS, parsingConfig.getRawStrings());
         System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/scripts/parsers");
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
