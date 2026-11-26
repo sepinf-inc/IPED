@@ -29,6 +29,7 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADMIN_APPROVAL_DISABLED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADMIN_APPROVAL_ENABLED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
@@ -1589,6 +1590,10 @@ public abstract class ExtractorIOS extends Extractor {
 
                     case 36:
                         result = GROUP_ADMIN_APPROVAL_ENABLED;
+                        break;
+
+                    case 37:
+                        result = GROUP_ADMIN_APPROVAL_DISABLED;
                         break;
 
                     case 39:
