@@ -1,4 +1,4 @@
-﻿# Audio transcription task config file.
+# Audio transcription task config file.
 
 #########################################
 # Choose the transcription implementation
