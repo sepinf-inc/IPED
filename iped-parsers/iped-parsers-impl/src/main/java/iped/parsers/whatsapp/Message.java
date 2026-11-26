@@ -438,6 +438,7 @@ public class Message implements Comparable<Message> {
             case GROUP_CHANGED_ALL_MEMBERS_CAN_SEND:
             case GROUP_CHANGED_ONLY_ADMINS_CAN_ADD:
             case GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT:
+            case GROUP_CHANGED_ONLY_ADMINS_CAN_INVITE:
             case GROUP_CHANGED_ONLY_ADMINS_CAN_SEND:
             case GROUP_ADMIN_APPROVAL_DISABLED:
             case GROUP_ADMIN_APPROVAL_ENABLED:
@@ -450,15 +451,19 @@ public class Message implements Comparable<Message> {
             case GROUP_NAME_CHANGED:
             case GROUP_ONLY_ADMINS_CAN_SEND:
             case GROUP_REMOVED_FROM_COMMUNITY:
+            case GROUP_RESET_INVITE_LINK:
+            case IGNORED:
             case MESSAGE_ASSOCIATION:
             case MESSAGES_ENCRYPTED:
             case MESSAGES_NOW_ENCRYPTED:
             case NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL:
+            case OFFERS_ANNOUNCEMENTS:
             case ORDER_MESSAGE:
             case RESET_GROUP_LINK:
             case SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE:
             case SENDER_ADDED_TO_CONTACTS:
             case SENDER_IN_CONTACTS:
+            case SENT_HISTORY:
             case STANDARD_CHAT:
             case SUBJECT_CHANGED:
             case UNBLOCKED_CONTACT:
