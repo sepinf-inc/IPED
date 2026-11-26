@@ -1,14 +1,14 @@
 ###########################################################################
-# Configuration for documents thumbnail creation
+# Configuration for document thumbnail creation
 ###########################################################################
 
 # Configuration for PDFs. Valid configurations:
-# internal : Run in IPED main process. Can cause out-of-memory and other fatal errors with corrupted files. 
+# internal : Run in the IPED main process. Can cause out-of-memory and other fatal errors with corrupted files. 
 # external : Run as an external process, started for each file to be processed, isolating any memory issues, but much slower. 
 # off      : Disabled.
 pdfThumbs = internal
 
-# Configuration for LibreOffice supported formats. Valid configurations:
+# Configuration for LibreOffice-supported formats. Valid configurations:
 # external : Run as an external process, started for each file to be processed.
 # off      : Disabled. 
 libreOfficeThumbs = external
@@ -19,10 +19,10 @@ pdfTimeout = 60
 # Time limit (in seconds) for each item of the file formats supported by LibreOffice.
 libreOfficeTimeout = 180
 
-# Additional time allowed based on the file length (in MBytes/second), used both for PDFs and LibreOffice supported files.
+# Additional time allowed based on the file size (in seconds/MByte), used for both PDFs and LibreOffice-supported files.
 timeoutIncPerMB = 2
 
-# Maximum dimensions (in pixels) of generated thumbnails.
+# Maximum dimension (in pixels) of generated thumbnails.
 thumbSize = 480
 
 # Memory limit (in MBytes) used for each conversion process, if "external" PDF conversion is used.
