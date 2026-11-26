@@ -1,2 +1,2 @@
-# Excludes from the rest of processing (and from the case) known files according to hashes database (hashDb:status = known).
+# Excludes known files according to the hash database (hashDb:status = known) from the rest of processing (and from the case).
 excludeKnown = false
