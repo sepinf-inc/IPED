@@ -43,7 +43,6 @@ import iped.engine.data.Item;
 import iped.engine.hashdb.HashDBDataSource;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.PhotoDNALookup;
 import iped.engine.task.index.IndexItem;

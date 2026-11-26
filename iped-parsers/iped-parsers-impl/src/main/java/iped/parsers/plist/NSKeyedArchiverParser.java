@@ -37,6 +37,7 @@ import iped.data.IItemReader;
 import iped.parsers.plist.detector.PListDetector;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
 
@@ -79,6 +80,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         NSArray objects;
         Set<Integer> alreadyVisitedUIDs;
         UID currentUID;
+        Set<String> parentLocations = new HashSet<>();
 
         public Extra(NSArray objects, Set<Integer> alreadyVisitedUIDs) {
             this.objects = objects;
@@ -204,6 +206,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
     public void processAsPList(NSObject nso, State state) throws SAXException {
         PListParser plistParser = new PListParser();
+        plistParser.setExtractEntries(extractEntries);
         AbstractPListParser<Void>.State plistState = plistParser.new State(state.xhtml, state.metadata, state.embeddedDocumentExtractor, state.context);
         plistParser.processObject(nso, "", plistState, true);
     }
@@ -311,6 +314,12 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
         processDictionary(obj, path, state, false);
 
+        if (!extractEntries) {
+            // no location subitem is created, so store the coordinates in the parent item
+            addLocationToParent(obj, state);
+            return;
+        }
+
         if (state.embeddedDocumentExtractor.shouldParseEmbedded(state.metadata)) {
             try {
                 Metadata metadata = new Metadata();
@@ -371,6 +380,23 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
             } catch (IOException e) {
                 getLogger().warn("Error adding plist data as sub-item " + state.metadata + ">>" + path, e);
             }
+        }
+    }
+
+    private void addLocationToParent(NSDictionary obj, State state) {
+        NSObject latObj = obj.get(CL_LOCATION_LATITUDE);
+        NSObject lonObj = obj.get(CL_LOCATION_LONGITUDE);
+        if (!(latObj instanceof NSNumber) || !(lonObj instanceof NSNumber)) {
+            return;
+        }
+        double lat = ((NSNumber) latObj).doubleValue();
+        double lon = ((NSNumber) lonObj).doubleValue();
+        if (Double.isNaN(lat) || Double.isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180 || (lat == 0 && lon == 0)) {
+            return;
+        }
+        String location = lat + ";" + lon;
+        if (state.extra.parentLocations.add(location)) {
+            state.metadata.add(ExtraProperties.LOCATIONS, location);
         }
     }
 

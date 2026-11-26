@@ -2,16 +2,16 @@
 # OCR Settings
 ########################################################################
 
-# You can use the parameter -ocr "bookmark_name" to restrict the OCR to a specific bookmark (just works when creating reports from cmd line).
+# You can use the parameter -ocr "bookmark_name" to restrict OCR to a specific bookmark (only works when creating reports from the command line).
 
-# Dictionary language to be used for OCR. You can specify multiple languages e.g. por+eng but you will pay an important processing cost.
-# Languages supported: eng, por, ita, deu, spa, fra
+# Dictionary language to be used for OCR. You can specify multiple languages (e.g., por+eng), but it incurs a significant processing cost.
+# Supported languages: eng, por, ita, deu, spa, fra
 OCRLanguage = por
 
 # Skip known files found in the hash lookup database.
 skipKnownFiles = true
 
-# Tesseract layout analysis mode, e.g.: 1- with OSD (orientation & script detection); 3 - no OSD (Tesseract default) 
+# Tesseract layout analysis mode, e.g.: 1 - with OSD (orientation & script detection); 3 - no OSD (Tesseract default)
 pageSegMode = 1
 
 # Minimum file size (bytes) to submit to OCR
@@ -20,21 +20,21 @@ minFileSize2OCR = 1000
 # Maximum file size (bytes) to submit to OCR
 maxFileSize2OCR = 200000000
 
-# Resolution (dpi) for PDF to image conversion. Increase if the document's fonts are small
+# Resolution (DPI) for PDF-to-image conversion. Increase if the document's fonts are small.
 pdfToImgResolution = 250
 
-# Maximum characters of text per page a PDF can contain to be submitted to OCR
+# Maximum number of text characters per page a PDF can contain to be submitted to OCR
 maxPDFTextSize2OCR = 100
 
-# Library for converting PDFs to image before OCR.
-# Possible Values: pdfbox or icepdf (usually faster)
+# Library for converting PDFs to images before OCR.
+# Possible values: pdfbox or icepdf (usually faster)
 pdfToImgLib = icepdf
 
-# Performs the conversion of PDFs to image in another process, isolating OutOfMemoryErrors
-# and CPU usage by unfinished threads. More stable, but makes the OCR slower.
+# Performs the conversion of PDFs to images in a separate process, isolating OutOfMemoryErrors
+# and CPU usage from unfinished threads. More stable, but makes OCR slower.
 externalPdfToImgConv = true
 
-# Maximum heap memory to be used by each WORKER during external conversion of PDFs to image.
+# Maximum heap memory to be used by each WORKER during external conversion of PDFs to images.
 externalConvMaxMem = 512M
 
 # Process non-standard image formats (not directly supported by Tesseract).

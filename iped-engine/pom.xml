@@ -12,7 +12,7 @@
 
     <properties>
         <release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
-        <javacpp.ffmpeg.version>8.0.1-1.5.13</javacpp.ffmpeg.version>
+        <javacpp.ffmpeg.version>8.1.2-1.5.14</javacpp.ffmpeg.version>
     </properties>
 
     <dependencies>
@@ -165,8 +165,13 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.3.8</version>
+            <version>8.6.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.1</version>
+        </dependency>        
         <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -186,13 +191,8 @@
 		</dependency>
         <dependency>
             <groupId>com.mchange</groupId>
-            <artifactId>mchange-commons-java</artifactId>
-            <version>0.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
-            <version>0.12.0</version>
+            <version>0.15.1</version>
         </dependency>
         <dependency>
   			<groupId>org.apache.pdfbox</groupId>

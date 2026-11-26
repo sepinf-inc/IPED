@@ -1,22 +1,22 @@
 # Uses auxiliary processes to read file contents in images. If Sleuthkit crashes, only
-# the auxiliary processes are killed and restarted. Increases RAM usage often in about ~500MB per process. 
-# Increases up to 3x the processing speed of compressed E01 images, APFS containers or images in network.
+# the auxiliary processes are killed and restarted. Often increases RAM usage by ~500 MB per process.
+# Increases the processing speed of compressed E01 images, APFS containers, or network images by up to 3x.
 robustImageReading = true
 
-# Number of auxiliary image reading processes. 'auto' uses 1/6 (rounded up) of the number of logical CPU cores.
-# You can decrease the value if it uses too much RAM. Increasing the value is not efficient, because often
-# IO devices can not handle many reading requests simultaneously.
+# Number of auxiliary image-reading processes. 'auto' uses 1/6 (rounded up) of the number of logical CPU cores.
+# You can decrease this value if it uses too much RAM. Increasing the value is inefficient, because
+# I/O devices often cannot handle many simultaneous read requests.
 numImageReaders = auto
 
-# Add and process unallocated areas of images.
+# Adds and processes unallocated areas of images.
 addUnallocated = false
 
-# Add and process file slacks.
+# Adds and processes file slacks.
 addFileSlacks = false
 
-# Ignore orphan files bigger than this value in bytes. Default -1 means disabled. 
+# Ignores orphan files larger than this value in bytes. Default -1 means disabled. 
 # In rare cases, Sleuthkit can recover thousands of large corrupted orphan files 
-# pointing to the same disk areas, making the processing not feasible.
+# pointing to the same disk areas, making processing unfeasible.
 minOrphanSizeToIgnore = -1
 
 # Size in bytes of the unallocated space segments. In cases where the carving of videos is important,
@@ -25,10 +25,10 @@ minOrphanSizeToIgnore = -1
 unallocatedFragSize = 1073741824
 
 # Ignores HFS+ hard links pointing to items already processed. The hard links are added to the case,
-# but their content is not processed (indexed, expanded, carved, etc).
-# Optimizes HFS+ image processing containing millions of hard links (such as Time Machine volumes).
+# but their content is not processed (indexed, expanded, carved, etc.).
+# Optimizes processing of HFS+ images containing millions of hard links (such as Time Machine volumes).
 ignoreHardLinks = true
 
-# Regex pattern to skip matched folder trees when processing. Just works if processing mounted folders currently.
-# Matched folders are ignored and not included in case.
+# Regex pattern to skip matching folder trees during processing. Currently only works when processing mounted folders.
+# Matched folders are ignored and not included in the case.
 skipFolderRegex =

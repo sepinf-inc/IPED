@@ -248,7 +248,7 @@ public class MenuClass extends JPopupMenu {
                 submenu.add(themeItem);
                 themeItem.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
-                        ThemeManager.getInstance().setTheme(theme);
+                        ThemeManager.getInstance().setTheme(theme, true);
                     }
                 });
             }

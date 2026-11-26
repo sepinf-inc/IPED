@@ -76,6 +76,14 @@
                 {  
                     "name":"Regex:IP",
                     "property":"ip"
+                },
+                {  
+                    "name":"Regex:IP_V4",
+                    "property":"ip"
+                },
+                {  
+                    "name":"Regex:IP_V6",
+                    "property":"ip"
                 }
             ]
         },

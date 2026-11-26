@@ -1,8 +1,8 @@
 # BFAC (Banco Federal de Arquivos Conhecidos) Backend Configuration
 # Configuration for the BFAC backend API client
 
-# Enables BFAC Client
-# It connects to BFAC Server for submitting hashes and files for the BFAC known files database.
+# Enables the BFAC client.
+# Connects to the BFAC server to submit hashes and files to the BFAC known-files database.
 # Default: true
 enableBFACClient = true
 
