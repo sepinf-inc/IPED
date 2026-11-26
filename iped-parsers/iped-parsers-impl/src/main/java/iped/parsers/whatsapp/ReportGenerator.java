@@ -711,10 +711,15 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ContactedFindBusinesses", name) + "<br>");
                 break;
-            case GROUP_CHANGED_ADMIN_APPROVAL_OFF:
+            case GROUP_ADMIN_APPROVAL_DISABLED:
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
-                out.println(Messages.getString("WhatsAppReport.GroupChangedAdminApprovalOff") + "<br>");
+                out.println(Messages.getString("WhatsAppReport.GroupAdminApprovalDisabled") + "<br>");
+                break;
+            case GROUP_ADMIN_APPROVAL_ENABLED:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.GroupAdminApprovalEnabled") + "<br>");
                 break;
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
