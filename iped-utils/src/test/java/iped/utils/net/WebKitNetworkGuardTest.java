@@ -10,13 +10,19 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.junit.After;
@@ -71,11 +77,54 @@ public class WebKitNetworkGuardTest {
     }
 
     @Test
-    public void testWebSocketsAndHttp2LoaderAlwaysBlocked() {
+    public void testWebSocketsAlwaysBlocked() {
         WebKitNetworkGuard.allow(Pattern.compile("https://example\\.com/"));
         assertFalse(blocked(WebKitNetworkGuard.URL_LOADER, "https://example.com/a.js"));
         assertTrue(blocked(SOCKET_STREAM, "https://example.com/a.js"));
-        assertTrue(blocked(HTTP2_LOADER, "https://example.com/a.js"));
+    }
+
+    @Test
+    public void testHttp2LoaderGetsUnreachableProxyForBlockedUrls() {
+        WebKitNetworkGuard.allow(Pattern.compile("https://example\\.com/"));
+        // an exception is not handled by this loader, so it must not be thrown
+        assertSame(WebKitNetworkGuard.BLOCKED_PROXY, guard(HTTP2_LOADER).select(URI.create("https://evil.net/a.js")));
+        assertSame(WebKitNetworkGuard.BLOCKED_PROXY, guard(HTTP2_LOADER + "$1").select(URI.create("http://example.com/a.js")));
+        assertSame(DELEGATED, guard(HTTP2_LOADER).select(URI.create("https://example.com/a.js")));
+
+        assertEquals(1, WebKitNetworkGuard.BLOCKED_PROXY.size());
+        Proxy proxy = WebKitNetworkGuard.BLOCKED_PROXY.get(0);
+        assertEquals(Proxy.Type.HTTP, proxy.type());
+        InetSocketAddress address = (InetSocketAddress) proxy.address();
+        assertTrue(address.getAddress().isLoopbackAddress());
+        assertEquals(0, address.getPort());
+    }
+
+    /**
+     * End to end with the real HttpClient, as used by WebKit HTTP2Loader: the
+     * request must fail without any connection to the server.
+     */
+    @Test
+    public void testHttpClientNeverConnects() throws Exception {
+        try (ServerSocket server = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+            server.setSoTimeout(500);
+            HttpClient client = HttpClient.newBuilder().proxy(guard(HTTP2_LOADER)).build();
+            for (String scheme : new String[] { "http", "https" }) {
+                URI uri = URI.create(scheme + "://127.0.0.1:" + server.getLocalPort() + "/tracker.png");
+                try {
+                    client.sendAsync(HttpRequest.newBuilder(uri).build(), HttpResponse.BodyHandlers.discarding())
+                            .get(30, TimeUnit.SECONDS);
+                    fail("request should have failed");
+                } catch (ExecutionException e) {
+                    assertTrue(e.getCause() instanceof IOException);
+                }
+            }
+            try {
+                server.accept().close();
+                fail("the server received a connection");
+            } catch (SocketTimeoutException e) {
+                // expected: nothing connected
+            }
+        }
     }
 
     @Test
@@ -230,7 +279,6 @@ public class WebKitNetworkGuardTest {
             WebKitNetworkGuard.install();
             WebKitNetworkGuard.install();
             assertTrue(ProxySelector.getDefault() instanceof WebKitNetworkGuard);
-            assertEquals("false", System.getProperty(WebKitNetworkGuard.USE_HTTP2_LOADER_PROP));
             // outside WebKit, requests go to the previous selector
             ProxySelector.getDefault().select(URI.create("http://example.com/"));
         } finally {

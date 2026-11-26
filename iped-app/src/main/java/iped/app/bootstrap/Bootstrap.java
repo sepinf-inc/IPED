@@ -191,11 +191,6 @@ public class Bootstrap {
                 cmd.add("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"); // fix for #1719
             }
             cmd.add("-Djava.net.useSystemProxies=true"); // fix for #1446
-            // Keeps the CORS headers of WebView requests, needed by Google Maps (#3041).
-            // The legacy HTTP loader of the JavaFX WebView (HttpURLConnection), used
-            // because of WebKitNetworkGuard (see useHTTP2Loader below), drops those
-            // headers without this option.
-            cmd.add("-Dsun.net.http.allowRestrictedHeaders=true");
             cmd.add(getMainClassName());
             cmd.addAll(finalArgs);
             
@@ -256,9 +251,7 @@ public class Bootstrap {
     
     private static List<String> getCustomJVMArgs(){
         List<String> args = new ArrayList<>(Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
-                "-XX:+HeapDumpOnOutOfMemoryError",
-                // WebKitNetworkGuard needs the URLConnection based loader, see #1522
-                "-Dcom.sun.webkit.useHTTP2Loader=false"));
+                "-XX:+HeapDumpOnOutOfMemoryError"));
         args.addAll(JvmFlags.all());
         return args;
     }

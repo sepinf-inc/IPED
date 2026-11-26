@@ -1,6 +1,8 @@
 package iped.utils.net;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.SocketAddress;
@@ -23,8 +25,13 @@ import org.slf4j.LoggerFactory;
  * All WebKit network requests call {@link ProxySelector#select(URI)} with the
  * full URL before any DNS lookup or connection:
  * <ul>
- * <li>HTTP(S) through com.sun.webkit.network.URLLoader (HttpURLConnection),
- * which turns the exception thrown here into a load error;</li>
+ * <li>HTTP(S) through com.sun.webkit.network.HTTP2Loader
+ * (java.net.http.HttpClient), the default loader. It selects the proxy when the
+ * request is sent, in the thread of WebKit, and does not follow redirects by
+ * itself: each one is a new request made by WebKit;</li>
+ * <li>other schemes, and HTTP(S) if the HTTP/2 loader is disabled, through
+ * com.sun.webkit.network.URLLoader (HttpURLConnection), which turns the
+ * exception thrown here into a load error;</li>
  * <li>WebSockets through com.sun.webkit.network.SocketStreamHandle.</li>
  * </ul>
  * Media of {@code <video>} and {@code <audio>} elements is not loaded by
@@ -32,10 +39,8 @@ import org.slf4j.LoggerFactory;
  * connections. IPED doesn't use JavaFX Media for anything else, so all its
  * network requests are blocked.
  * <p>
- * The HTTP/2 loader (java.net.http.HttpClient, default on Java 12+) may select
- * the proxy asynchronously, without WebKit frames on the stack, so it is
- * disabled by {@link #install()}. WebKit DNS prefetching is not implemented in
- * JavaFX, so there are no DNS lookups outside these paths.
+ * WebKit DNS prefetching is not implemented in JavaFX, so there are no DNS
+ * lookups outside these paths.
  * <p>
  * Only requests made by WebKit are checked; everything else (MinIO, remote
  * transcription, Elastic, etc.) is passed to the previous selector unchanged.
@@ -52,11 +57,18 @@ public class WebKitNetworkGuard extends ProxySelector {
 
     static final String WEBKIT_NETWORK_PACKAGE = "com.sun.webkit.network.";
     static final String URL_LOADER = WEBKIT_NETWORK_PACKAGE + "URLLoader";
+    static final String HTTP2_LOADER = WEBKIT_NETWORK_PACKAGE + "HTTP2Loader";
+
+    /**
+     * Returned to the HTTP/2 loader for blocked URLs: nothing listens on port 0, so
+     * the request fails when connecting to this proxy and the URL host is not even
+     * resolved. An exception thrown to this loader is not handled: it reaches the
+     * JavaFX thread and stops the loading of the other resources of the page.
+     */
+    static final List<Proxy> BLOCKED_PROXY = List.of(
+            new Proxy(Proxy.Type.HTTP, new InetSocketAddress(InetAddress.getLoopbackAddress(), 0)));
     /** loads the media of video and audio elements of the WebView content */
     static final String JFX_MEDIA_PACKAGE = "com.sun.media.jfxmedia.";
-
-    /** Must be set before the first WebView is created, read once by JavaFX. */
-    public static final String USE_HTTP2_LOADER_PROP = "com.sun.webkit.useHTTP2Loader";
 
     private static final StackWalker WALKER = StackWalker.getInstance();
 
@@ -81,7 +93,6 @@ public class WebKitNetworkGuard extends ProxySelector {
      * first WebView is created. Safe to call more than once.
      */
     public static synchronized void install() {
-        System.setProperty(USE_HTTP2_LOADER_PROP, "false");
         ProxySelector current = ProxySelector.getDefault();
         if (!(current instanceof WebKitNetworkGuard)) {
             ProxySelector.setDefault(new WebKitNetworkGuard(current, WebKitNetworkGuard::findWebKitCaller));
@@ -200,8 +211,14 @@ public class WebKitNetworkGuard extends ProxySelector {
     @Override
     public List<Proxy> select(URI uri) {
         String caller = webKitCaller.get();
-        if (caller != null) {
-            // only the HTTP loader is allowed, and only for registered URLs
+        if (caller != null && caller.startsWith(HTTP2_LOADER)) {
+            // only for registered URLs
+            if (!isAllowed(uri)) {
+                LOGGER.debug("Blocked network access from WebView content: {} ({})", uri, caller);
+                return BLOCKED_PROXY;
+            }
+        } else if (caller != null) {
+            // besides the HTTP/2 loader, only the URL loader is allowed, for registered URLs
             if (!caller.startsWith(URL_LOADER) || !isAllowedFromUrlLoader(uri)) {
                 LOGGER.debug("Blocked network access from WebView content: {} ({})", uri, caller);
                 // HttpURLConnection reports it as IOException before connecting
