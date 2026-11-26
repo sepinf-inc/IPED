@@ -49,7 +49,7 @@ BatchSize = 10
 MinimumImageSize = 2048
 
 # Minimum file dimension, in pixels (use 0 to disable)
-SkipDimension = 48
+SkipDimension = 0
 
 # Skip files with hits in the IPED HashDB database (known and csam)
 SkipHashDBFiles = true
