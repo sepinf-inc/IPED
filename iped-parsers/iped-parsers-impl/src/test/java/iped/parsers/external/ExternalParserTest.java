@@ -14,6 +14,7 @@ import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -35,7 +36,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     // the tools are unpacked by maven: see TestTools
     private static String tmpPath = TestTools.RELATIVE_DIR;
     private static String XMLFilePath = TestTools.ROOT + "/ExternalParsers.xml";
-    private static String osName = System.getProperty("os.name").toLowerCase();
     private static File XMLFile;
     private static List<ExternalParser> parsers;
     private static ExternalParser superfetchParser, prefetchParser, recyclebinParser,
@@ -67,7 +67,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         XMLFile.getParentFile().mkdirs();
         XMLFile.delete();
 
-        if (osName.startsWith("windows")) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             for (String tool : new String[] { "libagdb", "sccainfo", "rifiuti2", "evtxexport", "evtexport" }) {
                 TestTools.dir(tool);
             }

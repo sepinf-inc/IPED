@@ -8,6 +8,7 @@ import static org.junit.Assume.assumeFalse;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -21,18 +22,17 @@ import org.xml.sax.SAXException;
 import iped.parsers.util.TestTools;
 
 public class EDBParserTest {
-    private static String osName = System.getProperty("os.name").toLowerCase();
 
     @BeforeClass
     public static void setUpTool() throws IOException {
-        if (osName.startsWith("windows")) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             System.setProperty(EDBParser.TOOL_PATH_PROP, TestTools.dir("esedbexport"));
         }
     }
 
     @AfterClass
     public static void tearDownTool() throws IOException {
-        if (osName.startsWith("windows")) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             System.clearProperty(EDBParser.TOOL_PATH_PROP);
         }
     }

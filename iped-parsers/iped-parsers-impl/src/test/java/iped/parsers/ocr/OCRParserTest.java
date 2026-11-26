@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -39,7 +40,6 @@ import iped.parsers.util.TestTools;
 import iped.utils.ExternalImageConverter;
 
 public class OCRParserTest {
-    private static String osName = System.getProperty("os.name").toLowerCase();
     private static String OCR_OUTPUT_FOLDER_NAME = "ocr_output";
     private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
     private static Properties savedProperties;
@@ -53,7 +53,7 @@ public class OCRParserTest {
         // enabled) do not leak to other test classes running in the same JVM
         savedProperties = (Properties) System.getProperties().clone();
 
-        if (osName.startsWith("windows")) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             System.setProperty(OCRParser.TOOL_PATH_PROP, TestTools.dir("tesseract"));
         }
 
@@ -330,7 +330,7 @@ public class OCRParserTest {
     private void setUpImageMagick() throws IOException {
         if (System.getProperty(ExternalImageConverter.enabledProp, "").isEmpty()) {
             System.setProperty(ExternalImageConverter.enabledProp, "true");
-            if (osName.startsWith("windows")) {
+            if (SystemUtils.IS_OS_WINDOWS) {
                 TestTools.dir("imagemagick");
                 System.setProperty(ExternalImageConverter.winToolPathPrefixProp, TestTools.ROOT);
             }
@@ -338,7 +338,7 @@ public class OCRParserTest {
     }
 
     private boolean isImageMagickInstalled(String magickDir) {
-        magickDir += osName.startsWith("windows") ? "/tools/imagemagick/magick" : "magick";
+        magickDir += SystemUtils.IS_OS_WINDOWS ? "/tools/imagemagick/magick" : "magick";
 
         try {
             Process process;
@@ -347,7 +347,7 @@ public class OCRParserTest {
                 process = Runtime.getRuntime().exec(magickDir + " -version");
                 result = process.waitFor();
             } catch (IOException e) {
-                if (!osName.startsWith("windows")) {
+                if (!SystemUtils.IS_OS_WINDOWS) {
                     // try with older command
                     process = Runtime.getRuntime().exec("convert -version");
                     result = process.waitFor();

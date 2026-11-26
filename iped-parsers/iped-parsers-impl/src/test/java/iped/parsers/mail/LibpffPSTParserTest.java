@@ -6,6 +6,7 @@ import static org.junit.Assume.assumeFalse;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -23,7 +24,6 @@ import iped.parsers.util.AbstractPkgTest;
 import iped.parsers.util.TestTools;
 
 public class LibpffPSTParserTest extends AbstractPkgTest {
-    private static String osName = System.getProperty("os.name").toLowerCase();
 
     protected EmbeddedPSTParser psttracker;
     protected ParseContext pstContext;
@@ -36,7 +36,7 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        if (osName.startsWith("windows")) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, TestTools.dir("pffexport"));
         }
 
@@ -60,7 +60,7 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
     @Override
     protected void tearDown() throws Exception {
-        if (osName.startsWith("windows")) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             System.clearProperty(LibpffPSTParser.TOOL_PATH_PROP);
         }
     }
