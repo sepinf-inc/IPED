@@ -2,11 +2,9 @@ package iped.parsers.registry;
 
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -18,11 +16,10 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.util.RepoToolDownloader;
+import iped.parsers.util.TestTools;
 
 
 public class RegRipperParserTest {
-    private static String testRoot = System.getProperty("user.dir") + "/src/test";
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -30,15 +27,12 @@ public class RegRipperParserTest {
 
     @BeforeClass
     public static void setUpTool() throws IOException {
-        String repoPath = "keydet89/regripper/2.8_20180406_p01/regripper-2.8_20180406_p01.zip";
-        RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
-        System.setProperty(RegRipperParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/regripper/");
+        System.setProperty(RegRipperParser.TOOL_PATH_PROP, TestTools.dir("regripper"));
     }
 
     @AfterClass
     public static void tearDownTool() throws IOException {
-        File tool_path = new File(System.clearProperty(RegRipperParser.TOOL_PATH_PROP));
-        FileUtils.deleteDirectory(tool_path.getParentFile());
+        System.clearProperty(RegRipperParser.TOOL_PATH_PROP);
     }
 
     @Test

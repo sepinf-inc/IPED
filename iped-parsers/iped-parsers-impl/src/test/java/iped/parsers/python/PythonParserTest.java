@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -25,13 +26,12 @@ import iped.utils.IOUtil;
 
 public class PythonParserTest {
     private static String userDir = System.getProperty("user.dir");
-    private static String osName = System.getProperty("os.name").toLowerCase();
     private static String testRoot;
     private static String PYTHON_PARSERS_FOLDER = userDir + "/src/test/resources/test-files/python-parsers-test";
 
     @BeforeClass
     public static void setUpTestRoot() throws IOException {
-        if (osName.startsWith("windows")) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             String targetReleasePath = userDir + "/../../target/release/";
             assumeTrue(new File(targetReleasePath).exists());
             String ipedName = new File(targetReleasePath).listFiles()[0].getName(); 
