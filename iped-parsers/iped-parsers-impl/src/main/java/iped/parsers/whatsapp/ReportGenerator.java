@@ -742,6 +742,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedOnlyAdminsCanSend") + "<br>");
                 break;
+            case GROUP_CHANGED_ONLY_ADMINS_CAN_SEND_HISTORY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedOnlyAdminsCanSendHistory") + "<br>");
+                break;
             case GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedAllMembersCanEdit") + "<br>");
