@@ -5,11 +5,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -20,26 +18,22 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.util.RepoToolDownloader;
+import iped.parsers.util.TestTools;
 
 public class EDBParserTest {
-    private static String testRoot = System.getProperty("user.dir") + "/src/test";
     private static String osName = System.getProperty("os.name").toLowerCase();
 
     @BeforeClass
     public static void setUpTool() throws IOException {
         if (osName.startsWith("windows")) {
-            String repoPath = "libyal/libesedb/20151213.1/libesedb-20151213.1.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
-            System.setProperty(EDBParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/esedbexport/");
+            System.setProperty(EDBParser.TOOL_PATH_PROP, TestTools.dir("esedbexport"));
         }
     }
 
     @AfterClass
     public static void tearDownTool() throws IOException {
         if (osName.startsWith("windows")) {
-            File tool_path = new File(System.clearProperty(EDBParser.TOOL_PATH_PROP));
-            FileUtils.deleteDirectory(tool_path.getParentFile());
+            System.clearProperty(EDBParser.TOOL_PATH_PROP);
         }
     }
 

@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +14,6 @@ import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -29,15 +27,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.ExternalParserConfigGenerator;
-import iped.parsers.util.RepoToolDownloader;
+import iped.parsers.util.TestTools;
 import iped.parsers.util.ToXMLContentHandler;
 
 
 public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
-    private static String tmpPath = "/src/test/tmp/";
-    private static String userDir = System.getProperty("user.dir");
-    private static String absoluteTmpPath = userDir + tmpPath;
-    private static String XMLFilePath = absoluteTmpPath + "/ExternalParsers.xml";
+    // the tools are unpacked by maven: see TestTools
+    private static String tmpPath = TestTools.RELATIVE_DIR;
+    private static String XMLFilePath = TestTools.ROOT + "/ExternalParsers.xml";
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static File XMLFile;
     private static List<ExternalParser> parsers;
@@ -67,18 +64,12 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     @BeforeClass
     public static void setUp() throws IOException, TikaException, TransformerException, ParserConfigurationException, SAXException {
         XMLFile = new File(XMLFilePath);
-        new File(absoluteTmpPath).mkdir();
+        XMLFile.getParentFile().mkdirs();
+        XMLFile.delete();
 
-        // download all external parsers tools
         if (osName.startsWith("windows")) {
-            List<String> repoPaths = new ArrayList<>();
-            repoPaths.add("libyal/libagdb/20181111.1/libagdb-20181111.1.zip");
-            repoPaths.add("libyal/sccainfo/20170205.1/sccainfo-20170205.1.zip");
-            repoPaths.add("abelcheung/rifiuti2/0.7.0/rifiuti2-0.7.0.zip"); // recyclebin and recyclebinINFO2 parsers
-            repoPaths.add("libyal/evtxexport/20170122.1/evtxexport-20170122.1.zip");
-            repoPaths.add("libyal/evtexport/20180317.1/evtexport-20180317.1.zip");
-            for (String repoPath : repoPaths) {
-                RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
+            for (String tool : new String[] { "libagdb", "sccainfo", "rifiuti2", "evtxexport", "evtexport" }) {
+                TestTools.dir(tool);
             }
         }
 
@@ -137,9 +128,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
 
     @AfterClass
     public static void tearDown() throws IOException {
-        if (osName.startsWith("windows")) {
-            FileUtils.deleteDirectory(new File(absoluteTmpPath));
-        }
         XMLFile.delete();
     }
 

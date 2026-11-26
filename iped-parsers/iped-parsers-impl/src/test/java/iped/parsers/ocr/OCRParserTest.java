@@ -35,11 +35,10 @@ import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.OCROutputFolder;
 import iped.parsers.util.PDFToImage;
-import iped.parsers.util.RepoToolDownloader;
+import iped.parsers.util.TestTools;
 import iped.utils.ExternalImageConverter;
 
 public class OCRParserTest {
-    private static String testRoot = System.getProperty("user.dir") + "/src/test";
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static String OCR_OUTPUT_FOLDER_NAME = "ocr_output";
     private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
@@ -55,9 +54,7 @@ public class OCRParserTest {
         savedProperties = (Properties) System.getProperties().clone();
 
         if (osName.startsWith("windows")) {
-            String repoPath = "tesseract/tesseract-zip/5.3.2-24-g3922_1/tesseract-zip-5.3.2-24-g3922_1.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
-            System.setProperty(OCRParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/tesseract/");
+            System.setProperty(OCRParser.TOOL_PATH_PROP, TestTools.dir("tesseract"));
         }
 
         // Checks if tesseract is present to then enable OCR parsing property
@@ -75,10 +72,6 @@ public class OCRParserTest {
     @AfterClass
     public static void tearDownTool() throws IOException {
         try {
-            if (osName.startsWith("windows")) {
-                File tool_path = new File(System.clearProperty(OCRParser.TOOL_PATH_PROP));
-                FileUtils.deleteDirectory(tool_path.getParentFile());
-            }
             FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
         } finally {
             System.setProperties(savedProperties);
@@ -338,9 +331,8 @@ public class OCRParserTest {
         if (System.getProperty(ExternalImageConverter.enabledProp, "").isEmpty()) {
             System.setProperty(ExternalImageConverter.enabledProp, "true");
             if (osName.startsWith("windows")) {
-                String repoPath = "org/imagemagick/imagemagick-zip/7.1.1-19-q8-x64/imagemagick-zip-7.1.1-19-q8-x64.zip";
-                RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/tools");
-                System.setProperty(ExternalImageConverter.winToolPathPrefixProp, testRoot + "/tmp_tools");
+                TestTools.dir("imagemagick");
+                System.setProperty(ExternalImageConverter.winToolPathPrefixProp, TestTools.ROOT);
             }
         }
     }
