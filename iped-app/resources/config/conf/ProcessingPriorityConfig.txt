@@ -7,4 +7,3 @@ randomOrder = true
 # too small will slow down processing, and a setting that's too large will waste memory. Typical 
 # values range from 100,000 to 1,000,000.
 maxQueueSize = auto
-   

@@ -1,7 +1,7 @@
 ########################################################################
-# Uncomment the Categories that should be expanded during processing
-# The subitems will be extracted to the folder 'indexer / subitems'
-# The expansion is recursive, so it can consume considerable space
+# Uncomment the categories that should be expanded during processing.
+# The subitems will be extracted to the folder 'indexer / subitems'.
+# The expansion is recursive, so it can consume considerable disk space.
 ########################################################################
 
 Mailboxes
@@ -27,10 +27,10 @@ Event Files
 # Generates registry reports:
 Windows Registry
 
-# Generates USN Journal reports
+# Generates USN Journal reports:
 USN Journal
 
-#Generate Open Financial Exchange Spreadsheets
+# Generates Open Financial Exchange spreadsheets:
 Open Financial Exchange
 
 #Text Documents
@@ -40,5 +40,5 @@ Open Financial Exchange
 #PDF Documents
 #HTML Documents
 
-# To expand jar files, comment out the '<mime>application/java-archive</mime>' line in ParserConfig.xml
+# To expand JAR files, comment out the '<mime>application/java-archive</mime>' line in ParserConfig.xml
 #Programs and Libraries

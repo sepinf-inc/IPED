@@ -1,5 +1,5 @@
-# Store term vectors into index, needed to search for similar documents.
-# Increases index size up to 30%.
+# Stores term vectors in the index, needed to search for similar documents.
+# Increases index size by up to 30%.
 storeTermVectors = false
 
 # Maximum word length to be indexed.
