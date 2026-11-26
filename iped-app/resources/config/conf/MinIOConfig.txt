@@ -2,22 +2,22 @@
 # MinIO Task configuration
 #################################
 
-# Host name or ip address of MinIO
+# Hostname or IP address of MinIO
 host = http://HPW06
 
-# Port where MinIO is listening
+# Port on which MinIO is listening
 port = 9000
 
-# max size (bytes) of files to be included in the zip file
+# Max size (in bytes) of files to be included in the ZIP file
 zipFilesMaxSize = 32768
 
-# Update case item content internal references to MinIO server.
+# Updates internal references to case item contents to point to the MinIO server.
 # If true, the case will depend on MinIO to access file contents.
 # If false, the case won't depend on MinIO, even if files were exported to it.
 updateRefsToMinIO = false
 
-# Time out in seconds for the connection, read and write operations
+# Timeout (in seconds) for connection, read, and write operations
 timeOut = 30
 
-# Number of times the upload will be retried. Value -1 retries forever.
+# Number of times the upload will be retried. A value of -1 retries forever.
 retries = 1
