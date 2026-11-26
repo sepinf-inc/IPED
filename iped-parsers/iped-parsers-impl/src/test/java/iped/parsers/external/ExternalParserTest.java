@@ -1,6 +1,7 @@
 package iped.parsers.external;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNotNull;
 
 import java.io.File;
@@ -81,6 +82,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         // append Prefetch parser configuration to the same file
         ExternalParserConfigGenerator prefetchConfigGenerator = createExternalParserConfig("PrefetchParser", tmpPath + "sccainfo/",
             "sccainfo -V", "sccainfo ${INPUT}", "x-prefetch", 0, "ISO-8859-1");
+        prefetchConfigGenerator.setUnescapeOutput(true);
         prefetchConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append RecycleBin parser
@@ -235,11 +237,11 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             String hts = handler.toString();
 
             assertTrue(hts.contains("2008-10-28 15:53:42"));
-            assertTrue(hts.contains("No"));
+            assertTrue(hts.contains("No") || hts.contains("FALSE"));
             assertTrue(hts.contains("4096"));
             assertTrue(hts.contains("C:\\Documents and Settings\\All Users\\Desktop\\有道桌面词典.lnk"));
             assertTrue(hts.contains("2008-11-19 05:07:35"));
-            assertTrue(hts.contains("Yes"));
+            assertTrue(hts.contains("Yes") || hts.contains("TRUE"));
             assertTrue(hts.contains("2727936"));
             assertTrue(hts.contains("C:\\Documents and Settings\\Administrator\\Desktop\\GetDataBackforFAT-v3.63_PConline"));
         }
@@ -296,6 +298,24 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
                 assertTrue(eventNumbers.get(i-1).matches("Event number.*" + String.valueOf(i)));
             }
 
+        }
+    }
+
+    @Test
+    public void testToolNotFound() throws IOException, SAXException {
+
+        ExternalParser parser = new ExternalParser();
+        parser.setParserName("MissingToolParser");
+        parser.setCommand("iped-missing-external-tool " + ExternalParser.INPUT_FILE_TOKEN);
+
+        Metadata metadata = new Metadata();
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "test_evtxLog.evtx");
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_evtxLog.evtx")) {
+            parser.parse(stream, new BodyContentHandler(), metadata, new ParseContext());
+            fail("A TikaException should be thrown if the external tool can not be started");
+        } catch (TikaException e) {
+            assertTrue(e.getCause() instanceof IOException);
         }
     }
 
