@@ -3,11 +3,10 @@ package iped.parsers.mail;
 
 import static org.junit.Assume.assumeFalse;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -22,11 +21,9 @@ import org.xml.sax.helpers.DefaultHandler;
 import iped.content.TikaManager;
 import iped.parsers.mail.OutlookPSTParserTest.EmbeddedPSTParser;
 import iped.parsers.util.AbstractPkgTest;
-import iped.parsers.util.RepoToolDownloader;
+import iped.parsers.util.TestTools;
 
 public class LibpffPSTParserTest extends AbstractPkgTest {
-    private static String testRoot = System.getProperty("user.dir") + "/src/test";
-    private static String osName = System.getProperty("os.name").toLowerCase();
 
     protected EmbeddedPSTParser psttracker;
     protected ParseContext pstContext;
@@ -39,10 +36,8 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        if (osName.startsWith("windows")) {
-            String repoPath = "libyal/libpff/20131028/libpff-20131028.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
-            System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/pffexport/");
+        if (SystemUtils.IS_OS_WINDOWS) {
+            System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, TestTools.dir("pffexport"));
         }
 
         TikaManager.initializeTikaConfig(false, false);
@@ -65,9 +60,8 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
     @Override
     protected void tearDown() throws Exception {
-        if (osName.startsWith("windows")) {
-            File tool_path = new File(System.clearProperty(LibpffPSTParser.TOOL_PATH_PROP));
-            FileUtils.deleteDirectory(tool_path.getParentFile());
+        if (SystemUtils.IS_OS_WINDOWS) {
+            System.clearProperty(LibpffPSTParser.TOOL_PATH_PROP);
         }
     }
 
