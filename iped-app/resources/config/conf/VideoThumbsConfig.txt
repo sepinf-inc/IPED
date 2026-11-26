@@ -1,51 +1,51 @@
 ###############################################
-# Video Thumbnails Extraction Configuration   #
+# Video Thumbnail Extraction Configuration    #
 ###############################################
 
-# MPlayer for Windows is already distributed side by side with this software
-# For Linux, mplayer must be compiled and installed on system path.
+# MPlayer for Windows is already distributed alongside this software.
+# On Linux, MPlayer must be compiled and installed on the system PATH.
 
-# Thumbs extraction configuration, format: <frame maximum size in pixels>,<columns>,<rows>. 
-# The higher the resolution or number of thumbs, the slower the extraction.
+# Thumbnail extraction configuration, format: <maximum frame size in pixels>,<columns>,<rows>. 
+# The higher the resolution or number of thumbnails, the slower the extraction.
 Layout = 320,4,5
 
 # Compression level of the generated image file.
-# From 0 to 100, 0 - is very high compression and very low quality, 100 - higher quality and minimum compression.
+# From 0 to 100: 0 is very high compression and very low quality; 100 is highest quality and minimum compression.
 compression = 60
 
-# Timeouts (in seconds) used by the mplayer monitor.
-# Change with caution, because high values can slow down processing of corrupted videos.
-# Low values can abort thumb extraction of valid videos.
-#    - First execution timeout (must be higher because MPlayer can update its font cache).
+# Timeouts (in seconds) used by the MPlayer monitor.
+# Change with caution, as high values can slow down the processing of corrupted videos.
+# Low values can abort thumbnail extraction for valid videos.
+#    - First execution timeout (must be higher because MPlayer may update its font cache).
 #    - Metadata extraction
 #    - Thumbnail extraction
 Timeouts = 300,15,45
 
-# Enable or disable logging of mplayer messages, only for debugging problems
+# Enable or disable logging of MPlayer messages (only for debugging problems).
 Verbose = false
 
 # Gallery thumbnail configuration for videos.
-# Comment to disable (full video preview image will be shown in the gallery).
-# Format: <gallery image maximum size in pixels, minimum number of frames, maximum of frames frames>.
+# Comment out to disable (the full video preview image will be shown in the gallery).
+# Format: <maximum gallery image size in pixels, minimum number of frames, maximum number of frames>.
 GalleryThumbs = 320,2,3
 
-# Enables video frames extraction as video subitems.
-# If enabled, parallel to videoThumbs creation, video frames are to be created
-# as video subitems, so video frames will able to participate of the 
-# image processing pipeline (ocr, image similarity, and others)
+# Enables video frame extraction as video subitems.
+# If enabled, in parallel with videoThumbs creation, video frames are created
+# as video subitems, so they will be able to participate in the 
+# image processing pipeline (OCR, image similarity, etc.).
 enableVideoThumbsSubitems = false
 
-# If enabled, uses a javascript function to compute the number of frames to extract from videos as subitems.
+# If enabled, uses a JavaScript function to compute the number of frames to extract from videos as subitems.
 # You can use the 'duration' variable: the video duration in seconds.
-# This applies just if 'enableVideoThumbsSubitems' is enabled.
-# At least a minimum of <columns> x <rows> frames from 'Layout' option are extracted.
+# This applies only if 'enableVideoThumbsSubitems' is enabled.
+# A minimum of <columns> x <rows> frames from the 'Layout' option will be extracted.
 #numFramesEquation = Math.sqrt(duration)
 
-# Enables video frames extraction using original video resolution to be applied on Video Thumbs Subitems.
-# If enabled, first value of 'Layout' option above will be ignored.
-# This should help face detection on videos and other future features (like video ocr, so on...)
+# Enables video frame extraction using the original video resolution for Video Thumbs Subitems.
+# If enabled, the first value of the 'Layout' option above will be ignored.
+# This should help with face detection in videos and other future features (such as video OCR, etc.).
 enableVideoThumbsOriginalDimension = false
 
-# Upper bound width/height dimension size used when extracting video frames.
-# This applies and has precedence over all options above.
+# Upper bound for width/height dimensions used when extracting video frames.
+# This applies to and takes precedence over all options above.
 maxDimensionSize = 1024
