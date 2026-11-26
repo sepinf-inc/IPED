@@ -291,10 +291,6 @@
                 <groupId>io.github.download-maven-plugin</groupId>
                 <artifactId>download-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-            </plugin>
     		<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -326,7 +322,8 @@
                 </executions>
             </plugin>
             <plugin>
-                <!-- sets ${org.mockito:mockito-core:jar}, used by surefire below -->
+                <!-- besides the executions of the external tools inherited from the parent pom, sets
+                     ${org.mockito:mockito-core:jar}, used by surefire below -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
