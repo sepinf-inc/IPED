@@ -1919,6 +1919,13 @@ public abstract class ExtractorIOS extends Extractor {
             case 75:
                 result = SENT_HISTORY;
                 break;
+
+            case 76:
+                // This seems to be related to group member labels, but since nothing is
+                // displayed in the app (it is not an actual message), it will be ignored for
+                // now.
+                result = IGNORE_MESSAGE;
+                break;
         }
         return result;
     }
