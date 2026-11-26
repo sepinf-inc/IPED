@@ -1850,6 +1850,11 @@ public abstract class ExtractorIOS extends Extractor {
                 result = MENTIONED_YOU_IN_STATUS;
                 break;
 
+            case 71:
+                // AI_RESPONSE -> treat as a text message
+                result = TEXT_MESSAGE;
+                break;
+
             case 75:
                 result = SENT_HISTORY;
                 break;
