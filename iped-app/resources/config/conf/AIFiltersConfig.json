@@ -41,6 +41,8 @@
         {"name": "Very Low", "value": "[* TO 149]"}
     ]},
 
+    {"name": "Image Content", "prefix": "ImageSearch", "property": "ai\\:imageSearch\\:labels", "value": "*", "dynamic": "true"},
+
     {"name": "OCR Char Count", "prefix": "OCR", "property": "ocrCharCount", "value": "[1 TO *]", "children":[
         {"name": "High", "value": "[1001 TO *]"},
         {"name": "Medium", "value": "[100 TO 1000]"},
