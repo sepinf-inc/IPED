@@ -93,7 +93,7 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
             case 3:
                 // Item Name
                 try {
-                    Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
+                    Document doc = App.get().appCase.storedFields().document(results.getLuceneIds()[row]);
                     return doc.get(IndexItem.NAME);
                 } catch (Exception e) {
                 }

@@ -1,5 +1,6 @@
 package iped.app.ui.utils;
 
+import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -105,7 +106,7 @@ public class PanelsLayout {
             }
 
             if (fileExt.exists()) {
-                in = new BufferedReader(new FileReader(fileExt));
+                in = new BufferedReader(new FileReader(fileExt, CharsetUtil.NATIVE));
 
                 App app = App.get();
                 int colCount = Integer.parseInt(in.readLine());
@@ -186,7 +187,7 @@ public class PanelsLayout {
 
             control.write(file);
 
-            out = new BufferedWriter(new FileWriter(fileExt));
+            out = new BufferedWriter(new FileWriter(fileExt, CharsetUtil.NATIVE));
 
             App app = App.get();
             out.write("" + app.getGalleryColCount());

@@ -220,7 +220,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     int docId = App.get().appCase.getLuceneId(id);
-                    doc = App.get().appCase.getSearcher().doc(docId);
+                    doc = App.get().appCase.storedFields().document(docId);
                     value.name = doc.get(IndexItem.NAME);
 
                     if (logRendering) {
@@ -342,7 +342,7 @@ public class GalleryModel extends AbstractTableModel {
                 IItemId id = it.next();
                 int docId = App.get().appCase.getLuceneId(id);
                 try {
-                    Document doc = App.get().appCase.getSearcher().doc(docId);
+                    Document doc = App.get().appCase.storedFields().document(docId);
                     String mediaType = doc.get(IndexItem.CONTENTTYPE);
                     if (isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType)) {
                         it.remove();

@@ -139,6 +139,8 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
         // workaround for https://github.com/sepinf-inc/IPED/issues/1058
         json = fixJsonNumberFormatting(json);
 
+        // Intentionally uses the default charset: undoes JNA decoding Vosk UTF-8 output with it.
+        // Since Java 18 the default is UTF-8 and this becomes a no-op.
         String str = new String(json.getBytes(), StandardCharsets.UTF_8);
         JSONParser parser = new JSONParser();
         JSONObject root = (JSONObject) parser.parse(str);

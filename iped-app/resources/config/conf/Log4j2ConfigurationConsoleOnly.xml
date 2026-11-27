@@ -5,7 +5,8 @@
   	</CustomLevels>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[%logger{3}]\t\t\t%msg%n" />
+            <!-- the bytes are written as is to System.out, so they must use its encoding -->
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[%logger{3}]\t\t\t%msg%n" charset="${sys:stdout.encoding}" />
         </Console>
     </Appenders>
     <Loggers>

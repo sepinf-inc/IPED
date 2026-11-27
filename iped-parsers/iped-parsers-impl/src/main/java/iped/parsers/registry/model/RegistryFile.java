@@ -1,5 +1,6 @@
 package iped.parsers.registry.model;
 
+import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -59,7 +60,7 @@ public class RegistryFile {
         while (hbexite) {
             HiveBin hb = new HiveBin();
             pos += fis.read(hb.header);// le o cabecalho do hivebean
-            String sig = new String(Arrays.copyOf(hb.header, 4));
+            String sig = new String(Arrays.copyOf(hb.header, 4), StandardCharsets.ISO_8859_1);
             if (!sig.equals("hbin")) {
                 hbexite = false; // fim do arquivo, e consequentemente do loop
                 continue;
@@ -172,7 +173,7 @@ public class RegistryFile {
         bb = ByteBuffer.wrap(buffer);
         fis.read(bb);
 
-        String celltype = new String(Arrays.copyOf(buffer, 2));
+        String celltype = new String(Arrays.copyOf(buffer, 2), StandardCharsets.ISO_8859_1);
         switch (celltype) {
             case "nk":
                 cell.cellContent = new KeyNode(this, buffer);

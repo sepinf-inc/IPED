@@ -1,5 +1,6 @@
 package iped.engine.task;
 
+import java.nio.charset.StandardCharsets;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -45,6 +46,7 @@ import iped.parsers.util.PDFToThumb;
 import iped.parsers.util.Util;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
+import iped.utils.JavaExecutable;
 import iped.viewers.util.LibreOfficeFinder;
 
 public class DocThumbTask extends ThumbTask {
@@ -288,7 +290,7 @@ public class DocThumbTask extends ThumbTask {
                     String jarDir = new File(url.toURI()).getParent();
                     String classpath = jarDir + "/*";
                     File file = item.getTempFile();
-                    String[] cmd = { "java", "-cp", classpath, "-Xmx" + docThumbsConfig.getMaxPdfExternalMemory() + "M",
+                    String[] cmd = { JavaExecutable.getPath(), "-cp", classpath, "-Xmx" + docThumbsConfig.getMaxPdfExternalMemory() + "M",
                             PDFToThumb.class.getCanonicalName(), file.getAbsolutePath(),
                             String.valueOf(docThumbsConfig.getThumbSize()), item.toString(),
                             Boolean.toString(logger.isDebugEnabled()) };
@@ -483,8 +485,8 @@ public class DocThumbTask extends ThumbTask {
             File cfgIn = new File(loOutDir, "user/registrymodifications.xcu");
             File cfgOut = new File(loOutDir, "user/registrymodifications.tmp");
             if (cfgIn.exists()) {
-                try (BufferedReader in = new BufferedReader(new FileReader(cfgIn));
-                        BufferedWriter out = new BufferedWriter(new FileWriter(cfgOut))) {
+                try (BufferedReader in = new BufferedReader(new FileReader(cfgIn, StandardCharsets.UTF_8));
+                        BufferedWriter out = new BufferedWriter(new FileWriter(cfgOut, StandardCharsets.UTF_8))) {
                     String line = null;
                     int cnt = 0;
                     while ((line = in.readLine()) != null) {

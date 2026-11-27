@@ -1,5 +1,6 @@
 package iped.app.ui.splash;
 
+import java.nio.charset.StandardCharsets;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -31,7 +32,7 @@ public class StartUpControlClient {
                 }
 
                 // Write file
-                try (BufferedWriter out = new BufferedWriter(new FileWriter(startUpFile))) {
+                try (BufferedWriter out = new BufferedWriter(new FileWriter(startUpFile, StandardCharsets.UTF_8))) {
 
                     // Update progress while starting up
                     while (!finished) {

@@ -1,5 +1,6 @@
 package iped.parsers.sqlite.detector;
 
+import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,7 +63,7 @@ public class SQLiteContainerDetector implements Detector {
             config.setOpenMode(SQLiteOpenMode.MAIN_DB);
             sqliteConnectionProperties = config.toProperties();
         } catch (UnsupportedEncodingException e) {
-            header = headerStr.getBytes();
+            header = headerStr.getBytes(StandardCharsets.US_ASCII);
         }
     }
 

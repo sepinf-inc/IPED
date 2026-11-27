@@ -11,6 +11,7 @@
  */
 package com.linuxense.javadbf;
 
+import java.nio.charset.StandardCharsets;
 import java.io.DataInput;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -58,7 +59,7 @@ public final class Utils {
             }
         }
 
-        return t_sb.toString().getBytes();
+        return t_sb.toString().getBytes(StandardCharsets.ISO_8859_1);
     }
 
     public static short littleEndian(short value) {

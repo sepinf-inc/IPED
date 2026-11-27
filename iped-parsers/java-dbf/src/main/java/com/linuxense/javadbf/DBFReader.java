@@ -13,6 +13,7 @@
 
 package com.linuxense.javadbf;
 
+import java.nio.charset.StandardCharsets;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -223,9 +224,9 @@ public class DBFReader extends DBFBase {
                         try {
 
                             GregorianCalendar calendar = new GregorianCalendar(
-                                    Integer.parseInt(new String(t_byte_year)),
-                                    Integer.parseInt(new String(t_byte_month)) - 1,
-                                    Integer.parseInt(new String(t_byte_day)));
+                                    Integer.parseInt(new String(t_byte_year, StandardCharsets.US_ASCII)),
+                                    Integer.parseInt(new String(t_byte_month, StandardCharsets.US_ASCII)) - 1,
+                                    Integer.parseInt(new String(t_byte_day, StandardCharsets.US_ASCII)));
 
                             recordObjects[i] = calendar.getTime();
                         } catch (NumberFormatException e) {
@@ -247,7 +248,7 @@ public class DBFReader extends DBFBase {
                             t_float = Utils.trimLeftSpaces(t_float);
                             if (t_float.length > 0 && !Utils.contains(t_float, (byte) '?')) {
 
-                                recordObjects[i] = Float.parseFloat(new String(t_float));
+                                recordObjects[i] = Float.parseFloat(new String(t_float, StandardCharsets.US_ASCII));
                             } else {
 
                                 recordObjects[i] = null;
@@ -271,7 +272,7 @@ public class DBFReader extends DBFBase {
 
                             if (t_numeric.length > 0 && !Utils.contains(t_numeric, (byte) '?')) {
 
-                                recordObjects[i] = Double.parseDouble(new String(t_numeric));
+                                recordObjects[i] = Double.parseDouble(new String(t_numeric, StandardCharsets.US_ASCII));
                             } else {
 
                                 recordObjects[i] = null;

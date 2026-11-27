@@ -1,5 +1,6 @@
 package iped.engine.hashdb;
 
+import iped.utils.CharsetUtil;
 import static iped.engine.hashdb.HashDB.hashBytesLen;
 import static iped.engine.hashdb.HashDB.hashBytesToStr;
 import static iped.engine.hashdb.HashDB.hashStrToBytes;
@@ -655,7 +656,7 @@ public class HashDBTool {
                     return false;
                 }
             } else {
-                in = new BufferedReader(new FileReader(file), 1 << 20);
+                in = new BufferedReader(new FileReader(file, CharsetUtil.NATIVE), 1 << 20);
             }
             Builder builder = CSVFormat.DEFAULT.builder();
             if (delimiter != null)
@@ -1328,7 +1329,7 @@ public class HashDBTool {
     private boolean readNsrlProd(File file) {
         BufferedReader in = null;
         try {
-            in = new BufferedReader(new FileReader(file), 1 << 20);
+            in = new BufferedReader(new FileReader(file, CharsetUtil.NATIVE), 1 << 20);
             CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
             List<String> header = parser.getHeaderNames();
             if (header == null || header.isEmpty()) {
@@ -1611,7 +1612,7 @@ public class HashDBTool {
                     return false;
                 }
             } else {
-                in = new BufferedReader(new FileReader(file));
+                in = new BufferedReader(new FileReader(file, CharsetUtil.NATIVE));
             }
             CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
             List<String> header = parser.getHeaderNames();
@@ -1664,7 +1665,7 @@ public class HashDBTool {
     private boolean checkInputHeader(File file, FileType type) {
         BufferedReader in = null;
         try {
-            in = new BufferedReader(new FileReader(file));
+            in = new BufferedReader(new FileReader(file, CharsetUtil.NATIVE));
             Builder builder = CSVFormat.DEFAULT.builder();
             if (type == FileType.ICSE) {
                 builder.setDelimiter(icseDelimiter);
@@ -1717,7 +1718,7 @@ public class HashDBTool {
     private boolean setupIcse(File file) {
         BufferedReader in = null;
         try {
-            in = new BufferedReader(new FileReader(file));
+            in = new BufferedReader(new FileReader(file, CharsetUtil.NATIVE));
             Builder builder = CSVFormat.DEFAULT.builder();
             builder.setDelimiter(icseDelimiter);
             CSVParser parser = builder.setHeader().setSkipHeaderRecord(true).build().parse(in);
@@ -1791,7 +1792,7 @@ public class HashDBTool {
     private boolean isIcseCsv(File file) {
         BufferedReader in = null;
         try {
-            in = new BufferedReader(new FileReader(file));
+            in = new BufferedReader(new FileReader(file, CharsetUtil.NATIVE));
             Builder builder = CSVFormat.DEFAULT.builder();
             builder.setDelimiter(icseDelimiter);
             CSVParser parser = builder.setHeader().setSkipHeaderRecord(true).build().parse(in);

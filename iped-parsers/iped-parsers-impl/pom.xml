@@ -12,24 +12,10 @@
     <properties>
         <!-- The external tools the parsers run, for the tests: unpacked into target/tools before they run,
              from the definitions in the pluginManagement of the parent pom (the same iped-app releases).
-             The Windows binaries are only unpacked on Windows: see the profile below. -->
+             The Windows binaries are only unpacked on Windows: see the windows-test-tools profile. -->
         <tools.dir>${project.build.directory}/tools</tools.dir>
         <tools.unpack.phase>process-test-resources</tools.unpack.phase>
     </properties>
-
-    <profiles>
-        <profile>
-            <id>windows-test-tools</id>
-            <activation>
-                <os>
-                    <family>windows</family>
-                </os>
-            </activation>
-            <properties>
-                <tools.windows.skip>false</tools.windows.skip>
-            </properties>
-        </profile>
-    </profiles>
     
     <dependencies>
     	<dependency>
@@ -47,7 +33,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-    		<version>3.8.0</version>
+    		<version>5.24.0</version>
     		<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -231,10 +217,14 @@
             <version>${java.dbx.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- JAXB is not part of the JDK anymore, used by OFCParser -->
         <dependency>
-            <groupId>github.sepinf</groupId>
-            <artifactId>png-reader</artifactId>
-            <version>jdk11+28-p1</version>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
         </dependency>
         <dependency>
             <groupId>io.github.fmpfeifer</groupId>
@@ -286,7 +276,6 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.13.1</version>
         </dependency>
         <dependency>
             <groupId>commons-validator</groupId>
@@ -302,14 +291,9 @@
                 <groupId>io.github.download-maven-plugin</groupId>
                 <artifactId>download-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-            </plugin>
     		<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.4</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -322,7 +306,6 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.8</version>
                 <executions>
                     <execution>
                         <goals>
@@ -338,6 +321,69 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <!-- besides the executions of the external tools inherited from the parent pom, sets
+                     ${org.mockito:mockito-core:jar}, used by surefire below -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>mockito-agent-path</id>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Mockito 5 inline mock maker needs its agent; loading it dynamically is deprecated
+                         since Java 21 (JEP 451). @{argLine} keeps the JaCoCo agent. -->
+                    <argLine>@{argLine} ${iped.jvm.flags} -javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
+                </configuration>
+            </plugin>
     	</plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>windows-test-tools</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <tools.windows.skip>false</tools.windows.skip>
+            </properties>
+        </profile>
+        <profile>
+            <!-- CI only (JEP_JAR set by the workflow): the pip installed jep native library must match its jar,
+                 so tests use that jar instead of black.ninia:jep; the packaged release keeps the pom version -->
+            <id>ci-jep</id>
+            <activation>
+                <property>
+                    <name>env.JEP_JAR</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <classpathDependencyExcludes>
+                                <classpathDependencyExclude>black.ninia:jep</classpathDependencyExclude>
+                            </classpathDependencyExcludes>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${env.JEP_JAR}</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

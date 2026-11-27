@@ -11,6 +11,9 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+
 import org.apache.tika.utils.DateUtils;
 
 public class DateUtil {
@@ -18,6 +21,16 @@ public class DateUtil {
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
     public static final TimeZone MIDDAY = TimeZone.getTimeZone("GMT-12:00");
+
+    private static final DatatypeFactory datatypeFactory;
+
+    static {
+        try {
+            datatypeFactory = DatatypeFactory.newInstance();
+        } catch (DatatypeConfigurationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     private static final Pattern datePattern = Pattern.compile("\\d{4}([-:]\\d{2}){2}[T ](\\d{2}:){2}\\d{2}");
 
@@ -90,6 +103,15 @@ public class DateUtil {
      * @param val
      * @return
      */
+    /**
+     * Parses a xsd:dateTime (e.g. 2023-05-01T10:20:30.123-03:00) like the former
+     * javax.xml.bind.DatatypeConverter.parseDateTime(): without time zone, the
+     * default one is used.
+     */
+    public static Date parseXsdDateTime(String dateTime) {
+        return datatypeFactory.newXMLGregorianCalendar(dateTime.trim()).toGregorianCalendar().getTime();
+    }
+
     public static Date tryToParseDate(String val) {
         if (datePattern.matcher(val).find()) {
             synchronized (INSTANCE) {

@@ -1,8 +1,9 @@
 package iped.app.processing;
 
+import iped.utils.CharsetUtil;
+import iped.utils.JavaExecutable;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -362,14 +363,14 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         if (this.isAppendIndex()) {
             String classpath = outputDir.getAbsolutePath() + "/iped/lib/iped-search-app.jar"; //$NON-NLS-1$
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList("java", "-cp", classpath, Main.class.getCanonicalName(), "-h"));
+            cmd.addAll(Arrays.asList(JavaExecutable.getPath(), "-cp", classpath, Main.class.getCanonicalName(), "-h"));
 
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectErrorStream(true);
             List<String> lines;
             try {
                 Process process = pb.start();
-                lines = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+                lines = IOUtils.readLines(process.getInputStream(), CharsetUtil.NATIVE);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

@@ -10,6 +10,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.neo4j.kernel.impl.storemigration.UnableToMigrateException;
 
 import iped.app.ui.App;
 import iped.app.ui.Messages;
@@ -69,7 +71,24 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
             }
             createMultiCaseGraph(cases, multiCaseGraphPath);
             if (multiCaseGraphPath.exists()) {
-                loaded = initGraphService(multiCaseGraphPath);
+                try {
+                    loaded = initGraphService(multiCaseGraphPath);
+                } catch (RuntimeException e) {
+                    // Other failures, like a database locked by another running instance, must
+                    // not be handled as an outdated database.
+                    if (ExceptionUtils.indexOfType(e, UnableToMigrateException.class) == -1) {
+                        throw e;
+                    }
+                    // The cached multicase graph was created by an older neo4j version, which
+                    // can't be opened or migrated. It is recreated from the CSVs of the cases.
+                    AppGraphAnalytics.LOGGER.warn("Multicase graph created by an older version, it will be recreated: {}",
+                            multiCaseGraphPath.getAbsolutePath());
+                    IOUtil.deleteDirectory(multiCaseGraphPath, false);
+                    createMultiCaseGraph(cases, multiCaseGraphPath);
+                    if (multiCaseGraphPath.exists()) {
+                        loaded = initGraphService(multiCaseGraphPath);
+                    }
+                }
             }
         }
         AppGraphAnalytics.LOGGER.info("Init graph database took {}s", (System.currentTimeMillis() - t) / 1000);

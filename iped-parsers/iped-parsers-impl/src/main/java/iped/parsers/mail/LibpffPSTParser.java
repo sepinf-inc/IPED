@@ -1,5 +1,6 @@
 package iped.parsers.mail;
 
+import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -105,7 +106,7 @@ public class LibpffPSTParser extends AbstractParser {
                     if (p.exitValue() != 0)
                         throw new Exception();
 
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(), CharsetUtil.NATIVE));
                     String version = reader.readLine().replace(TOOL_NAME + " ", ""); //$NON-NLS-1$ //$NON-NLS-2$
                     if (version.compareToIgnoreCase("20130722") < 0) //$NON-NLS-1$
                         LOGGER.error(" Old version " + version //$NON-NLS-1$

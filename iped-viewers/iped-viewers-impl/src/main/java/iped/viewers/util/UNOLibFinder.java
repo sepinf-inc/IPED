@@ -1,5 +1,6 @@
 package iped.viewers.util;
 
+import iped.utils.CharsetUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,7 +80,7 @@ public class UNOLibFinder {
         }
         String s;
         if (code == '0') {
-            s = new String(buf);
+            s = new String(buf, CharsetUtil.NATIVE);
         } else if (code == '1') {
             try {
                 s = new String(buf, "UTF-16LE");

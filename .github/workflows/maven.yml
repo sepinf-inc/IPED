@@ -1,118 +1,51 @@
 name: Java CI
 
-on: [push, pull_request]
+on:
+  # Pull requests are built by the pull_request event, which tests the merge with the target
+  # branch, so pushes only trigger a build on master: one build per commit instead of two.
+  push:
+    branches: [master]
+  pull_request:
+  # manual run on any branch (Actions tab > Java CI > Run workflow), e.g. before opening a PR
+  workflow_dispatch:
 
 jobs:
 
-  build-java11:
+  build:
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
+
+    env:
+      # Latest Maven 3 release. The runner image has an older one, and the Maven repository
+      # cache saved by one Maven version is not fully reused by another.
+      MAVEN_VERSION: 3.10.1
 
     steps:
     - uses: actions/checkout@v7
-    - name: Set up JDK 11
+
+    - name: Set up JDK 25 (Liberica Full, with JavaFX)
       uses: actions/setup-java@v6
       with:
         distribution: liberica
-        java-version: 11
+        java-version: '25'
         java-package: jdk+fx
         cache-jdk: true
         # like the Maven repository below, only pushes to master save the JDK cache
         cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
 
-    - name: Restore Maven repository
-      # Restore and save are split so a partial repository is cached even when
-      # the build fails (e.g. a remote repository is unavailable), see #3047
-      id: m2
-      uses: actions/cache/restore@v5
-      with:
-        path: |
-          ~/.m2/repository
-          !~/.m2/repository/**/*.lastUpdated
-        key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          maven-${{ runner.os }}-
-
-    - name: Load libagdb from cache
-      id: libagdb
-      uses: actions/cache@v5
-      with:
-        path: libagdb
-        key: libagdb
-
-    - name: Compile libagdb
-      # libagdb (agdbinfo) needs to be built from source
-      if: steps.libagdb.outputs.cache-hit != 'true'
-      run: | 
-            sudo apt install git autoconf automake autopoint libtool pkg-config
-            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
-            sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
-
-    - name: Install External Tools
+    - name: Set up Maven
       run: |
-          sudo apt-get update && sudo apt-get install \
-          libscca-utils rifiuti2 libevtx-utils libevt-utils \
-          libmsiecf-utils=20181227-2build1 \
-          pff-tools=20180714-3build1 \
-          libesedb-utils=20181229-3.1build2 \
-          tesseract-ocr \
-          tesseract-ocr-por \
-          imagemagick \
-          python3-pip
-          sudo perl -MCPAN -e 'install Parse::Win32Registry'
-          pip install jep==4.0.3
-
-          cd libagdb/ && sudo make install
-          sudo ldconfig /usr/local/lib
-          cd ..
-          sudo apt-get install gsfonts
-
-
-    - name: Build with Maven
-      id: build
-      run: mvn -B -ntp package --file pom.xml
-
-    - name: Save Maven repository
-      # Only pushes to master save the cache: branches and pull requests restore master's cache
-      # but never save their own, so they do not use up the repository's cache quota.
-      # Full key on success; on failure a partial key, restored next time through restore-keys.
-      if: always() && steps.m2.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
-      uses: actions/cache/save@v5
-      with:
-        path: |
-          ~/.m2/repository
-          !~/.m2/repository/**/*.lastUpdated
-        key: ${{ steps.build.outcome == 'success' && steps.m2.outputs.cache-primary-key || format('{0}-partial-{1}-{2}-{3}', steps.m2.outputs.cache-primary-key, github.job, github.run_id, github.run_attempt) }}
-    - shell: bash
-      run:
-        cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
-    - name: Upload snapshot
-      uses: actions/upload-artifact@v4
-      with:
-        name: iped-snapshot-${{ github.sha }}
-        path: iped-snapshot.tar.gz
-
-  build-java14:
-    
-    runs-on: ubuntu-22.04
-
-    steps:
-    - uses: actions/checkout@v7
-    - name: Set up JDK 14
-      uses: actions/setup-java@v6
-      with:
-        distribution: liberica
-        java-version: 14
-        java-package: jdk+fx
-        cache-jdk: true
-        # like the Maven repository below, only pushes to master save the JDK cache
-        cache-read-only: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master') }}
+        url="https://repo1.maven.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+        curl -fsSL --retry 3 -o "$RUNNER_TEMP/maven.tar.gz" "$url"
+        echo "$(curl -fsSL --retry 3 "$url.sha512")  $RUNNER_TEMP/maven.tar.gz" | sha512sum -c -
+        tar -xzf "$RUNNER_TEMP/maven.tar.gz" -C "$RUNNER_TEMP"
+        echo "$RUNNER_TEMP/apache-maven-$MAVEN_VERSION/bin" >> "$GITHUB_PATH"
 
     - name: Restore Maven repository
       # Restore and save are split so a partial repository is cached even when
       # the build fails (e.g. a remote repository is unavailable), see #3047
       id: m2
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: |
           ~/.m2/repository
@@ -123,50 +56,101 @@ jobs:
 
     - name: Load libagdb from cache
       id: libagdb
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: libagdb
-        key: libagdb
+        key: libagdb-ubuntu-26.04-667a782
+
+    - name: Install External Tools
+      # libparse-win32registry-perl: perl module Parse::Win32Registry, used by RegRipper
+      run: |
+        sudo apt-get -qq update && sudo apt-get -qq install -y \
+          libscca-utils rifiuti2 libevtx-utils libevt-utils \
+          libmsiecf-utils pff-tools libesedb-utils \
+          tesseract-ocr tesseract-ocr-por \
+          imagemagick fonts-urw-base35 \
+          libparse-win32registry-perl
 
     - name: Compile libagdb
       # libagdb (agdbinfo) needs to be built from source
       if: steps.libagdb.outputs.cache-hit != 'true'
-      run: | 
-            sudo apt install git autoconf automake autopoint libtool pkg-config
-            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
-            sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
+      run: |
+        sudo apt-get -qq install -y git autoconf automake autopoint libtool pkg-config
+        git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
+        ./synclibs.sh && ./autogen.sh && ./configure
 
-    - name: Install External Tools
-      run: |        
-          sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel && sudo apt-get update && sudo apt-get install \
-          libscca-utils rifiuti2 libevtx-utils libevt-utils \
-          libmsiecf-utils=20181227-2build1 \
-          pff-tools=20180714-3build1 \
-          libesedb-utils=20181229-3.1build2 \
-          tesseract-ocr \
-          tesseract-ocr-por \
-          imagemagick \
-          python3-pip
-          sudo perl -MCPAN -e 'install Parse::Win32Registry'
-          pip install jep==4.0.3
+    - name: Install libagdb
+      run: cd libagdb/ && sudo make install && sudo ldconfig /usr/local/lib
 
-          cd libagdb/ && sudo make install
-          sudo ldconfig /usr/local/lib
-          cd ..
-          sudo apt-get install gsfonts
+    - name: Create Python venv with jep (tests only)
+      # jep is compiled against JAVA_HOME, so this must run after setup-java.
+      # Its native library must match the jep jar version in iped-parsers-impl/pom.xml.
+      # The venv activate script also sets what the embedded interpreter and the
+      # ci-jep surefire profile (iped-parsers-impl) need.
+      run: |
+        sudo apt-get -qq install -y python3-venv python3-dev
+        JEP_VERSION=$(python3 - <<'PY'
+        import xml.etree.ElementTree as ET
+        ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
+        pom = ET.parse('iped-parsers/iped-parsers-impl/pom.xml').getroot()
+        print(next(d.findtext('m:version', namespaces=ns) for d in pom.iterfind('.//m:dependency', ns)
+                   if d.findtext('m:groupId', namespaces=ns) == 'black.ninia'
+                   and d.findtext('m:artifactId', namespaces=ns) == 'jep'))
+        PY
+        )
+        echo "jep version from pom.xml: $JEP_VERSION"
+        python3 -m venv "$RUNNER_TEMP/venv"
+        source "$RUNNER_TEMP/venv/bin/activate"
+        pip install --no-cache-dir "jep==$JEP_VERSION"
+        SITE=$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
+        # jep can't be imported outside Java, just locate the package
+        JEP_DIR=$(python -c 'import importlib.util; print(importlib.util.find_spec("jep").submodule_search_locations[0])')
+        cat >> "$VIRTUAL_ENV/bin/activate" <<ACTIVATE
+
+        # IPED: needed by embedded jep (PythonParserTest) and by the ci-jep surefire profile
+        export PYTHONPATH="$SITE"
+        export LD_LIBRARY_PATH="$JEP_DIR\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}"
+        export JEP_JAR="$(ls $JEP_DIR/jep-*.jar)"
+        ACTIVATE
+
+    - name: Print tool versions
+      run: |
+        source "$RUNNER_TEMP/venv/bin/activate"
+        java -version; mvn -v; python --version; python -c 'import importlib.metadata as m; print("jep", m.version("jep"))'
+        pffexport -V | head -1; esedbexport -V | head -1; msiecfexport -V | head -1
+        tesseract --version | head -1
 
     - name: Build with Maven
       id: build
-      run: mvn -B -ntp package --file pom.xml
+      run: |
+        source "$RUNNER_TEMP/venv/bin/activate"
+        # --fail-at-end: keep building the modules that do not depend on a failed one.
+        # requestTimeout: give up on a remote repository that stops answering after 1 minute
+        # (default 30 minutes; both names are set, as the property was renamed in Maven Resolver 2).
+        mvn -B -ntp --fail-at-end \
+          -Daether.connector.requestTimeout=60000 -Daether.transport.http.requestTimeout=60000 \
+          package --file pom.xml
 
     - name: Save Maven repository
       # Only pushes to master save the cache: branches and pull requests restore master's cache
       # but never save their own, so they do not use up the repository's cache quota.
       # Full key on success; on failure a partial key, restored next time through restore-keys.
       if: always() && steps.m2.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: |
           ~/.m2/repository
           !~/.m2/repository/**/*.lastUpdated
         key: ${{ steps.build.outcome == 'success' && steps.m2.outputs.cache-primary-key || format('{0}-partial-{1}-{2}-{3}', steps.m2.outputs.cache-primary-key, github.job, github.run_id, github.run_attempt) }}
+
+    - name: Package snapshot
+      # The folders of the release (iped-<version> and plugins) at the root of the tar.gz.
+      # pigz: gzip on all cores. No -v: listing every file made up 40% of the job log.
+      run: tar -I pigz -cf "iped-snapshot-$GITHUB_SHA.tar.gz" -C target/release $(ls -A target/release)
+
+    - name: Upload snapshot
+      uses: actions/upload-artifact@v7
+      with:
+        path: iped-snapshot-${{ github.sha }}.tar.gz
+        # uploads the tar.gz itself, named after the file, instead of a zip with it inside
+        archive: false

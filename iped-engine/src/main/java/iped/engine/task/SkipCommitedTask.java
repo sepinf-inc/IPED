@@ -20,6 +20,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.util.BytesRef;
 
 import iped.configuration.Configurable;
@@ -100,10 +101,11 @@ public class SkipCommitedTask extends AbstractTask {
             LeafReader aReader = SlowCompositeReaderWrapper.wrap(reader);
 
             SortedDocValues evidenceUUIDs = aReader.getSortedDocValues(BasicProps.EVIDENCE_UUID);
+            StoredFields storedFields = aReader.storedFields();
             for (int doc = 0; doc < aReader.maxDoc(); doc++) {
                 String uuid = DocValuesUtil.getVal(evidenceUUIDs, doc);
                 if (uuid != null && !prevRootNameToEvidenceUUID.containsValue(uuid)) {
-                    Document luceneDoc = aReader.document(doc);
+                    Document luceneDoc = storedFields.document(doc);
                     String path = luceneDoc.get(BasicProps.PATH);
                     prevRootNameToEvidenceUUID.put(Util.getRootName(path), uuid);
                 }

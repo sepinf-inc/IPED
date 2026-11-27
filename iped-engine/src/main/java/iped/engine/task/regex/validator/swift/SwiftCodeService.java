@@ -1,5 +1,6 @@
 package iped.engine.task.regex.validator.swift;
 
+import java.nio.charset.StandardCharsets;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +20,7 @@ public class SwiftCodeService {
         URL resource = this.getClass().getClassLoader().getResource("swift" + File.separator + countryCode + ".csv");
         if (resource != null) {
             SwiftCountry swiftCountry = new SwiftCountry(countryCode);
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(resource.openStream()))) {
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
 
                 int lines = 0;
                 String line = null;

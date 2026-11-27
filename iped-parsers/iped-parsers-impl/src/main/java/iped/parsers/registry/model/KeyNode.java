@@ -1,5 +1,6 @@
 package iped.parsers.registry.model;
 
+import iped.utils.CharsetUtil;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -67,7 +68,7 @@ public class KeyNode extends CellContent {
     public String getKeyName() {
         byte buffer[] = Arrays.copyOfRange(data, 72, 74);
         int nameLength = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8;
-        return new String(Arrays.copyOfRange(data, 76, 76 + nameLength));
+        return new String(Arrays.copyOfRange(data, 76, 76 + nameLength), CharsetUtil.NATIVE);
     }
 
     public KeyNode getSubKey(String name) {

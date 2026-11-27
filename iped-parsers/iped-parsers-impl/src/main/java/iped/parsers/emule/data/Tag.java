@@ -1,5 +1,6 @@
 package iped.parsers.emule.data;
 
+import iped.utils.CharsetUtil;
 import java.nio.ByteBuffer;
 
 public class Tag {
@@ -145,7 +146,7 @@ public class Tag {
     }
 
     public String getStr() {
-        return new String(m_pstrVal);
+        return new String(m_pstrVal, CharsetUtil.NATIVE);
     }
 
     public Object getValObject() {

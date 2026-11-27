@@ -1,8 +1,10 @@
 package iped.app.timelinegraph;
 
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 import org.jfree.data.time.Day;
@@ -56,8 +58,41 @@ public class DateUtil {
 
     static long computerTimezoneOffset = TimeZone.getDefault().getRawOffset();
 
+    /**
+     * Same as the deprecated {@code newLocalDate(year, month, day, hours, minutes,
+     * seconds)}: year relative to 1900, local time zone and lenient, out of range
+     * values roll over (e.g. day 32 is the first day of the next month).
+     */
+    public static Date newLocalDate(int yearSince1900, int month, int day, int hours, int minutes, int seconds) {
+        return new GregorianCalendar(yearSince1900 + 1900, month, day, hours, minutes, seconds).getTime();
+    }
+
+    /** Same as the deprecated {@code newLocalDate(year, month, day)}, see above. */
+    public static Date newLocalDate(int yearSince1900, int month, int day) {
+        return newLocalDate(yearSince1900, month, day, 0, 0, 0);
+    }
+
+    /**
+     * Local time zone calendar of the date, to replace the deprecated Date getters
+     * (getMonth(), getDate(), getHours()...). Use {@link #localYear(Calendar)}
+     * instead of Calendar.YEAR.
+     */
+    public static Calendar toLocalCalendar(Date date) {
+        Calendar c = new GregorianCalendar();
+        c.setTime(date);
+        return c;
+    }
+
+    /**
+     * Same as the deprecated Date.getYear() + 1900, which is Calendar.YEAR (for BC
+     * dates both return the positive year of the era).
+     */
+    public static int localYear(Calendar c) {
+        return c.get(Calendar.YEAR);
+    }
+
     public static Date ISO8601DateParse(String timeStr) {
-        byte b[] = timeStr.getBytes();
+        byte b[] = timeStr.getBytes(StandardCharsets.US_ASCII);
         if (b.length < 18)
             return null;
         int year = (b[0] - 48) * 1000 + (b[1] - 48) * 100 + (b[2] - 48) * 10 + (b[3] - 48) - 1900;
@@ -65,7 +100,7 @@ public class DateUtil {
         int day = (b[8] - 48) * 10 + (b[9] - 48);
         long time = ((b[11] - 48) * 10 + (b[12] - 48)) * 3600000 + ((b[14] - 48) * 10 + (b[15] - 48)) * 60000 + ((b[17] - 48) * 10 + (b[18] - 48)) * 1000 + computerTimezoneOffset;
         b = null;
-        return new Date(new Date(year, month - 1, day).getTime() + time);
+        return new Date(newLocalDate(year, month - 1, day).getTime() + time);
     }
 
     static public String getTimePeriodName(Class<? extends TimePeriod> tpclass) {
@@ -91,22 +126,22 @@ public class DateUtil {
             }
 
             if (timePeriodClass == Day.class) {
-                return new Date(year, month, day);
+                return newLocalDate(year, month, day);
             } else if (timePeriodClass == Hour.class) {
                 int hour = (int) Math.floorDiv(time, 1000 * 60 * 60);
-                return new Date(year, month, day, hour, 0, 0);
+                return newLocalDate(year, month, day, hour, 0, 0);
             } else if (timePeriodClass == Year.class) {
-                Date d = new Date(year, month, day);
-                return new Date(d.getYear(), 0, 1);
+                Calendar d = toLocalCalendar(newLocalDate(year, month, day));
+                return newLocalDate(localYear(d) - 1900, 0, 1);
             } else if (timePeriodClass == Quarter.class) {
-                Date d = new Date(year, month, day);
-                return new Date(d.getYear(), Math.floorDiv(d.getMonth(), 3) * 3, 1);
+                Calendar d = toLocalCalendar(newLocalDate(year, month, day));
+                return newLocalDate(localYear(d) - 1900, Math.floorDiv(d.get(Calendar.MONTH), 3) * 3, 1);
             } else if (timePeriodClass == Month.class) {
-                Date d = new Date(year, month, day);
-                return new Date(d.getYear(), d.getMonth(), 1);
+                Calendar d = toLocalCalendar(newLocalDate(year, month, day));
+                return newLocalDate(localYear(d) - 1900, d.get(Calendar.MONTH), 1);
             } else if (timePeriodClass == Week.class) {
                 Calendar calendar = Calendar.getInstance();
-                Date d = new Date(year, month, day);
+                Date d = newLocalDate(year, month, day);
                 calendar.setTime(d);
                 int week;
                 // sometimes the last few days of the year are considered to fall in
@@ -140,20 +175,20 @@ public class DateUtil {
             } else if (timePeriodClass == Minute.class) {
                 int hour = (int) Math.floorDiv(time, 1000 * 60 * 60);
                 int minute = (int) Math.floorDiv(time, 1000 * 60) - hour * 60;
-                return new Date(year, month, day, hour, minute, 0);
+                return newLocalDate(year, month, day, hour, minute, 0);
             } else if (timePeriodClass == iped.jfextensions.model.Minute.class) {
                 int hour = (int) Math.floorDiv(time, 1000 * 60 * 60);
                 int minute = (int) Math.floorDiv(time, 1000 * 60) - hour * 60;
-                return new Date(year, month, day, hour, minute, 0);
+                return newLocalDate(year, month, day, hour, minute, 0);
             } else if (timePeriodClass == Second.class) {
                 int hour = (int) Math.floorDiv(time, 1000 * 60 * 60);
                 int minute = (int) Math.floorDiv(time, 1000 * 60) - hour * 60;
                 int second = (int) Math.floorDiv(time, 1000) - hour * 60 * 60 - minute * 60;
-                return new Date(year, month, day, hour, minute, second);
+                return newLocalDate(year, month, day, hour, minute, second);
             } else if (timePeriodClass == Millisecond.class) {
-                return new Date(new Date(year, month, day).getTime() + time);
+                return new Date(newLocalDate(year, month, day).getTime() + time);
             } else if (timePeriodClass == FixedMillisecond.class) {
-                return new Date(new Date(year, month, day).getTime() + time);
+                return new Date(newLocalDate(year, month, day).getTime() + time);
             }
         } catch (Exception e) {
             return null;
@@ -164,7 +199,7 @@ public class DateUtil {
 
     public static Date ISO8601DateParse(Class<? extends TimePeriod> timePeriodClass, String timeStr) {
         TimePeriod t = null;
-        byte b[] = timeStr.getBytes();
+        byte b[] = timeStr.getBytes(StandardCharsets.US_ASCII);
         return ISO8601DateParse(timePeriodClass, b);
     }
 

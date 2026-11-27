@@ -5,12 +5,15 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 import javax.imageio.ImageIO;
 
@@ -22,8 +25,20 @@ public class GoogleTileURLConnection extends URLConnection {
 
     private static final String PNG_CONTENT_TYPE = "image/png";
     private static final String[] FORWARDED_HEADERS = { "User-Agent", "Accept", "Accept-Language", "Referer" };
-    private static final int CONNECT_TIMEOUT = 15000;
-    private static final int READ_TIMEOUT = 30000;
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(15);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
+
+    /**
+     * Shared by all tile requests, so they are multiplexed in one HTTP/2 connection
+     * instead of each parallel request opening its own connection. Created on the
+     * first request, when the default proxy selector is already configured.
+     */
+    private static class ClientHolder {
+        // Redirects are not followed: they would be requested by the threads of the
+        // client, out of the control of the network guard of the WebView.
+        static final HttpClient CLIENT = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
+                .followRedirects(HttpClient.Redirect.NEVER).connectTimeout(CONNECT_TIMEOUT).build();
+    }
 
     private byte[] content;
     private String contentType;
@@ -41,10 +56,10 @@ public class GoogleTileURLConnection extends URLConnection {
         if (tileUrl == null) {
             throw new IOException("Not a Google Maps tile URL");
         }
-        HttpURLConnection conn;
+        HttpRequest.Builder request;
         try {
-            conn = (HttpURLConnection) new URI(tileUrl).toURL().openConnection();
-        } catch (URISyntaxException e) {
+            request = HttpRequest.newBuilder(new URI(tileUrl)).timeout(REQUEST_TIMEOUT);
+        } catch (URISyntaxException | IllegalArgumentException e) {
             throw new IOException(e);
         }
         // Forwards headers set by the WebView, so the request is similar to the one the
@@ -53,17 +68,21 @@ public class GoogleTileURLConnection extends URLConnection {
         for (String header : FORWARDED_HEADERS) {
             String value = getRequestProperty(header);
             if (value != null) {
-                conn.setRequestProperty(header, value);
+                request.setHeader(header, value);
             }
         }
-        conn.setConnectTimeout(CONNECT_TIMEOUT);
-        conn.setReadTimeout(READ_TIMEOUT);
-        try (InputStream is = conn.getInputStream()) {
-            content = is.readAllBytes();
-            contentType = conn.getContentType();
-        } finally {
-            conn.disconnect();
+        HttpResponse<byte[]> response;
+        try {
+            response = ClientHolder.CLIENT.send(request.build(), HttpResponse.BodyHandlers.ofByteArray());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException(e);
         }
+        if (response.statusCode() != 200) {
+            throw new IOException("Unexpected response code " + response.statusCode() + " loading map tile");
+        }
+        content = response.body();
+        contentType = response.headers().firstValue("Content-Type").orElse(null);
         if (isWebP(content)) {
             byte[] png = toPNG(content);
             if (png != null) {

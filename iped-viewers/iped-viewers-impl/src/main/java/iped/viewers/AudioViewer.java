@@ -108,7 +108,7 @@ public class AudioViewer extends AbstractViewer {
                         }
                         Files.write(htmlViewer.tmpFile.toPath(), preview.getBytes("UTF-8"),
                                 StandardOpenOption.TRUNCATE_EXISTING);
-                        webEngine.load(htmlViewer.tmpFile.toURI().toURL().toString());
+                        htmlViewer.loadHtmlFile(htmlViewer.tmpFile);
 
                     } catch (IOException e) {
                         webEngine.loadContent(preview);

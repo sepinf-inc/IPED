@@ -2,23 +2,35 @@ package iped.engine.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
+import java.nio.charset.Charset;
 
 public class FilterOutputStream extends OutputStream {
 
-    private OutputStream redirectStream, defaultStream;
+    private OutputStream defaultStream;
+    private PrintStream redirectStream;
     private String redirectPrefix;
+    private Charset charset;
 
-    public FilterOutputStream(OutputStream defaultStream, OutputStream redirectStream, String redirectPrefix) {
+    /**
+     * @param charset
+     *            the encoding of the bytes written to this stream
+     */
+    public FilterOutputStream(OutputStream defaultStream, PrintStream redirectStream, String redirectPrefix,
+            Charset charset) {
         this.redirectStream = redirectStream;
         this.defaultStream = defaultStream;
         this.redirectPrefix = redirectPrefix;
+        this.charset = charset;
     }
 
     @Override
     public void write(byte[] buf, int off, int len) throws IOException {
-        String msg = new String(buf, off, len);
+        String msg = new String(buf, off, len, charset);
         if (msg.startsWith(redirectPrefix)) {
-            redirectStream.write(buf, off, len);
+            // print the text, so the encoding of the redirect stream is used
+            redirectStream.print(msg);
+            redirectStream.flush();
         } else {
             defaultStream.write(buf, off, len);
         }

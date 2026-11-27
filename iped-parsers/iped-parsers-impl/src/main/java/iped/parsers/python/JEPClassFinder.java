@@ -25,6 +25,7 @@ package iped.parsers.python;
  *     distribution.
  */
 
+import java.nio.charset.StandardCharsets;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -245,7 +246,7 @@ public class JEPClassFinder implements ClassEnquirer {
                 throw new JepException("ClassList couldn't find resource " + rsc);
             }
 
-            reader = new BufferedReader(new InputStreamReader(in));
+            reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
             String line = "";
             while ((line = reader.readLine()) != null) {

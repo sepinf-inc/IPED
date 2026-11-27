@@ -1,5 +1,8 @@
 package iped.app.bootstrap;
 
+import iped.utils.JavaExecutable;
+import iped.utils.JvmFlags;
+import iped.utils.CharsetUtil;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -10,6 +13,8 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,9 +31,11 @@ import iped.app.ui.splash.SplashScreenManager;
 import iped.app.ui.splash.StartUpControl;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.LocalConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.util.Util;
 import iped.utils.IOUtil;
+import iped.utils.UTF8Properties;
 import iped.viewers.util.LibreOfficeFinder;
 import iped.viewers.util.UNOLibFinder;
 
@@ -47,6 +54,14 @@ public class Bootstrap {
     private static String separator = SystemUtils.IS_OS_WINDOWS ? ";" : ":";
 
     private static volatile File subProcessTempFolder;
+
+    // Printed by the child JVM at startup because of JvmFlags.vectorApi(). Not shown
+    // in the console, the JVM arguments of the child process are written to the log.
+    private static final String INCUBATOR_MODULE_WARNING = "WARNING: Using incubator modules: "
+            + JvmFlags.VECTOR_MODULE;
+
+    // encoding of the stdout and stderr of the child process, piped to this process
+    private static final Charset CHILD_OUTPUT_CHARSET = StandardCharsets.UTF_8;
 
     public static void main(String args[]) {
         new Bootstrap().run(args);
@@ -76,7 +91,7 @@ public class Bootstrap {
         List<String> heapArgs = new ArrayList<>();
         List<String> finalArgs = new ArrayList<>();
         boolean XmxDefined = false;
-        long physicalMemory = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
+        long totalMemSize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalMemorySize();
         for (String arg : args) {
             if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
                 if (arg.charAt(3) == 'x') {
@@ -106,9 +121,9 @@ public class Bootstrap {
                         break;
                 }
                 long memSize = parmSize;
-                if (memSize > physicalMemory) {
-                    memSize = physicalMemory;
-                    System.out.println("-Xms/-Xmx parameter value greater than physical memory. It was adjusted to the physical memory: " + memSize / (1024 * 1024) + "M");
+                if (memSize > totalMemSize) {
+                    memSize = totalMemSize;
+                    System.out.println("-Xms/-Xmx parameter value greater than memory size. It was adjusted to the memory: " + memSize / (1024 * 1024) + "M");
                 }
                 heapArgs.add(arg.substring(0, 4) + memSize / (1024 * 1024) + "M");
             } else {
@@ -118,7 +133,7 @@ public class Bootstrap {
 
         if (!XmxDefined) {
             // if -Xmx is not specified, set it, up to 32500MB
-            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32500L * 1024 * 1024);
+            long memSize = Math.min((long) (totalMemSize * getRAMToHeapFactor()), 32500L * 1024 * 1024);
             heapArgs.add("-Xmx" + (memSize / (1024 * 1024)) + "M");
         }
 
@@ -147,7 +162,6 @@ public class Bootstrap {
 
             classpath = fillClassPathWithLibreOfficeJars(iped, classpath, iped.getCmdLineArgs().isNogui());
 
-            String javaBin = "java";
             if (SystemUtils.IS_OS_WINDOWS) {
                 File javaHome = new File(System.getProperty("java.home"));
                 File embeddedJRE = new File(iped.getRootPath() + "/jre");
@@ -157,8 +171,10 @@ public class Bootstrap {
                         System.err.println(warn);
                     }
                 }
-                javaBin = javaHome.getPath() + "/bin/java.exe";
             }
+            // use the running JVM, not the "java" in the PATH: the JVM flags below are
+            // computed for this runtime and the classes need at least its version
+            String javaBin = JavaExecutable.getPath();
 
             List<String> cmd = new ArrayList<>();
             cmd.addAll(Arrays.asList(javaBin, "-cp", classpath));
@@ -166,16 +182,15 @@ public class Bootstrap {
             cmd.addAll(getCurrentJVMArgs());
             cmd.addAll(getCustomJVMArgs());
             cmd.addAll(getSystemProperties());
+            cmd.addAll(getTempDirArgs());
+            // The output of the child process is piped to this one, use a fixed encoding in
+            // both sides: its System.out would use the OS charset and log4j the default one.
+            cmd.add("-Dstdout.encoding=" + CHILD_OUTPUT_CHARSET.name());
+            cmd.add("-Dstderr.encoding=" + CHILD_OUTPUT_CHARSET.name());
             if (SystemUtils.IS_OS_WINDOWS) {
                 cmd.add("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"); // fix for #1719
             }
             cmd.add("-Djava.net.useSystemProxies=true"); // fix for #1446
-            // Keeps the CORS headers of WebView requests, needed by Google Maps (#3041).
-            // Only needed with Java 11, where the JavaFX WebView uses the legacy HTTP
-            // loader (HttpURLConnection), which drops those headers.
-            // TODO remove after the upgrade to Java 25 (#1522), where the WebView uses
-            // the HTTP/2 loader and Google Maps works without this option.
-            cmd.add("-Dsun.net.http.allowRestrictedHeaders=true");
             cmd.add(getMainClassName());
             cmd.addAll(finalArgs);
             
@@ -186,9 +201,9 @@ public class Bootstrap {
             Process process = pb.start();
             System.setProperty(StartUpControl.ipedChildProcessPID, String.valueOf(process.pid()));
 
-            redirectStream(process.getInputStream(), System.out);
-            redirectStream(process.getErrorStream(), System.err);
-            redirectStream(System.in, process.getOutputStream());
+            redirectStream(process.getInputStream(), CHILD_OUTPUT_CHARSET, System.out);
+            redirectStream(process.getErrorStream(), CHILD_OUTPUT_CHARSET, System.err);
+            redirectStream(System.in, CharsetUtil.NATIVE, process.getOutputStream());
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
@@ -235,17 +250,10 @@ public class Bootstrap {
     }
     
     private static List<String> getCustomJVMArgs(){
-        return Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
-                "-XX:+HeapDumpOnOutOfMemoryError",
-                "--add-opens=java.base/java.util=ALL-UNNAMED",
-                "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-                "--add-opens=java.base/java.lang=ALL-UNNAMED",
-                "--add-opens=java.base/java.math=ALL-UNNAMED",
-                "--add-opens=java.base/java.net=ALL-UNNAMED",
-                "--add-opens=java.base/java.io=ALL-UNNAMED",
-                "--add-opens=java.base/java.nio=ALL-UNNAMED",
-                "--add-opens=java.base/java.text=ALL-UNNAMED",
-                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED");
+        List<String> args = new ArrayList<>(Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
+                "-XX:+HeapDumpOnOutOfMemoryError"));
+        args.addAll(JvmFlags.all());
+        return args;
     }
 
     private static List<String> getCurrentJVMArgs() {
@@ -270,11 +278,39 @@ public class Bootstrap {
         return args;
     }
 
+    /**
+     * Creates the temp folder of the child process and returns the JVM arguments
+     * that make it its java.io.tmpdir. It must be given in the command line:
+     * since Java 21 the JVM reads java.io.tmpdir only at startup, changing it
+     * later does not change where File.createTempFile() creates its files.
+     */
+    private static List<String> getTempDirArgs() throws IOException {
+        UTF8Properties localConfig = new UTF8Properties();
+        File localConfigFile = new File(Configuration.getInstance().appRoot, LocalConfig.CONFIG_FILE);
+        if (localConfigFile.exists()) {
+            localConfig.load(localConfigFile);
+        }
+        File ipedTemp = LocalConfig.createIpedTemp(LocalConfig.getConfiguredTemp(localConfig, null));
+        if (!ipedTemp.isDirectory()) {
+            return new ArrayList<>();
+        }
+        // cleaned when the child process ends, even if it never reports its temp folder
+        subProcessTempFolder = ipedTemp;
+        return Arrays.asList( //
+                "-Djava.io.tmpdir=" + ipedTemp.getAbsolutePath(), //
+                "-D" + LocalConfig.SYS_PROP_IPED_TEMP + "=" + ipedTemp.getAbsolutePath(), //
+                "-Djava.io.basetmpdir=" + System.getProperty("java.io.basetmpdir"));
+    }
+
     private static List<String> getSystemProperties() {
         List<String> props = new ArrayList<>();
         for (Entry<Object, Object> e : System.getProperties().entrySet()) {
             String key = e.getKey().toString();
-            if (!key.equals("java.class.path") && !key.equals("sun.boot.library.path")) {
+            // java.io.tmpdir and java.io.basetmpdir are set by getTempDirArgs(),
+            // stdout.encoding and stderr.encoding are set to CHILD_OUTPUT_CHARSET
+            if (!key.equals("java.class.path") && !key.equals("sun.boot.library.path")
+                    && !key.equals("java.io.tmpdir") && !key.equals("java.io.basetmpdir")
+                    && !key.equals("stdout.encoding") && !key.equals("stderr.encoding")) {
                 props.add("-D" + key + "=" + e.getValue().toString().replace("\"", "\\\""));
             }
         }
@@ -296,19 +332,21 @@ public class Bootstrap {
         return classpath;
     }
 
-    private static void redirectStream(InputStream is, OutputStream os) {
+    private static void redirectStream(InputStream is, Charset isCharset, OutputStream os) {
         Thread t = new Thread() {
             public void run() {
                 try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is, isCharset));
                     // Write through the PrintStream itself (e.g. System.out), so its encoding is used
-                    // (the console encoding on Windows), instead of wrapping it with the default charset.
-                    PrintStream writer = os instanceof PrintStream ? (PrintStream) os : new PrintStream(os, true);
+                    // (the console encoding on Windows), instead of wrapping it with another charset.
+                    PrintStream writer = os instanceof PrintStream ? (PrintStream) os
+                            : new PrintStream(os, true, CharsetUtil.NATIVE);
                     String line = null;
                     while ((line = reader.readLine()) != null) {
-                        if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
+                        // always swallow this line, the folder may already be known from getTempDirArgs()
+                        if (line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
                             subProcessTempFolder = new File(line.substring(SUB_PROCESS_TEMP_FOLDER.length()));
-                        } else {
+                        } else if (!line.equals(INCUBATOR_MODULE_WARNING)) {
                             writer.println(line);
                         }
                     }

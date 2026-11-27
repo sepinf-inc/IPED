@@ -18,6 +18,7 @@
  */
 package iped.engine.task;
 
+import iped.utils.CharsetUtil;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -1168,7 +1169,7 @@ class EncodedFile {
     public void write() throws Exception {
         FileOutputStream fos = new FileOutputStream(file);
         BufferedWriter out = new BufferedWriter(
-                charset == null ? new OutputStreamWriter(fos) : new OutputStreamWriter(fos, charset));
+                charset == null ? new OutputStreamWriter(fos, CharsetUtil.NATIVE) : new OutputStreamWriter(fos, charset));
         out.write(content.toString());
         out.close();
         fos.close();

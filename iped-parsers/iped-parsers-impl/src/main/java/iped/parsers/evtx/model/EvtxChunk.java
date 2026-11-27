@@ -1,5 +1,6 @@
 package iped.parsers.evtx.model;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Date;
@@ -24,7 +25,7 @@ public class EvtxChunk {
     }
 
     public void processChunk() throws EvtxParseException {
-        String sig = new String(ArrayUtil.copyOfSubArray(src, 0, 8));
+        String sig = new String(ArrayUtil.copyOfSubArray(src, 0, 8), StandardCharsets.ISO_8859_1);
 
         if (!sig.equals("ElfChnk\0")) {
             throw new EvtxInvalidChunkHeaderException(sig);
