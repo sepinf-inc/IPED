@@ -1,6 +1,7 @@
 package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_OFF;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_MEMBERS_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -1661,6 +1662,11 @@ public abstract class ExtractorIOS extends Extractor {
 
                     case 33:
                         result = GROUP_REMOVED_FROM_COMMUNITY;
+                        break;
+
+                    case 35:
+                        // "Group members have changed" (shown in community announcement groups)
+                        result = GROUP_MEMBERS_CHANGED;
                         break;
 
                     case 36:
