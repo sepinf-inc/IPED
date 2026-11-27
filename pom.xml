@@ -29,13 +29,18 @@
         <conf.dir>${release.dir}/conf</conf.dir>
         <plugin.dir>${release.dir}/../plugins</plugin.dir>
         <plugin.rsc>${basedir}/resources/plugins</plugin.rsc>
+        <!-- external tools of the parsers (see pluginManagement): the phase they are unpacked in ("none"
+             unbinds them: other modules also declare maven-dependency-plugin) and whether the ones that
+             are Windows binaries are skipped. Set by the modules that want the tools. -->
+        <tools.unpack.phase>none</tools.unpack.phase>
+        <tools.windows.skip>true</tools.windows.skip>
 
         <!--dependencies-->
         <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit b673cf4 can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
         <tika.core.version>2.4.0-p1</tika.core.version>
         <pdfbox.version>2.0.27</pdfbox.version>
         <lucene.version>9.2.0</lucene.version>
-        <sleuthkit.version>4.15.0.p2</sleuthkit.version>
+        <sleuthkit.version>4.15.0.p3</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.26.1</log4j.version>
@@ -138,6 +143,245 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <!-- External tools used by the parsers. They are defined only here: iped-app unpacks them
+                     into the release (phase package) and iped-parsers-impl into its target/tools folder,
+                     before its tests run. Both just declare these two plugins. -->
+                <plugin>
+                    <groupId>io.github.download-maven-plugin</groupId>
+                    <artifactId>download-maven-plugin</artifactId>
+                    <version>2.2.0</version>
+                    <executions>
+                        <execution>
+                            <id>download-regripper</id>
+                            <goals>
+                                <goal>wget</goal>
+                            </goals>
+                            <configuration>
+                                <url>https://github.com/sepinf-inc/RegRipper3.0/archive/refs/tags/3.0-p3.zip</url>
+                                <unpack>true</unpack>
+                                <fileMappers>
+                                    <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                        <pattern>RegRipper[^/]+/</pattern>
+                                        <replacement>./</replacement>
+                                    </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                </fileMappers>
+                                <outputDirectory>${tools.dir}/regripper</outputDirectory>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>2.10</version>
+                    <executions>
+                        <!-- Windows binaries: skipped where tools.windows.skip is true -->
+                        <execution>
+                            <id>unpack-esedbexport</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>libyal</groupId>
+                                        <artifactId>libesedb</artifactId>
+                                        <version>20151213.1</version>
+                                        <type>zip</type>
+                                        <overWrite>false</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-pffexport</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>libyal</groupId>
+                                        <artifactId>libpff</artifactId>
+                                        <version>20131028</version>
+                                        <type>zip</type>
+                                        <overWrite>false</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-msiecfexport</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>libyal</groupId>
+                                        <artifactId>libmsiecf</artifactId>
+                                        <version>20160421.1</version>
+                                        <type>zip</type>
+                                        <overWrite>false</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-agdbinfo</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>libyal</groupId>
+                                        <artifactId>libagdb</artifactId>
+                                        <version>20181111.1</version>
+                                        <type>zip</type>
+                                        <overWrite>true</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-evtexport</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>libyal</groupId>
+                                        <artifactId>evtexport</artifactId>
+                                        <version>20180317.1</version>
+                                        <type>zip</type>
+                                        <overWrite>true</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-evtxexport</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>libyal</groupId>
+                                        <artifactId>evtxexport</artifactId>
+                                        <version>20170122.1</version>
+                                        <type>zip</type>
+                                        <overWrite>true</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-sccainfo</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>libyal</groupId>
+                                        <artifactId>sccainfo</artifactId>
+                                        <version>20240427</version>
+                                        <type>zip</type>
+                                        <overWrite>true</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-rifiuti</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>abelcheung</groupId>
+                                        <artifactId>rifiuti2</artifactId>
+                                        <version>0.7.0</version>
+                                        <type>zip</type>
+                                        <overWrite>true</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-imagemagick</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>org.imagemagick</groupId>
+                                        <artifactId>imagemagick-zip</artifactId>
+                                        <version>7.1.1-43-q8-x64+dlls</version>
+                                        <type>zip</type>
+                                        <overWrite>false</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-tesseract</id>
+                            <phase>${tools.unpack.phase}</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>tesseract</groupId>
+                                        <artifactId>tesseract-zip</artifactId>
+                                        <version>5.3.2-24-g3922_1</version>
+                                        <type>zip</type>
+                                        <overWrite>false</overWrite>
+                                        <outputDirectory>${tools.dir}</outputDirectory>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

@@ -1,6 +1,6 @@
 ﻿﻿########################################################################
-# Minimal configuration for fastest processing on triage scenarios.
-# Do not change the options, or the processing will became slower.
+# Minimal configuration for the fastest processing in triage scenarios.
+# Do not change the options, or processing will become slower.
 ########################################################################
 
 enableHash = false

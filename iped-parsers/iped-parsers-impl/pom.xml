@@ -8,6 +8,28 @@
     </parent>
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
+
+    <properties>
+        <!-- The external tools the parsers run, for the tests: unpacked into target/tools before they run,
+             from the definitions in the pluginManagement of the parent pom (the same iped-app releases).
+             The Windows binaries are only unpacked on Windows: see the profile below. -->
+        <tools.dir>${project.build.directory}/tools</tools.dir>
+        <tools.unpack.phase>process-test-resources</tools.unpack.phase>
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>windows-test-tools</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <tools.windows.skip>false</tools.windows.skip>
+            </properties>
+        </profile>
+    </profiles>
     
     <dependencies>
     	<dependency>
@@ -275,6 +297,15 @@
     
     <build>
     	<plugins>
+            <!-- executions inherited from the pluginManagement of the parent pom -->
+            <plugin>
+                <groupId>io.github.download-maven-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
     		<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>

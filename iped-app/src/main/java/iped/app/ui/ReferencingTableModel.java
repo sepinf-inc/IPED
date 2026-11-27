@@ -92,7 +92,7 @@ public class ReferencingTableModel extends BaseTableModel {
      * other items.
      */
     static String getReferenceHashField(String mediaType) {
-        if (KnownMetParser.EMULE_MIME_TYPE.equals(mediaType)) {
+        if (KnownMetParser.isKnownMetMimeType(mediaType)) {
             return HashTask.HASH.EDONKEY.toString();
         } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
             return HashTask.HASH.SHA1.toString();
