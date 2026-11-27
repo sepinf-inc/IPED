@@ -61,6 +61,7 @@ table
 a
 {
     text-decoration:none;
+    display: inline-block;
 }
 a:hover
 { 
