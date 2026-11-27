@@ -808,6 +808,15 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.GroupMembersChanged") + "<br>");
                 break;
+            case COMMUNITY_DEACTIVATED:
+                out.println("<div class=\"systemmessage\">");
+                if (notNullNorBlank(message.getData())) {
+                    out.println(Messages.getString("WhatsAppReport.CommunityDeactivatedName", name,
+                            format(message.getData())) + "<br>");
+                } else {
+                    out.println(Messages.getString("WhatsAppReport.CommunityDeactivated", name) + "<br>");
+                }
+                break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChannelAddedPrivacy") + "<br>");

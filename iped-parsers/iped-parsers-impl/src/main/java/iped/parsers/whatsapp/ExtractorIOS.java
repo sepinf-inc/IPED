@@ -2,6 +2,7 @@ package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_OFF;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_MEMBERS_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DEACTIVATED;
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -918,6 +919,11 @@ public abstract class ExtractorIOS extends Extractor {
                 m.setDuration(decodeEphemeralDuration(metadata));
                 break;
 
+            case COMMUNITY_DEACTIVATED:
+                String communityName = getJsonStringValue(m.getData(), "parent_group_name");
+                m.setData(communityName == null ? "" : communityName);
+                break;
+
             case ADVANCED_PRIVACY_ON:
                 if (isAdvancedPrivacyOff(metadata)) {
                     m.setMessageType(ADVANCED_PRIVACY_OFF);
@@ -978,6 +984,30 @@ public abstract class ExtractorIOS extends Extractor {
         }
 
         return m;
+    }
+
+    /**
+     * Simple extraction of a string value from a flat JSON object, as stored in
+     * ZTEXT by some system messages.
+     */
+    private static String getJsonStringValue(String json, String key) {
+        if (json != null) {
+            int p0 = json.indexOf("\"" + key + "\"");
+            if (p0 >= 0) {
+                int p1 = json.indexOf(':', p0 + key.length() + 2);
+                if (p1 > 0) {
+                    int p2 = json.indexOf('"', p1);
+                    if (p2 > 0) {
+                        int p3 = json.indexOf('"', p2 + 1);
+                        if (p3 > 0) {
+                            String value = json.substring(p2 + 1, p3).strip();
+                            return value.isEmpty() ? null : value;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -1679,6 +1709,11 @@ public abstract class ExtractorIOS extends Extractor {
 
                     case 39:
                         result = USER_ADMIN;
+                        break;
+
+                    case 41:
+                        // DATA is {"author":"...","parent_group_name":"Community Name",...}
+                        result = COMMUNITY_DEACTIVATED;
                         break;
                         
                     case 42:
