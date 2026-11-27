@@ -29,6 +29,7 @@ import iped.data.IItemReader;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.Party;
+import iped.parsers.util.ConversationConstants;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.WAContact;
 import iped.properties.MediaTypes;
@@ -81,9 +82,6 @@ public class ChatHandler extends BaseModelHandler<Chat> {
         model.getParticipants().forEach(p -> {
             new PartyHandler(p, model.getSource()).fillMetadata(CONVERSATION_PARTICIPANTS, metadata);
         });
-        if (!model.getParticipants().isEmpty()) {
-            metadata.add(CONVERSATION_PARTICIPANTS + ":count", Integer.toString(model.getParticipants().size()));
-        }
 
         // Chat Owner Participant
         model.getPhoneOwnerParticipant().ifPresent(p -> {
@@ -94,10 +92,6 @@ public class ChatHandler extends BaseModelHandler<Chat> {
         model.getParticipants().stream().filter(Party::isGroupAdmin).forEach(p -> {
             new PartyHandler(p, model.getSource()).fillMetadata(CONVERSATION_ADMINS, metadata);
         });
-        long groupAdminsCount = model.getParticipants().stream().filter(Party::isGroupAdmin).count();
-        if (groupAdminsCount > 0) {
-            metadata.set(CONVERSATION_ADMINS + ":count", Long.toString(groupAdminsCount));
-        }
 
         // Chat Owner is Group Admin
         if (model.getParticipants().stream().filter(Party::isGroupAdmin).filter(Party::isPhoneOwner).findAny().isPresent()) {
@@ -165,15 +159,15 @@ public class ChatHandler extends BaseModelHandler<Chat> {
 
             if (StringUtils.isNotBlank(chatType)) {
                 switch (chatType) {
-                    case Chat.TYPE_ONEONONE:
+                    case ConversationConstants.TYPE_ONEONONE:
                         sb.append("Chat").append(' ');
                         break;
 
-                    case Chat.TYPE_GROUP:
+                    case ConversationConstants.TYPE_GROUP:
                         sb.append(Messages.getString("UfedChatParser.Group")).append(' ');
                         break;
 
-                    case Chat.TYPE_BROADCAST:
+                    case ConversationConstants.TYPE_BROADCAST:
                         if (model.getParticipants().size() == 1 && StringUtils.containsAnyIgnoreCase(source, Chat.SOURCE_TELEGRAM, Chat.SOURCE_WHATSAPP)) {
                             sb.append(Messages.getString("UfedChatParser.Status"));
                         } else if (Chat.SOURCE_TELEGRAM.equalsIgnoreCase(source)) {
@@ -184,7 +178,7 @@ public class ChatHandler extends BaseModelHandler<Chat> {
                         sb.append(' ');
                         break;
 
-                    case Chat.TYPE_UNKNOWN:
+                    case ConversationConstants.TYPE_UNKNOWN:
                         break;
 
                     default:

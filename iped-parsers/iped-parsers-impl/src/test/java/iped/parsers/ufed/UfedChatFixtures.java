@@ -10,6 +10,7 @@ import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.ContactEntry;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.Party;
+import iped.parsers.util.ConversationConstants;
 
 /**
  * Builds a small, hand-crafted {@link Chat} model tree used by
@@ -43,7 +44,7 @@ final class UfedChatFixtures {
         Chat chat = new Chat();
         chat.setId(CHAT_ID);
         chat.setField("Source", Chat.SOURCE_WHATSAPP);
-        chat.setField("ChatType", Chat.TYPE_ONEONONE);
+        chat.setField("ChatType", ConversationConstants.TYPE_ONEONONE);
         chat.setField("StartTime", new Date(1_650_000_000_000L));
 
         Party owner = new Party();
@@ -115,7 +116,7 @@ final class UfedChatFixtures {
         Chat chat = new Chat();
         chat.setId("chat-attachment");
         chat.setField("Source", Chat.SOURCE_WHATSAPP);
-        chat.setField("ChatType", Chat.TYPE_ONEONONE);
+        chat.setField("ChatType", ConversationConstants.TYPE_ONEONONE);
 
         Party owner = new Party();
         owner.setId("party-owner");

@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +37,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -54,6 +56,8 @@ import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.ConversationConstants;
+import iped.parsers.util.HashUtils;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.properties.BasicProps;
@@ -119,8 +123,8 @@ public class TelegramParser extends SQLite3DBParser {
     private void storeLinkedHashes(List<MessageMultiMedia> messages, Metadata metadata) {
         for (MessageMultiMedia mmm : messages) {
             Message m = mmm.getMessage();
-            if (m != null && Util.isValidHash(m.getMediaHash())) {
-                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
+            if (m != null && HashUtils.isValidHash(m.getMediaHash())) {
+                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash());
                 if (m.isFromMe()) {
                     metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
                 }
@@ -192,6 +196,7 @@ public class TelegramParser extends SQLite3DBParser {
         int frag = 0;
         int firstMsg = 0;
         byte[] bytes;
+        int messagesCount = (int) c.getMessages().stream().filter(m -> m.getType() == null).count();
         ReportGenerator r = new ReportGenerator(searcher);
         r.setMinChatSplitSize(this.minChatSplitSize);
         while ((bytes = r.generateNextChatHtml(c)) != null) {
@@ -208,20 +213,66 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(ExtraProperties.DELETED, Boolean.toString(c.isDeleted()));
             chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-            if (c.isGroupOrChannel()) {
-                ChatGroup cg = (ChatGroup) c;
-                for (long id : cg.getMembers()) {
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
-                }
-                for (long id : cg.getAdmins()) {
-                    chatMetadata.add(ExtraProperties.COMMUNICATION_PREFIX + "ChannelAdmins",
-                            e.getContact(id).toString());
-                }
-                int participantsCount = cg.getParticipantsCount();
-                if (participantsCount > 0) {
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS + "Count", String.valueOf(participantsCount));
+            // the account may be unresolved (null on iOS, or id 0 when unknown)
+            Contact ownerAccount = null;
+            if (account != null && account.getId() != 0) {
+                ownerAccount = e.getContacts() != null ? e.getContacts().get(account.getId()) : null;
+                if (ownerAccount == null) {
+                    ownerAccount = account;
                 }
             }
+
+            if (c.isGroupOrChannel()) {
+                ChatGroup cg = (ChatGroup) c;
+                // admins are also participants, and may also be in the members set
+                Set<Long> participants = new LinkedHashSet<>(cg.getAdmins());
+                participants.addAll(cg.getMembers());
+                Set<Long> admins = new LinkedHashSet<>(cg.getAdmins());
+                if (cg.isOwnerAdmin() && ownerAccount != null) {
+                    // owner is creator/admin according to the group data
+                    admins.add(ownerAccount.getId());
+                    participants.add(ownerAccount.getId());
+                }
+                if (cg.isOwnerMember() && ownerAccount != null) {
+                    participants.add(ownerAccount.getId());
+                }
+                if (cg.isOwnerAdmin() || (ownerAccount != null && admins.contains(ownerAccount.getId()))) {
+                    chatMetadata.set(ExtraProperties.CONVERSATION_IS_OWNER_ADMIN, true);
+                }
+                for (long id : admins) {
+                    if (ownerAccount != null && id == ownerAccount.getId()) {
+                        addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_ADMINS, ownerAccount);
+                    } else {
+                        addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_ADMINS, id);
+                    }
+                }
+                for (long id : participants) {
+                    addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_PARTICIPANTS, id);
+                }
+                // total informed by the app, may be greater than the known participants
+                if (cg.getParticipantsCount() > 0) {
+                    chatMetadata.set(ExtraProperties.CONVERSATION_PARTICIPANTS_COUNT, cg.getParticipantsCount());
+                }
+            } else {
+                addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_PARTICIPANTS, c.getId());
+                addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, ownerAccount);
+            }
+
+            if (c.isChannel()) {
+                chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationConstants.TYPE_BROADCAST);
+            } else if (c.isGroup()) {
+                chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationConstants.TYPE_GROUP);
+            } else {
+                chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationConstants.TYPE_ONEONONE);
+            }
+
+            // Communication:Account
+            addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_ACCOUNT, ownerAccount);
+
+            // Communication:{ID, Name, , MessagesCount} 
+            chatMetadata.set(ExtraProperties.CONVERSATION_ID, Long.toString(c.isGroupOrChannel() ? -c.getId() :c.getId()));
+            chatMetadata.set(ExtraProperties.CONVERSATION_NAME, getChatName(c));
+            chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
 
             List<MessageMultiMedia> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
 
@@ -241,8 +292,24 @@ public class TelegramParser extends SQLite3DBParser {
         }
     }
 
+    private void addPartyFields(Metadata meta, Extractor e, String field, long contactId) {
+        Contact contact = e.getContact(contactId);
+        addPartyFields(meta, field, contact);
+    }
+
+    private void addPartyFields(Metadata meta, String field, Contact c) {
+        if (c == null) {
+            return;
+        }
+        meta.add(field,  c.toString());
+        meta.add(field + ExtraProperties.CONVERSATION_SUFFIX_ID, Long.toString(c.getId()));
+        meta.add(field + ExtraProperties.CONVERSATION_SUFFIX_NAME, c.getFullname());
+        meta.add(field + ExtraProperties.CONVERSATION_SUFFIX_PHONE, c.getPhone());
+        meta.add(field + ExtraProperties.CONVERSATION_SUFFIX_USERNAME, c.getUsername());
+    }
+
     private String getChatNamePrefix(Chat c) {
-        String title = "Telegram_";
+        String title = "Telegram ";
         if (c.isChannel()) {
             title += "Channel";
         } else if (c.isGroup()) {
@@ -250,8 +317,21 @@ public class TelegramParser extends SQLite3DBParser {
         } else {
             title += "Chat";
         }
-        title += "_" + c.getName();
+        if (c.isGroupOrChannel() && StringUtils.isBlank(c.getC().getFullname()) && StringUtils.isNotBlank(c.getName())) {
+            // group/channel data not decoded, use the name stored in the chats table
+            title += " - " + c.getName() + " (ID:" + Math.abs(c.getId()) + ")";
+        } else {
+            title += " - " + c.getC().toString();
+        }
         return title;
+    }
+
+    private static String getChatName(Chat c) {
+        String name = c.getC().getFullname();
+        if (c.isGroupOrChannel() && StringUtils.isBlank(name)) {
+            name = c.getName();
+        }
+        return StringUtils.isNotBlank(name) ? name : null;
     }
 
     private void extractMessages(String chatName, List<MessageMultiMedia> messages, Contact account, Extractor e,
@@ -275,22 +355,28 @@ public class TelegramParser extends SQLite3DBParser {
             if (location != null) {
                 meta.add(ExtraProperties.LOCATIONS, location);
             }
-            meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
+            addPartyFields(meta, ExtraProperties.COMMUNICATION_FROM, m.getFrom());
+
             if (m.getChat().isGroupOrChannel()) {
                 ChatGroup groupChat = (ChatGroup) m.getChat();
                 String to = groupChat.isGroup() ? "Group " : "Channel ";
-                to += groupChat.getName() + " (id:" + groupChat.getId() + ")";
-                meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, to);
-                meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
-            }
-            if (meta.get(org.apache.tika.metadata.Message.MESSAGE_TO) == null) {
+                to += groupChat.getName() + " (ID:" + (-groupChat.getId()) + ")";
+                meta.add(ExtraProperties.COMMUNICATION_TO, to);
+                meta.set(ExtraProperties.IS_GROUP_MESSAGE, Boolean.toString(true));
+            } else {
                 if (m.getToId() != 0) {
-                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, e.getContact(m.getToId()).toString());
+                    addPartyFields(meta, ExtraProperties.COMMUNICATION_TO, e.getContact(m.getToId()));
                 } else if (m.isFromMe()) {
-                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, m.getChat().getC().toString());
+                    addPartyFields(meta, ExtraProperties.COMMUNICATION_TO, m.getChat().getC());
                 } else if (account != null) {
-                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, account.toString());
+                    addPartyFields(meta, ExtraProperties.COMMUNICATION_TO, account);
                 }
+            }
+
+            if (m.isFromMe()) {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_OUTGOING);
+            } else {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_INCOMING);
             }
 
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
@@ -305,7 +391,7 @@ public class TelegramParser extends SQLite3DBParser {
                 if (media.getMediaSize() != 0) {
                     meta.set("mediaSize", Long.toString(media.getMediaSize()));
                 }
-                if (Util.isValidHash(media.getMediaHash())) {
+                if (HashUtils.isValidHash(media.getMediaHash())) {
                     meta.add(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
                     meta.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + media.getMediaHash()); //$NON-NLS-1$
                     if (!media.getChildPornSets().isEmpty()) {

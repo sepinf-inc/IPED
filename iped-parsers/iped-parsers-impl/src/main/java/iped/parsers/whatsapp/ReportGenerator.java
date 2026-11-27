@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
@@ -85,6 +86,9 @@ public class ReportGenerator {
         out.println("<br>" + Messages.getString("WhatsAppReport.NickName") + format(contact.getNickName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.SortName") + format(contact.getSortName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.Status") + format(contact.getStatus())); //$NON-NLS-1$ //$NON-NLS-2$
+        if (contact.getUsername() != null) {
+            out.println("<br>" + Messages.getString("WhatsAppReport.Username") + format("@" + contact.getUsername()));
+        }
         if (contact.isDeleted()) {
             out.println("<br><i>" + Messages.getString("WhatsAppReport.ContactDeleted") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
@@ -117,6 +121,9 @@ public class ReportGenerator {
         out.println(Messages.getString("WhatsAppReport.AccountID") + format(account.getId())); //$NON-NLS-1$
         out.println("<br>" + Messages.getString("WhatsAppReport.WAName") + format(account.getWaName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.Status") + format(account.getStatus())); //$NON-NLS-1$ //$NON-NLS-2$
+        if (account.getUsername() != null) {
+            out.println("<br>" + Messages.getString("WhatsAppReport.Username") + format("@" + account.getUsername()));
+        }
 
         out.println("</body>\n</html>"); //$NON-NLS-1$
 
@@ -1321,7 +1328,7 @@ public class ReportGenerator {
 
     private void printQuote(PrintWriter out, Message message, WAContactsDirectory contactsDirectory,
             WAAccount account) {
-        String quoteClass = message.isFromMe() ? "quoteTo" : "quoteFrom";
+        String quoteClass = "quoteBlock " + (message.isFromMe() ? "quoteTo" : "quoteFrom");
         Message messageQuote = message.getMessageQuote();
 
         if (messageQuote != null) {
@@ -1680,20 +1687,23 @@ public class ReportGenerator {
                 if (contact != null) {
                     name = contact.getName();
                     if (number.endsWith(WAContact.lidSuffix)) {
-                        number = contact.getId(); 
+                        number = contact.getFullId();
                     }
                 }
                 if (number.endsWith(WAContact.waSuffix)) {
-                    number = number.substring(0, number.length() - WAContact.waSuffix.length());
+                    // displayed phone number has the "+" prefix
+                    number = "+" + number.substring(0, number.length() - WAContact.waSuffix.length());
+                } else if (number.contains("@")) {
+                    number = number.substring(0, number.indexOf('@'));
                 }
             }
         }
         name = name == null ? "" : name.trim();
         number = number == null || number.equals("0") ? "" : number.trim();
         if (!number.isEmpty()) {
-            if (name.isEmpty()) {
+            if (name.isEmpty() || StringUtils.removeStart(number, "+").equals(StringUtils.removeStart(name, "+"))) {
                 name = number;
-            } else if (!number.equals(name)) {
+            } else {
                 name += " (" + number + ")";
             }
         }

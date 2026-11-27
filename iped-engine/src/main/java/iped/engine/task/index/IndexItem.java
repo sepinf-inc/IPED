@@ -125,7 +125,11 @@ public class IndexItem extends BasicProps {
     public static final char EVENT_IDX_SEPARATOR2 = ',';
     public static final String EVENT_SEPARATOR = " | ";
 
+    private static final String COUNT_SUFFIX = ":count";
+
     static HashSet<String> ignoredMetadata = new HashSet<String>();
+
+    static HashSet<String> countMetadata = new HashSet<>();
 
     private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new HashMap<>();
 
@@ -156,6 +160,9 @@ public class IndexItem extends BasicProps {
         ignoredMetadata.add("File Size"); //$NON-NLS-1$
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
+
+        countMetadata.add(ExtraProperties.CONVERSATION_PARTICIPANTS);
+        countMetadata.add(ExtraProperties.CONVERSATION_ADMINS);
 
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
@@ -701,8 +708,16 @@ public class IndexItem extends BasicProps {
         String[] names = metadata.names();
 
         for (String key : names) {
-            if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
+            if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
                 continue;
+            }
+            if (key.endsWith(COUNT_SUFFIX)) {
+                // count already present in metadata (e.g. restored by IPEDReader): it is
+                // recalculated below when the counted property is present
+                String countedKey = key.substring(0, key.length() - COUNT_SUFFIX.length());
+                if (countMetadata.contains(countedKey) && metadata.get(countedKey) != null) {
+                    continue;
+                }
             }
             boolean isMultiValued = true;// metadata.getValues(key).length > 1;
             for (String val : metadata.getValues(key)) {
@@ -710,6 +725,14 @@ public class IndexItem extends BasicProps {
                     addMetadataKeyToDoc(doc, key, val, isMultiValued, mimetype, timeEventSet);
             }
 
+            if (countMetadata.contains(key)) {
+                String newKey = key + COUNT_SUFFIX;
+                MetadataUtil.setMetadataType(newKey, Integer.class);
+                doc.removeFields(newKey);
+                // multivalued, to keep the same DocValues type used for metadata (and in cases
+                // processed before this field was calculated here)
+                addExtraAttributeToDoc(doc, newKey, metadata.getValues(key).length, true, timeEventSet);
+            }
         }
     }
 

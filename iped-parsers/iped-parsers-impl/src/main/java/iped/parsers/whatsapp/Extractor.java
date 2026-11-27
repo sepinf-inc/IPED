@@ -75,28 +75,74 @@ public abstract class Extractor {
 
     protected abstract Connection getConnection() throws SQLException;
 
-    protected void setGroupMembers(Chat c, Connection conn, String SELECT_GROUP_MEMBERS) throws SQLException {
+    /**
+     * Android stores the account owner as a group member using special JIDs:
+     * "status_me" or "lid_me" in group_participant_user (newer databases), or an
+     * empty JID in group_participants (older databases).
+     */
+    protected boolean isOwnerMemberId(String memberId) {
+        return false;
+    }
+
+    protected void setGroupMembers(Chat c, Connection conn, String selectGroupMembersQuery) throws SQLException {
         // adds all contacts that sent at least one message
         for (Message m : c.getMessages()) {
-            if (m.getRemoteResource() != null)
+            if (m.getRemoteResource() != null) {
+                if (c.isGroupOrChannelChat() && c.getRemote() != null && m.getRemoteResource().equals(c.getRemote().getFullId())) {
+                    continue; // don't add the group itself as a member
+                }
                 c.getGroupMembers().add(contacts.getContact(m.getRemoteResource()));
+            }
         }
-        if (SELECT_GROUP_MEMBERS == null) {
+
+        // the account owner is a member if sent a message (as other members above), or
+        // if listed in the group participants table
+        boolean isOwnerMember = c.getMessages().stream().anyMatch(Message::isFromMe);
+
+        if (selectGroupMembersQuery == null) {
+            // participants table not available, so assume the owner is a member
+            addOwnerAsMember(c);
             return;
         }
         // adds all contacts which is a member of the group now
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
+        try (PreparedStatement stmt = conn.prepareStatement(selectGroupMembersQuery)) {
             stmt.setString(1, c.getRemote().getFullId());
             try (ResultSet rs = stmt.executeQuery()) {
 
                 while (rs.next()) {
                     String memberId = rs.getString("member");
-                    if (memberId != null && !memberId.trim().isEmpty()) {
+                    boolean isAdmin = rs.getBoolean("admin");
+                    if (isOwnerMemberId(memberId)) {
+                        isOwnerMember = true;
+                        if (isAdmin) {
+                            c.setOwnerAdmin(true);
+                        }
+                    } else if (memberId != null && !memberId.trim().isEmpty()) {
                         c.getGroupMembers().add(contacts.getContact(memberId));
+                        if (isAdmin) {
+                            c.getGroupAdmins().add(contacts.getContact(memberId));
+                        }
                     }
                 }
             }
         }
+
+        if (isOwnerMember) {
+            addOwnerAsMember(c);
+        }
+        if (c.isOwnerAdmin()) {
+            c.getGroupAdmins().add(getOwnerContact());
+        }
+    }
+
+    private void addOwnerAsMember(Chat c) {
+        c.getGroupMembers().add(getOwnerContact());
+    }
+
+    private WAContact getOwnerContact() {
+        // if unknown, the account itself is used, so its unknown id is not output as a
+        // contact id
+        return account.isUnknown() ? account : contacts.getContact(account.getFullId());
     }
     
     protected static boolean isSqliteCorruptException(SQLException exception) {

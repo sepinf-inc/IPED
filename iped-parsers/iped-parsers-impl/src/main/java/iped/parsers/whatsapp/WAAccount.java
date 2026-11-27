@@ -26,8 +26,27 @@ public class WAAccount extends WAContact {
 
     private boolean isUnknown = false;
 
+    /**
+     * LID (e.g. "123456789012345@lid") of the account, used in newer databases
+     * instead of the phone based JID.
+     */
+    private String lid;
+
     public WAAccount(String id) {
         super(id);
+    }
+
+    public String getLid() {
+        return lid;
+    }
+
+    public void setLid(String lid) {
+        if (StringUtils.isNotBlank(lid)) {
+            lid = lid.strip();
+            this.lid = lid.contains("@") ? lid : lid + lidSuffix;
+        } else {
+            this.lid = null;
+        }
     }
 
     public String getTitle() {
@@ -58,15 +77,20 @@ public class WAAccount extends WAContact {
             } else {
                 expr = xpath.compile("/map/string[@name=\"registration_jid\"]");
                 value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (StringUtils.isBlank(value)) {
-                    expr = xpath.compile("/map/string[@name=\"ph\"]");
-                    value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                }
                 if (StringUtils.isNotBlank(value)) {
-                    if (!value.endsWith(waSuffix)) {
+                    // registration_jid usually holds only the number, without the suffix
+                    if (!value.contains("@")) {
                         value += waSuffix;
                     }
                     id = value;
+                } else {
+                    expr = xpath.compile("/map/string[@name=\"cc\"]");
+                    String cc = (String) expr.evaluate(doc, XPathConstants.STRING);
+                    expr = xpath.compile("/map/string[@name=\"ph\"]");
+                    String ph = (String) expr.evaluate(doc, XPathConstants.STRING);
+                    if (StringUtils.isNoneBlank(cc, ph)) {
+                        id = cc + ph + waSuffix;
+                    }
                 }
             }
 
@@ -82,13 +106,34 @@ public class WAAccount extends WAContact {
                 status = value;
             }
 
-            if (StringUtils.isAllBlank(id, name, status)) {
+            // username of the account (without "@"), reserved or in use
+            String username = null;
+            expr = xpath.compile("/map/string[@name=\"self_user_name\"]");
+            value = (String) expr.evaluate(doc, XPathConstants.STRING);
+            if (StringUtils.isNotBlank(value)) {
+                username = value;
+            }
+
+            // own LID, used in newer databases (e.g. as sender of own messages in groups)
+            String lid = null;
+            for (String key : new String[] { "self_lid", "registration_lid" }) {
+                expr = xpath.compile("/map/string[@name=\"" + key + "\"]");
+                value = (String) expr.evaluate(doc, XPathConstants.STRING);
+                if (StringUtils.isNotBlank(value)) {
+                    lid = value;
+                    break;
+                }
+            }
+
+            if (StringUtils.isAllBlank(id, name, status, username, lid)) {
                 return null;
             }
 
             WAAccount account = new WAAccount(id);
             account.setWaName(name);
             account.setStatus(status);
+            account.setUsername(username);
+            account.setLid(lid);
 
             return account;
         } catch (ParserConfigurationException | XPathExpressionException e) {

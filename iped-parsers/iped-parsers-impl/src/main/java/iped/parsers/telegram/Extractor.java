@@ -36,6 +36,7 @@ import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -202,10 +203,11 @@ public class Extractor {
 
                     searchAvatar(cont, androidDecoder.getPhotoData());
 
-                    ChatGroup group = new ChatGroup(chatId, cont, chatName);
+                    String chatNameToUse = StringUtils.firstNonBlank((String) androidDecoder.getAlltMetadata().get("title"), chatName);
+                    ChatGroup group = new ChatGroup(chatId, cont, chatNameToUse);
 
                     Map<String, Object> m = androidDecoder.getAlltMetadata();
-                    if ("true".equals(m.get("broadcast"))) {
+                    if (Boolean.parseBoolean(String.valueOf(m.get("broadcast")))) {
                         group.setGroup(false);
                         group.setChannel(true);
                     }
@@ -218,7 +220,24 @@ public class Extractor {
                     }
                     addAdmins(conn, group);
 
+                    // "creator" and "admin_rights" refer to the account owner (current user)
+                    if (Boolean.parseBoolean(String.valueOf(m.get("creator"))) || m.get("admin_rights") != null) {
+                        group.setOwnerAdmin(true);
+                    }
+                    // only if the group data was decoded
+                    if (m.get("left") != null && !Boolean.parseBoolean(String.valueOf(m.get("left"))) && !Boolean.parseBoolean(String.valueOf(m.get("kicked")))) {
+                        group.setOwnerMember(true);
+                    }
+
                     int participantsCount = getParticipantsCount(conn, group);
+                    if (participantsCount <= 0 && m.get("participants_count") != null) {
+                        // e.g. basic groups, which have the count only in the group data
+                        try {
+                            participantsCount = Integer.parseInt(m.get("participants_count").toString());
+                        } catch (NumberFormatException e) {
+                            // ignore
+                        }
+                    }
                     group.setParticipantsCount(participantsCount);
                 }
                 if (cg != null) {
@@ -377,7 +396,7 @@ public class Extractor {
             }
             setFrom(message, chat);
 
-            if (cg != null && message.getFrom().getId() != 0) {
+            if (cg != null && message.getFrom().getId() != 0 && Math.abs(message.getFrom().getId()) != Math.abs(cg.getId())) {
                 cg.addMember(message.getFrom().getId());
             }
 
@@ -498,7 +517,7 @@ public class Extractor {
                             }
                         }
     
-                        if (cg != null && message.getFrom().getId() != 0) {
+                        if (cg != null && message.getFrom().getId() != 0 && Math.abs(message.getFrom().getId()) != Math.abs(cg.getId())) {
                             cg.addMember(message.getFrom().getId());
                         }
     
@@ -666,6 +685,10 @@ public class Extractor {
                                 e.printStackTrace();
                             }
                         }
+
+                        if (Boolean.parseBoolean(String.valueOf(androidDecoder.getAlltMetadata().get("self")))) {
+                            userAccount = c;
+                        }
                     }
                 }
             }
@@ -800,11 +823,11 @@ public class Extractor {
             + "           from dialogs d LEFT join users u on u.uid=d.did  WHERE d.did NOT IN (SELECT -uid FROM chats) "
             + "            order by date desc";
 
-    private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
+    private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=? AND uid > 0";
 
     private static final String SELECT_CHATS_SETTINGS = "SELECT participants_count FROM chat_settings_v2 WHERE uid=?";
 
-    private static final String SELECT_CHANNEL_ADMINS = "SELECT uid FROM channel_admins_v3 WHERE did=?";
+    private static final String SELECT_CHANNEL_ADMINS = "SELECT uid FROM channel_admins_v3 WHERE did=? AND uid > 0";
 
     private static final String CHATS_SQL_IOS = "select substr(key,16,8) as chatid, false as deleted from t9 "
             + "UNION SELECT  substr(t7.key,1,8) as chatid, true as deleted from t7  "

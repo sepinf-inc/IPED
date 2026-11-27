@@ -55,7 +55,15 @@ public class ExtraProperties {
 
     public static final String CONVERSATION_PARTICIPANTS = CONVERSATION_PREFIX + "Participants";
 
+    /**
+     * Total number of participants as informed by the app (e.g. Telegram groups and
+     * channels), which may be greater than the participants listed in the database.
+     */
+    public static final Property CONVERSATION_PARTICIPANTS_COUNT = Property.internalInteger(CONVERSATION_PREFIX + "participantsCount");
+
     public static final Property CONVERSATION_MESSAGES_COUNT = Property.internalInteger(CONVERSATION_PREFIX + "messagesCount");
+
+    public static final Property CONVERSATION_IS_EMPTY = Property.internalBoolean(CONVERSATION_PREFIX + "isEmpty");
 
     public static final String CONVERSATION_SUFFIX_ID = ":id";
     public static final String CONVERSATION_SUFFIX_NAME = ":name";
@@ -78,7 +86,9 @@ public class ExtraProperties {
 
     public static final String GROUP_ID = "GroupID";
 
-    public static final String IS_GROUP_MESSAGE = "isGroupMessage";
+    public static final String IS_GROUP_MESSAGE = COMMUNICATION_PREFIX + "isGroupMessage";
+    public static final Property COMMUNICATION_SYSTEM_MESSAGE = Property.internalBoolean(COMMUNICATION_PREFIX + "isSystemMessage");
+
 
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
 

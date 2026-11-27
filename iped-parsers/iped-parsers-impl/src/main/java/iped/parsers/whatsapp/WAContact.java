@@ -2,6 +2,8 @@ package iped.parsers.whatsapp;
 
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class WAContact {
 
     // e.g. 5561999999999@s.whatsapp.net, 120363000000000000@g.us, status@broadcast
@@ -9,6 +11,7 @@ public class WAContact {
 
     public static final String waSuffix = "@s.whatsapp.net";
     public static final String waStatusBroadcast = "status@broadcast";
+    public static final String waBroadcastSuffix = "@broadcast";
     public static final String waGroupSuffix = "@g.us";
     public static final String waStatusSuffix = "@status";
     public static final String waNewsletterSuffix = "@newsletter";
@@ -29,6 +32,8 @@ public class WAContact {
     private String sortName;
 
     private String nickName;
+
+    private String username;
 
     private byte[] avatar;
 
@@ -110,17 +115,20 @@ public class WAContact {
         this.nickName = nickName;
     }
 
+    /**
+     * @return the WhatsApp username, without the "@" prefix
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        username = username != null ? username.strip() : null;
+        this.username = username != null && !username.isEmpty() ? StringUtils.removeStart(username, "@") : null;
+    }
+
     public String getName() {
-        if (displayName != null && !displayName.isBlank())
-            return displayName;
-        else if (waName != null && !waName.isBlank())
-            return waName;
-        else if (givenName != null && !givenName.isBlank())
-            return givenName;
-        else if (nickName != null && !nickName.isBlank())
-            return nickName;
-        else
-            return id;
+        return StringUtils.firstNonBlank(displayName, waName, givenName, nickName, id);
 
     }
 
@@ -180,6 +188,12 @@ public class WAContact {
     @Override
     public int hashCode() {
         return this.getFullId().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        // for debug
+        return getName() + " (" + getFullId() + ")";
     }
 
     public boolean matches(WAContact o) {
