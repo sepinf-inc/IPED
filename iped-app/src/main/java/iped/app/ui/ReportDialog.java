@@ -17,6 +17,7 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -25,6 +26,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -69,6 +71,9 @@ public class ReportDialog implements ActionListener, TableModelListener {
     JCheckBox noAttachs = new JCheckBox(Messages.getString("ReportDialog.NoAttachments")); //$NON-NLS-1$
     JCheckBox noLinkedItems = new JCheckBox(Messages.getString("ReportDialog.noLinkedItems")); //$NON-NLS-1$
     JCheckBox append = new JCheckBox(Messages.getString("ReportDialog.AddToReport")); //$NON-NLS-1$
+    JRadioButton bothReports = new JRadioButton(Messages.getString("ReportDialog.BothReports"), true); //$NON-NLS-1$
+    JRadioButton htmlReportOnly = new JRadioButton(Messages.getString("ReportDialog.HtmlReportOnly")); //$NON-NLS-1$
+    JRadioButton portableCaseOnly = new JRadioButton(Messages.getString("ReportDialog.PortableCaseOnly")); //$NON-NLS-1$
     JCheckBox selectAll = new JCheckBox();
 
     HashSet<String> noContent = new HashSet<>();
@@ -76,8 +81,22 @@ public class ReportDialog implements ActionListener, TableModelListener {
     public ReportDialog() {
 
         dialog.setTitle(Messages.getString("ReportDialog.Title")); //$NON-NLS-1$
-        dialog.setBounds(0, 0, 500, 500);
+        dialog.setBounds(0, 0, 500, 580);
         dialog.setLocationRelativeTo(null);
+
+        Box reportTypePanel = Box.createVerticalBox();
+        reportTypePanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        reportTypePanel.add(new JLabel(Messages.getString("ReportDialog.ReportType"))); //$NON-NLS-1$
+        ButtonGroup reportTypeGroup = new ButtonGroup();
+        for (JRadioButton reportType : Arrays.asList(bothReports, htmlReportOnly, portableCaseOnly)) {
+            reportTypeGroup.add(reportType);
+            reportTypePanel.add(reportType);
+        }
+        htmlReportOnly.addItemListener(e -> {
+            append.setEnabled(!htmlReportOnly.isSelected());
+            if (htmlReportOnly.isSelected())
+                append.setSelected(false);
+        });
 
         JPanel footer1 = new JPanel(new BorderLayout());
         footer1.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
@@ -114,6 +133,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         Box footer = Box.createVerticalBox();
         footer.add(noAttachs);
         footer.add(noLinkedItems);
+        footer.add(reportTypePanel);
         footer.add(footer1);
         footer.add(append);
         footer.add(footer3);
@@ -325,6 +345,12 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
             if (append.isSelected())
                 cmd.add("--append"); //$NON-NLS-1$
+
+            if (htmlReportOnly.isSelected())
+                cmd.add(CmdLineArgsImpl.noPortableCaseOption);
+
+            if (portableCaseOnly.isSelected())
+                cmd.add(CmdLineArgsImpl.noHtmlReportOption);
 
             for (String label : noContent) {
                 cmd.add("-nocontent"); //$NON-NLS-1$
