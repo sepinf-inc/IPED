@@ -126,6 +126,8 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
                     parser.setParserName(getString(child));
                 } else if (child.getTagName().equals(WIN_TOOL_PATH)) {
                     parser.setToolPath(getString(child));
+                } else if (child.getTagName().equals(WIN_TOOL_NAME)) {
+                    parser.setWinToolName(getString(child).trim());
                 } else if (child.getTagName().equals(OUTPUT_CHARSET)) {
                     parser.setCharset(getString(child));
                 } else if (child.getTagName().equals(OUTPUT_IS_HTML)) {
@@ -141,7 +143,7 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
             String tool = parser.getCommand()[0].split(" ")[0];
             synchronized (lock) {
                 boolean firstCheck = (cmdCheckResultCache.get(tool) == null);
-                boolean present = readCheckTagAndCheck(checkElement, parser.getToolPath());
+                boolean present = readCheckTagAndCheck(checkElement, parser.getToolPath(), parser.getWinToolName());
                 if (!present) {
                     if (firstCheck)
                         LOGGER.error("Error testing " + parser.getParserName()
@@ -190,7 +192,7 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
         return metadata;
     }
 
-    private static boolean readCheckTagAndCheck(Element checkDef, String toolPath) {
+    private static boolean readCheckTagAndCheck(Element checkDef, String toolPath, String winToolName) {
         String command = null;
         List<Integer> errorVals = new ArrayList<Integer>();
 
@@ -220,7 +222,7 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
             String[] theCommand = command.split(" ");
             String tool = theCommand[0];
             if (SystemUtils.IS_OS_WINDOWS && toolPath != null) {
-                theCommand[0] = ExternalParser.getRootFolder() + "/" + toolPath + theCommand[0];
+                theCommand[0] = ExternalParser.getRootFolder() + "/" + toolPath + ExternalParser.getWindowsToolName(theCommand[0], winToolName);
             }
             int[] errVals = new int[errorVals.size()];
             for (int i = 0; i < errVals.length; i++) {

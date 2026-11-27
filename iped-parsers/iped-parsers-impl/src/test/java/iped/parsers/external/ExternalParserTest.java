@@ -93,6 +93,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         // append RecycleBinInfo2 parser
         ExternalParserConfigGenerator recyclebinInfo2ConfigGenerator = createExternalParserConfig("RecycleInfo2Parser", tmpPath + "rifiuti2/",
             "rifiuti2 -v", "rifiuti2 ${INPUT}", "x-info2", 3, "UTF-8");
+        recyclebinInfo2ConfigGenerator.setWinToolName("rifiuti");
         recyclebinInfo2ConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append EvtxLogParser parser
