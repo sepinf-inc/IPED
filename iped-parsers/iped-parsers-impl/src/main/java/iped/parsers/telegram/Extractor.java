@@ -207,7 +207,7 @@ public class Extractor {
                     ChatGroup group = new ChatGroup(chatId, cont, chatNameToUse);
 
                     Map<String, Object> m = androidDecoder.getAlltMetadata();
-                    if ("true".equals(m.get("broadcast"))) {
+                    if (Boolean.parseBoolean((String) m.get("broadcast"))) {
                         group.setGroup(false);
                         group.setChannel(true);
                     }
@@ -221,11 +221,11 @@ public class Extractor {
                     addAdmins(conn, group);
 
                     // "creator" and "admin_rights" refer to the account owner (current user)
-                    if ("true".equals(m.get("creator")) || m.get("admin_rights") != null) {
+                    if (Boolean.parseBoolean((String) m.get("creator")) || m.get("admin_rights") != null) {
                         group.setOwnerAdmin(true);
                     }
                     // only if the group data was decoded
-                    if (m.get("left") != null && !"true".equals(m.get("left")) && !"true".equals(m.get("kicked"))) {
+                    if (m.get("left") != null && !Boolean.parseBoolean((String) m.get("left")) && !Boolean.parseBoolean((String) m.get("kicked"))) {
                         group.setOwnerMember(true);
                     }
 
