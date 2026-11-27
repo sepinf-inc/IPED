@@ -708,8 +708,16 @@ public class IndexItem extends BasicProps {
         String[] names = metadata.names();
 
         for (String key : names) {
-            if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
+            if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
                 continue;
+            }
+            if (key.endsWith(COUNT_SUFFIX)) {
+                // count already present in metadata (e.g. restored by IPEDReader): it is
+                // recalculated below when the counted property is present
+                String countedKey = key.substring(0, key.length() - COUNT_SUFFIX.length());
+                if (countMetadata.contains(countedKey) && metadata.get(countedKey) != null) {
+                    continue;
+                }
             }
             boolean isMultiValued = true;// metadata.getValues(key).length > 1;
             for (String val : metadata.getValues(key)) {
@@ -721,7 +729,9 @@ public class IndexItem extends BasicProps {
                 String newKey = key + COUNT_SUFFIX;
                 MetadataUtil.setMetadataType(newKey, Integer.class);
                 doc.removeFields(newKey);
-                addExtraAttributeToDoc(doc, newKey, metadata.getValues(key).length, false, timeEventSet);
+                // multivalued, to keep the same DocValues type used for metadata (and in cases
+                // processed before this field was calculated here)
+                addExtraAttributeToDoc(doc, newKey, metadata.getValues(key).length, true, timeEventSet);
             }
         }
     }
