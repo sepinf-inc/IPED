@@ -428,6 +428,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         chatMetadata.add(field + ExtraProperties.CONVERSATION_SUFFIX_ID, member.getFullId());
         chatMetadata.add(field + ExtraProperties.CONVERSATION_SUFFIX_NAME, member.getName());
         chatMetadata.add(field + ExtraProperties.CONVERSATION_SUFFIX_PHONE, phoneNumber);
+        chatMetadata.add(field + ExtraProperties.CONVERSATION_SUFFIX_USERNAME, member.getUsername());
     }
 
     private void parseWhatsAppMessages(InputStream stream, ContentHandler handler, Metadata metadata,
@@ -1023,6 +1024,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                         }
                         if (account.getStatus() == null && a.getStatus() != null) {
                             account.setStatus(a.getStatus());
+                        }
+                        if (account.getUsername() == null && a.getUsername() != null) {
+                            account.setUsername(a.getUsername());
+                        }
+                        if (account.getLid() == null && a.getLid() != null) {
+                            account.setLid(a.getLid());
                         }
                     }
                 } catch (Exception e) {

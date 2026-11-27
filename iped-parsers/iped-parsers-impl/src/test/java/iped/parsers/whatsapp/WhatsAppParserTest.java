@@ -2,23 +2,33 @@ package iped.parsers.whatsapp;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ConversationConstants;
+import iped.parsers.util.ItemInfo;
+import iped.search.IItemSearcher;
 
 public class WhatsAppParserTest extends AbstractPkgTest {
 
@@ -236,15 +246,43 @@ public class WhatsAppParserTest extends AbstractPkgTest {
 
     }
 
+    /**
+     * Since #2294, the Android account is not parsed from the preferences XML
+     * itself: it is created as a child of wa.db, looking for the preferences XML
+     * (in "shared_prefs", as in the real app data folder) with the item searcher.
+     */
     @Test
-    @Ignore("Fix this test to handle all xml files for WA accounts")
-    public void _testWhatsAppParserUserXMLAndroid() throws IOException, SAXException, TikaException {
+    public void testWhatsAppParserAccountFromPreferencesXMLAndroid() throws IOException, SAXException, TikaException {
 
-        String testFile = "test-files/test_whatsAppPreferences.xml";
+        String testFile = "test-files/test_whatsApp.db";
         ParseContext whatsappContext = getContext(testFile);
+        whatsappContext.set(ItemInfo.class, new ItemInfo(0, "", Collections.emptySet(), Collections.emptySet(),
+                "/data/data/com.whatsapp/databases/wa.db", false));
+
+        File prefsFile = getFile("test-files/test_whatsAppPreferences.xml");
+        IItemReader prefsItem = mock(IItemReader.class);
+        when(prefsItem.getName()).thenReturn("com.whatsapp_preferences_light.xml");
+        when(prefsItem.getPath())
+                .thenReturn("/data/data/com.whatsapp/shared_prefs/com.whatsapp_preferences_light.xml");
+        when(prefsItem.getBufferedInputStream())
+                .thenAnswer(inv -> new BufferedInputStream(Files.newInputStream(prefsFile.toPath())));
+
+        IItemSearcher searcher = mock(IItemSearcher.class);
+        when(searcher.escapeQuery(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(searcher.searchIterable(anyString())).thenReturn(Collections.emptyList());
+        when(searcher.search(anyString())).thenAnswer(inv -> {
+            String query = inv.getArgument(0);
+            List<IItemReader> result = new ArrayList<>();
+            if (query.contains("\"com.whatsapp_preferences_light.xml\"")) {
+                result.add(prefsItem);
+            }
+            return result;
+        });
+        whatsappContext.set(IItemSearcher.class, searcher);
+
         WhatsAppParser parser = new WhatsAppParser();
         Metadata metadata = new Metadata();
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-user-xml");
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, WhatsAppParser.WA_DB.toString());
         ContentHandler handler = new BodyContentHandler(1 << 20);
         parser.setExtractMessages(true);
         parser.setMergeBackups(false);
@@ -252,25 +290,17 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         try (InputStream stream = getStream(testFile)) {
             parser.parse(stream, handler, metadata, whatsappContext);
 
-            assertEquals(1, whatsapptracker.title.size());
-            assertEquals(1, whatsapptracker.username.size());
-            assertEquals(1, whatsapptracker.userphone.size());
-            assertEquals(1, whatsapptracker.useraccount.size());
-            assertEquals(1, whatsapptracker.usernotes.size());
-            assertEquals(0, whatsapptracker.participants.size());
-            assertEquals(0, whatsapptracker.messagefrom.size());
-            assertEquals(0, whatsapptracker.messagebody.size());
-            assertEquals(0, whatsapptracker.messageto.size());
-            assertEquals(0, whatsapptracker.messagedate.size());
-
-            assertEquals("WhatsApp Account: Mr. Roboto", whatsapptracker.title.get(0));
-            assertEquals("Mr. Roboto", whatsapptracker.username.get(0));
-            assertEquals("554499887766@s.whatsapp.net", whatsapptracker.useraccount.get(0));
-            assertEquals("Domo arigato!", whatsapptracker.usernotes.get(0));
-
+            // the account is the last item created
+            assertEquals("WhatsApp Account: Mr. Roboto", last(whatsapptracker.title));
+            assertEquals("Mr. Roboto", last(whatsapptracker.username));
+            assertEquals("554499887766@s.whatsapp.net", last(whatsapptracker.useraccount));
+            assertEquals("Domo arigato!", last(whatsapptracker.usernotes));
         }
     }
 
+    private static String last(List<String> list) {
+        return list.get(list.size() - 1);
+    }
 
     @Test
     public void testIsBackupDatabase() {

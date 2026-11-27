@@ -32,6 +32,8 @@ public class WAContact {
 
     private String nickName;
 
+    private String username;
+
     private byte[] avatar;
 
     private String avatarPath;
@@ -110,6 +112,18 @@ public class WAContact {
 
     public void setNickName(String nickName) {
         this.nickName = nickName;
+    }
+
+    /**
+     * @return the WhatsApp username, without the "@" prefix
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        username = username != null ? username.strip() : null;
+        this.username = username != null && !username.isEmpty() ? StringUtils.removeStart(username, "@") : null;
     }
 
     public String getName() {

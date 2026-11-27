@@ -85,6 +85,9 @@ public class ReportGenerator {
         out.println("<br>" + Messages.getString("WhatsAppReport.NickName") + format(contact.getNickName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.SortName") + format(contact.getSortName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.Status") + format(contact.getStatus())); //$NON-NLS-1$ //$NON-NLS-2$
+        if (contact.getUsername() != null) {
+            out.println("<br>" + Messages.getString("WhatsAppReport.Username") + format("@" + contact.getUsername()));
+        }
         if (contact.isDeleted()) {
             out.println("<br><i>" + Messages.getString("WhatsAppReport.ContactDeleted") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
@@ -117,6 +120,9 @@ public class ReportGenerator {
         out.println(Messages.getString("WhatsAppReport.AccountID") + format(account.getId())); //$NON-NLS-1$
         out.println("<br>" + Messages.getString("WhatsAppReport.WAName") + format(account.getWaName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.Status") + format(account.getStatus())); //$NON-NLS-1$ //$NON-NLS-2$
+        if (account.getUsername() != null) {
+            out.println("<br>" + Messages.getString("WhatsAppReport.Username") + format("@" + account.getUsername()));
+        }
 
         out.println("</body>\n</html>"); //$NON-NLS-1$
 

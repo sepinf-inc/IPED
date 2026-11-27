@@ -247,6 +247,10 @@ public abstract class ExtractorAndroidNew extends Extractor {
     }
 
     private void updateContactsDirectoryMapping() throws SQLException {
+        // the own LID of the account is usually not in jid_map
+        if (account != null && !account.isUnknown() && account.getLid() != null) {
+            contacts.addContactMapping(account.getLid(), account.getFullId());
+        }
         // Read LID -> JID mapping
         try (Connection conn = getConnection()) {
             if (SQLite3DBParser.containsTable("jid_map", conn)) {
