@@ -38,9 +38,6 @@ import iped.engine.task.HashTask;
 import iped.engine.task.jumplist.JumpListTask;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
-import iped.parsers.ares.AresParser;
-import iped.parsers.emule.KnownMetParser;
-import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
@@ -59,15 +56,7 @@ public class ReferencedByTableModel extends BaseTableModel {
 
         String nameToScroll = null;
         if (refDoc != null) {
-            if (KnownMetParser.isKnownMetMimeType(item.getMediaType().toString())) {
-                nameToScroll = refDoc.get(HashTask.HASH.EDONKEY.toString());
-            } else if (AresParser.ARES_MIME_TYPE.equals(item.getMediaType().toString())) {
-                nameToScroll = refDoc.get(HashTask.HASH.SHA1.toString());
-            } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(item.getMediaType().toString())) {
-                nameToScroll = refDoc.get(HashTask.HASH.MD5.toString());
-            } else {
-                nameToScroll = refDoc.get(BasicProps.HASH);
-            }
+            nameToScroll = refDoc.get(ReferencingTableModel.getReferenceHashField(item.getMediaType().toString()));
         }
 
         if (nameToScroll != null) {

@@ -19,6 +19,9 @@
 package iped.app.ui;
 
 import java.awt.Rectangle;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.Map;
 
 import javax.swing.ListSelectionModel;
 
@@ -30,7 +33,10 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import iped.data.IItem;
+import iped.engine.search.LuceneSearchResult;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.utils.LocalizedFormat;
 
 public class SubitemTableModel extends BaseTableModel {
@@ -48,6 +54,47 @@ public class SubitemTableModel extends BaseTableModel {
         parsingTask.execute();
 
         App.get().parentItemModel.fireTableDataChanged();
+    }
+
+    @Override
+    public String getGoToPositionLabelKey() {
+        return "MenuClass.GoToChat";
+    }
+
+    @Override
+    protected boolean setPositionToScroll(int luceneId, boolean apply) {
+        IItem item = App.get().appCase.getItemByLuceneID(luceneId);
+        String position = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
+        if (position == null) {
+            return false;
+        }
+        if (apply) {
+            App.get().getViewerController().getHtmlLinkViewer().setElementIDToScroll(position);
+        }
+        return true;
+    }
+
+    @Override
+    protected void sortResults(LuceneSearchResult results) throws IOException {
+        int[] docs = results.getLuceneIds();
+        Map<Integer, String> names = readSortValues(docs, sortResultsBy);
+        Comparator<Integer> comparator = (a, b) -> compareNaturally(names.get(a), names.get(b));
+
+        // Messages of a chat are listed in the order used by the chats, by date, after
+        // the other subitems. Ties and messages without a date (last) are sorted by name.
+        Map<Integer, String> positions = readSortValues(docs, ExtraProperties.PARENT_VIEW_POSITION);
+        if (positions.values().stream().anyMatch(p -> !p.isEmpty())) {
+            Map<Integer, String> dates = readSortValues(docs, ExtraProperties.MESSAGE_DATE.getName());
+            Comparator<Integer> messagesLast = Comparator.comparing(id -> !positions.get(id).isEmpty());
+            Comparator<Integer> byDate = Comparator.comparing(id -> positions.get(id).isEmpty() ? "" : dates.get(id), (a, b) -> {
+                if (a.isEmpty() || b.isEmpty()) {
+                    return Boolean.compare(a.isEmpty(), b.isEmpty());
+                }
+                return a.compareTo(b);
+            });
+            comparator = messagesLast.thenComparing(byDate).thenComparing(comparator);
+        }
+        sortResults(results, comparator);
     }
 
     @Override

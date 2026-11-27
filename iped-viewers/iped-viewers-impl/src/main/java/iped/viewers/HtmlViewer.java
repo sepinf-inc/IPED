@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -44,6 +45,9 @@ public class HtmlViewer extends AbstractViewer {
     private JFXPanel jfxPanel;
     private static int MAX_SIZE = 10000000;
 
+    // color (lavender) that temporarily fills the element the page is scrolled to
+    private static final String SCROLL_HIGHLIGHT_RGB = "205, 190, 240";
+
     private static final String hitStyle = "color:#2F3603; background-color:#FDFE2D";
     private static final String selStyle = "color:#2F0201; background-color:#F79131";
 
@@ -65,6 +69,8 @@ public class HtmlViewer extends AbstractViewer {
     private volatile String fileName;
     protected Set<String> highlightTerms;
     private volatile boolean scrollToPositionDone = false;
+    private volatile IStreamSource loadedContent;
+    private volatile Set<String> loadedTerms;
 
     private volatile Document doc;
     private volatile String[] queryTerms;
@@ -122,6 +128,21 @@ public class HtmlViewer extends AbstractViewer {
 
     @Override
     public void loadFile(final IStreamSource content, final Set<String> terms) {
+
+        if (content != null && content == loadedContent && Objects.equals(terms, loadedTerms) && (idToScroll != null || nameToScroll != null)) {
+            // The same content is already loaded and a position was requested (e.g. another
+            // message of the same chat was selected), so just scroll instead of reloading it.
+            Platform.runLater(() -> {
+                // if it is still loading, the position is scrolled to when it finishes
+                if (content == loadedContent && doc != null && webEngine.getLoadWorker().getState() == Worker.State.SUCCEEDED) {
+                    scrollToPositionDone = false;
+                    scrollToPosition();
+                }
+            });
+            return;
+        }
+        loadedContent = content;
+        loadedTerms = terms;
 
         if (tmpFile != null) {
             tmpFile.delete();
@@ -362,6 +383,56 @@ public class HtmlViewer extends AbstractViewer {
         return sb.toString();
     }
 
+    /**
+     * Returns a script that scrolls the page to show the element vertically
+     * centered in the visible area, or its beginning if it does not fit.
+     */
+    private String scrollToCenter(String var) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("(function(e){");
+        // margins to not hide the element behind a top bar or the borders
+        sb.append("  var margin = 32, mTop = 96;");
+        sb.append("  var r = e.getBoundingClientRect();");
+        sb.append("  var free = window.innerHeight - mTop - margin - r.height;");
+        sb.append("  var y = window.scrollY + r.top - mTop - (free > 0 ? free / 2 : 0);");
+        sb.append("  var x = window.scrollX;");
+        sb.append("  if (r.left < margin) ");
+        sb.append("    x += r.left - margin;");
+        sb.append("  else if (r.right > window.innerWidth - margin && r.width < window.innerWidth - 2 * margin) ");
+        sb.append("    x += r.right - window.innerWidth + margin;");
+        sb.append("  window.scrollTo(x, y);");
+        sb.append("})(").append(var).append(");");
+        return sb.toString();
+    }
+
+    /**
+     * Returns a script that highlights the element for a few seconds, filling it
+     * with a color that fades out, so the user can easily find it after the page
+     * is scrolled to its position. It is the effect chat previews apply to the
+     * original message when a quote is clicked, with a slightly different color.
+     */
+    private String highlightTemporarily(String var) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("(function(e){");
+        sb.append("  if (!document.getElementById('iped-scroll-highlight')) {");
+        sb.append("    var s = document.createElement('style');");
+        sb.append("    s.id = 'iped-scroll-highlight';");
+        sb.append("    s.textContent = '@keyframes iped-scroll-highlight {");
+        sb.append("0% {background: rgba(" + SCROLL_HIGHLIGHT_RGB + ", 1);} 100% {background: rgba(" + SCROLL_HIGHLIGHT_RGB + ", 0);}}';");
+        sb.append("    (document.head || document.documentElement).appendChild(s);");
+        sb.append("  }");
+        // only the last element is highlighted, when positions are changed quickly
+        sb.append("  var last = window.ipedScrollHighlighted;");
+        sb.append("  if (last && last !== e) last.style.animation = '';");
+        sb.append("  window.ipedScrollHighlighted = e;");
+        // restarts the animation if the element was already highlighted
+        sb.append("  e.style.animation = 'none';");
+        sb.append("  void e.offsetWidth;");
+        sb.append("  e.style.animation = 'iped-scroll-highlight 2.5s';");
+        sb.append("})(").append(var).append(");");
+        return sb.toString();
+    }
+
     protected void scrollToPosition() {
         boolean done = false;
         boolean exception = false;
@@ -369,9 +440,10 @@ public class HtmlViewer extends AbstractViewer {
             if (idToScroll != null) {
                 done = (Boolean) webEngine.executeScript(""
                         + "function find(){"
-                        + "  x = document.getElementById(\"" + idToScroll + "\");"
-                        + "  if(x != null){"
-                        + "    " + scrollIntoView("x")
+                        + "  var el = document.getElementById(\"" + idToScroll + "\");"
+                        + "  if(el != null){"
+                        + "    " + scrollToCenter("el")
+                        + "    " + highlightTemporarily("el")
                         + "    return true;"
                         + "  }"
                         + "  return false;"
@@ -381,9 +453,14 @@ public class HtmlViewer extends AbstractViewer {
             } else if (nameToScroll != null) {
                 done = (Boolean) webEngine.executeScript(""
                         + "function find(){"
-                        + "  var x = document.getElementsByName(\"" + nameToScroll + "\");"
-                        + "  if(x != null && x.length > 0){"
-                        + "    " + scrollIntoView("x[0]")
+                        + "  var els = document.getElementsByName(\"" + nameToScroll + "\");"
+                        + "  if(els != null && els.length > 0){"
+                        + "    var el = els[0];"
+                        // uses the enclosing identified element, e.g. the message of an attachment
+                        + "    var p = el.closest('[id]');"
+                        + "    if (p != null && p != document.body && p != document.documentElement) el = p;"
+                        + "    " + scrollToCenter("el")
+                        + "    " + highlightTemporarily("el")
                         + "    return true;"
                         + "  }"
                         + "  return false;"

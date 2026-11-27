@@ -25,6 +25,7 @@ import org.apache.tika.io.TikaInputStream;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
+import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.viewers.AttachmentSearcherImpl;
@@ -64,6 +65,27 @@ import iped.viewers.util.LibreOfficeFinder;
  * @author Wladimir
  */
 public class ViewerController {
+
+    /**
+     * The chat where an item (a message or an attachment) can be seen in context.
+     */
+    public static class ChatContext {
+        public final IStreamSource chat;
+        public final String chatType;
+        public final int chatLuceneId;
+        // id or name of the element of the item in the chat, one of them is set
+        public final String elementId;
+        public final String elementName;
+
+        public ChatContext(IStreamSource chat, String chatType, int chatLuceneId, String elementId, String elementName) {
+            this.chat = chat;
+            this.chatType = chatType;
+            this.chatLuceneId = chatLuceneId;
+            this.elementId = elementId;
+            this.elementName = elementName;
+        }
+    }
+
     private final List<AbstractViewer> viewers = new ArrayList<>();
     private final ATextViewer textViewer;
     private final MetadataViewer metadataViewer;
@@ -74,6 +96,9 @@ public class ViewerController {
     private LibreOfficeViewer officeViewer;
     private IStreamSource file;
     private IStreamSource viewFile;
+    private IStreamSource itemViewFile;
+    private ChatContext chatContext;
+    private volatile boolean showInChat = true;
     private String contentType;
     private String viewType;
     private Set<String> highlightTerms;
@@ -228,18 +253,41 @@ public class ViewerController {
     public void reload() {
         boolean currFixed = isFixed;
         isFixed = true;
-        loadFile(this.file, this.viewFile, this.contentType, this.highlightTerms);
+        loadFile(this.file, this.itemViewFile, this.contentType, this.highlightTerms, this.chatContext);
         isFixed = currFixed;
     }
 
     public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms) {
+        loadFile(file, viewFile, contentType, highlightTerms, null);
+    }
+
+    /**
+     * Loads an item into the viewers.
+     * 
+     * @param file
+     *            the item, used by the hex, text and metadata viewers
+     * @param viewFile
+     *            the content rendered by the preview viewer: the item itself or its
+     *            view file
+     * @param contentType
+     *            the content type of the item
+     * @param highlightTerms
+     *            the terms to be highlighted
+     * @param chatContext
+     *            if the item is a message or an attachment, the chat where it can
+     *            be seen in context, null otherwise. It is rendered by the preview
+     *            viewer instead of viewFile if showing items in the chat is
+     *            enabled.
+     */
+    public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms, ChatContext chatContext) {
         if (!isInitialized()) {
             return;
         }
         this.file = file;
-        this.viewFile = viewFile;
+        this.itemViewFile = viewFile;
+        this.chatContext = chatContext;
         this.contentType = contentType;
-        this.viewType = null;
+        selectViewFile();
         this.highlightTerms = highlightTerms;
         synchronized (updatedViewers) {
             updatedViewers.clear();
@@ -267,6 +315,49 @@ public class ViewerController {
             if (!viewer.equals(requested)) {
                 updateViewer(viewer, true, false);
             }
+        }
+    }
+
+    private void selectViewFile() {
+        if (chatContext != null && showInChat) {
+            viewFile = chatContext.chat;
+            viewType = chatContext.chatType;
+            // TODO change viewer api to pass this
+            if (chatContext.elementId != null) {
+                linkViewer.setElementIDToScroll(chatContext.elementId);
+            } else {
+                linkViewer.setElementNameToScroll(chatContext.elementName);
+            }
+        } else {
+            viewFile = itemViewFile;
+            viewType = null;
+        }
+    }
+
+    /**
+     * Returns the chat rendered by the preview viewer in place of the loaded item
+     * (a message or an attachment), or null if the item itself is being rendered.
+     */
+    public ChatContext getShownChatContext() {
+        return showInChat ? chatContext : null;
+    }
+
+    public boolean isShowInChat() {
+        return showInChat;
+    }
+
+    /**
+     * Sets if messages and attachments should be rendered by the preview viewer in
+     * the context of their chat, instead of rendering their own content.
+     */
+    public void setShowInChat(boolean showInChat) {
+        this.showInChat = showInChat;
+        if (isInitialized() && chatContext != null) {
+            selectViewFile();
+            synchronized (updatedViewers) {
+                updatedViewers.remove(viewersRepository);
+            }
+            updateViewer(viewersRepository, true, false);
         }
     }
 
@@ -315,6 +406,11 @@ public class ViewerController {
                     CSelButton butToolbar = (CSelButton) dock.getAction("toolbar");
                     butToolbar.setEnabled(toolbarSupport == 1);
                     butToolbar.setSelected(toolbarSupport == 1 && viewer.isToolbarVisible());
+                }
+
+                CCheckBox chkShowInChat = (CCheckBox) dock.getAction("showInChat");
+                if (chkShowInChat != null) {
+                    chkShowInChat.setEnabled(chatContext != null);
                 }
 
                 CButton butSearch = (CButton) dock.getAction("searchInViewer");

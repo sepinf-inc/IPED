@@ -33,9 +33,11 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.ViewerController.ChatContext;
 import iped.data.IItem;
 import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
+import iped.engine.data.ItemId;
 import iped.engine.datasource.AD1DataSourceReader.AD1InputStreamFactory;
 import iped.engine.io.ZIPInputStreamFactory;
 import iped.engine.search.SimilarFacesSearch;
@@ -45,7 +47,9 @@ import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.io.ISeekableInputStreamFactory;
 import iped.localization.LocaleResolver;
 import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.utils.FileInputStreamFactory;
+import iped.viewers.HtmlLinkViewer;
 import iped.viewers.ImageViewer;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.api.IFileProcessor;
@@ -61,7 +65,14 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     private Document doc;
     private int docId;
     private boolean listRelated;
+    private int referencingChatLuceneId = -1;
+    private String referencingElementName;
     private static volatile IItem lastItem;
+
+    // last chat rendered for a message or attachment, reused while messages of the same
+    // chat are selected, so the viewer can just scroll instead of reloading it
+    private static int lastChatLuceneId = -1;
+    private static IItem lastChatItem;
 
     public static final void disposeLastItem() {
         if (lastItem != null) {
@@ -170,6 +181,9 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             viewItem = IndexItem.getItem(doc, iCase, true);
         }
 
+        // messages and attachments can be rendered in the context of their chat
+        ChatContext chatContext = getChatContext(item, iCase);
+
         waitEvidenceOpening(item);
 
         Set<String> highlights = new HashSet<>();
@@ -182,7 +196,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             }
         }
 
-        App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);
+        App.get().getViewerController().loadFile(item, viewItem, contentType, highlights, chatContext);
 
         if (listRelated) {
             App.get().subItemModel.listItems(doc);
@@ -197,6 +211,66 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
             App.get().referencesModel.listItems(doc);
         }
+    }
+
+    /**
+     * Sets the chat that references the item, so the item can be rendered in the
+     * context of that chat by the preview viewer.
+     * 
+     * @param chatLuceneId
+     *            the lucene id of the referencing chat
+     * @param elementName
+     *            the name of the element of the item in the chat
+     */
+    public void setReferencingChat(int chatLuceneId, String elementName) {
+        this.referencingChatLuceneId = chatLuceneId;
+        this.referencingElementName = elementName;
+    }
+
+    /**
+     * Returns the chat where the item can be rendered in context by the preview
+     * viewer: the referencing chat, if it was set, or the parent chat of a message
+     * with a known position. Returns null if there is no such chat.
+     */
+    private ChatContext getChatContext(IItem item, IPEDSource iCase) {
+        try {
+            if (referencingChatLuceneId >= 0) {
+                return getChatContext(referencingChatLuceneId, null, referencingElementName);
+            }
+            String position = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
+            if (position == null || item.getParentId() == null) {
+                return null;
+            }
+            if (!MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME) && !MediaTypes.UFED_MESSAGE_MIME.equals(item.getMediaType())) {
+                return null;
+            }
+            int chatLuceneId = App.get().appCase.getLuceneId(new ItemId(iCase.getSourceId(), item.getParentId()));
+            return getChatContext(chatLuceneId, position, null);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private ChatContext getChatContext(int chatLuceneId, String elementId, String elementName) throws IOException {
+        if (chatLuceneId < 0) {
+            return null;
+        }
+        if (chatLuceneId != lastChatLuceneId) {
+            Document chatDoc = App.get().appCase.getSearcher().doc(chatLuceneId);
+            IItem chat = IndexItem.getItem(chatDoc, (IPEDSource) App.get().appCase.getAtomicSource(chatLuceneId), false);
+            HtmlLinkViewer linkViewer = App.get().getViewerController().getHtmlLinkViewer();
+            if (chat == null || chat.getMediaType() == null || !linkViewer.isSupportedType(chat.getMediaType().toString(), true)) {
+                chat = null;
+            }
+            lastChatLuceneId = chatLuceneId;
+            lastChatItem = chat;
+        }
+        if (lastChatItem == null) {
+            return null;
+        }
+        return new ChatContext(lastChatItem, lastChatItem.getMediaType().toString(), chatLuceneId, elementId, elementName);
     }
 
     private void waitEvidenceOpening(final IItem item) throws InterruptedException {

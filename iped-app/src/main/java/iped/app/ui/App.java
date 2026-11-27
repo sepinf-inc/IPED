@@ -889,7 +889,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         itemTable.getColumnModel().getColumn(1).setPreferredWidth(18);
         itemTable.getColumnModel().getColumn(3).setPreferredWidth(4096);
         itemTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        itemTable.addKeyListener(new SpaceKeyListener());
+        itemTable.addKeyListener(new RelatedItemsKeyListener());
     }
 
     /**
@@ -1186,6 +1186,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     }
                 });
                 viewerDock.addAction(copyViewerImage);
+
+                CCheckBox chkShowInChat = new CCustomCheckBox(Messages.getString("ViewerController.ShowInChat"), IconUtil.getToolbarIcon("chat", resPath)) {
+                    protected void changed() {
+                        viewerController.setShowInChat(isSelected());
+                    }
+                };
+                chkShowInChat.setSelected(viewerController.isShowInChat());
+                chkShowInChat.setEnabled(false);
+                viewerDock.addAction(chkShowInChat);
+                viewerDock.putAction("showInChat", chkShowInChat);
             }
 
             CButton prevHit = new CCustomButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getToolbarIcon("prev", resPath));
@@ -1741,12 +1751,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencedByTable.repaint();
     }
 
-    private class SpaceKeyListener extends KeyAdapter {
+    /**
+     * Keyboard handling of the related items panels: space checks/unchecks the
+     * highlighted items and bookmark shortcuts are applied to them.
+     */
+    private class RelatedItemsKeyListener extends KeyAdapter {
 
         @Override
         public void keyPressed(KeyEvent e) {
+            JTable table = (JTable) e.getComponent();
             if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                JTable table = (JTable) e.getComponent();
                 int col = table.convertColumnIndexToView(1);
                 int firstRow = table.getSelectedRow();
                 boolean value = true;
@@ -1762,6 +1776,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 BookmarksController.get().setMultiSetting(false);
                 BookmarksController.get().updateUISelection();
                 appCase.getMultiBookmarks().saveState();
+            } else if (table.getModel() instanceof BaseTableModel) {
+                BaseTableModel model = (BaseTableModel) table.getModel();
+                BookmarksManager.get().applyBookmarkKeyStroke(e, () -> model.getSelectedItemIds(table));
             }
         }
     }

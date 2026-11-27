@@ -18,6 +18,7 @@
  */
 package iped.app.ui;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,7 +59,66 @@ public class ReferencingTableModel extends BaseTableModel {
         int id = results.getLuceneIds()[selectedIndex];
 
         FileProcessor parsingTask = new FileProcessor(id, false);
+        // the referenced item can be seen in the context of the referencing chat
+        int refLuceneId = getRefLuceneId();
+        String hash = getReferenceHash(id);
+        if (refLuceneId != -1 && hash != null) {
+            parsingTask.setReferencingChat(refLuceneId, hash);
+        }
         parsingTask.execute();
+    }
+
+    /**
+     * Returns the hash that identifies the given referenced item in the preview of
+     * the referencing item, or null if there is none.
+     */
+    private String getReferenceHash(int luceneId) {
+        if (refDoc == null) {
+            return null;
+        }
+        try {
+            Document doc = App.get().appCase.getSearcher().doc(luceneId);
+            String hash = doc.get(getReferenceHashField(refDoc.get(BasicProps.CONTENTTYPE)));
+            return StringUtils.isBlank(hash) ? null : hash;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Returns the hash field used by items of the given media type to reference
+     * other items.
+     */
+    static String getReferenceHashField(String mediaType) {
+        if (KnownMetParser.isKnownMetMimeType(mediaType)) {
+            return HashTask.HASH.EDONKEY.toString();
+        } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
+            return HashTask.HASH.SHA1.toString();
+        } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(mediaType)) {
+            return HashTask.HASH.MD5.toString();
+        } else {
+            return BasicProps.HASH;
+        }
+    }
+
+    @Override
+    public String getGoToPositionLabelKey() {
+        return "RelatedItemsMenu.GoToReferencePosition";
+    }
+
+    @Override
+    protected boolean setPositionToScroll(int luceneId, boolean apply) {
+        // the referenced items are identified by their hash in the referencing preview
+        String hash = getReferenceHash(luceneId);
+        if (hash == null) {
+            return false;
+        }
+        if (apply) {
+            App.get().getViewerController().getHtmlLinkViewer().setElementNameToScroll(hash);
+        }
+        return true;
     }
 
     @Override
@@ -81,17 +141,7 @@ public class ReferencingTableModel extends BaseTableModel {
         // sharedHashes
         String[] sharedHashes = doc.getValues(ExtraProperties.SHARED_HASHES);
         if (sharedHashes.length > 0) {
-            String field;
-            String mediaType = doc.get(BasicProps.CONTENTTYPE);
-            if (KnownMetParser.isKnownMetMimeType(mediaType)) {
-                field = HashTask.HASH.EDONKEY.toString();
-            } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
-                field = HashTask.HASH.SHA1.toString();
-            } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(mediaType)) {
-                field = HashTask.HASH.MD5.toString();
-            } else {
-                field = BasicProps.HASH;
-            }
+            String field = getReferenceHashField(doc.get(BasicProps.CONTENTTYPE));
 
             Set<BytesRef> hashes = Arrays.asList(sharedHashes).stream().filter(StringUtils::isNotBlank)
                     .map(h -> new BytesRef(h)).collect(Collectors.toSet());
