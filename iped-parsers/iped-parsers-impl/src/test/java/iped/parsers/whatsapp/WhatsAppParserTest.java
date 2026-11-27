@@ -69,6 +69,10 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(0, Collections.frequency(whatsapptracker.type, ConversationConstants.TYPE_BROADCAST));
             assertEquals(0, Collections.frequency(whatsapptracker.type, ConversationConstants.TYPE_UNKNOWN));
 
+            // account owner is admin ("status_me" with rank > 0) in 8 groups, detected
+            // even if the account itself is unknown
+            assertEquals(8, whatsapptracker.ownerAdminCount);
+
             assertEquals("WhatsApp Chat - Nickerida - 556183125151", whatsapptracker.title.get(0));
             assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_0", whatsapptracker.title.get(1));
             assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_1", whatsapptracker.title.get(2));
@@ -116,12 +120,16 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertThat(whatsapptracker.participants.get(3), hasItems("unknownAccount"));
             assertThat(whatsapptracker.participants.get(4), hasItems("unknownAccount"));
 
-            assertEquals(21, whatsapptracker.admins.get(1).size());
-            assertEquals(19, whatsapptracker.admins.get(2).size());
+            assertEquals(22, whatsapptracker.admins.get(1).size());
+            assertEquals(20, whatsapptracker.admins.get(2).size());
             assertEquals(1, whatsapptracker.admins.get(3).size());
-            assertEquals(0, whatsapptracker.admins.get(4).size());
+            assertEquals(1, whatsapptracker.admins.get(4).size());
 
             assertThat(whatsapptracker.admins.get(1), hasItems("+556192644086"));
+            // account owner is admin ("status_me" with rank > 0) in these groups
+            assertThat(whatsapptracker.admins.get(1), hasItems("unknownAccount"));
+            assertThat(whatsapptracker.admins.get(2), hasItems("unknownAccount"));
+            assertThat(whatsapptracker.admins.get(4), hasItems("unknownAccount"));
             assertThat(whatsapptracker.admins.get(2), hasItems("Pedro Gonzaga (+556199351995)"));
 
             assertEquals("unknownAccount", whatsapptracker.messagefrom.get(0));

@@ -1677,6 +1677,11 @@ public abstract class ExtractorAndroidNew extends Extractor {
             + messageTableJoin;
     }
 
+    @Override
+    protected boolean isOwnerMemberId(String memberId) {
+        return ExtractorAndroid.isAndroidOwnerMemberId(memberId);
+    }
+
     private static final String SELECT_JID_BY_ID = "select raw_string from jid where _id=?";
 
     private static final String SELECT_JID_MAP = "SELECT a.raw_string AS lid, b.raw_string AS jid FROM jid_map map, jid a, jid b WHERE map.lid_row_id = a._id AND map.jid_row_id = b._id";

@@ -43,6 +43,7 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
         protected List<String> usernotes = new ArrayList<String>();
         protected List<List<String>> participants = new ArrayList<>();
         protected List<List<String>> admins = new ArrayList<>();
+        protected int ownerAdminCount = 0;
         protected List<String> messagefrom = new ArrayList<String>();
         protected List<String> messagebody = new ArrayList<String>();
         protected List<String> messageto = new ArrayList<String>();
@@ -70,6 +71,8 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
                 participants.add(Arrays.asList(metadata.getValues(ExtraProperties.CONVERSATION_PARTICIPANTS)));
                 admins.add(Arrays.asList(metadata.getValues(ExtraProperties.CONVERSATION_ADMINS)));
             }
+            if (Boolean.parseBoolean(metadata.get(ExtraProperties.CONVERSATION_IS_OWNER_ADMIN)))
+                ownerAdminCount++;
             if (metadata.get(ExtraProperties.COMMUNICATION_FROM) != null)
                 messagefrom.add(metadata.get(ExtraProperties.COMMUNICATION_FROM));
             if (metadata.get(ExtraProperties.COMMUNICATION_TO) != null)

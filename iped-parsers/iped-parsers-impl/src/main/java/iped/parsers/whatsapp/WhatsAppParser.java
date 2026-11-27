@@ -305,6 +305,16 @@ public class WhatsAppParser extends SQLite3DBParser {
         // Expand broadcast chat, from a single chat to one per contact
         expandBroadcastChat(chatList, contacts);        
 
+        // Check if the account owner is admin of group chats (done here to cover all
+        // paths that create reports, including merged backups)
+        if (account != null && !account.isUnknown()) {
+            for (Chat c : chatList) {
+                if (c.getGroupAdmins().stream().map(WAContact::getFullId).anyMatch(account.getFullId()::equals)) {
+                    c.setOwnerAdmin(true);
+                }
+            }
+        }
+
         int chatVirtualId = 0;
         HashMap<String, String> cache = new HashMap<>();
         for (Chat c : chatList) {
@@ -457,12 +467,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                 Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account,
                         shouldRecoverDeletedRecords(filePath));
                 List<Chat> chatList = waExtractor.getChatList();
-                for (Chat chat : chatList) {
-                    chat.setAccount(account);
-                    if (chat.getGroupAdmins().stream().map(WAContact::getFullId).anyMatch(account.getFullId()::equals)) {
-                        chat.setOwnerAdmin(true);
-                    }
-                }
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
 
             } catch (Exception e) {

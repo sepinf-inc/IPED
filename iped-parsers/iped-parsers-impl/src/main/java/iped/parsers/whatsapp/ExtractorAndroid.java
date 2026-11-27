@@ -784,10 +784,29 @@ public abstract class ExtractorAndroid extends Extractor {
             + "AND messages.key_from_me = message_thumbnails.key_from_me) " //$NON-NLS-1$
             + "WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
+    // Group members are users identified by phone (server "s.whatsapp.net", type 0)
+    // or, in newer databases, by LID (server "lid", type 18), mapped to the phone
+    // contacts through jid_map. Types 17 and 19 are devices of those users.
+    // JIDs used for the account owner in group_participant_user
+    static final String OWNER_STATUS_ME = "status_me";
+    static final String OWNER_LID_ME = "lid_me";
+
+    static boolean isAndroidOwnerMemberId(String memberId) {
+        // empty JID is used for the owner in group_participants (older databases)
+        return memberId != null && (memberId.trim().isEmpty() || memberId.equals(OWNER_STATUS_ME)
+                || memberId.equals(OWNER_LID_ME));
+    }
+
+    @Override
+    protected boolean isOwnerMemberId(String memberId) {
+        return isAndroidOwnerMemberId(memberId);
+    }
+
     // to address a field must use ` instead of '
     private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member, admin FROM group_participants where `group`=?";
     static final String SELECT_GROUP_MEMBERS_2 = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member, gp.rank > 0 as admin "
-            + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?";
+            + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where ((u.server='s.whatsapp.net' and u.type=0) or (u.server='lid' and u.type=18) or u.raw_string in ('"
+            + OWNER_STATUS_ME + "', '" + OWNER_LID_ME + "')) and group_name=?";
 
     private static final String SELECT_QUOTES_NO_THUMBS_TABLE = "SELECT mq._id AS id, mq.key_remote_jid "
             + "as remoteId, mq.remote_resource AS remoteResource, mq.status, mq.data, "

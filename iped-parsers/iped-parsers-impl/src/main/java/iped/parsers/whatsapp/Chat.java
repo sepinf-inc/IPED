@@ -26,7 +26,6 @@ public class Chat {
     private Set<WAContact> groupMembers = new HashSet<>();
     private Set<WAContact> groupAdmins = new HashSet<>();
 
-    private WAAccount account;
     private boolean isOwnerAdmin;
 
     public Chat(WAContact remote) {
@@ -167,14 +166,6 @@ public class Chat {
 
     public Set<WAContact> getGroupAdmins() {
         return groupAdmins;
-    }
-
-    public WAAccount getAccount() {
-        return account;
-    }
-
-    public void setAccount(WAAccount account) {
-        this.account = account;
     }
 
     public boolean isOwnerAdmin() {
