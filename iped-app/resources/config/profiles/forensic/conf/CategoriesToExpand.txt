@@ -23,6 +23,7 @@ Apple Configuration Files
 Automatic Destinations
 Custom Destinations
 Event Files
+LevelDB
 
 # Generates registry reports:
 Windows Registry

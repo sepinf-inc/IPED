@@ -18,6 +18,7 @@ import iped.parsers.browsers.chrome.CacheIndexParser;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
+import iped.parsers.leveldb.LevelDbParser;
 import iped.parsers.lnk.LNKShortcutParser;
 import iped.parsers.mail.RFC822Parser;
 import iped.parsers.mail.win10.Win10MailParser;
@@ -65,6 +66,7 @@ public class QueuesProcessingOrder {
 
         // handle wal logs
         mediaTypes.put(SQLite3Parser.MEDIA_TYPE, 2);
+        mediaTypes.put(LevelDbParser.CURRENT, 2);
 
         // links processed after theirs targets 
         mediaTypes.put(LNKShortcutParser.LNK_MEDIA_TYPE, 2);

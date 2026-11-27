@@ -1717,5 +1717,17 @@
     <mime-type type="application/x-customdestinations-entry">
     	<sub-class-of type="application/x-lnk"/>
     </mime-type>
-
+	    
+    <!-- LevelDB Support -->
+	<mime-type type="application/x-leveldb-sstable">
+	    <glob pattern="*.ldb"/>
+	    <glob pattern="*.sst"/>
+	</mime-type>
+	<mime-type type="application/x-leveldb-current">
+	    <!-- Detection must occur before the parsing task for queue routing to work. -->
+	    <glob pattern="CURRENT"/>
+	    <magic priority="70">
+	        <match value="MANIFEST-" type="string" offset="0"/>
+	    </magic>
+	</mime-type>
 </mime-info>
