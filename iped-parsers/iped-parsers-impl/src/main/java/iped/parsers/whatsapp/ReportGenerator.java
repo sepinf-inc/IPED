@@ -875,8 +875,20 @@ public class ReportGenerator {
                             if (notNullNorBlank(evt.getTitle())) {
                                 out.print("<b>[" + format(evt.getTitle()) + "]</b><br>");
                             }
+                            if (notNullNorBlank(evt.getDescription())) {
+                                out.print(format(evt.getDescription()) + "<br>");
+                            }
                             if (evt.getDate() != null) {
-                                out.print(timeFormat.format(evt.getDate()) + "<br>");
+                                out.print(timeFormat.format(evt.getDate()));
+                                if (evt.getEndDate() != null) {
+                                    out.print(" - " + timeFormat.format(evt.getEndDate()));
+                                }
+                                out.print("<br>");
+                            } else if (evt.getEndDate() != null) {
+                                out.print("- " + timeFormat.format(evt.getEndDate()) + "<br>");
+                            }
+                            if (notNullNorBlank(evt.getLocation())) {
+                                out.print(format(evt.getLocation()) + "<br>");
                             }
                         }
                         if (notNullNorBlank(message.getUrl())) {

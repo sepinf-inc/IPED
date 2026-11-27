@@ -1001,9 +1001,19 @@ public abstract class ExtractorIOS extends Extractor {
         if (parts1 != null) {
             List<Part> parts2 = ProtoBufDecoder.findChilds(parts1, 100);
             if (parts2 != null) {
+                // Field 100 holds the event data: 1 = title, 2 = description, 4 = location
+                // (3 = address), 7 = end time (ms). The start time is not stored here, it is
+                // taken from ZMEDIASECTIONID ("event-<start time ms>").
                 title = ProtoBufDecoder.findString(parts2, 1);
                 if (title != null && !title.isBlank()) {
-                    m.setEventData(new EventData(null, title));
+                    EventData evt = new EventData(null, title);
+                    evt.setDescription(ProtoBufDecoder.findString(parts2, 2));
+                    evt.setLocation(ProtoBufDecoder.findString(ProtoBufDecoder.findChilds(parts2, 4), 3));
+                    Long end = ProtoBufDecoder.findLong(parts2, 7);
+                    if (end != null && end > 0) {
+                        evt.setEndDate(new Date(end));
+                    }
+                    m.setEventData(evt);
                     return true;
                 }
             }
