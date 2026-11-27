@@ -173,6 +173,10 @@ public class BitmapBookmarks implements IBookmarks {
         return bookmarkIds;
     }
 
+    public int[] getBookmarkedItemList(int bookmarkId) {
+        return bookmarks.get(bookmarkId).toArray();
+    }
+
     public synchronized void addBookmark(int[] ids, int bookmark) {
         List<Integer> list = new ArrayList<>();
         for (int id : ids) {

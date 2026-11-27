@@ -23,6 +23,7 @@ import iped.data.ICaseData;
 import iped.engine.data.IPEDSource;
 import iped.engine.localization.Messages;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.task.index.ElasticSearchIndexTask;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.ares.AresParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
@@ -208,6 +209,8 @@ public class P2PBookmarker {
                 ipedSrc.getBookmarks().addBookmark(ids, labelId);
                 ipedSrc.getBookmarks().saveState(true);
             }
+            ElasticSearchIndexTask.processBookmarks(ipedSrc.getBookmarks());
+
         } catch (Exception e1) {
             e1.printStackTrace();
 
