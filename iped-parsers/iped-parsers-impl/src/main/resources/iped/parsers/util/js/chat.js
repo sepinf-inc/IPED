@@ -203,23 +203,68 @@ document.addEventListener("DOMContentLoaded", () => {
     window.updateNavigation = updateNavigation;
 
     if (conversation) {
+        const IGNORE_SELECTOR = "a, input, button, audio, video, .check, .quoteTo, .quoteFrom";
+        const DRAG_THRESHOLD = 4;
+        const DBLCLICK_DELAY = 200;
+
+        let startX = 0;
+        let startY = 0;
+        let startLine = null;
+        let clickTimer = null;
+
+        conversation.addEventListener("mousedown", (event) => {
+            if (event.button !== 0) return;
+            if (event.target.closest(IGNORE_SELECTOR)) {
+                startLine = null;
+                return;
+            }
+            startX = event.clientX;
+            startY = event.clientY;
+            startLine = event.target.closest(".line");
+        });
+
         conversation.addEventListener("click", (event) => {
-            // Ignore clicks on interactive elements, including quotes (which jump to the quoted message)
-            if (event.target.closest("a, input, button, audio, video, .check, .quoteTo, .quoteFrom")) {
+            if (event.button !== 0) return;
+            if (event.detail > 1) {
+                clearTimeout(clickTimer);
+                clickTimer = null;
+                return;
+            }
+            if (event.target.closest(IGNORE_SELECTOR)) {
                 return;
             }
             const line = event.target.closest(".line");
-            if (line) {
-                if (line.id) {
-                    const isSel = line.classList.toggle("sel");
-                    if (window.msgApp) {
-                        window.msgApp.selectMessage(line.id, isSel);
-                    }
-                    updateNavigation(line);
-                }
+            if (!line || !line.id || line !== startLine) {
+                return;
             }
+            const moved = Math.hypot(event.clientX - startX, event.clientY - startY);
+            if (moved > DRAG_THRESHOLD) {
+                return;
+            }
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed && sel.toString().trim().length > 0) {
+                return;
+            }
+            clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => {
+                clickTimer = null;
+                const currentSel = window.getSelection();
+                if (currentSel && !currentSel.isCollapsed && currentSel.toString().trim().length > 0) {
+                    return;
+                }
+                const isSel = line.classList.toggle("sel");
+                if (window.msgApp) {
+                    window.msgApp.selectMessage(line.id, isSel);
+                }
+                updateNavigation(line);
+            }, DBLCLICK_DELAY);
+        });
+        conversation.addEventListener("dblclick", () => {
+            clearTimeout(clickTimer);
+            clickTimer = null;
         });
     }
+
     if (btnPrev) {
         btnPrev.addEventListener("click", () => {
             const selectedLines = Array.from(document.querySelectorAll("#conversation .line.sel"));
