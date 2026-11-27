@@ -180,6 +180,13 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
             m.newBookmark(bookmarkName);
     }
 
+    @Override
+    public void newBookmarkHierarchy(List<String> path) {
+        for (IBookmarks m : map.values()) {
+            m.newBookmarkHierarchy(path);
+        }
+    }
+
     public void delBookmark(String bookmarkName) {
         for (IBookmarks m : map.values()) {
             int bookmarkId = m.getBookmarkId(bookmarkName);
