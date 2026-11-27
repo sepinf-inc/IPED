@@ -1764,6 +1764,12 @@ public abstract class ExtractorIOS extends Extractor {
                         }
                         break;
 
+                    case 69:
+                        // Child of announcement group posts (comments related), not shown in the
+                        // chat by the app.
+                        result = IGNORE_MESSAGE;
+                        break;
+
                     case 64:
                         if ("1".equals(data)) {
                             result = COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
