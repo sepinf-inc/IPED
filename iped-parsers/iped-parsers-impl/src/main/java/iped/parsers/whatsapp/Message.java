@@ -3,6 +3,7 @@ package iped.parsers.whatsapp;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.NoSuchFileException;
@@ -26,7 +27,13 @@ import iped.parsers.util.ChildPornHashLookup;
 public class Message implements Comparable<Message> {
 
     private static File thumbsfile;
-    private static FileChannel fileChannel;
+    private static volatile FileChannel fileChannel;
+
+    /**
+     * Maximum number of attempts to access the thumbs file channel, which is shared
+     * by all threads and closed when a thread using it is interrupted.
+     */
+    private static final int MAX_CHANNEL_ATTEMPTS = 3;
     private static AtomicLong fileOffset = new AtomicLong();
     private static AtomicInteger deletedCounter = new AtomicInteger();
 
@@ -237,15 +244,17 @@ public class Message implements Comparable<Message> {
         if (thumbSize == -1) {
             return null;
         }
-        try {
-            ByteBuffer bb = ByteBuffer.allocate(thumbSize);
-            fileChannel.read(bb, thumbOffset);
-            return bb.array();
-        } catch (ClosedChannelException e) {
-            reOpenChannel();
-            return getThumbData();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        for (int attempt = 1;; attempt++) {
+            try {
+                ByteBuffer bb = ByteBuffer.allocate(thumbSize);
+                fileChannel.read(bb, thumbOffset);
+                return bb.array();
+            } catch (ClosedChannelException e) {
+                checkChannelRetry(e, attempt);
+                reOpenChannel();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -254,14 +263,31 @@ public class Message implements Comparable<Message> {
             thumbSize = -1;
             return;
         }
-        try {
-            thumbSize = rawData.length;
-            thumbOffset = fileOffset.getAndAdd(thumbSize);
-            fileChannel.write(ByteBuffer.wrap(rawData), thumbOffset);
-        } catch (ClosedChannelException e) {
-            reOpenChannel();
-            setThumbData(rawData);
-        } catch (IOException e) {
+        thumbSize = rawData.length;
+        thumbOffset = fileOffset.getAndAdd(thumbSize);
+        for (int attempt = 1;; attempt++) {
+            try {
+                fileChannel.write(ByteBuffer.wrap(rawData), thumbOffset);
+                return;
+            } catch (ClosedChannelException e) {
+                checkChannelRetry(e, attempt);
+                reOpenChannel();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
+     * The thumbs file channel is closed when any thread using it is interrupted, so
+     * other threads reopen it and try again (see #1679). The interrupted thread
+     * itself must not retry, otherwise it is interrupted again in an endless loop
+     * (see #2685), so it gives up, as when the maximum number of attempts is
+     * reached.
+     */
+    private static void checkChannelRetry(ClosedChannelException e, int attempt) {
+        if (e instanceof ClosedByInterruptException || Thread.currentThread().isInterrupted()
+                || attempt >= MAX_CHANNEL_ATTEMPTS) {
             throw new RuntimeException(e);
         }
     }
