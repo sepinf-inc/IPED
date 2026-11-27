@@ -290,8 +290,8 @@ public class ReportGenerator {
                 break;
             case OFFERS_ANNOUNCEMENTS:
                 out.println("<div class=\"systemmessage\">");
-                out.println(Messages.getString("WhatsAppReport.OffersAnnoucements"));
-                break;              
+                out.println(Messages.getString("WhatsAppReport.OffersAnnouncements"));
+                break;
             case CHAT_STARTED_FROM_AD:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChatStartedFromAd"));
@@ -867,7 +867,7 @@ public class ReportGenerator {
                         printTitleDesc(out, message);
                         if (message.getEventData() != null) {
                             EventData evt = message.getEventData();
-                            out.print("\uD83D\uDCC5<br>"); // Calendar emoji 
+                            out.print("\uD83D\uDCC5<br>"); // Calendar emoji
                             if (notNullNorBlank(evt.getTitle())) {
                                 out.print("<b>[" + format(evt.getTitle()) + "]</b><br>");
                             }
