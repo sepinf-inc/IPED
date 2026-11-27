@@ -26,10 +26,8 @@ enableLedDie = false
 # An attribute "nsfw_nudity_score" from 0 to 100 will be created.
 enableYahooNSFWDetection = false
 
-# [Experimental] Detects Child Sexual Abuse Material (CSAM) using a TensorFlow, PyTorch or ONNX AI model.
-#
+# Detects Child Sexual Abuse Material (CSAM) using a TensorFlow, PyTorch or ONNX AI model.
 # Prerequisites: Python and the TensorFlow, PyTorch or ONNX library, generated thumbnails for images and videos, file hashes
-#
 # This feature assigns the following properties to the image and video files:
 #     ai:csamDetector:label - classification, possible values are csam, porn or other
 #     ai:csamDetector:csam, ai:csamDetector:porn, ai:csamDetector:other - confidence from 0 to 100 for each category
@@ -37,9 +35,7 @@ enableYahooNSFWDetection = false
 #     ai:csamDetector:triggerFrame - frame number with the highest confidence from the video thumbnails
 #     ai:csamDetector:hitPercentage - percentage of the total frames analyzed in the csam or porn categories
 #     ai:csamDetector:avgConfidence - average of all the confidences of the chosen categorization
-#
 # To change the model to be used and other parameters, edit the file conf/CSAMDetector.txt
-#
 enableCSAMDetector = false
 
 # Enables QR code detection and decoding.
