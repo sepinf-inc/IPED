@@ -3,7 +3,7 @@
 ########################################################################
 
 # Defines program localization/language. Currently there are localizations for 'en', 'pt-BR', 'it-IT', 'de-DE', 'es-AR' and 'fr-FR'.
-locale = en
+locale = es-AR
 
 # Temporary directory for processing: "default" uses the system temporary folder.
 # Configure it to a folder excluded from antivirus scanning, system indexing, or system restore. Using an SSD is highly recommended.
