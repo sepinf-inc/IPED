@@ -800,6 +800,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.AdvancedPrivacyOn") + "<br>");
                 break;
+            case ADVANCED_PRIVACY_OFF:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.AdvancedPrivacyOff") + "<br>");
+                break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChannelAddedPrivacy") + "<br>");

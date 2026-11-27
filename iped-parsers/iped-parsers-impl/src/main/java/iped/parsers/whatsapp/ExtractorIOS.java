@@ -1,5 +1,6 @@
 package iped.parsers.whatsapp;
 
+import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_OFF;
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -916,6 +917,12 @@ public abstract class ExtractorIOS extends Extractor {
                 m.setDuration(decodeEphemeralDuration(metadata));
                 break;
 
+            case ADVANCED_PRIVACY_ON:
+                if (isAdvancedPrivacyOff(metadata)) {
+                    m.setMessageType(ADVANCED_PRIVACY_OFF);
+                }
+                break;
+
             case TEMPLATE_MESSAGE:
                 m.setMessageTemplate(decodeTemplate(metadata, m));
                 if (m.getMessageTemplate() != null && m.getMessageTemplate().getContent().equals(m.getData())) {
@@ -970,6 +977,22 @@ public abstract class ExtractorIOS extends Extractor {
         }
 
         return m;
+    }
+
+    /**
+     * Event type 91 is used both when advanced chat privacy is turned on and off.
+     * The state is stored in field 1 of metadata field 159 (1 = on, 0 = off).
+     */
+    private boolean isAdvancedPrivacyOff(byte[] metadata) {
+        List<Part> parts1 = new ProtoBufDecoder(metadata).decode();
+        if (parts1 != null) {
+            List<Part> parts2 = ProtoBufDecoder.findChilds(parts1, 159);
+            if (parts2 != null) {
+                Long state = ProtoBufDecoder.findLong(parts2, 1);
+                return state != null && state == 0;
+            }
+        }
+        return false;
     }
 
     private boolean decodeEventData(byte[] metadata, Message m) {
