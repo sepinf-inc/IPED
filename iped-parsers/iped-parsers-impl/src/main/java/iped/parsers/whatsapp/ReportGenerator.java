@@ -220,8 +220,8 @@ public class ReportGenerator {
             String lastId = "1000000000";
             while (currentMsg < c.getMessages().size()) {
                 Message m = c.getMessages().get(currentMsg++);
-                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION) {
-                    // These messages are not visible on the app and don't contain any data
+                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION || m.getMessageType() == MessageType.IGNORE_MESSAGE) {
+                    // These messages are not visible on the app and don't contain any useful data
                     continue;
                 }
                 String thisDate = dateFormat.format(m.getTimeStamp());
@@ -287,6 +287,10 @@ public class ReportGenerator {
             case AI_THIRD_PARTY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.AIThirdParty"));
+                break;
+            case OFFERS_ANNOUNCEMENTS:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.OffersAnnouncements"));
                 break;
             case CHAT_STARTED_FROM_AD:
                 out.println("<div class=\"systemmessage\">");
@@ -707,10 +711,15 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ContactedFindBusinesses", name) + "<br>");
                 break;
-            case GROUP_CHANGED_ADMIN_APPROVAL_OFF:
+            case GROUP_ADMIN_APPROVAL_DISABLED:
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
-                out.println(Messages.getString("WhatsAppReport.GroupChangedAdminApprovalOff") + "<br>");
+                out.println(Messages.getString("WhatsAppReport.GroupAdminApprovalDisabled") + "<br>");
+                break;
+            case GROUP_ADMIN_APPROVAL_ENABLED:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.GroupAdminApprovalEnabled") + "<br>");
                 break;
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
@@ -733,6 +742,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedOnlyAdminsCanSend") + "<br>");
                 break;
+            case GROUP_CHANGED_ONLY_ADMINS_CAN_SEND_HISTORY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedOnlyAdminsCanSendHistory") + "<br>");
+                break;
             case GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedAllMembersCanEdit") + "<br>");
@@ -744,6 +757,10 @@ public class ReportGenerator {
             case GROUP_CHANGED_ALL_MEMBERS_CAN_INVITE:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedAllMembersCanInvite") + "<br>");
+                break;
+            case GROUP_CHANGED_ONLY_ADMINS_CAN_INVITE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedOnlyAdminsCanInvite") + "<br>");
                 break;
             case GROUP_ONLY_ADMINS_CAN_SEND:
                 out.println("<div class=\"systemmessage\">");
@@ -783,6 +800,48 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.AdvancedPrivacyOn") + "<br>");
                 break;
+            case ADVANCED_PRIVACY_OFF:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.AdvancedPrivacyOff") + "<br>");
+                break;
+            case GROUP_MEMBERS_CHANGED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.GroupMembersChanged") + "<br>");
+                break;
+            case COMMUNITY_DEACTIVATED:
+                out.println("<div class=\"systemmessage\">");
+                if (notNullNorBlank(message.getData())) {
+                    out.println(Messages.getString("WhatsAppReport.CommunityDeactivatedName", name,
+                            format(message.getData())) + "<br>");
+                } else {
+                    out.println(Messages.getString("WhatsAppReport.CommunityDeactivated", name) + "<br>");
+                }
+                break;
+            case COMMUNITY_AUTO_ADD_DISABLED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityAutoAddDisabled") + "<br>");
+                break;
+            case COMMUNITY_AUTO_ADD_DISABLED_GROUP_FULL:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityAutoAddDisabledGroupFull") + "<br>");
+                break;
+            case VERIFIED_SECURITY_CODE_CHANGED:
+                out.println("<div class=\"systemmessage\">");
+                out.print(lockedIcon);
+                out.println(Messages.getString("WhatsAppReport.VerifiedSecurityCodeChanged") + "<br>");
+                break;
+            case META_AI_DISCLAIMER:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.MetaAIDisclaimer") + "<br>");
+                break;
+            case USERNAME_CREATED:
+                out.println("<div class=\"systemmessage\">");
+                String username = message.getData() == null ? "" : message.getData();
+                if (!username.isEmpty() && !username.startsWith("@")) {
+                    username = "@" + username;
+                }
+                out.println(Messages.getString("WhatsAppReport.UsernameCreated", name, format(username)) + "<br>");
+                break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChannelAddedPrivacy") + "<br>");
@@ -802,6 +861,14 @@ public class ReportGenerator {
             case PINNED_MESSAGE:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.PinnedMessage") + ".<br>");
+                break;
+            case SENT_HISTORY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.SentHistory") + ".<br>");
+                break;
+            case MENTIONED_YOU_IN_STATUS:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.MentionedYouInStatus") + ".<br>");
                 break;
 
             default:
@@ -833,12 +900,35 @@ public class ReportGenerator {
  
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
+                    case SCHEDULED_EVENT:
                     case TEMPLATE_QUOTE:
                     case UI_ELEMENTS_QUOTE:
                     case UI_ELEMENTS:
                         // Some textual messages may have thumbs, URL and UIElements
                         printThumb(out, message);
                         printTitleDesc(out, message);
+                        if (message.getEventData() != null) {
+                            EventData evt = message.getEventData();
+                            out.print("\uD83D\uDCC5<br>"); // Calendar emoji
+                            if (notNullNorBlank(evt.getTitle())) {
+                                out.print("<b>[" + format(evt.getTitle()) + "]</b><br>");
+                            }
+                            if (notNullNorBlank(evt.getDescription())) {
+                                out.print(format(evt.getDescription()) + "<br>");
+                            }
+                            if (evt.getDate() != null) {
+                                out.print(timeFormat.format(evt.getDate()));
+                                if (evt.getEndDate() != null) {
+                                    out.print(" - " + timeFormat.format(evt.getEndDate()));
+                                }
+                                out.print("<br>");
+                            } else if (evt.getEndDate() != null) {
+                                out.print("- " + timeFormat.format(evt.getEndDate()) + "<br>");
+                            }
+                            if (notNullNorBlank(evt.getLocation())) {
+                                out.print(format(evt.getLocation()) + "<br>");
+                            }
+                        }
                         if (notNullNorBlank(message.getUrl())) {
                             out.print(format(message.getUrl()) + "<br>");
                         }
