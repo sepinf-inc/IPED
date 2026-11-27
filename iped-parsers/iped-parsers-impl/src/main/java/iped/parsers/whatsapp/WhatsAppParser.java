@@ -378,7 +378,11 @@ public class WhatsAppParser extends SQLite3DBParser {
                     if (account != null) {
                         addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, account);
                     }
-                    chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationConstants.TYPE_ONEONONE);
+                    // broadcast lists (<id>@broadcast) send the same message to many contacts
+                    boolean isBroadcastList = c.getRemote() != null
+                            && c.getRemote().getFullId().endsWith(WAContact.waBroadcastSuffix);
+                    chatMetadata.set(ExtraProperties.CONVERSATION_TYPE,
+                            isBroadcastList ? ConversationConstants.TYPE_BROADCAST : ConversationConstants.TYPE_ONEONONE);
                 }
 
                 // Communication:{ID, Name, Account, MessagesCount, isEmpty} 
