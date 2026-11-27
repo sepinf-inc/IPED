@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +37,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -211,21 +213,46 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(ExtraProperties.DELETED, Boolean.toString(c.isDeleted()));
             chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
+            // the account may be unresolved (null on iOS, or id 0 when unknown)
+            Contact ownerAccount = null;
+            if (account != null && account.getId() != 0) {
+                ownerAccount = e.getContacts() != null ? e.getContacts().get(account.getId()) : null;
+                if (ownerAccount == null) {
+                    ownerAccount = account;
+                }
+            }
+
             if (c.isGroupOrChannel()) {
                 ChatGroup cg = (ChatGroup) c;
-                for (long id : cg.getAdmins()) {
-                    addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_ADMINS, id);
-                    addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_PARTICIPANTS, id);
-                    if (id == e.getUserAccount().getId()) {
-                        chatMetadata.set(ExtraProperties.CONVERSATION_IS_OWNER_ADMIN, true);
+                // admins are also participants, and may also be in the members set
+                Set<Long> participants = new LinkedHashSet<>(cg.getAdmins());
+                participants.addAll(cg.getMembers());
+                Set<Long> admins = new LinkedHashSet<>(cg.getAdmins());
+                if (cg.isOwnerAdmin() && ownerAccount != null) {
+                    // owner is creator/admin according to the group data
+                    admins.add(ownerAccount.getId());
+                    participants.add(ownerAccount.getId());
+                }
+                if (cg.isOwnerAdmin() || (ownerAccount != null && admins.contains(ownerAccount.getId()))) {
+                    chatMetadata.set(ExtraProperties.CONVERSATION_IS_OWNER_ADMIN, true);
+                }
+                for (long id : admins) {
+                    if (ownerAccount != null && id == ownerAccount.getId()) {
+                        addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_ADMINS, ownerAccount);
+                    } else {
+                        addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_ADMINS, id);
                     }
                 }
-                for (long id : cg.getMembers()) {
+                for (long id : participants) {
                     addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_PARTICIPANTS, id);
+                }
+                // total informed by the app, may be greater than the known participants
+                if (cg.getParticipantsCount() > 0) {
+                    chatMetadata.set(ExtraProperties.CONVERSATION_PARTICIPANTS_COUNT, cg.getParticipantsCount());
                 }
             } else {
                 addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_PARTICIPANTS, c.getId());
-                addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_PARTICIPANTS, e.getUserAccount().getId());
+                addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, ownerAccount);
             }
 
             if (c.isChannel()) {
@@ -237,11 +264,11 @@ public class TelegramParser extends SQLite3DBParser {
             }
 
             // Communication:Account
-            addPartyFields(chatMetadata, e, ExtraProperties.CONVERSATION_ACCOUNT, e.getUserAccount().getId());
+            addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_ACCOUNT, ownerAccount);
 
             // Communication:{ID, Name, , MessagesCount} 
             chatMetadata.set(ExtraProperties.CONVERSATION_ID, Long.toString(c.isGroupOrChannel() ? -c.getId() :c.getId()));
-            chatMetadata.set(ExtraProperties.CONVERSATION_NAME, c.getC().getFullname());
+            chatMetadata.set(ExtraProperties.CONVERSATION_NAME, getChatName(c));
             chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
 
             List<MessageMultiMedia> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
@@ -287,8 +314,21 @@ public class TelegramParser extends SQLite3DBParser {
         } else {
             title += "Chat";
         }
-        title += " - " + c.getC().toString();
+        if (c.isGroupOrChannel() && StringUtils.isBlank(c.getC().getFullname()) && StringUtils.isNotBlank(c.getName())) {
+            // group/channel data not decoded, use the name stored in the chats table
+            title += " - " + c.getName() + " (ID:" + Math.abs(c.getId()) + ")";
+        } else {
+            title += " - " + c.getC().toString();
+        }
         return title;
+    }
+
+    private static String getChatName(Chat c) {
+        String name = c.getC().getFullname();
+        if (c.isGroupOrChannel() && StringUtils.isBlank(name)) {
+            name = c.getName();
+        }
+        return StringUtils.isNotBlank(name) ? name : null;
     }
 
     private void extractMessages(String chatName, List<MessageMultiMedia> messages, Contact account, Extractor e,

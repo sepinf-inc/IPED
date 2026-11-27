@@ -220,7 +220,20 @@ public class Extractor {
                     }
                     addAdmins(conn, group);
 
+                    // "creator" and "admin_rights" refer to the account owner (current user)
+                    if ("true".equals(m.get("creator")) || m.get("admin_rights") != null) {
+                        group.setOwnerAdmin(true);
+                    }
+
                     int participantsCount = getParticipantsCount(conn, group);
+                    if (participantsCount <= 0 && m.get("participants_count") != null) {
+                        // e.g. basic groups, which have the count only in the group data
+                        try {
+                            participantsCount = Integer.parseInt(m.get("participants_count").toString());
+                        } catch (NumberFormatException e) {
+                            // ignore
+                        }
+                    }
                     group.setParticipantsCount(participantsCount);
                 }
                 if (cg != null) {
@@ -379,7 +392,7 @@ public class Extractor {
             }
             setFrom(message, chat);
 
-            if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
+            if (cg != null && message.getFrom().getId() != 0 && Math.abs(message.getFrom().getId()) != Math.abs(cg.getId())) {
                 cg.addMember(message.getFrom().getId());
             }
 
@@ -500,7 +513,7 @@ public class Extractor {
                             }
                         }
     
-                        if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
+                        if (cg != null && message.getFrom().getId() != 0 && Math.abs(message.getFrom().getId()) != Math.abs(cg.getId())) {
                             cg.addMember(message.getFrom().getId());
                         }
     

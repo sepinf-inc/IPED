@@ -74,6 +74,7 @@ Conversation:id = java.lang.String
 Conversation:Type = java.lang.String
 Conversation:Name = java.lang.String
 Conversation:messagesCount = java.lang.Integer
+Conversation:participantsCount = java.lang.Integer
 Conversation:isOwnerAdmin = java.lang.Boolean
 Conversation:Account = java.lang.String
 Conversation:Account:id = java.lang.String

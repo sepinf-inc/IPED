@@ -26,6 +26,7 @@ public class ChatGroup extends Chat {
     private final Set<Long> members = new HashSet<Long>();
     private final Set<Long> admins = new HashSet<Long>();
     private int participantsCount;
+    private boolean ownerAdmin;
 
     public ChatGroup(long id, Contact c, String name) {
         super(id, c, name);
@@ -54,6 +55,18 @@ public class ChatGroup extends Chat {
 
     public void setParticipantsCount(int participantsCount) {
         this.participantsCount = participantsCount;
+    }
+
+    /**
+     * @return true if the account owner is the creator or an admin of the group,
+     *         according to the group data
+     */
+    public boolean isOwnerAdmin() {
+        return ownerAdmin;
+    }
+
+    public void setOwnerAdmin(boolean ownerAdmin) {
+        this.ownerAdmin = ownerAdmin;
     }
 
     public String toString() {

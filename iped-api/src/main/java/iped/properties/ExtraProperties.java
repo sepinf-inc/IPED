@@ -55,6 +55,12 @@ public class ExtraProperties {
 
     public static final String CONVERSATION_PARTICIPANTS = CONVERSATION_PREFIX + "Participants";
 
+    /**
+     * Total number of participants as informed by the app (e.g. Telegram groups and
+     * channels), which may be greater than the participants listed in the database.
+     */
+    public static final Property CONVERSATION_PARTICIPANTS_COUNT = Property.internalInteger(CONVERSATION_PREFIX + "participantsCount");
+
     public static final Property CONVERSATION_MESSAGES_COUNT = Property.internalInteger(CONVERSATION_PREFIX + "messagesCount");
 
     public static final Property CONVERSATION_IS_EMPTY = Property.internalBoolean(CONVERSATION_PREFIX + "isEmpty");

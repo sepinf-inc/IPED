@@ -41,7 +41,8 @@ public class TelegramParserTest extends AbstractPkgTest {
         assertEquals(236, telegramtracker.userphone.size());
         assertEquals(261, telegramtracker.useraccount.size());
         assertEquals(118, telegramtracker.usernotes.size());
-        assertEquals(32, telegramtracker.groupParticipants.size());
+        // includes groups created by the account owner (creator flag), listing the owner
+        assertEquals(33, telegramtracker.groupParticipants.size());
         assertEquals(69, telegramtracker.privateParticipants.size());
         assertEquals(151, telegramtracker.messagefrom.size());
         assertEquals(151, telegramtracker.messagebody.size());
@@ -117,7 +118,7 @@ public class TelegramParserTest extends AbstractPkgTest {
         parseTelegramDB("test-files/test_telegramCache4NoChannelUsers.db");
         assertEquals(2, telegramtracker.username.size());
         assertEquals(1, telegramtracker.messagebody.size());
-        assertTrue(telegramtracker.title.contains("Telegram_Group_mixirica e noronhe-se"));
+        assertTrue(telegramtracker.title.contains("Telegram Group - Mixirica e noronhe-se (ID:136232058)"));
     }
 
     @Test
