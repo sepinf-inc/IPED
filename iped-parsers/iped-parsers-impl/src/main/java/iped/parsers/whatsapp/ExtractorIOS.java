@@ -5,6 +5,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_MEMBERS_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DEACTIVATED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_AUTO_ADD_DISABLED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_AUTO_ADD_DISABLED_GROUP_FULL;
+import static iped.parsers.whatsapp.Message.MessageType.META_AI_DISCLAIMER;
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -1884,6 +1885,11 @@ public abstract class ExtractorIOS extends Extractor {
 
                     case 62:
                         result = IGNORE_MESSAGE;
+                        break;
+
+                    case 63:
+                        // Notice placed before the first Meta AI mention in a chat
+                        result = META_AI_DISCLAIMER;
                         break;
 
                     case 67:
