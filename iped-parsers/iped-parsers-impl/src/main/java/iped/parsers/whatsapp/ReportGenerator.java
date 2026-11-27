@@ -825,6 +825,11 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityAutoAddDisabledGroupFull") + "<br>");
                 break;
+            case VERIFIED_SECURITY_CODE_CHANGED:
+                out.println("<div class=\"systemmessage\">");
+                out.print(lockedIcon);
+                out.println(Messages.getString("WhatsAppReport.VerifiedSecurityCodeChanged") + "<br>");
+                break;
             case META_AI_DISCLAIMER:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.MetaAIDisclaimer") + "<br>");

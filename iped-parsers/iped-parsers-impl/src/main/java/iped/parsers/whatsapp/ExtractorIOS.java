@@ -7,6 +7,7 @@ import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_AUTO_ADD_DISAB
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_AUTO_ADD_DISABLED_GROUP_FULL;
 import static iped.parsers.whatsapp.Message.MessageType.META_AI_DISCLAIMER;
 import static iped.parsers.whatsapp.Message.MessageType.USERNAME_CREATED;
+import static iped.parsers.whatsapp.Message.MessageType.VERIFIED_SECURITY_CODE_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -1914,6 +1915,12 @@ public abstract class ExtractorIOS extends Extractor {
 
                     case 91:
                         result = ADVANCED_PRIVACY_ON;
+                        break;
+
+                    case 130:
+                        // "Your security code with ... changed. They are no longer verified."
+                        // The contact is not stored (the app itself shows it blank).
+                        result = VERIFIED_SECURITY_CODE_CHANGED;
                         break;
                 }
                 break;
