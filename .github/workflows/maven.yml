@@ -144,13 +144,13 @@ jobs:
         key: ${{ steps.build.outcome == 'success' && steps.m2.outputs.cache-primary-key || format('{0}-partial-{1}-{2}-{3}', steps.m2.outputs.cache-primary-key, github.job, github.run_id, github.run_attempt) }}
 
     - name: Package snapshot
+      # The folders of the release (iped-<version> and plugins) at the root of the tar.gz.
       # pigz: gzip on all cores. No -v: listing every file made up 40% of the job log.
-      run: cd target && mv release iped-snapshot-$GITHUB_SHA && tar -I pigz -cf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
+      run: tar -I pigz -cf "iped-snapshot-$GITHUB_SHA.tar.gz" -C target/release $(ls -A target/release)
 
     - name: Upload snapshot
       uses: actions/upload-artifact@v7
       with:
-        name: iped-snapshot-${{ github.sha }}
-        path: iped-snapshot.tar.gz
-        # already a .tar.gz: do not compress it again
-        compression-level: 0
+        path: iped-snapshot-${{ github.sha }}.tar.gz
+        # uploads the tar.gz itself, named after the file, instead of a zip with it inside
+        archive: false
