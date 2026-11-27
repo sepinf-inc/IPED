@@ -817,6 +817,14 @@ public class ReportGenerator {
                     out.println(Messages.getString("WhatsAppReport.CommunityDeactivated", name) + "<br>");
                 }
                 break;
+            case COMMUNITY_AUTO_ADD_DISABLED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityAutoAddDisabled") + "<br>");
+                break;
+            case COMMUNITY_AUTO_ADD_DISABLED_GROUP_FULL:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityAutoAddDisabledGroupFull") + "<br>");
+                break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChannelAddedPrivacy") + "<br>");

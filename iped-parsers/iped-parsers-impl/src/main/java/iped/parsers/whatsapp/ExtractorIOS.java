@@ -3,6 +3,8 @@ package iped.parsers.whatsapp;
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_OFF;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_MEMBERS_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DEACTIVATED;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_AUTO_ADD_DISABLED;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_AUTO_ADD_DISABLED_GROUP_FULL;
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -924,6 +926,11 @@ public abstract class ExtractorIOS extends Extractor {
                 m.setData(communityName == null ? "" : communityName);
                 break;
 
+            case COMMUNITY_AUTO_ADD_DISABLED:
+            case COMMUNITY_AUTO_ADD_DISABLED_GROUP_FULL:
+                m.setData("");
+                break;
+
             case ADVANCED_PRIVACY_ON:
                 if (isAdvancedPrivacyOff(metadata)) {
                     m.setMessageType(ADVANCED_PRIVACY_OFF);
@@ -1746,6 +1753,15 @@ public abstract class ExtractorIOS extends Extractor {
                         
                     case 60:
                         result = COMMUNITY_WELCOME;
+                        break;
+
+                    case 68:
+                        // DATA is {"group_is_full":false} or {"group_is_full":true}
+                        if (data != null && data.replace(" ", "").contains("\"group_is_full\":true")) {
+                            result = COMMUNITY_AUTO_ADD_DISABLED_GROUP_FULL;
+                        } else {
+                            result = COMMUNITY_AUTO_ADD_DISABLED;
+                        }
                         break;
 
                     case 64:
