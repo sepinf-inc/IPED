@@ -224,6 +224,10 @@ public class Extractor {
                     if ("true".equals(m.get("creator")) || m.get("admin_rights") != null) {
                         group.setOwnerAdmin(true);
                     }
+                    // only if the group data was decoded
+                    if (m.get("left") != null && !"true".equals(m.get("left")) && !"true".equals(m.get("kicked"))) {
+                        group.setOwnerMember(true);
+                    }
 
                     int participantsCount = getParticipantsCount(conn, group);
                     if (participantsCount <= 0 && m.get("participants_count") != null) {

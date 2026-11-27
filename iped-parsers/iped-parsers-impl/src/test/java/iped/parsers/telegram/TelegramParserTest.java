@@ -41,8 +41,9 @@ public class TelegramParserTest extends AbstractPkgTest {
         assertEquals(236, telegramtracker.userphone.size());
         assertEquals(261, telegramtracker.useraccount.size());
         assertEquals(118, telegramtracker.usernotes.size());
-        // includes groups created by the account owner (creator flag), listing the owner
-        assertEquals(33, telegramtracker.groupParticipants.size());
+        // includes groups listing only the account owner, as creator or member (not
+        // left/kicked) according to the group data
+        assertEquals(38, telegramtracker.groupParticipants.size());
         assertEquals(69, telegramtracker.privateParticipants.size());
         assertEquals(151, telegramtracker.messagefrom.size());
         assertEquals(151, telegramtracker.messagebody.size());

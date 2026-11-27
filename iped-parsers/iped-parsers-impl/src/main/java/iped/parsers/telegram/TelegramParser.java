@@ -233,6 +233,9 @@ public class TelegramParser extends SQLite3DBParser {
                     admins.add(ownerAccount.getId());
                     participants.add(ownerAccount.getId());
                 }
+                if (cg.isOwnerMember() && ownerAccount != null) {
+                    participants.add(ownerAccount.getId());
+                }
                 if (cg.isOwnerAdmin() || (ownerAccount != null && admins.contains(ownerAccount.getId()))) {
                     chatMetadata.set(ExtraProperties.CONVERSATION_IS_OWNER_ADMIN, true);
                 }
