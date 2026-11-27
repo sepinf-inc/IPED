@@ -91,6 +91,7 @@ import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewRepository;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.index.IndexItem;
+import iped.engine.util.HashIndex;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
@@ -157,7 +158,7 @@ public class ExportFileTask extends AbstractTask {
     private static ExportFileTask lastInstance = null;
     private static LockManager<String> lockManager;
 
-    private HashMap<IHashValue, IHashValue> hashMap;
+    private HashIndex hashIndex;
     private List<String> noContentLabels;
     private ExportByCategoriesConfig exportByCategories;
     private ExportByKeywordsConfig exportByKeywords;
@@ -348,9 +349,7 @@ public class ExportFileTask extends AbstractTask {
                 // store references to -nocontent items to be deleted from sqlite storages
                 IHashValue hashValue = evidence.getHashValue();
                 if (hashValue != null) {
-                    synchronized (hashMap) {
-                        // this uses less memory reusing a previous stored reference
-                        hashValue = hashMap.get(hashValue);
+                    synchronized (noContentHashes) {
                         noContentHashes.add(hashValue);
                     }
                 }
@@ -539,11 +538,7 @@ public class ExportFileTask extends AbstractTask {
             if (!hashFile.getParentFile().exists()) {
                 hashFile.getParentFile().mkdirs();
             }
-            IHashValue hashVal = new HashValue(hash);
-            IHashValue hashLock;
-            synchronized (hashMap) {
-                hashLock = hashMap.get(hashVal);
-            }
+            Object hashLock = hashIndex.lockFor(new HashValue(hash));
 
             synchronized (hashLock) {
                 if (!hashFile.exists()) {
@@ -643,10 +638,7 @@ public class ExportFileTask extends AbstractTask {
             outputFile = new File(getSubDir(extractDir), Util.getValidFilename(counter.getAndIncrement() + ext));
         } else if ((hash = evidence.getHash()) != null && !hash.isEmpty()) {
             outputFile = getHashFile(hash, ext);
-            IHashValue hashVal = new HashValue(hash);
-            synchronized (hashMap) {
-                hashLock = hashMap.get(hashVal);
-            }
+            hashLock = hashIndex.lockFor(new HashValue(hash));
 
         } else {
             outputFile = new File(extractDir, Util.getValidFilename("0" + counter.getAndIncrement() + ext)); //$NON-NLS-1$
@@ -874,14 +866,14 @@ public class ExportFileTask extends AbstractTask {
         itensExtracted.set(0);
         subDirCounter = 0;
 
-        hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
+        hashIndex = (HashIndex) caseData.getCaseObject(DuplicateTask.HASH_MAP);
 
         initLockManager();
     }
 
     @Override
     public void finish() throws Exception {
-        hashMap.clear();
+        hashIndex.clear();
         if (storageCon.get(output) != null) {
             for (Entry<Integer, Connection> entry : storageCon.get(output).entrySet()) {
                 Connection con = entry.getValue();
