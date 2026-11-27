@@ -22,6 +22,7 @@ import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import iped.data.IItemReader;
 import iped.io.SeekableInputStream;
@@ -174,6 +175,7 @@ public class UsnJrnlParser extends AbstractParser {
          * Optionally extract entries as subitems
          */
         if (extractEntries) {
+            DefaultHandler dfh = new DefaultHandler();
             for (UsnJrnlEntry entry : entries) {
                 extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
                 Metadata metadataItem = new Metadata();
@@ -202,7 +204,7 @@ public class UsnJrnlParser extends AbstractParser {
                 }
                 metadataItem.set(props[9], Long.toString(entry.getSourceInformation()));
                 metadataItem.set(props[10], Long.toString(entry.getSecurityId()));
-                extractor.parseEmbedded(new EmptyInputStream(), handler, metadataItem, false);
+                extractor.parseEmbedded(new EmptyInputStream(), dfh, metadataItem, false);
 
             }
         }

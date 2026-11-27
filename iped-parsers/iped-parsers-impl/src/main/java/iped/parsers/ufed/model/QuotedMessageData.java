@@ -12,7 +12,7 @@ public class QuotedMessageData extends BaseModel {
     }
 
     // Specific field getters
-    public String getOriginalMessageID() { return (String) getField("OriginalMessageID"); }
-    public String getReferenceId() { return (String) getField("ReferenceId"); }
-    public String getLabel() { return (String) getField("Label"); }
+    public String getOriginalMessageID() { return getFieldAsString("OriginalMessageID"); }
+    public String getReferenceId() { return getFieldAsString("ReferenceId"); }
+    public String getLabel() { return getFieldAsString("Label"); }
 }

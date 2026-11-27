@@ -319,16 +319,6 @@ function process(e){
 		)
 		e.addCategory("Shareaza");
 	
-		
-	//Telegram
-	if (name.equals("translit.cache") === true){
-		e.addCategory("Telegram");
-		e.addCategory("Contacts");
-	}
-	if ((path.indexOf("ph.telegra.telegraph") !== -1))	{
-		e.addCategory("Telegram");	
-	}
-	
 	//Categories for Brazilian Software
 	
 	//Program Files of Federal Taxes Agency

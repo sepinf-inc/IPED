@@ -255,6 +255,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+        if ("output".equals(evt.getPropertyName())) {
+            String outDir = (String) evt.getNewValue();
+            setTitle(Version.APP_NAME + " - [" + outDir + "]");
+            return;
+        }
+
         if (processingStart == 0) {
             processingStart = System.currentTimeMillis();
             physicalMemory = Util.getPhysicalMemorySize();
@@ -264,7 +270,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         if ("discoverEnded".equals(evt.getPropertyName())) {
             discoverEnded = true;
             update();
-            
+
         } else if ("update".equals(evt.getPropertyName())) {
             update();
 

@@ -77,6 +77,14 @@ public class PostBoxObject {
         return 0;
     }
 
+    public int getInteger(String key, int notFound) {
+        Object obj = fields.get(key);
+        if (obj != null && obj instanceof Integer) {
+            return (Integer) obj;
+        }
+        return notFound;
+    }
+
     public long getLong(String key) {
         Object obj = fields.get(key);
         if (obj != null && obj instanceof Long) {

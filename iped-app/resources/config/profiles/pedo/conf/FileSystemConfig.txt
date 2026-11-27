@@ -1,8 +1,8 @@
-# Add and process unallocated areas of images.
+# Adds and processes unallocated areas of images.
 addUnallocated = true
 
-# Add and process file slacks.
+# Adds and processes file slacks.
 addFileSlacks = true
 
-# This is 10x greater than default profile value to improve carving of large videos.
+# This is 10x greater than the default profile value, to improve carving of large videos.
 unallocatedFragSize = 10737418240

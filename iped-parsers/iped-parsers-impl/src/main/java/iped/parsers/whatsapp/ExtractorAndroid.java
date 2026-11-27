@@ -60,6 +60,7 @@ import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.sqlite.SQLiteUndeleteTableResultSetAdapter;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
 
@@ -107,6 +108,7 @@ public abstract class ExtractorAndroid extends Extractor {
 
         if (recoverDeletedRecords) {
             try {
+                warnIfLowMemoryToRecoverDeletedRecords();
                 SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
                 undelete.addTableToRecover("messages"); //$NON-NLS-1$
                 undelete.addRecordValidator("messages", new WAAndroidMessageValidator()); //$NON-NLS-1$
@@ -187,7 +189,7 @@ public abstract class ExtractorAndroid extends Extractor {
                         WAContact remote = contacts.getContact(contactId);
                         Chat c = new Chat(remote);
                         c.setId(rs.getLong("id")); //$NON-NLS-1$
-                        c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
+                        c.setSubject(ChatUtil.getUTF8String(rs, "subject")); //$NON-NLS-1$
                         c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                         if (recoverDeletedRecords) {
                             activeChats.add(contactId);
@@ -479,7 +481,7 @@ public abstract class ExtractorAndroid extends Extractor {
         m.setData(rs.getString("data")); //$NON-NLS-1$
         m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
         m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
-        m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
+        m.setUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
         m.setMediaMime(rs.getString("mediaMime")); //$NON-NLS-1$
         m.setMediaName(rs.getString("mediaName")); //$NON-NLS-1$
         m.setMediaCaption(caption); // $NON-NLS-1$

@@ -1,2 +1,2 @@
-# Add and process unallocated areas of images.
+# Adds and processes unallocated areas of images.
 addUnallocated = true

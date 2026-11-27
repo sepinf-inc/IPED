@@ -1,13 +1,13 @@
 package iped.parsers.external;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -29,15 +29,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.ExternalParserConfigGenerator;
-import iped.parsers.util.RepoToolDownloader;
+import iped.parsers.util.TestTools;
+import iped.parsers.util.ToXMLContentHandler;
 
 
 public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
-    private static String tmpPath = "/src/test/tmp/";
-    private static String userDir = System.getProperty("user.dir");
-    private static String absoluteTmpPath = userDir + tmpPath;
-    private static String XMLFilePath = absoluteTmpPath + "/ExternalParsers.xml";
-    private static String osName = System.getProperty("os.name").toLowerCase();
+    // the tools are unpacked by maven: see TestTools
+    private static String tmpPath = TestTools.RELATIVE_DIR;
+    private static String XMLFilePath = TestTools.ROOT + "/ExternalParsers.xml";
     private static File XMLFile;
     private static List<ExternalParser> parsers;
     private static ExternalParser superfetchParser, prefetchParser, recyclebinParser,
@@ -66,18 +65,12 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     @BeforeClass
     public static void setUp() throws IOException, TikaException, TransformerException, ParserConfigurationException, SAXException {
         XMLFile = new File(XMLFilePath);
-        new File(absoluteTmpPath).mkdir();
+        XMLFile.getParentFile().mkdirs();
+        XMLFile.delete();
 
-        // download all external parsers tools
-        if (osName.startsWith("windows")) {
-            List<String> repoPaths = new ArrayList<>();
-            repoPaths.add("libyal/libagdb/20181111.1/libagdb-20181111.1.zip");
-            repoPaths.add("libyal/sccainfo/20170205.1/sccainfo-20170205.1.zip");
-            repoPaths.add("abelcheung/rifiuti2/0.7.0/rifiuti2-0.7.0.zip"); // recyclebin and recyclebinINFO2 parsers
-            repoPaths.add("libyal/evtxexport/20170122.1/evtxexport-20170122.1.zip");
-            repoPaths.add("libyal/evtexport/20180317.1/evtexport-20180317.1.zip");
-            for (String repoPath : repoPaths) {
-                RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
+        if (SystemUtils.IS_OS_WINDOWS) {
+            for (String tool : new String[] { "libagdb", "sccainfo", "rifiuti2", "evtxexport", "evtexport" }) {
+                TestTools.dir(tool);
             }
         }
 
@@ -89,6 +82,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         // append Prefetch parser configuration to the same file
         ExternalParserConfigGenerator prefetchConfigGenerator = createExternalParserConfig("PrefetchParser", tmpPath + "sccainfo/",
             "sccainfo -V", "sccainfo ${INPUT}", "x-prefetch", 0, "ISO-8859-1");
+        prefetchConfigGenerator.setUnescapeOutput(true);
         prefetchConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append RecycleBin parser
@@ -136,9 +130,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
 
     @AfterClass
     public static void tearDown() throws IOException {
-        if (osName.startsWith("windows")) {
-            FileUtils.deleteDirectory(new File(absoluteTmpPath));
-        }
         XMLFile.delete();
     }
 
@@ -187,6 +178,31 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     }
 
     @Test
+    public void testPreFetchPreviewKeepsLineBreaks() throws IOException, TikaException, SAXException, TransformerException {
+
+        ToXMLContentHandler handler = new ToXMLContentHandler();
+        ParseContext context = new ParseContext();
+        Metadata metadata = new Metadata();
+        String fileName = "test_prefetch.pf";
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
+            assumeNotNull(prefetchParser);
+            prefetchParser.parse(stream, handler, metadata, context);
+            String hts = handler.toString();
+
+            int start = hts.indexOf("<pre>");
+            int end = hts.indexOf("</pre>");
+            assertTrue(start != -1);
+            assertTrue(end > start);
+
+            String body = hts.substring(start + "<pre>".length(), end);
+            assertTrue(body.contains("TEAMS.EXE"));
+            assertTrue(body.split("\n", -1).length > 5);
+        }
+    }
+
+    @Test
     public void testRecycleBin() throws IOException, TikaException, SAXException, TransformerException {
 
         ContentHandler handler = new BodyContentHandler(1 << 20);
@@ -221,11 +237,11 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             String hts = handler.toString();
 
             assertTrue(hts.contains("2008-10-28 15:53:42"));
-            assertTrue(hts.contains("No"));
+            assertTrue(hts.contains("No") || hts.contains("FALSE"));
             assertTrue(hts.contains("4096"));
             assertTrue(hts.contains("C:\\Documents and Settings\\All Users\\Desktop\\有道桌面词典.lnk"));
             assertTrue(hts.contains("2008-11-19 05:07:35"));
-            assertTrue(hts.contains("Yes"));
+            assertTrue(hts.contains("Yes") || hts.contains("TRUE"));
             assertTrue(hts.contains("2727936"));
             assertTrue(hts.contains("C:\\Documents and Settings\\Administrator\\Desktop\\GetDataBackforFAT-v3.63_PConline"));
         }
@@ -282,6 +298,24 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
                 assertTrue(eventNumbers.get(i-1).matches("Event number.*" + String.valueOf(i)));
             }
 
+        }
+    }
+
+    @Test
+    public void testToolNotFound() throws IOException, SAXException {
+
+        ExternalParser parser = new ExternalParser();
+        parser.setParserName("MissingToolParser");
+        parser.setCommand("iped-missing-external-tool " + ExternalParser.INPUT_FILE_TOKEN);
+
+        Metadata metadata = new Metadata();
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "test_evtxLog.evtx");
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_evtxLog.evtx")) {
+            parser.parse(stream, new BodyContentHandler(), metadata, new ParseContext());
+            fail("A TikaException should be thrown if the external tool can not be started");
+        } catch (TikaException e) {
+            assertTrue(e.getCause() instanceof IOException);
         }
     }
 

@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URISyntaxException;
@@ -170,6 +170,12 @@ public class Bootstrap {
                 cmd.add("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"); // fix for #1719
             }
             cmd.add("-Djava.net.useSystemProxies=true"); // fix for #1446
+            // Keeps the CORS headers of WebView requests, needed by Google Maps (#3041).
+            // Only needed with Java 11, where the JavaFX WebView uses the legacy HTTP
+            // loader (HttpURLConnection), which drops those headers.
+            // TODO remove after the upgrade to Java 25 (#1522), where the WebView uses
+            // the HTTP/2 loader and Google Maps works without this option.
+            cmd.add("-Dsun.net.http.allowRestrictedHeaders=true");
             cmd.add(getMainClassName());
             cmd.addAll(finalArgs);
             
@@ -295,7 +301,9 @@ public class Bootstrap {
             public void run() {
                 try {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                    PrintWriter writer = new PrintWriter(os, true);
+                    // Write through the PrintStream itself (e.g. System.out), so its encoding is used
+                    // (the console encoding on Windows), instead of wrapping it with the default charset.
+                    PrintStream writer = os instanceof PrintStream ? (PrintStream) os : new PrintStream(os, true);
                     String line = null;
                     while ((line = reader.readLine()) != null) {
                         if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {

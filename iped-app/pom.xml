@@ -9,12 +9,15 @@
 
     <artifactId>iped-app</artifactId>
     <packaging>jar</packaging>
-    
+
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
+        <!-- the external tools of the parsers go into the release: see the pluginManagement of the parent pom -->
+        <tools.unpack.phase>package</tools.unpack.phase>
+        <tools.windows.skip>false</tools.windows.skip>
     </properties>
-    
+
     <dependencies>
         <dependency>
             <groupId>iped</groupId>
@@ -24,6 +27,11 @@
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-geo</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-bfac</artifactId>
             <version>${project.version}</version>
         </dependency>
       	<dependency>
@@ -53,7 +61,7 @@
 	  		<version>5d6b903557dac49a925a7a62d5c6592bd07482c5</version>
 	  	</dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -61,40 +69,21 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.0</version>
             </plugin>
-			<plugin>
-				<groupId>com.googlecode.maven-download-plugin</groupId>
-				<artifactId>download-maven-plugin</artifactId>
-				<version>1.6.8</version>
-				<executions>
-					<execution>
-						<id>download-regripper</id>
-						<goals>
-							<goal>wget</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<url>https://github.com/sepinf-inc/RegRipper3.0/archive/refs/tags/3.0-p3.zip</url>
-					<unpack>true</unpack>
-					<fileMappers>
-                      <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
-                        <pattern>RegRipper[^/]+/</pattern>
-                        <replacement>./</replacement>
-                      </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
-                    </fileMappers>
-					<outputDirectory>${tools.dir}/regripper</outputDirectory>
-				</configuration>
-			</plugin>
+            <!-- the executions of the external tools the parsers use are defined once, in the
+                 pluginManagement of the parent pom: iped-parsers-impl unpacks them for its tests too -->
+            <plugin>
+                <groupId>io.github.download-maven-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.10</version>
                 <executions>
                     <execution>
                         <goals>
                             <goal>analyze</goal>
                         </goals>
-                    </execution>                                        
+                    </execution>
                     <execution>
                         <id>unpack-jre</id>
                         <phase>package</phase>
@@ -125,200 +114,10 @@
                                 <artifactItem>
                                     <groupId>org.python</groupId>
                                     <artifactId>python-jep-dlib</artifactId>
-                                    <version>3.9.12-4.0.3-19.23.1-2</version>
+                                    <version>3.9.13-4.0.3-20.0.1-1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-esedbexport</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>libyal</groupId>
-                                    <artifactId>libesedb</artifactId>
-                                    <version>20151213.1</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-pffexport</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>libyal</groupId>
-                                    <artifactId>libpff</artifactId>
-                                    <version>20131028</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-msiecfexport</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>libyal</groupId>
-                                    <artifactId>libmsiecf</artifactId>
-                                    <version>20160421.1</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-agdbinfo</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>libyal</groupId>
-                                    <artifactId>libagdb</artifactId>
-                                    <version>20181111.1</version>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-evtexport</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>libyal</groupId>
-                                    <artifactId>evtexport</artifactId>
-                                    <version>20180317.1</version>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-evtxexport</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>libyal</groupId>
-                                    <artifactId>evtxexport</artifactId>
-                                    <version>20170122.1</version>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-sccainfo</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>libyal</groupId>
-                                    <artifactId>sccainfo</artifactId>
-                                    <version>20240427</version>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-rifiuti</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>abelcheung</groupId>
-                                    <artifactId>rifiuti2</artifactId>
-                                    <version>0.7.0</version>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-imagemagick</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.imagemagick</groupId>
-                                    <artifactId>imagemagick-zip</artifactId>
-                                    <version>7.1.1-43-q8-x64+dlls</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-tesseract</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>tesseract</groupId>
-                                    <artifactId>tesseract-zip</artifactId>
-                                    <version>5.3.2-24-g3922_1</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -334,7 +133,7 @@
                                 <artifactItem>
                                     <groupId>mplayer</groupId>
                                     <artifactId>mplayer-zip</artifactId>
-                                    <version>6.2.0-r38109</version>
+                                    <version>1.5-r38677</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -353,7 +152,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>sleuthkit-dlls</artifactId>
-                                    <version>4.15.0-p1</version>
+                                    <version>4.15.0-p3</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -571,7 +370,7 @@
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
-                    </execution>                    
+                    </execution>
                     <execution>
                         <id>copy-dependencies</id>
                         <phase>package</phase>
@@ -632,7 +431,7 @@
                             <finalName>iped</finalName>
                             <outputDirectory>${release.dir}</outputDirectory>
                             <forceCreation>true</forceCreation>
-                            <archive>                                
+                            <archive>
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
@@ -641,7 +440,7 @@
                                 </manifest>
                                 <manifestEntries>
                                     <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
-                                </manifestEntries>  
+                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
@@ -676,7 +475,7 @@
                             <finalName>iped-search-app</finalName>
                             <outputDirectory>${lib.dir}</outputDirectory>
                             <forceCreation>true</forceCreation>
-                            <archive>                                
+                            <archive>
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
@@ -684,7 +483,7 @@
                                 </manifest>
                                 <manifestEntries>
                                     <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
-                                </manifestEntries>                                
+                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
@@ -729,7 +528,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -854,10 +653,8 @@
                 <version>2.18.1</version>
                 <configuration>
                     <testFailureIgnore>true</testFailureIgnore>
-                    <aggregate>true</aggregate>
-                    <linkXRef>true</linkXRef>
                 </configuration>
             </plugin>
         </plugins>
-    </build>    
+    </build>
 </project>

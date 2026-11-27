@@ -44,7 +44,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import iped.data.IItemReader;
 import iped.parsers.browsers.chrome.CacheIndexParser;
 import iped.parsers.chat.PartyStringBuilderFactory;
-import iped.parsers.discord.cache.Index;
 import iped.parsers.discord.json.DiscordAttachment;
 import iped.parsers.discord.json.DiscordAuthor;
 import iped.parsers.discord.json.DiscordRoot;
@@ -87,7 +86,7 @@ public class DiscordParser extends AbstractParser {
 
     public static final MediaType DISCORD_ACCOUNT = MediaType.application("x-discord-account"); //$NON-NLS-1$
 
-    private static Logger LOGGER = LoggerFactory.getLogger(Index.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(DiscordParser.class);
 
     private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<>(Arrays.asList(MediaType.parse(CHAT_MIME_TYPE)));
     private static final String ME_URL = "https://discord.com/api/v9/users/@me";

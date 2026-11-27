@@ -184,13 +184,17 @@ public class ExtraProperties {
 
     public static final String EXTRACTED_FILE = "extractedFile";
 
+    public static final String MOD_TO_INTERNAL_TIME_DIFF = "modToInternalTimeDiff";
+
     public static final String FACE_COUNT = "face_count";
-
     public static final String FACE_LOCATIONS = "face_locations";
-
     public static final String FACE_ENCODINGS = "face_encodings";
-
     public static final String FACE_AGE_LABELS = "faceAge:labels";
+
+    public static final String FS_PREFIX = "fs:";
+    public static final String OWNER_ID = FS_PREFIX + "ownerID";
+    public static final String OWNER_LOGIN = FS_PREFIX + "ownerLogin";
+    public static final String OWNER_FULL_NAME = FS_PREFIX + "ownerFullName";
 
     public static final String HASHDB_PREFIX = "hashDb:";
     public static final String STATUS_PROPERTY = "status";

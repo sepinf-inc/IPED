@@ -38,6 +38,7 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
+import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.preview.PreviewInputStreamFactory;
@@ -276,6 +277,13 @@ public class Item implements IItem {
         tmpFile = null;
         tis = null;
         parentTmpFile = null;
+        try {
+            if (inputStreamFactory != null) {
+                inputStreamFactory.dispose();
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Error closing inputStreamFactory of " + getPath(), e);
+        }
         try {
             if (textCache != null && clearTextCache) {
                 textCache.close();
@@ -645,11 +653,13 @@ public class Item implements IItem {
 
         SeekableInputStream stream = null;
 
-        if (inputStreamFactory != null && idInDataSource != null) {
+        boolean isMetadataStream = inputStreamFactory instanceof MetadataInputStreamFactory;
+
+        if (inputStreamFactory != null && (idInDataSource != null || isMetadataStream)) {
             stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
         }
 
-        if (stream != null && startOffset != -1 && !(inputStreamFactory instanceof PreviewInputStreamFactory)) {
+        if (stream != null && startOffset != -1 && !isMetadataStream && !(inputStreamFactory instanceof PreviewInputStreamFactory)) {
             stream = new LimitedSeekableInputStream(stream, startOffset, length);
         }
 
@@ -689,10 +699,15 @@ public class Item implements IItem {
             while (offset < data.length && (i = is.read(data, offset, data.length - offset)) != -1) {
                 offset += i;
             }
-            return true;
+            if (offset == data.length) {
+                return true;
+            }
+            LOGGER.warn("Not enough data read ({} / {}) from item {}", offset, data.length, getPath());
         } catch (IOException e) {
-            // ignore
+            LOGGER.warn("Error reading item " + getPath(), e);
         }
+        // Array "data" was not filled -> must be discarded.
+        data = null;
         return false;
     }
 
@@ -754,29 +769,29 @@ public class Item implements IItem {
      * @throws IOException
      */
     public TikaInputStream getTikaStream() throws IOException {
-
-        File file = null;
-        if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
-            tis = TikaInputStream.get(file.toPath());
+        if (data != null) {
+            tis = TikaInputStream.get(data);
         } else {
-            if (tmpFile == null && tis != null && tis.hasFile()) {
-                tmpFile = tis.getFile();
-            }
-            // reset tis, it may have been set (and consumed) by a previous call of this
-            // method
-            tis = null;
-            if (tmpFile != null) {
-                try {
-                    tis = TikaInputStream.get(tmpFile.toPath());
-                } catch (IOException fnfe) {
-                    tmpFile = null;
+            File file = null;
+            if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
+                tis = TikaInputStream.get(file.toPath());
+            } else {
+                if (tmpFile == null && tis != null && tis.hasFile()) {
+                    tmpFile = tis.getFile();
                 }
-            }
-            if (tis == null && data != null) {
-                tis = TikaInputStream.get(data);
-            }
-            if (tis == null) {
-                tis = TikaInputStream.get(getBufferedInputStream());
+                // reset tis, it may have been set (and consumed) by a previous call of this
+                // method
+                tis = null;
+                if (tmpFile != null) {
+                    try {
+                        tis = TikaInputStream.get(tmpFile.toPath());
+                    } catch (IOException fnfe) {
+                        tmpFile = null;
+                    }
+                }
+                if (tis == null) {
+                    tis = TikaInputStream.get(getBufferedInputStream());
+                }
             }
         }
         addTmpResource(tis);

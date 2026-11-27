@@ -120,12 +120,11 @@ public class TelegramParser extends SQLite3DBParser {
 
     private void storeLinkedHashes(List<MessageMultiMedia> messages, Metadata metadata) {
         for (MessageMultiMedia mmm : messages) {
-            for (Message m : mmm.getMessages()) {
-                if (HashUtils.isValidHash(m.getMediaHash())) {
-                    metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
-                    if (m.isFromMe())
-                        metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
-
+            Message m = mmm.getMessage();
+            if (m != null && HashUtils.isValidHash(m.getMediaHash())) {
+                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash());
+                if (m.isFromMe()) {
+                    metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
                 }
             }
         }
@@ -309,7 +308,8 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.isDeleted()) {
                 meta.set(ExtraProperties.DELETED, Boolean.toString(true));
             }
-            for (String location : m.getLocations()) {
+            String location = m.getLocation();
+            if (location != null) {
                 meta.add(ExtraProperties.LOCATIONS, location);
             }
             addPartyFields(meta, ExtraProperties.COMMUNICATION_FROM, m.getFrom());
@@ -338,7 +338,8 @@ public class TelegramParser extends SQLite3DBParser {
 
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
 
-            for (Message media : m.getMessages()) {
+            Message media = m.getMessage();
+            if (media != null) {
                 meta.add("mediaName", media.getMediaName());
 
                 if (media.getMediaMime() != null) {
@@ -418,6 +419,7 @@ public class TelegramParser extends SQLite3DBParser {
             for (Chat c : e.getChatList()) {
                 c.getMessages().addAll(e.extractMessagesIOS(c));
                 generateChat(c, useraccount, e, searcher, handler, extractor);
+                c.getMessages().clear();
             }
 
         } catch (SQLException e) {
@@ -512,7 +514,7 @@ public class TelegramParser extends SQLite3DBParser {
         Extractor ex = new Extractor();
         IItemSearcher searcher = context.get(IItemSearcher.class);
         ex.setSearcher(searcher);
-        ex.searchAvatarFileName(user, user.getPhotos());
+        ex.searchAvatar(user, user.getPhotos());
         if (user.getAvatar() != null) {
             meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(user.getAvatar()));
         }

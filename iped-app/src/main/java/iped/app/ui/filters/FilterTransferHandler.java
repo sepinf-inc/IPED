@@ -13,6 +13,7 @@ import javax.swing.TransferHandler;
 import javax.swing.tree.TreePath;
 
 import iped.app.ui.App;
+import iped.app.ui.CombinedFilterTreeModel;
 import iped.app.ui.FiltersPanel;
 import iped.app.ui.Messages;
 import iped.app.ui.filterdecisiontree.CombinedFilterer;
@@ -119,7 +120,7 @@ public class FilterTransferHandler extends TransferHandler {
 
     @Override
     public int getSourceActions(JComponent c) {
-        return MOVE;
+        return COPY_OR_MOVE;
     }
 
     @Override
@@ -180,7 +181,7 @@ public class FilterTransferHandler extends TransferHandler {
                             filterClonedSrc = filter;
                             filter = (IFilter) clone(((FilterNode) filterNode).getFilter());
                             if (filter != null) {
-                                dest.addFilter(new FilterNode(filter));
+                                dest.addFilter(new FilterNode(filter, (CombinedFilterTreeModel) tree.getModel()));
                             } else {
                                 return false;
                             }
@@ -193,7 +194,7 @@ public class FilterTransferHandler extends TransferHandler {
                     } else {
                         filter = (IFilter) data.getTransferData(filterFlavor);
                         if (filter != null) {
-                            FilterNode fn = new FilterNode(filter);
+                            FilterNode fn = new FilterNode(filter, (CombinedFilterTreeModel) tree.getModel());
                             dest.addFilter(fn);
                             tree.expandPath(destPath.pathByAddingChild(fn));
                         }
@@ -219,7 +220,7 @@ public class FilterTransferHandler extends TransferHandler {
                     OperandNode operand = (OperandNode) data.getTransferData(operandNodeFlavor);
                     if (operand != null) {
                         if (support.getDropAction() == COPY) {
-                            DecisionNode dn = (DecisionNode) clone(operand);
+                            DecisionNode dn = (DecisionNode) operand.clone();
                             if (dn != null) {
                                 dest.addDecisionNode(dn);
                             } else {
