@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
@@ -1686,20 +1687,23 @@ public class ReportGenerator {
                 if (contact != null) {
                     name = contact.getName();
                     if (number.endsWith(WAContact.lidSuffix)) {
-                        number = contact.getId(); 
+                        number = contact.getFullId();
                     }
                 }
                 if (number.endsWith(WAContact.waSuffix)) {
-                    number = number.substring(0, number.length() - WAContact.waSuffix.length());
+                    // displayed phone number has the "+" prefix
+                    number = "+" + number.substring(0, number.length() - WAContact.waSuffix.length());
+                } else if (number.contains("@")) {
+                    number = number.substring(0, number.indexOf('@'));
                 }
             }
         }
         name = name == null ? "" : name.trim();
         number = number == null || number.equals("0") ? "" : number.trim();
         if (!number.isEmpty()) {
-            if (name.isEmpty()) {
+            if (name.isEmpty() || StringUtils.removeStart(number, "+").equals(StringUtils.removeStart(name, "+"))) {
                 name = number;
-            } else if (!number.equals(name)) {
+            } else {
                 name += " (" + number + ")";
             }
         }

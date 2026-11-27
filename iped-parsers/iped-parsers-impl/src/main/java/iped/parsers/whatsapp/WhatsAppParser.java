@@ -383,7 +383,15 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 // Communication:{ID, Name, Account, MessagesCount, isEmpty} 
                 chatMetadata.set(ExtraProperties.CONVERSATION_ID, c.getRemote() != null ? c.getRemote().getFullId() : c.getPrintId());
-                chatMetadata.set(ExtraProperties.CONVERSATION_NAME, c.getRemote() != null ? c.getRemote().getName() : "<NA>");
+                // group and channel names are stored in the chat subject, as shown by the app
+                String conversationName = null;
+                if (c.isGroupOrChannelChat()) {
+                    conversationName = StringUtils.stripToNull(c.getSubject());
+                }
+                if (conversationName == null && c.getRemote() != null) {
+                    conversationName = c.getRemote().getName();
+                }
+                chatMetadata.set(ExtraProperties.CONVERSATION_NAME, conversationName != null ? conversationName : "<NA>");
                 if (account != null) {
                     addPartyFields(chatMetadata, ExtraProperties.CONVERSATION_ACCOUNT, account);
                 }
@@ -421,14 +429,17 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (member == null) {
             return;
         }
+        // only phone based JIDs carry the phone number (not @lid, @g.us, @newsletter...)
         String phoneNumber = null;
-        if (StringUtils.endsWithAny(member.getId(), WAContact.waSuffix, WAContact.waStatusSuffix)) {
-            phoneNumber = StringUtils.substringAfterLast(member.getId(), "@");
+        if (StringUtils.endsWithAny(member.getFullId(), WAContact.waSuffix, WAContact.waStatusSuffix)) {
+            // displayed phone number has the "+" prefix (ids keep the JID format)
+            phoneNumber = "+" + StringUtils.substringBefore(member.getFullId(), "@");
         }
         chatMetadata.add(field, new WhatsAppPartyStringBuilder()
                 .withName(member.getName())
                 .withUserId(member.getFullId())
                 .withPhoneNumber(phoneNumber)
+                .withUsername(member.getUsername())
                 .build());
 
         if (member instanceof WAAccount && ((WAAccount) member).isUnknown()) {
