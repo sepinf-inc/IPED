@@ -49,6 +49,7 @@
 	      {"name": "Main Registry Files", "mimes": ["application/x-windows-registry-main"]},
 	      {"name": "Other Registry Files", "mimes": ["application/x-windows-registry"]},
 	      {"name": "Registry Full Reports", "mimes": ["application/x-windows-registry-report"]},
+          {"name": "Registry Timestamp Entries", "mimes": ["application/x-windows-registry-report-timestamp"]},
 	      {"name": "Registry Custom Reports", "categories":[
 	        {"name": "Registry OS Info"},
 	        {"name": "Registry Installed Apps"},
