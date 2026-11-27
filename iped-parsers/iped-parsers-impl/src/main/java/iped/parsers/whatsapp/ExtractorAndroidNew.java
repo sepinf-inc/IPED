@@ -266,6 +266,20 @@ public abstract class ExtractorAndroidNew extends Extractor {
                     }
                 }
             }
+            // usernames of contacts, stored by LID (read after the LID -> JID mapping, so
+            // they are set in the contact of the phone number, if known)
+            if (SQLite3DBParser.containsTable("lid_display_name", conn)
+                    && SQLite3DBParser.checkIfColumnExists(conn, "lid_display_name", "username")) {
+                try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_LID_USERNAME)) {
+                    while (rs.next()) {
+                        String lid = rs.getString("lid");
+                        String username = rs.getString("username");
+                        if (lid != null && !lid.isBlank() && username != null && !username.isBlank()) {
+                            contacts.getContact(lid).setUsername(username);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1683,6 +1697,8 @@ public abstract class ExtractorAndroidNew extends Extractor {
     }
 
     private static final String SELECT_JID_BY_ID = "select raw_string from jid where _id=?";
+
+    private static final String SELECT_LID_USERNAME = "SELECT j.raw_string AS lid, l.username AS username FROM lid_display_name l, jid j WHERE l.lid_row_id = j._id AND l.username IS NOT NULL AND l.username != ''";
 
     private static final String SELECT_JID_MAP = "SELECT a.raw_string AS lid, b.raw_string AS jid FROM jid_map map, jid a, jid b WHERE map.lid_row_id = a._id AND map.jid_row_id = b._id";
 }
