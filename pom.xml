@@ -170,6 +170,30 @@
                                 <outputDirectory>${tools.dir}/regripper</outputDirectory>
                             </configuration>
                         </execution>
+                        <execution>
+                            <!-- Windows build published by the author of rifiuti2: only its executables are kept -->
+                            <id>download-rifiuti2</id>
+                            <goals>
+                                <goal>wget</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${tools.windows.skip}</skip>
+                                <url>https://github.com/abelcheung/rifiuti2/releases/download/0.8.2/rifiuti2-0.8.2-win64.zip</url>
+                                <sha256>7ae0034715e553085b834926fcd973543bd0a0ce723776d6a1d3ace515b46312</sha256>
+                                <unpack>true</unpack>
+                                <includes>
+                                    <include>*/rifiuti.exe</include>
+                                    <include>*/rifiuti-vista.exe</include>
+                                </includes>
+                                <fileMappers>
+                                    <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                        <pattern>rifiuti2[^/]+/</pattern>
+                                        <replacement>./</replacement>
+                                    </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                </fileMappers>
+                                <outputDirectory>${tools.dir}/rifiuti2</outputDirectory>
+                            </configuration>
+                        </execution>
                     </executions>
                 </plugin>
                 <plugin>
@@ -310,27 +334,7 @@
                                     <artifactItem>
                                         <groupId>libyal</groupId>
                                         <artifactId>sccainfo</artifactId>
-                                        <version>20240427</version>
-                                        <type>zip</type>
-                                        <overWrite>true</overWrite>
-                                        <outputDirectory>${tools.dir}</outputDirectory>
-                                    </artifactItem>
-                                </artifactItems>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>unpack-rifiuti</id>
-                            <phase>${tools.unpack.phase}</phase>
-                            <goals>
-                                <goal>unpack</goal>
-                            </goals>
-                            <configuration>
-                                <skip>${tools.windows.skip}</skip>
-                                <artifactItems>
-                                    <artifactItem>
-                                        <groupId>abelcheung</groupId>
-                                        <artifactId>rifiuti2</artifactId>
-                                        <version>0.7.0</version>
+                                        <version>20260527</version>
                                         <type>zip</type>
                                         <overWrite>true</overWrite>
                                         <outputDirectory>${tools.dir}</outputDirectory>

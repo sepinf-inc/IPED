@@ -141,6 +141,14 @@ public class ExternalParser extends AbstractParser {
 
     private String toolPath;
 
+    /**
+     * Name of the executable on Windows, used instead of the first word of the
+     * commands when it is different there (e.g. rifiuti2, which is named
+     * rifiuti.exe in the Windows build of its author). Only applied together with
+     * the tool path.
+     */
+    private String winToolName;
+
     private static String rootFolder;
 
     private String charset = "UTF-8";
@@ -287,7 +295,7 @@ public class ExternalParser extends AbstractParser {
         File workDir = null;
         if (SystemUtils.IS_OS_WINDOWS && toolPath != null) {
             String separator = toolPath.endsWith("/") ? "" : "/";
-            cmd[0] = getRootFolder() + "/" + toolPath + separator + cmd[0];
+            cmd[0] = getRootFolder() + "/" + toolPath + separator + getWindowsToolName(cmd[0], winToolName);
         } else
             workDir = new File(getRootFolder());
         // Execute
@@ -669,6 +677,22 @@ public class ExternalParser extends AbstractParser {
 
     public void setToolPath(String toolPath) {
         this.toolPath = toolPath;
+    }
+
+    public String getWinToolName() {
+        return winToolName;
+    }
+
+    public void setWinToolName(String winToolName) {
+        this.winToolName = winToolName;
+    }
+
+    /**
+     * Returns the name of the executable to run on Windows: winToolName, if set,
+     * otherwise the tool of the command.
+     */
+    static String getWindowsToolName(String tool, String winToolName) {
+        return winToolName != null && !winToolName.isEmpty() ? winToolName : tool;
     }
 
     public String getCharset() {
