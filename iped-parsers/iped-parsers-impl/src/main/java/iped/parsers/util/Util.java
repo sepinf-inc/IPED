@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
@@ -24,6 +23,7 @@ import org.slf4j.Logger;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.content.TikaManager;
 import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.RawStringParser;
@@ -33,13 +33,10 @@ import iped.utils.IOUtil;
 
 public class Util {
 
-    private static final String imageThumbsDir = "../../../../iped/thumbs/"; //$NON-NLS-1$
-    private static final String videoThumbsDir = "../../../../iped/view/"; //$NON-NLS-1$
     private static final int MAX_PREVIEW_SIZE = 128;
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 
     private static StandardParser autoParser;
-    private static TikaConfig tikaConfig;
 
     private static StandardParser getAutoParser() {
         if (autoParser == null) {
@@ -50,7 +47,7 @@ public class Util {
         return autoParser;
     }
 
-    private static String getContentPreview(InputStream is, Metadata m, String mimeType) {
+    public static String getContentPreview(InputStream is, Metadata m, String mimeType) {
         LimitedContentHandler contentHandler = new LimitedContentHandler(MAX_PREVIEW_SIZE);
         TextContentHandler textHandler = new TextContentHandler(contentHandler, true);
         if (m == null)
@@ -263,6 +260,10 @@ public class Util {
         return items;
     }
 
+    public static IItemReader getFirstItem(String query, IItemSearcher searcher) {
+        return searcher == null ? null : searcher.searchFirst(query);
+    }
+
     public static String getExportPath(IItemReader item) {
         String hash = item.getHash();
         String ext = item.getType(); // $NON-NLS-1$
@@ -354,17 +355,6 @@ public class Util {
             return path.substring(0, i);
     }
 
-    private static TikaConfig getTikaConfig() throws TikaException, IOException {
-        if (tikaConfig == null) {
-            synchronized (Util.class) {
-                if (tikaConfig == null) {
-                    tikaConfig = new TikaConfig();
-                }
-            }
-        }
-        return tikaConfig;
-    }
-
     public static String getTrueExtension(File file) {
         String trueExt = "";
         String origExt = "";
@@ -376,7 +366,7 @@ public class Util {
             Metadata meta = new Metadata();
             MediaType mediaType = MediaType.OCTET_STREAM;
             try (TikaInputStream in = TikaInputStream.get(file.toPath(), meta)) {
-                mediaType = getTikaConfig().getDetector().detect(in, meta);
+                mediaType = TikaManager.getTikaConfig().getDetector().detect(in, meta);
             }
 
             trueExt = getTrueExtension(origExt, mediaType);
@@ -396,7 +386,7 @@ public class Util {
         if (!mediaType.equals(MediaType.OCTET_STREAM)) {
             do {
                 boolean first = true;
-                for (String ext : getTikaConfig().getMimeRepository().forName(mediaType.toString()).getExtensions()) {
+                for (String ext : TikaManager.getTikaConfig().getMimeRepository().forName(mediaType.toString()).getExtensions()) {
                     if (first) {
                         trueExt = ext;
                         first = false;
@@ -408,7 +398,7 @@ public class Util {
                 }
 
             } while (trueExt.isEmpty() && !MediaType.OCTET_STREAM
-                    .equals((mediaType = getTikaConfig().getMediaTypeRegistry().getSupertype(mediaType))));
+                    .equals((mediaType = TikaManager.getTikaConfig().getMediaTypeRegistry().getSupertype(mediaType))));
         }
 
         if (!origExt.isEmpty() && (trueExt.isEmpty() || trueExt.equals(".txt"))) { //$NON-NLS-1$

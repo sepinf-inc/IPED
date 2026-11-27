@@ -22,9 +22,9 @@ public class Contact extends Accountable {
     }
 
     // Specific field getters
-    public String getType() { return (String) getField("Type"); }
-    public String getGroup() { return (String) getField("Group"); }
-    public String getInteractionStatuses() { return (String) getField("InteractionStatuses"); }
+    public String getType() { return getFieldAsString("Type"); }
+    public String getGroup() { return getFieldAsString("Group"); }
+    public String getInteractionStatuses() { return getFieldAsString("InteractionStatuses"); }
 
     public Optional<ReferencedAccountable> getReferencedContact() {
         return referencedContact;

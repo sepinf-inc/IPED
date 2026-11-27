@@ -14,6 +14,7 @@ import javax.swing.UIManager;
 import org.apache.commons.io.IOUtils;
 
 import iped.geo.AbstractMapCanvas;
+import iped.geo.googlemaps.GoogleTileURLStreamHandlerProvider;
 import iped.geo.impl.JMapOptionsPane;
 import iped.utils.UiUtil;
 import javafx.application.Platform;
@@ -254,8 +255,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         html = html.replace("{{leafletarrowheads}}", leafletarrowheads);
 
         String apikey = JMapOptionsPane.getGoogleAPIKey();
-        html = html.replace("{{googlemaps_scripts}}", "<script id=\"mapsapi\" src=\"https://maps.googleapis.com/maps/api/js?key=" + apikey + "\" async defer></script>\n"
-                + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js\"></script>");
+        // GoogleMutant 0.15.0 is the last version compatible with Leaflet 1.x
+        html = html.replace("{{googlemaps_scripts}}", "<script>" + GoogleTileURLStreamHandlerProvider.getImageSrcRewriteScript() + "</script>\n"
+                + "<script id=\"mapsapi\" src=\"https://maps.googleapis.com/maps/api/js?key=" + apikey + "\" async defer></script>\n"
+                + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@0.15.0/dist/Leaflet.GoogleMutant.js\"></script>");
 
         html = html.replace("{{tilelayer_script}}", "setTileServerUrl('" + url + "');");
 
@@ -579,6 +582,9 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         webEngine.executeScript("track.clearVisibleMarkers();");
                     }
                     webEngine.executeScript("track.tourOrder='"+self.tourOrder+"';");                    
+                    if (gids.isEmpty()) {
+                        webEngine.executeScript("doFullyLoaded();");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -599,6 +605,8 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                             webEngine.executeScript("track.createMarkers(" + jsgids + ");");
                         }
                         webEngine.executeScript("track.orderVisibleMarkers();");
+                    } else {
+                        webEngine.executeScript("doFullyLoaded();");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -1,7 +1,6 @@
 package iped.parsers.ufed.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -22,23 +21,18 @@ public class Email extends BaseModel {
     }
 
     // Specific field getters
-    public String getFolder() { return (String) getField("Folder"); }
-    public String getSubject() { return (String) getField("Subject"); }
-    public String getBody() { return (String) getField("Body"); }
-    public String getSnippet() { return (String) getField("Snippet"); }
+    public String getFolder() { return getFieldAsString("Folder"); }
+    public String getSubject() { return getFieldAsString("Subject"); }
+    public String getBody() { return getFieldAsString("Body"); }
+    public String getSnippet() { return getFieldAsString("Snippet"); }
     public Date getTimeStamp() { return (Date) getField("TimeStamp"); }
-    public String getEmailHeader() { return (String) getField("EmailHeader"); }
-    public String getAccount() { return (String) getField("Account"); }
-    public String getStatus() { return (String) getField("Status"); }
-    public String getSource() { return (String) getField("Source"); }
+    public String getEmailHeader() { return getFieldAsString("EmailHeader"); }
+    public String getAccount() { return getFieldAsString("Account"); }
+    public String getStatus() { return getFieldAsString("Status"); }
+    public String getSource() { return getFieldAsString("Source"); }
 
-    @SuppressWarnings("unchecked")
     public List<String> getLabels() {
-        Object labels = getField("Labels");
-        if (labels instanceof List) {
-            return (List<String>) labels;
-        }
-        return Collections.emptyList();
+        return getFieldAsList("Labels");
     }
 
     // Child model getters/setters

@@ -30,6 +30,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
 
     private final AppGraphAnalytics app;
     private volatile boolean loaded = false;
+    private volatile boolean awaitingProcessing = false;
 
     LoadGraphDatabaseWorker(AppGraphAnalytics appGraphAnalytics) {
         app = appGraphAnalytics;
@@ -39,6 +40,13 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
     protected Void doInBackground() throws Exception {
         long t = System.currentTimeMillis();
         app.setEnabled(false);
+        // GraphTask builds the database during finalization, after the preview opens.
+        if (App.get().getProcessingManager() != null
+                && !App.get().getProcessingManager().isProcessingFinished()) {
+            awaitingProcessing = true;
+            AppGraphAnalytics.LOGGER.info("Graph preview deferred until processing has finished.");
+            return null;
+        }
         GraphTaskConfig config = ConfigurationManager.get().findObject(GraphTaskConfig.class);
         if (!config.isEnabled()) {
             return null;
@@ -168,8 +176,9 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
 
     @Override
     protected void done() {
-        app.setStatus(Messages.getString("GraphAnalysis.Ready"));
-        app.setProgress(100);
+        app.setStatus(Messages.getString(awaitingProcessing
+                ? "GraphAnalysis.AwaitingProcessing" : "GraphAnalysis.Ready"));
+        app.setProgress(awaitingProcessing ? 0 : 100);
         app.setEnabled(loaded);
         app.setDatabaseLoaded(loaded);
     }

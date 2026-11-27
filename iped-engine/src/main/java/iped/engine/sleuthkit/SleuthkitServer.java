@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -76,7 +77,7 @@ public class SleuthkitServer {
             cm.loadConfigs();
             Configuration.getInstance().loadNativeLibs();
 
-            SleuthkitCase sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(dbPath);
+            SleuthkitCase sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(Paths.get(dbPath));
             HashMap<Long, SleuthkitInputStream> sisMap = new HashMap<>();
 
             java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$

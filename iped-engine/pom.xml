@@ -9,24 +9,12 @@
     
     <artifactId>iped-engine</artifactId>
     <packaging>jar</packaging>
-    
+
     <properties>
-    	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
+        <release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
+        <javacpp.ffmpeg.version>8.1.2-1.5.14</javacpp.ffmpeg.version>
     </properties>
-    
-    <repositories>
-	    <repository>
-	      <id>maven-cognitiveservices-speech</id>
-	      <name>Microsoft Cognitive Services Speech Maven Repository</name>
-	      <url>https://csspeechstorage.blob.core.windows.net/maven/</url>
-	    </repository>
-	    <repository>
-	      <id>maven-vosk</id>
-	      <name>Alphaceph Vosk Java Maven Repo</name>
-	      <url>https://alphacephei.com/maven/</url>
-	    </repository>
-    </repositories>
-    
+
     <dependencies>
 		<dependency>
 		    <groupId>org.apache.httpcomponents</groupId>
@@ -177,8 +165,13 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.3.8</version>
+            <version>8.6.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.1</version>
+        </dependency>        
         <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -198,13 +191,8 @@
 		</dependency>
         <dependency>
             <groupId>com.mchange</groupId>
-            <artifactId>mchange-commons-java</artifactId>
-            <version>0.2.20</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
-            <version>0.9.5.5</version>
+            <version>0.15.1</version>
         </dependency>
         <dependency>
   			<groupId>org.apache.pdfbox</groupId>
@@ -340,6 +328,24 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>7.0.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>${javacpp.ffmpeg.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>${javacpp.ffmpeg.version}</version>
+            <classifier>windows-x86_64</classifier>
+		</dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>${javacpp.ffmpeg.version}</version>
+            <classifier>linux-x86_64</classifier>
         </dependency>
      </dependencies>
 </project>

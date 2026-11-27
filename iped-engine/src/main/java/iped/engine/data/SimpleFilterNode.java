@@ -1,9 +1,10 @@
 package iped.engine.data;
 
 import java.io.Serializable;
+import java.text.Collator;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.text.Collator;
@@ -11,6 +12,8 @@ import iped.localization.LocaleResolver;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import iped.localization.LocaleResolver;
 
 public class SimpleFilterNode implements Serializable, Cloneable {
     private static final long serialVersionUID = 197209091220L;

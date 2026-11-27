@@ -1,8 +1,8 @@
 ########################################################################
 # Configuration for AUTOMATIC file export.
-# Useful in cases of blind data extraction
+# Useful in cases of blind data extraction.
 # Uncomment the categories that should be EXPORTED.
-# Items will be exported to the folder ' Exported '
+# Items will be exported to the 'Exported' folder.
 # In this case, only the exported files will be indexed.
 ########################################################################
 

@@ -16,10 +16,10 @@ public class ChatActivity extends BaseModel {
         super("ChatActivity");
     }
 
-    public String getAction() { return (String) getField("Action"); }
+    public String getAction() { return getFieldAsString("Action"); }
     public UUID getSystemMessageId() { return (UUID) getField("SystemMessageId"); }
     public Date getSystemMessageTimeStamp() { return (Date) getField("SystemMessageTimeStamp"); }
-    public String getSystemMessageBody() { return (String) getField("SystemMessageBody"); }
+    public String getSystemMessageBody() { return getFieldAsString("SystemMessageBody"); }
 
     public Party getParticipant() {
         return participant;

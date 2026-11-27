@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -234,8 +235,8 @@ public class LNKShortcutParser extends AbstractParser {
 
         // Strategy 1: MFT-based lookup
         {
-            List<IItemReader> items = lookupUsingMFT(searcher, lnkObj, lnkItem);
-            IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, items);
+            IItemReader item = lookupUsingMFT(searcher, lnkObj, lnkItem);
+            IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, item);
             if (result != null) {
                 metadata.set(LNK_METADATA_TARGET_REF_STRATEGY, LNK_TARGET_REF_STRATEGY_MFT);
                 return result;
@@ -244,8 +245,8 @@ public class LNKShortcutParser extends AbstractParser {
 
         // Strategy 2: Relative path lookup
         {
-            List<IItemReader> items = lookupUsingRelativePath(searcher, lnkObj, lnkItem);
-            IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, items);
+            IItemReader item = lookupUsingRelativePath(searcher, lnkObj, lnkItem);
+            IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, item);
             if (result != null) {
                 metadata.set(LNK_METADATA_TARGET_REF_STRATEGY, LNK_TARGET_REF_STRATEGY_RELATIVEPATH);
                 return result;
@@ -254,8 +255,8 @@ public class LNKShortcutParser extends AbstractParser {
 
         // Strategy 3: Full local path lookup
         {
-            List<IItemReader> items = lookupUsingFullLocalPath(searcher, lnkObj, lnkItem, fullLocalPath);
-            IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, items);
+            IItemReader item = lookupUsingFullLocalPath(searcher, lnkObj, lnkItem, fullLocalPath);
+            IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, item);
             if (result != null) {
                 metadata.set(LNK_METADATA_TARGET_REF_STRATEGY, LNK_TARGET_REF_STRATEGY_FULLLOCALPATH);
                 return result;
@@ -278,10 +279,10 @@ public class LNKShortcutParser extends AbstractParser {
      *
      * @param lnkObj  The LNK object parsed from lnk file.
      * @param lnkItem The LNK item to be added to the case.
-     * @return The corresponding target files, or {@code null} if preconditions are
+     * @return The best matching target file, or {@code null} if no match is found or preconditions are
      *         not met.
      */
-    private List<IItemReader> lookupUsingRelativePath(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem) {
+    private IItemReader lookupUsingRelativePath(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem) {
 
         if (!lnkObj.hasRelativePath() || lnkItem == null || lnkObj.getRelativePath() == null) {
             return null;
@@ -289,10 +290,9 @@ public class LNKShortcutParser extends AbstractParser {
 
         String lnkRelativePath = lnkObj.getRelativePath().replace('\\', '/');
         String fullPathInCase = Paths.get(lnkItem.getPath(), "..", lnkRelativePath).normalize().toString();
-        List<IItemReader> items = searcher
-                .search(BasicProps.PATH + ":\"" + searcher.escapeQuery(fullPathInCase) + "\"");
-        items.removeIf(item -> !item.getPath().equals(fullPathInCase)); // must match exactly the path
-        return items;
+        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(fullPathInCase) + "\"";
+        return selectBestItem(searcher, query, lnkObj, LNK_TARGET_REF_STRATEGY_RELATIVEPATH,
+                item -> item.getPath().equals(fullPathInCase));
     }
 
     /**
@@ -309,10 +309,10 @@ public class LNKShortcutParser extends AbstractParser {
      *
      * @param lnkObj  The LNK object parsed from lnk file.
      * @param lnkItem The LNK item to be added to the case.
-     * @return The corresponding target files, or {@code null} if preconditions are
+     * @return The best matching target file, or {@code null} if no match is found or preconditions are
      *         not met.
      */
-    private List<IItemReader> lookupUsingMFT(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem) {
+    private IItemReader lookupUsingMFT(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem) {
 
         if (lnkItem == null || !lnkObj.hasTargetIDList() || lnkObj.getShellTargetIDList().isEmpty()) {
             return null;
@@ -332,60 +332,43 @@ public class LNKShortcutParser extends AbstractParser {
             return null;
         }
 
-        return searcher.search(BasicProps.META_ADDRESS + ":" + fEntry.getIndMft() //
+        String query = BasicProps.META_ADDRESS + ":" + fEntry.getIndMft() //
                 + " && " + BasicProps.MFT_SEQUENCE + ":" + fEntry.getSeqMft() //
-                + " && " + BasicProps.CREATED + ":\"" + DateUtil.dateToString(lnkObj.getCreateDate()) + "\"");
+                + " && " + BasicProps.CREATED + ":\"" + DateUtil.dateToString(lnkObj.getCreateDate()) + "\"";
+        return selectBestItem(searcher, query, lnkObj, LNK_TARGET_REF_STRATEGY_MFT, item -> true);
     }
 
-    private List<IItemReader> lookupUsingFullLocalPath(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem,
+    private IItemReader lookupUsingFullLocalPath(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem,
             String fullLocalPath) {
 
         fullLocalPath = StringUtils.removeStart(fullLocalPath, "file://");
         fullLocalPath = fullLocalPath.replace('\\', '/');
         fullLocalPath = "/" + StringUtils.substringAfter(fullLocalPath, ":/");
         final String fullLocalPathFinal = fullLocalPath;
-        List<IItemReader> items = searcher.search(BasicProps.PATH + ":\"" + searcher.escapeQuery(fullLocalPath) + "\"");
-        items.removeIf(item -> !item.getPath().endsWith(fullLocalPathFinal)); // path must ends with fullLocalPathFinal
-
-        // Disconsider if fullPath is not relative to a root item (named as "/").
-        // This avoid a fullLocalPath = "/x/y/a.png" to wrongly reference a file like "/image.E01/vol_2/Images/foo/x/y/a.png"
+        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(fullLocalPath) + "\"";
         int fullLocalPathParts = StringUtils.countMatches(fullLocalPathFinal, '/');
-        for (Iterator<IItemReader> iter = items.iterator(); iter.hasNext();) {
-            IItemReader item = iter.next();
+        return selectBestItem(searcher, query, lnkObj, LNK_TARGET_REF_STRATEGY_FULLLOCALPATH,
+                item -> item.getPath().endsWith(fullLocalPathFinal)
+                        && hasExpectedRoot(searcher, item, fullLocalPathParts));
+    }
 
-            // walk until find the relative root
-            IItemReader currentItem = item;
-            for (int i = 0; i < fullLocalPathParts; i++) {
-                List<IItemReader> parents = searcher.search(BasicProps.ID + ":" + currentItem.getParentId());
-                if (parents.isEmpty()) {
-                    currentItem = null;
-                    break;
-                }
-                currentItem = parents.get(0);
+    private boolean hasExpectedRoot(IItemSearcher searcher, IItemReader candidate, int depth) {
+        IItemReader current = candidate;
+        for (int hop = 0; hop < depth; hop++) {
+            Iterator<IItemReader> parents = searcher
+                    .searchIterable(BasicProps.ID + ":" + current.getParentId()).iterator();
+            if (!parents.hasNext()) {
+                return false;
             }
-
-            // if relative root is not "/", then the item is not related to the link
-            if (currentItem == null || !(currentItem.getName().equals("/") || currentItem.isRoot())) {
-                iter.remove();
-            }
+            current = parents.next();
         }
-        return items;
+        return current != null && (current.getName().equals("/") || current.isRoot());
     }
 
     private IItemReader setReferenceMetadata(Metadata metadata, ParseContext context, LNKShortcut lnkObj,
-            String localPathName, List<IItemReader> items) {
-
-        if (items == null || items.isEmpty()) {
+            String localPathName, IItemReader item) {
+        if (item == null) {
             return null;
-        }
-
-        IItemReader item;
-        if (items.size() > 1) {
-            item = selectBestItem(lnkObj, items);
-            logger.warn("More than one file referenced to the link. Using only the best one. {}",
-                    items.stream().map(IItemReader::getPath).toString());
-        } else {
-            item = items.get(0);
         }
 
         metadata.set(LNK_METADATA_TARGET_REFERENCED, Boolean.toString(true));
@@ -418,13 +401,33 @@ public class LNKShortcutParser extends AbstractParser {
         return item;
     }
 
-    private IItemReader selectBestItem(LNKShortcut lnkObj, List<IItemReader> items) {
-
-        Collections.sort(items, (o1, o2) -> {
-            return getItemScore(lnkObj, o2) - getItemScore(lnkObj, o1);
-        });
-
-        return items.get(0);
+    private IItemReader selectBestItem(IItemSearcher searcher, String query, LNKShortcut lnkObj,
+            String strategy, Predicate<IItemReader> accepts) {
+        logger.debug("LNK_STREAMING_REFERENCE_FIX_V1 phase=BEGIN strategy={}", strategy);
+        IItemReader best = null;
+        int bestScore = Integer.MIN_VALUE;
+        long scanned = 0;
+        long accepted = 0;
+        for (IItemReader candidate : searcher.searchIterable(query)) {
+            scanned++;
+            if (!accepts.test(candidate)) {
+                continue;
+            }
+            accepted++;
+            int score = getItemScore(lnkObj, candidate);
+            // Strict comparison preserves the first candidate on ties.
+            if (best == null || score > bestScore) {
+                best = candidate;
+                bestScore = score;
+            }
+        }
+        if (accepted > 1) {
+            logger.warn("More than one file referenced to the link. Candidates accepted: {}. Selected path: {}",
+                    accepted, best.getPath());
+        }
+        logger.debug("LNK_STREAMING_REFERENCE_FIX_V1 phase=END strategy={} scanned={} accepted={} selectedId={}",
+                strategy, scanned, accepted, best == null ? null : Integer.valueOf(best.getId()));
+        return best;
     }
 
     private int getItemScore(LNKShortcut lnkObj, IItemReader item) {

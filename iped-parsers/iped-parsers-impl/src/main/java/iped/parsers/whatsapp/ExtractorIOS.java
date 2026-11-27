@@ -104,6 +104,7 @@ import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
@@ -156,6 +157,7 @@ public abstract class ExtractorIOS extends Extractor {
         if (recoverDeletedRecords) {
             try {
                 // try to recover deleted records
+                warnIfLowMemoryToRecoverDeletedRecords();
                 var undelete = new SQLiteUndelete(databaseFile.toPath());
                 undelete.addTableToRecover("ZWAMESSAGE"); //$NON-NLS-1$
                 undelete.addRecordValidator("ZWAMESSAGE", new WAIOSMessageValidator()); //$NON-NLS-1$
@@ -226,7 +228,7 @@ public abstract class ExtractorIOS extends Extractor {
                                 contactId = identifier;
                             }
                         }
-                        String subject = Util.getUTF8String(rs, "subject");
+                        String subject = ChatUtil.getUTF8String(rs, "subject");
                         WAContact remote = contacts.getContact(contactId);
                         if (StringUtils.isNotBlank(subject) && remote.getId().equals(remote.getName())) {
                             remote.setWaName(subject);
@@ -762,8 +764,13 @@ public abstract class ExtractorIOS extends Extractor {
         if (receiptInfo != null) {
             decodeReceiptInfo(m, receiptInfo);
         }
-        int forwardedMask = 0b1_1000_0000; // 8th and 9th bits
-        m.setForwarded((rs.getLong("zflags") & forwardedMask) == forwardedMask);
+
+        // Set forwarded based on zFlags 8th, 9th, and 10th bits (see #2687)
+        long zFlag = rs.getLong("zflags");
+        boolean fwdBit = (0b1000_0000 & zFlag) != 0; // 8th bit
+        boolean fwdStandardBit = (0b1_0000_0000 & zFlag) != 0; // 9th bit
+        boolean fwdChannelBit = (0b10_0000_0000 & zFlag) != 0; // 10th bit
+        m.setForwarded(fwdBit & (fwdStandardBit ^ fwdChannelBit));
 
         byte[] metadata = null;
         if (hasZSTANZAIDAndZMETADATAColumns) {
@@ -1805,7 +1812,7 @@ public abstract class ExtractorIOS extends Extractor {
                     try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_PUSH_NAMES)) {
                         while (rs.next()) {
                             String jid = rs.getString("jid");
-                            if (jid != null && !jid.isBlank() && !contacts.hasContact(Util.getNameFromId(jid))) {
+                            if (jid != null && !jid.isBlank() && !contacts.hasContact(ChatUtil.getNameFromId(jid))) {
                                 String name = rs.getString("pushname");
                                 if (name != null && !name.isBlank() && !jid.startsWith(name)) {
                                     WAContact c = contacts.getContact(jid);

@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -353,6 +355,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         }
     }
 
+    // a line ending with a version number, like "IPED 4.4.0-snapshot"
+    private static final Pattern VERSION_LINE_PATTERN = Pattern.compile("(?:.*\\s)?(\\d+\\.\\d+\\.\\d+\\S*)");
+
     private void checkIfAppendingToCompatibleCase() {
         if (this.isAppendIndex()) {
             String classpath = outputDir.getAbsolutePath() + "/iped/lib/iped-search-app.jar"; //$NON-NLS-1$
@@ -361,15 +366,28 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectErrorStream(true);
-            String line;
+            List<String> lines;
             try {
                 Process process = pb.start();
-                line = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset()).get(0);
+                lines = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            // The version is the last token of the first line ending with a version
+            // number, as the JVM may print other lines before it (e.g. "Picked up
+            // _JAVA_OPTIONS: ..." when that environment variable is set).
+            String fullVersion = null;
+            for (String line : lines) {
+                Matcher matcher = VERSION_LINE_PATTERN.matcher(line.trim());
+                if (matcher.matches()) {
+                    fullVersion = matcher.group(1);
+                    break;
+                }
+            }
+            if (fullVersion == null) {
+                throw new IPEDException("Could not detect the version of the case to append to.");
+            }
             String thisVersion = Version.APP_VERSION.substring(0, Version.APP_VERSION.lastIndexOf('.'));
-            String fullVersion = line.replace(Version.APP_NAME_PREFIX, "").trim();
             String version = fullVersion.substring(0, fullVersion.lastIndexOf('.'));
             if (!version.equals(thisVersion)) {
                 throw new IPEDException("Appending to case with old version " + fullVersion + " not supported.");

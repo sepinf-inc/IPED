@@ -45,14 +45,14 @@ public class Chat extends BaseModel {
     }
 
     // Specific field getters
-    public String getSource() { return (String) getField("Source"); }
-    public String getServiceIdentifier() { return (String) getField("ServiceIdentifier"); }
-    public String getName() { return (String) getField("Name"); }
-    public String getFieldId() { return (String) getField("Id"); }
+    public String getSource() { return getFieldAsString("Source"); }
+    public String getServiceIdentifier() { return getFieldAsString("ServiceIdentifier"); }
+    public String getName() { return getFieldAsString("Name"); }
+    public String getFieldId() { return getFieldAsString("Id"); }
     public Date getStartTime() { return (Date) getField("StartTime"); }
     public Date getLastActivity() { return (Date) getField("LastActivity"); }
-    public String getAccount() { return (String) getField("Account"); }
-    public String getChatType() { return (String) getField("ChatType"); }
+    public String getAccount() { return getFieldAsString("Account"); }
+    public String getChatType() { return getFieldAsString("ChatType"); }
 
     // Child model getters
     public List<Party> getParticipants() {
@@ -91,6 +91,12 @@ public class Chat extends BaseModel {
             if (StringUtils.isNotBlank(ufedId)) {
                 messagesByUfedId.put(ufedId, message);
             }
+
+            // ReferenceId may point to "pa_id" (ids are GUIDs, so both share the same map without collisions)
+            String paId = message.getPaId();
+            if (StringUtils.isNotBlank(paId) && !paId.equals(ufedId)) {
+                messagesByUfedId.put(paId, message);
+            }
         });
     }
 
@@ -110,6 +116,9 @@ public class Chat extends BaseModel {
         return messagesByIdentifier.get(identifier);
     }
 
+    /**
+     * Finds a chat message by its "id" or "pa_id" attribute.
+     */
     public InstantMessage findMessageByUfedId(String ufedId) {
         return messagesByUfedId.get(ufedId);
     }

@@ -1,6 +1,6 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Util.nullToEmpty;
+import static iped.parsers.util.ChatUtil.nullToEmpty;
 
 import java.io.File;
 import java.sql.Connection;
@@ -16,6 +16,7 @@ import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
+import iped.parsers.util.ChatUtil;
 
 public abstract class WAContactsExtractorAndroid extends WAContactsExtractor {
     
@@ -81,36 +82,32 @@ public abstract class WAContactsExtractorAndroid extends WAContactsExtractor {
         if (undeletedContactsTable != null) {
             for (var row : undeletedContactsTable.getTableRows()) {
                 var jid = row.getTextValue("jid");
-                if (! directory.hasContact(jid)) { // only recover contact if it does not exist already
+
+                // Only recover contact if it does not exist already
+                if (!directory.hasContact(ChatUtil.getNameFromId(jid))) {
                     WAContact c = directory.getContact(jid);
-                    c.setDisplayName(nullToEmpty(row.getTextValue("display_name"))); //$NON-NLS-1$
-                    c.setWaName(nullToEmpty(row.getTextValue("wa_name"))); //$NON-NLS-1$
-                    c.setNickName(nullToEmpty(row.getTextValue("nickname"))); //$NON-NLS-1$
-                    c.setSortName(nullToEmpty(row.getTextValue("sort_name"))); //$NON-NLS-1$
-                    c.setGivenName(nullToEmpty(row.getTextValue("given_name"))); //$NON-NLS-1$
-                    c.setStatus(nullToEmpty(row.getTextValue("status"))); //$NON-NLS-1$
+                    c.setDisplayName(nullToEmpty(row.getTextValue("display_name")));
+                    c.setWaName(nullToEmpty(row.getTextValue("wa_name")));
+                    c.setNickName(nullToEmpty(row.getTextValue("nickname")));
+                    c.setSortName(nullToEmpty(row.getTextValue("sort_name")));
+                    c.setGivenName(nullToEmpty(row.getTextValue("given_name")));
+                    c.setStatus(nullToEmpty(row.getTextValue("status")));
                     c.setDeleted(true);
                 }
             }
         }
     }
-    
+
     private static class WAAndroidContactValidator implements SQLiteRecordValidator {
 
         @Override
         public boolean validateRecord(SqliteRow row) {
             try {
-                String jid = row.getTextValue("jid"); //$NON-NLS-1$
-                if (jid == null || jid.isBlank()) {
-                    return false;
-                }
-                return true;
-                
+                String jid = row.getTextValue("jid");
+                return !row.isTruncated() && WAContact.isValidJid(jid);
             } catch (Exception e) {
             }
             return false;
         }
-
     }
-
 }

@@ -12,10 +12,17 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 
 public class LinkDownloader {
+    // signed URLs expire about 30 days after the message, so a larger value is not valid
+    private static final long MAX_EXPIRATION_AHEAD = 90L * 24 * 60 * 60 * 1000;
+
+    private static final Pattern EXPIRATION_PATTERN = Pattern.compile("[?&]oe=([0-9A-Fa-f]{1,15})(&|$)");
+
     private String urlStr;
     private String fileName;
     private byte[] cipherKey;
@@ -30,6 +37,38 @@ public class LinkDownloader {
 
     public String getFileName() {
         return fileName;
+    }
+
+    /**
+     * Signed media URLs have an expiration time (about 30 days after the message),
+     * stored as seconds since epoch, in hexadecimal, in the "oe" parameter.
+     * 
+     * @return the expiration time in milliseconds, or null if the URL has none.
+     */
+    public Long getExpirationTime() {
+        Matcher matcher = EXPIRATION_PATTERN.matcher(urlStr);
+        if (matcher.find()) {
+            try {
+                return Long.parseLong(matcher.group(1), 16) * 1000L;
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks if the URL would be refused by the server because of its expiration
+     * time: it is in the past ("URL signature expired") or too far in the future
+     * ("URL Expiry out of range"), which happens in direct paths of old medias.
+     */
+    public boolean isExpired() {
+        Long expiration = getExpirationTime();
+        if (expiration == null) {
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        return expiration < now || expiration > now + MAX_EXPIRATION_AHEAD;
     }
 
     public static String getSHA256(InputStream input) {
