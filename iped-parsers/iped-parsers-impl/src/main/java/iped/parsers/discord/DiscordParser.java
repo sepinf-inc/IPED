@@ -248,14 +248,6 @@ public class DiscordParser extends AbstractParser {
             chatmetadata.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE_HTML);
             chatmetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
 
-            // Type
-            chatmetadata.set(ExtraProperties.CONVERSATION_NAME, chatName);
-            chatmetadata.set(ExtraProperties.CONVERSATION_TYPE, discordRoot.get(0).getType() + "");
-            chatmetadata.set(ExtraProperties.CONVERSATION_ID, discordRoot.get(0).getId());
-
-            // Account
-            addPartyFields(chatmetadata, ExtraProperties.CONVERSATION_ACCOUNT, me);
-
             // Participants
             TreeMap<String, DiscordAuthor> participantsMap = new TreeMap<>();
             for (DiscordRoot d : discordRoot) {
@@ -267,6 +259,20 @@ public class DiscordParser extends AbstractParser {
             for (DiscordAuthor participant : participants) {
                 addPartyFields(chatmetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, participant);
             }
+
+            // Name, ID and Type
+            chatmetadata.set(ExtraProperties.CONVERSATION_NAME, chatName);
+            // the cached messages have the channel id, but not the channel type, so the
+            // type is guessed by the number of participants (as done for "To" in messages)
+            String channelId = discordRoot.get(0).getChannel_id();
+            if (channelId != null) {
+                chatmetadata.set(ExtraProperties.CONVERSATION_ID, channelId);
+            }
+            chatmetadata.set(ExtraProperties.CONVERSATION_TYPE,
+                    participants.size() <= 2 ? ConversationConstants.TYPE_ONEONONE : ConversationConstants.TYPE_GROUP);
+
+            // Account
+            addPartyFields(chatmetadata, ExtraProperties.CONVERSATION_ACCOUNT, me);
 
             for (DiscordRoot dr : discordRoot) {
                 for (DiscordSticker sticker : dr.getStickers()) {
