@@ -270,6 +270,20 @@ public class ProtoBufDecoder {
         return null;
     }
 
+    public static Long findLong(List<Part> l, int idx) {
+        if (l != null) {
+            for (Part p : l) {
+                if (p.getIdx() == idx) {
+                    try {
+                        return Long.parseLong(p.getString(true));
+                    } catch (NumberFormatException e) {
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public static List<Part> findChilds(List<Part> l, int idx) {
         if (l != null) {
             for (Part p : l) {
