@@ -829,6 +829,14 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.MetaAIDisclaimer") + "<br>");
                 break;
+            case USERNAME_CREATED:
+                out.println("<div class=\"systemmessage\">");
+                String username = message.getData() == null ? "" : message.getData();
+                if (!username.isEmpty() && !username.startsWith("@")) {
+                    username = "@" + username;
+                }
+                out.println(Messages.getString("WhatsAppReport.UsernameCreated", name, format(username)) + "<br>");
+                break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChannelAddedPrivacy") + "<br>");

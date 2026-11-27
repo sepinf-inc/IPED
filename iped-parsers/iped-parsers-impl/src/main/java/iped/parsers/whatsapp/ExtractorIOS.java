@@ -6,6 +6,7 @@ import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DEACTIVATED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_AUTO_ADD_DISABLED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_AUTO_ADD_DISABLED_GROUP_FULL;
 import static iped.parsers.whatsapp.Message.MessageType.META_AI_DISCLAIMER;
+import static iped.parsers.whatsapp.Message.MessageType.USERNAME_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.ADVANCED_PRIVACY_ON;
 import static iped.parsers.whatsapp.Message.MessageType.AI_RECEIVE_MESSAGES;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
@@ -930,6 +931,12 @@ public abstract class ExtractorIOS extends Extractor {
             case COMMUNITY_AUTO_ADD_DISABLED:
             case COMMUNITY_AUTO_ADD_DISABLED_GROUP_FULL:
                 m.setData("");
+                break;
+
+            case USERNAME_CREATED:
+                if (m.getData() != null) {
+                    m.setData(m.getData().strip());
+                }
                 break;
 
             case ADVANCED_PRIVACY_ON:
@@ -1898,6 +1905,11 @@ public abstract class ExtractorIOS extends Extractor {
 
                     case 68:
                         result = CHAT_STARTED_FROM_AD;
+                        break;
+
+                    case 69:
+                        // DATA contains the username
+                        result = USERNAME_CREATED;
                         break;
 
                     case 91:
