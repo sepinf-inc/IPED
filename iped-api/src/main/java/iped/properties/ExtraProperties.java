@@ -187,6 +187,8 @@ public class ExtraProperties {
     public static final String FACE_ENCODINGS = "face_encodings";
     public static final String FACE_AGE_LABELS = "faceAge:labels";
 
+    public static final String SUMMARY = "ai:summary";
+    public static final String CHUNK_IDS = "ai:chunkIds";
     public static final String FS_PREFIX = "fs:";
     public static final String OWNER_ID = FS_PREFIX + "ownerID";
     public static final String OWNER_LOGIN = FS_PREFIX + "ownerLogin";

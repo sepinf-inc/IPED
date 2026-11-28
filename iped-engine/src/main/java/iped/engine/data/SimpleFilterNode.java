@@ -7,6 +7,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.text.Collator;
+import iped.localization.LocaleResolver;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -49,6 +51,9 @@ public class SimpleFilterNode implements Serializable, Cloneable {
     @JsonIgnore
     private int numItems = -1;
 
+    @JsonIgnore
+    private String suffix;
+
     public String getName() {
         return name;
     }
@@ -64,6 +69,10 @@ public class SimpleFilterNode implements Serializable, Cloneable {
             s = parent.getPrefix();
         }
         return s;
+    }
+
+    public String getSuffix() {
+        return suffix;
     }
 
     public String getProperty() {
@@ -109,6 +118,10 @@ public class SimpleFilterNode implements Serializable, Cloneable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
     }
 
     public void setPrefix(String prefix) {
@@ -169,6 +182,7 @@ public class SimpleFilterNode implements Serializable, Cloneable {
         clonedNode.addChildren = addChildren;
         clonedNode.sortChildren = sortChildren;
         clonedNode.dynamicChild = dynamicChild;
+        clonedNode.suffix = suffix;
         for (int i = 0; i < children.size(); i++) {
             SimpleFilterNode child = children.get(i);
             SimpleFilterNode clonedChild = (SimpleFilterNode) child.clone();
