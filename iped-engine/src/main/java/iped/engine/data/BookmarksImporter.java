@@ -8,7 +8,6 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -149,16 +148,14 @@ public class BookmarksImporter {
 
         private final File sourceCase;
         private final int id;
+        private final List<String> trackIds;
         private final String path;
-        private final String hash;
-        private final boolean withoutTrackId;
 
-        private NotFoundItem(File sourceCase, int id, String path, String hash, boolean withoutTrackId) {
+        private NotFoundItem(File sourceCase, int id, List<String> trackIds, String path) {
             this.sourceCase = sourceCase;
             this.id = id;
+            this.trackIds = trackIds != null ? trackIds : Collections.emptyList();
             this.path = path;
-            this.hash = hash;
-            this.withoutTrackId = withoutTrackId;
         }
 
         public File getSourceCase() {
@@ -172,16 +169,20 @@ public class BookmarksImporter {
             return id;
         }
 
+        /**
+         * @return trackIds of the item in the source case, more than one if its text
+         *         was split in fragments, empty if the item has no trackId
+         */
+        public List<String> getTrackIds() {
+            return trackIds;
+        }
+
         public String getPath() {
             return path;
         }
 
-        public String getHash() {
-            return hash;
-        }
-
         public boolean isWithoutTrackId() {
-            return withoutTrackId;
+            return trackIds.isEmpty();
         }
     }
 
@@ -317,17 +318,16 @@ public class BookmarksImporter {
             }
         }
 
-        // load path and hash of not found items to report them
+        // load the path of not found items to report them
         for (SourceIndexInfo info : sourceInfos) {
-            readStoredFields(info);
+            readPaths(info);
         }
         for (ImportedBookmark imported : result.values()) {
             for (SourceBitmap ref : pendingItems.getOrDefault(imported.name, Collections.emptyList())) {
                 for (int sourceId : ref.bitmap) {
                     if (ref.info.notFoundIds.contains(sourceId)) {
-                        String[] fields = ref.info.storedFields.getOrDefault(sourceId, new String[2]);
-                        imported.notFoundItems.add(new NotFoundItem(ref.info.caseFolder, sourceId, fields[0], fields[1],
-                                !ref.info.idToTrackIds.containsKey(sourceId)));
+                        imported.notFoundItems.add(new NotFoundItem(ref.info.caseFolder, sourceId,
+                                ref.info.idToTrackIds.get(sourceId), ref.info.paths.get(sourceId)));
                     }
                 }
             }
@@ -355,10 +355,10 @@ public class BookmarksImporter {
                 }
                 writer.println("Bookmark: " + bookmark.name + " (" + bookmark.notFoundItems.size() + " of "
                         + bookmark.sourceItems + " items not found)");
-                writer.println("id\tpath\thash\treason\tsource case");
+                writer.println("id\ttrackId\tpath\treason\tsource-case");
                 for (NotFoundItem item : bookmark.notFoundItems) {
-                    writer.println(item.id + "\t" + nonNull(item.path) + "\t" + nonNull(item.hash) + "\t"
-                            + (item.withoutTrackId ? "item without trackId" : "trackId not found") + "\t"
+                    writer.println(item.id + "\t" + String.join(",", item.trackIds) + "\t" + nonNull(item.path) + "\t"
+                            + (item.isWithoutTrackId() ? "item without trackId" : "trackId not found") + "\t"
                             + item.sourceCase.getAbsolutePath());
                     count++;
                 }
@@ -394,7 +394,7 @@ public class BookmarksImporter {
         private final RoaringBitmap existingIds = new RoaringBitmap();
         private final Map<Integer, List<String>> idToTrackIds = new HashMap<>();
         private final RoaringBitmap notFoundIds = new RoaringBitmap();
-        private final Map<Integer, String[]> storedFields = new HashMap<>();
+        private final Map<Integer, String> paths = new HashMap<>();
 
         private SourceIndexInfo(File caseFolder, File indexDir) {
             this.caseFolder = caseFolder;
@@ -495,13 +495,13 @@ public class BookmarksImporter {
     }
 
     /**
-     * Loads the path and hash of the not found items from the source case index.
+     * Loads the path of the not found items from the source case index.
      */
-    private void readStoredFields(SourceIndexInfo info) throws IOException {
+    private void readPaths(SourceIndexInfo info) throws IOException {
         if (info.notFoundIds.isEmpty()) {
             return;
         }
-        Set<String> fieldsToLoad = new HashSet<>(Arrays.asList(BasicProps.PATH, BasicProps.HASH));
+        Set<String> fieldsToLoad = Collections.singleton(BasicProps.PATH);
         try (DirectoryReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(info.indexDir))) {
             LeafReader leafReader = SlowCompositeReaderWrapper.wrap(reader);
             NumericDocValues idValues = leafReader.getNumericDocValues(IndexItem.ID);
@@ -513,12 +513,11 @@ public class BookmarksImporter {
                 }
                 Long id = DocValuesUtil.get(idValues, doc);
                 if (id == null || !info.notFoundIds.contains(id.intValue())
-                        || info.storedFields.containsKey(id.intValue())) {
+                        || info.paths.containsKey(id.intValue())) {
                     continue;
                 }
                 Document document = leafReader.document(doc, fieldsToLoad);
-                info.storedFields.put(id.intValue(),
-                        new String[] { document.get(BasicProps.PATH), document.get(BasicProps.HASH) });
+                info.paths.put(id.intValue(), document.get(BasicProps.PATH));
             }
         }
     }
