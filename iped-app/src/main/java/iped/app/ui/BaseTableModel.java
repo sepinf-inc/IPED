@@ -2,7 +2,10 @@ package iped.app.ui;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.Arrays;
 
+import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -13,6 +16,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
 
 import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.data.IItemId;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
@@ -114,15 +118,59 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
     }
 
     @Override
-    public void mousePressed(MouseEvent arg0) {
+    public void mousePressed(MouseEvent evt) {
+        // needed for Linux
+        showContextMenu(evt);
     }
 
     @Override
     public void mouseReleased(MouseEvent evt) {
+        if (showContextMenu(evt)) {
+            return;
+        }
         if (evt.getClickCount() == 2 && selectedIndex != -1) {
             int docId = results.getLuceneIds()[selectedIndex];
             ExternalFileOpen.open(docId);
         }
+    }
+
+    private boolean showContextMenu(MouseEvent evt) {
+        if (!evt.isPopupTrigger() || !(evt.getSource() instanceof JTable)) {
+            return false;
+        }
+        JTable table = (JTable) evt.getSource();
+        int row = table.rowAtPoint(evt.getPoint());
+        if (row == -1) {
+            return false;
+        }
+        // right-clicking a row outside the current selection selects just that row
+        if (!table.isRowSelected(row)) {
+            table.setRowSelectionInterval(row, row);
+        }
+        new RelatedItemsMenu(this, table).show(table, evt.getX(), evt.getY());
+        return true;
+    }
+
+    public int getLuceneId(int modelRow) {
+        return results.getLuceneIds()[modelRow];
+    }
+
+    /**
+     * Returns the items highlighted in the given table (which must use this model),
+     * in index order.
+     */
+    public ArrayList<IItemId> getSelectedItemIds(JTable table) {
+        int[] rows = table.getSelectedRows();
+        int[] luceneIds = new int[rows.length];
+        for (int i = 0; i < rows.length; i++) {
+            luceneIds[i] = getLuceneId(table.convertRowIndexToModel(rows[i]));
+        }
+        Arrays.sort(luceneIds);
+        ArrayList<IItemId> ids = new ArrayList<>(luceneIds.length);
+        for (int luceneId : luceneIds) {
+            ids.add(App.get().appCase.getItemId(luceneId));
+        }
+        return ids;
     }
 
     @Override
