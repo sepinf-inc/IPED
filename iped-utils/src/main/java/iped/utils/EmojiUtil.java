@@ -3,15 +3,18 @@ package iped.utils;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.CodeSource;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -238,25 +241,36 @@ public class EmojiUtil {
             String path = "iped/utils/emoji/";
             CodeSource src = EmojiUtil.class.getProtectionDomain().getCodeSource();
             if (src != null) {
-                URL jar = src.getLocation();
-                try (ZipInputStream zip = new ZipInputStream(jar.openStream())) {
-                    while (true) {
-                        ZipEntry e = zip.getNextEntry();
-                        if (e == null) {
-                            break;
+                List<String> names = new ArrayList<String>();
+                URL location = src.getLocation();
+                File dir = "file".equals(location.getProtocol()) ? new File(location.toURI()) : null;
+                if (dir != null && dir.isDirectory()) {
+                    // Classes not packed in a jar (e.g. when running unit tests)
+                    File[] files = new File(dir, path).listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            names.add(path + file.getName());
                         }
-                        String name = e.getName();
-                        if (name.startsWith(path)) {
-                            int pos = name.indexOf(".png");
-                            if (pos > 0) {
-                                String code = name.substring(path.length(), pos);
-                                byte[] bytes = EmojiUtil.class.getResourceAsStream("/" + name).readAllBytes();
-                                String base64 = Base64.getEncoder().encodeToString(bytes);
-                                base64ImagesPerCode.put(code, base64);
-                                int extra = code.split("_").length - 1;
-                                if (extra > maxSequenceExtraCodePoints) {
-                                    maxSequenceExtraCodePoints = extra;
-                                }
+                    }
+                } else {
+                    try (ZipInputStream zip = new ZipInputStream(location.openStream())) {
+                        ZipEntry e;
+                        while ((e = zip.getNextEntry()) != null) {
+                            names.add(e.getName());
+                        }
+                    }
+                }
+                for (String name : names) {
+                    if (name.startsWith(path)) {
+                        int pos = name.indexOf(".png");
+                        if (pos > 0) {
+                            String code = name.substring(path.length(), pos);
+                            byte[] bytes = EmojiUtil.class.getResourceAsStream("/" + name).readAllBytes();
+                            String base64 = Base64.getEncoder().encodeToString(bytes);
+                            base64ImagesPerCode.put(code, base64);
+                            int extra = code.split("_").length - 1;
+                            if (extra > maxSequenceExtraCodePoints) {
+                                maxSequenceExtraCodePoints = extra;
                             }
                         }
                     }
