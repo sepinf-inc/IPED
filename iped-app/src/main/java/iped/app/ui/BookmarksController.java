@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -382,13 +384,17 @@ public class BookmarksController implements IBookmarksController {
             JOptionPane.showMessageDialog(App.get(), panel, title, JOptionPane.WARNING_MESSAGE);
             return;
         }
-        String openLog = Messages.getString("BookmarksController.ImportFromAnotherCase.Report.OpenLog");
-        String close = Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Close");
-        int option = JOptionPane.showOptionDialog(App.get(), panel, title, JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
-                null, new Object[] { openLog, close }, close);
-        if (option == 0) {
-            ExternalFileOpen.open(notFoundReport);
-        }
+        // buttons as components, so opening the log does not close the dialog
+        JButton openLogButton = new JButton(Messages.getString("BookmarksController.ImportFromAnotherCase.Report.OpenLog"));
+        openLogButton.addActionListener(e -> ExternalFileOpen.open(notFoundReport));
+        JButton closeButton = new JButton(Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Close"));
+        JOptionPane optionPane = new JOptionPane(panel, JOptionPane.WARNING_MESSAGE, JOptionPane.DEFAULT_OPTION, null,
+                new Object[] { openLogButton, closeButton }, closeButton);
+        // setting the value closes the dialog
+        closeButton.addActionListener(e -> optionPane.setValue(closeButton));
+        JDialog dialog = optionPane.createDialog(App.get(), title);
+        dialog.setVisible(true);
+        dialog.dispose();
     }
 
     private static String escapeHtml(String text) {
