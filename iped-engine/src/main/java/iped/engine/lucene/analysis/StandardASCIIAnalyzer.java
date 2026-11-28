@@ -34,6 +34,24 @@ public class StandardASCIIAnalyzer extends Analyzer {
 
     private int[] extraChars;
 
+    private int analyzerVersion = AnalyzerVersion.LEGACY;
+
+    /**
+     * Sets the analysis version, see {@link AnalyzerVersion}. Indexes must be
+     * searched with the version they were built with.
+     */
+    public void setAnalyzerVersion(int analyzerVersion) {
+        this.analyzerVersion = analyzerVersion;
+    }
+
+    public int getAnalyzerVersion() {
+        return analyzerVersion;
+    }
+
+    private boolean isUnicodeAnalysis(String fieldName) {
+        return analyzerVersion >= AnalyzerVersion.UNICODE && !isCategoryField(fieldName);
+    }
+
     public void setFilterNonLatinChars(boolean filterNonLatinChars) {
         this.filterNonLatinChars = filterNonLatinChars;
     }
@@ -73,6 +91,17 @@ public class StandardASCIIAnalyzer extends Analyzer {
 
     @Override
     protected TokenStream normalize(String fieldName, TokenStream tok) {
+        if (isUnicodeAnalysis(fieldName)) {
+            tok = new UnicodeNormalizationFilter(tok, convertCharsToAscii);
+            if (convertCharsToLowerCase) {
+                tok = new LowerCaseFilter(tok);
+            }
+            if (convertCharsToAscii) {
+                tok = new FastASCIIFoldingFilter(tok);
+                tok = new DiacriticFoldingFilter(tok);
+            }
+            return tok;
+        }
         if (convertCharsToLowerCase || isCategoryField(fieldName)) {
             tok = new LowerCaseFilter(tok);
         }
@@ -88,6 +117,8 @@ public class StandardASCIIAnalyzer extends Analyzer {
         Tokenizer tokenizer;
         if (isCategoryField(fieldName)) {
             tokenizer = new CategoryTokenizer();
+        } else if (isUnicodeAnalysis(fieldName)) {
+            tokenizer = new UnicodeTokenizer(extraChars, UnicodeTokenizer.DEFAULT_MAX_TOKEN_LENGTH);
         } else {
             tokenizer = new LetterDigitTokenizer(extraChars);
         }

@@ -4,10 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -15,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -25,6 +31,7 @@ import iped.data.IIPEDSource;
 import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.lucene.SlowCompositeReaderWrapper;
+import iped.engine.lucene.analysis.AnalyzerVersion;
 import iped.engine.lucene.analysis.AppAnalyzer;
 import iped.engine.search.LuceneSearchResult;
 import iped.exception.IPEDException;
@@ -36,6 +43,10 @@ public class IPEDMultiSource extends IPEDSource {
     private static ArrayList<Integer> baseDocCache = new ArrayList<Integer>();
 
     List<IPEDSource> cases = new ArrayList<>();
+
+    private final SortedSet<Integer> analyzerVersions = new TreeSet<>();
+
+    private final Map<Integer, Analyzer> analyzersByVersion = new HashMap<>();
 
     public IPEDMultiSource(IIPEDSource singleCase) {
         super(singleCase.getCaseDir());
@@ -160,9 +171,33 @@ public class IPEDMultiSource extends IPEDSource {
         // marcadores = new Bookmarks(this, this.getCaseDir());
         this.multiBookmarks = new MultiBitmapBookmarks(cases);
 
-        analyzer = AppAnalyzer.get();
+        for (IPEDSource iCase : cases) {
+            analyzerVersions.add(iCase.getAnalyzerVersion());
+        }
+        analyzerVersion = analyzerVersions.isEmpty() ? AnalyzerVersion.LATEST : analyzerVersions.last();
+        analyzer = AppAnalyzer.get(analyzerVersion);
+        analyzersByVersion.put(analyzerVersion, analyzer);
+        if (analyzerVersions.size() > 1) {
+            LOGGER.warn("Cases were indexed with different text analysis versions {}. Queries are parsed with each " //$NON-NLS-1$
+                    + "of them and combined. Reprocess older cases for best results.", analyzerVersions); //$NON-NLS-1$
+        }
 
         LOGGER.info("Loaded " + cases.size() + " cases."); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    /**
+     * @return the distinct text analysis versions of the cases, see
+     *         {@link AnalyzerVersion}
+     */
+    public SortedSet<Integer> getAnalyzerVersions() {
+        return Collections.unmodifiableSortedSet(analyzerVersions);
+    }
+
+    /**
+     * @return the analyzer of a text analysis version used by some of the cases
+     */
+    public synchronized Analyzer getAnalyzer(int version) {
+        return analyzersByVersion.computeIfAbsent(version, AppAnalyzer::get);
     }
 
     private void loadCategories() {

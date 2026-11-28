@@ -36,6 +36,10 @@ public class NonFinalPerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
       this.fieldAnalyzers = (fieldAnalyzers != null) ? fieldAnalyzers : Collections.<String, Analyzer>emptyMap();
     }
 
+    public Analyzer getDefaultAnalyzer() {
+        return defaultAnalyzer;
+    }
+
     @Override
     protected Analyzer getWrappedAnalyzer(String fieldName) {
         Analyzer analyzer = fieldAnalyzers.get(fieldName);

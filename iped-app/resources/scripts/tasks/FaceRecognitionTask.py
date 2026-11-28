@@ -69,8 +69,10 @@ def createExternalProcess():
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript), str(max_size), detection_model, str(up_sampling)], 
-                                    stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            # UTF-8 pipes on both ends: the default (Windows ANSI code page) cannot pass all file paths
+            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript), str(max_size), detection_model, str(up_sampling)],
+                                    stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
+                                    encoding='utf-8', errors='replace', env=dict(os.environ, PYTHONUTF8='1', PYTHONIOENCODING='utf-8'))
         
         if pingExternalProcess(proc):
             from threading import Thread

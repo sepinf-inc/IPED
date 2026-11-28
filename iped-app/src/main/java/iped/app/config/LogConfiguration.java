@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
@@ -72,7 +73,8 @@ public class LogConfiguration {
             out = System.out;
             err = System.err;
             FileOutputStream fos = new FileOutputStream(logFile, true);
-            log = new PrintStream(new FilterOutputStream(fos, out, "IPED")); //$NON-NLS-1$
+            // UTF-8 like the log4j file appender writing to the same file
+            log = new PrintStream(new FilterOutputStream(fos, out, "IPED"), false, StandardCharsets.UTF_8.name()); //$NON-NLS-1$
             System.setOut(log);
             System.setErr(log);
 

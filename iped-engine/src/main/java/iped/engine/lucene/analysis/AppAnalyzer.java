@@ -38,7 +38,29 @@ import iped.properties.ExtraProperties;
  */
 public class AppAnalyzer {
 
+    /**
+     * Returns the analyzer of the latest {@link AnalyzerVersion}, to be used with
+     * new indexes. Existing indexes must use {@link #get(int)} with their version.
+     */
     public static Analyzer get() {
+        return get(AnalyzerVersion.LATEST);
+    }
+
+    /**
+     * Returns the analysis version of an analyzer created by this class, or
+     * {@link AnalyzerVersion#LEGACY} for other analyzers.
+     */
+    public static int getVersion(Analyzer analyzer) {
+        if (analyzer instanceof NonFinalPerFieldAnalyzerWrapper) {
+            analyzer = ((NonFinalPerFieldAnalyzerWrapper) analyzer).getDefaultAnalyzer();
+        }
+        if (analyzer instanceof StandardASCIIAnalyzer) {
+            return ((StandardASCIIAnalyzer) analyzer).getAnalyzerVersion();
+        }
+        return AnalyzerVersion.LEGACY;
+    }
+
+    public static Analyzer get(int analyzerVersion) {
         Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
         analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer());
         analyzerPerField.put(LocalizedProperties.getLocalizedField(IndexItem.CATEGORY),
@@ -74,6 +96,7 @@ public class AppAnalyzer {
         defaultAnalyzer.setConvertCharsToAscii(indexConfig.isConvertCharsToAscii());
         defaultAnalyzer.setConvertCharsToLower(indexConfig.isConvertCharsToLowerCase());
         defaultAnalyzer.setExtraCharsToIndex(indexConfig.getExtraCharsToIndex());
+        defaultAnalyzer.setAnalyzerVersion(analyzerVersion);
 
         return new NonFinalPerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField) {
             protected Analyzer getWrappedAnalyzer(String fieldName) {

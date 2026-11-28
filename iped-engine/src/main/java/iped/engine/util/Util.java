@@ -37,6 +37,11 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -403,6 +408,52 @@ public class Util {
         }
         reader.close();
         return array;
+    }
+
+    /**
+     * Loads a keyword list (one keyword per line) provided by the user, which
+     * may be UTF-8 (with or without BOM), UTF-16 with BOM or, for older lists,
+     * the platform charset.
+     */
+    public static ArrayList<String> loadKeywordsDetectingCharset(File file) throws IOException {
+        ArrayList<String> keywords = new ArrayList<String>();
+        if (!file.exists()) {
+            return keywords;
+        }
+        String text = decodeTextDetectingCharset(Files.readAllBytes(file.toPath()));
+        for (String line : text.split("\\r?\\n|\\r")) { //$NON-NLS-1$
+            if (!line.trim().isEmpty()) {
+                keywords.add(line.trim());
+            }
+        }
+        return keywords;
+    }
+
+    /**
+     * Decodes a user provided text file: a BOM is honored, otherwise UTF-8 is
+     * used if the bytes are valid UTF-8, falling back to the platform charset
+     * (windows-1252 if the platform charset is UTF-8).
+     */
+    public static String decodeTextDetectingCharset(byte[] bytes) {
+        if (bytes.length >= 3 && (bytes[0] & 0xFF) == 0xEF && (bytes[1] & 0xFF) == 0xBB && (bytes[2] & 0xFF) == 0xBF) {
+            return new String(bytes, 3, bytes.length - 3, StandardCharsets.UTF_8);
+        }
+        if (bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xFE) {
+            return new String(bytes, 2, bytes.length - 2, StandardCharsets.UTF_16LE);
+        }
+        if (bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFE && (bytes[1] & 0xFF) == 0xFF) {
+            return new String(bytes, 2, bytes.length - 2, StandardCharsets.UTF_16BE);
+        }
+        try {
+            return StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(bytes)).toString();
+        } catch (CharacterCodingException e) {
+            Charset fallback = Charset.defaultCharset();
+            if (StandardCharsets.UTF_8.equals(fallback)) {
+                fallback = Charset.forName("windows-1252"); //$NON-NLS-1$
+            }
+            return new String(bytes, fallback);
+        }
     }
 
     public static void saveKeywords(ArrayList<String> keywords, String filePath, String encoding) throws IOException {

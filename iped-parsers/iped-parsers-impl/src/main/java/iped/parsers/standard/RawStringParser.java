@@ -36,9 +36,15 @@ import org.xml.sax.SAXException;
 import iped.utils.RandomFilterInputStream;
 
 /**
- * Parser que extrai strings brutas de um arquivo qualquer. Útil para binários,
- * tipos desconhecidos e drivefreespace. É utilizada uma heurística para
- * detectar codificações ISO-8859-1, UTF-8 e UTF-16 mescladas num mesmo arquivo.
+ * Extracts strings of text from any file: binaries, unknown or corrupted files,
+ * unallocated space... The encodings searched are set by the
+ * {@value #ENCODINGS} system property:
+ * <ul>
+ * <li>{@value #LATIN1} (default): ASCII and Latin-1 text, in single bytes
+ * (windows-1252), UTF-8 and UTF-16, even mixed in the same file;</li>
+ * <li>{@value #ALL}: also UTF-8 and UTF-16 (LE and BE) text in any script, see
+ * {@link RawStringExtractor}. Slower on binary data.</li>
+ * </ul>
  */
 public class RawStringParser extends AbstractParser {
 
@@ -48,6 +54,11 @@ public class RawStringParser extends AbstractParser {
      */
     public static final String COMPRESS_RATIO = "compressRatioLZ4"; //$NON-NLS-1$
     public static final String MIN_STRING_SIZE = "minRawStringSize"; //$NON-NLS-1$
+
+    /** System property with the encodings to search: {@value #LATIN1} or {@value #ALL} */
+    public static final String ENCODINGS = "rawStrings"; //$NON-NLS-1$
+    public static final String LATIN1 = "latin1"; //$NON-NLS-1$
+    public static final String ALL = "all"; //$NON-NLS-1$
 
     private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
@@ -144,7 +155,51 @@ public class RawStringParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        new RawStringParser(filterRandomBytes).safeParse(stream, handler, metadata, context);
+        if (ALL.equalsIgnoreCase(System.getProperty(ENCODINGS))) {
+            parseAllEncodings(stream, handler, metadata);
+        } else {
+            new RawStringParser(filterRandomBytes).safeParse(stream, handler, metadata, context);
+        }
+    }
+
+    /**
+     * Extracts text in any script with {@link RawStringExtractor}. Uses only
+     * local state, so it does not need a new instance.
+     */
+    private void parseAllEncodings(InputStream stream, ContentHandler handler, Metadata metadata)
+            throws IOException, SAXException {
+
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
+
+        if (filterRandomBytes)
+            stream = new RandomFilterInputStream(stream);
+
+        int minSize = Integer.valueOf(System.getProperty(MIN_STRING_SIZE, "4"));
+        RawStringExtractor extractor = new RawStringExtractor(minSize, true, xhtml::characters);
+        byte[] data = new byte[BUF_SIZE];
+        int i = 0;
+        do {
+            int size = 0;
+            while ((i = stream.read(data, size, BUF_SIZE - size)) > 0) {
+                size += i;
+            }
+            extractor.process(data, size);
+            if (i == 0) {
+                // random data skipped by RandomFilterInputStream
+                extractor.skip(0);
+            }
+        } while (i != -1 && !Thread.currentThread().isInterrupted());
+
+        extractor.finish();
+
+        if (filterRandomBytes) {
+            Double compression = ((RandomFilterInputStream) stream).getCompressRatio();
+            if (compression != null)
+                metadata.set(COMPRESS_RATIO, Double.toString(compression));
+        }
+
+        xhtml.endDocument();
     }
 
     private void safeParse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)

@@ -214,6 +214,17 @@ public class TextParser extends CancelableWorker implements ITextParser {
         }
     }
 
+    /**
+     * Checks if the UTF-32BE code unit ending at {@code lastByte} is a line feed.
+     * Testing single bytes is not enough: many characters have a 0x0A byte, like
+     * 上 (U+4E0A), ช (U+0E0A) or the whole Gujarati and Gurmukhi blocks
+     * (U+0A00-U+0AFF).
+     */
+    static boolean isLineFeed(byte[] utf32be, int lastByte) {
+        return utf32be[lastByte] == 0x0A && utf32be[lastByte - 1] == 0 && utf32be[lastByte - 2] == 0
+                && utf32be[lastByte - 3] == 0;
+    }
+
     @SuppressWarnings("resource")
     private FileChannel getFileChannel(File tmpFile) throws FileNotFoundException {
         return new RandomAccessFile(tmpFile, "rw").getChannel();
@@ -311,8 +322,8 @@ public class TextParser extends CancelableWorker implements ITextParser {
                     lineBreak = false;
                     int startRow = viewRows.size() - 1;
                     if (viewRows.size() - 1 < ATextViewer.MAX_LINES) {
-                        for (int i = 0; i < data.length - 1; i++) {
-                            if (data[i] == 0x0A) {
+                        for (int i = ATextViewer.CHAR_BYTE_COUNT - 1; i < data.length - 1; i += ATextViewer.CHAR_BYTE_COUNT) {
+                            if (isLineFeed(data, i)) {
                                 viewRows.add(startPos + i + 1);
                                 lineBreak = true;
                                 if (viewRows.size() - 1 == ATextViewer.MAX_LINES) {

@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,12 +16,14 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import iped.data.IItem;
 import iped.io.IStreamSource;
 import iped.parsers.util.Util;
+import iped.utils.HighlightTermMatcher;
 import iped.utils.IOUtil;
 import iped.utils.UiUtil;
 import iped.viewers.api.AbstractViewer;
@@ -71,8 +74,9 @@ public class HtmlViewer extends AbstractViewer {
     private volatile boolean isNavigableTree;
     private volatile int currTerm = -1;
     private volatile Object currExec;
-    private volatile boolean isRunning;
-    private final Object lock = new Object();
+
+    // how long highlighting may hold the JavaFX thread before letting it render and handle input
+    private static final long HIGHLIGHT_SLICE_NANOS = 50_000_000;
 
     // TODO change viewer api and move this to loadFile method
     public void setElementIDToScroll(String id) {
@@ -130,6 +134,8 @@ public class HtmlViewer extends AbstractViewer {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
+                // stop highlighting the previous page
+                currExec = new Object();
                 scrollToPositionDone = false;
                 webEngine.load(null);
                 webEngine.loadContent(UiUtil.getUIEmptyHtml());
@@ -231,15 +237,12 @@ public class HtmlViewer extends AbstractViewer {
 
                             try {
                                 Object exec = currExec = new Object();
-                                synchronized (lock) {
-                                    while (isRunning) {
-                                        lock.wait();
-                                    }
-                                    isRunning = true;
-                                }
                                 doc = webEngine.getDocument();
                                 isNavigableTree = false;
                                 if (doc != null) {
+                                    if (!webEngine.isJavaScriptEnabled()) {
+                                        removeChatLoadingOverlay(doc);
+                                    }
                                     try {
                                         Boolean nt = (Boolean) webEngine.executeScript("document.querySelector('details') != null");
                                         isNavigableTree = nt.booleanValue();
@@ -249,10 +252,17 @@ public class HtmlViewer extends AbstractViewer {
                                     currentHit = -1;
                                     totalHits = 0;
                                     hits = new ArrayList<Object>();
+                                    HighlightTermMatcher matcher = null;
                                     if (highlightTerms != null && highlightTerms.size() > 0) {
-                                        highlightNode(doc, false, exec);
+                                        matcher = new HighlightTermMatcher(highlightTerms);
                                     }
-    
+                                    if (matcher != null && !matcher.isEmpty()) {
+                                        // most pages are done in this first slice
+                                        new Highlighter(doc, matcher, exec, () -> scrollToPosition()).run();
+                                    } else {
+                                        scrollToPosition();
+                                    }
+
                                 } else if (tmpFile != null) {
                                     LOGGER.info("Null DOM to highlight!");
                                     queryTerms = highlightTerms.toArray(new String[0]);
@@ -261,16 +271,8 @@ public class HtmlViewer extends AbstractViewer {
                                         scrollToNextHit(true);
                                     }
                                 }
-                                if (doc != null) {
-                                    scrollToPosition();
-                                }
                             } catch(Exception e) {
                                 e.printStackTrace();
-                            } finally{
-                                synchronized (lock) {
-                                    isRunning = false;
-                                    lock.notifyAll();
-                                }
                             }
                         }
                     }
@@ -290,15 +292,6 @@ public class HtmlViewer extends AbstractViewer {
                         return;
                     }
                     try {
-                        synchronized (lock) {
-                            while (isRunning) {
-                                lock.wait();
-                            }
-                            if (currExec != exec) {
-                                return;
-                            }
-                            isRunning = true;
-                        }
                         currentHit = -1;
                         totalHits = 0;
                         hits = new ArrayList<Object>();
@@ -308,22 +301,38 @@ public class HtmlViewer extends AbstractViewer {
                         }
                         clearNode(doc, exec);
                         if (doc != null && !highlightTerms.isEmpty()) {
-                            highlightNode(doc, false, exec);
-                            scrollToPosition();
-                        }
-                        if (hitsUpdater != null) {                    
-                            hitsUpdater.updateHits(currentHit + 1, totalHits);
+                            new Highlighter(doc, new HighlightTermMatcher(highlightTerms), exec, () -> {
+                                scrollToPosition();
+                                updateHits(hitsUpdater);
+                            }).run();
+                        } else {
+                            updateHits(hitsUpdater);
                         }
                     } catch(Exception e) {
                         e.printStackTrace();
-                    } finally{
-                        synchronized (lock) {
-                            isRunning = false;
-                            lock.notifyAll();
-                        }
                     }
                 }
             });
+        }
+    }
+
+    /**
+     * Big chat reports generated by IPED cover the page with a "Loading..." overlay
+     * that their own script removes once the page has loaded. Without JavaScript,
+     * e.g. when such a report was exported and processed again as a plain HTML
+     * file, the overlay would never go away, so remove it here.
+     */
+    private static void removeChatLoadingOverlay(Document doc) {
+        Element overlay = doc.getElementById("loading-modal");
+        if (overlay == null || overlay.getParentNode() == null) {
+            return;
+        }
+        // only the overlay of the chat reports: <div id="loading-modal"><div class="loader">
+        for (Node child = overlay.getFirstChild(); child != null; child = child.getNextSibling()) {
+            if (child instanceof Element && "loader".equals(((Element) child).getAttribute("class"))) {
+                overlay.getParentNode().removeChild(overlay);
+                return;
+            }
         }
     }
 
@@ -406,81 +415,147 @@ public class HtmlViewer extends AbstractViewer {
 
     protected ArrayList<Object> hits;
 
-    protected void highlightNode(Node node, boolean parentVisible, Object exec) {
-        if (node == null || exec != currExec) {
-            return;
+    /**
+     * Highlights the terms in a document on the JavaFX thread, a slice of time at a
+     * time, so the preview stays responsive on pages with many hits. Loading a page
+     * or searching again (a new currExec) cancels it.
+     */
+    private class Highlighter implements Runnable {
+
+        private final Document document;
+        private final HighlightTermMatcher matcher;
+        private final Object exec;
+        private final Runnable whenDone;
+
+        // the nodes whose children are being visited, the innermost first
+        private final ArrayDeque<Visit> visits = new ArrayDeque<>();
+
+        private Highlighter(Document document, HighlightTermMatcher matcher, Object exec, Runnable whenDone) {
+            this.document = document;
+            this.matcher = matcher;
+            this.exec = exec;
+            this.whenDone = whenDone;
+            enter(document, false);
         }
 
-        if (node.getNodeType() == Node.ELEMENT_NODE) {
-            String nodeName = node.getNodeName();
-            if (nodeName.equalsIgnoreCase("body")) {
-                parentVisible = true;
-            } else if (nodeName.equalsIgnoreCase("script") || nodeName.equalsIgnoreCase("style")) {
-                parentVisible = false;
+        @Override
+        public void run() {
+            long deadline = System.nanoTime() + HIGHLIGHT_SLICE_NANOS;
+            try {
+                while (exec == currExec) {
+                    if (visits.isEmpty()) {
+                        whenDone.run();
+                        return;
+                    }
+                    visitNextNode();
+                    if (System.nanoTime() > deadline) {
+                        // let the page render and handle input, then go on
+                        Platform.runLater(this);
+                        return;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
-        Node subnode = node.getFirstChild();
-
-        if (subnode != null) {
-            do {
-
-                if (parentVisible && (subnode.getNodeType() == Node.TEXT_NODE)) {
-                    String term;
-                    do {
-                        String value = subnode.getNodeValue();
-                        String fValue = value.toLowerCase();
-
-                        int idx = Integer.MAX_VALUE;
-                        term = null;
-                        for (String t : highlightTerms) {
-                            int j = 0, i;
-                            do {
-                                i = fValue.indexOf(t, j);
-                                if (i != -1 && i < idx) {
-                                    idx = i;
-                                    term = t;
-                                    break;
-                                }
-                            } while (i != -1 && i < idx);
-
-                        }
-                        if (term != null) {
-                            Node preNode = subnode.cloneNode(false);
-                            preNode.setNodeValue(value.substring(0, idx));
-                            node.insertBefore(preNode, subnode);
-
-                            Element termNode = doc.createElement("span");
-                            termNode.setAttribute("style", hitStyle);
-                            termNode.appendChild(doc.createTextNode(value.substring(idx, idx + term.length())));
-                            termNode.setAttribute("id", "ipedHit-" + totalHits);
-                            hits.add(termNode);
-                            totalHits++;
-                            node.insertBefore(termNode, subnode);
-                            subnode.setNodeValue(value.substring(idx + term.length()));
-                            if (isNavigableTree) {
-                                // expands all parent elements of a hit
-                                try {
-                                    webEngine.executeScript("for (let el = document.getElementById('ipedHit-"
-                                            + (totalHits - 1)
-                                            + "'); el; el = el.parentElement) if (el.tagName === 'DETAILS') el.open = true;");
-                                } catch (Exception e) {
-                                }
-                            }
-                            if (totalHits == 1) {
-                                termNode.setAttribute("style", selStyle);
-                                if (shouldScrollToHit()) {
-                                    webEngine.executeScript("x = document.getElementById(\"ipedHit-" + ++currentHit + "\"); " + scrollIntoView("x"));
-                                }
-                            }
-                        }
-                    } while (term != null);
-
+        private void enter(Node node, boolean parentVisible) {
+            boolean visible = parentVisible;
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                String nodeName = node.getNodeName();
+                if (nodeName.equalsIgnoreCase("body")) {
+                    visible = true;
+                } else if (nodeName.equalsIgnoreCase("script") || nodeName.equalsIgnoreCase("style")) {
+                    return;
                 }
+            }
+            Node firstChild = node.getFirstChild();
+            if (firstChild != null) {
+                visits.push(new Visit(node, firstChild, visible));
+            }
+        }
 
-                highlightNode(subnode, parentVisible, exec);
+        private void visitNextNode() {
+            Visit visit = visits.peek();
+            Node node = visit.next;
+            visit.next = node.getNextSibling();
+            if (visit.next == null) {
+                visits.pop();
+            }
+            if (node.getNodeType() == Node.TEXT_NODE) {
+                if (visit.visible) {
+                    highlightText(visit.parent, node);
+                }
+            } else {
+                enter(node, visit.visible);
+            }
+        }
 
-            } while ((subnode = subnode.getNextSibling()) != null && exec == currExec);
+        /**
+         * Wraps the matches of a text node in highlight spans. The text around them
+         * stays in text nodes, one before each span and the original node after the
+         * last one, as clearNode() expects.
+         */
+        private void highlightText(Node parent, Node textNode) {
+            String value = textNode.getNodeValue();
+            int[] matches = matcher.find(value);
+            if (matches.length == 0) {
+                return;
+            }
+            // build the highlighted text apart and insert it with a single DOM change
+            DocumentFragment fragment = document.createDocumentFragment();
+            boolean firstHit = false;
+            int end = 0;
+            for (int i = 0; i < matches.length; i += 2) {
+                fragment.appendChild(document.createTextNode(value.substring(end, matches[i])));
+                end = matches[i + 1];
+                Element termNode = document.createElement("span");
+                termNode.setAttribute("style", totalHits == 0 ? selStyle : hitStyle);
+                termNode.setAttribute("id", "ipedHit-" + totalHits);
+                termNode.appendChild(document.createTextNode(value.substring(matches[i], end)));
+                fragment.appendChild(termNode);
+                firstHit |= totalHits == 0;
+                hits.add(termNode);
+                totalHits++;
+            }
+            parent.insertBefore(fragment, textNode);
+            textNode.setNodeValue(value.substring(end));
+
+            if (isNavigableTree) {
+                openParentDetails(parent);
+            }
+            if (firstHit && shouldScrollToHit()) {
+                webEngine.executeScript("x = document.getElementById(\"ipedHit-" + ++currentHit + "\"); " + scrollIntoView("x"));
+            }
+        }
+    }
+
+    private static class Visit {
+        private final Node parent;
+        private Node next;
+        private final boolean visible;
+
+        private Visit(Node parent, Node next, boolean visible) {
+            this.parent = parent;
+            this.next = next;
+            this.visible = visible;
+        }
+    }
+
+    private void updateHits(HitsUpdater hitsUpdater) {
+        if (hitsUpdater != null) {
+            hitsUpdater.updateHits(currentHit + 1, totalHits);
+        }
+    }
+
+    /**
+     * Expands the collapsed DETAILS elements around a hit.
+     */
+    private static void openParentDetails(Node node) {
+        for (Node n = node; n != null; n = n.getParentNode()) {
+            if (n instanceof Element && "details".equalsIgnoreCase(n.getNodeName())) {
+                ((Element) n).setAttribute("open", "");
+            }
         }
     }
 
@@ -492,24 +567,41 @@ public class HtmlViewer extends AbstractViewer {
         if (subnode != null) {
             StringBuilder sb = new StringBuilder();
             do {
-                if (subnode instanceof Element) {
-                    String attr = ((Element) subnode).getAttribute("id");
-                    if (attr != null && attr.startsWith("ipedHit")) {
-                        Node prevSubnode = subnode.getPreviousSibling();
-                        sb.setLength(0);
-                        sb.append(prevSubnode.getNodeValue());
+                if (isHit(subnode)) {
+                    // merge the hits in a row and the text around them at once into the
+                    // text node after the last hit: merging hit by hit copied the text
+                    // before them again for each hit
+                    Node prevSubnode = subnode.getPreviousSibling();
+                    sb.setLength(0);
+                    sb.append(prevSubnode.getNodeValue());
+                    node.removeChild(prevSubnode);
+                    Node nextSubnode;
+                    while (true) {
                         sb.append(subnode.getFirstChild().getNodeValue());
-                        Node nextSubnode = subnode.getNextSibling();
-                        node.removeChild(prevSubnode);
+                        nextSubnode = subnode.getNextSibling();
                         node.removeChild(subnode);
+                        subnode = nextSubnode.getNextSibling();
+                        if (!isHit(subnode)) {
+                            break;
+                        }
                         sb.append(nextSubnode.getNodeValue());
-                        nextSubnode.setNodeValue(sb.toString());
-                        subnode = nextSubnode;
+                        node.removeChild(nextSubnode);
                     }
+                    sb.append(nextSubnode.getNodeValue());
+                    nextSubnode.setNodeValue(sb.toString());
+                    subnode = nextSubnode;
                 }
                 clearNode(subnode, exec);
             } while ((subnode = subnode.getNextSibling()) != null && exec == currExec);
         }
+    }
+
+    private static boolean isHit(Node node) {
+        if (!(node instanceof Element)) {
+            return false;
+        }
+        String id = ((Element) node).getAttribute("id");
+        return id != null && id.startsWith("ipedHit");
     }
 
     @Override

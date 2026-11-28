@@ -100,11 +100,8 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
     private int[] convertExtraCharsToIndex(String chars) {
 
         ArrayList<Integer> codePoints = new ArrayList<Integer>();
-        for (char c : chars.toCharArray()) {
-            if (c != ' ') {
-                codePoints.add((int) c);
-            }
-        }
+        // code points, not chars, so supplementary characters can be configured too
+        chars.codePoints().filter(c -> c != ' ').forEach(codePoints::add);
 
         int[] extraCodePoints = null;
         if (codePoints.size() > 0) {

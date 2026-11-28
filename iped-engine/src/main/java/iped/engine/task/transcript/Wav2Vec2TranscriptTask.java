@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -145,12 +146,13 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
 
         pb.command(python, script, model, Integer.toString(device));
+        setPythonUTF8Mode(pb);
 
         Process process = pb.start();
 
         logInputStream(process.getErrorStream());
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
 
         String line = reader.readLine();
 
@@ -190,13 +192,24 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         return server;
     }
 
+    /**
+     * Runs Python in UTF-8 mode: by default its pipes use the Windows ANSI code
+     * page, so file paths with other characters are not decoded and transcripts
+     * in other alphabets cannot be written. Both ends must use UTF-8.
+     */
+    protected static void setPythonUTF8Mode(ProcessBuilder pb) {
+        pb.environment().put("PYTHONUTF8", "1"); //$NON-NLS-1$ //$NON-NLS-2$
+        pb.environment().put("PYTHONIOENCODING", "utf-8"); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
     protected void logInputStream(InputStream is) {
         Thread t = new Thread() {
             public void run() {
-                byte[] buf = new byte[1024];
+                // the process runs in Python UTF-8 mode (see setPythonUTF8Mode)
+                char[] buf = new char[1024];
                 int read = 0;
-                try {
-                    while ((read = is.read(buf)) != -1) {
+                try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+                    while ((read = reader.read(buf)) != -1) {
                         logger.log(logLevel, new String(buf, 0, read).trim());
                     }
                 } catch (IOException e) {

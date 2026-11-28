@@ -75,6 +75,7 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         String device = transcriptConfig.getDevice();
 
         pb.command(python, script, model, device, Integer.toString(deviceId), Integer.toString(threads), lang, precision, batchSize);
+        setPythonUTF8Mode(pb);
 
         Process process = pb.start();
 
@@ -198,10 +199,11 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
                 "Lightning automatically upgraded your loaded checkpoint from", "Model was trained with pyannote.audio 0.0.1, yours is", "Model was trained with torch 1.10.0+cu102, yours is");
         Thread t = new Thread() {
             public void run() {
-                byte[] buf = new byte[1024];
+                // the process runs in Python UTF-8 mode (see setPythonUTF8Mode)
+                char[] buf = new char[1024];
                 int read = 0;
-                try {
-                    while ((read = is.read(buf)) != -1) {
+                try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+                    while ((read = reader.read(buf)) != -1) {
                         String msg = new String(buf, 0, read).trim();
                         boolean ignore = false;
                         for (String i : ignoreMsgs) {

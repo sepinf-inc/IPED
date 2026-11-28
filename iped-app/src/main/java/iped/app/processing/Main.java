@@ -24,12 +24,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.bootstrap.Bootstrap;
+import iped.app.bootstrap.UnicodeArgs;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.ui.ProgressConsole;
 import iped.app.processing.ui.ProgressFrame;
@@ -39,6 +41,7 @@ import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.core.Manager;
+import iped.engine.core.Statistics;
 import iped.engine.localization.Messages;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.util.UIPropertyListenerProvider;
@@ -296,6 +299,10 @@ public class Main {
      * Entrada principal da aplicação para processamento de evidências
      */
     public static void main(String[] args) {
+
+        // Bootstrap passes arguments with characters the launcher would lose encoded
+        args = UnicodeArgs.decode(UnicodeArgs.recoverWindowsArgs(args, Collections.singleton(Main.class.getName())));
+        System.setProperty(Statistics.JAVA_COMMAND_PROPERTY, Main.class.getName() + " " + String.join(" ", args)); //$NON-NLS-1$
 
         Main iped = new Main(args, true);
         PrintStream SystemOut = System.out; // this is redirected by LogConfiguration

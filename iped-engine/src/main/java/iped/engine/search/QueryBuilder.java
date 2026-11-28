@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -18,11 +19,17 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.FieldInfos;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.queryparser.flexible.core.processors.QueryNodeProcessor;
+import org.apache.lucene.queryparser.flexible.core.processors.QueryNodeProcessorPipeline;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
+import org.apache.lucene.queryparser.flexible.standard.processors.AnalyzerQueryNodeProcessor;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -52,8 +59,13 @@ import org.slf4j.LoggerFactory;
 import iped.data.IIPEDSource;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
+import iped.engine.data.IPEDMultiSource;
 import iped.engine.localization.CategoryLocalization;
 import iped.engine.lucene.PublicPointRangeQuery;
+import iped.engine.lucene.analysis.AnalyzerVersion;
+import iped.engine.lucene.analysis.AppAnalyzer;
+import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
+import iped.engine.lucene.analysis.UnicodeTokenizer;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
@@ -75,6 +87,13 @@ public class QueryBuilder {
 
     private static Object lock = new Object();
 
+    /**
+     * Non ASCII characters that ASCII folding turns into query syntax
+     * characters. Typographic double quotes are not included, they are accepted
+     * as phrase quotes.
+     */
+    private static final boolean[] FOLDS_TO_QUERY_SYNTAX = buildFoldsToQuerySyntax();
+
     private IIPEDSource ipedCase;
 
     private boolean allowLeadingWildCard = true;
@@ -92,6 +111,65 @@ public class QueryBuilder {
 
     public void setAllowLeadingWildcard(boolean allow) {
         this.allowLeadingWildCard = allow;
+    }
+
+    private static boolean[] buildFoldsToQuerySyntax() {
+        String syntaxChars = "+-&|!(){}[]^~*?:\\/"; //$NON-NLS-1$
+        boolean[] result = new boolean[Character.MAX_VALUE + 1];
+        char[] in = new char[1];
+        char[] out = new char[8];
+        for (int c = 0x80; c <= Character.MAX_VALUE; c++) {
+            in[0] = (char) c;
+            int len = FastASCIIFoldingFilter.foldToASCII(in, 0, out, 0, 1);
+            result[c] = len == 1 && syntaxChars.indexOf(out[0]) >= 0;
+        }
+        return result;
+    }
+
+    /**
+     * Replaces by spaces the punctuation that ASCII folding would turn into query
+     * syntax, like the full width question marks, colons and parenthesis of CJK
+     * texts or en/em dashes, which would otherwise become wildcards, field
+     * separators, groups or NOT operators when a text is pasted in the search box.
+     */
+    static String replaceFoldedQuerySyntax(String text) {
+        char[] chars = null;
+        for (int i = 0; i < text.length(); i++) {
+            if (FOLDS_TO_QUERY_SYNTAX[text.charAt(i)]) {
+                if (chars == null) {
+                    chars = text.toCharArray();
+                }
+                chars[i] = ' ';
+            }
+        }
+        return chars == null ? text : new String(chars);
+    }
+
+    /**
+     * Joins the terms of a phrase with spaces, except between characters of
+     * scripts written without spaces, which are indexed one character per term.
+     */
+    private static String joinPhraseTerms(List<Term> terms) {
+        StringBuilder sb = new StringBuilder();
+        String prev = null;
+        for (Term term : terms) {
+            String text = term.text().toLowerCase();
+            if (prev != null && !(isClusterScriptBoundary(prev, true) && isClusterScriptBoundary(text, false))) {
+                sb.append(' ');
+            }
+            sb.append(text);
+            prev = text;
+        }
+        return sb.toString();
+    }
+
+    private static boolean isClusterScriptBoundary(String text, boolean atEnd) {
+        if (text.isEmpty()) {
+            return false;
+        }
+        int cp = atEnd ? text.codePointBefore(text.length()) : text.codePointAt(0);
+        return UnicodeTokenizer.isClusterScriptChar(cp) || Character.getType(cp) == Character.NON_SPACING_MARK
+                || Character.getType(cp) == Character.COMBINING_SPACING_MARK;
     }
 
     public static String escape(String query) {
@@ -131,7 +209,7 @@ public class QueryBuilder {
                 if (query instanceof PhraseQuery) {
                     List<Term> terms = Arrays.asList(((PhraseQuery) query).getTerms());
                     if (((PhraseQuery) query).getSlop() == 0) {
-                        result.add(terms.stream().map(t -> t.text().toLowerCase()).collect(Collectors.joining(" "))); //$NON-NLS-1$
+                        result.add(joinPhraseTerms(terms));
                     } else {
                         termSet.addAll(terms);
                     }
@@ -358,12 +436,26 @@ public class QueryBuilder {
             }
         }
 
+        // a blank term, e.g. from "" or from quoted punctuation that the analysis drops, would match everywhere
+        result.removeIf(String::isBlank);
+
         logger.info("Expanded query terms: {}", result.toString());
 
         return result;
     }
 
     public Query getQuery(String texto) throws ParseException, QueryNodeException {
+        if (ipedCase instanceof IPEDMultiSource && !texto.trim().isEmpty()) {
+            // cases indexed with different text analysis versions: each one matches the query parsed with its own
+            IPEDMultiSource multiSource = (IPEDMultiSource) ipedCase;
+            if (multiSource.getAnalyzerVersions().size() > 1) {
+                BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                for (int version : multiSource.getAnalyzerVersions()) {
+                    builder.add(getQuery(texto, multiSource.getAnalyzer(version)), Occur.SHOULD);
+                }
+                return builder.build();
+            }
+        }
         return getQuery(texto, ipedCase.getAnalyzer());
     }
 
@@ -390,10 +482,14 @@ public class QueryBuilder {
             fieldBoost.put(IndexItem.NAME, 1000.0f);
             parser.setFieldsBoost(fieldBoost);
 
+            if (AppAnalyzer.getVersion(analyzer) >= AnalyzerVersion.UNICODE) {
+                addClusterScriptPhraseProcessor(parser, getFieldsWithPositionsPredicate());
+            }
+
             IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
             // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
             if (analyzer != spaceAnalyzer && indexConfig.isConvertCharsToAscii()) {
-                texto = IndexItem.normalize(texto, false);
+                texto = IndexItem.normalize(replaceFoldedQuerySyntax(texto), false);
             }
 
             try {
@@ -410,6 +506,33 @@ public class QueryBuilder {
             }
         }
 
+    }
+
+    /**
+     * Phrase queries fail on fields indexed without positions (ids, paths,
+     * dates...). Unknown fields (no documents) are considered to have them.
+     */
+    private Predicate<CharSequence> getFieldsWithPositionsPredicate() {
+        FieldInfos fieldInfos = ipedCase.getLeafReader().getFieldInfos();
+        return field -> {
+            FieldInfo info = fieldInfos.fieldInfo(getNonLocalizedField(field.toString()));
+            return info == null || info.getIndexOptions().compareTo(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS) >= 0;
+        };
+    }
+
+    private static void addClusterScriptPhraseProcessor(StandardQueryParser parser,
+            Predicate<CharSequence> fieldHasPositions) {
+        QueryNodeProcessor processor = parser.getQueryNodeProcessor();
+        if (processor instanceof QueryNodeProcessorPipeline) {
+            QueryNodeProcessorPipeline pipeline = (QueryNodeProcessorPipeline) processor;
+            for (int i = 0; i < pipeline.size(); i++) {
+                if (pipeline.get(i) instanceof AnalyzerQueryNodeProcessor) {
+                    pipeline.add(i, new ClusterScriptPhraseQueryNodeProcessor(fieldHasPositions));
+                    return;
+                }
+            }
+        }
+        logger.warn("Could not configure phrase queries for scripts written without spaces"); //$NON-NLS-1$
     }
 
     private Query handleNegativeQueries(Query q, Analyzer analyzer) {

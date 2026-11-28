@@ -2,7 +2,6 @@ package iped.app.ui;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
@@ -30,7 +29,8 @@ public class KeywordListImporter extends CancelableWorker {
         this.addBookMarkList = addBookMarkList;
         this.addBookMarkWords = addBookMarkWords;
         try {
-            keywords = Util.loadKeywords(file.getAbsolutePath(), Charset.defaultCharset().displayName());
+            // the list may be UTF-8 or in the platform charset
+            keywords = Util.loadKeywordsDetectingCharset(file);
             fileName = file.getName().trim();
             progress = new ProgressDialog(App.get(), this, false);
             progress.setMaximum(keywords.size());
