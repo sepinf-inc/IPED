@@ -30,6 +30,8 @@ public class AppMain {
     private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
     private static StartUpControlClient startUpControlClient;
 
+    private static File appLogFile;
+
     private static final String BUNDLED_JRE_VERSION = "11.0.13";
 
     public static final String HOME_JRE_FOLDER = ".iped/jre-" + BUNDLED_JRE_VERSION;
@@ -43,6 +45,13 @@ public class AppMain {
     boolean nolog = false;
     File casesPathFile = null;
     File libDir;
+
+    /**
+     * @return the log file of the analysis app, may be null
+     */
+    public static File getAppLogFile() {
+        return appLogFile;
+    }
 
     public static void main(String[] args) {
         // Start up control client should be is created as soon as possible
@@ -160,6 +169,7 @@ public class AppMain {
             if ((logFile.exists() && !IOUtil.canWrite(logFile)) || !IOUtil.canCreateFile(logFile.getParentFile())) {
                 logFile = new File(System.getProperty("java.io.tmpdir"), appLogFileName);
             }
+            appLogFile = logFile;
 
             if (libDir == null)
                 libDir = detectLibDir();

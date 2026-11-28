@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,7 @@ import iped.engine.data.BookmarksImporter.ImportedBookmark;
 import iped.engine.data.BookmarksImporter.SourceCaseNotFoundException;
 import iped.engine.data.BookmarksImporter.UnsupportedStateFileException;
 import iped.utils.DateUtil;
+import iped.utils.IOUtil;
 import iped.utils.LocalizedFormat;
 import iped.viewers.bookmarks.IBookmarksController;
 import iped.viewers.util.ProgressDialog;
@@ -210,9 +212,10 @@ public class BookmarksController implements IBookmarksController {
         try {
             BookmarksImporter importer = new BookmarksImporter(stateFile, App.get().appCase, progress::isCanceled);
             List<ImportedBookmark> imported = importer.computeImport();
+            File notFoundReport = writeNotFoundReport(imported, stateFile);
             progress.close();
             if (!progress.isCanceled()) {
-                SwingUtilities.invokeLater(() -> applyImport(imported));
+                SwingUtilities.invokeLater(() -> applyImport(imported, notFoundReport));
             }
 
         } catch (CancellationException e) {
@@ -241,7 +244,35 @@ public class BookmarksController implements IBookmarksController {
                 Messages.getString("BookmarksController.ImportFromAnotherCase.Error.Title"), JOptionPane.ERROR_MESSAGE));
     }
 
-    private void applyImport(List<ImportedBookmark> imported) {
+    /**
+     * Writes the bookmarked items not found in the current case to a text file
+     * next to the analysis app log, or in the temp folder if not writable.
+     *
+     * @return the report file, or null if all items were found
+     */
+    private File writeNotFoundReport(List<ImportedBookmark> imported, File stateFile) {
+        if (imported.stream().allMatch(b -> b.getNotFoundItems().isEmpty())) {
+            return null;
+        }
+        File appLog = AppMain.getAppLogFile();
+        File dir = appLog != null ? appLog.getParentFile() : App.get().appCase.getCaseDir();
+        if (dir == null || !IOUtil.canCreateFile(dir)) {
+            dir = new File(System.getProperty("java.io.tmpdir"));
+        }
+        String date = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+        File report = new File(dir, "IPED-BookmarksImport-" + date + ".txt");
+        try {
+            int count = BookmarksImporter.writeNotFoundReport(imported, stateFile, report);
+            LOGGER.info("{} bookmarked items not found in the current case were written to {}", count,
+                    report.getAbsolutePath());
+            return report;
+        } catch (IOException e) {
+            LOGGER.error("Error writing report of not found items to " + report.getAbsolutePath(), e);
+            return null;
+        }
+    }
+
+    private void applyImport(List<ImportedBookmark> imported, File notFoundReport) {
         IMultiBookmarks currentBookmarks = App.get().appCase.getMultiBookmarks();
         String timestamp = DateUtil.dateToString(new Date());
         String importPrefix = String.format("[%s_%s] - ", Messages.getString("BookmarksController.ImportFromAnotherCase.Prefix"), timestamp);
@@ -276,10 +307,10 @@ public class BookmarksController implements IBookmarksController {
             updateUI();
         }
 
-        showImportReport(imported, created);
+        showImportReport(imported, created, notFoundReport);
     }
 
-    private void showImportReport(List<ImportedBookmark> imported, int created) {
+    private void showImportReport(List<ImportedBookmark> imported, int created, File notFoundReport) {
         String[] columns = { Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Bookmark"),
                 Messages.getString("BookmarksController.ImportFromAnotherCase.Report.SourceItems"),
                 Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Found"),
@@ -323,8 +354,35 @@ public class BookmarksController implements IBookmarksController {
         panel.add(new JLabel(summary), BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        int messageType = totalFound < totalSource ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
-        JOptionPane.showMessageDialog(App.get(), panel, Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Title"),
-                messageType);
+        long totalNotFound = totalSource - totalFound;
+        String title = Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Title");
+        if (totalNotFound == 0) {
+            JOptionPane.showMessageDialog(App.get(), panel, title, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String notFoundMsg = notFoundReport != null
+                ? MessageFormat.format(Messages.getString("BookmarksController.ImportFromAnotherCase.Report.NotFoundDetails"),
+                        LocalizedFormat.format(totalNotFound), notFoundReport.getAbsolutePath())
+                : MessageFormat.format(Messages.getString("BookmarksController.ImportFromAnotherCase.Report.NotFoundNoDetails"),
+                        LocalizedFormat.format(totalNotFound));
+        JLabel notFoundLabel = new JLabel("<html>" + escapeHtml(notFoundMsg).replace("\n", "<br>") + "</html>");
+        panel.add(notFoundLabel, BorderLayout.SOUTH);
+
+        if (notFoundReport == null) {
+            JOptionPane.showMessageDialog(App.get(), panel, title, JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String openLog = Messages.getString("BookmarksController.ImportFromAnotherCase.Report.OpenLog");
+        String close = Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Close");
+        int option = JOptionPane.showOptionDialog(App.get(), panel, title, JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
+                null, new Object[] { openLog, close }, close);
+        if (option == 0) {
+            ExternalFileOpen.open(notFoundReport);
+        }
+    }
+
+    private static String escapeHtml(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

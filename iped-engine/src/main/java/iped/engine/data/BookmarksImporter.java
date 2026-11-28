@@ -4,9 +4,14 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -18,6 +23,7 @@ import java.util.function.BooleanSupplier;
 
 import javax.swing.KeyStroke;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
@@ -35,6 +41,7 @@ import iped.engine.lucene.SlowCompositeReaderWrapper;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.SaveStateThread;
 import iped.engine.util.Util;
+import iped.properties.BasicProps;
 
 /**
  * Maps the bookmarks saved in a state file of another case to the items of the
@@ -67,6 +74,7 @@ public class BookmarksImporter {
         private int sourceItemsWithoutTrackId;
         private int foundSourceItems;
         private final Set<IItemId> targetIds = new HashSet<>();
+        private final List<NotFoundItem> notFoundItems = new ArrayList<>();
 
         private ImportedBookmark(String name) {
             this.name = name;
@@ -124,6 +132,56 @@ public class BookmarksImporter {
          */
         public Set<IItemId> getTargetIds() {
             return targetIds;
+        }
+
+        /**
+         * @return bookmarked items of the source case not found in the current case
+         */
+        public List<NotFoundItem> getNotFoundItems() {
+            return notFoundItems;
+        }
+    }
+
+    /**
+     * A bookmarked item of the source case not found in the current case.
+     */
+    public static class NotFoundItem {
+
+        private final File sourceCase;
+        private final int id;
+        private final String path;
+        private final String hash;
+        private final boolean withoutTrackId;
+
+        private NotFoundItem(File sourceCase, int id, String path, String hash, boolean withoutTrackId) {
+            this.sourceCase = sourceCase;
+            this.id = id;
+            this.path = path;
+            this.hash = hash;
+            this.withoutTrackId = withoutTrackId;
+        }
+
+        public File getSourceCase() {
+            return sourceCase;
+        }
+
+        /**
+         * @return the item id in the source case
+         */
+        public int getId() {
+            return id;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public String getHash() {
+            return hash;
+        }
+
+        public boolean isWithoutTrackId() {
+            return withoutTrackId;
         }
     }
 
@@ -187,7 +245,8 @@ public class BookmarksImporter {
 
         // bookmarks with the same name in different source cases are merged
         Map<String, ImportedBookmark> result = new LinkedHashMap<>();
-        Map<String, List<IntBitmapRef>> pendingItems = new HashMap<>();
+        Map<String, List<SourceBitmap>> pendingItems = new HashMap<>();
+        List<SourceIndexInfo> sourceInfos = new ArrayList<>();
         Set<String> neededTrackIds = new HashSet<>();
 
         for (Map.Entry<BitmapBookmarks, File> entry : sourceCaseFolders.entrySet()) {
@@ -215,24 +274,30 @@ public class BookmarksImporter {
                 imported.inReport |= state.isInReport(bookmarkId);
             }
 
-            Map<Integer, List<String>> idToTrackIds = readSourceTrackIds(entry.getValue(), allBookmarked);
+            SourceIndexInfo info = readSourceTrackIds(entry.getValue(), allBookmarked);
+            sourceInfos.add(info);
 
             for (Map.Entry<String, RoaringBitmap> bitmap : bitmaps.entrySet()) {
                 pendingItems.computeIfAbsent(bitmap.getKey(), k -> new ArrayList<>())
-                        .add(new IntBitmapRef(bitmap.getValue(), idToTrackIds));
+                        .add(new SourceBitmap(bitmap.getValue(), info));
             }
-            idToTrackIds.values().forEach(neededTrackIds::addAll);
+            info.idToTrackIds.values().forEach(neededTrackIds::addAll);
         }
 
         Map<String, List<IItemId>> trackIdToTargetIds = findTargetItems(neededTrackIds);
 
         for (ImportedBookmark imported : result.values()) {
-            for (IntBitmapRef ref : pendingItems.getOrDefault(imported.name, Collections.emptyList())) {
+            for (SourceBitmap ref : pendingItems.getOrDefault(imported.name, Collections.emptyList())) {
                 for (int sourceId : ref.bitmap) {
+                    if (!ref.info.existingIds.contains(sourceId)) {
+                        // id not present in the source index, ignore it
+                        continue;
+                    }
                     imported.sourceItems++;
-                    List<String> trackIds = ref.idToTrackIds.get(sourceId);
+                    List<String> trackIds = ref.info.idToTrackIds.get(sourceId);
                     if (trackIds == null) {
                         imported.sourceItemsWithoutTrackId++;
+                        ref.info.notFoundIds.add(sourceId);
                         continue;
                     }
                     boolean found = false;
@@ -245,6 +310,24 @@ public class BookmarksImporter {
                     }
                     if (found) {
                         imported.foundSourceItems++;
+                    } else {
+                        ref.info.notFoundIds.add(sourceId);
+                    }
+                }
+            }
+        }
+
+        // load path and hash of not found items to report them
+        for (SourceIndexInfo info : sourceInfos) {
+            readStoredFields(info);
+        }
+        for (ImportedBookmark imported : result.values()) {
+            for (SourceBitmap ref : pendingItems.getOrDefault(imported.name, Collections.emptyList())) {
+                for (int sourceId : ref.bitmap) {
+                    if (ref.info.notFoundIds.contains(sourceId)) {
+                        String[] fields = ref.info.storedFields.getOrDefault(sourceId, new String[2]);
+                        imported.notFoundItems.add(new NotFoundItem(ref.info.caseFolder, sourceId, fields[0], fields[1],
+                                !ref.info.idToTrackIds.containsKey(sourceId)));
                     }
                 }
             }
@@ -253,13 +336,69 @@ public class BookmarksImporter {
         return new ArrayList<>(result.values());
     }
 
-    private static class IntBitmapRef {
-        private final RoaringBitmap bitmap;
-        private final Map<Integer, List<String>> idToTrackIds;
+    /**
+     * Writes a text report with the bookmarked items not found in the current case.
+     *
+     * @return number of items written
+     */
+    public static int writeNotFoundReport(List<ImportedBookmark> imported, File stateFile, File reportFile)
+            throws IOException {
+        int count = 0;
+        try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(reportFile.toPath(), StandardCharsets.UTF_8))) {
+            writer.println("Bookmarks import - items not found in the current case");
+            writer.println("Date: " + new Date());
+            writer.println("Imported file: " + stateFile.getAbsolutePath());
+            writer.println();
+            for (ImportedBookmark bookmark : imported) {
+                if (bookmark.notFoundItems.isEmpty()) {
+                    continue;
+                }
+                writer.println("Bookmark: " + bookmark.name + " (" + bookmark.notFoundItems.size() + " of "
+                        + bookmark.sourceItems + " items not found)");
+                writer.println("id\tpath\thash\treason\tsource case");
+                for (NotFoundItem item : bookmark.notFoundItems) {
+                    writer.println(item.id + "\t" + nonNull(item.path) + "\t" + nonNull(item.hash) + "\t"
+                            + (item.withoutTrackId ? "item without trackId" : "trackId not found") + "\t"
+                            + item.sourceCase.getAbsolutePath());
+                    count++;
+                }
+                writer.println();
+            }
+        }
+        return count;
+    }
 
-        private IntBitmapRef(RoaringBitmap bitmap, Map<Integer, List<String>> idToTrackIds) {
+    private static String nonNull(String s) {
+        return s != null ? s : "";
+    }
+
+    /**
+     * Bookmarked items of one source case.
+     */
+    private static class SourceBitmap {
+        private final RoaringBitmap bitmap;
+        private final SourceIndexInfo info;
+
+        private SourceBitmap(RoaringBitmap bitmap, SourceIndexInfo info) {
             this.bitmap = bitmap;
-            this.idToTrackIds = idToTrackIds;
+            this.info = info;
+        }
+    }
+
+    /**
+     * Information read from the index of one source case.
+     */
+    private static class SourceIndexInfo {
+        private final File caseFolder;
+        private final File indexDir;
+        private final RoaringBitmap existingIds = new RoaringBitmap();
+        private final Map<Integer, List<String>> idToTrackIds = new HashMap<>();
+        private final RoaringBitmap notFoundIds = new RoaringBitmap();
+        private final Map<Integer, String[]> storedFields = new HashMap<>();
+
+        private SourceIndexInfo(File caseFolder, File indexDir) {
+            this.caseFolder = caseFolder;
+            this.indexDir = indexDir;
         }
     }
 
@@ -311,30 +450,30 @@ public class BookmarksImporter {
     }
 
     /**
-     * Reads the trackIds of the given item ids from the source case index.
-     * Returns a list per id because an item can be split in many documents (text
+     * Reads the trackIds of the given item ids from the source case index. Keeps a
+     * list per id because an item can be split in many documents (text
      * fragments), each one with its own trackId.
      */
-    private Map<Integer, List<String>> readSourceTrackIds(File caseFolder, RoaringBitmap ids) throws IOException {
-        Map<Integer, List<String>> result = new HashMap<>();
-        if (ids.isEmpty()) {
-            return result;
-        }
+    private SourceIndexInfo readSourceTrackIds(File caseFolder, RoaringBitmap ids) throws IOException {
         File moduleDir = new File(caseFolder, IPEDSource.MODULE_DIR);
         File indexDir = new File(moduleDir, IPEDSource.INDEX_DIR);
         if (!indexDir.exists()) {
             indexDir = IPEDSource.getTempIndexDir(moduleDir);
+        }
+        SourceIndexInfo info = new SourceIndexInfo(caseFolder, indexDir);
+        if (ids.isEmpty()) {
+            return info;
         }
         LOGGER.info("Reading trackIds of {} bookmarked items from {}", ids.getCardinality(), indexDir);
 
         try (DirectoryReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(indexDir))) {
             LeafReader leafReader = SlowCompositeReaderWrapper.wrap(reader);
             NumericDocValues idValues = leafReader.getNumericDocValues(IndexItem.ID);
-            SortedDocValues trackIdValues = leafReader.getSortedDocValues(IndexItem.TRACK_ID);
-            if (idValues == null || trackIdValues == null) {
-                // old case without trackId
-                return result;
+            if (idValues == null) {
+                return info;
             }
+            // may be null in old cases without trackId
+            SortedDocValues trackIdValues = leafReader.getSortedDocValues(IndexItem.TRACK_ID);
             Bits liveDocs = leafReader.getLiveDocs();
             for (int doc = 0; doc < leafReader.maxDoc(); doc++) {
                 checkCanceled(doc);
@@ -345,13 +484,43 @@ public class BookmarksImporter {
                 if (id == null || !ids.contains(id.intValue())) {
                     continue;
                 }
-                String trackId = DocValuesUtil.getVal(trackIdValues, doc);
+                info.existingIds.add(id.intValue());
+                String trackId = trackIdValues != null ? DocValuesUtil.getVal(trackIdValues, doc) : null;
                 if (trackId != null && !trackId.isEmpty()) {
-                    result.computeIfAbsent(id.intValue(), k -> new ArrayList<>(1)).add(trackId);
+                    info.idToTrackIds.computeIfAbsent(id.intValue(), k -> new ArrayList<>(1)).add(trackId);
                 }
             }
         }
-        return result;
+        return info;
+    }
+
+    /**
+     * Loads the path and hash of the not found items from the source case index.
+     */
+    private void readStoredFields(SourceIndexInfo info) throws IOException {
+        if (info.notFoundIds.isEmpty()) {
+            return;
+        }
+        Set<String> fieldsToLoad = new HashSet<>(Arrays.asList(BasicProps.PATH, BasicProps.HASH));
+        try (DirectoryReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(info.indexDir))) {
+            LeafReader leafReader = SlowCompositeReaderWrapper.wrap(reader);
+            NumericDocValues idValues = leafReader.getNumericDocValues(IndexItem.ID);
+            Bits liveDocs = leafReader.getLiveDocs();
+            for (int doc = 0; doc < leafReader.maxDoc(); doc++) {
+                checkCanceled(doc);
+                if (liveDocs != null && !liveDocs.get(doc)) {
+                    continue;
+                }
+                Long id = DocValuesUtil.get(idValues, doc);
+                if (id == null || !info.notFoundIds.contains(id.intValue())
+                        || info.storedFields.containsKey(id.intValue())) {
+                    continue;
+                }
+                Document document = leafReader.document(doc, fieldsToLoad);
+                info.storedFields.put(id.intValue(),
+                        new String[] { document.get(BasicProps.PATH), document.get(BasicProps.HASH) });
+            }
+        }
     }
 
     /**
