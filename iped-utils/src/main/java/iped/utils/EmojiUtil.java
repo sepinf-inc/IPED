@@ -21,6 +21,9 @@ public class EmojiUtil {
     private static final Map<String, String> base64ImagesPerCode = new HashMap<String, String>();
     private static final Map<Integer, Character> specialCharsReplacement = new HashMap<Integer, Character>();
 
+    // Maximum number of code points (excluding the first one) of the available emoji sequences
+    private static int maxSequenceExtraCodePoints;
+
     static {
         initEmojiImages();
         initSpecialChars();
@@ -58,9 +61,14 @@ public class EmojiUtil {
                     int skip = i;
                     int j = i;
                     int cnt = 0;
-                    while (j < len && ++cnt <= 5) {
+                    while (j < len && cnt < maxSequenceExtraCodePoints) {
                         int next = s.codePointAt(j);
                         j += Character.charCount(next);
+                        if (isVariationSelector(next)) {
+                            // Variation selectors are not part of the image names
+                            continue;
+                        }
+                        cnt++;
                         sb.append('_').append(format(next));
                         if (base64ImagesPerCode.containsKey(sb.toString())) {
                             skip = j;
@@ -70,7 +78,7 @@ public class EmojiUtil {
                     i = skip;
                     if (i < len) {
                         int next = s.codePointAt(i);
-                        if (next == 0xFE0E || next == 0xFE0F) {
+                        if (isVariationSelector(next)) {
                             i += Character.charCount(next);
                         }
                     }
@@ -140,9 +148,14 @@ public class EmojiUtil {
                                 int skip = i;
                                 int j = i;
                                 int cnt = 0;
-                                while (j < len && ++cnt <= 5) {
+                                while (j < len && cnt < maxSequenceExtraCodePoints) {
                                     int next = s.codePointAt(j);
                                     j += Character.charCount(next);
+                                    if (isVariationSelector(next)) {
+                                        // Variation selectors are not part of the image names
+                                        continue;
+                                    }
+                                    cnt++;
                                     sb.append('_').append(format(next));
                                     if (base64ImagesPerCode.containsKey(sb.toString())) {
                                         key = sb.toString();
@@ -154,7 +167,7 @@ public class EmojiUtil {
                                 i = skip;
                                 if (i < len) {
                                     int next = s.codePointAt(i);
-                                    if (next == 0xFE0E || next == 0xFE0F) {
+                                    if (isVariationSelector(next)) {
                                         i += Character.charCount(next);
                                     }
                                 }
@@ -212,6 +225,10 @@ public class EmojiUtil {
         return inBytes;
     }
 
+    private static boolean isVariationSelector(int c) {
+        return c == 0xFE0E || c == 0xFE0F;
+    }
+
     private static final String format(int c) {
         return String.format("%04x", c);
     }
@@ -236,6 +253,10 @@ public class EmojiUtil {
                                 byte[] bytes = EmojiUtil.class.getResourceAsStream("/" + name).readAllBytes();
                                 String base64 = Base64.getEncoder().encodeToString(bytes);
                                 base64ImagesPerCode.put(code, base64);
+                                int extra = code.split("_").length - 1;
+                                if (extra > maxSequenceExtraCodePoints) {
+                                    maxSequenceExtraCodePoints = extra;
+                                }
                             }
                         }
                     }
