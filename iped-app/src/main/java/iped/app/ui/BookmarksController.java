@@ -246,8 +246,9 @@ public class BookmarksController implements IBookmarksController {
 
     /**
      * Writes the bookmarked items not found in the current case to a text file in
-     * the case root folder (the first case of a multicase), or in the temp folder
-     * if not writable.
+     * the case root folder or, for a multicase, in the folder of the file listing
+     * the cases (or the folder containing them), or in the temp folder if not
+     * writable.
      *
      * @return the report file, or null if all items were found
      */
@@ -255,9 +256,14 @@ public class BookmarksController implements IBookmarksController {
         if (imported.stream().allMatch(b -> b.getNotFoundItems().isEmpty())) {
             return null;
         }
-        File dir = App.get().appCase.getCaseDir();
-        if (dir == null && !App.get().appCase.getAtomicSources().isEmpty()) {
-            dir = App.get().appCase.getAtomicSources().get(0).getCaseDir();
+        App app = App.get();
+        File dir;
+        if (app.isMultiCase) {
+            // -multicases receives a txt file listing the cases or a folder containing them
+            File casesPath = app.casesPathFile;
+            dir = casesPath.isFile() ? casesPath.getParentFile() : casesPath;
+        } else {
+            dir = app.appCase.getCaseDir();
         }
         if (dir == null || !IOUtil.canCreateFile(dir)) {
             dir = new File(System.getProperty("java.io.tmpdir"));
