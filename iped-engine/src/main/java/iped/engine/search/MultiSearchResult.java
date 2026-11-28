@@ -2,8 +2,6 @@ package iped.engine.search;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Spliterator;
-import java.util.Spliterators;
 
 import org.roaringbitmap.RoaringBitmap;
 
@@ -54,6 +52,10 @@ public class MultiSearchResult implements IMultiSearchResult {
         scores[i] = score;
     }
 
+    public final void setItem(int i, IItemId itemId) {
+        ids[i] = itemId;
+    }
+
     public Iterable<IItemId> getIterator() {
         return new ItemIdIterator();
     }
@@ -88,11 +90,6 @@ public class MultiSearchResult implements IMultiSearchResult {
 
         public void setPos(int pos) {
             this.pos = pos;
-        }
-
-        @Override
-        public Spliterator<IItemId> spliterator() {
-            return Spliterators.spliterator(ids, Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.IMMUTABLE);
         }
     }
 

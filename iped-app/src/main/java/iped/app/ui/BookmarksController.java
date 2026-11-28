@@ -1,45 +1,44 @@
 package iped.app.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.text.MessageFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.TermInSetQuery;
-import org.apache.lucene.util.BytesRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.data.Bookmarks;
-import iped.engine.data.IPEDMultiSource;
-import iped.engine.data.IPEDSource;
-import iped.engine.search.IPEDSearcher;
-import iped.engine.search.MultiSearchResult;
-import iped.engine.util.SaveStateThread;
-import iped.properties.BasicProps;
-import iped.search.IMultiSearchResult;
+import iped.engine.data.BookmarksImporter;
+import iped.engine.data.BookmarksImporter.ImportedBookmark;
+import iped.engine.data.BookmarksImporter.SourceCaseNotFoundException;
+import iped.engine.data.BookmarksImporter.UnsupportedStateFileException;
 import iped.utils.DateUtil;
 import iped.utils.LocalizedFormat;
 import iped.viewers.bookmarks.IBookmarksController;
 import iped.viewers.util.ProgressDialog;
 
 public class BookmarksController implements IBookmarksController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BookmarksController.class);
 
     public static final String HISTORY_DIV = Messages.getString("BookmarksController.HistoryDelimiter"); //$NON-NLS-1$
 
@@ -60,8 +59,6 @@ public class BookmarksController implements IBookmarksController {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         }
     }
-
-
 
     public boolean isUpdatingHistory() {
         return updatingHistory;
@@ -193,168 +190,141 @@ public class BookmarksController implements IBookmarksController {
         }
     }
 
-    private File lookupCaseFolderFromBookmark(File bookmarkFile) {
-        if (bookmarkFile == null || bookmarkFile.getParentFile() == null) {
-            return null;
-        }
-
-        File immediateParent = bookmarkFile.getParentFile();
-
-        // 1. Check if the file is in the standard module directory
-        // Expected structure: [Case Folder] / MODULE_DIR / bookmarkFile
-        if (IPEDSource.MODULE_DIR.equals(immediateParent.getName())) {
-            File caseFolder = immediateParent.getParentFile();
-
-            if (caseFolder != null && IPEDSource.checkIfIsCaseFolder(caseFolder)) {
-                return caseFolder;
-            }
-        }
-
-        // 2. Check if the file is in a backup directory
-        // Expected structure: [Case Folder] / MODULE_DIR / BKP_DIR / bookmarkFile
-        if (SaveStateThread.BKP_DIR.equals(immediateParent.getName())) {
-            File moduleDir = immediateParent.getParentFile();
-
-            if (moduleDir != null && moduleDir.getParentFile() != null) {
-                File caseFolder = moduleDir.getParentFile();
-
-                if (IPEDSource.checkIfIsCaseFolder(caseFolder)) {
-                    return caseFolder;
-                }
-            }
-        }
-
-        return null;
-    }
-
     public void askAndImportFromAnotherCase() {
         setupFileChooser();
 
         if (fileChooser.showOpenDialog(App.get()) != JFileChooser.APPROVE_OPTION) {
             return;
         }
-
-        File selectedFile = fileChooser.getSelectedFile();
-        File sourceCaseFolder = lookupCaseFolderFromBookmark(selectedFile);
-
-        if (sourceCaseFolder == null) {
-            JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.ImportFromAnotherCase.NotValidCase"),
-                            Messages.getString("BookmarksController.ImportFromAnotherCase.NotValidCase.Title"), JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        new Thread(() -> {
-            importFromAnotherCase(sourceCaseFolder);
-        }).start();
-
+        File stateFile = fileChooser.getSelectedFile();
+        new Thread(() -> importFromAnotherCase(stateFile)).start();
     }
 
-    private void importFromAnotherCase(File sourceCaseFolder) {
-
-        IMultiBookmarks currentBookmarks = App.get().appCase.getMultiBookmarks();
-
-        ProgressDialog progress = new ProgressDialog(App.get(), null);
+    /**
+     * Computes the import in a background thread, without changing the current
+     * case. The result is applied in the EDT just if the user does not cancel.
+     */
+    private void importFromAnotherCase(File stateFile) {
+        ProgressDialog progress = new ProgressDialog(App.get(), null, true);
         progress.setNote(Messages.getString("BookmarksController.ImportFromAnotherCase.Progress.Text"));
-
-        // Open the source case to map its bookmarks to the current case
-        try (IPEDMultiSource sourceCase = new IPEDMultiSource(new IPEDSource(sourceCaseFolder))) {
-
-            IMultiBookmarks sourceBookmarks = sourceCase.getMultiBookmarks();
-
-            Set<String> fieldsToLoad = Collections.singleton(BasicProps.TRACK_ID);
-            String timestamp = DateUtil.dateToString(new Date());
-            String importPrefix = String.format("[%s_%s] - ", Messages.getString("BookmarksController.ImportFromAnotherCase.Prefix"), timestamp);
-
-            // Fetch all items from the source case to filter by bookmark later
-            IPEDSearcher sourceSearcher = new IPEDSearcher(sourceCase, "");
-            MultiSearchResult sourceItems = sourceSearcher.multiSearch();
-
-            long totalItems = sourceBookmarks.getBookmarkSet().stream().mapToLong(name -> sourceBookmarks.getBookmarkCount(name)).sum();
-            progress.setMaximum(totalItems);
-
-            AtomicLong count = new AtomicLong(0);
-            for (String sourceBookmarkName : sourceBookmarks.getBookmarkSet()) {
-
-                String newBookmarkName = importPrefix + sourceBookmarkName;
-
-                // 1. Recreate bookmark metadata in the current case
-                currentBookmarks.newBookmark(newBookmarkName);
-                currentBookmarks.setBookmarkComment(newBookmarkName, sourceBookmarks.getBookmarkComment(sourceBookmarkName));
-                currentBookmarks.setBookmarkColor(newBookmarkName, sourceBookmarks.getBookmarkColor(sourceBookmarkName));
-
-                KeyStroke stroke = sourceBookmarks.getBookmarkKeyStroke(sourceBookmarkName);
-                if (stroke != null && !BookmarksManager.get().isKeyStrokeAlreadyUsed(stroke)) {
-                    currentBookmarks.setBookmarkKeyStroke(newBookmarkName, stroke);
-                }
-
-                // 2. Extract trackIds from the source case's bookmarked items
-                IMultiSearchResult bookmarkedSourceItems = sourceBookmarks.filterBookmarks(sourceItems, Collections.singleton(sourceBookmarkName));
-                List<BytesRef> trackIds = StreamSupport
-                        .stream(bookmarkedSourceItems.getIterator().spliterator(), true)
-                        .map(sourceCase::getLuceneId)
-                        .map(luceneId -> {
-                            if (progress.isCanceled()) {
-                                throw new CancellationException();
-                            }
-                            try {
-                                return sourceCase.getReader().document(luceneId, fieldsToLoad);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                return null;
-                            } finally {
-                                progress.setProgress(count.incrementAndGet());
-                            }
-                        })
-                        .filter(Objects::nonNull)
-                        .map(doc -> doc.get(BasicProps.TRACK_ID))
-                        .filter(StringUtils::isNotBlank)
-                        .map(BytesRef::new)
-                        .collect(Collectors.toList());
-
-                // Skip querying if the bookmark is empty or has no trackable items
-                if (trackIds.isEmpty()) {
-                    continue;
-                }
-
-                // 3. Locate corresponding items in the current case and link them
-                BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
-                queryBuilder.add(new TermInSetQuery(BasicProps.TRACK_ID, trackIds), Occur.SHOULD);
-
-                IPEDSearcher currentSearcher = new IPEDSearcher(App.get().appCase, queryBuilder.build());
-                currentSearcher.setRewritequery(false);
-
-                Set<IItemId> currentCaseItemIds = StreamSupport
-                        .stream(currentSearcher.multiSearch().getIterator().spliterator(), true)
-                        .collect(Collectors.toSet());
-
-                if (!currentCaseItemIds.isEmpty()) {
-                    currentBookmarks.addBookmark(currentCaseItemIds, newBookmarkName);
-                }
-
-                if (progress.isCanceled()) {
-                    return;
-                }
+        try {
+            BookmarksImporter importer = new BookmarksImporter(stateFile, App.get().appCase, progress::isCanceled);
+            List<ImportedBookmark> imported = importer.computeImport();
+            progress.close();
+            if (!progress.isCanceled()) {
+                SwingUtilities.invokeLater(() -> applyImport(imported));
             }
 
-            currentBookmarks.saveState();
-            BookmarksManager.get().updateList();
-            BookmarksController.get().updateUI();
+        } catch (CancellationException e) {
+            // canceled by the user, nothing was changed
 
-            JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.ImportFromAnotherCase.Success"),
-                            Messages.getString("BookmarksController.ImportFromAnotherCase.Success.Title"), JOptionPane.INFORMATION_MESSAGE);
+        } catch (UnsupportedStateFileException e) {
+            LOGGER.error(e.getMessage(), e);
+            showImportError(Messages.getString("BookmarksController.ImportFromAnotherCase.UnsupportedFile"));
+
+        } catch (SourceCaseNotFoundException e) {
+            LOGGER.error(e.getMessage());
+            showImportError(MessageFormat.format(Messages.getString("BookmarksController.ImportFromAnotherCase.NotValidCase"),
+                    e.getCaseFolder() != null ? e.getCaseFolder().getAbsolutePath() : stateFile.getAbsolutePath()));
 
         } catch (Exception e) {
+            LOGGER.error("Error importing bookmarks from " + stateFile.getAbsolutePath(), e);
+            showImportError(Messages.getString("BookmarksController.ImportFromAnotherCase.Error"));
 
-            // restore state
-            currentBookmarks.loadState();
-
-            if (!progress.isCanceled()) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.ImportFromAnotherCase.Error"),
-                                Messages.getString("BookmarksController.ImportFromAnotherCase.Error.Title"), JOptionPane.ERROR_MESSAGE);
-            }
         } finally {
             progress.close();
         }
+    }
+
+    private void showImportError(String message) {
+        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(App.get(), message,
+                Messages.getString("BookmarksController.ImportFromAnotherCase.Error.Title"), JOptionPane.ERROR_MESSAGE));
+    }
+
+    private void applyImport(List<ImportedBookmark> imported) {
+        IMultiBookmarks currentBookmarks = App.get().appCase.getMultiBookmarks();
+        String timestamp = DateUtil.dateToString(new Date());
+        String importPrefix = String.format("[%s_%s] - ", Messages.getString("BookmarksController.ImportFromAnotherCase.Prefix"), timestamp);
+
+        Set<KeyStroke> usedKeyStrokes = new HashSet<>();
+        int created = 0;
+        for (ImportedBookmark bookmark : imported) {
+            // bookmarks without items found are just listed in the report
+            if (bookmark.getTargetIds().isEmpty()) {
+                continue;
+            }
+            String newBookmarkName = importPrefix + bookmark.getName();
+            currentBookmarks.newBookmark(newBookmarkName);
+            currentBookmarks.setBookmarkComment(newBookmarkName, bookmark.getComment());
+            if (bookmark.getColor() != null) {
+                currentBookmarks.setBookmarkColor(newBookmarkName, bookmark.getColor());
+            }
+            currentBookmarks.setInReport(newBookmarkName, bookmark.isInReport());
+
+            KeyStroke stroke = bookmark.getKeyStroke();
+            if (stroke != null && !BookmarksManager.get().isKeyStrokeAlreadyUsed(stroke) && usedKeyStrokes.add(stroke)) {
+                currentBookmarks.setBookmarkKeyStroke(newBookmarkName, stroke);
+            }
+
+            currentBookmarks.addBookmark(bookmark.getTargetIds(), newBookmarkName);
+            created++;
+        }
+
+        if (created > 0) {
+            currentBookmarks.saveState();
+            BookmarksManager.get().updateList();
+            updateUI();
+        }
+
+        showImportReport(imported, created);
+    }
+
+    private void showImportReport(List<ImportedBookmark> imported, int created) {
+        String[] columns = { Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Bookmark"),
+                Messages.getString("BookmarksController.ImportFromAnotherCase.Report.SourceItems"),
+                Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Found"),
+                Messages.getString("BookmarksController.ImportFromAnotherCase.Report.NotFound"),
+                Messages.getString("BookmarksController.ImportFromAnotherCase.Report.WithoutTrackId") };
+
+        Object[][] rows = new Object[imported.size()][];
+        long totalSource = 0, totalFound = 0;
+        for (int i = 0; i < imported.size(); i++) {
+            ImportedBookmark b = imported.get(i);
+            rows[i] = new Object[] { b.getName(), b.getSourceItems(), b.getFoundSourceItems(), b.getNotFoundSourceItems(),
+                    b.getSourceItemsWithoutTrackId() };
+            totalSource += b.getSourceItems();
+            totalFound += b.getFoundSourceItems();
+            LOGGER.info("Imported bookmark '{}': {} source items, {} found, {} not found, {} without trackId", b.getName(),
+                    b.getSourceItems(), b.getFoundSourceItems(), b.getNotFoundSourceItems(), b.getSourceItemsWithoutTrackId());
+        }
+
+        JTable table = new JTable(new DefaultTableModel(rows, columns) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int column) {
+                return column == 0 ? String.class : Integer.class;
+            }
+        });
+        table.setAutoCreateRowSorter(true);
+        table.getColumnModel().getColumn(0).setPreferredWidth(300);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setPreferredSize(new Dimension(700, Math.min(400, 60 + 20 * rows.length)));
+
+        String summary = MessageFormat.format(Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Summary"),
+                LocalizedFormat.format(totalFound), LocalizedFormat.format(totalSource), created);
+
+        JPanel panel = new JPanel(new BorderLayout(0, 10));
+        panel.add(new JLabel(summary), BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        int messageType = totalFound < totalSource ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
+        JOptionPane.showMessageDialog(App.get(), panel, Messages.getString("BookmarksController.ImportFromAnotherCase.Report.Title"),
+                messageType);
     }
 }
