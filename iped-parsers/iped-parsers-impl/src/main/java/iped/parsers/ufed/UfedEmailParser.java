@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.detect.EncodingDetector;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -279,8 +280,8 @@ public class UfedEmailParser extends AbstractParser {
                         byte[] attachData = null;
                         String contentType = null;
                         if (a.getReferencedFile() != null) {
-                            try {
-                                attachData = IOUtils.toByteArray(a.getReferencedFile().getItem().getBufferedInputStream());
+                            try (InputStream is = a.getReferencedFile().getItem().getSeekableInputStream()) {
+                                attachData = IOUtils.toByteArray(is);
                                 contentType = StringUtils.firstNonBlank(a.getContentType(), a.getReferencedFile().getItem().getMediaType().toString());
                             } catch (IOException e) {
                                 logger.warn("Error reading attachment referenced file: " + a, e);
@@ -324,6 +325,10 @@ public class UfedEmailParser extends AbstractParser {
 
         ParseContext context = new ParseContext();
         context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
+        // The body is always encoded as UTF-8 below, so the encoding must not be
+        // detected, otherwise a charset meta tag of the original e-mail or a long
+        // ASCII only beginning could lead to a wrong charset.
+        context.set(EncodingDetector.class, (input, metadata) -> StandardCharsets.UTF_8);
 
         HtmlParser parser = new HtmlParser();
         parser.parse(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)), bodyHandler, new Metadata(), context);

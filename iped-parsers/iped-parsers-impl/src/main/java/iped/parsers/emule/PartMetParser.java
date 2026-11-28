@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
@@ -47,7 +46,7 @@ public class PartMetParser extends AbstractParser {
     private static final long serialVersionUID = 6100522577461358577L;
 
     public static final String EMULE_PART_MET_MIME_TYPE = "application/x-emule-part-met";
-    public static final String PART_MET_ENTRY_MIME_TYPE = "application/x-emule-part-met-entry";
+    public static final String EMULE_PART_MET_ENTRY_MIME_TYPE = "application/x-emule-part-met-entry";
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections
             .singleton(MediaType.parse(EMULE_PART_MET_MIME_TYPE));
@@ -75,8 +74,10 @@ public class PartMetParser extends AbstractParser {
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         // PART.MET files are very small, so 1 MB should be more than enough.
-        byte[] bytes = new byte[1 << 20];
-        IOUtils.read(stream, bytes);
+        byte[] bytes = stream.readNBytes(1 << 20);
+        if (bytes.length < 1) {
+            throw new TikaException("Empty part.met file");
+        }
         int version = bytes[0] & 0xFF;
         if (version != 224 && version != 225 && version != 226) {
             throw new TikaException("Detected part.met file format version not supported: " + version);
@@ -120,7 +121,7 @@ public class PartMetParser extends AbstractParser {
         }
 
         if (extractEntries) {
-            BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, PART_MET_ENTRY_MIME_TYPE, context);
+            BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, EMULE_PART_MET_ENTRY_MIME_TYPE, context);
             // normalization to use same property name of other p2p parsers
             bme.registerPropertyNameMapping(KnownMetEntry.class, "hash", "ed2k");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");

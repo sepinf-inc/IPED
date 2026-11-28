@@ -24,7 +24,7 @@ import dpf.ap.gpinf.interfacetelegram.ChatInterface;
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
 
 public class Chat implements ChatInterface {
-    private ArrayList<Message> messages = new ArrayList<>();
+    private ArrayList<MessageMultiMedia> messages = new ArrayList<>();
     private Contact contact;
     private String name;
     private boolean isChannel;
@@ -32,11 +32,11 @@ public class Chat implements ChatInterface {
     private boolean isDeleted;
     private long id;
 
-    public ArrayList<Message> getMessages() {
+    public ArrayList<MessageMultiMedia> getMessages() {
         return messages;
     }
 
-    public void setMessages(ArrayList<Message> messages) {
+    public void setMessages(ArrayList<MessageMultiMedia> messages) {
         this.messages = messages;
     }
 

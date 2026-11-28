@@ -45,9 +45,13 @@ public interface ExternalParsersConfigReaderMetKeys {
 
     String WIN_TOOL_PATH = "win-tool-path";
 
+    String WIN_TOOL_NAME = "win-tool-name";
+
     String OUTPUT_CHARSET = "output-charset";
 
     String OUTPUT_IS_HTML = "outputIsHtml";
 
     String LINES_TO_IGNORE = "firstLinesToIgnore";
+
+    String UNESCAPE_OUTPUT = "unescapeOutput";
 }

@@ -273,6 +273,25 @@
         <sub-class-of type="application/x-whatsapp-db"/>
     </mime-type>
 
+    <mime-type type="application/x-whatsapp-crypt">
+        <_comment>WhatsApp encrypted backup (crypt12, crypt14 or crypt15). Besides the
+        databases, WhatsApp encrypts other backed up files with the same scheme, like
+        stickers and backup_settings.json, and all of them are decrypted</_comment>
+        <glob pattern="*.crypt12"/>
+        <glob pattern="*.crypt14"/>
+        <glob pattern="*.crypt15"/>
+    </mime-type>
+
+    <mime-type type="application/x-whatsapp-key">
+        <_comment>WhatsApp backup encryption key. It is a java serialized byte array,
+        131 bytes long for crypt12/crypt14 ("key") and 32 bytes long for crypt15 ("encrypted_backup.key")</_comment>
+        <magic priority="60">
+            <match value="0xACED0005757200025B42ACF317F8060854E0020000787000000083" type="string" offset="0"/>
+            <match value="0xACED0005757200025B42ACF317F8060854E0020000787000000020" type="string" offset="0"/>
+        </magic>
+        <glob pattern="encrypted_backup.key"/>
+    </mime-type>
+
 	<mime-type type="application/x-usnjournal-$J">
         <glob pattern="$UsnJrnl:$J*"/>
 		<glob pattern="$UsnJrnl$J*"/>
@@ -861,7 +880,7 @@
     <mime-type type="application/x-p2p">
     </mime-type>
 
-    <mime-type type="application/x-emule">
+    <mime-type type="application/x-emule-known-met">
         <sub-class-of type="application/x-p2p"/>
         <glob pattern="known*.met"/>
     </mime-type>
@@ -917,19 +936,19 @@
 
     <mime-type type="application/x-tika-ooxml-protected-docx">
         <sub-class-of type="application/x-tika-ooxml-protected"/>
-        <!--Extensão maiúscula para evitar conflito-->
+        <!-- Uppercase extension to avoid conflict -->
         <glob pattern="*.DOCX"/>
     </mime-type>
 
     <mime-type type="application/x-tika-ooxml-protected-xlsx">
         <sub-class-of type="application/x-tika-ooxml-protected"/>
-        <!--Extensão maiúscula para evitar conflito-->
+        <!-- Uppercase extension to avoid conflict -->
         <glob pattern="*.XLSX"/>
     </mime-type>
 
     <mime-type type="application/x-tika-ooxml-protected-pptx">
         <sub-class-of type="application/x-tika-ooxml-protected"/>
-        <!--Extensão maiúscula para evitar conflito-->
+        <!-- Uppercase extension to avoid conflict -->
         <glob pattern="*.PPTX"/>
     </mime-type>
 
@@ -938,7 +957,7 @@
     </mime-type>
 
     <mime-type type="application/x-nls">
-    	<!--Evita detecção incorreta de itens NLS como x-ms-owner-->
+    	<!-- Prevents incorrect detection of NLS items as x-ms-owner -->
     	<magic priority="90">
             <match value="0x0D000000000000003F00" type="string" offset="0"  mask="0xFFFF000000FF00FFFFFF"/>
         </magic>
@@ -978,14 +997,14 @@
         <glob pattern="*.lnk"/>
     </mime-type>
 
-	<!-- considera tambem vcards com letra minuscula, como os exportados pelo thunderbird -->
+	<!-- Also considers lowercase vCards, such as those exported by Thunderbird -->
     <mime-type type="text/x-vcard">
     	<magic priority="50">
     		<match value="begin:vcard" type="string" offset="0"/>
     	</magic>
     </mime-type>
 
-    <!-- vcard decodificado pelo parser -->
+    <!-- vCard decoded by the parser -->
     <mime-type type="application/x-vcard-html">
     	<sub-class-of type="text/html"/>
     </mime-type>
@@ -1672,10 +1691,6 @@
     </mime-type>
 
     <mime-type type="application/x-emule-collection">
-        <glob pattern="*.emulecollection"/>
-    </mime-type>
-
-    <mime-type type="application/x-emule-collection">
         <sub-class-of type="text/plain"/>
         <glob pattern="*.emulecollection"/>
     </mime-type>
@@ -1702,5 +1717,8 @@
     <mime-type type="application/x-customdestinations-entry">
     	<sub-class-of type="application/x-lnk"/>
     </mime-type>
+
+    <!-- Enable "magic-only" to force signature detection, ignoring pre-defined extension based detection -->
+    <mime-type type="audio/speex" magic-only="true"/>
 
 </mime-info>

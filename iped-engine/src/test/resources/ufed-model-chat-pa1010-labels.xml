@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synthetic sample of the InstantMessage model used by PA 10.10+: labels are in <multiField name="Labels">
+     (no MessageLabel models) and QuotedMessageData has no "Label" field. -->
+<model type="Chat" id="chat-1" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="1" extractionId="0">
+  <field name="Source" type="String">
+    <value type="String"><![CDATA[WhatsApp]]></value>
+  </field>
+  <multiModelField name="Messages" type="InstantMessage">
+    <model type="InstantMessage" id="msg-fwd" pa_id="pa-msg-fwd" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="10" extractionId="0">
+      <field name="Source" type="String">
+        <value type="String"><![CDATA[WhatsApp]]></value>
+      </field>
+      <modelField name="Attachment" type="Attachment">
+        <empty />
+      </modelField>
+      <multiModelField name="Attachments" type="Attachment" />
+      <field name="Label" type="Label">
+        <value type="Label"><![CDATA[Default]]></value>
+      </field>
+      <multiField name="Labels" type="Label">
+        <value type="Label"><![CDATA[Forwarded]]></value>
+        <value type="Label"><![CDATA[Edited]]></value>
+      </multiField>
+      <multiModelField name="MessageExtraData" type="InstantMessageExtraData">
+        <model type="QuotedMessageData" id="quoted-1" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="11" extractionId="0">
+          <field name="ReferenceId" type="Guid">
+            <value type="Guid"><![CDATA[pa-embedded]]></value>
+          </field>
+        </model>
+      </multiModelField>
+      <field name="IsEmbeddedOnly" type="Boolean">
+        <value type="Boolean"><![CDATA[False]]></value>
+      </field>
+      <field name="Identifier" type="String">
+        <value type="String"><![CDATA[FWD-1]]></value>
+      </field>
+      <multiModelField name="EmbeddedInstantMessage" type="InstantMessage">
+        <model type="InstantMessage" id="embedded" pa_id="pa-embedded" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="12" extractionId="0">
+          <field name="Body" type="String">
+            <value type="String"><![CDATA[forwarded body]]></value>
+          </field>
+          <multiField name="Labels" type="Label" />
+          <field name="IsEmbeddedOnly" type="Boolean">
+            <value type="Boolean"><![CDATA[True]]></value>
+          </field>
+          <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+        </model>
+      </multiModelField>
+    </model>
+    <model type="InstantMessage" id="msg-reply" pa_id="pa-msg-reply" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="20" extractionId="0">
+      <field name="Body" type="String">
+        <value type="String"><![CDATA[reply body]]></value>
+      </field>
+      <multiField name="Labels" type="Label">
+        <value type="Label"><![CDATA[Reply]]></value>
+      </multiField>
+      <multiModelField name="MessageExtraData" type="InstantMessageExtraData">
+        <model type="QuotedMessageData" id="quoted-2" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="21" extractionId="0">
+          <field name="OriginalMessageID" type="String">
+            <value type="String"><![CDATA[FWD-1]]></value>
+          </field>
+          <field name="ReferenceId" type="Guid">
+            <value type="Guid"><![CDATA[00000000-0000-0000-0000-000000000000]]></value>
+          </field>
+        </model>
+      </multiModelField>
+      <field name="Identifier" type="String">
+        <value type="String"><![CDATA[REPLY-1]]></value>
+      </field>
+      <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+    </model>
+  </multiModelField>
+</model>

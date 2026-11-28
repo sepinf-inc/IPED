@@ -33,9 +33,6 @@ import iped.search.IMultiSearchResult;
 
 public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
     // cache made of soft reference to bookmarks hashcodes
@@ -98,20 +95,6 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
 
     public final boolean hasBookmark(IItemId item) {
         return map.get(item.getSourceId()).hasBookmark(item.getId());
-    }
-
-    private static final int[] getBookmarkIds(IBookmarks m, Set<String> bookmarkNames) {
-        int[] bookmarkIds = new int[bookmarkNames.size()];
-        int i = 0;
-        boolean hasBookmark = false;
-        for (String bookmarkName : bookmarkNames) {
-            bookmarkIds[i] = m.getBookmarkId(bookmarkName);
-            if (bookmarkIds[i++] != -1)
-                hasBookmark = true;
-        }
-        if (!hasBookmark)
-            return null;
-        return bookmarkIds;
     }
 
     public boolean hasBookmark(IItemId item, Set<String> bookmarkNames) {
@@ -504,7 +487,6 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
                 m.setBookmarkColor(bid, color);
             }
         }
-
     }
 
     public Color getBookmarkColor(String bookmarkName) {
@@ -531,5 +513,46 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
     public void removeBookmarkKeyStroke(String bookmarkName) {
         for (IBookmarks m : map.values())
             m.removeBookmarkKeyStroke(m.getBookmarkId(bookmarkName));
+    }
+
+    @Override
+    public boolean isChatMessageSelected(IItemId chatItem, String msgId) {
+        return map.get(chatItem.getSourceId()).isChatMessageSelected(chatItem.getId(), msgId);
+    }
+
+    @Override
+    public void setChatMessageSelected(boolean selected, IItemId chatItem, String msgId) {
+        map.get(chatItem.getSourceId()).setChatMessageSelected(selected, chatItem.getId(), msgId);
+    }
+
+    @Override
+    public IMultiSearchResult filterChatsWithSelectedMessages(IMultiSearchResult result) {
+        ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
+        ArrayList<Float> scores = new ArrayList<Float>();
+
+        Set<IItemId> chatsWithSelectedMessages = new HashSet<IItemId>();
+        for (Integer sourceId : map.keySet()) {
+            IBookmarks m = map.get(sourceId);
+            Set<Integer> items = m.getChatsWithSelectedMessages();
+            if (items != null && !items.isEmpty()) {
+                for (int item : items) {
+                    chatsWithSelectedMessages.add(new ItemId(sourceId, item));
+                }
+            }
+        }
+
+        if (!chatsWithSelectedMessages.isEmpty()) {
+            int i = 0;
+            for (IItemId item : result.getIterator()) {
+                if (chatsWithSelectedMessages.contains(item)) {
+                    selectedItems.add(item);
+                    scores.add(result.getScore(i));
+                }
+                i++;
+            }
+        }
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
+                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        return r;
     }
 }

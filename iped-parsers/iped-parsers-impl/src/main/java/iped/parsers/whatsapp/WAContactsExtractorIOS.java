@@ -1,6 +1,6 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Util.nullToEmpty;
+import static iped.parsers.util.ChatUtil.nullToEmpty;
 
 import java.io.File;
 import java.sql.Connection;
@@ -15,6 +15,7 @@ import fqlite.base.SqliteRow;
 import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
+import iped.parsers.util.ChatUtil;
 
 public abstract class WAContactsExtractorIOS extends WAContactsExtractor {
     
@@ -87,41 +88,38 @@ public abstract class WAContactsExtractorIOS extends WAContactsExtractor {
                 if (!id.endsWith(WAContact.waSuffix)) {
                     id += WAContact.waSuffix;
                 }
-                if (! directory.hasContact(Util.getNameFromId(id))) { // only recover contact if it does not exist already
+
+                // Only recover contact if it does not exist already
+                if (!directory.hasContact(ChatUtil.getNameFromId(id))) {
                     WAContact c = directory.getContact(id);
-                    c.setWaName(nullToEmpty(row.getTextValue("ZHIGHLIGHTEDNAME"))); //$NON-NLS-1$
-                    c.setDisplayName(nullToEmpty(row.getTextValue("ZFULLNAME"))); //$NON-NLS-1$
-                    c.setNickName(nullToEmpty(row.getTextValue("ZNICKNAME"))); //$NON-NLS-1$
-                    String given_name = row.getTextValue("ZGIVENNAME"); //$NON-NLS-1$
-                    if (given_name == null) 
-                        given_name = row.getTextValue("ZFIRSTNAME"); //$NON-NLS-1$
+                    c.setWaName(nullToEmpty(row.getTextValue("ZHIGHLIGHTEDNAME")));
+                    c.setDisplayName(nullToEmpty(row.getTextValue("ZFULLNAME")));
+                    c.setNickName(nullToEmpty(row.getTextValue("ZNICKNAME")));
+                    String given_name = row.getTextValue("ZGIVENNAME");
+                    if (given_name == null) {
+                        given_name = row.getTextValue("ZFIRSTNAME");
+                    }
                     c.setGivenName(nullToEmpty(given_name));
-                    String status = row.getTextValue("ZABOUTTEXT"); //$NON-NLS-1$
-                    if (status == null)
-                        status = row.getTextValue("ZTEXT"); //$NON-NLS-1$
-                    c.setStatus(nullToEmpty(status)); //$NON-NLS-1$
+                    String status = row.getTextValue("ZABOUTTEXT");
+                    if (status == null) {
+                        status = row.getTextValue("ZTEXT");
+                    }
+                    c.setStatus(nullToEmpty(status));
                     c.setDeleted(true);
                 }
             }
         }
     }
-    
-    
+
     private static class WAIOSContactValidator implements SQLiteRecordValidator {
 
         @Override
         public boolean validateRecord(SqliteRow row) {
             try {
-                String jid = row.getTextValue("ZWHATSAPPID"); //$NON-NLS-1$
-                if (jid == null || jid.isBlank()) {
-                    return false;
-                }
-                return true;
-                
-            } catch (Exception e) {
-            }
+                String jid = row.getTextValue("ZWHATSAPPID");
+                return !row.isTruncated() && WAContact.isValidJid(jid);
+            } catch (Exception e) {}
             return false;
         }
-
     }
 }

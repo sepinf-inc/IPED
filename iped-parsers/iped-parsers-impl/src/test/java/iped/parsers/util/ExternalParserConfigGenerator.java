@@ -90,6 +90,18 @@ public class ExternalParserConfigGenerator implements ExternalParsersConfigReade
         addTextContent(winToolPath, strWinToolPath);
     }
 
+    public void setWinToolName(String strWinToolName) {
+        Element winToolName = document.createElement(WIN_TOOL_NAME);
+        parser.appendChild(winToolName);
+        addTextContent(winToolName, strWinToolName);
+    }
+
+    public void setUnescapeOutput(boolean boolUnescapeOutput) {
+        Element unescapeOutput = document.createElement(UNESCAPE_OUTPUT);
+        parser.appendChild(unescapeOutput);
+        addTextContent(unescapeOutput, String.valueOf(boolUnescapeOutput));
+    }
+
     public void setFirstLinesToIgnore(int intFirstLinesToIgnore) {
         String strFirstLinesToIgnore = String.valueOf(intFirstLinesToIgnore);
         addTextContent(firstLinesToIgnore, strFirstLinesToIgnore);

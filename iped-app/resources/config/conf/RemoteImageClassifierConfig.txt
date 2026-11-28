@@ -5,7 +5,7 @@
 # URL of the service/central node used by the RemoteImageClassifier implementation
 url = 10.61.86.148:30603/new
 
-# Maximum number of thumbs to be included in the zip file to send to the server
+# Maximum number of thumbnails to be included in the ZIP file sent to the server
 batchSize = 50
 
 # Minimum confidence threshold for assigning a class label to an image/video. Values are between 0 and 100.   
@@ -14,11 +14,17 @@ labelingThreshold = 50
 # Skip classification of images/videos smaller than a given file size (in bytes; '0' = do not skip)
 skipSize = 2048
 
-# Skip classification of images/videos smaller than a given dimension, i.e. height or width (in pixels; '0' = do not skip)
+# Skip classification of images/videos smaller than a given dimension, i.e., height or width (in pixels; '0' = do not skip)
 skipDimension = 48
 
-# Skip classification of images/videos with hits on IPED hashesDB database (if 'hashesDB' is not configured in 'LocalConfig.txt' or 'false', do not skip)
+# Skip classification of images/videos with hits in the IPED hashesDB database (if 'hashesDB' is not configured in 'LocalConfig.txt' or is set to 'false', do not skip)
 skipHashDBFiles = true
 
 # Validate server SSL certificate
 validateSSL = false
+
+# Timeout to establish a connection in milliseconds 
+connectTimeout = 30000
+
+# Timeout while waiting for results from the service in milliseconds
+socketTimeout =  180000

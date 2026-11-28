@@ -40,6 +40,15 @@ public class ItemSearcher implements IItemSearcher {
     }
 
     @Override
+    public IItemReader searchFirst(String luceneQuery) {
+        SearchResult result = getResult(luceneQuery);
+        if (result.getLength() > 0) {
+            return iSource.getItemByID(result.getId(0));
+        }
+        return null;
+    }
+
+    @Override
     public Iterable<IItemReader> searchIterable(String luceneQuery) {
 
         SearchResult result = getResult(luceneQuery);

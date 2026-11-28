@@ -77,6 +77,66 @@ public abstract class BaseModel implements Serializable {
         this.fields.put(name, value);
     }
 
+    /**
+     * Adds a value to a multi-valued field (<multiField>). Values are kept in a
+     * List, in document order.
+     */
+    @SuppressWarnings("unchecked")
+    public void addFieldValue(String name, Object value) {
+        Object current = fields.get(name);
+        List<Object> values;
+        if (current instanceof List) {
+            values = (List<Object>) current;
+        } else {
+            values = new ArrayList<>(2);
+            if (current != null) {
+                values.add(current);
+            }
+            fields.put(name, values);
+        }
+        values.add(value);
+    }
+
+    /**
+     * Returns the field value as String. Multi-valued fields are joined with ", ".
+     */
+    public String getFieldAsString(String name) {
+        Object value = fields.get(name);
+        if (value == null || value instanceof String) {
+            return (String) value;
+        }
+        if (value instanceof List) {
+            List<?> list = (List<?>) value;
+            if (list.isEmpty()) {
+                return null;
+            }
+            if (list.size() == 1) {
+                return String.valueOf(list.get(0));
+            }
+            StringJoiner joiner = new StringJoiner(", ");
+            list.forEach(v -> joiner.add(String.valueOf(v)));
+            return joiner.toString();
+        }
+        return value.toString();
+    }
+
+    /**
+     * Returns the values of a (possibly) multi-valued field as a list of Strings.
+     */
+    public List<String> getFieldAsList(String name) {
+        Object value = fields.get(name);
+        if (value == null) {
+            return Collections.emptyList();
+        }
+        if (value instanceof List) {
+            List<?> list = (List<?>) value;
+            List<String> result = new ArrayList<>(list.size());
+            list.forEach(v -> result.add(String.valueOf(v)));
+            return result;
+        }
+        return Collections.singletonList(value.toString());
+    }
+
     public void setAttribute(String name, String value) {
         this.attributes.put(name, value);
     }
@@ -151,6 +211,14 @@ public abstract class BaseModel implements Serializable {
 
     public String getId() {
         return id;
+    }
+
+    /**
+     * The "pa_id" attribute. Since PA 10.x, references like QuotedMessageData.ReferenceId
+     * and file sourcemodels/ownerid point to this value instead of the "id" attribute.
+     */
+    public String getPaId() {
+        return getAttribute("pa_id");
     }
 
     public void setId(String id) {

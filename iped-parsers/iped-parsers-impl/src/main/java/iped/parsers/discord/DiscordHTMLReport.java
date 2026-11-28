@@ -2,6 +2,7 @@ package iped.parsers.discord;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
@@ -23,6 +24,7 @@ import iped.parsers.discord.json.DiscordMention;
 import iped.parsers.discord.json.DiscordReaction;
 import iped.parsers.discord.json.DiscordRoot;
 import iped.parsers.discord.json.DiscordSticker;
+import iped.parsers.util.ChatUtil;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
@@ -78,7 +80,7 @@ public class DiscordHTMLReport {
             out.println(" <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n");
             out.println("<style>" + CSS + "</style>");
             out.println("<script>"); //$NON-NLS-1$
-            out.println(iped.parsers.whatsapp.Util.readResourceAsString("js/whatsapp.js"));
+            out.println(ChatUtil.readResourceAsString("js/chat.js"));
             out.println("</script>"); //$NON-NLS-1$
             // out.println("<script
             // src=\"https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js\"
@@ -163,9 +165,12 @@ public class DiscordHTMLReport {
                     Iterator<IItemReader> it = searcher.searchIterable(query).iterator();
                     // if hash exists, at least 1 item will be returned
                     IItemReader item = it.next();
-                    byte buff[] = item.getBufferedInputStream().readAllBytes();
-                    out.println("<lottie-player src=\"data:application/json;base64, " + Base64.getEncoder().encodeToString(buff)
-                            + "\" background=\"transparent\"  speed=\"1\"  style=\"width: 300px; height: 300px;\" loop controls autoplay><lottie-player>");
+                    try (InputStream in = item.getBufferedInputStream()) {
+                        byte buff[] = in.readAllBytes();
+                        out.println("<lottie-player src=\"data:application/json;base64, " + Base64.getEncoder().encodeToString(buff)
+                                + "\" background=\"transparent\"  speed=\"1\"  style=\"width: 300px; height: 300px;\" loop controls autoplay><lottie-player>");
+                    }
+
                 }
             }
 
@@ -252,7 +257,7 @@ public class DiscordHTMLReport {
                         }
                         if (item.getMediaType().toString().startsWith("video/")) {
                             if (thumb != null) {
-                                out.println("<img class=\"thumb iped-video\" src=\"" + "data:image/jpg;base64," + iped.parsers.whatsapp.Util.encodeBase64(thumb) + "\"" + " data-src1=\"" + format(exportPath) + "\"" + " data-src2=\""
+                                out.println("<img class=\"thumb iped-video\" src=\"" + "data:image/jpg;base64," + ChatUtil.encodeBase64(thumb) + "\"" + " data-src1=\"" + format(exportPath) + "\"" + " data-src2=\""
                                         + format(source) + "\"" //$NON-NLS-1$
                                         + " title=\"" + att.getFilename() //$NON-NLS-1$
                                         + "\"/>");
@@ -268,7 +273,7 @@ public class DiscordHTMLReport {
                     }
                     if (!att.getChildPornSets().isEmpty()) {
                         out.println("       <BR/>");
-                        out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " " + format(att.getChildPornSets().toString()) + "</i></p>");
+                        out.print("<p><i>" + Messages.getString("ChatReport.FoundInPedoHashDB") + " " + format(att.getChildPornSets().toString()) + "</i></p>");
                     }
                     out.println("	</TD>");
                     out.println("</TR>");

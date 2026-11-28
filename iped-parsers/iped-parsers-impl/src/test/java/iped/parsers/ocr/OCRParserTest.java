@@ -4,12 +4,20 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -28,24 +36,25 @@ import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.OCROutputFolder;
 import iped.parsers.util.PDFToImage;
-import iped.parsers.util.RepoToolDownloader;
+import iped.parsers.util.TestTools;
 import iped.utils.ExternalImageConverter;
 
 public class OCRParserTest {
-    private static String testRoot = System.getProperty("user.dir") + "/src/test";
-    private static String osName = System.getProperty("os.name").toLowerCase();
     private static String OCR_OUTPUT_FOLDER_NAME = "ocr_output";
     private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
+    private static Properties savedProperties;
 
     @Rule
     public TestName testName = new TestName();
 
     @BeforeClass
     public static void setUpTool() throws IOException {
-        if (osName.startsWith("windows")) {
-            String repoPath = "tesseract/tesseract-zip/5.3.2-24-g3922_1/tesseract-zip-5.3.2-24-g3922_1.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
-            System.setProperty(OCRParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/tesseract/");
+        // Saved to be restored after the tests, so the properties set here (e.g. OCR
+        // enabled) do not leak to other test classes running in the same JVM
+        savedProperties = (Properties) System.getProperties().clone();
+
+        if (SystemUtils.IS_OS_WINDOWS) {
+            System.setProperty(OCRParser.TOOL_PATH_PROP, TestTools.dir("tesseract"));
         }
 
         // Checks if tesseract is present to then enable OCR parsing property
@@ -62,11 +71,11 @@ public class OCRParserTest {
 
     @AfterClass
     public static void tearDownTool() throws IOException {
-        if (osName.startsWith("windows")) {
-            File tool_path = new File(System.clearProperty(OCRParser.TOOL_PATH_PROP));
-            FileUtils.deleteDirectory(tool_path.getParentFile());
+        try {
+            FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
+        } finally {
+            System.setProperties(savedProperties);
         }
-        FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
     }
 
 
@@ -146,6 +155,63 @@ public class OCRParserTest {
         // System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "true");
         // FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
         // assertPDFParsing();
+    }
+
+    private static void addTextPage(PDDocument doc, PDRectangle size, String text) throws IOException {
+        PDPage page = new PDPage(size);
+        doc.addPage(page);
+        try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA_BOLD, 36);
+            cs.newLineAtOffset(40, size.getHeight() - 60);
+            cs.showText(text);
+            cs.endText();
+        }
+    }
+
+    @Test
+    public void testOCRParserPDFSkipsPageRejectedByTesseract()
+            throws IOException, SAXException, TikaException, SQLException {
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        ParseContext context = new ParseContext();
+        ItemInfo itemInfo = new ItemInfo(0, testName.getMethodName(), null, null, testName.getMethodName(), false);
+        context.set(ItemInfo.class, itemInfo);
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "application/pdf");
+        context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
+        System.setProperty(OCRParser.LANGUAGE_PROP, "eng");
+
+        // page 2 is 14400pt wide (PDF max): at 250 dpi it renders 50000px wide,
+        // above the 32767px limit, so tesseract exits with "Image too large"
+        File pdf = File.createTempFile("iped-ocr-huge-page", ".pdf");
+        try (PDDocument doc = new PDDocument()) {
+            addTextPage(doc, PDRectangle.LETTER, "FIRST PAGE TEXT");
+            addTextPage(doc, new PDRectangle(14400, 100), "HUGE PAGE TEXT");
+            addTextPage(doc, PDRectangle.LETTER, "THIRD PAGE TEXT");
+            doc.save(pdf);
+        }
+        // generated pdf is smaller than the default ocr.minFileSize
+        System.setProperty(OCRParser.MIN_SIZE_PROP, "0");
+
+        String hts = "";
+        try (OCRParser parser = new OCRParser();
+            InputStream stream = new FileInputStream(pdf)) {
+            assumeTrue(parser.isEnabled());
+
+            parser.parse(stream, handler, metadata, context);
+            hts = handler.toString();
+
+            assertTrue(hts.contains("FIRST PAGE TEXT"));
+            assertTrue(hts.contains("THIRD PAGE TEXT"));
+
+        } catch (Throwable e) {
+            System.out.println(hts);
+            throw e;
+        } finally {
+            System.clearProperty(OCRParser.MIN_SIZE_PROP);
+            pdf.delete();
+            FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
+        }
     }
 
     
@@ -264,16 +330,15 @@ public class OCRParserTest {
     private void setUpImageMagick() throws IOException {
         if (System.getProperty(ExternalImageConverter.enabledProp, "").isEmpty()) {
             System.setProperty(ExternalImageConverter.enabledProp, "true");
-            if (osName.startsWith("windows")) {
-                String repoPath = "org/imagemagick/imagemagick-zip/7.1.1-19-q8-x64/imagemagick-zip-7.1.1-19-q8-x64.zip";
-                RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/tools");
-                System.setProperty(ExternalImageConverter.winToolPathPrefixProp, testRoot + "/tmp_tools");
+            if (SystemUtils.IS_OS_WINDOWS) {
+                TestTools.dir("imagemagick");
+                System.setProperty(ExternalImageConverter.winToolPathPrefixProp, TestTools.ROOT);
             }
         }
     }
 
     private boolean isImageMagickInstalled(String magickDir) {
-        magickDir += osName.startsWith("windows") ? "/tools/imagemagick/magick" : "magick";
+        magickDir += SystemUtils.IS_OS_WINDOWS ? "/tools/imagemagick/magick" : "magick";
 
         try {
             Process process;
@@ -282,7 +347,7 @@ public class OCRParserTest {
                 process = Runtime.getRuntime().exec(magickDir + " -version");
                 result = process.waitFor();
             } catch (IOException e) {
-                if (!osName.startsWith("windows")) {
+                if (!SystemUtils.IS_OS_WINDOWS) {
                     // try with older command
                     process = Runtime.getRuntime().exec("convert -version");
                     result = process.waitFor();

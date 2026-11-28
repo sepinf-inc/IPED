@@ -84,6 +84,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             App.get().setEnableGallerySimSearchButton(false);
             App.get().setLastSelectedDoc(-1);
             lastTableDoc = -1;
+            // No item is selected anymore, so do not keep the last one in the viewers
+            App.get().getViewerController().clear();
             return;
         }
 

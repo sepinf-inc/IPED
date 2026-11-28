@@ -28,7 +28,6 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.search.LoadIndexFields;
-import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.LanguageDetectTask;
 import iped.engine.task.NamedEntityTask;
 import iped.engine.task.PhotoDNALookup;
@@ -157,11 +156,11 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
         autoManageCols = analysisConfig.isAutoManageCols();
 
-        moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
-
-        updateDinamicFields();
-
-        loadSavedCols();
+        if (App.get().appCase != null) {
+            moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+            updateDinamicFields();
+            loadSavedCols();
+        }
     }
 
     public void saveColumnsState() {
@@ -367,7 +366,8 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         for (int i = 0; i < customGroups.length; i++)
             fieldGroups[i] = customGroups[i];
         fieldGroups[fieldGroups.length - 2] = otherFields.toArray(new String[0]);
-        fieldGroups[fieldGroups.length - 1] = indexFields.clone();
+        String[] all = fieldGroups[fieldGroups.length - 1] = Arrays.copyOf(indexFields, indexFields.length + 1);
+        all[all.length - 1] = ResultTableModel.BOOKMARK_COL;
 
         for (String[] fields : fieldGroups)
             Arrays.sort(fields, Collator.getInstance());
